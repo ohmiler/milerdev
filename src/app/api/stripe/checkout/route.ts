@@ -24,7 +24,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
 
-        if (course.price <= 0) {
+        const priceNumber = parseFloat(course.price.toString());
+        if (priceNumber <= 0) {
             return NextResponse.json(
                 { error: "This course is free" },
                 { status: 400 }
@@ -32,17 +33,18 @@ export async function POST(request: Request) {
         }
 
         // Create pending payment record
-        const [payment] = await db
+        const paymentId = crypto.randomUUID();
+        await db
             .insert(payments)
             .values({
+                id: paymentId,
                 userId: session.user.id,
                 courseId: course.id,
-                amount: course.price,
+                amount: priceNumber.toString(),
                 currency: "THB",
                 method: "stripe",
                 status: "pending",
-            })
-            .returning();
+            });
 
         // Create Stripe checkout session
         const checkoutSession = await stripe.checkout.sessions.create({
@@ -57,17 +59,17 @@ export async function POST(request: Request) {
                             description: course.description || undefined,
                             images: course.thumbnailUrl ? [course.thumbnailUrl] : undefined,
                         },
-                        unit_amount: Math.round(course.price * 100), // Convert to satang
+                        unit_amount: Math.round(priceNumber * 100), // Convert to satang
                     },
                     quantity: 1,
                 },
             ],
             metadata: {
-                paymentId: payment.id,
+                paymentId: paymentId,
                 userId: session.user.id,
                 courseId: course.id,
             },
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}/learn?payment=success`,
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}/payment-success`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}?payment=cancelled`,
         });
 

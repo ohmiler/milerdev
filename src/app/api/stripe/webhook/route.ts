@@ -64,7 +64,7 @@ export async function POST(request: Request) {
                     email: session.customer_details.email,
                     name: session.customer_details.name || "คุณลูกค้า",
                     courseName: course.title,
-                    amount: payment.amount,
+                    amount: parseFloat(payment.amount.toString()),
                     paymentId: payment.id,
                 });
 

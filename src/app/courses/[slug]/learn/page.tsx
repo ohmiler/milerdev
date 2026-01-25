@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ payment?: string }>;
 }
 
 async function getCourseWithAccess(slug: string, userId: string) {
@@ -50,7 +51,7 @@ async function getCourseWithAccess(slug: string, userId: string) {
   };
 }
 
-export default async function LearnPage({ params }: Props) {
+export default async function LearnPage({ params, searchParams }: Props) {
   const session = await auth();
 
   if (!session?.user) {
@@ -59,6 +60,7 @@ export default async function LearnPage({ params }: Props) {
   }
 
   const { slug } = await params;
+  const { payment } = await searchParams;
   const data = await getCourseWithAccess(slug, session.user.id);
 
   if (!data) {
@@ -69,6 +71,28 @@ export default async function LearnPage({ params }: Props) {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a' }}>
+      {/* Payment Success Banner */}
+      {payment === 'success' && (
+        <div style={{
+          background: 'linear-gradient(90deg, #16a34a, #22c55e)',
+          color: 'white',
+          padding: '16px 24px',
+          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px',
+        }}>
+          <span style={{ fontSize: '1.5rem' }}>🎉</span>
+          <div>
+            <strong>ชำระเงินสำเร็จ!</strong>
+            <span style={{ marginLeft: '8px', opacity: 0.9 }}>
+              ยินดีต้อนรับสู่คอร์ส {course.title} คุณสามารถเริ่มเรียนได้ทันที
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header style={{
         background: '#1e293b',

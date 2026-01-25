@@ -51,6 +51,33 @@ export default function EnrollButton({ courseId, courseSlug, price }: EnrollButt
     setLoading(true);
 
     try {
+      // ถ้าคอร์สมีราคา → ไปหน้า Stripe Checkout
+      if (price > 0) {
+        const res = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.url) {
+          // Redirect ไปหน้า Stripe Checkout
+          window.location.href = data.url;
+          return;
+        } else {
+          setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            message: data.error || 'ไม่สามารถสร้างหน้าชำระเงินได้ กรุณาลองใหม่',
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // ถ้าคอร์สฟรี → ลงทะเบียนเลย
       const res = await fetch('/api/enrollments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
