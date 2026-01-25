@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { payments, enrollments, courses } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import Stripe from "stripe";
 
@@ -33,6 +33,19 @@ export async function POST(request: Request) {
         const { paymentId, userId, courseId } = session.metadata!;
 
         try {
+            // Check if already enrolled (idempotency)
+            const existingEnrollment = await db.query.enrollments.findFirst({
+                where: and(
+                    eq(enrollments.userId, userId),
+                    eq(enrollments.courseId, courseId)
+                ),
+            });
+
+            if (existingEnrollment) {
+                console.log(`User ${userId} already enrolled in course ${courseId}, skipping`);
+                return NextResponse.json({ received: true });
+            }
+
             // Update payment status
             await db
                 .update(payments)

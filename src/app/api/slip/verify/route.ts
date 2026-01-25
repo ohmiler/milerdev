@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { payments, enrollments, courses } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
+import { createId } from "@paralleldrive/cuid2";
 
 // POST /api/slip/verify - Verify slip payment (PromptPay)
 export async function POST(request: Request) {
@@ -34,18 +35,34 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
 
-        // Create pending payment record first
-        const [payment] = await db
-            .insert(payments)
-            .values({
-                userId: session.user.id,
-                courseId,
-                amount,
-                currency: "THB",
-                method: "promptpay",
-                status: "pending",
-            })
-            .returning();
+        // Check if already enrolled
+        const existingEnrollment = await db.query.enrollments.findFirst({
+            where: and(
+                eq(enrollments.userId, session.user.id),
+                eq(enrollments.courseId, courseId)
+            ),
+        });
+
+        if (existingEnrollment) {
+            return NextResponse.json(
+                { error: "Already enrolled in this course" },
+                { status: 400 }
+            );
+        }
+
+        // Create pending payment record first (MySQL doesn't support .returning())
+        const paymentId = createId();
+        await db.insert(payments).values({
+            id: paymentId,
+            userId: session.user.id,
+            courseId,
+            amount: String(amount),
+            currency: "THB",
+            method: "promptpay",
+            status: "pending",
+        } as typeof payments.$inferInsert);
+        
+        const payment = { id: paymentId, amount };
 
         // Verify slip with SlipOK API
         const slipFormData = new FormData();
@@ -82,22 +99,23 @@ export async function POST(request: Request) {
                 courseId,
             });
 
-            // Send confirmation emails
+            // Send confirmation emails (non-blocking)
             if (session.user.email && session.user.name) {
-                await sendPaymentConfirmation({
-                    email: session.user.email,
-                    name: session.user.name,
-                    courseName: course.title,
-                    amount,
-                    paymentId: payment.id,
-                });
-
-                await sendEnrollmentEmail({
-                    email: session.user.email,
-                    name: session.user.name,
-                    courseName: course.title,
-                    courseSlug: course.slug,
-                });
+                Promise.all([
+                    sendPaymentConfirmation({
+                        email: session.user.email,
+                        name: session.user.name,
+                        courseName: course.title,
+                        amount,
+                        paymentId: payment.id,
+                    }),
+                    sendEnrollmentEmail({
+                        email: session.user.email,
+                        name: session.user.name,
+                        courseName: course.title,
+                        courseSlug: course.slug,
+                    }),
+                ]).catch((err) => console.error("Failed to send emails:", err));
             }
 
             return NextResponse.json({

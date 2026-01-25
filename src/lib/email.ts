@@ -2,6 +2,10 @@ import { Resend } from "resend";
 
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Email sender configuration
+const EMAIL_FROM = process.env.EMAIL_FROM || "MilerDev <noreply@milerdev.com>";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://milerdev.com";
+
 interface SendWelcomeEmailParams {
     email: string;
     name: string;
@@ -27,16 +31,16 @@ interface SendPaymentConfirmationParams {
  */
 export async function sendWelcomeEmail({ email, name }: SendWelcomeEmailParams) {
     await resend.emails.send({
-        from: "Course Platform <noreply@yourdomain.com>",
+        from: EMAIL_FROM,
         to: email,
-        subject: "ยินดีต้อนรับสู่ Course Platform! 🎉",
+        subject: "ยินดีต้อนรับสู่ MilerDev! ",
         html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h1>สวัสดี ${name}!</h1>
         <p>ขอบคุณที่สมัครสมาชิกกับเรา</p>
         <p>คุณสามารถเริ่มเรียนคอร์สต่างๆ ได้เลยวันนี้</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/courses" 
-           style="display: inline-block; padding: 12px 24px; background: #0070f3; color: white; text-decoration: none; border-radius: 8px;">
+        <a href="${APP_URL}/courses" 
+           style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">
           ดูคอร์สทั้งหมด
         </a>
       </div>
@@ -54,7 +58,7 @@ export async function sendEnrollmentEmail({
     courseSlug,
 }: SendEnrollmentEmailParams) {
     await resend.emails.send({
-        from: "Course Platform <noreply@yourdomain.com>",
+        from: EMAIL_FROM,
         to: email,
         subject: `คุณได้ลงทะเบียนคอร์ส: ${courseName}`,
         html: `
@@ -62,7 +66,7 @@ export async function sendEnrollmentEmail({
         <h1>ยินดีด้วย ${name}! 🎓</h1>
         <p>คุณได้ลงทะเบียนเรียนคอร์ส <strong>${courseName}</strong> เรียบร้อยแล้ว</p>
         <p>คุณสามารถเริ่มเรียนได้ทันที</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/courses/${courseSlug}/learn" 
+        <a href="${APP_URL}/courses/${courseSlug}/learn" 
            style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 8px;">
           เริ่มเรียนเลย
         </a>
@@ -82,7 +86,7 @@ export async function sendPaymentConfirmation({
     paymentId,
 }: SendPaymentConfirmationParams) {
     await resend.emails.send({
-        from: "Course Platform <noreply@yourdomain.com>",
+        from: EMAIL_FROM,
         to: email,
         subject: `ยืนยันการชำระเงิน - ${courseName}`,
         html: `
@@ -97,8 +101,8 @@ export async function sendPaymentConfirmation({
           <p><strong>หมายเลขการชำระเงิน:</strong> ${paymentId}</p>
         </div>
         
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/my-courses" 
-           style="display: inline-block; padding: 12px 24px; background: #0070f3; color: white; text-decoration: none; border-radius: 8px;">
+        <a href="${APP_URL}/dashboard" 
+           style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">
           ไปยังคอร์สของฉัน
         </a>
       </div>

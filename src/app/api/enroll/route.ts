@@ -4,6 +4,14 @@ import { db } from "@/lib/db";
 import { enrollments, courses, payments } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/email";
+import { z } from "zod";
+import { createId } from "@paralleldrive/cuid2";
+
+// Validation schema
+const enrollSchema = z.object({
+    courseId: z.string().min(1, "Course ID is required"),
+    paymentId: z.string().optional(),
+});
 
 // POST /api/enroll - Enroll in a course
 export async function POST(request: Request) {
@@ -13,7 +21,17 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { courseId, paymentId } = await request.json();
+        const body = await request.json();
+        const validation = enrollSchema.safeParse(body);
+        
+        if (!validation.success) {
+            return NextResponse.json(
+                { error: validation.error.issues[0].message },
+                { status: 400 }
+            );
+        }
+        
+        const { courseId, paymentId } = validation.data;
 
         // Check if course exists
         const course = await db.query.courses.findFirst({
@@ -40,7 +58,8 @@ export async function POST(request: Request) {
         }
 
         // If course is paid, verify payment
-        if (course.price > 0 && paymentId) {
+        const coursePrice = parseFloat(course.price || '0');
+        if (coursePrice > 0 && paymentId) {
             const payment = await db.query.payments.findFirst({
                 where: and(
                     eq(payments.id, paymentId),
@@ -56,30 +75,31 @@ export async function POST(request: Request) {
                     { status: 402 }
                 );
             }
-        } else if (course.price > 0) {
+        } else if (coursePrice > 0) {
             return NextResponse.json(
                 { error: "Payment required for this course" },
                 { status: 402 }
             );
         }
 
-        // Create enrollment
-        const [enrollment] = await db
-            .insert(enrollments)
-            .values({
-                userId: session.user.id,
-                courseId,
-            })
-            .returning();
+        // Create enrollment (MySQL doesn't support .returning())
+        const enrollmentId = createId();
+        await db.insert(enrollments).values({
+            id: enrollmentId,
+            userId: session.user.id,
+            courseId,
+        });
+        
+        const enrollment = { id: enrollmentId, userId: session.user.id, courseId };
 
-        // Send enrollment email
+        // Send enrollment email (non-blocking)
         if (session.user.email && session.user.name) {
-            await sendEnrollmentEmail({
+            sendEnrollmentEmail({
                 email: session.user.email,
                 name: session.user.name,
                 courseName: course.title,
                 courseSlug: course.slug,
-            });
+            }).catch((err) => console.error("Failed to send enrollment email:", err));
         }
 
         return NextResponse.json(enrollment, { status: 201 });

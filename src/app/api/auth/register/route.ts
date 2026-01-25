@@ -3,17 +3,34 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
+
+// Validation schema
+const registerSchema = z.object({
+    name: z.string().min(2, 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร').max(100),
+    email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
+    password: z
+        .string()
+        .min(8, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
+        .regex(/[A-Z]/, 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว')
+        .regex(/[a-z]/, 'รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว')
+        .regex(/[0-9]/, 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว'),
+});
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password } = await request.json();
-
-    if (!email || !password) {
+    const body = await request.json();
+    
+    // Validate input
+    const validation = registerSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'กรุณากรอกอีเมลและรหัสผ่าน' },
+        { error: validation.error.issues[0].message },
         { status: 400 }
       );
     }
+    
+    const { name, email, password } = validation.data;
 
     // Check if user exists
     const [existingUser] = await db
