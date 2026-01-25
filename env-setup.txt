@@ -1,0 +1,18 @@
+# คัดลอกข้อมูลนี้ไปสร้างไฟล์ .env.local ในโปรเจค
+
+# New database (Railway/Local MySQL)
+DATABASE_URL="mysql://root:@localhost:3306/course_platform"
+
+# WordPress database (สำหรับ migration)
+WP_DB_HOST="localhost"
+WP_DB_USER="root"
+WP_DB_PASSWORD=""
+WP_DB_NAME="milerdev_db"
+
+# NextAuth
+AUTH_SECRET="your-secret-key-here"
+
+# หมายเหตุ:
+# 1. ถ้าใช้ Railway: เปลี่ยน DATABASE_URL เป็น connection string จาก Railway
+# 2. ถ้าใช้ local: สร้าง database ชื่อ course_platform ก่อน
+# 3. เปลี่ยน WP_DB_NAME เป็นชื่อ database ที่ import เข้าไป

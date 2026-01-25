@@ -4,8 +4,8 @@ import { auth } from '@/lib/auth';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
-import { enrollments, courses, lessons } from '@/lib/db/schema';
-import { eq, desc, count } from 'drizzle-orm';
+import { enrollments, courses, lessons, lessonProgress } from '@/lib/db/schema';
+import { eq, desc, count, and } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,25 +17,47 @@ async function getUserEnrollments(userId: string) {
     .where(eq(enrollments.userId, userId))
     .orderBy(desc(enrollments.enrolledAt));
 
-  // Get courses and lesson counts for each enrollment
+  // Get courses, lesson counts, and progress for each enrollment
   const result = [];
   for (const enrollment of userEnrollments) {
-    const course = await db.query.courses.findFirst({
-      where: eq(courses.id, enrollment.courseId),
-    });
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.id, enrollment.courseId))
+      .limit(1);
 
     if (course) {
+      // Get total lessons
       const [lessonCount] = await db
         .select({ count: count() })
         .from(lessons)
         .where(eq(lessons.courseId, enrollment.courseId));
 
+      // Get completed lessons (lessonProgress with completed = true)
+      const [completedCount] = await db
+        .select({ count: count() })
+        .from(lessonProgress)
+        .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+        .where(
+          and(
+            eq(lessonProgress.userId, userId),
+            eq(lessons.courseId, enrollment.courseId),
+            eq(lessonProgress.completed, true)
+          )
+        );
+
+      const totalLessons = lessonCount?.count || 0;
+      const completedLessons = completedCount?.count || 0;
+      const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
       result.push({
         ...enrollment,
         course: {
           ...course,
-          lessonCount: lessonCount?.count || 0,
+          lessonCount: totalLessons,
         },
+        completedLessons,
+        progressPercent,
       });
     }
   }
@@ -224,11 +246,39 @@ export default async function DashboardPage() {
                         fontSize: '1rem',
                         fontWeight: 600,
                         color: '#1e293b',
-                        marginBottom: '8px',
+                        marginBottom: '12px',
                         lineHeight: 1.4,
                       }}>
                         {enrollment.course.title}
                       </h3>
+
+                      {/* Progress Bar */}
+                      <div style={{ marginBottom: '12px' }}>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '0.75rem',
+                          color: '#64748b',
+                          marginBottom: '6px',
+                        }}>
+                          <span>{enrollment.completedLessons}/{enrollment.course.lessonCount} บท</span>
+                          <span>{enrollment.progressPercent}%</span>
+                        </div>
+                        <div style={{
+                          height: '6px',
+                          background: '#e2e8f0',
+                          borderRadius: '3px',
+                          overflow: 'hidden',
+                        }}>
+                          <div style={{
+                            height: '100%',
+                            width: `${enrollment.progressPercent}%`,
+                            background: enrollment.progressPercent === 100 ? '#16a34a' : '#2563eb',
+                            borderRadius: '3px',
+                            transition: 'width 0.3s ease',
+                          }} />
+                        </div>
+                      </div>
 
                       <div style={{
                         display: 'flex',
@@ -237,16 +287,18 @@ export default async function DashboardPage() {
                         fontSize: '0.875rem',
                         color: '#64748b',
                       }}>
-                        <span>{enrollment.course.lessonCount} บทเรียน</span>
+                        <span style={{ color: '#2563eb', fontWeight: 500 }}>
+                          เรียนต่อ →
+                        </span>
                         <span style={{
-                          background: enrollment.completedAt ? '#dcfce7' : '#fef3c7',
-                          color: enrollment.completedAt ? '#16a34a' : '#d97706',
+                          background: enrollment.progressPercent === 100 ? '#dcfce7' : '#eff6ff',
+                          color: enrollment.progressPercent === 100 ? '#16a34a' : '#2563eb',
                           padding: '4px 10px',
                           borderRadius: '50px',
                           fontSize: '0.75rem',
                           fontWeight: 500,
                         }}>
-                          {enrollment.completedAt ? 'เรียนจบแล้ว' : 'กำลังเรียน'}
+                          {enrollment.progressPercent === 100 ? '✓ เรียนจบแล้ว' : 'กำลังเรียน'}
                         </span>
                       </div>
                     </div>

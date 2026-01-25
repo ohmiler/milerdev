@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Modal from '@/components/ui/Modal';
 
 interface EnrollButtonProps {
   courseId: string;
@@ -16,6 +17,12 @@ export default function EnrollButton({ courseId, courseSlug, price }: EnrollButt
   const [loading, setLoading] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: '',
+  });
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -54,21 +61,42 @@ export default function EnrollButton({ courseId, courseSlug, price }: EnrollButt
 
       if (res.ok) {
         setEnrolled(true);
-        // Show success and redirect
-        alert('ลงทะเบียนสำเร็จ! กำลังพาไปหน้าเรียน...');
-        router.push(`/courses/${courseSlug}/learn`);
+        // Show success modal
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'ลงทะเบียนสำเร็จ!',
+          message: 'ยินดีด้วย! คุณลงทะเบียนคอร์สนี้เรียบร้อยแล้ว กดปุ่มด้านล่างเพื่อเริ่มเรียน',
+        });
       } else {
         if (data.error === 'คุณลงทะเบียนคอร์สนี้แล้ว') {
           setEnrolled(true);
         } else {
-          alert(data.error || 'เกิดข้อผิดพลาด');
+          setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            message: data.error || 'ไม่สามารถลงทะเบียนได้ กรุณาลองใหม่',
+          });
         }
       }
     } catch (error) {
       console.error('Enrollment error:', error);
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        message: 'ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่อีกครั้ง',
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    setModal({ ...modal, isOpen: false });
+    if (modal.type === 'success') {
+      router.push(`/courses/${courseSlug}/learn`);
     }
   };
 
@@ -98,49 +126,58 @@ export default function EnrollButton({ courseId, courseSlug, price }: EnrollButt
     );
   }
 
-  if (enrolled) {
-    return (
-      <button
-        onClick={handleGoToLearn}
-        style={{
-          display: 'block',
-          width: '100%',
-          textAlign: 'center',
-          padding: '16px',
-          fontSize: '1.125rem',
-          background: '#16a34a',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontWeight: 600,
-        }}
-      >
-        ✓ เข้าเรียน
-      </button>
-    );
-  }
-
   return (
-    <button
-      onClick={handleEnroll}
-      disabled={loading}
-      className="btn btn-primary"
-      style={{
-        display: 'block',
-        width: '100%',
-        textAlign: 'center',
-        padding: '16px',
-        fontSize: '1.125rem',
-        opacity: loading ? 0.7 : 1,
-        cursor: loading ? 'not-allowed' : 'pointer',
-      }}
-    >
-      {loading
-        ? 'กำลังดำเนินการ...'
-        : price === 0
-        ? 'ลงทะเบียนเรียนฟรี'
-        : `ซื้อคอร์สนี้ ฿${price.toLocaleString()}`}
-    </button>
+    <>
+      {enrolled ? (
+        <button
+          onClick={handleGoToLearn}
+          style={{
+            display: 'block',
+            width: '100%',
+            textAlign: 'center',
+            padding: '16px',
+            fontSize: '1.125rem',
+            background: '#16a34a',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 600,
+          }}
+        >
+          ✓ เข้าเรียน
+        </button>
+      ) : (
+        <button
+          onClick={handleEnroll}
+          disabled={loading}
+          className="btn btn-primary"
+          style={{
+            display: 'block',
+            width: '100%',
+            textAlign: 'center',
+            padding: '16px',
+            fontSize: '1.125rem',
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {loading
+            ? 'กำลังดำเนินการ...'
+            : price === 0
+            ? 'ลงทะเบียนเรียนฟรี'
+            : `ซื้อคอร์สนี้ ฿${price.toLocaleString()}`}
+        </button>
+      )}
+
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={handleModalClose}
+        type={modal.type}
+        title={modal.title}
+      >
+        {modal.message}
+      </Modal>
+    </>
   );
 }

@@ -16,9 +16,11 @@ export async function POST(request: Request) {
     }
 
     // Check if user exists
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
     if (existingUser) {
       return NextResponse.json(

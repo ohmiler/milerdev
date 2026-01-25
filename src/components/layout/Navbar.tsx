@@ -38,17 +38,31 @@ export default function Navbar() {
                         {status === 'loading' ? (
                             <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
                         ) : session ? (
-                            <>
-                                <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-                                    แดชบอร์ด
+                            <div className="flex items-center gap-4">
+                                <Link href="/dashboard" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors">
+                                    {/* Avatar */}
+                                    {session.user?.image ? (
+                                        <img 
+                                            src={session.user.image} 
+                                            alt={session.user.name || 'Avatar'} 
+                                            className="w-8 h-8 rounded-full object-cover border-2 border-blue-100"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                                            {session.user?.name?.charAt(0).toUpperCase() || 'U'}
+                                        </div>
+                                    )}
+                                    <span className="font-medium max-w-[120px] truncate">
+                                        {session.user?.name || 'ผู้ใช้'}
+                                    </span>
                                 </Link>
                                 <button
                                     onClick={() => signOut({ callbackUrl: '/' })}
-                                    className="text-gray-600 hover:text-red-600 transition-colors font-medium"
+                                    className="text-gray-500 hover:text-red-600 transition-colors text-sm"
                                 >
-                                    ออกจากระบบ
+                                    ออก
                                 </button>
-                            </>
+                            </div>
                         ) : (
                             <>
                                 <Link href="/login" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
@@ -93,8 +107,19 @@ export default function Navbar() {
                             <hr className="border-gray-100" />
                             {session ? (
                                 <>
-                                    <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-                                        แดชบอร์ด
+                                    <Link href="/dashboard" className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                                        {session.user?.image ? (
+                                            <img 
+                                                src={session.user.image} 
+                                                alt={session.user.name || 'Avatar'} 
+                                                className="w-6 h-6 rounded-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                                                {session.user?.name?.charAt(0).toUpperCase() || 'U'}
+                                            </div>
+                                        )}
+                                        {session.user?.name || 'แดชบอร์ด'}
                                     </Link>
                                     <button
                                         onClick={() => signOut({ callbackUrl: '/' })}

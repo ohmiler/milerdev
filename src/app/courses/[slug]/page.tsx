@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import EnrollButton from '@/components/course/EnrollButton';
+import CourseLessonList from '@/components/course/CourseLessonList';
 import { db } from '@/lib/db';
 import { courses, lessons, users } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -151,71 +152,11 @@ export default async function CourseDetailPage({ params }: Props) {
                   เนื้อหาคอร์ส
                 </h2>
 
-                {course.lessons.length === 0 ? (
-                  <div style={{
-                    padding: '40px',
-                    textAlign: 'center',
-                    background: '#f8fafc',
-                    borderRadius: '12px',
-                    color: '#64748b',
-                  }}>
-                    <p>กำลังเตรียมเนื้อหา...</p>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {course.lessons.map((lesson, index) => (
-                      <div
-                        key={lesson.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '16px',
-                          padding: '16px 20px',
-                          background: 'white',
-                          borderRadius: '12px',
-                          border: '1px solid #e2e8f0',
-                        }}
-                      >
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: '#eff6ff',
-                          color: '#2563eb',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 600,
-                          fontSize: '0.875rem',
-                        }}>
-                          {index + 1}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <h4 style={{ fontWeight: 500, color: '#1e293b' }}>
-                            {lesson.title}
-                          </h4>
-                          {lesson.videoDuration && lesson.videoDuration > 0 && (
-                            <span style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
-                              {Math.floor(lesson.videoDuration / 60)} นาที
-                            </span>
-                          )}
-                        </div>
-                        {lesson.isFreePreview && (
-                          <span style={{
-                            fontSize: '0.75rem',
-                            background: '#dcfce7',
-                            color: '#16a34a',
-                            padding: '4px 12px',
-                            borderRadius: '50px',
-                            fontWeight: 500,
-                          }}>
-                            ดูฟรี
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <CourseLessonList 
+                  lessons={course.lessons}
+                  courseSlug={course.slug}
+                  courseId={course.id}
+                />
               </div>
 
               {/* Right - Enrollment Card */}
