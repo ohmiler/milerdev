@@ -5,64 +5,74 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { enrollments, courses, lessons, lessonProgress } from '@/lib/db/schema';
-import { eq, desc, count, and } from 'drizzle-orm';
+import { eq, desc, count, and, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 async function getUserEnrollments(userId: string) {
-  // Get enrollments
+  // Optimized query: Get enrollments with courses in a single query
   const userEnrollments = await db
-    .select()
+    .select({
+      enrollment: enrollments,
+      course: courses,
+    })
     .from(enrollments)
+    .innerJoin(courses, eq(enrollments.courseId, courses.id))
     .where(eq(enrollments.userId, userId))
     .orderBy(desc(enrollments.enrolledAt));
 
-  // Get courses, lesson counts, and progress for each enrollment
-  const result = [];
-  for (const enrollment of userEnrollments) {
-    const [course] = await db
-      .select()
-      .from(courses)
-      .where(eq(courses.id, enrollment.courseId))
-      .limit(1);
+  if (userEnrollments.length === 0) return [];
 
-    if (course) {
-      // Get total lessons
-      const [lessonCount] = await db
-        .select({ count: count() })
-        .from(lessons)
-        .where(eq(lessons.courseId, enrollment.courseId));
+  // Get all course IDs
+  const courseIds = userEnrollments.map(e => e.course.id);
 
-      // Get completed lessons (lessonProgress with completed = true)
-      const [completedCount] = await db
-        .select({ count: count() })
-        .from(lessonProgress)
-        .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
-        .where(
-          and(
-            eq(lessonProgress.userId, userId),
-            eq(lessons.courseId, enrollment.courseId),
-            eq(lessonProgress.completed, true)
-          )
-        );
+  // Get lesson counts for all courses in one query
+  const lessonCounts = await db
+    .select({
+      courseId: lessons.courseId,
+      count: count(),
+    })
+    .from(lessons)
+    .where(sql`${lessons.courseId} IN ${courseIds}`)
+    .groupBy(lessons.courseId);
 
-      const totalLessons = lessonCount?.count || 0;
-      const completedLessons = completedCount?.count || 0;
-      const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  // Get completed lessons for all courses in one query
+  const completedCounts = await db
+    .select({
+      courseId: lessons.courseId,
+      count: count(),
+    })
+    .from(lessonProgress)
+    .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        sql`${lessons.courseId} IN ${courseIds}`,
+        eq(lessonProgress.completed, true)
+      )
+    )
+    .groupBy(lessons.courseId);
 
-      result.push({
-        ...enrollment,
-        course: {
-          ...course,
-          lessonCount: totalLessons,
-        },
-        completedLessons,
-        progressPercent,
-      });
-    }
-  }
+  // Create lookup maps for O(1) access
+  const lessonCountMap = new Map(lessonCounts.map(l => [l.courseId, l.count]));
+  const completedCountMap = new Map(completedCounts.map(c => [c.courseId, c.count]));
 
-  return result;
+  // Build result with all data
+  return userEnrollments.map(({ enrollment, course }) => {
+    const totalLessons = lessonCountMap.get(course.id) || 0;
+    const completedLessons = completedCountMap.get(course.id) || 0;
+    const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+
+    return {
+      ...enrollment,
+      course: {
+        ...course,
+        lessonCount: totalLessons,
+      },
+      completedLessons,
+      progressPercent,
+    };
+  });
 }
 
 export default async function DashboardPage() {

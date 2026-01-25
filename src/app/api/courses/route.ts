@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { courses, enrollments } from "@/lib/db/schema";
 import { eq, desc, and, count } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
 
 // GET /api/courses - Get all published courses
 export async function GET(request: Request) {
@@ -85,18 +86,28 @@ export async function POST(request: Request) {
             .replace(/[^a-z0-9ก-๙]+/g, "-")
             .replace(/^-|-$/g, "");
 
-        const [newCourse] = await db
+        // Generate ID manually (MySQL doesn't support .returning())
+        const courseId = createId();
+        
+        await db
             .insert(courses)
             .values({
+                id: courseId,
                 title,
                 slug,
                 description,
-                price: parseFloat(price) || 0,
+                price: String(parseFloat(price) || 0),
                 thumbnailUrl,
                 instructorId: session.user.id,
                 status: "draft",
-            })
-            .returning();
+            });
+
+        // Fetch the created course
+        const [newCourse] = await db
+            .select()
+            .from(courses)
+            .where(eq(courses.id, courseId))
+            .limit(1);
 
         return NextResponse.json(newCourse, { status: 201 });
     } catch (error) {

@@ -5,6 +5,7 @@ import { payments, enrollments, courses } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import { createId } from "@paralleldrive/cuid2";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/slip/verify - Verify slip payment (PromptPay)
 export async function POST(request: Request) {
@@ -12,6 +13,12 @@ export async function POST(request: Request) {
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // Rate limiting - 10 requests per minute per user
+        const rateLimit = checkRateLimit(`slip:${session.user.id}`, rateLimits.sensitive);
+        if (!rateLimit.success) {
+            return rateLimitResponse(rateLimit.resetTime);
         }
 
         const formData = await request.formData();

@@ -4,6 +4,7 @@ import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 // Validation schema
 const registerSchema = z.object({
@@ -19,6 +20,14 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting - 5 requests per minute per IP
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(`register:${clientIP}`, rateLimits.auth);
+    
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const body = await request.json();
     
     // Validate input
