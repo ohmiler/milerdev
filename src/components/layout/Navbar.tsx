@@ -97,39 +97,31 @@ function UserDropdown({
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-gray-200 shadow-xl py-2 z-[100]">
-                    {/* User Info */}
-                    <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-800 truncate">
-                            {session.user?.name || 'ผู้ใช้'}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate mt-0.5">
-                            {session.user?.email || ''}
-                        </p>
-                    </div>
-
+                <div className="absolute right-0 top-full mt-3 w-64 bg-white rounded-2xl border border-gray-200 shadow-2xl py-3 z-[100]">
                     {/* Menu Links */}
-                    <div className="py-2">
+                    <div style={{ padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
                             <Link
                                 key={href}
                                 href={href}
-                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 16px', fontSize: '16px', color: '#374151', borderRadius: '12px' }}
+                                className="hover:bg-gray-50 transition-colors"
                                 onClick={onToggle}
                             >
-                                <Icon className="w-4 h-4" />
+                                <Icon className="w-5 h-5 text-gray-500" />
                                 {label}
                             </Link>
                         ))}
                     </div>
 
                     {/* Logout */}
-                    <div className="border-t border-gray-100 pt-2">
+                    <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginTop: '8px', padding: '16px 12px' }}>
                         <button
                             onClick={onLogout}
-                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '14px 16px', fontSize: '16px', color: '#dc2626', borderRadius: '12px' }}
+                            className="hover:bg-red-50 transition-colors cursor-pointer"
                         >
-                            <LogoutIcon className="w-4 h-4" />
+                            <LogoutIcon className="w-5 h-5" />
                             ออกจากระบบ
                         </button>
                     </div>
@@ -139,7 +131,7 @@ function UserDropdown({
     );
 }
 
-// Mobile Menu
+// Mobile Menu (Dropdown style)
 function MobileMenu({
     isOpen,
     session,
@@ -155,79 +147,74 @@ function MobileMenu({
         <>
             {/* Backdrop */}
             <div
-                className={`fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 ${
+                className={`fixed inset-0 bg-black/30 z-40 md:hidden transition-opacity duration-200 ${
                     isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
                 onClick={onClose}
             />
 
-            {/* Menu Panel */}
+            {/* Dropdown Menu Panel */}
             <div
-                className={`md:hidden fixed top-16 left-0 right-0 bottom-0 bg-white z-50 transition-transform duration-300 ease-out overflow-y-auto ${
-                    isOpen ? 'translate-x-0' : '-translate-x-full'
+                className={`md:hidden fixed top-16 left-0 right-0 bg-white z-50 border-b border-gray-200 shadow-xl transition-all duration-200 ease-out overflow-hidden ${
+                    isOpen 
+                        ? 'max-h-[calc(100vh-4rem)] opacity-100' 
+                        : 'max-h-0 opacity-0'
                 }`}
             >
-                <div className="py-4 flex flex-col">
-                    {/* User Info */}
-                    {session && (
-                        <div className="flex items-center gap-3 px-4 py-3 mb-2 mx-4 bg-gray-50 rounded-xl">
-                            <Avatar image={session.user?.image} name={session.user?.name} size="lg" />
-                            <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-gray-800 truncate text-sm">
-                                    {session.user?.name || 'ผู้ใช้'}
-                                </p>
-                                <p className="text-xs text-blue-500 truncate">
-                                    {session.user?.email || ''}
-                                </p>
-                            </div>
-                        </div>
-                    )}
+                <div className="py-6 px-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
 
                     {/* Navigation Links */}
-                    {NAV_LINKS.map(({ href, label, icon: Icon }) => (
-                        <Link
-                            key={href}
-                            href={href}
-                            className="flex items-center gap-3 px-6 py-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-                            onClick={onClose}
-                        >
-                            <Icon className="w-5 h-5" />
-                            {label}
-                        </Link>
-                    ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                        {NAV_LINKS.map(({ href, label, icon: Icon }) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 16px', fontSize: '16px', color: '#374151', borderRadius: '12px', fontWeight: 500 }}
+                                className="hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                onClick={onClose}
+                            >
+                                <Icon className="w-5 h-5" />
+                                {label}
+                            </Link>
+                        ))}
+                    </div>
 
-                    <hr className="border-gray-100 my-2 mx-4" />
+                    <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '24px 0' }} />
 
                     {session ? (
                         <>
                             {/* User Menu Links */}
-                            {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
-                                <Link
-                                    key={href}
-                                    href={href}
-                                    className="flex items-center gap-3 px-6 py-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors"
-                                    onClick={onClose}
-                                >
-                                    <Icon className="w-5 h-5" />
-                                    {label}
-                                </Link>
-                            ))}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                                {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
+                                    <Link
+                                        key={href}
+                                        href={href}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 16px', fontSize: '16px', color: '#374151', borderRadius: '12px', fontWeight: 500 }}
+                                        className="hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                        onClick={onClose}
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                        {label}
+                                    </Link>
+                                ))}
+                            </div>
 
-                            <hr className="border-gray-100 my-2 mx-4" />
+                            <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '24px 0' }} />
 
                             <button
                                 onClick={onLogout}
-                                className="flex items-center gap-3 w-full px-6 py-3 text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '14px 16px', fontSize: '16px', color: '#dc2626', borderRadius: '12px', fontWeight: 500 }}
+                                className="hover:bg-red-50 transition-colors cursor-pointer"
                             >
                                 <LogoutIcon className="w-5 h-5" />
                                 ออกจากระบบ
                             </button>
                         </>
                     ) : (
-                        <div className="flex flex-col gap-3 px-4 pt-2">
+                        <div className="flex flex-col gap-4 pt-2">
                             <Link
                                 href="/login"
-                                className="flex items-center justify-center gap-3 py-3 text-gray-600 hover:text-blue-600 border border-gray-200 rounded-xl transition-colors font-medium"
+                                className="flex items-center justify-center gap-3 py-4 text-gray-700 hover:text-blue-600 border-2 border-gray-200 hover:border-blue-200 rounded-xl transition-colors font-semibold text-base"
                                 onClick={onClose}
                             >
                                 <LoginIcon className="w-5 h-5" />
@@ -235,7 +222,7 @@ function MobileMenu({
                             </Link>
                             <Link
                                 href="/register"
-                                className="flex items-center justify-center gap-3 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors font-medium"
+                                className="flex items-center justify-center gap-3 py-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors font-semibold text-base"
                                 onClick={onClose}
                             >
                                 <RegisterIcon className="w-5 h-5" />
@@ -287,11 +274,8 @@ export default function Navbar() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Prevent body scroll when mobile menu is open
-    useEffect(() => {
-        document.body.style.overflow = isMenuOpen ? 'hidden' : '';
-        return () => { document.body.style.overflow = ''; };
-    }, [isMenuOpen]);
+    // Prevent body scroll when mobile menu is open (only for full-screen menus)
+    // Removed since we're using dropdown style now
 
     // Close dropdown when clicking outside
     useEffect(() => {
