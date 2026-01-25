@@ -69,6 +69,12 @@ export default async function LearnPage({ params, searchParams }: Props) {
 
   const { course, lessons: courseLessons } = data;
 
+  // ถ้ามีบทเรียน ให้ redirect ไปบทเรียนแรกโดยอัตโนมัติ
+  if (courseLessons.length > 0) {
+    const firstLesson = courseLessons[0];
+    redirect(`/courses/${slug}/learn/${firstLesson.id}`);
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a' }}>
       {/* Payment Success Banner */}

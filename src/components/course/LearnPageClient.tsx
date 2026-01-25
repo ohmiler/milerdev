@@ -89,11 +89,11 @@ export default function LearnPageClient({
         </div>
       </header>
 
-      <div style={{ display: 'flex', height: 'calc(100vh - 57px)' }}>
+      <div style={{ display: 'flex', minHeight: 'calc(100vh - 57px)' }}>
         {/* Video Area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Video Player or Locked Message */}
-          <div style={{ aspectRatio: '16/9', background: '#000', position: 'relative' }}>
+          <div style={{ width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative', flexShrink: 0 }}>
             {lockedMessage ? (
               <div style={{
                 position: 'absolute',
@@ -174,7 +174,7 @@ export default function LearnPageClient({
           </div>
 
           {/* Lesson Info */}
-          <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+          <div style={{ padding: '24px', flex: 1, overflowY: 'auto', background: '#0f172a' }}>
             <h1 style={{
               fontSize: '1.5rem',
               fontWeight: 600,
@@ -207,6 +207,7 @@ export default function LearnPageClient({
             {/* Navigation */}
             <div style={{
               display: 'flex',
+              justifyContent: 'space-between',
               gap: '12px',
               paddingTop: '16px',
               borderTop: '1px solid #334155',
@@ -215,8 +216,7 @@ export default function LearnPageClient({
                 <Link
                   href={`/courses/${course.slug}/learn/${prevLesson.id}`}
                   style={{
-                    flex: 1,
-                    padding: '12px 16px',
+                    padding: '12px 24px',
                     background: '#334155',
                     color: 'white',
                     textDecoration: 'none',
@@ -224,34 +224,36 @@ export default function LearnPageClient({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
                   }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                   </svg>
                   บทก่อนหน้า
                 </Link>
               ) : (
-                <div style={{ flex: 1 }} />
+                <div />
               )}
               {nextLesson && (isEnrolled || nextLesson.isFreePreview) ? (
                 <Link
                   href={`/courses/${course.slug}/learn/${nextLesson.id}`}
                   style={{
-                    flex: 1,
-                    padding: '12px 16px',
+                    padding: '12px 24px',
                     background: '#2563eb',
                     color: 'white',
                     textDecoration: 'none',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
                     gap: '8px',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
                   }}
                 >
                   บทถัดไป
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </Link>
@@ -259,17 +261,17 @@ export default function LearnPageClient({
                 <button
                   onClick={() => handleLockedClick(nextLesson.id)}
                   style={{
-                    flex: 1,
-                    padding: '12px 16px',
+                    padding: '12px 24px',
                     background: '#475569',
                     color: '#94a3b8',
                     border: 'none',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
                     gap: '8px',
                     cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
                   }}
                 >
                   🔒 บทถัดไป
@@ -282,9 +284,11 @@ export default function LearnPageClient({
         {/* Sidebar */}
         <aside style={{
           width: '320px',
+          minWidth: '320px',
           background: '#1e293b',
           borderLeft: '1px solid #334155',
           overflowY: 'auto',
+          flexShrink: 0,
         }}>
           <div style={{
             padding: '16px',
