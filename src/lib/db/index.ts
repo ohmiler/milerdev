@@ -1,10 +1,7 @@
-import { createClient } from '@libsql/client';
-import { drizzle } from 'drizzle-orm/libsql';
+import { drizzle } from 'drizzle-orm/mysql2';
+import mysql from 'mysql2/promise';
 import * as schema from './schema';
 
-const client = createClient({
-    url: process.env.TURSO_DATABASE_URL!,
-    authToken: process.env.TURSO_AUTH_TOKEN,
-});
+const connection = await mysql.createConnection(process.env.DATABASE_URL!);
 
-export const db = drizzle(client, { schema });
+export const db = drizzle(connection, { schema, mode: 'default' });

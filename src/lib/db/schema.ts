@@ -1,20 +1,20 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { mysqlTable, varchar, text, int, decimal, datetime, boolean } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // =====================
 // USERS TABLE
 // =====================
-export const users = sqliteTable('users', {
-    id: text('id').primaryKey().$defaultFn(() => createId()),
-    email: text('email').notNull().unique(),
-    passwordHash: text('password_hash'),
-    name: text('name'),
+export const users = mysqlTable('users', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    passwordHash: varchar('password_hash', { length: 255 }),
+    name: varchar('name', { length: 255 }),
     avatarUrl: text('avatar_url'),
-    role: text('role', { enum: ['student', 'instructor', 'admin'] }).default('student').notNull(),
-    emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp' }),
-    createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+    role: varchar('role', { length: 20, enum: ['student', 'instructor', 'admin'] }).default('student').notNull(),
+    emailVerifiedAt: datetime('email_verified_at'),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -26,17 +26,17 @@ export const usersRelations = relations(users, ({ many }) => ({
 // =====================
 // COURSES TABLE
 // =====================
-export const courses = sqliteTable('courses', {
-    id: text('id').primaryKey().$defaultFn(() => createId()),
-    title: text('title').notNull(),
-    slug: text('slug').notNull().unique(),
+export const courses = mysqlTable('courses', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    title: varchar('title', { length: 255 }).notNull(),
+    slug: varchar('slug', { length: 255 }).notNull().unique(),
     description: text('description'),
     thumbnailUrl: text('thumbnail_url'),
-    price: real('price').notNull().default(0),
-    status: text('status', { enum: ['draft', 'published', 'archived'] }).default('draft').notNull(),
-    instructorId: text('instructor_id').references(() => users.id),
-    createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+    price: decimal('price', { precision: 10, scale: 2 }).notNull().default('0'),
+    status: varchar('status', { length: 20, enum: ['draft', 'published', 'archived'] }).default('draft').notNull(),
+    instructorId: varchar('instructor_id', { length: 36 }).references(() => users.id),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
 });
 
 export const coursesRelations = relations(courses, ({ one, many }) => ({
@@ -51,16 +51,16 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
 // =====================
 // LESSONS TABLE
 // =====================
-export const lessons = sqliteTable('lessons', {
-    id: text('id').primaryKey().$defaultFn(() => createId()),
-    courseId: text('course_id').references(() => courses.id, { onDelete: 'cascade' }).notNull(),
-    title: text('title').notNull(),
+export const lessons = mysqlTable('lessons', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
     content: text('content'),
     videoUrl: text('video_url'),
-    videoDuration: integer('video_duration').default(0),
-    orderIndex: integer('order_index').notNull(),
-    isFreePreview: integer('is_free_preview', { mode: 'boolean' }).default(false),
-    createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+    videoDuration: int('video_duration').default(0),
+    orderIndex: int('order_index').notNull(),
+    isFreePreview: boolean('is_free_preview').default(false),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
 });
 
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
@@ -74,13 +74,13 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
 // =====================
 // ENROLLMENTS TABLE
 // =====================
-export const enrollments = sqliteTable('enrollments', {
-    id: text('id').primaryKey().$defaultFn(() => createId()),
-    userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-    courseId: text('course_id').references(() => courses.id, { onDelete: 'cascade' }).notNull(),
-    enrolledAt: integer('enrolled_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
-    progressPercent: integer('progress_percent').default(0),
-    completedAt: integer('completed_at', { mode: 'timestamp' }),
+export const enrollments = mysqlTable('enrollments', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    enrolledAt: datetime('enrolled_at').$defaultFn(() => new Date()),
+    progressPercent: int('progress_percent').default(0),
+    completedAt: datetime('completed_at'),
 });
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
@@ -97,13 +97,13 @@ export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
 // =====================
 // LESSON PROGRESS TABLE
 // =====================
-export const lessonProgress = sqliteTable('lesson_progress', {
-    id: text('id').primaryKey().$defaultFn(() => createId()),
-    userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-    lessonId: text('lesson_id').references(() => lessons.id, { onDelete: 'cascade' }).notNull(),
-    completed: integer('completed', { mode: 'boolean' }).default(false),
-    watchTimeSeconds: integer('watch_time_seconds').default(0),
-    lastWatchedAt: integer('last_watched_at', { mode: 'timestamp' }),
+export const lessonProgress = mysqlTable('lesson_progress', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    lessonId: varchar('lesson_id', { length: 36 }).references(() => lessons.id, { onDelete: 'cascade' }).notNull(),
+    completed: boolean('completed').default(false),
+    watchTimeSeconds: int('watch_time_seconds').default(0),
+    lastWatchedAt: datetime('last_watched_at'),
 });
 
 export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
@@ -120,17 +120,17 @@ export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
 // =====================
 // PAYMENTS TABLE
 // =====================
-export const payments = sqliteTable('payments', {
-    id: text('id').primaryKey().$defaultFn(() => createId()),
-    userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
-    courseId: text('course_id').references(() => courses.id, { onDelete: 'set null' }),
-    amount: real('amount').notNull(),
-    currency: text('currency').default('THB').notNull(),
-    method: text('method', { enum: ['stripe', 'promptpay', 'bank_transfer'] }).notNull(),
-    stripePaymentId: text('stripe_payment_id'),
+export const payments = mysqlTable('payments', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
+    amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 10 }).default('THB').notNull(),
+    method: varchar('method', { length: 20, enum: ['stripe', 'promptpay', 'bank_transfer'] }).notNull(),
+    stripePaymentId: varchar('stripe_payment_id', { length: 255 }),
     slipUrl: text('slip_url'),
-    status: text('status', { enum: ['pending', 'completed', 'failed', 'refunded'] }).default('pending').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+    status: varchar('status', { length: 20, enum: ['pending', 'completed', 'failed', 'refunded'] }).default('pending').notNull(),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
 });
 
 export const paymentsRelations = relations(payments, ({ one }) => ({
