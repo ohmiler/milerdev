@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import EnrollButton from '@/components/course/EnrollButton';
 import { db } from '@/lib/db';
 import { courses, lessons, users } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -271,19 +272,11 @@ export default async function CourseDetailPage({ params }: Props) {
                   </div>
 
                   {/* CTA Button */}
-                  <Link
-                    href="/login"
-                    className="btn btn-primary"
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      textAlign: 'center',
-                      padding: '16px',
-                      fontSize: '1.125rem',
-                    }}
-                  >
-                    {price === 0 ? 'ลงทะเบียนเรียนฟรี' : 'ซื้อคอร์สนี้'}
-                  </Link>
+                  <EnrollButton
+                    courseId={course.id}
+                    courseSlug={course.slug}
+                    price={price}
+                  />
 
                   {/* Features */}
                   <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
