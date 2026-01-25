@@ -1,0 +1,321 @@
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import { db } from '@/lib/db';
+import { courses, lessons, users } from '@/lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
+
+export const dynamic = 'force-dynamic';
+
+interface Props {
+  params: Promise<{ slug: string }>;
+}
+
+async function getCourse(slug: string) {
+  // Get course
+  const [course] = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.slug, slug))
+    .limit(1);
+
+  if (!course) return null;
+
+  // Get instructor if exists
+  let instructor = null;
+  if (course.instructorId) {
+    const [instructorData] = await db
+      .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+      .from(users)
+      .where(eq(users.id, course.instructorId))
+      .limit(1);
+    instructor = instructorData || null;
+  }
+
+  // Get lessons
+  const courseLessons = await db
+    .select()
+    .from(lessons)
+    .where(eq(lessons.courseId, course.id))
+    .orderBy(asc(lessons.orderIndex));
+
+  return {
+    ...course,
+    instructor,
+    lessons: courseLessons,
+  };
+}
+
+export default async function CourseDetailPage({ params }: Props) {
+  const { slug } = await params;
+  const course = await getCourse(slug);
+
+  if (!course) {
+    notFound();
+  }
+
+  const price = parseFloat(course.price || '0');
+
+  return (
+    <>
+      <Navbar />
+
+      <main style={{ paddingTop: '64px' }}>
+        {/* Course Header */}
+        <section style={{
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
+          padding: '60px 0',
+          color: 'white',
+        }}>
+          <div className="container">
+            <div style={{ maxWidth: '800px' }}>
+              {/* Breadcrumb */}
+              <div style={{ marginBottom: '24px', fontSize: '0.875rem', opacity: 0.8 }}>
+                <Link href="/" style={{ color: 'white', textDecoration: 'none' }}>หน้าแรก</Link>
+                {' / '}
+                <Link href="/courses" style={{ color: 'white', textDecoration: 'none' }}>คอร์สทั้งหมด</Link>
+                {' / '}
+                <span>{course.title}</span>
+              </div>
+
+              <h1 style={{
+                fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+                fontWeight: 700,
+                marginBottom: '16px',
+                lineHeight: 1.3,
+              }}>
+                {course.title}
+              </h1>
+
+              {course.description && (
+                <p style={{
+                  fontSize: '1.125rem',
+                  opacity: 0.9,
+                  marginBottom: '24px',
+                  lineHeight: 1.7,
+                }}>
+                  {course.description.replace(/<[^>]*>/g, '').slice(0, 200)}...
+                </p>
+              )}
+
+              {/* Meta */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center' }}>
+                {course.instructor?.name && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <span style={{ fontWeight: 600 }}>{course.instructor.name.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>ผู้สอน</div>
+                      <div style={{ fontWeight: 500 }}>{course.instructor.name}</div>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>บทเรียน</div>
+                  <div style={{ fontWeight: 500 }}>{course.lessons.length} บท</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Course Content */}
+        <section className="section">
+          <div className="container">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 360px',
+              gap: '48px',
+              alignItems: 'start',
+            }}>
+              {/* Left - Lessons */}
+              <div>
+                <h2 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 600,
+                  marginBottom: '24px',
+                  color: '#1e293b',
+                }}>
+                  เนื้อหาคอร์ส
+                </h2>
+
+                {course.lessons.length === 0 ? (
+                  <div style={{
+                    padding: '40px',
+                    textAlign: 'center',
+                    background: '#f8fafc',
+                    borderRadius: '12px',
+                    color: '#64748b',
+                  }}>
+                    <p>กำลังเตรียมเนื้อหา...</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {course.lessons.map((lesson, index) => (
+                      <div
+                        key={lesson.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          padding: '16px 20px',
+                          background: 'white',
+                          borderRadius: '12px',
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: '#eff6ff',
+                          color: '#2563eb',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 600,
+                          fontSize: '0.875rem',
+                        }}>
+                          {index + 1}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ fontWeight: 500, color: '#1e293b' }}>
+                            {lesson.title}
+                          </h4>
+                          {lesson.videoDuration && lesson.videoDuration > 0 && (
+                            <span style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
+                              {Math.floor(lesson.videoDuration / 60)} นาที
+                            </span>
+                          )}
+                        </div>
+                        {lesson.isFreePreview && (
+                          <span style={{
+                            fontSize: '0.75rem',
+                            background: '#dcfce7',
+                            color: '#16a34a',
+                            padding: '4px 12px',
+                            borderRadius: '50px',
+                            fontWeight: 500,
+                          }}>
+                            ดูฟรี
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right - Enrollment Card */}
+              <div style={{
+                position: 'sticky',
+                top: '80px',
+                background: 'white',
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                overflow: 'hidden',
+              }}>
+                {/* Thumbnail */}
+                <div style={{
+                  aspectRatio: '16/9',
+                  background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {course.thumbnailUrl ? (
+                    <img
+                      src={course.thumbnailUrl}
+                      alt={course.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                </div>
+
+                <div style={{ padding: '24px' }}>
+                  {/* Price */}
+                  <div style={{ marginBottom: '24px' }}>
+                    {price === 0 ? (
+                      <div style={{
+                        fontSize: '2rem',
+                        fontWeight: 700,
+                        color: '#16a34a',
+                      }}>
+                        ฟรี
+                      </div>
+                    ) : (
+                      <div style={{
+                        fontSize: '2rem',
+                        fontWeight: 700,
+                        color: '#1e293b',
+                      }}>
+                        ฿{price.toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CTA Button */}
+                  <Link
+                    href="/login"
+                    className="btn btn-primary"
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      textAlign: 'center',
+                      padding: '16px',
+                      fontSize: '1.125rem',
+                    }}
+                  >
+                    {price === 0 ? 'ลงทะเบียนเรียนฟรี' : 'ซื้อคอร์สนี้'}
+                  </Link>
+
+                  {/* Features */}
+                  <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9375rem', color: '#64748b' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <svg style={{ width: '20px', height: '20px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        เข้าถึงได้ตลอดชีพ
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <svg style={{ width: '20px', height: '20px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        เรียนได้ทุกอุปกรณ์
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <svg style={{ width: '20px', height: '20px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Certificate เมื่อเรียนจบ
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </>
+  );
+}

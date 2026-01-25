@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { data: session, status } = useSession();
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -33,12 +35,30 @@ export default function Navbar() {
 
                     {/* Auth Buttons */}
                     <div className="hidden md:flex items-center gap-4">
-                        <Link href="/login" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-                            เข้าสู่ระบบ
-                        </Link>
-                        <Link href="/register" className="btn btn-primary">
-                            สมัครเรียน
-                        </Link>
+                        {status === 'loading' ? (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+                        ) : session ? (
+                            <>
+                                <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                                    แดชบอร์ด
+                                </Link>
+                                <button
+                                    onClick={() => signOut({ callbackUrl: '/' })}
+                                    className="text-gray-600 hover:text-red-600 transition-colors font-medium"
+                                >
+                                    ออกจากระบบ
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/login" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                                    เข้าสู่ระบบ
+                                </Link>
+                                <Link href="/register" className="btn btn-primary">
+                                    สมัครเรียน
+                                </Link>
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -71,12 +91,28 @@ export default function Navbar() {
                                 ติดต่อ
                             </Link>
                             <hr className="border-gray-100" />
-                            <Link href="/login" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-                                เข้าสู่ระบบ
-                            </Link>
-                            <Link href="/register" className="btn btn-primary text-center">
-                                สมัครเรียน
-                            </Link>
+                            {session ? (
+                                <>
+                                    <Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                                        แดชบอร์ด
+                                    </Link>
+                                    <button
+                                        onClick={() => signOut({ callbackUrl: '/' })}
+                                        className="text-left text-gray-600 hover:text-red-600 transition-colors font-medium"
+                                    >
+                                        ออกจากระบบ
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link href="/login" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
+                                        เข้าสู่ระบบ
+                                    </Link>
+                                    <Link href="/register" className="btn btn-primary text-center">
+                                        สมัครเรียน
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
