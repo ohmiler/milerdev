@@ -63,8 +63,8 @@ export default function HomePage() {
             borderRadius: '50%'
           }} />
 
-          <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ maxWidth: '720px' }}>
+          <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+            <div style={{ maxWidth: '720px', margin: '0 auto' }}>
               {/* Badge */}
               <div style={{
                 display: 'inline-flex',
@@ -102,14 +102,13 @@ export default function HomePage() {
                 color: '#64748b',
                 marginBottom: '32px',
                 lineHeight: 1.8,
-                maxWidth: '600px'
               }}>
                 พัฒนาทักษะการเขียนโปรแกรมของคุณด้วยคอร์สคุณภาพสูง
                 เรียนรู้จากโปรเจกต์จริง และก้าวสู่การเป็น Developer มืออาชีพ
               </p>
 
               {/* CTA Buttons */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '48px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '48px', justifyContent: 'center' }}>
                 <Link href="/courses" className="btn btn-primary" style={{ fontSize: '1.1rem', padding: '16px 32px' }}>
                   <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -128,7 +127,8 @@ export default function HomePage() {
                 flexWrap: 'wrap',
                 gap: '40px',
                 paddingTop: '32px',
-                borderTop: '1px solid #e2e8f0'
+                borderTop: '1px solid #e2e8f0',
+                justifyContent: 'center'
               }}>
                 <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
                   <div className="stat-value">1,000+</div>
