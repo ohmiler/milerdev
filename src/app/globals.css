@@ -297,6 +297,48 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
+
+/* Learn Page Grid - Desktop */
+@media (min-width: 1024px) {
+  .learn-page-grid {
+    grid-template-columns: 1fr 350px !important;
+  }
+}
+
+/* Learn Page Sidebar - Mobile */
+@media (max-width: 1023px) {
+  .learn-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    right: -100% !important;
+    width: 100% !important;
+    max-width: 350px !important;
+    height: 100vh !important;
+    z-index: 100 !important;
+    transition: right 0.3s ease !important;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  .learn-sidebar.open {
+    right: 0 !important;
+  }
+  
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .sidebar-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .section {

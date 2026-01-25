@@ -1,22 +1,32 @@
+import { Suspense } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
+import CourseFilters from '@/components/course/CourseFilters';
 import { db } from '@/lib/db';
 import { courses, lessons, users } from '@/lib/db/schema';
-import { eq, desc, count } from 'drizzle-orm';
+import { eq, desc, asc, count, like, and, gt, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
-async function getCourses() {
+interface SearchParams {
+  search?: string;
+  price?: string;
+  sort?: string;
+}
+
+async function getCourses(searchParams: SearchParams) {
+  const { search, price, sort } = searchParams;
+  
   // Get published courses
-  const allCourses = await db
+  let allCourses = await db
     .select()
     .from(courses)
     .where(eq(courses.status, 'published'))
     .orderBy(desc(courses.createdAt));
 
   // Get lesson counts and instructor for each course
-  const result = [];
+  let result = [];
   for (const course of allCourses) {
     const [lessonCount] = await db
       .select({ count: count() })
@@ -40,11 +50,42 @@ async function getCourses() {
     });
   }
 
+  // Apply search filter
+  if (search) {
+    const searchLower = search.toLowerCase();
+    result = result.filter(course => 
+      course.title.toLowerCase().includes(searchLower) ||
+      (course.description?.toLowerCase().includes(searchLower))
+    );
+  }
+
+  // Apply price filter
+  if (price === 'free') {
+    result = result.filter(course => parseFloat(course.price || '0') === 0);
+  } else if (price === 'paid') {
+    result = result.filter(course => parseFloat(course.price || '0') > 0);
+  }
+
+  // Apply sorting
+  if (sort === 'oldest') {
+    result.sort((a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime());
+  } else if (sort === 'price-low') {
+    result.sort((a, b) => parseFloat(a.price || '0') - parseFloat(b.price || '0'));
+  } else if (sort === 'price-high') {
+    result.sort((a, b) => parseFloat(b.price || '0') - parseFloat(a.price || '0'));
+  }
+  // Default is newest (already sorted by createdAt desc)
+
   return result;
 }
 
-export default async function CoursesPage() {
-  const allCourses = await getCourses();
+interface Props {
+  searchParams: Promise<SearchParams>;
+}
+
+export default async function CoursesPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const allCourses = await getCourses(params);
 
   return (
     <>
@@ -74,6 +115,11 @@ export default async function CoursesPage() {
         {/* Courses Grid */}
         <section className="section">
           <div className="container">
+            {/* Filters */}
+            <Suspense fallback={<div style={{ height: '100px' }} />}>
+              <CourseFilters totalCourses={allCourses.length} />
+            </Suspense>
+
             {allCourses.length === 0 ? (
               <div style={{
                 textAlign: 'center',

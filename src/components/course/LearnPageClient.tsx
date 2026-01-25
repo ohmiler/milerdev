@@ -47,6 +47,7 @@ export default function LearnPageClient({
   isEnrolled,
 }: LearnPageClientProps) {
   const [lockedMessage, setLockedMessage] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLockedClick = (lessonId: string) => {
     const lesson = allLessons.find(l => l.id === lessonId);
@@ -84,8 +85,32 @@ export default function LearnPageClient({
           <span style={{ color: '#475569' }}>|</span>
           <span style={{ color: 'white', fontWeight: 500 }}>{course.title}</span>
         </div>
-        <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-          บทที่ {currentIndex + 1} / {allLessons.length}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+            บทที่ {currentIndex + 1} / {allLessons.length}
+          </div>
+          {/* Mobile sidebar toggle */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 12px',
+              background: '#334155',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            เนื้อหา
+          </button>
         </div>
       </header>
 
@@ -281,19 +306,64 @@ export default function LearnPageClient({
           </div>
         </div>
 
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="sidebar-overlay open"
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 99,
+            }}
+          />
+        )}
+
         {/* Sidebar */}
-        <aside style={{
-          width: '320px',
-          minWidth: '320px',
-          background: '#1e293b',
-          borderLeft: '1px solid #334155',
-          overflowY: 'auto',
-          flexShrink: 0,
-        }}>
-          <div style={{
+        <aside 
+          className={`learn-sidebar ${sidebarOpen ? 'open' : ''}`}
+          style={{
+            width: '320px',
+            minWidth: '320px',
+            background: '#1e293b',
+            borderLeft: '1px solid #334155',
+            overflowY: 'auto',
+            flexShrink: 0,
+          }}
+        >
+          {/* Mobile Close Button */}
+          <div className="lg:hidden" style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             padding: '16px',
+            borderBottom: '1px solid #334155',
           }}>
-            <div style={{
+            <span style={{ color: 'white', fontWeight: 600 }}>เนื้อหาคอร์ส</span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#334155',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div style={{ padding: '16px' }}>
+            <div className="hidden lg:block" style={{
               fontSize: '0.875rem',
               fontWeight: 600,
               color: '#94a3b8',
@@ -307,7 +377,10 @@ export default function LearnPageClient({
               courseSlug={course.slug}
               currentLessonId={currentLesson.id}
               isEnrolled={isEnrolled}
-              onLockedClick={handleLockedClick}
+              onLockedClick={(id) => {
+                handleLockedClick(id);
+                setSidebarOpen(false);
+              }}
             />
           </div>
         </aside>

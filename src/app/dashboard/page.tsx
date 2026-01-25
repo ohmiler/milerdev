@@ -184,7 +184,7 @@ export default async function DashboardPage() {
                 {userEnrollments.map((enrollment) => (
                   <Link
                     key={enrollment.id}
-                    href={`/courses/${enrollment.course.slug}`}
+                    href={`/courses/${enrollment.course.slug}/learn`}
                     style={{
                       display: 'block',
                       background: 'white',

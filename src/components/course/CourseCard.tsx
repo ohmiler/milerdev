@@ -21,53 +21,74 @@ export default function CourseCard({
     lessonCount,
 }: CourseCardProps) {
     return (
-        <Link href={`/courses/${slug}`} className="card block overflow-hidden group">
+        <Link href={`/courses/${slug}`} className="card block group">
             {/* Thumbnail */}
-            <div className="aspect-video bg-gradient-to-br from-blue-100 to-blue-200 relative overflow-hidden">
-                {thumbnailUrl ? (
-                    <img
-                        src={thumbnailUrl}
-                        alt={title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <svg className="w-16 h-16 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="course-thumbnail">
+                <div style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative'
+                }}>
+                    {thumbnailUrl ? (
+                        <img
+                            src={thumbnailUrl}
+                            alt={title}
+                            className="group-hover:scale-105 transition-transform duration-300"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                        />
+                    ) : (
+                        <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                    </div>
-                )}
-
-                {/* Price Badge */}
-                <div className="absolute top-3 right-3">
-                    {price === 0 ? (
-                        <span className="bg-green-500 text-white text-sm font-medium px-3 py-1 rounded-full">
-                            ฟรี
-                        </span>
-                    ) : (
-                        <span className="bg-blue-600 text-white text-sm font-medium px-3 py-1 rounded-full">
-                            ฿{price.toLocaleString()}
-                        </span>
                     )}
                 </div>
+
+                {/* Price Badge */}
+                {price === 0 ? (
+                    <span className="price-badge free">ฟรี</span>
+                ) : (
+                    <span className="price-badge paid">฿{price.toLocaleString()}</span>
+                )}
             </div>
 
             {/* Content */}
-            <div className="p-5">
-                <h3 className="font-semibold text-lg text-gray-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+            <div style={{ padding: '24px' }}>
+                <h3 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    marginBottom: '8px',
+                    lineHeight: 1.5,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                }} className="group-hover:text-blue-600 transition-colors">
                     {title}
                 </h3>
 
                 {description && (
-                    <p className="text-gray-500 text-sm mb-4 line-clamp-2">
+                    <p style={{
+                        color: '#64748b',
+                        fontSize: '0.9375rem',
+                        marginBottom: '16px',
+                        lineHeight: 1.6,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                    }}>
                         {description}
                     </p>
                 )}
 
-                <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-gray-500">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8' }}>
+                        <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -75,7 +96,7 @@ export default function CourseCard({
                     </div>
 
                     {instructorName && (
-                        <span className="text-gray-400">โดย {instructorName}</span>
+                        <span style={{ color: '#94a3b8' }}>โดย {instructorName}</span>
                     )}
                 </div>
             </div>

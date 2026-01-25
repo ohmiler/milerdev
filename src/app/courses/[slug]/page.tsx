@@ -135,12 +135,56 @@ export default async function CourseDetailPage({ params }: Props) {
         {/* Course Content */}
         <section className="section">
           <div className="container">
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 360px',
-              gap: '48px',
-              alignItems: 'start',
-            }}>
+            <div className="grid gap-8 lg:gap-12 lg:grid-cols-[1fr_360px] items-start">
+              {/* Mobile - Enrollment Card First */}
+              <div className="card lg:hidden order-first">
+                {/* Thumbnail */}
+                <div className="course-thumbnail">
+                  <div style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative'
+                  }}>
+                    {course.thumbnailUrl ? (
+                      <img
+                        src={course.thumbnailUrl}
+                        alt={course.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                      />
+                    ) : (
+                      <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                  </div>
+                  
+                  {/* Price Badge */}
+                  {price === 0 ? (
+                    <span className="price-badge free">ฟรี</span>
+                  ) : (
+                    <span className="price-badge paid">฿{price.toLocaleString()}</span>
+                  )}
+                </div>
+
+                <div style={{ padding: '24px' }}>
+                  {/* Price */}
+                  <div style={{ marginBottom: '20px' }}>
+                    {price === 0 ? (
+                      <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a' }}>ฟรี</div>
+                    ) : (
+                      <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b' }}>฿{price.toLocaleString()}</div>
+                    )}
+                  </div>
+
+                  {/* CTA Button */}
+                  <EnrollButton courseId={course.id} courseSlug={course.slug} price={price} />
+                </div>
+              </div>
+
               {/* Left - Lessons */}
               <div>
                 <h2 style={{
@@ -159,54 +203,49 @@ export default async function CourseDetailPage({ params }: Props) {
                 />
               </div>
 
-              {/* Right - Enrollment Card */}
-              <div style={{
-                position: 'sticky',
-                top: '80px',
-                background: 'white',
-                borderRadius: '16px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                overflow: 'hidden',
-              }}>
+              {/* Right - Enrollment Card (Desktop only) */}
+              <div className="card hidden lg:block sticky top-20">
                 {/* Thumbnail */}
-                <div style={{
-                  aspectRatio: '16/9',
-                  background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {course.thumbnailUrl ? (
-                    <img
-                      src={course.thumbnailUrl}
-                      alt={course.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                <div className="course-thumbnail">
+                  <div style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative'
+                  }}>
+                    {course.thumbnailUrl ? (
+                      <img
+                        src={course.thumbnailUrl}
+                        alt={course.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                      />
+                    ) : (
+                      <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                  </div>
+                  
+                  {/* Price Badge */}
+                  {price === 0 ? (
+                    <span className="price-badge free">ฟรี</span>
                   ) : (
-                    <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <span className="price-badge paid">฿{price.toLocaleString()}</span>
                   )}
                 </div>
 
                 <div style={{ padding: '24px' }}>
-                  {/* Price */}
-                  <div style={{ marginBottom: '24px' }}>
+                  {/* Price Display */}
+                  <div style={{ marginBottom: '20px' }}>
                     {price === 0 ? (
-                      <div style={{
-                        fontSize: '2rem',
-                        fontWeight: 700,
-                        color: '#16a34a',
-                      }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a' }}>
                         ฟรี
                       </div>
                     ) : (
-                      <div style={{
-                        fontSize: '2rem',
-                        fontWeight: 700,
-                        color: '#1e293b',
-                      }}>
+                      <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b' }}>
                         ฿{price.toLocaleString()}
                       </div>
                     )}
