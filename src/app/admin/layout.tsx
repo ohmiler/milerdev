@@ -71,6 +71,20 @@ export default async function AdminLayout({
             }}>
               รายงาน
             </Link>
+            <Link href="/admin/media" style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+            }}>
+              ไฟล์สื่อ
+            </Link>
+            <Link href="/admin/tags" style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+            }}>
+              แท็ก
+            </Link>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

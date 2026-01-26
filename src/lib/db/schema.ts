@@ -145,6 +145,59 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 }));
 
 // =====================
+// MEDIA TABLE
+// =====================
+export const media = mysqlTable('media', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    filename: varchar('filename', { length: 255 }).notNull(),
+    originalName: varchar('original_name', { length: 255 }).notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    size: int('size').notNull(),
+    url: text('url').notNull(),
+    type: varchar('type', { length: 20, enum: ['image', 'video', 'document'] }).default('image').notNull(),
+    uploadedBy: varchar('uploaded_by', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+});
+
+export const mediaRelations = relations(media, ({ one }) => ({
+    uploader: one(users, {
+        fields: [media.uploadedBy],
+        references: [users.id],
+    }),
+}));
+
+// =====================
+// COURSE TAGS TABLE
+// =====================
+export const tags = mysqlTable('tags', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    name: varchar('name', { length: 100 }).notNull().unique(),
+    slug: varchar('slug', { length: 100 }).notNull().unique(),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+});
+
+export const courseTags = mysqlTable('course_tags', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    tagId: varchar('tag_id', { length: 36 }).references(() => tags.id, { onDelete: 'cascade' }).notNull(),
+});
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+    courseTags: many(courseTags),
+}));
+
+export const courseTagsRelations = relations(courseTags, ({ one }) => ({
+    course: one(courses, {
+        fields: [courseTags.courseId],
+        references: [courses.id],
+    }),
+    tag: one(tags, {
+        fields: [courseTags.tagId],
+        references: [tags.id],
+    }),
+}));
+
+// =====================
 // TYPE EXPORTS
 // =====================
 export type User = typeof users.$inferSelect;
@@ -159,3 +212,7 @@ export type LessonProgress = typeof lessonProgress.$inferSelect;
 export type NewLessonProgress = typeof lessonProgress.$inferInsert;
 export type Payment = typeof payments.$inferSelect;
 export type NewPayment = typeof payments.$inferInsert;
+export type Media = typeof media.$inferSelect;
+export type NewMedia = typeof media.$inferInsert;
+export type Tag = typeof tags.$inferSelect;
+export type NewTag = typeof tags.$inferInsert;
