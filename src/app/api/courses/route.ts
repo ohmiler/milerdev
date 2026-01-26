@@ -1,51 +1,96 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { courses, enrollments } from "@/lib/db/schema";
-import { eq, desc, and, count } from "drizzle-orm";
+import { courses, enrollments, users, lessons } from "@/lib/db/schema";
+import { eq, desc, asc, and, count, like, gt } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 
-// GET /api/courses - Get all published courses
+// GET /api/courses - Get all published courses with filters and pagination
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "12");
+        const search = searchParams.get("search") || "";
+        const priceFilter = searchParams.get("price") || "all";
+        const sort = searchParams.get("sort") || "newest";
         const offset = (page - 1) * limit;
 
-        const allCourses = await db.query.courses.findMany({
-            where: eq(courses.status, "published"),
-            with: {
-                instructor: {
-                    columns: {
-                        id: true,
-                        name: true,
-                        avatarUrl: true,
-                    },
-                },
-                lessons: {
-                    columns: {
-                        id: true,
-                    },
-                },
-            },
-            orderBy: [desc(courses.createdAt)],
-            limit,
-            offset,
-        });
+        // Build conditions
+        const conditions = [eq(courses.status, "published")];
+        
+        if (search) {
+            conditions.push(like(courses.title, `%${search}%`));
+        }
 
-        // Get total count
+        if (priceFilter === "free") {
+            conditions.push(eq(courses.price, "0"));
+        } else if (priceFilter === "paid") {
+            conditions.push(gt(courses.price, "0"));
+        }
+
+        // Build order
+        let orderBy;
+        switch (sort) {
+            case "oldest":
+                orderBy = asc(courses.createdAt);
+                break;
+            case "price-low":
+                orderBy = asc(courses.price);
+                break;
+            case "price-high":
+                orderBy = desc(courses.price);
+                break;
+            default:
+                orderBy = desc(courses.createdAt);
+        }
+
+        // Use simple select instead of relational query (MariaDB compatibility)
+        const allCourses = await db
+            .select()
+            .from(courses)
+            .where(and(...conditions))
+            .orderBy(orderBy)
+            .limit(limit)
+            .offset(offset);
+
+        // Get instructor and lesson count for each course
+        const formattedCourses = await Promise.all(
+            allCourses.map(async (course) => {
+                // Get instructor
+                let instructor = null;
+                if (course.instructorId) {
+                    const [instructorData] = await db
+                        .select({
+                            id: users.id,
+                            name: users.name,
+                            avatarUrl: users.avatarUrl,
+                        })
+                        .from(users)
+                        .where(eq(users.id, course.instructorId))
+                        .limit(1);
+                    instructor = instructorData || null;
+                }
+
+                // Get lesson count
+                const [lessonCountResult] = await db
+                    .select({ count: count() })
+                    .from(lessons)
+                    .where(eq(lessons.courseId, course.id));
+
+                return {
+                    ...course,
+                    instructor,
+                    lessonCount: lessonCountResult?.count || 0,
+                };
+            })
+        );
+
+        // Get total count with filters
         const [{ total }] = await db
             .select({ total: count() })
             .from(courses)
-            .where(eq(courses.status, "published"));
-
-        // Format response
-        const formattedCourses = allCourses.map((course) => ({
-            ...course,
-            lessonCount: course.lessons.length,
-            lessons: undefined,
-        }));
+            .where(and(...conditions));
 
         return NextResponse.json({
             courses: formattedCourses,
