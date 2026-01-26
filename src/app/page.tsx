@@ -1,35 +1,65 @@
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import CourseCard from '@/components/course/CourseCard';
+import { db } from '@/lib/db';
+import { courses, lessons, users } from '@/lib/db/schema';
+import { eq, desc, count } from 'drizzle-orm';
 
-export default function HomePage() {
-  // Sample featured courses (จะเปลี่ยนเป็นดึงจาก API ทีหลัง)
-  const featuredCourses = [
-    {
-      id: '1',
-      title: 'เรียน React.js ตั้งแต่เริ่มต้นจนเป็นมืออาชีพ',
-      slug: 'react-professional',
-      description: 'เรียนรู้ React.js แบบเจาะลึก พร้อมสร้างโปรเจกต์จริง',
-      price: 1990,
-      lessonCount: 45,
-    },
-    {
-      id: '2',
-      title: 'Next.js 14 - Full Stack Development',
-      slug: 'nextjs-fullstack',
-      description: 'สร้างเว็บแอพแบบ Full Stack ด้วย Next.js',
-      price: 2490,
-      lessonCount: 60,
-    },
-    {
-      id: '3',
-      title: 'TypeScript สำหรับ JavaScript Developer',
-      slug: 'typescript-fundamentals',
-      description: 'เรียนรู้ TypeScript เพื่อเขียนโค้ดที่ปลอดภัยยิ่งขึ้น',
-      price: 0,
-      lessonCount: 25,
-    },
-  ];
+async function getFeaturedCourses() {
+  // Get published courses ordered by creation date (newest first)
+  // Simple query for MariaDB compatibility
+  const allCourses = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.status, 'published'))
+    .orderBy(desc(courses.createdAt))
+    .limit(6);
+
+  // Get instructor and lesson count for each course
+  const result = await Promise.all(
+    allCourses.map(async (course) => {
+      let instructor = null;
+      if (course.instructorId) {
+        const [instructorData] = await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(eq(users.id, course.instructorId))
+          .limit(1);
+        instructor = instructorData || null;
+      }
+
+      const [lessonCountResult] = await db
+        .select({ count: count() })
+        .from(lessons)
+        .where(eq(lessons.courseId, course.id));
+
+      return {
+        ...course,
+        instructor,
+        lessonCount: lessonCountResult?.count || 0,
+      };
+    })
+  );
+
+  return result;
+}
+
+async function getStats() {
+  const [userCount] = await db.select({ count: count() }).from(users);
+  const [lessonCount] = await db.select({ count: count() }).from(lessons);
+  const [courseCount] = await db.select({ count: count() }).from(courses).where(eq(courses.status, 'published'));
+  
+  return {
+    users: userCount?.count || 0,
+    lessons: lessonCount?.count || 0,
+    courses: courseCount?.count || 0,
+  };
+}
+
+export default async function HomePage() {
+  const featuredCourses = await getFeaturedCourses();
+  const stats = await getStats();
 
   return (
     <>
@@ -131,16 +161,16 @@ export default function HomePage() {
                 justifyContent: 'center'
               }}>
                 <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                  <div className="stat-value">1,000+</div>
+                  <div className="stat-value">{stats.users.toLocaleString()}+</div>
                   <div className="stat-label">นักเรียน</div>
                 </div>
                 <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                  <div className="stat-value">50+</div>
+                  <div className="stat-value">{stats.lessons}+</div>
                   <div className="stat-label">บทเรียน</div>
                 </div>
                 <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                  <div className="stat-value">4.9</div>
-                  <div className="stat-label">คะแนนรีวิว</div>
+                  <div className="stat-value">{stats.courses}</div>
+                  <div className="stat-label">คอร์ส</div>
                 </div>
               </div>
             </div>
@@ -236,61 +266,17 @@ export default function HomePage() {
               gap: '24px'
             }}>
               {featuredCourses.map((course) => (
-                <Link key={course.id} href={`/courses/${course.slug}`} className="card" style={{ display: 'block' }}>
-                  {/* Thumbnail */}
-                  <div className="course-thumbnail">
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative'
-                    }}>
-                      <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-
-                    {/* Price Badge */}
-                    {course.price === 0 ? (
-                      <span className="price-badge free">ฟรี</span>
-                    ) : (
-                      <span className="price-badge paid">฿{course.price.toLocaleString()}</span>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div style={{ padding: '24px' }}>
-                    <h3 style={{
-                      fontSize: '1.125rem',
-                      fontWeight: 600,
-                      color: '#1e293b',
-                      marginBottom: '8px',
-                      lineHeight: 1.5
-                    }}>
-                      {course.title}
-                    </h3>
-
-                    <p style={{
-                      color: '#64748b',
-                      fontSize: '0.9375rem',
-                      marginBottom: '16px',
-                      lineHeight: 1.6
-                    }}>
-                      {course.description}
-                    </p>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.875rem' }}>
-                      <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>{course.lessonCount} บทเรียน</span>
-                    </div>
-                  </div>
-                </Link>
+                <CourseCard
+                  key={course.id}
+                  id={course.id}
+                  title={course.title}
+                  slug={course.slug}
+                  description={course.description}
+                  thumbnailUrl={course.thumbnailUrl}
+                  price={parseFloat(course.price || '0')}
+                  instructorName={course.instructor?.name || null}
+                  lessonCount={course.lessonCount}
+                />
               ))}
             </div>
           </div>
