@@ -1,11 +1,54 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+
+// Eye icon components
+const EyeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+);
+
+const EyeOffIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
+
+// Password strength calculator
+const getPasswordStrength = (password: string) => {
+  let score = 0;
+  const checks = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+
+  if (checks.length) score++;
+  if (checks.uppercase) score++;
+  if (checks.lowercase) score++;
+  if (checks.number) score++;
+  if (checks.special) score++;
+
+  let label = 'อ่อนมาก';
+  let color = '#dc2626';
+  
+  if (score >= 5) { label = 'แข็งแกร่งมาก'; color = '#16a34a'; }
+  else if (score >= 4) { label = 'แข็งแกร่ง'; color = '#22c55e'; }
+  else if (score >= 3) { label = 'ปานกลาง'; color = '#f59e0b'; }
+  else if (score >= 2) { label = 'อ่อน'; color = '#f97316'; }
+
+  return { score, checks, label, color, percentage: (score / 5) * 100 };
+};
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,20 +56,46 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (password !== confirmPassword) {
-      setError('รหัสผ่านไม่ตรงกัน');
+    // Name validation
+    if (name.trim().length < 2) {
+      setError('ชื่อต้องมีอย่างน้อย 2 ตัวอักษร');
       return;
     }
 
-    if (password.length < 6) {
-      setError('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+    // Password validation (match API requirements)
+    if (password.length < 8) {
+      setError('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
+      return;
+    }
+
+    if (!passwordStrength.checks.uppercase) {
+      setError('รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว');
+      return;
+    }
+
+    if (!passwordStrength.checks.lowercase) {
+      setError('รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว');
+      return;
+    }
+
+    if (!passwordStrength.checks.number) {
+      setError('รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('รหัสผ่านไม่ตรงกัน');
       return;
     }
 
@@ -176,21 +245,122 @@ export default function RegisterPage() {
                 }}>
                   รหัสผ่าน
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="อย่างน้อย 6 ตัวอักษร"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    outline: 'none',
-                  }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="อย่างน้อย 8 ตัวอักษร"
+                    style={{
+                      width: '100%',
+                      padding: '12px 48px 12px 16px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
+                  >
+                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </div>
+
+                {/* Password Strength Indicator */}
+                {password && (
+                  <div style={{ marginTop: '12px' }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '6px',
+                    }}>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>ความแข็งแกร่งของรหัสผ่าน</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: passwordStrength.color }}>
+                        {passwordStrength.label}
+                      </span>
+                    </div>
+                    <div style={{
+                      height: '4px',
+                      background: '#e2e8f0',
+                      borderRadius: '2px',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${passwordStrength.percentage}%`,
+                        background: passwordStrength.color,
+                        borderRadius: '2px',
+                        transition: 'all 0.3s ease',
+                      }} />
+                    </div>
+                    <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: passwordStrength.checks.length ? '#dcfce7' : '#f1f5f9',
+                        color: passwordStrength.checks.length ? '#16a34a' : '#64748b',
+                      }}>
+                        {passwordStrength.checks.length ? '✓' : '○'} 8+ ตัวอักษร
+                      </span>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: passwordStrength.checks.uppercase ? '#dcfce7' : '#f1f5f9',
+                        color: passwordStrength.checks.uppercase ? '#16a34a' : '#64748b',
+                      }}>
+                        {passwordStrength.checks.uppercase ? '✓' : '○'} ตัวพิมพ์ใหญ่
+                      </span>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: passwordStrength.checks.lowercase ? '#dcfce7' : '#f1f5f9',
+                        color: passwordStrength.checks.lowercase ? '#16a34a' : '#64748b',
+                      }}>
+                        {passwordStrength.checks.lowercase ? '✓' : '○'} ตัวพิมพ์เล็ก
+                      </span>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: passwordStrength.checks.number ? '#dcfce7' : '#f1f5f9',
+                        color: passwordStrength.checks.number ? '#16a34a' : '#64748b',
+                      }}>
+                        {passwordStrength.checks.number ? '✓' : '○'} ตัวเลข
+                      </span>
+                      <span style={{
+                        fontSize: '0.7rem',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        background: passwordStrength.checks.special ? '#dcfce7' : '#f1f5f9',
+                        color: passwordStrength.checks.special ? '#16a34a' : '#64748b',
+                      }}>
+                        {passwordStrength.checks.special ? '✓' : '○'} อักขระพิเศษ
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{ marginBottom: '24px' }}>
@@ -203,21 +373,54 @@ export default function RegisterPage() {
                 }}>
                   ยืนยันรหัสผ่าน
                 </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  placeholder="ยืนยันรหัสผ่าน"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    outline: 'none',
-                  }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    placeholder="ยืนยันรหัสผ่าน"
+                    style={{
+                      width: '100%',
+                      padding: '12px 48px 12px 16px',
+                      border: `1px solid ${confirmPassword && confirmPassword !== password ? '#fecaca' : '#e2e8f0'}`,
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    aria-label={showConfirmPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
+                  >
+                    {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </div>
+                {confirmPassword && confirmPassword !== password && (
+                  <p style={{ color: '#dc2626', fontSize: '0.75rem', marginTop: '6px' }}>
+                    รหัสผ่านไม่ตรงกัน
+                  </p>
+                )}
+                {confirmPassword && confirmPassword === password && password && (
+                  <p style={{ color: '#16a34a', fontSize: '0.75rem', marginTop: '6px' }}>
+                    ✓ รหัสผ่านตรงกัน
+                  </p>
+                )}
               </div>
 
               <button
