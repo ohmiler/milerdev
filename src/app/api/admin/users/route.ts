@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { users, enrollments } from '@/lib/db/schema';
+import { users } from '@/lib/db/schema';
 import { desc, sql, eq, like, and, or, gte, lte } from 'drizzle-orm';
 
 // GET /api/admin/users - Get all users with stats and advanced filtering

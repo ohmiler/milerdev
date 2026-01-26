@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { users, enrollments } from '@/lib/db/schema';
+import { users } from '@/lib/db/schema';
 import { desc, sql, eq } from 'drizzle-orm';
 
 // GET /api/admin/users/export - Export users as CSV

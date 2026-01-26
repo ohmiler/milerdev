@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mysql, { RowDataPacket } from 'mysql2/promise';
 import { createId } from '@paralleldrive/cuid2';
 import dotenv from 'dotenv';

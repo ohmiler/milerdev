@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import LessonList from './LessonList';
 
 interface Lesson {

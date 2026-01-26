@@ -18,25 +18,21 @@ interface CourseLessonListProps {
 }
 
 export default function CourseLessonList({ lessons, courseSlug, courseId }: CourseLessonListProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (session?.user) {
+    if (status === 'authenticated' && session?.user) {
       // Check enrollment status
       fetch(`/api/enrollments/check?courseId=${courseId}`)
         .then(res => res.json())
         .then(data => {
           setIsEnrolled(data.enrolled || false);
         })
-        .catch(console.error)
-        .finally(() => setChecking(false));
-    } else {
-      setChecking(false);
+        .catch(console.error);
     }
-  }, [session, courseId]);
+  }, [status, session, courseId]);
 
   const handleLessonClick = (lesson: Lesson) => {
     // If free preview or enrolled, go to lesson

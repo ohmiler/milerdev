@@ -49,7 +49,7 @@ export default function AdminUsersPage() {
   
   // Import
   const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<any>(null);
+  const [importResult, setImportResult] = useState<{ success?: number; skipped?: number; failed?: number; errors?: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchUsers = async () => {
@@ -474,9 +474,9 @@ export default function AdminUsersPage() {
           <div style={{ fontSize: '0.875rem', color: '#166534' }}>
             สำเร็จ: {importResult.success} | ข้าม: {importResult.skipped} | ล้มเหลว: {importResult.failed}
           </div>
-          {importResult.errors?.length > 0 && (
+          {(importResult.errors?.length ?? 0) > 0 && (
             <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#dc2626' }}>
-              {importResult.errors.slice(0, 5).map((err: string, i: number) => (
+              {importResult.errors?.slice(0, 5).map((err: string, i: number) => (
                 <div key={i}>{err}</div>
               ))}
             </div>

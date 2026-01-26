@@ -23,7 +23,7 @@ const defaultSettings = [
 ];
 
 // GET /api/admin/settings - Get all settings
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== 'admin') {

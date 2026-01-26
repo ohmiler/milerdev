@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { tags, courseTags, courses } from '@/lib/db/schema';
-import { desc, eq, sql } from 'drizzle-orm';
+import { tags } from '@/lib/db/schema';
+import { eq, count, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // GET /api/admin/tags - Get all tags
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== 'admin') {

@@ -77,11 +77,11 @@ function UserDropdown({
     onLogout,
     dropdownRef,
 }: {
-    session: any;
+    session: { user?: { name?: string | null; email?: string | null; image?: string | null; role?: string } };
     isOpen: boolean;
     onToggle: () => void;
     onLogout: () => void;
-    dropdownRef: React.RefObject<HTMLDivElement>;
+    dropdownRef: React.RefObject<HTMLDivElement | null>;
 }) {
     return (
         <div className="relative" ref={dropdownRef}>
@@ -139,7 +139,7 @@ function MobileMenu({
     onLogout,
 }: {
     isOpen: boolean;
-    session: any;
+    session: { user?: { name?: string | null; email?: string | null; image?: string | null; role?: string } } | null;
     onClose: () => void;
     onLogout: () => void;
 }) {

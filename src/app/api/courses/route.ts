@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { courses, enrollments, users, lessons } from "@/lib/db/schema";
+import { courses, users, lessons } from "@/lib/db/schema";
 import { eq, desc, asc, and, count, like, gt } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 

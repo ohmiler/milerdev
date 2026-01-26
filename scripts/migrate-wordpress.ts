@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mysql, { RowDataPacket, Pool } from 'mysql2/promise';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { createId } from '@paralleldrive/cuid2';

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { notifications, users } from '@/lib/db/schema';
-import { desc, eq, sql, and, inArray } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // GET /api/admin/notifications - Get all notifications (admin view)

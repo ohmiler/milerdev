@@ -63,7 +63,10 @@ export default function CoursesPage() {
 
   useEffect(() => {
     fetchCourses();
-    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, priceFilter, sort]);
+
+  useEffect(() => {
     // Update URL params
     const params = new URLSearchParams();
     if (search) params.set('search', search);
@@ -73,7 +76,7 @@ export default function CoursesPage() {
     
     const queryString = params.toString();
     router.replace(queryString ? `?${queryString}` : '/courses', { scroll: false });
-  }, [currentPage, priceFilter, sort]);
+  }, [currentPage, priceFilter, sort, search, router]);
 
   const handleSearch = () => {
     setCurrentPage(1);

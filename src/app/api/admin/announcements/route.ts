@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { announcements, users, notifications } from '@/lib/db/schema';
-import { desc, eq, sql, and, or, gte, lte } from 'drizzle-orm';
+import { desc, eq, sql, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // GET /api/admin/announcements - Get all announcements
