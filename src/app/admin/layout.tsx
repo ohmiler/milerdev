@@ -64,6 +64,13 @@ export default async function AdminLayout({
             }}>
               การลงทะเบียน
             </Link>
+            <Link href="/admin/reports" style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+            }}>
+              รายงาน
+            </Link>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
