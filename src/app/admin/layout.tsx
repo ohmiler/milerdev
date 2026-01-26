@@ -85,6 +85,20 @@ export default async function AdminLayout({
             }}>
               แท็ก
             </Link>
+            <Link href="/admin/settings" style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+            }}>
+              ตั้งค่า
+            </Link>
+            <Link href="/admin/audit-logs" style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+            }}>
+              Logs
+            </Link>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

@@ -145,6 +145,49 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 }));
 
 // =====================
+// SETTINGS TABLE
+// =====================
+export const settings = mysqlTable('settings', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    key: varchar('key', { length: 100 }).notNull().unique(),
+    value: text('value'),
+    type: varchar('type', { length: 20, enum: ['string', 'number', 'boolean', 'json'] }).default('string').notNull(),
+    description: text('description'),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
+    updatedBy: varchar('updated_by', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
+});
+
+export const settingsRelations = relations(settings, ({ one }) => ({
+    updater: one(users, {
+        fields: [settings.updatedBy],
+        references: [users.id],
+    }),
+}));
+
+// =====================
+// AUDIT LOGS TABLE
+// =====================
+export const auditLogs = mysqlTable('audit_logs', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
+    action: varchar('action', { length: 50 }).notNull(),
+    entityType: varchar('entity_type', { length: 50 }).notNull(),
+    entityId: varchar('entity_id', { length: 36 }),
+    oldValue: text('old_value'),
+    newValue: text('new_value'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    userAgent: text('user_agent'),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+});
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+    user: one(users, {
+        fields: [auditLogs.userId],
+        references: [users.id],
+    }),
+}));
+
+// =====================
 // MEDIA TABLE
 // =====================
 export const media = mysqlTable('media', {
@@ -216,3 +259,7 @@ export type Media = typeof media.$inferSelect;
 export type NewMedia = typeof media.$inferInsert;
 export type Tag = typeof tags.$inferSelect;
 export type NewTag = typeof tags.$inferInsert;
+export type Setting = typeof settings.$inferSelect;
+export type NewSetting = typeof settings.$inferInsert;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;

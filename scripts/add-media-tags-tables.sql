@@ -32,3 +32,35 @@ CREATE TABLE IF NOT EXISTS `course_tags` (
 -- Add index for better query performance
 CREATE INDEX IF NOT EXISTS `idx_course_tags_course_id` ON `course_tags` (`course_id`);
 CREATE INDEX IF NOT EXISTS `idx_course_tags_tag_id` ON `course_tags` (`tag_id`);
+
+-- Add settings table
+CREATE TABLE IF NOT EXISTS `settings` (
+    `id` varchar(36) NOT NULL PRIMARY KEY,
+    `key` varchar(100) NOT NULL UNIQUE,
+    `value` text,
+    `type` varchar(20) NOT NULL DEFAULT 'string',
+    `description` text,
+    `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    `updated_by` varchar(36),
+    CONSTRAINT `settings_updated_by_users_id_fk` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+);
+
+-- Add audit_logs table
+CREATE TABLE IF NOT EXISTS `audit_logs` (
+    `id` varchar(36) NOT NULL PRIMARY KEY,
+    `user_id` varchar(36),
+    `action` varchar(50) NOT NULL,
+    `entity_type` varchar(50) NOT NULL,
+    `entity_id` varchar(36),
+    `old_value` text,
+    `new_value` text,
+    `ip_address` varchar(45),
+    `user_agent` text,
+    `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `audit_logs_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+);
+
+-- Add indexes for audit_logs
+CREATE INDEX `idx_audit_logs_user_id` ON `audit_logs` (`user_id`);
+CREATE INDEX `idx_audit_logs_entity_type` ON `audit_logs` (`entity_type`);
+CREATE INDEX `idx_audit_logs_created_at` ON `audit_logs` (`created_at`);
