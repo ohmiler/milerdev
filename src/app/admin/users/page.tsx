@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface User {
   id: string;
@@ -18,20 +18,55 @@ interface Stats {
   students: number;
 }
 
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({ name: '', role: 'student' });
+  
+  // Filters
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Bulk operations
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState('');
+  const [bulkRole, setBulkRole] = useState('student');
+  const [processingBulk, setProcessingBulk] = useState(false);
+  
+  // Import
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/admin/users');
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        role: roleFilter,
+        search,
+        sortBy,
+        sortOrder,
+      });
+      const res = await fetch(`/api/admin/users?${params}`);
       const data = await res.json();
       setUsers(data.users || []);
       setStats(data.stats || null);
+      setPagination(data.pagination || null);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -41,7 +76,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [currentPage, roleFilter, sortBy, sortOrder]);
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
@@ -111,6 +146,98 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleSearch = () => {
+    setCurrentPage(1);
+    fetchUsers();
+  };
+
+  const handleExport = async () => {
+    const params = new URLSearchParams({ role: roleFilter });
+    window.open(`/api/admin/users/export?${params}`, '_blank');
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch('/api/admin/users/import', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await res.json();
+      setImportResult(data.results || data);
+      if (res.ok) {
+        await fetchUsers();
+      }
+    } catch (error) {
+      alert('เกิดข้อผิดพลาดในการนำเข้า');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const toggleSelectUser = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUsers.length === users.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(users.map(u => u.id));
+    }
+  };
+
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedUsers.length === 0) {
+      alert('กรุณาเลือกผู้ใช้และการดำเนินการ');
+      return;
+    }
+
+    if (bulkAction === 'delete' && !confirm(`คุณแน่ใจหรือไม่ที่จะลบ ${selectedUsers.length} ผู้ใช้?`)) {
+      return;
+    }
+
+    setProcessingBulk(true);
+    try {
+      const res = await fetch('/api/admin/users/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: bulkAction,
+          userIds: selectedUsers,
+          data: bulkAction === 'updateRole' ? { role: bulkRole } : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(`ดำเนินการสำเร็จ ${data.affectedCount} รายการ`);
+        setSelectedUsers([]);
+        setBulkAction('');
+        await fetchUsers();
+      } else {
+        alert(data.error || 'เกิดข้อผิดพลาด');
+      }
+    } catch (error) {
+      alert('เกิดข้อผิดพลาด');
+    } finally {
+      setProcessingBulk(false);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
@@ -153,6 +280,222 @@ export default function AdminUsersPage() {
             <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>นักเรียน</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{stats.students}</div>
           </div>
+        </div>
+      )}
+
+      {/* Search & Filters */}
+      <div style={{
+        display: 'flex',
+        gap: '12px',
+        marginBottom: '16px',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+      }}>
+        <input
+          type="text"
+          placeholder="ค้นหาชื่อหรืออีเมล..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          style={{
+            padding: '10px 16px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            fontSize: '0.875rem',
+            minWidth: '200px',
+          }}
+        />
+        <select
+          value={roleFilter}
+          onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
+          style={{
+            padding: '10px 16px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            background: 'white',
+            fontSize: '0.875rem',
+          }}
+        >
+          <option value="all">ทุก Role</option>
+          <option value="admin">Admin</option>
+          <option value="instructor">ผู้สอน</option>
+          <option value="student">นักเรียน</option>
+        </select>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          style={{
+            padding: '10px 16px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            background: 'white',
+            fontSize: '0.875rem',
+          }}
+        >
+          <option value="createdAt">เรียงตามวันที่</option>
+          <option value="name">เรียงตามชื่อ</option>
+          <option value="email">เรียงตามอีเมล</option>
+        </select>
+        <button
+          onClick={handleSearch}
+          style={{
+            padding: '10px 20px',
+            background: '#2563eb',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+          }}
+        >
+          ค้นหา
+        </button>
+      </div>
+
+      {/* Actions Row */}
+      <div style={{
+        display: 'flex',
+        gap: '12px',
+        marginBottom: '24px',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        {/* Bulk Actions */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {selectedUsers.length > 0 && (
+            <>
+              <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                เลือก {selectedUsers.length} รายการ
+              </span>
+              <select
+                value={bulkAction}
+                onChange={(e) => setBulkAction(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  background: 'white',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <option value="">เลือกการดำเนินการ</option>
+                <option value="updateRole">เปลี่ยน Role</option>
+                <option value="delete">ลบ</option>
+              </select>
+              {bulkAction === 'updateRole' && (
+                <select
+                  value={bulkRole}
+                  onChange={(e) => setBulkRole(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    background: 'white',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  <option value="student">นักเรียน</option>
+                  <option value="instructor">ผู้สอน</option>
+                  <option value="admin">Admin</option>
+                </select>
+              )}
+              <button
+                onClick={handleBulkAction}
+                disabled={processingBulk || !bulkAction}
+                style={{
+                  padding: '8px 16px',
+                  background: bulkAction === 'delete' ? '#dc2626' : '#2563eb',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: processingBulk || !bulkAction ? 'not-allowed' : 'pointer',
+                  opacity: processingBulk || !bulkAction ? 0.7 : 1,
+                  fontSize: '0.875rem',
+                }}
+              >
+                {processingBulk ? 'กำลังดำเนินการ...' : 'ดำเนินการ'}
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Import/Export */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImport}
+            accept=".csv"
+            style={{ display: 'none' }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            style={{
+              padding: '8px 16px',
+              background: '#f1f5f9',
+              color: '#475569',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: importing ? 'not-allowed' : 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            {importing ? 'กำลังนำเข้า...' : '📥 นำเข้า CSV'}
+          </button>
+          <button
+            onClick={handleExport}
+            style={{
+              padding: '8px 16px',
+              background: '#f1f5f9',
+              color: '#475569',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            📤 ส่งออก CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Import Result */}
+      {importResult && (
+        <div style={{
+          background: '#f0fdf4',
+          border: '1px solid #bbf7d0',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '24px',
+        }}>
+          <div style={{ fontWeight: 600, color: '#16a34a', marginBottom: '8px' }}>ผลการนำเข้า</div>
+          <div style={{ fontSize: '0.875rem', color: '#166534' }}>
+            สำเร็จ: {importResult.success} | ข้าม: {importResult.skipped} | ล้มเหลว: {importResult.failed}
+          </div>
+          {importResult.errors?.length > 0 && (
+            <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#dc2626' }}>
+              {importResult.errors.slice(0, 5).map((err: string, i: number) => (
+                <div key={i}>{err}</div>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setImportResult(null)}
+            style={{
+              marginTop: '8px',
+              padding: '4px 12px',
+              background: 'transparent',
+              color: '#16a34a',
+              border: '1px solid #16a34a',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+            }}
+          >
+            ปิด
+          </button>
         </div>
       )}
 
@@ -267,6 +610,14 @@ export default function AdminUsersPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '14px 16px', textAlign: 'center', width: '40px' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.length === users.length && users.length > 0}
+                    onChange={toggleSelectAll}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </th>
                 <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
                   ผู้ใช้
                 </th>
@@ -286,7 +637,15 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <tr key={user.id} style={{ borderBottom: '1px solid #e2e8f0', background: selectedUsers.includes(user.id) ? '#f0f9ff' : 'transparent' }}>
+                  <td style={{ padding: '16px', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => toggleSelectUser(user.id)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
                   <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{
@@ -377,6 +736,50 @@ export default function AdminUsersPage() {
         {users.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
             ยังไม่มีผู้ใช้
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '16px',
+            borderTop: '1px solid #e2e8f0',
+          }}>
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                background: 'white',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                opacity: currentPage === 1 ? 0.5 : 1,
+              }}
+            >
+              ก่อนหน้า
+            </button>
+            <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
+              หน้า {currentPage} จาก {pagination.totalPages} (ทั้งหมด {pagination.total} รายการ)
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+              disabled={currentPage === pagination.totalPages}
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                background: 'white',
+                cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
+                opacity: currentPage === pagination.totalPages ? 0.5 : 1,
+              }}
+            >
+              ถัดไป
+            </button>
           </div>
         )}
       </div>

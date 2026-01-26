@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users, enrollments } from '@/lib/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { desc, sql, eq, like, and, or, gte, lte } from 'drizzle-orm';
 
-// GET /api/admin/users - Get all users with stats
+// GET /api/admin/users - Get all users with stats and advanced filtering
 export async function GET(request: Request) {
   try {
     const session = await auth();
@@ -17,7 +17,40 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const role = searchParams.get('role');
     const search = searchParams.get('search');
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
     const offset = (page - 1) * limit;
+
+    // Build conditions
+    const conditions = [];
+    
+    if (role && role !== 'all') {
+      conditions.push(eq(users.role, role as 'admin' | 'instructor' | 'student'));
+    }
+    
+    if (search) {
+      conditions.push(
+        or(
+          like(users.name, `%${search}%`),
+          like(users.email, `%${search}%`)
+        )
+      );
+    }
+
+    if (dateFrom) {
+      conditions.push(gte(users.createdAt, new Date(dateFrom)));
+    }
+
+    if (dateTo) {
+      conditions.push(lte(users.createdAt, new Date(dateTo)));
+    }
+
+    // Build order
+    const orderColumn = sortBy === 'name' ? users.name : 
+                        sortBy === 'email' ? users.email :
+                        sortBy === 'role' ? users.role : users.createdAt;
 
     // Get users with enrollment counts
     const userList = await db
@@ -32,16 +65,18 @@ export async function GET(request: Request) {
         enrollmentCount: sql<number>`(SELECT COUNT(*) FROM enrollments WHERE enrollments.user_id = ${users.id})`,
       })
       .from(users)
-      .orderBy(desc(users.createdAt))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(sortOrder === 'asc' ? orderColumn : desc(orderColumn))
       .limit(limit)
       .offset(offset);
 
-    // Get total count
+    // Get total count with filters
     const [{ count: totalCount }] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(users);
+      .from(users)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
 
-    // Get role stats
+    // Get role stats (always total, unfiltered)
     const [stats] = await db
       .select({
         total: sql<number>`count(*)`,
