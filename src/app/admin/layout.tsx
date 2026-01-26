@@ -50,6 +50,20 @@ export default async function AdminLayout({
             }}>
               ผู้ใช้
             </Link>
+            <Link href="/admin/payments" style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+            }}>
+              การชำระเงิน
+            </Link>
+            <Link href="/admin/enrollments" style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+            }}>
+              การลงทะเบียน
+            </Link>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
