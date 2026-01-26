@@ -64,3 +64,37 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
 CREATE INDEX `idx_audit_logs_user_id` ON `audit_logs` (`user_id`);
 CREATE INDEX `idx_audit_logs_entity_type` ON `audit_logs` (`entity_type`);
 CREATE INDEX `idx_audit_logs_created_at` ON `audit_logs` (`created_at`);
+
+-- Add announcements table
+CREATE TABLE IF NOT EXISTS `announcements` (
+    `id` varchar(36) NOT NULL PRIMARY KEY,
+    `title` varchar(255) NOT NULL,
+    `content` text NOT NULL,
+    `type` varchar(20) NOT NULL DEFAULT 'info',
+    `target_role` varchar(20) NOT NULL DEFAULT 'all',
+    `is_active` boolean DEFAULT true,
+    `starts_at` datetime,
+    `ends_at` datetime,
+    `created_by` varchar(36),
+    `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `announcements_created_by_users_id_fk` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+);
+
+-- Add notifications table
+CREATE TABLE IF NOT EXISTS `notifications` (
+    `id` varchar(36) NOT NULL PRIMARY KEY,
+    `user_id` varchar(36) NOT NULL,
+    `title` varchar(255) NOT NULL,
+    `message` text,
+    `type` varchar(20) NOT NULL DEFAULT 'info',
+    `link` varchar(500),
+    `is_read` boolean DEFAULT false,
+    `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `notifications_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+);
+
+-- Add indexes for notifications
+CREATE INDEX `idx_notifications_user_id` ON `notifications` (`user_id`);
+CREATE INDEX `idx_notifications_is_read` ON `notifications` (`is_read`);
+CREATE INDEX `idx_notifications_created_at` ON `notifications` (`created_at`);

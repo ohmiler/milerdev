@@ -145,6 +145,51 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 }));
 
 // =====================
+// ANNOUNCEMENTS TABLE
+// =====================
+export const announcements = mysqlTable('announcements', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    title: varchar('title', { length: 255 }).notNull(),
+    content: text('content').notNull(),
+    type: varchar('type', { length: 20, enum: ['info', 'warning', 'success', 'error'] }).default('info').notNull(),
+    targetRole: varchar('target_role', { length: 20, enum: ['all', 'student', 'instructor', 'admin'] }).default('all').notNull(),
+    isActive: boolean('is_active').default(true),
+    startsAt: datetime('starts_at'),
+    endsAt: datetime('ends_at'),
+    createdBy: varchar('created_by', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
+});
+
+export const announcementsRelations = relations(announcements, ({ one }) => ({
+    creator: one(users, {
+        fields: [announcements.createdBy],
+        references: [users.id],
+    }),
+}));
+
+// =====================
+// NOTIFICATIONS TABLE
+// =====================
+export const notifications = mysqlTable('notifications', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    message: text('message'),
+    type: varchar('type', { length: 20, enum: ['info', 'warning', 'success', 'error'] }).default('info').notNull(),
+    link: varchar('link', { length: 500 }),
+    isRead: boolean('is_read').default(false),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+});
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+    user: one(users, {
+        fields: [notifications.userId],
+        references: [users.id],
+    }),
+}));
+
+// =====================
 // SETTINGS TABLE
 // =====================
 export const settings = mysqlTable('settings', {
@@ -263,3 +308,7 @@ export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
+export type Announcement = typeof announcements.$inferSelect;
+export type NewAnnouncement = typeof announcements.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;

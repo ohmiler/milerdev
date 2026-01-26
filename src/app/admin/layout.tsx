@@ -99,6 +99,13 @@ export default async function AdminLayout({
             }}>
               Logs
             </Link>
+            <Link href="/admin/announcements" style={{
+              color: '#94a3b8',
+              textDecoration: 'none',
+              fontSize: '0.9375rem',
+            }}>
+              ประกาศ
+            </Link>
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
