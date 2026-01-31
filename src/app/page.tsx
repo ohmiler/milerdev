@@ -17,27 +17,27 @@ async function getFeaturedCourses() {
     .limit(6);
 
   // Get instructor and lesson count for each course
+  // Parallelize both queries inside map (async-parallel rule)
   const result = await Promise.all(
     allCourses.map(async (course) => {
-      let instructor = null;
-      if (course.instructorId) {
-        const [instructorData] = await db
-          .select({ id: users.id, name: users.name })
-          .from(users)
-          .where(eq(users.id, course.instructorId))
-          .limit(1);
-        instructor = instructorData || null;
-      }
-
-      const [lessonCountResult] = await db
-        .select({ count: count() })
-        .from(lessons)
-        .where(eq(lessons.courseId, course.id));
+      const [instructorResult, lessonCountResult] = await Promise.all([
+        course.instructorId
+          ? db
+              .select({ id: users.id, name: users.name })
+              .from(users)
+              .where(eq(users.id, course.instructorId))
+              .limit(1)
+          : Promise.resolve([]),
+        db
+          .select({ count: count() })
+          .from(lessons)
+          .where(eq(lessons.courseId, course.id)),
+      ]);
 
       return {
         ...course,
-        instructor,
-        lessonCount: lessonCountResult?.count || 0,
+        instructor: instructorResult[0] || null,
+        lessonCount: lessonCountResult[0]?.count || 0,
       };
     })
   );
@@ -46,20 +46,26 @@ async function getFeaturedCourses() {
 }
 
 async function getStats() {
-  const [userCount] = await db.select({ count: count() }).from(users);
-  const [lessonCount] = await db.select({ count: count() }).from(lessons);
-  const [courseCount] = await db.select({ count: count() }).from(courses).where(eq(courses.status, 'published'));
+  // Use Promise.all() to parallelize independent queries (async-parallel rule)
+  const [userCountResult, lessonCountResult, courseCountResult] = await Promise.all([
+    db.select({ count: count() }).from(users),
+    db.select({ count: count() }).from(lessons),
+    db.select({ count: count() }).from(courses).where(eq(courses.status, 'published')),
+  ]);
   
   return {
-    users: userCount?.count || 0,
-    lessons: lessonCount?.count || 0,
-    courses: courseCount?.count || 0,
+    users: userCountResult[0]?.count || 0,
+    lessons: lessonCountResult[0]?.count || 0,
+    courses: courseCountResult[0]?.count || 0,
   };
 }
 
 export default async function HomePage() {
-  const featuredCourses = await getFeaturedCourses();
-  const stats = await getStats();
+  // Parallelize independent data fetching (async-parallel rule)
+  const [featuredCourses, stats] = await Promise.all([
+    getFeaturedCourses(),
+    getStats(),
+  ]);
 
   return (
     <>

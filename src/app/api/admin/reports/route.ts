@@ -20,133 +20,153 @@ export async function GET(request: Request) {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - parseInt(period));
-
-    // Overview Stats
-    const [totalRevenue] = await db
-      .select({
-        total: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
-        count: sql<number>`COUNT(CASE WHEN status = 'completed' THEN 1 END)`,
-      })
-      .from(payments);
-
-    const [totalUsers] = await db.select({ count: count() }).from(users);
-    const [totalEnrollments] = await db.select({ count: count() }).from(enrollments);
-    const [totalCourses] = await db.select({ count: count() }).from(courses);
-
-    // Monthly Revenue (last 12 months)
-    const monthlyRevenue = await db
-      .select({
-        month: sql<string>`DATE_FORMAT(created_at, '%Y-%m')`,
-        revenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
-        transactions: sql<number>`COUNT(CASE WHEN status = 'completed' THEN 1 END)`,
-      })
-      .from(payments)
-      .where(gte(payments.createdAt, startDate))
-      .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
-      .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m')`);
-
-    // Monthly Enrollments
-    const monthlyEnrollments = await db
-      .select({
-        month: sql<string>`DATE_FORMAT(enrolled_at, '%Y-%m')`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(enrollments)
-      .where(gte(enrollments.enrolledAt, startDate))
-      .groupBy(sql`DATE_FORMAT(enrolled_at, '%Y-%m')`)
-      .orderBy(sql`DATE_FORMAT(enrolled_at, '%Y-%m')`);
-
-    // Monthly New Users
-    const monthlyUsers = await db
-      .select({
-        month: sql<string>`DATE_FORMAT(created_at, '%Y-%m')`,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(users)
-      .where(gte(users.createdAt, startDate))
-      .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
-      .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m')`);
-
-    // Course Performance
-    const coursePerformance = await db
-      .select({
-        courseId: courses.id,
-        courseTitle: courses.title,
-        coursePrice: courses.price,
-        enrollmentCount: sql<number>`COUNT(DISTINCT ${enrollments.id})`,
-        completedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${enrollments.completedAt} IS NOT NULL THEN ${enrollments.id} END)`,
-        avgProgress: sql<number>`COALESCE(AVG(${enrollments.progressPercent}), 0)`,
-      })
-      .from(courses)
-      .leftJoin(enrollments, eq(courses.id, enrollments.courseId))
-      .groupBy(courses.id, courses.title, courses.price)
-      .orderBy(desc(sql`COUNT(DISTINCT ${enrollments.id})`))
-      .limit(10);
-
-    // Revenue by Course
-    const revenueByCourse = await db
-      .select({
-        courseId: courses.id,
-        courseTitle: courses.title,
-        revenue: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`,
-        transactions: sql<number>`COUNT(CASE WHEN ${payments.status} = 'completed' THEN 1 END)`,
-      })
-      .from(courses)
-      .leftJoin(payments, eq(courses.id, payments.courseId))
-      .groupBy(courses.id, courses.title)
-      .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`))
-      .limit(10);
-
-    // User Growth Stats
-    const [userStats] = await db
-      .select({
-        total: sql<number>`COUNT(*)`,
-        admins: sql<number>`COUNT(CASE WHEN role = 'admin' THEN 1 END)`,
-        instructors: sql<number>`COUNT(CASE WHEN role = 'instructor' THEN 1 END)`,
-        students: sql<number>`COUNT(CASE WHEN role = 'student' THEN 1 END)`,
-      })
-      .from(users);
-
-    // Completion Rate
-    const [completionStats] = await db
-      .select({
-        total: sql<number>`COUNT(*)`,
-        completed: sql<number>`COUNT(CASE WHEN completed_at IS NOT NULL THEN 1 END)`,
-        inProgress: sql<number>`COUNT(CASE WHEN completed_at IS NULL AND progress_percent > 0 THEN 1 END)`,
-        notStarted: sql<number>`COUNT(CASE WHEN progress_percent = 0 OR progress_percent IS NULL THEN 1 END)`,
-      })
-      .from(enrollments);
-
-    // Payment Method Distribution
-    const paymentMethods = await db
-      .select({
-        method: payments.method,
-        count: sql<number>`COUNT(*)`,
-        revenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
-      })
-      .from(payments)
-      .groupBy(payments.method);
-
-    // Recent Activity Summary (last 30 days)
+    
+    // Recent Activity date range (last 30 days)
     const last30Days = new Date();
     last30Days.setDate(last30Days.getDate() - 30);
 
-    const [recentNewUsers] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(users)
-      .where(gte(users.createdAt, last30Days));
+    // Parallelize ALL independent queries using Promise.all() (async-parallel rule)
+    // This eliminates 12+ sequential awaits into a single parallel batch
+    const [
+      totalRevenueResult,
+      totalUsersResult,
+      totalEnrollmentsResult,
+      totalCoursesResult,
+      monthlyRevenue,
+      monthlyEnrollments,
+      monthlyUsers,
+      coursePerformance,
+      revenueByCourse,
+      userStatsResult,
+      completionStatsResult,
+      paymentMethods,
+      recentNewUsersResult,
+      recentNewEnrollmentsResult,
+      recentRevenueResult,
+    ] = await Promise.all([
+      // Overview Stats
+      db
+        .select({
+          total: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
+          count: sql<number>`COUNT(CASE WHEN status = 'completed' THEN 1 END)`,
+        })
+        .from(payments),
+      db.select({ count: count() }).from(users),
+      db.select({ count: count() }).from(enrollments),
+      db.select({ count: count() }).from(courses),
+      // Monthly Revenue (last 12 months)
+      db
+        .select({
+          month: sql<string>`DATE_FORMAT(created_at, '%Y-%m')`,
+          revenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
+          transactions: sql<number>`COUNT(CASE WHEN status = 'completed' THEN 1 END)`,
+        })
+        .from(payments)
+        .where(gte(payments.createdAt, startDate))
+        .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
+        .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m')`),
+      // Monthly Enrollments
+      db
+        .select({
+          month: sql<string>`DATE_FORMAT(enrolled_at, '%Y-%m')`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(enrollments)
+        .where(gte(enrollments.enrolledAt, startDate))
+        .groupBy(sql`DATE_FORMAT(enrolled_at, '%Y-%m')`)
+        .orderBy(sql`DATE_FORMAT(enrolled_at, '%Y-%m')`),
+      // Monthly New Users
+      db
+        .select({
+          month: sql<string>`DATE_FORMAT(created_at, '%Y-%m')`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(users)
+        .where(gte(users.createdAt, startDate))
+        .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
+        .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m')`),
+      // Course Performance
+      db
+        .select({
+          courseId: courses.id,
+          courseTitle: courses.title,
+          coursePrice: courses.price,
+          enrollmentCount: sql<number>`COUNT(DISTINCT ${enrollments.id})`,
+          completedCount: sql<number>`COUNT(DISTINCT CASE WHEN ${enrollments.completedAt} IS NOT NULL THEN ${enrollments.id} END)`,
+          avgProgress: sql<number>`COALESCE(AVG(${enrollments.progressPercent}), 0)`,
+        })
+        .from(courses)
+        .leftJoin(enrollments, eq(courses.id, enrollments.courseId))
+        .groupBy(courses.id, courses.title, courses.price)
+        .orderBy(desc(sql`COUNT(DISTINCT ${enrollments.id})`))
+        .limit(10),
+      // Revenue by Course
+      db
+        .select({
+          courseId: courses.id,
+          courseTitle: courses.title,
+          revenue: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`,
+          transactions: sql<number>`COUNT(CASE WHEN ${payments.status} = 'completed' THEN 1 END)`,
+        })
+        .from(courses)
+        .leftJoin(payments, eq(courses.id, payments.courseId))
+        .groupBy(courses.id, courses.title)
+        .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`))
+        .limit(10),
+      // User Growth Stats
+      db
+        .select({
+          total: sql<number>`COUNT(*)`,
+          admins: sql<number>`COUNT(CASE WHEN role = 'admin' THEN 1 END)`,
+          instructors: sql<number>`COUNT(CASE WHEN role = 'instructor' THEN 1 END)`,
+          students: sql<number>`COUNT(CASE WHEN role = 'student' THEN 1 END)`,
+        })
+        .from(users),
+      // Completion Rate
+      db
+        .select({
+          total: sql<number>`COUNT(*)`,
+          completed: sql<number>`COUNT(CASE WHEN completed_at IS NOT NULL THEN 1 END)`,
+          inProgress: sql<number>`COUNT(CASE WHEN completed_at IS NULL AND progress_percent > 0 THEN 1 END)`,
+          notStarted: sql<number>`COUNT(CASE WHEN progress_percent = 0 OR progress_percent IS NULL THEN 1 END)`,
+        })
+        .from(enrollments),
+      // Payment Method Distribution
+      db
+        .select({
+          method: payments.method,
+          count: sql<number>`COUNT(*)`,
+          revenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
+        })
+        .from(payments)
+        .groupBy(payments.method),
+      // Recent Activity Summary (last 30 days)
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(users)
+        .where(gte(users.createdAt, last30Days)),
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(enrollments)
+        .where(gte(enrollments.enrolledAt, last30Days)),
+      db
+        .select({
+          total: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
+        })
+        .from(payments)
+        .where(gte(payments.createdAt, last30Days)),
+    ]);
 
-    const [recentNewEnrollments] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(enrollments)
-      .where(gte(enrollments.enrolledAt, last30Days));
-
-    const [recentRevenue] = await db
-      .select({
-        total: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
-      })
-      .from(payments)
-      .where(gte(payments.createdAt, last30Days));
+    // Extract results
+    const totalRevenue = totalRevenueResult[0];
+    const totalUsers = totalUsersResult[0];
+    const totalEnrollments = totalEnrollmentsResult[0];
+    const totalCourses = totalCoursesResult[0];
+    const userStats = userStatsResult[0];
+    const completionStats = completionStatsResult[0];
+    const recentNewUsers = recentNewUsersResult[0];
+    const recentNewEnrollments = recentNewEnrollmentsResult[0];
+    const recentRevenue = recentRevenueResult[0];
 
     return NextResponse.json({
       overview: {

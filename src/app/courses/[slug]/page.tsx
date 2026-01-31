@@ -24,27 +24,25 @@ async function getCourse(slug: string) {
 
   if (!course) return null;
 
-  // Get instructor if exists
-  let instructor = null;
-  if (course.instructorId) {
-    const [instructorData] = await db
-      .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
-      .from(users)
-      .where(eq(users.id, course.instructorId))
-      .limit(1);
-    instructor = instructorData || null;
-  }
-
-  // Get lessons
-  const courseLessons = await db
-    .select()
-    .from(lessons)
-    .where(eq(lessons.courseId, course.id))
-    .orderBy(asc(lessons.orderIndex));
+  // Parallelize instructor and lessons queries (async-parallel rule)
+  const [instructorResult, courseLessons] = await Promise.all([
+    course.instructorId
+      ? db
+          .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+          .from(users)
+          .where(eq(users.id, course.instructorId))
+          .limit(1)
+      : Promise.resolve([]),
+    db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.courseId, course.id))
+      .orderBy(asc(lessons.orderIndex)),
+  ]);
 
   return {
     ...course,
-    instructor,
+    instructor: instructorResult[0] || null,
     lessons: courseLessons,
   };
 }

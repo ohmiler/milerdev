@@ -26,32 +26,34 @@ async function getUserEnrollments(userId: string) {
   // Get all course IDs
   const courseIds = userEnrollments.map(e => e.course.id);
 
-  // Get lesson counts for all courses in one query
-  const lessonCounts = await db
-    .select({
-      courseId: lessons.courseId,
-      count: count(),
-    })
-    .from(lessons)
-    .where(sql`${lessons.courseId} IN ${courseIds}`)
-    .groupBy(lessons.courseId);
-
-  // Get completed lessons for all courses in one query
-  const completedCounts = await db
-    .select({
-      courseId: lessons.courseId,
-      count: count(),
-    })
-    .from(lessonProgress)
-    .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
-    .where(
-      and(
-        eq(lessonProgress.userId, userId),
-        sql`${lessons.courseId} IN ${courseIds}`,
-        eq(lessonProgress.completed, true)
+  // Parallelize lesson counts and completed counts queries (async-parallel rule)
+  const [lessonCounts, completedCounts] = await Promise.all([
+    // Get lesson counts for all courses in one query
+    db
+      .select({
+        courseId: lessons.courseId,
+        count: count(),
+      })
+      .from(lessons)
+      .where(sql`${lessons.courseId} IN ${courseIds}`)
+      .groupBy(lessons.courseId),
+    // Get completed lessons for all courses in one query
+    db
+      .select({
+        courseId: lessons.courseId,
+        count: count(),
+      })
+      .from(lessonProgress)
+      .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+      .where(
+        and(
+          eq(lessonProgress.userId, userId),
+          sql`${lessons.courseId} IN ${courseIds}`,
+          eq(lessonProgress.completed, true)
+        )
       )
-    )
-    .groupBy(lessons.courseId);
+      .groupBy(lessons.courseId),
+  ]);
 
   // Create lookup maps for O(1) access
   const lessonCountMap = new Map(lessonCounts.map(l => [l.courseId, l.count]));

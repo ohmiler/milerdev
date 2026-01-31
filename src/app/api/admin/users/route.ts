@@ -52,39 +52,45 @@ export async function GET(request: Request) {
                         sortBy === 'email' ? users.email :
                         sortBy === 'role' ? users.role : users.createdAt;
 
-    // Get users with enrollment counts
-    const userList = await db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        avatarUrl: users.avatarUrl,
-        emailVerifiedAt: users.emailVerifiedAt,
-        createdAt: users.createdAt,
-        enrollmentCount: sql<number>`(SELECT COUNT(*) FROM enrollments WHERE enrollments.user_id = ${users.id})`,
-      })
-      .from(users)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(sortOrder === 'asc' ? orderColumn : desc(orderColumn))
-      .limit(limit)
-      .offset(offset);
+    // Parallelize independent queries using Promise.all() (async-parallel rule)
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    const [userList, totalCountResult, statsResult] = await Promise.all([
+      // Get users with enrollment counts
+      db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          avatarUrl: users.avatarUrl,
+          emailVerifiedAt: users.emailVerifiedAt,
+          createdAt: users.createdAt,
+          enrollmentCount: sql<number>`(SELECT COUNT(*) FROM enrollments WHERE enrollments.user_id = ${users.id})`,
+        })
+        .from(users)
+        .where(whereCondition)
+        .orderBy(sortOrder === 'asc' ? orderColumn : desc(orderColumn))
+        .limit(limit)
+        .offset(offset),
+      // Get total count with filters
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(whereCondition),
+      // Get role stats (always total, unfiltered)
+      db
+        .select({
+          total: sql<number>`count(*)`,
+          admins: sql<number>`sum(case when role = 'admin' then 1 else 0 end)`,
+          instructors: sql<number>`sum(case when role = 'instructor' then 1 else 0 end)`,
+          students: sql<number>`sum(case when role = 'student' then 1 else 0 end)`,
+        })
+        .from(users),
+    ]);
 
-    // Get total count with filters
-    const [{ count: totalCount }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
-
-    // Get role stats (always total, unfiltered)
-    const [stats] = await db
-      .select({
-        total: sql<number>`count(*)`,
-        admins: sql<number>`sum(case when role = 'admin' then 1 else 0 end)`,
-        instructors: sql<number>`sum(case when role = 'instructor' then 1 else 0 end)`,
-        students: sql<number>`sum(case when role = 'student' then 1 else 0 end)`,
-      })
-      .from(users);
+    const totalCount = totalCountResult[0]?.count ?? 0;
+    const stats = statsResult[0];
 
     return NextResponse.json({
       users: userList,

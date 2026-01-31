@@ -12,29 +12,22 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user enrollments
+    // Get user enrollments with course details in a single query (eliminates N+1 problem)
     const userEnrollments = await db
-      .select()
+      .select({
+        enrollment: enrollments,
+        course: courses,
+      })
       .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
       .where(eq(enrollments.userId, session.user.id))
       .orderBy(desc(enrollments.enrolledAt));
 
-    // Get course details for each enrollment
-    const result = [];
-    for (const enrollment of userEnrollments) {
-      const [course] = await db
-        .select()
-        .from(courses)
-        .where(eq(courses.id, enrollment.courseId))
-        .limit(1);
-
-      if (course) {
-        result.push({
-          ...enrollment,
-          course,
-        });
-      }
-    }
+    // Format result
+    const result = userEnrollments.map(({ enrollment, course }) => ({
+      ...enrollment,
+      course,
+    }));
 
     return NextResponse.json({ enrollments: result });
   } catch (error) {

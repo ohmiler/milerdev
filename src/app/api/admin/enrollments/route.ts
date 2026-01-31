@@ -25,49 +25,54 @@ export async function GET(request: Request) {
       conditions.push(eq(enrollments.courseId, courseId));
     }
 
-    // Get enrollments with user and course info
-    const enrollmentList = await db
-      .select({
-        id: enrollments.id,
-        userId: enrollments.userId,
-        courseId: enrollments.courseId,
-        enrolledAt: enrollments.enrolledAt,
-        progressPercent: enrollments.progressPercent,
-        completedAt: enrollments.completedAt,
-        userName: users.name,
-        userEmail: users.email,
-        courseTitle: courses.title,
-        coursePrice: courses.price,
-      })
-      .from(enrollments)
-      .leftJoin(users, eq(enrollments.userId, users.id))
-      .leftJoin(courses, eq(enrollments.courseId, courses.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(enrollments.enrolledAt))
-      .limit(limit)
-      .offset(offset);
+    // Parallelize all independent queries using Promise.all() (async-parallel rule)
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    const [enrollmentList, totalCountResult, statsResult, coursesList] = await Promise.all([
+      // Get enrollments with user and course info
+      db
+        .select({
+          id: enrollments.id,
+          userId: enrollments.userId,
+          courseId: enrollments.courseId,
+          enrolledAt: enrollments.enrolledAt,
+          progressPercent: enrollments.progressPercent,
+          completedAt: enrollments.completedAt,
+          userName: users.name,
+          userEmail: users.email,
+          courseTitle: courses.title,
+          coursePrice: courses.price,
+        })
+        .from(enrollments)
+        .leftJoin(users, eq(enrollments.userId, users.id))
+        .leftJoin(courses, eq(enrollments.courseId, courses.id))
+        .where(whereCondition)
+        .orderBy(desc(enrollments.enrolledAt))
+        .limit(limit)
+        .offset(offset),
+      // Get total count
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(enrollments)
+        .where(whereCondition),
+      // Get stats
+      db
+        .select({
+          total: sql<number>`count(*)`,
+          completed: sql<number>`sum(case when completed_at is not null then 1 else 0 end)`,
+          inProgress: sql<number>`sum(case when completed_at is null and progress_percent > 0 then 1 else 0 end)`,
+          notStarted: sql<number>`sum(case when progress_percent = 0 or progress_percent is null then 1 else 0 end)`,
+        })
+        .from(enrollments),
+      // Get all courses for filter dropdown
+      db
+        .select({ id: courses.id, title: courses.title })
+        .from(courses)
+        .orderBy(courses.title),
+    ]);
 
-    // Get total count
-    const [{ count: totalCount }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(enrollments)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
-
-    // Get stats
-    const [stats] = await db
-      .select({
-        total: sql<number>`count(*)`,
-        completed: sql<number>`sum(case when completed_at is not null then 1 else 0 end)`,
-        inProgress: sql<number>`sum(case when completed_at is null and progress_percent > 0 then 1 else 0 end)`,
-        notStarted: sql<number>`sum(case when progress_percent = 0 or progress_percent is null then 1 else 0 end)`,
-      })
-      .from(enrollments);
-
-    // Get all courses for filter dropdown
-    const coursesList = await db
-      .select({ id: courses.id, title: courses.title })
-      .from(courses)
-      .orderBy(courses.title);
+    const totalCount = totalCountResult[0]?.count ?? 0;
+    const stats = statsResult[0];
 
     return NextResponse.json({
       enrollments: enrollmentList,

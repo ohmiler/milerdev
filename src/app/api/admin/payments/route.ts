@@ -29,48 +29,54 @@ export async function GET(request: Request) {
       conditions.push(eq(payments.method, method as 'stripe' | 'promptpay' | 'bank_transfer'));
     }
 
-    // Get payments with user and course info
-    const paymentList = await db
-      .select({
-        id: payments.id,
-        amount: payments.amount,
-        currency: payments.currency,
-        method: payments.method,
-        status: payments.status,
-        stripePaymentId: payments.stripePaymentId,
-        slipUrl: payments.slipUrl,
-        createdAt: payments.createdAt,
-        userId: payments.userId,
-        courseId: payments.courseId,
-        userName: users.name,
-        userEmail: users.email,
-        courseTitle: courses.title,
-      })
-      .from(payments)
-      .leftJoin(users, eq(payments.userId, users.id))
-      .leftJoin(courses, eq(payments.courseId, courses.id))
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(payments.createdAt))
-      .limit(limit)
-      .offset(offset);
+    // Parallelize all independent queries using Promise.all() (async-parallel rule)
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    const [paymentList, totalCountResult, statsResult] = await Promise.all([
+      // Get payments with user and course info
+      db
+        .select({
+          id: payments.id,
+          amount: payments.amount,
+          currency: payments.currency,
+          method: payments.method,
+          status: payments.status,
+          stripePaymentId: payments.stripePaymentId,
+          slipUrl: payments.slipUrl,
+          createdAt: payments.createdAt,
+          userId: payments.userId,
+          courseId: payments.courseId,
+          userName: users.name,
+          userEmail: users.email,
+          courseTitle: courses.title,
+        })
+        .from(payments)
+        .leftJoin(users, eq(payments.userId, users.id))
+        .leftJoin(courses, eq(payments.courseId, courses.id))
+        .where(whereCondition)
+        .orderBy(desc(payments.createdAt))
+        .limit(limit)
+        .offset(offset),
+      // Get total count for pagination
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(payments)
+        .where(whereCondition),
+      // Get stats
+      db
+        .select({
+          total: sql<number>`count(*)`,
+          pending: sql<number>`sum(case when status = 'pending' then 1 else 0 end)`,
+          completed: sql<number>`sum(case when status = 'completed' then 1 else 0 end)`,
+          failed: sql<number>`sum(case when status = 'failed' then 1 else 0 end)`,
+          refunded: sql<number>`sum(case when status = 'refunded' then 1 else 0 end)`,
+          totalRevenue: sql<number>`sum(case when status = 'completed' then amount else 0 end)`,
+        })
+        .from(payments),
+    ]);
 
-    // Get total count for pagination
-    const [{ count: totalCount }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(payments)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
-
-    // Get stats
-    const [stats] = await db
-      .select({
-        total: sql<number>`count(*)`,
-        pending: sql<number>`sum(case when status = 'pending' then 1 else 0 end)`,
-        completed: sql<number>`sum(case when status = 'completed' then 1 else 0 end)`,
-        failed: sql<number>`sum(case when status = 'failed' then 1 else 0 end)`,
-        refunded: sql<number>`sum(case when status = 'refunded' then 1 else 0 end)`,
-        totalRevenue: sql<number>`sum(case when status = 'completed' then amount else 0 end)`,
-      })
-      .from(payments);
+    const totalCount = totalCountResult[0]?.count ?? 0;
+    const stats = statsResult[0];
 
     return NextResponse.json({
       payments: paymentList,

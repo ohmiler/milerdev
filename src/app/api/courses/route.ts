@@ -45,52 +45,55 @@ export async function GET(request: Request) {
                 orderBy = desc(courses.createdAt);
         }
 
-        // Use simple select instead of relational query (MariaDB compatibility)
-        const allCourses = await db
-            .select()
-            .from(courses)
-            .where(and(...conditions))
-            .orderBy(orderBy)
-            .limit(limit)
-            .offset(offset);
+        // Parallelize courses query and total count query (async-parallel rule)
+        const whereCondition = and(...conditions);
+        
+        const [allCourses, totalResult] = await Promise.all([
+            db
+                .select()
+                .from(courses)
+                .where(whereCondition)
+                .orderBy(orderBy)
+                .limit(limit)
+                .offset(offset),
+            db
+                .select({ total: count() })
+                .from(courses)
+                .where(whereCondition),
+        ]);
+
+        const total = totalResult[0]?.total ?? 0;
 
         // Get instructor and lesson count for each course
+        // Parallelize both queries inside map (async-parallel rule)
         const formattedCourses = await Promise.all(
             allCourses.map(async (course) => {
-                // Get instructor
-                let instructor = null;
-                if (course.instructorId) {
-                    const [instructorData] = await db
-                        .select({
-                            id: users.id,
-                            name: users.name,
-                            avatarUrl: users.avatarUrl,
-                        })
-                        .from(users)
-                        .where(eq(users.id, course.instructorId))
-                        .limit(1);
-                    instructor = instructorData || null;
-                }
-
-                // Get lesson count
-                const [lessonCountResult] = await db
-                    .select({ count: count() })
-                    .from(lessons)
-                    .where(eq(lessons.courseId, course.id));
+                // Parallelize instructor and lesson count queries
+                const [instructorResult, lessonCountResult] = await Promise.all([
+                    course.instructorId
+                        ? db
+                            .select({
+                                id: users.id,
+                                name: users.name,
+                                avatarUrl: users.avatarUrl,
+                            })
+                            .from(users)
+                            .where(eq(users.id, course.instructorId))
+                            .limit(1)
+                        : Promise.resolve([]),
+                    db
+                        .select({ count: count() })
+                        .from(lessons)
+                        .where(eq(lessons.courseId, course.id)),
+                ]);
 
                 return {
                     ...course,
-                    instructor,
-                    lessonCount: lessonCountResult?.count || 0,
+                    instructor: instructorResult[0] || null,
+                    lessonCount: lessonCountResult[0]?.count || 0,
                 };
             })
         );
-
-        // Get total count with filters
-        const [{ total }] = await db
-            .select({ total: count() })
-            .from(courses)
-            .where(and(...conditions));
 
         return NextResponse.json({
             courses: formattedCourses,
