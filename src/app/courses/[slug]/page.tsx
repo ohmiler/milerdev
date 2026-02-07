@@ -8,6 +8,7 @@ import CourseLessonList from '@/components/course/CourseLessonList';
 import { db } from '@/lib/db';
 import { courses, lessons, users } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
+import { getExcerpt } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,7 +97,7 @@ export default async function CourseDetailPage({ params }: Props) {
                   marginBottom: '24px',
                   lineHeight: 1.7,
                 }}>
-                  {course.description.replace(/<[^>]*>/g, '').slice(0, 200)}...
+                  {getExcerpt(course.description, 200)}
                 </p>
               )}
 
