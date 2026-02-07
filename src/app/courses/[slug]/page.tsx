@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import EnrollButton from '@/components/course/EnrollButton';
@@ -147,10 +148,12 @@ export default async function CourseDetailPage({ params }: Props) {
                     position: 'relative'
                   }}>
                     {course.thumbnailUrl ? (
-                      <img
+                      <Image
                         src={course.thumbnailUrl}
                         alt={course.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 400px"
+                        style={{ objectFit: 'cover' }}
                       />
                     ) : (
                       <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,10 +217,12 @@ export default async function CourseDetailPage({ params }: Props) {
                     position: 'relative'
                   }}>
                     {course.thumbnailUrl ? (
-                      <img
+                      <Image
                         src={course.thumbnailUrl}
                         alt={course.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                        fill
+                        sizes="400px"
+                        style={{ objectFit: 'cover' }}
                       />
                     ) : (
                       <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">

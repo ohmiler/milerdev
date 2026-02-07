@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface CourseCardProps {
     id: string;
@@ -33,11 +34,12 @@ export default function CourseCard({
                     position: 'relative'
                 }}>
                     {thumbnailUrl ? (
-                        <img
+                        <Image
                             src={thumbnailUrl}
                             alt={title}
-                            className="group-hover:scale-105 transition-transform duration-300"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className="group-hover:scale-105 transition-transform duration-300 object-cover"
                         />
                     ) : (
                         <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">

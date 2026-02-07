@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Image from 'next/image';
 import { auth } from '@/lib/auth';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -83,12 +84,12 @@ export default async function ProfilePage() {
                                 left: '32px',
                             }}>
                                 {user.avatarUrl ? (
-                                    <img
+                                    <Image
                                         src={user.avatarUrl}
                                         alt={user.name || 'Avatar'}
+                                        width={100}
+                                        height={100}
                                         style={{
-                                            width: '100px',
-                                            height: '100px',
                                             borderRadius: '50%',
                                             border: '4px solid white',
                                             objectFit: 'cover',

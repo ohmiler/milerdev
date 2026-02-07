@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { courses, enrollments, payments } from '@/lib/db/schema';
@@ -163,12 +164,12 @@ export default async function PaymentSuccessPage({ params }: Props) {
             marginBottom: '12px',
           }}>
             {course.thumbnailUrl && (
-              <img
+              <Image
                 src={course.thumbnailUrl}
                 alt={course.title}
+                width={60}
+                height={40}
                 style={{
-                  width: '60px',
-                  height: '40px',
                   objectFit: 'cover',
                   borderRadius: '6px',
                 }}

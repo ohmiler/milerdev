@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -40,11 +41,15 @@ function Avatar({ image, name, size = 'md' }: { image?: string | null; name?: st
         lg: 'w-11 h-11 text-sm',
     };
     
+    const sizePixels = { sm: 32, md: 36, lg: 44 };
+
     if (image) {
         return (
-            <img
+            <Image
                 src={image}
                 alt={name || 'Avatar'}
+                width={sizePixels[size]}
+                height={sizePixels[size]}
                 className={`${sizeClasses[size]} rounded-full object-cover border-2 border-blue-100`}
             />
         );

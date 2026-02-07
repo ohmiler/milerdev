@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { auth } from '@/lib/auth';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -214,10 +215,12 @@ export default async function DashboardPage() {
                       position: 'relative',
                     }}>
                       {enrollment.course.thumbnailUrl ? (
-                        <img
+                        <Image
                           src={enrollment.course.thumbnailUrl}
                           alt={enrollment.course.title}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          style={{ objectFit: 'cover' }}
                         />
                       ) : (
                         <div style={{
