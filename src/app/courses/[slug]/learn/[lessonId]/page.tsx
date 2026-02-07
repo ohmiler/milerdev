@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { courses, lessons, enrollments } from '@/lib/db/schema';
+import { courses, lessons, enrollments, lessonProgress } from '@/lib/db/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import LearnPageClient from '@/components/course/LearnPageClient';
 import { generateSignedVideoUrl, extractBunnyVideoId, isBunnyVideo } from '@/lib/bunny';
@@ -64,6 +64,23 @@ async function getLessonWithAccess(slug: string, lessonId: string, userId: strin
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
+  // Get completed lesson IDs for this user
+  let completedLessonIds: string[] = [];
+  if (userId) {
+    const completedProgress = await db
+      .select({ lessonId: lessonProgress.lessonId })
+      .from(lessonProgress)
+      .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+      .where(
+        and(
+          eq(lessonProgress.userId, userId),
+          eq(lessons.courseId, course.id),
+          eq(lessonProgress.completed, true)
+        )
+      );
+    completedLessonIds = completedProgress.map(p => p.lessonId);
+  }
+
   return {
     accessDenied: false,
     course,
@@ -73,6 +90,7 @@ async function getLessonWithAccess(slug: string, lessonId: string, userId: strin
     nextLesson,
     currentIndex,
     isEnrolled,
+    completedLessonIds,
   };
 }
 
@@ -93,7 +111,7 @@ export default async function LessonPage({ params }: Props) {
     redirect(`/courses/${slug}?access=denied`);
   }
 
-  const { course, lesson, allLessons, prevLesson, nextLesson, currentIndex, isEnrolled } = data;
+  const { course, lesson, allLessons, prevLesson, nextLesson, currentIndex, isEnrolled, completedLessonIds } = data;
 
   // Additional null check for lesson
   if (!lesson) {
@@ -118,6 +136,7 @@ export default async function LessonPage({ params }: Props) {
       nextLesson={nextLesson}
       currentIndex={currentIndex ?? 0}
       isEnrolled={isEnrolled ?? false}
+      completedLessonIds={completedLessonIds ?? []}
     />
   );
 }

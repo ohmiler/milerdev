@@ -14,6 +14,7 @@ interface LessonListProps {
   courseSlug: string;
   currentLessonId?: string;
   isEnrolled?: boolean;
+  completedLessonIds?: Set<string>;
   onLockedClick?: (lessonId: string) => void;
 }
 
@@ -24,7 +25,7 @@ const formatDuration = (seconds: number | null) => {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-export default function LessonList({ lessons, courseSlug, currentLessonId, isEnrolled = false, onLockedClick }: LessonListProps) {
+export default function LessonList({ lessons, courseSlug, currentLessonId, isEnrolled = false, completedLessonIds, onLockedClick }: LessonListProps) {
   if (lessons.length === 0) {
     return (
       <div style={{
@@ -42,6 +43,7 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
       {lessons.map((lesson, index) => {
         const isLocked = !isEnrolled && !lesson.isFreePreview;
         const isCurrent = lesson.id === currentLessonId;
+        const isCompleted = completedLessonIds?.has(lesson.id) ?? false;
 
         if (isLocked) {
           return (
@@ -123,7 +125,7 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
               width: '28px',
               height: '28px',
               borderRadius: '50%',
-              background: isCurrent ? '#2563eb' : '#334155',
+              background: isCompleted ? '#16a34a' : isCurrent ? '#2563eb' : '#334155',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -131,7 +133,13 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
               fontWeight: 600,
               flexShrink: 0,
             }}>
-              {index + 1}
+              {isCompleted ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                  <path d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                index + 1
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{

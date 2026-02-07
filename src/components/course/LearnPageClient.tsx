@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import LessonList from './LessonList';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
@@ -28,6 +28,7 @@ interface LearnPageClientProps {
   nextLesson: Lesson | null;
   currentIndex: number;
   isEnrolled: boolean;
+  completedLessonIds: string[];
 }
 
 const formatDuration = (seconds: number | null) => {
@@ -45,9 +46,48 @@ export default function LearnPageClient({
   nextLesson,
   currentIndex,
   isEnrolled,
+  completedLessonIds: initialCompletedIds,
 }: LearnPageClientProps) {
   const [lockedMessage, setLockedMessage] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
+  const [markingComplete, setMarkingComplete] = useState(false);
+
+  const isCurrentCompleted = completedIds.has(currentLesson.id);
+  const completedCount = completedIds.size;
+  const totalCount = allLessons.length;
+  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  const handleMarkComplete = useCallback(async () => {
+    if (markingComplete) return;
+    setMarkingComplete(true);
+    const newCompleted = !isCurrentCompleted;
+    try {
+      const res = await fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId: currentLesson.id,
+          completed: newCompleted,
+        }),
+      });
+      if (res.ok) {
+        setCompletedIds(prev => {
+          const next = new Set(prev);
+          if (newCompleted) {
+            next.add(currentLesson.id);
+          } else {
+            next.delete(currentLesson.id);
+          }
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error('Failed to update progress:', error);
+    } finally {
+      setMarkingComplete(false);
+    }
+  }, [currentLesson.id, isCurrentCompleted, markingComplete]);
 
   const handleLockedClick = (lessonId: string) => {
     const lesson = allLessons.find(l => l.id === lessonId);
@@ -86,8 +126,36 @@ export default function LearnPageClient({
           <span style={{ color: 'white', fontWeight: 500 }}>{course.title}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-            บทที่ {currentIndex + 1} / {allLessons.length}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {isEnrolled && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.75rem',
+                color: progressPercent === 100 ? '#4ade80' : '#94a3b8',
+              }}>
+                <div style={{
+                  width: '60px',
+                  height: '4px',
+                  background: '#334155',
+                  borderRadius: '2px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${progressPercent}%`,
+                    background: progressPercent === 100 ? '#4ade80' : '#3b82f6',
+                    borderRadius: '2px',
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+                {progressPercent}%
+              </div>
+            )}
+            <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+              บทที่ {currentIndex + 1} / {allLessons.length}
+            </div>
           </div>
           {/* Mobile sidebar toggle */}
           <button
@@ -208,11 +276,45 @@ export default function LearnPageClient({
               {currentLesson.title}
             </h1>
 
-            {formatDuration(currentLesson.videoDuration) && (
-              <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '16px' }}>
-                ⏱️ {formatDuration(currentLesson.videoDuration)}
-              </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              {formatDuration(currentLesson.videoDuration) && (
+                <div style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                  ⏱️ {formatDuration(currentLesson.videoDuration)}
+                </div>
+              )}
+
+              {isEnrolled && (
+                <button
+                  onClick={handleMarkComplete}
+                  disabled={markingComplete}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: isCurrentCompleted ? '1px solid #22c55e' : '1px solid #475569',
+                    background: isCurrentCompleted ? 'rgba(34, 197, 94, 0.1)' : 'transparent',
+                    color: isCurrentCompleted ? '#4ade80' : '#94a3b8',
+                    cursor: markingComplete ? 'wait' : 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {isCurrentCompleted ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                    </svg>
+                  )}
+                  {markingComplete ? 'กำลังบันทึก...' : isCurrentCompleted ? 'เรียนจบแล้ว' : 'ทำเครื่องหมายว่าเรียนจบ'}
+                </button>
+              )}
+            </div>
 
             {currentLesson.content && (
               <div style={{
@@ -375,6 +477,7 @@ export default function LearnPageClient({
               courseSlug={course.slug}
               currentLessonId={currentLesson.id}
               isEnrolled={isEnrolled}
+              completedLessonIds={completedIds}
               onLockedClick={(id) => {
                 handleLockedClick(id);
                 setSidebarOpen(false);

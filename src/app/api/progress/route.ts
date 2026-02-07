@@ -14,25 +14,28 @@ export async function POST(request: Request) {
 
         const { lessonId, watchTimeSeconds, completed } = await request.json();
 
-        // Get lesson to check course enrollment
-        const lesson = await db.query.lessons.findFirst({
-            where: eq(lessons.id, lessonId),
-            with: {
-                course: true,
-            },
-        });
+        // Get lesson
+        const [lesson] = await db
+            .select()
+            .from(lessons)
+            .where(eq(lessons.id, lessonId))
+            .limit(1);
 
         if (!lesson) {
             return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
         }
 
         // Check enrollment
-        const enrollment = await db.query.enrollments.findFirst({
-            where: and(
-                eq(enrollments.userId, session.user.id),
-                eq(enrollments.courseId, lesson.courseId)
-            ),
-        });
+        const [enrollment] = await db
+            .select()
+            .from(enrollments)
+            .where(
+                and(
+                    eq(enrollments.userId, session.user.id),
+                    eq(enrollments.courseId, lesson.courseId)
+                )
+            )
+            .limit(1);
 
         if (!enrollment && !lesson.isFreePreview) {
             return NextResponse.json(
@@ -42,12 +45,16 @@ export async function POST(request: Request) {
         }
 
         // Update or create progress
-        const existingProgress = await db.query.lessonProgress.findFirst({
-            where: and(
-                eq(lessonProgress.userId, session.user.id),
-                eq(lessonProgress.lessonId, lessonId)
-            ),
-        });
+        const [existingProgress] = await db
+            .select()
+            .from(lessonProgress)
+            .where(
+                and(
+                    eq(lessonProgress.userId, session.user.id),
+                    eq(lessonProgress.lessonId, lessonId)
+                )
+            )
+            .limit(1);
 
         if (existingProgress) {
             await db
@@ -126,21 +133,38 @@ export async function GET(request: Request) {
             );
         }
 
-        // Get all lesson progress for this course
-        const courseLessons = await db.query.lessons.findMany({
-            where: eq(lessons.courseId, courseId),
-            with: {
-                progress: {
-                    where: eq(lessonProgress.userId, session.user.id),
-                },
-            },
-        });
+        // Get all lessons for this course
+        const courseLessons = await db
+            .select({ id: lessons.id })
+            .from(lessons)
+            .where(eq(lessons.courseId, courseId));
 
-        const progressMap = courseLessons.map((lesson) => ({
-            lessonId: lesson.id,
-            completed: lesson.progress[0]?.completed || false,
-            watchTimeSeconds: lesson.progress[0]?.watchTimeSeconds || 0,
-        }));
+        // Get progress for these lessons
+        const userProgress = await db
+            .select({
+                lessonId: lessonProgress.lessonId,
+                completed: lessonProgress.completed,
+                watchTimeSeconds: lessonProgress.watchTimeSeconds,
+            })
+            .from(lessonProgress)
+            .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+            .where(
+                and(
+                    eq(lessonProgress.userId, session.user.id),
+                    eq(lessons.courseId, courseId)
+                )
+            );
+
+        const progressLookup = new Map(userProgress.map(p => [p.lessonId, p]));
+
+        const progressMap = courseLessons.map((lesson) => {
+            const p = progressLookup.get(lesson.id);
+            return {
+                lessonId: lesson.id,
+                completed: p?.completed || false,
+                watchTimeSeconds: p?.watchTimeSeconds || 0,
+            };
+        });
 
         return NextResponse.json({ progress: progressMap });
     } catch (error) {
