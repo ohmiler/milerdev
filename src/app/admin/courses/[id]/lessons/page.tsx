@@ -207,10 +207,10 @@ export default function ManageLessonsPage({ params }: Props) {
                 URL วิดีโอ
               </label>
               <input
-                type="url"
+                type="text"
                 value={formData.videoUrl}
                 onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                placeholder="https://vimeo.com/123456"
+                placeholder="Bunny Video GUID หรือ Embed URL"
                 style={{
                   width: '100%',
                   padding: '12px 16px',

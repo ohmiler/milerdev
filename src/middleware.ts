@@ -19,12 +19,12 @@ export function middleware(_request: NextRequest) {
         // Content Security Policy
         'Content-Security-Policy': [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://player.bunnycdn.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "img-src 'self' data: blob: https: http:",
             "font-src 'self' https://fonts.gstatic.com",
-            "connect-src 'self' https://api.stripe.com https://*.bunny.net",
-            "frame-src 'self' https://js.stripe.com https://*.bunny.net",
+            "connect-src 'self' https://api.stripe.com https://*.bunny.net https://*.bunnyinfra.net",
+            "frame-src 'self' https://js.stripe.com https://*.bunny.net https://iframe.mediadelivery.net https://www.youtube.com https://player.vimeo.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",

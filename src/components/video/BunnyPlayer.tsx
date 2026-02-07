@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 interface BunnyPlayerProps {
   videoId: string;
@@ -101,17 +101,6 @@ export default function BunnyPlayer({
 
   const embedUrl = getEmbedUrl();
   const finalUrl = embedUrl;
-
-  useEffect(() => {
-    // Load Bunny.net player script if needed
-    const existingScript = document.querySelector('script[src*="player.bunnycdn.com"]');
-    if (!existingScript) {
-      const script = document.createElement('script');
-      script.src = 'https://player.bunnycdn.com/iframe-embed.js';
-      script.async = true;
-      document.body.appendChild(script);
-    }
-  }, []);
 
   if (!videoId) {
     return (

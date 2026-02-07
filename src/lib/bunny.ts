@@ -39,6 +39,34 @@ export function generateDirectVideoUrl(
 }
 
 /**
+ * Extract Bunny.net video GUID from various URL formats
+ * Supports: embed URL, play URL, CDN URL, or raw GUID
+ */
+export function extractBunnyVideoId(input: string): string | null {
+    // Already a GUID
+    if (/^[a-f0-9-]{36}$/i.test(input.trim())) {
+        return input.trim();
+    }
+
+    // Match GUID from URLs like:
+    // https://iframe.mediadelivery.net/embed/592809/b7bdef9b-...
+    // https://iframe.mediadelivery.net/play/592809/b7bdef9b-...
+    // https://vz-xxxxx.b-cdn.net/b7bdef9b-...
+    const guidMatch = input.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+    return guidMatch ? guidMatch[1] : null;
+}
+
+/**
+ * Check if a video URL is from Bunny.net
+ */
+export function isBunnyVideo(url: string): boolean {
+    return url.includes('mediadelivery.net') 
+        || url.includes('bunnycdn.com') 
+        || url.includes('b-cdn.net')
+        || /^[a-f0-9-]{36}$/i.test(url.trim());
+}
+
+/**
  * Upload video to Bunny.net (for admin use)
  */
 export async function createVideoUpload(title: string): Promise<{
