@@ -1,8 +1,12 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { users } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +16,14 @@ export default async function SettingsPage() {
     if (!session?.user) {
         redirect('/login');
     }
+
+    const [user] = await db
+        .select({ passwordHash: users.passwordHash })
+        .from(users)
+        .where(eq(users.id, session.user.id))
+        .limit(1);
+
+    const hasPassword = !!user?.passwordHash;
 
     return (
         <>
@@ -75,89 +87,7 @@ export default async function SettingsPage() {
                                     </svg>
                                 </Link>
 
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '16px',
-                                        background: '#f8fafc',
-                                        borderRadius: '12px',
-                                        opacity: 0.6,
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <svg style={{ width: '20px', height: '20px', color: '#64748b' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                        </svg>
-                                        <div>
-                                            <div style={{ fontWeight: 500, color: '#1e293b' }}>เปลี่ยนรหัสผ่าน</div>
-                                            <div style={{ fontSize: '0.875rem', color: '#64748b' }}>เร็วๆ นี้</div>
-                                        </div>
-                                    </div>
-                                    <span style={{ fontSize: '0.75rem', background: '#e2e8f0', padding: '4px 8px', borderRadius: '4px', color: '#64748b' }}>
-                                        Coming Soon
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Notification Settings */}
-                        <div style={{
-                            background: 'white',
-                            borderRadius: '16px',
-                            padding: '24px',
-                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                        }}>
-                            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-                                การแจ้งเตือน
-                            </h2>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '16px',
-                                    background: '#f8fafc',
-                                    borderRadius: '12px',
-                                }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <svg style={{ width: '20px', height: '20px', color: '#64748b' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        <div>
-                                            <div style={{ fontWeight: 500, color: '#1e293b' }}>แจ้งเตือนทางอีเมล</div>
-                                            <div style={{ fontSize: '0.875rem', color: '#64748b' }}>รับข่าวสารและอัพเดทคอร์ส</div>
-                                        </div>
-                                    </div>
-                                    <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '24px' }}>
-                                        <input type="checkbox" defaultChecked style={{ opacity: 0, width: 0, height: 0 }} />
-                                        <span style={{
-                                            position: 'absolute',
-                                            cursor: 'pointer',
-                                            top: 0,
-                                            left: 0,
-                                            right: 0,
-                                            bottom: 0,
-                                            background: '#2563eb',
-                                            borderRadius: '24px',
-                                            transition: '0.3s',
-                                        }}>
-                                            <span style={{
-                                                position: 'absolute',
-                                                content: '',
-                                                height: '18px',
-                                                width: '18px',
-                                                left: '26px',
-                                                bottom: '3px',
-                                                background: 'white',
-                                                borderRadius: '50%',
-                                                transition: '0.3s',
-                                            }} />
-                                        </span>
-                                    </label>
-                                </div>
+                                <ChangePasswordForm hasPassword={hasPassword} />
                             </div>
                         </div>
 
