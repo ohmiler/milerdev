@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { payments, enrollments } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 interface RouteParams {
@@ -81,7 +81,12 @@ export async function PUT(request: Request, { params }: RouteParams) {
         const [existingEnrollment] = await db
           .select()
           .from(enrollments)
-          .where(eq(enrollments.userId, existingPayment.userId))
+          .where(
+            and(
+              eq(enrollments.userId, existingPayment.userId),
+              eq(enrollments.courseId, existingPayment.courseId)
+            )
+          )
           .limit(1);
 
         if (!existingEnrollment) {
