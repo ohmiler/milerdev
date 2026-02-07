@@ -8,7 +8,7 @@ dotenv.config({ path: '.env.local' });
 
 let wpConnection: mysql.Connection;
 let newConnection: Pool;
-let db: ReturnType<typeof drizzle>;
+let db: any;
 
 // ID mappings: WordPress ID -> New ID
 const userIdMap = new Map<number, string>();

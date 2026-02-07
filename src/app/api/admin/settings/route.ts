@@ -119,7 +119,7 @@ export async function PUT(request: Request) {
         id: createId(),
         key,
         value: String(value),
-        type: defaultSetting?.type || 'string',
+        type: (defaultSetting?.type || 'string') as 'string' | 'number' | 'boolean' | 'json',
         description: defaultSetting?.description || null,
         updatedAt: new Date(),
         updatedBy: session.user.id,

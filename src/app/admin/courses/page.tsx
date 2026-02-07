@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { courses, lessons, enrollments } from '@/lib/db/schema';
-import { desc, eq, count, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 

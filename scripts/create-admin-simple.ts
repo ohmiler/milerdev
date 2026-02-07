@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import mysql from 'mysql2/promise';
+import mysql, { RowDataPacket } from 'mysql2/promise';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
@@ -19,7 +19,7 @@ async function createAdmin() {
 
   try {
     // Check if admin exists
-    const [existingAdmin] = await connection.execute(
+    const [existingAdmin] = await connection.execute<RowDataPacket[]>(
       'SELECT id FROM users WHERE email = ?',
       [email]
     );

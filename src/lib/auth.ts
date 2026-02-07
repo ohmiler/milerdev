@@ -10,7 +10,7 @@ import { eq } from "drizzle-orm";
 export const { handlers, signIn, signOut, auth } = NextAuth({
     adapter: DrizzleAdapter(db, {
         usersTable: schema.users,
-    }),
+    } as any),
     session: {
         strategy: "jwt",
         maxAge: 7 * 24 * 60 * 60, // 7 days

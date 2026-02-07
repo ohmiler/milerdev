@@ -75,6 +75,40 @@ export async function sendEnrollmentEmail({
     });
 }
 
+interface SendPasswordResetEmailParams {
+    email: string;
+    name: string | null;
+    resetToken: string;
+}
+
+/**
+ * Send password reset email
+ */
+export async function sendPasswordResetEmail({
+    email,
+    name,
+    resetToken,
+}: SendPasswordResetEmailParams) {
+    const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
+    await resend.emails.send({
+        from: EMAIL_FROM,
+        to: email,
+        subject: "รีเซ็ตรหัสผ่าน - MilerDev",
+        html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1>รีเซ็ตรหัสผ่าน</h1>
+        <p>สวัสดี ${name || 'คุณ'},</p>
+        <p>เราได้รับคำขอรีเซ็ตรหัสผ่านของคุณ คลิกปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่</p>
+        <a href="${resetUrl}" 
+           style="display: inline-block; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">
+          ตั้งรหัสผ่านใหม่
+        </a>
+        <p style="margin-top: 16px; color: #64748b; font-size: 0.875rem;">ลิงก์นี้จะหมดอายุใน 1 ชั่วโมง หากคุณไม่ได้ร้องขอ กรุณาเพิกเฉยอีเมลนี้</p>
+      </div>
+    `,
+    });
+}
+
 /**
  * Send payment confirmation email
  */

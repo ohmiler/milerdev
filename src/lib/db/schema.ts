@@ -13,6 +13,8 @@ export const users = mysqlTable('users', {
     avatarUrl: text('avatar_url'),
     role: varchar('role', { length: 20, enum: ['student', 'instructor', 'admin'] }).default('student').notNull(),
     emailVerifiedAt: datetime('email_verified_at'),
+    resetToken: varchar('reset_token', { length: 255 }),
+    resetExpires: datetime('reset_expires'),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
 });
