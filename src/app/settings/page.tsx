@@ -96,48 +96,6 @@ export default async function SettingsPage() {
                                 <ChangePasswordForm hasPassword={hasPassword} />
                             </div>
                         </div>
-
-                        {/* Danger Zone */}
-                        <div style={{
-                            background: 'white',
-                            borderRadius: '16px',
-                            padding: '24px',
-                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                            border: '1px solid #fecaca',
-                        }}>
-                            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#dc2626', marginBottom: '20px' }}>
-                                โซนอันตราย
-                            </h2>
-
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '16px',
-                                background: '#fef2f2',
-                                borderRadius: '12px',
-                            }}>
-                                <div>
-                                    <div style={{ fontWeight: 500, color: '#dc2626' }}>ลบบัญชี</div>
-                                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>ลบบัญชีและข้อมูลทั้งหมดอย่างถาวร</div>
-                                </div>
-                                <button
-                                    style={{
-                                        padding: '8px 16px',
-                                        background: 'white',
-                                        border: '1px solid #dc2626',
-                                        borderRadius: '8px',
-                                        color: '#dc2626',
-                                        fontWeight: 500,
-                                        cursor: 'not-allowed',
-                                        opacity: 0.5,
-                                    }}
-                                    disabled
-                                >
-                                    ลบบัญชี
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </main>

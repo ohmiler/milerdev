@@ -42,17 +42,6 @@ export default function SettingsLoading() {
                                 <Skeleton width="100%" height="64px" borderRadius="12px" />
                             </div>
                         </div>
-
-                        {/* Danger Zone */}
-                        <div style={{
-                            background: 'white',
-                            borderRadius: '16px',
-                            padding: '24px',
-                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                        }}>
-                            <Skeleton width="100px" height="20px" style={{ marginBottom: '20px' }} />
-                            <Skeleton width="100%" height="64px" borderRadius="12px" />
-                        </div>
                     </div>
                 </div>
             </main>
