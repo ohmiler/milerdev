@@ -11,11 +11,23 @@ export default function NewCoursePage() {
 
   const [formData, setFormData] = useState({
     title: '',
+    slug: '',
     description: '',
     price: '0',
     status: 'draft',
     thumbnailUrl: '',
   });
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9ก-๙\s-]+/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 100);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +100,14 @@ export default function NewCoursePage() {
           <input
             type="text"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => {
+              const newTitle = e.target.value;
+              setFormData(prev => ({
+                ...prev,
+                title: newTitle,
+                ...(!slugManuallyEdited ? { slug: generateSlug(newTitle) } : {}),
+              }));
+            }}
             required
             placeholder="เช่น JavaScript for Beginners"
             style={{
@@ -99,6 +118,52 @@ export default function NewCoursePage() {
               fontSize: '1rem',
             }}
           />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+            Slug (URL)
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: '#64748b', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>/courses/</span>
+            <input
+              type="text"
+              value={formData.slug}
+              onChange={(e) => {
+                setSlugManuallyEdited(true);
+                setFormData({ ...formData, slug: e.target.value });
+              }}
+              placeholder="auto-generated-from-title"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '1rem',
+              }}
+            />
+            {slugManuallyEdited && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSlugManuallyEdited(false);
+                  setFormData(prev => ({ ...prev, slug: generateSlug(prev.title) }));
+                }}
+                style={{
+                  padding: '8px 12px',
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#475569',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                รีเซ็ต
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={{ marginBottom: '20px' }}>
@@ -181,6 +246,22 @@ export default function NewCoursePage() {
               fontSize: '1rem',
             }}
           />
+          {formData.thumbnailUrl && (
+            <div style={{ marginTop: '8px' }}>
+              <img
+                src={formData.thumbnailUrl}
+                alt="Preview"
+                style={{
+                  maxWidth: '200px',
+                  maxHeight: '120px',
+                  borderRadius: '8px',
+                  objectFit: 'cover',
+                  border: '1px solid #e2e8f0',
+                }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>

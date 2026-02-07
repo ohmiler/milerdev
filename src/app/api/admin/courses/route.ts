@@ -13,17 +13,19 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, price, status, thumbnailUrl } = body;
+    const { title, description, price, status, thumbnailUrl, slug: customSlug } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'กรุณาระบุชื่อคอร์ส' }, { status: 400 });
     }
 
-    // Generate slug from title
-    const slug = title
+    // Use custom slug or generate from title
+    const slug = (customSlug || title)
       .toLowerCase()
-      .replace(/[^a-z0-9ก-๙\s]+/g, '')
+      .replace(/[^a-z0-9ก-๙\s-]+/g, '')
       .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
       .substring(0, 100);
 
     const courseId = createId();

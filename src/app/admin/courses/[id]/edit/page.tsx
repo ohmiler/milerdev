@@ -255,6 +255,22 @@ export default function EditCoursePage({ params }: Props) {
               fontSize: '1rem',
             }}
           />
+          {formData.thumbnailUrl && (
+            <div style={{ marginTop: '8px' }}>
+              <img
+                src={formData.thumbnailUrl}
+                alt="Preview"
+                style={{
+                  maxWidth: '200px',
+                  maxHeight: '120px',
+                  borderRadius: '8px',
+                  objectFit: 'cover',
+                  border: '1px solid #e2e8f0',
+                }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
