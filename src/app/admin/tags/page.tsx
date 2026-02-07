@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { showToast } from '@/components/ui/Toast';
 
 interface Tag {
   id: string;
@@ -18,6 +20,7 @@ export default function AdminTagsPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const fetchTags = async () => {
     setLoading(true);
@@ -38,7 +41,7 @@ export default function AdminTagsPage() {
 
   const handleCreate = async () => {
     if (!newTagName.trim()) {
-      alert('กรุณาระบุชื่อแท็ก');
+      showToast('กรุณาระบุชื่อแท็ก', 'error');
       return;
     }
 
@@ -53,12 +56,13 @@ export default function AdminTagsPage() {
       if (res.ok) {
         setNewTagName('');
         await fetchTags();
+        showToast('สร้างแท็กสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาดในการสร้างแท็ก');
+      showToast('เกิดข้อผิดพลาดในการสร้างแท็ก', 'error');
     } finally {
       setCreating(false);
     }
@@ -66,7 +70,7 @@ export default function AdminTagsPage() {
 
   const handleUpdate = async (id: string) => {
     if (!editName.trim()) {
-      alert('กรุณาระบุชื่อแท็ก');
+      showToast('กรุณาระบุชื่อแท็ก', 'error');
       return;
     }
 
@@ -81,17 +85,20 @@ export default function AdminTagsPage() {
         setEditing(null);
         setEditName('');
         await fetchTags();
+        showToast('อัพเดทแท็กสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาดในการอัพเดทแท็ก');
+      showToast('เกิดข้อผิดพลาดในการอัพเดทแท็ก', 'error');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบแท็กนี้?')) return;
+  const confirmDeleteTag = async () => {
+    if (!deleteConfirm) return;
+    const id = deleteConfirm;
+    setDeleteConfirm(null);
 
     setDeleting(id);
     try {
@@ -101,12 +108,13 @@ export default function AdminTagsPage() {
 
       if (res.ok) {
         await fetchTags();
+        showToast('ลบแท็กสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาดในการลบแท็ก');
+      showToast('เกิดข้อผิดพลาดในการลบแท็ก', 'error');
     } finally {
       setDeleting(null);
     }
@@ -291,7 +299,7 @@ export default function AdminTagsPage() {
                         ✏️
                       </button>
                       <button
-                        onClick={() => handleDelete(tag.id)}
+                        onClick={() => setDeleteConfirm(tag.id)}
                         disabled={deleting === tag.id}
                         style={{
                           padding: '4px',
@@ -314,6 +322,14 @@ export default function AdminTagsPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        title="ลบแท็ก"
+        message="คุณแน่ใจหรือไม่ที่จะลบแท็กนี้?"
+        confirmText="ลบแท็ก"
+        onConfirm={confirmDeleteTag}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { showToast } from '@/components/ui/Toast';
 
 interface Setting {
   id: string | null;
@@ -53,12 +54,13 @@ export default function AdminSettingsPage() {
 
       if (res.ok) {
         await fetchSettings();
+        showToast('บันทึกสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาดในการบันทึก');
+      showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
     } finally {
       setSaving(null);
     }

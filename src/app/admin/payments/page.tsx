@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { showToast } from '@/components/ui/Toast';
 
 interface Payment {
   id: string;
@@ -46,6 +48,7 @@ export default function AdminPaymentsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusConfirm, setStatusConfirm] = useState<{ paymentId: string; status: string } | null>(null);
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -73,8 +76,10 @@ export default function AdminPaymentsPage() {
     fetchPayments();
   }, [statusFilter, methodFilter, currentPage]);
 
-  const updatePaymentStatus = async (paymentId: string, newStatus: string) => {
-    if (!confirm(`ยืนยันการเปลี่ยนสถานะเป็น "${getStatusText(newStatus)}"?`)) return;
+  const confirmUpdateStatus = async () => {
+    if (!statusConfirm) return;
+    const { paymentId, status: newStatus } = statusConfirm;
+    setStatusConfirm(null);
     
     setUpdating(paymentId);
     try {
@@ -86,12 +91,13 @@ export default function AdminPaymentsPage() {
 
       if (res.ok) {
         await fetchPayments();
+        showToast('อัพเดทสถานะสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch {
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
     }
@@ -336,7 +342,7 @@ export default function AdminPaymentsPage() {
                           {payment.status === 'pending' && (
                             <>
                               <button
-                                onClick={() => updatePaymentStatus(payment.id, 'completed')}
+                                onClick={() => setStatusConfirm({ paymentId: payment.id, status: 'completed' })}
                                 disabled={updating === payment.id}
                                 style={{
                                   padding: '6px 12px',
@@ -352,7 +358,7 @@ export default function AdminPaymentsPage() {
                                 ยืนยัน
                               </button>
                               <button
-                                onClick={() => updatePaymentStatus(payment.id, 'failed')}
+                                onClick={() => setStatusConfirm({ paymentId: payment.id, status: 'failed' })}
                                 disabled={updating === payment.id}
                                 style={{
                                   padding: '6px 12px',
@@ -371,7 +377,7 @@ export default function AdminPaymentsPage() {
                           )}
                           {payment.status === 'completed' && (
                             <button
-                              onClick={() => updatePaymentStatus(payment.id, 'refunded')}
+                              onClick={() => setStatusConfirm({ paymentId: payment.id, status: 'refunded' })}
                               disabled={updating === payment.id}
                               style={{
                                 padding: '6px 12px',
@@ -441,6 +447,14 @@ export default function AdminPaymentsPage() {
           </>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={!!statusConfirm}
+        title="เปลี่ยนสถานะการชำระเงิน"
+        message={`ยืนยันการเปลี่ยนสถานะเป็น "${statusConfirm ? getStatusText(statusConfirm.status) : ''}"?`}
+        confirmText="ยืนยัน"
+        onConfirm={confirmUpdateStatus}
+        onCancel={() => setStatusConfirm(null)}
+      />
     </div>
   );
 }

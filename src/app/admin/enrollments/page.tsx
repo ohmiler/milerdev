@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { showToast } from '@/components/ui/Toast';
 
 interface Enrollment {
   id: string;
@@ -57,6 +59,7 @@ export default function AdminEnrollmentsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ userId: '', courseId: '' });
   const [adding, setAdding] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const fetchEnrollments = async () => {
     setLoading(true);
@@ -100,8 +103,10 @@ export default function AdminEnrollmentsPage() {
     }
   }, [showAddModal]);
 
-  const handleDelete = async (enrollmentId: string) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบการลงทะเบียนนี้?')) return;
+  const confirmDeleteEnrollment = async () => {
+    if (!deleteConfirm) return;
+    const enrollmentId = deleteConfirm;
+    setDeleteConfirm(null);
     
     setUpdating(enrollmentId);
     try {
@@ -111,12 +116,13 @@ export default function AdminEnrollmentsPage() {
 
       if (res.ok) {
         await fetchEnrollments();
+        showToast('ลบการลงทะเบียนสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch {
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
     }
@@ -124,7 +130,7 @@ export default function AdminEnrollmentsPage() {
 
   const handleAdd = async () => {
     if (!addForm.userId || !addForm.courseId) {
-      alert('กรุณาเลือกผู้ใช้และคอร์ส');
+      showToast('กรุณาเลือกผู้ใช้และคอร์ส', 'error');
       return;
     }
 
@@ -140,12 +146,13 @@ export default function AdminEnrollmentsPage() {
         await fetchEnrollments();
         setShowAddModal(false);
         setAddForm({ userId: '', courseId: '' });
+        showToast('เพิ่มการลงทะเบียนสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch {
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setAdding(false);
     }
@@ -448,7 +455,7 @@ export default function AdminEnrollmentsPage() {
                       </td>
                       <td style={{ padding: '16px', textAlign: 'right' }}>
                         <button
-                          onClick={() => handleDelete(enrollment.id)}
+                          onClick={() => setDeleteConfirm(enrollment.id)}
                           disabled={updating === enrollment.id}
                           style={{
                             padding: '6px 12px',
@@ -516,6 +523,14 @@ export default function AdminEnrollmentsPage() {
           </>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        title="ลบการลงทะเบียน"
+        message="คุณแน่ใจหรือไม่ที่จะลบการลงทะเบียนนี้?"
+        confirmText="ลบ"
+        onConfirm={confirmDeleteEnrollment}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }

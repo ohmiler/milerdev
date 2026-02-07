@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { showToast } from '@/components/ui/Toast';
 
 interface Overview {
   totalRevenue: number;
@@ -118,7 +119,7 @@ export default function AdminReportsPage() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Export error:', error);
-      alert('เกิดข้อผิดพลาดในการส่งออกข้อมูล');
+      showToast('เกิดข้อผิดพลาดในการส่งออกข้อมูล', 'error');
     } finally {
       setExporting(null);
     }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { showToast } from '@/components/ui/Toast';
 
 interface MediaFile {
   id: string;
@@ -40,6 +42,7 @@ export default function AdminMediaPage() {
   const [search, setSearch] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<MediaFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -82,13 +85,14 @@ export default function AdminMediaPage() {
 
         if (!res.ok) {
           const data = await res.json();
-          alert(data.error || 'เกิดข้อผิดพลาดในการอัพโหลด');
+          showToast(data.error || 'เกิดข้อผิดพลาดในการอัพโหลด', 'error');
         }
       }
       await fetchMedia();
+      showToast('อัพโหลดสำเร็จ', 'success');
     } catch (error) {
       console.error('Upload error:', error);
-      alert('เกิดข้อผิดพลาดในการอัพโหลด');
+      showToast('เกิดข้อผิดพลาดในการอัพโหลด', 'error');
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -97,8 +101,10 @@ export default function AdminMediaPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบไฟล์นี้?')) return;
+  const confirmDeleteMedia = async () => {
+    if (!deleteConfirm) return;
+    const id = deleteConfirm;
+    setDeleteConfirm(null);
 
     setDeleting(id);
     try {
@@ -111,13 +117,14 @@ export default function AdminMediaPage() {
         if (selectedMedia?.id === id) {
           setSelectedMedia(null);
         }
+        showToast('ลบไฟล์สำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาดในการลบ');
+        showToast(data.error || 'เกิดข้อผิดพลาดในการลบ', 'error');
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert('เกิดข้อผิดพลาดในการลบ');
+      showToast('เกิดข้อผิดพลาดในการลบ', 'error');
     } finally {
       setDeleting(null);
     }
@@ -143,7 +150,7 @@ export default function AdminMediaPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert('คัดลอก URL แล้ว');
+    showToast('คัดลอก URL แล้ว', 'success');
   };
 
   return (
@@ -500,7 +507,7 @@ export default function AdminMediaPage() {
                   เปิดดู
                 </a>
                 <button
-                  onClick={() => handleDelete(selectedMedia.id)}
+                  onClick={() => setDeleteConfirm(selectedMedia.id)}
                   disabled={deleting === selectedMedia.id}
                   style={{
                     flex: 1,
@@ -521,6 +528,14 @@ export default function AdminMediaPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        title="ลบไฟล์"
+        message="คุณแน่ใจหรือไม่ที่จะลบไฟล์นี้?"
+        confirmText="ลบไฟล์"
+        onConfirm={confirmDeleteMedia}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }

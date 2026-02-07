@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { showToast } from '@/components/ui/Toast';
 
 interface User {
   id: string;
@@ -51,6 +53,8 @@ export default function AdminUsersPage() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ success?: number; skipped?: number; failed?: number; errors?: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -97,19 +101,22 @@ export default function AdminUsersPage() {
       if (res.ok) {
         await fetchUsers();
         setEditingUser(null);
+        showToast('บันทึกสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch {
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
     }
   };
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+  const confirmDeleteUser = async () => {
+    if (!deleteConfirm) return;
+    const userId = deleteConfirm;
+    setDeleteConfirm(null);
 
     setUpdating(userId);
     try {
@@ -119,12 +126,13 @@ export default function AdminUsersPage() {
 
       if (res.ok) {
         await fetchUsers();
+        showToast('ลบผู้ใช้สำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'ไม่สามารถลบผู้ใช้ได้');
+        showToast(data.error || 'ไม่สามารถลบผู้ใช้ได้', 'error');
       }
     } catch {
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
     }
@@ -177,7 +185,7 @@ export default function AdminUsersPage() {
         await fetchUsers();
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาดในการนำเข้า');
+      showToast('เกิดข้อผิดพลาดในการนำเข้า', 'error');
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -202,14 +210,20 @@ export default function AdminUsersPage() {
 
   const handleBulkAction = async () => {
     if (!bulkAction || selectedUsers.length === 0) {
-      alert('กรุณาเลือกผู้ใช้และการดำเนินการ');
+      showToast('กรุณาเลือกผู้ใช้และการดำเนินการ', 'error');
       return;
     }
 
-    if (bulkAction === 'delete' && !confirm(`คุณแน่ใจหรือไม่ที่จะลบ ${selectedUsers.length} ผู้ใช้?`)) {
+    if (bulkAction === 'delete') {
+      setBulkDeleteConfirm(true);
       return;
     }
 
+    await executeBulkAction();
+  };
+
+  const executeBulkAction = async () => {
+    setBulkDeleteConfirm(false);
     setProcessingBulk(true);
     try {
       const res = await fetch('/api/admin/users/bulk', {
@@ -224,15 +238,15 @@ export default function AdminUsersPage() {
 
       const data = await res.json();
       if (res.ok) {
-        alert(`ดำเนินการสำเร็จ ${data.affectedCount} รายการ`);
+        showToast(`ดำเนินการสำเร็จ ${data.affectedCount} รายการ`, 'success');
         setSelectedUsers([]);
         setBulkAction('');
         await fetchUsers();
       } else {
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาด');
+      showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
       setProcessingBulk(false);
     }
@@ -710,7 +724,7 @@ export default function AdminUsersPage() {
                         แก้ไข
                       </button>
                       <button
-                        onClick={() => handleDelete(user.id)}
+                        onClick={() => setDeleteConfirm(user.id)}
                         disabled={updating === user.id}
                         style={{
                           padding: '6px 12px',
@@ -783,6 +797,22 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        title="ลบผู้ใช้"
+        message="คุณแน่ใจหรือไม่ที่จะลบผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้"
+        confirmText="ลบผู้ใช้"
+        onConfirm={confirmDeleteUser}
+        onCancel={() => setDeleteConfirm(null)}
+      />
+      <ConfirmDialog
+        isOpen={bulkDeleteConfirm}
+        title="ลบผู้ใช้หลายรายการ"
+        message={`คุณแน่ใจหรือไม่ที่จะลบ ${selectedUsers.length} ผู้ใช้?`}
+        confirmText="ลบทั้งหมด"
+        onConfirm={executeBulkAction}
+        onCancel={() => setBulkDeleteConfirm(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { showToast } from '@/components/ui/Toast';
 
 interface Announcement {
   id: string;
@@ -31,6 +33,7 @@ export default function AdminAnnouncementsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   
   const [form, setForm] = useState({
     title: '',
@@ -79,7 +82,7 @@ export default function AdminAnnouncementsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.content) {
-      alert('กรุณาระบุหัวข้อและเนื้อหา');
+      showToast('กรุณาระบุหัวข้อและเนื้อหา', 'error');
       return;
     }
 
@@ -99,12 +102,13 @@ export default function AdminAnnouncementsPage() {
         await fetchAnnouncements();
         resetForm();
         setShowForm(false);
+        showToast(editingId ? 'แก้ไขประกาศสำเร็จ' : 'สร้างประกาศสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาด');
+      showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
       setSaving(false);
     }
@@ -125,8 +129,10 @@ export default function AdminAnnouncementsPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบประกาศนี้?')) return;
+  const confirmDeleteAnnouncement = async () => {
+    if (!deleteConfirm) return;
+    const id = deleteConfirm;
+    setDeleteConfirm(null);
 
     setDeleting(id);
     try {
@@ -136,12 +142,13 @@ export default function AdminAnnouncementsPage() {
 
       if (res.ok) {
         await fetchAnnouncements();
+        showToast('ลบประกาศสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาด');
+      showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
       setDeleting(null);
     }
@@ -159,7 +166,7 @@ export default function AdminAnnouncementsPage() {
         await fetchAnnouncements();
       }
     } catch (error) {
-      alert('เกิดข้อผิดพลาด');
+      showToast('เกิดข้อผิดพลาด', 'error');
     }
   };
 
@@ -579,7 +586,7 @@ export default function AdminAnnouncementsPage() {
                       แก้ไข
                     </button>
                     <button
-                      onClick={() => handleDelete(announcement.id)}
+                      onClick={() => setDeleteConfirm(announcement.id)}
                       disabled={deleting === announcement.id}
                       style={{
                         padding: '6px 12px',
@@ -601,6 +608,14 @@ export default function AdminAnnouncementsPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        title="ลบประกาศ"
+        message="คุณแน่ใจหรือไม่ที่จะลบประกาศนี้?"
+        confirmText="ลบประกาศ"
+        onConfirm={confirmDeleteAnnouncement}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }
