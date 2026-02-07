@@ -20,9 +20,13 @@ interface AdminCoursesTableProps {
     courses: Course[];
 }
 
+const PER_PAGE_OPTIONS = [10, 25, 50];
+
 export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
 
     const filtered = courses.filter((course) => {
         const matchesSearch = !search ||
@@ -31,6 +35,9 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
         const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
+
+    const totalPages = Math.ceil(filtered.length / perPage);
+    const paginatedCourses = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
 
     const publishedCount = courses.filter(c => c.status === 'published').length;
     const draftCount = courses.filter(c => c.status === 'draft').length;
@@ -67,7 +74,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                         type="text"
                         placeholder="ค้นหาคอร์ส..."
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                         style={{
                             width: '100%',
                             padding: '10px 12px 10px 40px',
@@ -94,7 +101,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                     ].map((tab) => (
                         <button
                             key={tab.value}
-                            onClick={() => setStatusFilter(tab.value)}
+                            onClick={() => { setStatusFilter(tab.value); setCurrentPage(1); }}
                             style={{
                                 padding: '6px 14px',
                                 borderRadius: '6px',
@@ -145,7 +152,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {filtered.map((course) => (
+                        {paginatedCourses.map((course) => (
                             <tr key={course.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                                 <td style={{ padding: '16px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -227,6 +234,136 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                         ))}
                     </tbody>
                 </table>
+
+                {/* Pagination */}
+                {filtered.length > 0 && (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 16px',
+                        borderTop: '1px solid #e2e8f0',
+                        fontSize: '0.875rem',
+                        color: '#64748b',
+                        flexWrap: 'wrap',
+                        gap: '12px',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>แสดง</span>
+                            <select
+                                value={perPage}
+                                onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                                style={{
+                                    padding: '4px 8px',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '6px',
+                                    fontSize: '0.875rem',
+                                    background: 'white',
+                                }}
+                            >
+                                {PER_PAGE_OPTIONS.map(n => (
+                                    <option key={n} value={n}>{n}</option>
+                                ))}
+                            </select>
+                            <span>รายการ · {(currentPage - 1) * perPage + 1}-{Math.min(currentPage * perPage, filtered.length)} จาก {filtered.length}</span>
+                        </div>
+
+                        {totalPages > 1 && (
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                                <button
+                                    onClick={() => setCurrentPage(1)}
+                                    disabled={currentPage === 1}
+                                    style={{
+                                        padding: '6px 10px',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '6px',
+                                        background: 'white',
+                                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                        opacity: currentPage === 1 ? 0.4 : 1,
+                                        fontSize: '0.8125rem',
+                                    }}
+                                >
+                                    «
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    style={{
+                                        padding: '6px 10px',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '6px',
+                                        background: 'white',
+                                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                        opacity: currentPage === 1 ? 0.4 : 1,
+                                        fontSize: '0.8125rem',
+                                    }}
+                                >
+                                    ‹
+                                </button>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                    .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
+                                    .reduce<(number | string)[]>((acc, page, idx, arr) => {
+                                        if (idx > 0 && page - (arr[idx - 1] as number) > 1) acc.push('...');
+                                        acc.push(page);
+                                        return acc;
+                                    }, [])
+                                    .map((page, idx) => (
+                                        typeof page === 'string' ? (
+                                            <span key={`ellipsis-${idx}`} style={{ padding: '6px 4px', color: '#94a3b8' }}>…</span>
+                                        ) : (
+                                            <button
+                                                key={page}
+                                                onClick={() => setCurrentPage(page)}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    border: '1px solid',
+                                                    borderColor: currentPage === page ? '#2563eb' : '#e2e8f0',
+                                                    borderRadius: '6px',
+                                                    background: currentPage === page ? '#2563eb' : 'white',
+                                                    color: currentPage === page ? 'white' : '#475569',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.8125rem',
+                                                    fontWeight: currentPage === page ? 600 : 400,
+                                                }}
+                                            >
+                                                {page}
+                                            </button>
+                                        )
+                                    ))}
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    style={{
+                                        padding: '6px 10px',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '6px',
+                                        background: 'white',
+                                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                        opacity: currentPage === totalPages ? 0.4 : 1,
+                                        fontSize: '0.8125rem',
+                                    }}
+                                >
+                                    ›
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(totalPages)}
+                                    disabled={currentPage === totalPages}
+                                    style={{
+                                        padding: '6px 10px',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '6px',
+                                        background: 'white',
+                                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                        opacity: currentPage === totalPages ? 0.4 : 1,
+                                        fontSize: '0.8125rem',
+                                    }}
+                                >
+                                    »
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {filtered.length === 0 && (
                     <div style={{
