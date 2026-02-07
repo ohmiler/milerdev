@@ -4,7 +4,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'เกี่ยวกับเรา - MilerDev',
+  title: 'เกี่ยวกับเรา',
   description: 'แพลตฟอร์มเรียนออนไลน์สำหรับนักพัฒนาซอฟต์แวร์ สร้างโดย MilerDev',
 };
 

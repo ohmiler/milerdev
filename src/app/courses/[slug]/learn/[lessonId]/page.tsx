@@ -1,4 +1,5 @@
 import { redirect, notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { courses, lessons, enrollments, lessonProgress } from '@/lib/db/schema';
@@ -10,6 +11,28 @@ export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ slug: string; lessonId: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug, lessonId } = await params;
+  const [lesson] = await db
+    .select({ title: lessons.title })
+    .from(lessons)
+    .where(eq(lessons.id, lessonId))
+    .limit(1);
+  const [course] = await db
+    .select({ title: courses.title })
+    .from(courses)
+    .where(eq(courses.slug, slug))
+    .limit(1);
+
+  const lessonTitle = lesson?.title || 'บทเรียน';
+  const courseTitle = course?.title || 'คอร์ส';
+
+  return {
+    title: `${lessonTitle} - ${courseTitle}`,
+    robots: { index: false },
+  };
 }
 
 async function getLessonWithAccess(slug: string, lessonId: string, userId: string | null) {

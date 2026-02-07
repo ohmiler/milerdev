@@ -1,10 +1,16 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { courses, lessons, enrollments } from '@/lib/db/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import LessonList from '@/components/course/LessonList';
+
+export const metadata: Metadata = {
+    title: 'เริ่มเรียน',
+    robots: { index: false },
+};
 
 export const dynamic = 'force-dynamic';
 

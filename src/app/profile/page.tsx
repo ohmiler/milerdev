@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -7,6 +8,11 @@ import { db } from '@/lib/db';
 import { users, enrollments } from '@/lib/db/schema';
 import { eq, count } from 'drizzle-orm';
 import ProfileForm from './ProfileForm';
+
+export const metadata: Metadata = {
+    title: 'โปรไฟล์',
+    description: 'จัดการข้อมูลส่วนตัวและดูสถิติการเรียนของคุณ',
+};
 
 export const dynamic = 'force-dynamic';
 

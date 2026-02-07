@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import EnrollButton from '@/components/course/EnrollButton';
@@ -14,6 +15,31 @@ export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const [course] = await db
+    .select({ title: courses.title, description: courses.description, thumbnailUrl: courses.thumbnailUrl })
+    .from(courses)
+    .where(eq(courses.slug, slug))
+    .limit(1);
+
+  if (!course) {
+    return { title: 'ไม่พบคอร์ส' };
+  }
+
+  const description = course.description ? getExcerpt(course.description, 160) : 'เรียนออนไลน์กับ MilerDev';
+
+  return {
+    title: course.title,
+    description,
+    openGraph: {
+      title: course.title,
+      description,
+      ...(course.thumbnailUrl && { images: [course.thumbnailUrl] }),
+    },
+  };
 }
 
 async function getCourse(slug: string) {

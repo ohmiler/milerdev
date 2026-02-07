@@ -17,7 +17,10 @@ const notoSansThai = Noto_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "MilerDev - เรียน Coding ออนไลน์",
+  title: {
+    default: "MilerDev - เรียน Coding ออนไลน์",
+    template: "%s | MilerDev",
+  },
   description: "แพลตฟอร์มเรียนออนไลน์ที่จะช่วยให้คุณพัฒนาทักษะการเขียนโปรแกรม และก้าวสู่การเป็นนักพัฒนามืออาชีพ",
 };
 

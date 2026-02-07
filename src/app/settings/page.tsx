@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
@@ -7,6 +8,11 @@ import { eq } from 'drizzle-orm';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
+
+export const metadata: Metadata = {
+    title: 'ตั้งค่า',
+    description: 'จัดการการตั้งค่าบัญชีและความปลอดภัยของคุณ',
+};
 
 export const dynamic = 'force-dynamic';
 

@@ -1,12 +1,18 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { enrollments, courses, lessons, lessonProgress } from '@/lib/db/schema';
 import { eq, desc, count, and, sql } from 'drizzle-orm';
+
+export const metadata: Metadata = {
+    title: 'แดชบอร์ด',
+    description: 'ติดตามความก้าวหน้าและจัดการคอร์สเรียนของคุณ',
+};
 
 export const dynamic = 'force-dynamic';
 
