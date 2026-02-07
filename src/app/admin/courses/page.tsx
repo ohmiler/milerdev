@@ -1,31 +1,31 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { courses, lessons } from '@/lib/db/schema';
-import { desc, eq, count } from 'drizzle-orm';
+import { courses, lessons, enrollments } from '@/lib/db/schema';
+import { desc, eq, count, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 async function getCourses() {
   const allCourses = await db
-    .select()
+    .select({
+      id: courses.id,
+      title: courses.title,
+      slug: courses.slug,
+      description: courses.description,
+      price: courses.price,
+      status: courses.status,
+      thumbnailUrl: courses.thumbnailUrl,
+      createdAt: courses.createdAt,
+      lessonCount: sql<number>`count(distinct ${lessons.id})`.as('lesson_count'),
+      enrollmentCount: sql<number>`count(distinct ${enrollments.id})`.as('enrollment_count'),
+    })
     .from(courses)
+    .leftJoin(lessons, eq(lessons.courseId, courses.id))
+    .leftJoin(enrollments, eq(enrollments.courseId, courses.id))
+    .groupBy(courses.id)
     .orderBy(desc(courses.createdAt));
 
-  // Get lesson counts
-  const result = [];
-  for (const course of allCourses) {
-    const [lessonCount] = await db
-      .select({ count: count() })
-      .from(lessons)
-      .where(eq(lessons.courseId, course.id));
-
-    result.push({
-      ...course,
-      lessonCount: lessonCount?.count || 0,
-    });
-  }
-
-  return result;
+  return allCourses;
 }
 
 export default async function AdminCoursesPage() {
@@ -87,6 +87,9 @@ export default async function AdminCoursesPage() {
               <th style={{ padding: '16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
                 บทเรียน
               </th>
+              <th style={{ padding: '16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
+                ผู้เรียน
+              </th>
               <th style={{ padding: '16px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
                 การดำเนินการ
               </th>
@@ -137,6 +140,9 @@ export default async function AdminCoursesPage() {
                 </td>
                 <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
                   {course.lessonCount} บท
+                </td>
+                <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
+                  {course.enrollmentCount} คน
                 </td>
                 <td style={{ padding: '16px', textAlign: 'right' }}>
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
