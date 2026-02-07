@@ -92,9 +92,8 @@ export default function LearnPageClient({
           {/* Mobile sidebar toggle */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden"
+            className="flex lg:hidden"
             style={{
-              display: 'flex',
               alignItems: 'center',
               gap: '6px',
               padding: '8px 12px',
@@ -333,8 +332,7 @@ export default function LearnPageClient({
           }}
         >
           {/* Mobile Close Button */}
-          <div className="lg:hidden" style={{
-            display: 'flex',
+          <div className="flex lg:hidden" style={{
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px',
