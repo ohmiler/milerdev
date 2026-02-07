@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
+import ToastContainer from '@/components/ui/Toast';
 
 export default async function AdminLayout({
   children,
@@ -126,6 +127,7 @@ export default async function AdminLayout({
       <main style={{ padding: '24px' }}>
         {children}
       </main>
+      <ToastContainer />
     </div>
   );
 }

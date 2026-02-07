@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DraggableLessonList from '@/components/admin/DraggableLessonList';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { showToast } from '@/components/ui/Toast';
 
 interface Lesson {
   id: string;
@@ -32,6 +34,7 @@ export default function ManageLessonsPage({ params }: Props) {
     videoDuration: '0',
     isFreePreview: false,
   });
+  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
 
   const fetchLessons = async (id: string) => {
     try {
@@ -102,20 +105,22 @@ export default function ManageLessonsPage({ params }: Props) {
       if (res.ok) {
         await fetchLessons(courseId);
         resetForm();
+        showToast(editingLesson ? 'บันทึกสำเร็จ' : 'เพิ่มบทเรียนสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'เกิดข้อผิดพลาด');
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch {
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (lessonId: string) => {
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบบทเรียนนี้?')) return;
-    if (!courseId) return;
+  const confirmDeleteLesson = async () => {
+    if (!deletingLessonId || !courseId) return;
+    const lessonId = deletingLessonId;
+    setDeletingLessonId(null);
 
     try {
       const res = await fetch(`/api/admin/lessons/${lessonId}`, {
@@ -124,12 +129,13 @@ export default function ManageLessonsPage({ params }: Props) {
 
       if (res.ok) {
         await fetchLessons(courseId);
+        showToast('ลบบทเรียนสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        alert(data.error || 'ไม่สามารถลบบทเรียนได้');
+        showToast(data.error || 'ไม่สามารถลบบทเรียนได้', 'error');
       }
     } catch {
-      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     }
   };
 
@@ -303,7 +309,7 @@ export default function ManageLessonsPage({ params }: Props) {
           lessons={lessons}
           courseId={courseId || ''}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={(id) => setDeletingLessonId(id)}
           onReorder={(newIds) => {
             // Update local state to match new order
             const reordered = newIds.map(id => lessons.find(l => l.id === id)!).filter(Boolean);
@@ -311,6 +317,15 @@ export default function ManageLessonsPage({ params }: Props) {
           }}
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={!!deletingLessonId}
+        title="ลบบทเรียน"
+        message="คุณแน่ใจหรือไม่ที่จะลบบทเรียนนี้? การกระทำนี้ไม่สามารถย้อนกลับได้"
+        confirmText="ลบบทเรียน"
+        onConfirm={confirmDeleteLesson}
+        onCancel={() => setDeletingLessonId(null)}
+      />
     </div>
   );
 }

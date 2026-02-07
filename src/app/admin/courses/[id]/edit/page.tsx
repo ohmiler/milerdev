@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { showToast } from '@/components/ui/Toast';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -14,6 +16,7 @@ export default function EditCoursePage({ params }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -77,7 +80,7 @@ export default function EditCoursePage({ params }: Props) {
 
   const handleDelete = async () => {
     if (!courseId) return;
-    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบคอร์สนี้? การกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+    setShowDeleteConfirm(false);
 
     try {
       const res = await fetch(`/api/admin/courses/${courseId}`, {
@@ -85,13 +88,14 @@ export default function EditCoursePage({ params }: Props) {
       });
 
       if (res.ok) {
+        showToast('ลบคอร์สสำเร็จ', 'success');
         router.push('/admin/courses');
       } else {
         const data = await res.json();
-        setError(data.error || 'ไม่สามารถลบคอร์สได้');
+        showToast(data.error || 'ไม่สามารถลบคอร์สได้', 'error');
       }
     } catch {
-      setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     }
   };
 
@@ -310,7 +314,7 @@ export default function EditCoursePage({ params }: Props) {
 
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             style={{
               padding: '12px 24px',
               background: '#fef2f2',
@@ -325,6 +329,15 @@ export default function EditCoursePage({ params }: Props) {
           </button>
         </div>
       </form>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="ลบคอร์ส"
+        message="คุณแน่ใจหรือไม่ที่จะลบคอร์สนี้? การกระทำนี้ไม่สามารถย้อนกลับได้"
+        confirmText="ลบคอร์ส"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }
