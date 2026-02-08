@@ -3,12 +3,16 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import DraggableLessonList from '@/components/admin/DraggableLessonList';
+import dynamic from 'next/dynamic';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
+
+const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 
 interface Lesson {
   id: string;
   title: string;
+  content: string | null;
   videoUrl: string | null;
   videoDuration: number | null;
   orderIndex: number | null;
@@ -71,7 +75,7 @@ export default function ManageLessonsPage({ params }: Props) {
     const durationInMinutes = lesson.videoDuration ? (lesson.videoDuration / 60).toFixed(1) : '0';
     setFormData({
       title: lesson.title,
-      content: '',
+      content: lesson.content || '',
       videoUrl: lesson.videoUrl || '',
       videoDuration: durationInMinutes,
       isFreePreview: lesson.isFreePreview || false,
@@ -205,6 +209,16 @@ export default function ManageLessonsPage({ params }: Props) {
                   borderRadius: '8px',
                   fontSize: '1rem',
                 }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+                เนื้อหาบทเรียน (รายละเอียด, โค้ด, ลิงก์)
+              </label>
+              <RichTextEditor
+                content={formData.content}
+                onChange={(html) => setFormData({ ...formData, content: html })}
               />
             </div>
 

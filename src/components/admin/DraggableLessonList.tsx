@@ -22,6 +22,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface Lesson {
   id: string;
   title: string;
+  content: string | null;
   videoUrl: string | null;
   videoDuration: number | null;
   orderIndex: number | null;
