@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import {
     MenuIcon,
@@ -35,28 +36,34 @@ const USER_MENU_LINKS = [
 
 // Avatar component
 function Avatar({ image, name, size = 'md' }: { image?: string | null; name?: string | null; size?: 'sm' | 'md' | 'lg' }) {
-    const sizeClasses = {
-        sm: 'w-8 h-8 text-xs',
-        md: 'w-9 h-9 text-sm',
-        lg: 'w-11 h-11 text-sm',
-    };
-    
-    const sizePixels = { sm: 32, md: 36, lg: 44 };
+    const sizeMap = { sm: 32, md: 36, lg: 44 };
+    const px = sizeMap[size];
 
     if (image) {
         return (
             <Image
                 src={image}
                 alt={name || 'Avatar'}
-                width={sizePixels[size]}
-                height={sizePixels[size]}
-                className={`${sizeClasses[size]} rounded-full object-cover border-2 border-blue-100`}
+                width={px}
+                height={px}
+                style={{ width: px, height: px, borderRadius: '50%', objectFit: 'cover', border: '2px solid #dbeafe' }}
             />
         );
     }
-    
+
     return (
-        <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold`}>
+        <div style={{
+            width: px,
+            height: px,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: 700,
+            fontSize: size === 'lg' ? '1rem' : '0.875rem',
+        }}>
             {name?.charAt(0).toUpperCase() || 'U'}
         </div>
     );
@@ -65,179 +72,29 @@ function Avatar({ image, name, size = 'md' }: { image?: string | null; name?: st
 // Logo component
 function Logo() {
     return (
-        <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">M</span>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <div style={{
+                width: 32,
+                height: 32,
+                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <span style={{ color: 'white', fontWeight: 700, fontSize: '0.875rem' }}>M</span>
             </div>
-            <span className="font-bold text-xl text-gray-800">MilerDev</span>
+            <span style={{ fontWeight: 700, fontSize: '1.25rem', color: '#1e293b' }}>MilerDev</span>
         </Link>
     );
 }
 
-// Desktop User Dropdown
-function UserDropdown({
-    session,
-    isOpen,
-    onToggle,
-    onLogout,
-    dropdownRef,
-}: {
-    session: { user?: { name?: string | null; email?: string | null; image?: string | null; role?: string } };
-    isOpen: boolean;
-    onToggle: () => void;
-    onLogout: () => void;
-    dropdownRef: React.RefObject<HTMLDivElement | null>;
-}) {
+// Shield icon for admin
+function ShieldIcon({ className = "w-5 h-5" }: { className?: string }) {
     return (
-        <div className="relative" ref={dropdownRef}>
-            <button
-                onClick={onToggle}
-                className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors cursor-pointer px-2 py-1"
-            >
-                <Avatar image={session.user?.image} name={session.user?.name} />
-                <span className="font-medium max-w-[150px] truncate">
-                    {session.user?.name || 'ผู้ใช้'}
-                </span>
-                <ChevronDownIcon className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isOpen && (
-                <div className="absolute right-0 top-full mt-3 w-64 bg-white rounded-2xl border border-gray-200 shadow-2xl py-3 z-[100]">
-                    {/* Menu Links */}
-                    <div style={{ padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
-                            <Link
-                                key={href}
-                                href={href}
-                                style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 16px', fontSize: '16px', color: '#374151', borderRadius: '12px' }}
-                                className="hover:bg-gray-50 transition-colors"
-                                onClick={onToggle}
-                            >
-                                <Icon className="w-5 h-5 text-gray-500" />
-                                {label}
-                            </Link>
-                        ))}
-                    </div>
-
-                    {/* Logout */}
-                    <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '16px', marginTop: '8px', padding: '16px 12px' }}>
-                        <button
-                            onClick={onLogout}
-                            style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '14px 16px', fontSize: '16px', color: '#dc2626', borderRadius: '12px' }}
-                            className="hover:bg-red-50 transition-colors cursor-pointer"
-                        >
-                            <LogoutIcon className="w-5 h-5" />
-                            ออกจากระบบ
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
-// Mobile Menu (Dropdown style)
-function MobileMenu({
-    isOpen,
-    session,
-    onClose,
-    onLogout,
-}: {
-    isOpen: boolean;
-    session: { user?: { name?: string | null; email?: string | null; image?: string | null; role?: string } } | null;
-    onClose: () => void;
-    onLogout: () => void;
-}) {
-    return (
-        <>
-            {/* Backdrop */}
-            <div
-                className={`fixed inset-0 bg-black/30 z-40 md:hidden transition-opacity duration-200 ${
-                    isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}
-                onClick={onClose}
-            />
-
-            {/* Dropdown Menu Panel */}
-            <div
-                className={`md:hidden fixed top-16 left-0 right-0 bg-white z-50 border-b border-gray-200 shadow-xl transition-all duration-200 ease-out overflow-hidden ${
-                    isOpen 
-                        ? 'max-h-[calc(100vh-4rem)] opacity-100' 
-                        : 'max-h-0 opacity-0'
-                }`}
-            >
-                <div className="py-6 px-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
-
-                    {/* Navigation Links */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-                        {NAV_LINKS.map(({ href, label, icon: Icon }) => (
-                            <Link
-                                key={href}
-                                href={href}
-                                style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 16px', fontSize: '16px', color: '#374151', borderRadius: '12px', fontWeight: 500 }}
-                                className="hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                onClick={onClose}
-                            >
-                                <Icon className="w-5 h-5" />
-                                {label}
-                            </Link>
-                        ))}
-                    </div>
-
-                    <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '24px 0' }} />
-
-                    {session ? (
-                        <>
-                            {/* User Menu Links */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-                                {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
-                                    <Link
-                                        key={href}
-                                        href={href}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 16px', fontSize: '16px', color: '#374151', borderRadius: '12px', fontWeight: 500 }}
-                                        className="hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                        onClick={onClose}
-                                    >
-                                        <Icon className="w-5 h-5" />
-                                        {label}
-                                    </Link>
-                                ))}
-                            </div>
-
-                            <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '24px 0' }} />
-
-                            <button
-                                onClick={onLogout}
-                                style={{ display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '14px 16px', fontSize: '16px', color: '#dc2626', borderRadius: '12px', fontWeight: 500 }}
-                                className="hover:bg-red-50 transition-colors cursor-pointer"
-                            >
-                                <LogoutIcon className="w-5 h-5" />
-                                ออกจากระบบ
-                            </button>
-                        </>
-                    ) : (
-                        <div className="flex flex-col gap-4 pt-2">
-                            <Link
-                                href="/login"
-                                className="flex items-center justify-center gap-3 py-4 text-gray-700 hover:text-blue-600 border-2 border-gray-200 hover:border-blue-200 rounded-xl transition-colors font-semibold text-base"
-                                onClick={onClose}
-                            >
-                                <LoginIcon className="w-5 h-5" />
-                                เข้าสู่ระบบ
-                            </Link>
-                            <Link
-                                href="/register"
-                                className="flex items-center justify-center gap-3 py-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors font-semibold text-base"
-                                onClick={onClose}
-                            >
-                                <RegisterIcon className="w-5 h-5" />
-                                สมัครเรียน
-                            </Link>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </>
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
     );
 }
 
@@ -247,7 +104,11 @@ export default function Navbar() {
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const { data: session, status } = useSession();
+    const pathname = usePathname();
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+    const isAdmin = session?.user?.role === 'admin';
 
     // Close all menus
     const closeAllMenus = useCallback(() => {
@@ -279,9 +140,6 @@ export default function Navbar() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Prevent body scroll when mobile menu is open (only for full-screen menus)
-    // Removed since we're using dropdown style now
-
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -298,72 +156,479 @@ export default function Navbar() {
     return (
         <>
             {/* Navbar */}
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
-                <div className="container">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Logo />
+            <nav style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 50,
+                background: 'rgba(255,255,255,0.95)',
+                backdropFilter: 'blur(8px)',
+                borderBottom: '1px solid #e2e8f0',
+            }}>
+                <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
+                    {/* Logo */}
+                    <Logo />
 
-                        {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center gap-8">
-                            {NAV_LINKS.map(({ href, label }) => (
+                    {/* Desktop Navigation */}
+                    <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {NAV_LINKS.map(({ href, label }) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                style={{
+                                    color: isActive(href) ? '#2563eb' : '#64748b',
+                                    textDecoration: 'none',
+                                    fontWeight: isActive(href) ? 600 : 500,
+                                    fontSize: '0.9375rem',
+                                    padding: '6px 14px',
+                                    borderRadius: '8px',
+                                    background: isActive(href) ? '#eff6ff' : 'transparent',
+                                    transition: 'all 0.15s',
+                                }}
+                            >
+                                {label}
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* Desktop Auth */}
+                    <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {status === 'loading' ? (
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e2e8f0' }} />
+                        ) : session ? (
+                            <div style={{ position: 'relative' }} ref={dropdownRef}>
+                                <button
+                                    onClick={() => setShowUserDropdown(!showUserDropdown)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '4px 8px',
+                                        borderRadius: '8px',
+                                        transition: 'background 0.15s',
+                                    }}
+                                >
+                                    <Avatar image={session.user?.image} name={session.user?.name} />
+                                    <span style={{
+                                        fontWeight: 500,
+                                        color: '#374151',
+                                        maxWidth: '120px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        fontSize: '0.9375rem',
+                                    }}>
+                                        {session.user?.name || 'ผู้ใช้'}
+                                    </span>
+                                    <ChevronDownIcon className={`w-4 h-4 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {showUserDropdown && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        right: 0,
+                                        top: '100%',
+                                        marginTop: '8px',
+                                        width: '280px',
+                                        background: 'white',
+                                        borderRadius: '16px',
+                                        border: '1px solid #e2e8f0',
+                                        boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+                                        zIndex: 100,
+                                        overflow: 'hidden',
+                                    }}>
+                                        {/* User Info Header */}
+                                        <div style={{
+                                            padding: '16px 20px',
+                                            borderBottom: '1px solid #f1f5f9',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                        }}>
+                                            <Avatar image={session.user?.image} name={session.user?.name} size="lg" />
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div style={{
+                                                    fontWeight: 600,
+                                                    color: '#1e293b',
+                                                    fontSize: '0.9375rem',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}>
+                                                    {session.user?.name || 'ผู้ใช้'}
+                                                </div>
+                                                <div style={{
+                                                    color: '#94a3b8',
+                                                    fontSize: '0.8125rem',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}>
+                                                    {session.user?.email}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Menu Links */}
+                                        <div style={{ padding: '8px' }}>
+                                            {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
+                                                <Link
+                                                    key={href}
+                                                    href={href}
+                                                    onClick={() => setShowUserDropdown(false)}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '12px',
+                                                        padding: '10px 12px',
+                                                        color: isActive(href) ? '#2563eb' : '#374151',
+                                                        textDecoration: 'none',
+                                                        borderRadius: '10px',
+                                                        fontSize: '0.9375rem',
+                                                        fontWeight: isActive(href) ? 600 : 400,
+                                                        background: isActive(href) ? '#eff6ff' : 'transparent',
+                                                        transition: 'background 0.15s',
+                                                    }}
+                                                >
+                                                    <Icon className="w-5 h-5" />
+                                                    {label}
+                                                </Link>
+                                            ))}
+
+                                            {/* Admin Link */}
+                                            {isAdmin && (
+                                                <Link
+                                                    href="/admin"
+                                                    onClick={() => setShowUserDropdown(false)}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '12px',
+                                                        padding: '10px 12px',
+                                                        color: '#7c3aed',
+                                                        textDecoration: 'none',
+                                                        borderRadius: '10px',
+                                                        fontSize: '0.9375rem',
+                                                        fontWeight: 500,
+                                                        transition: 'background 0.15s',
+                                                    }}
+                                                >
+                                                    <ShieldIcon className="w-5 h-5" />
+                                                    Admin Panel
+                                                </Link>
+                                            )}
+                                        </div>
+
+                                        {/* Logout */}
+                                        <div style={{ borderTop: '1px solid #f1f5f9', padding: '8px' }}>
+                                            <button
+                                                onClick={handleLogoutClick}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '12px',
+                                                    width: '100%',
+                                                    padding: '10px 12px',
+                                                    color: '#dc2626',
+                                                    border: 'none',
+                                                    background: 'none',
+                                                    borderRadius: '10px',
+                                                    fontSize: '0.9375rem',
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.15s',
+                                                }}
+                                            >
+                                                <LogoutIcon className="w-5 h-5" />
+                                                ออกจากระบบ
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                <Link href="/login" style={{
+                                    color: '#64748b',
+                                    textDecoration: 'none',
+                                    fontWeight: 500,
+                                    fontSize: '0.9375rem',
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    transition: 'color 0.15s',
+                                }}>
+                                    เข้าสู่ระบบ
+                                </Link>
+                                <Link href="/register" className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.9375rem' }}>
+                                    สมัครเรียน
+                                </Link>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="nav-mobile-btn"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        aria-label="Toggle menu"
+                        style={{
+                            display: 'none',
+                            padding: '8px',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        {isMenuOpen ? (
+                            <CloseIcon className="w-6 h-6 text-gray-600" />
+                        ) : (
+                            <MenuIcon className="w-6 h-6 text-gray-600" />
+                        )}
+                    </button>
+                </div>
+            </nav>
+
+            {/* Mobile Backdrop */}
+            {isMenuOpen && (
+                <div
+                    onClick={() => setIsMenuOpen(false)}
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.3)',
+                        zIndex: 40,
+                    }}
+                    className="nav-mobile-only"
+                />
+            )}
+
+            {/* Mobile Menu */}
+            {isMenuOpen && (
+                <div
+                    className="nav-mobile-only"
+                    style={{
+                        position: 'fixed',
+                        top: '64px',
+                        left: 0,
+                        right: 0,
+                        background: 'white',
+                        zIndex: 50,
+                        borderBottom: '1px solid #e2e8f0',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                        maxHeight: 'calc(100vh - 64px)',
+                        overflowY: 'auto',
+                    }}
+                >
+                    <div style={{ padding: '16px' }}>
+                        {/* User Info (logged in) */}
+                        {session && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                padding: '12px 16px',
+                                marginBottom: '12px',
+                                background: '#f8fafc',
+                                borderRadius: '12px',
+                            }}>
+                                <Avatar image={session.user?.image} name={session.user?.name} size="lg" />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{
+                                        fontWeight: 600,
+                                        color: '#1e293b',
+                                        fontSize: '0.9375rem',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                    }}>
+                                        {session.user?.name || 'ผู้ใช้'}
+                                    </div>
+                                    <div style={{
+                                        color: '#94a3b8',
+                                        fontSize: '0.8125rem',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                    }}>
+                                        {session.user?.email}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Navigation Links */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
+                            {NAV_LINKS.map(({ href, label, icon: Icon }) => (
                                 <Link
                                     key={href}
                                     href={href}
-                                    className="text-gray-600 hover:text-blue-600 transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        padding: '12px 16px',
+                                        fontSize: '0.9375rem',
+                                        color: isActive(href) ? '#2563eb' : '#374151',
+                                        fontWeight: isActive(href) ? 600 : 500,
+                                        borderRadius: '10px',
+                                        background: isActive(href) ? '#eff6ff' : 'transparent',
+                                        textDecoration: 'none',
+                                        transition: 'all 0.15s',
+                                    }}
                                 >
+                                    <Icon className="w-5 h-5" />
                                     {label}
                                 </Link>
                             ))}
                         </div>
 
-                        {/* Desktop Auth */}
-                        <div className="hidden md:flex items-center gap-4">
-                            {status === 'loading' ? (
-                                <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
-                            ) : session ? (
-                                <UserDropdown
-                                    session={session}
-                                    isOpen={showUserDropdown}
-                                    onToggle={() => setShowUserDropdown(!showUserDropdown)}
-                                    onLogout={handleLogoutClick}
-                                    dropdownRef={dropdownRef as React.RefObject<HTMLDivElement>}
-                                />
-                            ) : (
-                                <>
-                                    <Link href="/login" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">
-                                        เข้าสู่ระบบ
-                                    </Link>
-                                    <Link href="/register" className="btn btn-primary">
-                                        สมัครเรียน
-                                    </Link>
-                                </>
-                            )}
-                        </div>
+                        <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '12px 0' }} />
 
-                        {/* Mobile Menu Button */}
-                        <button
-                            className="md:hidden p-2"
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            aria-label="Toggle menu"
-                        >
-                            {isMenuOpen ? (
-                                <CloseIcon className="w-6 h-6 text-gray-600" />
-                            ) : (
-                                <MenuIcon className="w-6 h-6 text-gray-600" />
-                            )}
-                        </button>
+                        {session ? (
+                            <>
+                                {/* User Menu Links */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
+                                    {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
+                                        <Link
+                                            key={href}
+                                            href={href}
+                                            onClick={() => setIsMenuOpen(false)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                padding: '12px 16px',
+                                                fontSize: '0.9375rem',
+                                                color: isActive(href) ? '#2563eb' : '#374151',
+                                                fontWeight: isActive(href) ? 600 : 500,
+                                                borderRadius: '10px',
+                                                background: isActive(href) ? '#eff6ff' : 'transparent',
+                                                textDecoration: 'none',
+                                                transition: 'all 0.15s',
+                                            }}
+                                        >
+                                            <Icon className="w-5 h-5" />
+                                            {label}
+                                        </Link>
+                                    ))}
+
+                                    {/* Admin Link */}
+                                    {isAdmin && (
+                                        <Link
+                                            href="/admin"
+                                            onClick={() => setIsMenuOpen(false)}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                padding: '12px 16px',
+                                                fontSize: '0.9375rem',
+                                                color: '#7c3aed',
+                                                fontWeight: 500,
+                                                borderRadius: '10px',
+                                                textDecoration: 'none',
+                                                transition: 'all 0.15s',
+                                            }}
+                                        >
+                                            <ShieldIcon className="w-5 h-5" />
+                                            Admin Panel
+                                        </Link>
+                                    )}
+                                </div>
+
+                                <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '12px 0' }} />
+
+                                <button
+                                    onClick={handleLogoutClick}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        width: '100%',
+                                        padding: '12px 16px',
+                                        fontSize: '0.9375rem',
+                                        color: '#dc2626',
+                                        fontWeight: 500,
+                                        borderRadius: '10px',
+                                        border: 'none',
+                                        background: 'none',
+                                        cursor: 'pointer',
+                                        transition: 'background 0.15s',
+                                    }}
+                                >
+                                    <LogoutIcon className="w-5 h-5" />
+                                    ออกจากระบบ
+                                </button>
+                            </>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '4px' }}>
+                                <Link
+                                    href="/login"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        padding: '14px',
+                                        color: '#374151',
+                                        border: '2px solid #e2e8f0',
+                                        borderRadius: '12px',
+                                        fontWeight: 600,
+                                        fontSize: '0.9375rem',
+                                        textDecoration: 'none',
+                                        transition: 'all 0.15s',
+                                    }}
+                                >
+                                    <LoginIcon className="w-5 h-5" />
+                                    เข้าสู่ระบบ
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px',
+                                        padding: '14px',
+                                        color: 'white',
+                                        background: '#2563eb',
+                                        borderRadius: '12px',
+                                        fontWeight: 600,
+                                        fontSize: '0.9375rem',
+                                        textDecoration: 'none',
+                                        transition: 'all 0.15s',
+                                    }}
+                                >
+                                    <RegisterIcon className="w-5 h-5" />
+                                    สมัครเรียน
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </nav>
+            )}
 
-            {/* Mobile Menu */}
-            <MobileMenu
-                isOpen={isMenuOpen}
-                session={session}
-                onClose={() => setIsMenuOpen(false)}
-                onLogout={handleLogoutClick}
-            />
+            {/* Responsive Styles */}
+            <style>{`
+                .nav-desktop { display: flex; }
+                .nav-mobile-btn { display: none !important; }
+                .nav-mobile-only { display: block; }
+
+                @media (max-width: 768px) {
+                    .nav-desktop { display: none !important; }
+                    .nav-mobile-btn { display: flex !important; }
+                }
+
+                @media (min-width: 769px) {
+                    .nav-mobile-only { display: none !important; }
+                }
+            `}</style>
 
             {/* Logout Confirmation Dialog */}
             <ConfirmDialog
