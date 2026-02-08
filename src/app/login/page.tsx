@@ -129,7 +129,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: '16px' }}>
                 <label style={{
                   display: 'block',
                   fontSize: '0.875rem',
@@ -178,6 +178,17 @@ export default function LoginPage() {
                     {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                   </button>
                 </div>
+              </div>
+
+              <div style={{ textAlign: 'right', marginBottom: '24px' }}>
+                <Link href="/forgot-password" style={{
+                  color: '#2563eb',
+                  fontSize: '0.875rem',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                }}>
+                  ลืมรหัสผ่าน?
+                </Link>
               </div>
 
               <button
