@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { courses, users, lessons } from "@/lib/db/schema";
-import { eq, desc, asc, and, count, like, gt } from "drizzle-orm";
+import { eq, desc, asc, and, count, like, gt, sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 
 // GET /api/courses - Get all published courses with filters and pagination
@@ -45,13 +45,38 @@ export async function GET(request: Request) {
                 orderBy = desc(courses.createdAt);
         }
 
-        // Parallelize courses query and total count query (async-parallel rule)
         const whereCondition = and(...conditions);
-        
-        const [allCourses, totalResult] = await Promise.all([
+
+        // Single query with LEFT JOIN for instructor + subquery for lesson count
+        const lessonCountSq = db
+            .select({
+                courseId: lessons.courseId,
+                lessonCount: count().as('lesson_count'),
+            })
+            .from(lessons)
+            .groupBy(lessons.courseId)
+            .as('lc');
+
+        const [coursesWithDetails, totalResult] = await Promise.all([
             db
-                .select()
+                .select({
+                    id: courses.id,
+                    title: courses.title,
+                    slug: courses.slug,
+                    description: courses.description,
+                    thumbnailUrl: courses.thumbnailUrl,
+                    price: courses.price,
+                    status: courses.status,
+                    instructorId: courses.instructorId,
+                    createdAt: courses.createdAt,
+                    updatedAt: courses.updatedAt,
+                    instructorName: users.name,
+                    instructorAvatarUrl: users.avatarUrl,
+                    lessonCount: sql<number>`COALESCE(${lessonCountSq.lessonCount}, 0)`.as('lesson_count'),
+                })
                 .from(courses)
+                .leftJoin(users, eq(courses.instructorId, users.id))
+                .leftJoin(lessonCountSq, eq(courses.id, lessonCountSq.courseId))
                 .where(whereCondition)
                 .orderBy(orderBy)
                 .limit(limit)
@@ -64,36 +89,23 @@ export async function GET(request: Request) {
 
         const total = totalResult[0]?.total ?? 0;
 
-        // Get instructor and lesson count for each course
-        // Parallelize both queries inside map (async-parallel rule)
-        const formattedCourses = await Promise.all(
-            allCourses.map(async (course) => {
-                // Parallelize instructor and lesson count queries
-                const [instructorResult, lessonCountResult] = await Promise.all([
-                    course.instructorId
-                        ? db
-                            .select({
-                                id: users.id,
-                                name: users.name,
-                                avatarUrl: users.avatarUrl,
-                            })
-                            .from(users)
-                            .where(eq(users.id, course.instructorId))
-                            .limit(1)
-                        : Promise.resolve([]),
-                    db
-                        .select({ count: count() })
-                        .from(lessons)
-                        .where(eq(lessons.courseId, course.id)),
-                ]);
-
-                return {
-                    ...course,
-                    instructor: instructorResult[0] || null,
-                    lessonCount: lessonCountResult[0]?.count || 0,
-                };
-            })
-        );
+        // Format response
+        const formattedCourses = coursesWithDetails.map((row) => ({
+            id: row.id,
+            title: row.title,
+            slug: row.slug,
+            description: row.description,
+            thumbnailUrl: row.thumbnailUrl,
+            price: row.price,
+            status: row.status,
+            instructorId: row.instructorId,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+            instructor: row.instructorId
+                ? { id: row.instructorId, name: row.instructorName, avatarUrl: row.instructorAvatarUrl }
+                : null,
+            lessonCount: Number(row.lessonCount) || 0,
+        }));
 
         return NextResponse.json({
             courses: formattedCourses,

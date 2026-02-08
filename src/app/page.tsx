@@ -4,45 +4,56 @@ import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
 import { db } from '@/lib/db';
 import { courses, lessons, users } from '@/lib/db/schema';
-import { eq, desc, count } from 'drizzle-orm';
+import { eq, desc, count, sql } from 'drizzle-orm';
 
 async function getFeaturedCourses() {
-  // Get published courses ordered by creation date (newest first)
-  // Simple query for MariaDB compatibility
-  const allCourses = await db
-    .select()
+  // Subquery for lesson counts
+  const lessonCountSq = db
+    .select({
+      courseId: lessons.courseId,
+      lessonCount: count().as('lesson_count'),
+    })
+    .from(lessons)
+    .groupBy(lessons.courseId)
+    .as('lc');
+
+  // Single query with LEFT JOIN for instructor + lesson count
+  const rows = await db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      slug: courses.slug,
+      description: courses.description,
+      thumbnailUrl: courses.thumbnailUrl,
+      price: courses.price,
+      status: courses.status,
+      instructorId: courses.instructorId,
+      createdAt: courses.createdAt,
+      updatedAt: courses.updatedAt,
+      instructorName: users.name,
+      lessonCount: sql<number>`COALESCE(${lessonCountSq.lessonCount}, 0)`.as('lesson_count'),
+    })
     .from(courses)
+    .leftJoin(users, eq(courses.instructorId, users.id))
+    .leftJoin(lessonCountSq, eq(courses.id, lessonCountSq.courseId))
     .where(eq(courses.status, 'published'))
     .orderBy(desc(courses.createdAt))
     .limit(6);
 
-  // Get instructor and lesson count for each course
-  // Parallelize both queries inside map (async-parallel rule)
-  const result = await Promise.all(
-    allCourses.map(async (course) => {
-      const [instructorResult, lessonCountResult] = await Promise.all([
-        course.instructorId
-          ? db
-              .select({ id: users.id, name: users.name })
-              .from(users)
-              .where(eq(users.id, course.instructorId))
-              .limit(1)
-          : Promise.resolve([]),
-        db
-          .select({ count: count() })
-          .from(lessons)
-          .where(eq(lessons.courseId, course.id)),
-      ]);
-
-      return {
-        ...course,
-        instructor: instructorResult[0] || null,
-        lessonCount: lessonCountResult[0]?.count || 0,
-      };
-    })
-  );
-
-  return result;
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    description: row.description,
+    thumbnailUrl: row.thumbnailUrl,
+    price: row.price,
+    status: row.status,
+    instructorId: row.instructorId,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    instructor: row.instructorId ? { id: row.instructorId, name: row.instructorName } : null,
+    lessonCount: Number(row.lessonCount) || 0,
+  }));
 }
 
 async function getStats() {
