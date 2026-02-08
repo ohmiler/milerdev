@@ -4,8 +4,7 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import EnrollButton from '@/components/course/EnrollButton';
-import CourseLessonList from '@/components/course/CourseLessonList';
+import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
 import { db } from '@/lib/db';
 import { courses, lessons, users } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -43,7 +42,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 async function getCourse(slug: string) {
-  // Get course
   const [course] = await db
     .select()
     .from(courses)
@@ -52,7 +50,7 @@ async function getCourse(slug: string) {
 
   if (!course) return null;
 
-  // Parallelize instructor and lessons queries (async-parallel rule)
+  // Parallelize instructor and lessons queries
   const [instructorResult, courseLessons] = await Promise.all([
     course.instructorId
       ? db
@@ -73,6 +71,14 @@ async function getCourse(slug: string) {
     instructor: instructorResult[0] || null,
     lessons: courseLessons,
   };
+}
+
+function CheckIcon() {
+  return (
+    <svg style={{ width: '20px', height: '20px', color: '#16a34a', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  );
 }
 
 export default async function CourseDetailPage({ params }: Props) {
@@ -161,60 +167,10 @@ export default async function CourseDetailPage({ params }: Props) {
         {/* Course Content */}
         <section className="section">
           <div className="container">
-            <div className="grid gap-8 lg:gap-12 lg:grid-cols-[1fr_360px] items-start">
-              {/* Mobile - Enrollment Card First */}
-              <div className="card lg:hidden order-first">
-                {/* Thumbnail */}
-                <div className="course-thumbnail">
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative'
-                  }}>
-                    {course.thumbnailUrl ? (
-                      <Image
-                        src={course.thumbnailUrl}
-                        alt={course.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 400px"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    )}
-                  </div>
-                  
-                  {/* Price Badge */}
-                  {price === 0 ? (
-                    <span className="price-badge free">ฟรี</span>
-                  ) : (
-                    <span className="price-badge paid">฿{price.toLocaleString()}</span>
-                  )}
-                </div>
-
-                <div style={{ padding: '24px' }}>
-                  {/* Price */}
-                  <div style={{ marginBottom: '20px' }}>
-                    {price === 0 ? (
-                      <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a' }}>ฟรี</div>
-                    ) : (
-                      <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b' }}>฿{price.toLocaleString()}</div>
-                    )}
-                  </div>
-
-                  {/* CTA Button */}
-                  <EnrollButton courseId={course.id} courseSlug={course.slug} price={price} />
-                </div>
-              </div>
-
+            <CourseDetailProvider>
+            <div className="course-detail-grid">
               {/* Left - Lessons */}
-              <div>
+              <div className="course-detail-main">
                 <h2 style={{
                   fontSize: '1.5rem',
                   fontWeight: 600,
@@ -224,101 +180,145 @@ export default async function CourseDetailPage({ params }: Props) {
                   เนื้อหาคอร์ส
                 </h2>
 
-                <CourseLessonList 
-                  lessons={course.lessons}
-                  courseSlug={course.slug}
+                <CourseDetailClient
                   courseId={course.id}
+                  courseSlug={course.slug}
+                  lessons={course.lessons}
                 />
               </div>
 
-              {/* Right - Enrollment Card (Desktop only) */}
-              <div className="card hidden lg:block sticky top-20">
-                {/* Thumbnail */}
-                <div className="course-thumbnail">
+              {/* Right - Enrollment Card */}
+              <div className="course-detail-sidebar">
+                <div style={{
+                  background: 'white',
+                  borderRadius: '16px',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+                  overflow: 'hidden',
+                  position: 'sticky',
+                  top: '80px',
+                }}>
+                  {/* Thumbnail */}
                   <div style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative'
+                    position: 'relative',
+                    paddingTop: '56.25%',
+                    background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
                   }}>
                     {course.thumbnailUrl ? (
                       <Image
                         src={course.thumbnailUrl}
                         alt={course.title}
                         fill
-                        sizes="400px"
+                        sizes="(max-width: 1024px) 100vw, 400px"
                         style={{ objectFit: 'cover' }}
                       />
                     ) : (
-                      <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    )}
-                  </div>
-                  
-                  {/* Price Badge */}
-                  {price === 0 ? (
-                    <span className="price-badge free">ฟรี</span>
-                  ) : (
-                    <span className="price-badge paid">฿{price.toLocaleString()}</span>
-                  )}
-                </div>
-
-                <div style={{ padding: '24px' }}>
-                  {/* Price Display */}
-                  <div style={{ marginBottom: '20px' }}>
-                    {price === 0 ? (
-                      <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a' }}>
-                        ฟรี
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b' }}>
-                        ฿{price.toLocaleString()}
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                       </div>
                     )}
+
+                    {/* Price Badge */}
+                    <span style={{
+                      position: 'absolute',
+                      top: '12px',
+                      right: '12px',
+                      padding: '6px 14px',
+                      borderRadius: '50px',
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      ...(price === 0
+                        ? { background: '#dcfce7', color: '#16a34a' }
+                        : { background: '#fef3c7', color: '#b45309' }),
+                    }}>
+                      {price === 0 ? 'ฟรี' : `฿${price.toLocaleString()}`}
+                    </span>
                   </div>
 
-                  {/* CTA Button */}
-                  <EnrollButton
-                    courseId={course.id}
-                    courseSlug={course.slug}
-                    price={price}
-                  />
+                  <div style={{ padding: '24px' }}>
+                    {/* Price Display */}
+                    <div style={{ marginBottom: '20px' }}>
+                      {price === 0 ? (
+                        <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a' }}>ฟรี</div>
+                      ) : (
+                        <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b' }}>฿{price.toLocaleString()}</div>
+                      )}
+                    </div>
 
-                  {/* Features */}
-                  <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9375rem', color: '#64748b' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <svg style={{ width: '20px', height: '20px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        เข้าถึงได้ตลอดชีพ
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <svg style={{ width: '20px', height: '20px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        เรียนได้ทุกอุปกรณ์
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <svg style={{ width: '20px', height: '20px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Certificate เมื่อเรียนจบ
+                    {/* CTA Button — rendered by CourseDetailClient */}
+                    <div id="enroll-button-slot">
+                      <CourseDetailClient
+                        courseId={course.id}
+                        courseSlug={course.slug}
+                        price={price}
+                        renderMode="button"
+                      />
+                    </div>
+
+                    {/* Features */}
+                    <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9375rem', color: '#64748b' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <CheckIcon />
+                          เข้าถึงได้ตลอดชีพ
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <CheckIcon />
+                          เรียนได้ทุกอุปกรณ์
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <CheckIcon />
+                          Certificate เมื่อเรียนจบ
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+            </CourseDetailProvider>
           </div>
         </section>
       </main>
 
       <Footer />
+
+      <style>{`
+        .course-detail-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 32px;
+        }
+        .course-detail-main {
+          order: 2;
+        }
+        .course-detail-sidebar {
+          order: 1;
+        }
+
+        @media (min-width: 1024px) {
+          .course-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 48px;
+          }
+          .course-detail-main {
+            order: 1;
+          }
+          .course-detail-sidebar {
+            order: 2;
+          }
+        }
+      `}</style>
     </>
   );
 }

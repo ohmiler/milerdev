@@ -2,7 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Modal from '@/components/ui/Modal';
 
 interface Lesson {
   id: string;
@@ -15,35 +16,27 @@ interface CourseLessonListProps {
   lessons: Lesson[];
   courseSlug: string;
   courseId: string;
+  isEnrolled?: boolean;
 }
 
-export default function CourseLessonList({ lessons, courseSlug, courseId }: CourseLessonListProps) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [isEnrolled, setIsEnrolled] = useState(false);
+const INITIAL_SHOW = 10;
 
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      // Check enrollment status
-      fetch(`/api/enrollments/check?courseId=${courseId}`)
-        .then(res => res.json())
-        .then(data => {
-          setIsEnrolled(data.enrolled || false);
-        })
-        .catch(console.error);
-    }
-  }, [status, session, courseId]);
+export default function CourseLessonList({ lessons, courseSlug, isEnrolled = false }: CourseLessonListProps) {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+
+  const hasMore = lessons.length > INITIAL_SHOW;
+  const visibleLessons = showAll ? lessons : lessons.slice(0, INITIAL_SHOW);
 
   const handleLessonClick = (lesson: Lesson) => {
-    // If free preview or enrolled, go to lesson
     if (lesson.isFreePreview || isEnrolled) {
       router.push(`/courses/${courseSlug}/learn/${lesson.id}`);
     } else if (!session) {
-      // Not logged in - redirect to login
       router.push(`/login?callbackUrl=/courses/${courseSlug}`);
     } else {
-      // Logged in but not enrolled - show message
-      alert('กรุณาลงทะเบียนคอร์สก่อนเพื่อดูบทเรียนนี้');
+      setShowModal(true);
     }
   };
 
@@ -72,7 +65,7 @@ export default function CourseLessonList({ lessons, courseSlug, courseId }: Cour
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {lessons.map((lesson, index) => {
+      {visibleLessons.map((lesson, index) => {
         const canAccess = lesson.isFreePreview || isEnrolled;
         
         return (
@@ -184,6 +177,55 @@ export default function CourseLessonList({ lessons, courseSlug, courseId }: Cour
           </div>
         );
       })}
+
+      {/* Show More / Show Less */}
+      {hasMore && (
+        <button
+          onClick={() => setShowAll(!showAll)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            width: '100%',
+            padding: '14px',
+            background: '#f8fafc',
+            border: '1px dashed #cbd5e1',
+            borderRadius: '12px',
+            color: '#2563eb',
+            fontWeight: 600,
+            fontSize: '0.9375rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          {showAll ? (
+            <>
+              <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+              ย่อรายการ
+            </>
+          ) : (
+            <>
+              <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              ดูเพิ่มเติมอีก {lessons.length - INITIAL_SHOW} บท
+            </>
+          )}
+        </button>
+      )}
+
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        type="warning"
+        title="ต้องลงทะเบียนก่อน"
+        buttonText="ตกลง"
+      >
+        กรุณาลงทะเบียนคอร์สก่อนเพื่อดูบทเรียนนี้
+      </Modal>
     </div>
   );
 }

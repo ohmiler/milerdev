@@ -8,9 +8,10 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   type?: 'success' | 'error' | 'info' | 'warning';
+  buttonText?: string;
 }
 
-export default function Modal({ isOpen, onClose, title, children, type = 'info' }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, type = 'info', buttonText }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -153,7 +154,7 @@ export default function Modal({ isOpen, onClose, title, children, type = 'info' 
           onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
           onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
         >
-          ตกลง
+          {buttonText || 'ตกลง'}
         </button>
       </div>
 
