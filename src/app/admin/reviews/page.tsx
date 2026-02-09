@@ -58,6 +58,13 @@ export default function AdminReviewsPage() {
   const [importJson, setImportJson] = useState('');
   const [importing, setImporting] = useState(false);
 
+  // WordPress import
+  const [wpStep, setWpStep] = useState<'paste' | 'map' | 'done'>('paste');
+  interface WpReview { course_id: string; display_name: string; comment: string; created_at: string; rating: string; }
+  const [wpReviews, setWpReviews] = useState<WpReview[]>([]);
+  const [wpCourseIds, setWpCourseIds] = useState<string[]>([]);
+  const [courseMapping, setCourseMapping] = useState<Record<string, string>>({});
+
   useEffect(() => {
     const timer = setTimeout(() => setSearchDebounce(search), 400);
     return () => clearTimeout(timer);
@@ -121,15 +128,40 @@ export default function AdminReviewsPage() {
     }
   };
 
-  const handleImport = async () => {
-    setImporting(true);
+  const handleParseJson = () => {
     try {
       const parsed = JSON.parse(importJson);
+
+      // Detect phpMyAdmin format
+      if (Array.isArray(parsed) && parsed.some((item: { type?: string }) => item.type === 'table')) {
+        const tableObj = parsed.find((item: { type?: string }) => item.type === 'table');
+        if (tableObj?.data && Array.isArray(tableObj.data)) {
+          const reviews = tableObj.data as WpReview[];
+          setWpReviews(reviews);
+          const uniqueIds = [...new Set(reviews.map((r: WpReview) => r.course_id))];
+          setWpCourseIds(uniqueIds);
+          setCourseMapping({});
+          setWpStep('map');
+          return;
+        }
+      }
+
+      // Direct array format
       const reviewsData = Array.isArray(parsed) ? parsed : parsed.reviews;
-      if (!Array.isArray(reviewsData)) {
-        showToast('รูปแบบ JSON ไม่ถูกต้อง', 'error');
+      if (Array.isArray(reviewsData) && reviewsData.length > 0 && reviewsData[0].courseId) {
+        handleDirectImport(reviewsData);
         return;
       }
+
+      showToast('รูปแบบ JSON ไม่ถูกต้อง', 'error');
+    } catch {
+      showToast('JSON ไม่ถูกต้อง กรุณาตรวจสอบ', 'error');
+    }
+  };
+
+  const handleDirectImport = async (reviewsData: Record<string, unknown>[]) => {
+    setImporting(true);
+    try {
       const res = await fetch('/api/admin/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,15 +172,38 @@ export default function AdminReviewsPage() {
         showToast(`นำเข้า ${data.imported} รีวิว (ข้าม ${data.skipped})`, 'success');
         setShowImport(false);
         setImportJson('');
+        setWpStep('paste');
         await fetchReviews();
       } else {
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch {
-      showToast('JSON ไม่ถูกต้อง กรุณาตรวจสอบ', 'error');
+      showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
       setImporting(false);
     }
+  };
+
+  const handleWpImport = async () => {
+    // Check all courses are mapped
+    const unmapped = wpCourseIds.filter(id => !courseMapping[id]);
+    if (unmapped.length > 0) {
+      showToast(`กรุณาเลือกคอร์สให้ครบทุก ID`, 'error');
+      return;
+    }
+
+    const converted = wpReviews
+      .filter(r => courseMapping[r.course_id])
+      .map(r => ({
+        courseId: courseMapping[r.course_id],
+        rating: parseInt(r.rating) || 5,
+        comment: r.comment || null,
+        displayName: r.display_name || 'ผู้ใช้',
+        isVerified: true,
+        createdAt: r.created_at ? r.created_at.replace(' ', 'T') + 'Z' : new Date().toISOString(),
+      }));
+
+    await handleDirectImport(converted);
   };
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('th-TH', {
@@ -225,57 +280,164 @@ export default function AdminReviewsPage() {
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           marginBottom: '24px',
         }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '12px' }}>นำเข้ารีวิวจาก JSON</h3>
-          <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '12px' }}>
-            รูปแบบ: [{`{ "courseId": "...", "rating": 5, "comment": "...", "displayName": "...", "isVerified": true, "createdAt": "2024-07-31" }`}]
-          </p>
-          <textarea
-            value={importJson}
-            onChange={(e) => setImportJson(e.target.value)}
-            placeholder="วาง JSON ที่นี่..."
-            rows={8}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '0.8125rem',
-              fontFamily: 'monospace',
-              resize: 'vertical',
-              marginBottom: '12px',
-            }}
-          />
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={handleImport}
-              disabled={importing || !importJson.trim()}
-              style={{
-                padding: '10px 20px',
-                background: importing ? '#94a3b8' : '#16a34a',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: importing ? 'not-allowed' : 'pointer',
-                fontSize: '0.875rem',
-              }}
-            >
-              {importing ? 'กำลังนำเข้า...' : 'นำเข้า'}
-            </button>
-            <button
-              onClick={() => { setShowImport(false); setImportJson(''); }}
-              style={{
-                padding: '10px 20px',
-                background: '#f1f5f9',
-                color: '#64748b',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-              }}
-            >
-              ยกเลิก
-            </button>
-          </div>
+          {wpStep === 'paste' && (
+            <>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '12px' }}>นำเข้ารีวิว</h3>
+              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '12px' }}>
+                รองรับ JSON จาก phpMyAdmin (WordPress) หรือ JSON แบบ [{`{ "courseId": "...", "rating": 5, "comment": "..." }`}]
+              </p>
+              <textarea
+                value={importJson}
+                onChange={(e) => setImportJson(e.target.value)}
+                placeholder="วาง JSON ที่นี่..."
+                rows={8}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '0.8125rem',
+                  fontFamily: 'monospace',
+                  resize: 'vertical',
+                  marginBottom: '12px',
+                }}
+              />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleParseJson}
+                  disabled={importing || !importJson.trim()}
+                  style={{
+                    padding: '10px 20px',
+                    background: importing ? '#94a3b8' : '#16a34a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: importing ? 'not-allowed' : 'pointer',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  {importing ? 'กำลังนำเข้า...' : 'ถัดไป'}
+                </button>
+                <button
+                  onClick={() => { setShowImport(false); setImportJson(''); setWpStep('paste'); }}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#f1f5f9',
+                    color: '#64748b',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  ยกเลิก
+                </button>
+              </div>
+            </>
+          )}
+
+          {wpStep === 'map' && (
+            <>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                จับคู่คอร์ส WordPress → คอร์สใหม่
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '16px' }}>
+                พบ {wpReviews.length} รีวิว จาก {wpCourseIds.length} คอร์ส — เลือกคอร์สที่ตรงกัน
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                {wpCourseIds.map(wpId => {
+                  const reviewCount = wpReviews.filter(r => r.course_id === wpId).length;
+                  const sampleComment = wpReviews.find(r => r.course_id === wpId)?.comment || '';
+                  return (
+                    <div key={wpId} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '12px 16px',
+                      background: '#f8fafc',
+                      borderRadius: '8px',
+                      flexWrap: 'wrap',
+                    }}>
+                      <div style={{ minWidth: '200px' }}>
+                        <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem' }}>
+                          WordPress ID: {wpId}
+                        </div>
+                        <div style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                          {reviewCount} รีวิว • &ldquo;{sampleComment.slice(0, 60)}...&rdquo;
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '1.25rem', color: '#94a3b8' }}>→</div>
+                      <select
+                        value={courseMapping[wpId] || ''}
+                        onChange={(e) => setCourseMapping(prev => ({ ...prev, [wpId]: e.target.value }))}
+                        style={{
+                          flex: 1,
+                          minWidth: '200px',
+                          padding: '10px 16px',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          background: 'white',
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        <option value="">-- เลือกคอร์ส --</option>
+                        {courses.map(c => (
+                          <option key={c.id} value={c.id}>{c.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleWpImport}
+                  disabled={importing || wpCourseIds.some(id => !courseMapping[id])}
+                  style={{
+                    padding: '10px 20px',
+                    background: importing || wpCourseIds.some(id => !courseMapping[id]) ? '#94a3b8' : '#16a34a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: importing ? 'not-allowed' : 'pointer',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  {importing ? 'กำลังนำเข้า...' : `นำเข้า ${wpReviews.length} รีวิว`}
+                </button>
+                <button
+                  onClick={() => setWpStep('paste')}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#f1f5f9',
+                    color: '#64748b',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  กลับ
+                </button>
+                <button
+                  onClick={() => { setShowImport(false); setImportJson(''); setWpStep('paste'); }}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#f1f5f9',
+                    color: '#64748b',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  ยกเลิก
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
