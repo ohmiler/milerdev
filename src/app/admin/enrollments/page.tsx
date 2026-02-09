@@ -601,11 +601,16 @@ export default function AdminEnrollmentsPage() {
                   {enrollments.map((enrollment) => (
                     <tr key={enrollment.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <td style={{ padding: '16px' }}>
-                        <div style={{ fontWeight: 500, color: '#1e293b', marginBottom: '2px' }}>
-                          {enrollment.userName || 'ไม่ระบุชื่อ'}
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                          {enrollment.userEmail || '-'}
+                        <div
+                          onClick={() => enrollment.userId && (window.location.href = `/admin/users/${enrollment.userId}`)}
+                          style={{ cursor: enrollment.userId ? 'pointer' : 'default' }}
+                        >
+                          <div style={{ fontWeight: 500, color: enrollment.userId ? '#2563eb' : '#1e293b', marginBottom: '2px' }}>
+                            {enrollment.userName || 'ไม่ระบุชื่อ'}
+                          </div>
+                          <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                            {enrollment.userEmail || '-'}
+                          </div>
                         </div>
                       </td>
                       <td style={{ padding: '16px' }}>

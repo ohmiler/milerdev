@@ -38,10 +38,16 @@ export default function AdminUsersPage() {
   
   // Filters
   const [search, setSearch] = useState('');
+  const [searchDebounce, setSearchDebounce] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchDebounce(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
   
   // Bulk operations
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -68,7 +74,7 @@ export default function AdminUsersPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         role: roleFilter,
-        search,
+        ...(searchDebounce && { search: searchDebounce }),
         sortBy,
         sortOrder,
       });
@@ -86,7 +92,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, roleFilter, sortBy, sortOrder]);
+  }, [currentPage, roleFilter, sortBy, sortOrder, searchDebounce]);
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
@@ -191,10 +197,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-    fetchUsers();
-  };
 
   const handleExport = async () => {
     const params = new URLSearchParams({ role: roleFilter });
@@ -342,20 +344,38 @@ export default function AdminUsersPage() {
         flexWrap: 'wrap',
         alignItems: 'center',
       }}>
-        <input
-          type="text"
-          placeholder="ค้นหาชื่อหรืออีเมล..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          style={{
-            padding: '10px 16px',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            fontSize: '0.875rem',
-            minWidth: '200px',
-          }}
-        />
+        <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '350px' }}>
+          <svg
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '18px',
+              height: '18px',
+              color: '#94a3b8',
+            }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="ค้นหาชื่อหรืออีเมล..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            style={{
+              width: '100%',
+              padding: '10px 12px 10px 40px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '0.875rem',
+              background: 'white',
+            }}
+          />
+        </div>
         <select
           value={roleFilter}
           onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
@@ -367,7 +387,7 @@ export default function AdminUsersPage() {
             fontSize: '0.875rem',
           }}
         >
-          <option value="all">ทุก Role</option>
+          <option value="all">Role ทั้งหมด</option>
           <option value="admin">Admin</option>
           <option value="instructor">ผู้สอน</option>
           <option value="student">นักเรียน</option>
@@ -387,20 +407,6 @@ export default function AdminUsersPage() {
           <option value="name">เรียงตามชื่อ</option>
           <option value="email">เรียงตามอีเมล</option>
         </select>
-        <button
-          onClick={handleSearch}
-          style={{
-            padding: '10px 20px',
-            background: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-          }}
-        >
-          ค้นหา
-        </button>
       </div>
 
       {/* Actions Row */}
