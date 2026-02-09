@@ -77,61 +77,59 @@ export async function POST(request: Request) {
         slipFormData.append("amount", amount.toString());
         slipFormData.append("log", "true");
 
+        const apiKey = (process.env.SLIPOK_API_KEY || "").trim();
+        const branchId = (process.env.SLIPOK_BRANCH_ID || "").trim();
+
+        console.log("[SlipOK] Sending request:", {
+            url: `https://api.slipok.com/api/line/apikey/${branchId}`,
+            apiKeyLength: apiKey.length,
+            apiKeyPrefix: apiKey.substring(0, 4),
+            branchIdLength: branchId.length,
+            fileSize: slipFile.size,
+            fileName: slipFile.name,
+            amount,
+        });
+
         const slipResponse = await fetch(
-            `https://api.slipok.com/api/line/apikey/${process.env.SLIPOK_BRANCH_ID}`,
+            `https://api.slipok.com/api/line/apikey/${branchId}`,
             {
                 method: "POST",
                 headers: {
-                    "x-authorization": process.env.SLIPOK_API_KEY || "",
+                    "x-authorization": apiKey,
                 },
                 body: slipFormData,
             }
         );
 
         const slipResult = await slipResponse.json();
+        console.log("[SlipOK] Response:", { status: slipResponse.status, result: slipResult });
 
-        if (slipResult.success && slipResult.data?.amount >= amount) {
-            // Update payment to completed
+        // Handle SlipOK error codes
+        if (!slipResult.success) {
             await db
                 .update(payments)
-                .set({
-                    status: "completed",
-                    slipUrl: slipResult.data?.transRef || null,
-                })
+                .set({ status: "failed" })
                 .where(eq(payments.id, payment.id));
 
-            // Create enrollment
-            await db.insert(enrollments).values({
-                userId: session.user.id,
-                courseId,
-            });
+            const errorMessages: Record<number, string> = {
+                1001: "ไม่พบข้อมูลสลิป กรุณาตรวจสอบรูปภาพแล้วลองใหม่",
+                1002: "เกิดข้อผิดพลาดในการยืนยันตัวตน กรุณาลองใหม่ภายหลัง",
+                1003: "สลิปซ้ำ สลิปนี้เคยถูกใช้ไปแล้ว กรุณาใช้สลิปใหม่",
+                1004: "ไม่สามารถอ่านข้อมูลจากสลิปได้ กรุณาถ่ายรูปให้ชัดเจน",
+                1010: "สลิปยังไม่พร้อมตรวจสอบ กรุณารอสักครู่แล้วลองใหม่",
+            };
 
-            // Send confirmation emails (non-blocking)
-            if (session.user.email && session.user.name) {
-                Promise.all([
-                    sendPaymentConfirmation({
-                        email: session.user.email,
-                        name: session.user.name,
-                        courseName: course.title,
-                        amount,
-                        paymentId: payment.id,
-                    }),
-                    sendEnrollmentEmail({
-                        email: session.user.email,
-                        name: session.user.name,
-                        courseName: course.title,
-                        courseSlug: course.slug,
-                    }),
-                ]).catch((err) => console.error("Failed to send emails:", err));
-            }
+            const code = slipResult.code || slipResult.data?.code;
+            const errorMsg = errorMessages[code] || slipResult.message || "ไม่สามารถตรวจสอบสลิปได้ กรุณาลองใหม่";
 
-            return NextResponse.json({
-                success: true,
-                message: "Payment verified and enrolled successfully",
-                paymentId: payment.id,
-            });
-        } else {
-            // Update payment to failed
+            return NextResponse.json(
+                { success: false, error: errorMsg },
+                { status: 400 }
+            );
+        }
+
+        // Check amount matches
+        if (slipResult.data?.amount < amount) {
             await db
                 .update(payments)
                 .set({ status: "failed" })
@@ -140,11 +138,50 @@ export async function POST(request: Request) {
             return NextResponse.json(
                 {
                     success: false,
-                    error: slipResult.message || "Slip verification failed",
+                    error: `ยอดเงินในสลิปไม่ตรง (สลิป: ฿${slipResult.data.amount.toLocaleString()} / ต้องชำระ: ฿${amount.toLocaleString()})`,
                 },
                 { status: 400 }
             );
         }
+
+        // Success — update payment and create enrollment
+        await db
+            .update(payments)
+            .set({
+                status: "completed",
+                slipUrl: slipResult.data?.transRef || null,
+            })
+            .where(eq(payments.id, payment.id));
+
+        await db.insert(enrollments).values({
+            userId: session.user.id,
+            courseId,
+        });
+
+        // Send confirmation emails (non-blocking)
+        if (session.user.email && session.user.name) {
+            Promise.all([
+                sendPaymentConfirmation({
+                    email: session.user.email,
+                    name: session.user.name,
+                    courseName: course.title,
+                    amount,
+                    paymentId: payment.id,
+                }),
+                sendEnrollmentEmail({
+                    email: session.user.email,
+                    name: session.user.name,
+                    courseName: course.title,
+                    courseSlug: course.slug,
+                }),
+            ]).catch((err) => console.error("Failed to send emails:", err));
+        }
+
+        return NextResponse.json({
+            success: true,
+            message: "Payment verified and enrolled successfully",
+            paymentId: payment.id,
+        });
     } catch (error) {
         console.error("Error verifying slip:", error);
         return NextResponse.json(
