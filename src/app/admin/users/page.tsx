@@ -56,6 +56,12 @@ export default function AdminUsersPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
+  // Password reset
+  const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -135,6 +141,37 @@ export default function AdminUsersPage() {
       showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!passwordResetUser) return;
+    if (newPassword.length < 8) {
+      showToast('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร', 'error');
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      const res = await fetch(`/api/admin/users/${passwordResetUser.id}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      if (res.ok) {
+        showToast(`เปลี่ยนรหัสผ่านของ ${passwordResetUser.name || passwordResetUser.email} สำเร็จ`, 'success');
+        setPasswordResetUser(null);
+        setNewPassword('');
+        setShowPassword(false);
+      } else {
+        const data = await res.json();
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch {
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -724,6 +761,20 @@ export default function AdminUsersPage() {
                         แก้ไข
                       </button>
                       <button
+                        onClick={() => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}
+                        style={{
+                          padding: '6px 12px',
+                          background: '#fef3c7',
+                          color: '#d97706',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        รหัสผ่าน
+                      </button>
+                      <button
                         onClick={() => setDeleteConfirm(user.id)}
                         disabled={updating === user.id}
                         style={{
@@ -797,6 +848,114 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+      {/* Password Reset Modal */}
+      {passwordResetUser && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '420px',
+            margin: '16px',
+          }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px', color: '#1e293b' }}>
+              เปลี่ยนรหัสผ่าน
+            </h2>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '20px' }}>
+              {passwordResetUser.name || 'ไม่ระบุชื่อ'} ({passwordResetUser.email})
+            </p>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+                รหัสผ่านใหม่
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="อย่างน้อย 8 ตัวอักษร"
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    paddingRight: '48px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    color: '#64748b',
+                    padding: '4px 8px',
+                  }}
+                >
+                  {showPassword ? 'ซ่อน' : 'แสดง'}
+                </button>
+              </div>
+              {newPassword.length > 0 && newPassword.length < 8 && (
+                <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '6px' }}>
+                  รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร
+                </p>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => { setPasswordResetUser(null); setNewPassword(''); setShowPassword(false); }}
+                style={{
+                  padding: '10px 20px',
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                }}
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleResetPassword}
+                disabled={resettingPassword || newPassword.length < 8}
+                style={{
+                  padding: '10px 20px',
+                  background: '#d97706',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: resettingPassword || newPassword.length < 8 ? 'not-allowed' : 'pointer',
+                  opacity: resettingPassword || newPassword.length < 8 ? 0.7 : 1,
+                }}
+              >
+                {resettingPassword ? 'กำลังบันทึก...' : 'เปลี่ยนรหัสผ่าน'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog
         isOpen={!!deleteConfirm}
         title="ลบผู้ใช้"
