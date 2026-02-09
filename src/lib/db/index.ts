@@ -4,7 +4,7 @@ import * as schema from './schema';
 
 const connection = mysql.createPool({
     uri: process.env.DATABASE_URL!,
-    connectionLimit: 10,
+    connectionLimit: 5,
     waitForConnections: true,
     queueLimit: 0,
     enableKeepAlive: true,
