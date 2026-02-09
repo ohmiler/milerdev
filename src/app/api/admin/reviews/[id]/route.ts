@@ -1,0 +1,74 @@
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { reviews } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+
+type RouteParams = { params: Promise<{ id: string }> };
+
+// PUT /api/admin/reviews/[id] - Update review (toggle hidden, edit)
+export async function PUT(request: Request, { params }: RouteParams) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+
+    const [existing] = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json({ error: 'ไม่พบรีวิว' }, { status: 404 });
+    }
+
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+
+    if (typeof body.isHidden === 'boolean') updateData.isHidden = body.isHidden;
+    if (typeof body.isVerified === 'boolean') updateData.isVerified = body.isVerified;
+    if (body.comment !== undefined) updateData.comment = body.comment;
+    if (body.rating !== undefined) updateData.rating = Math.min(5, Math.max(1, Math.round(body.rating)));
+    if (body.displayName !== undefined) updateData.displayName = body.displayName;
+
+    await db.update(reviews).set(updateData).where(eq(reviews.id, id));
+
+    return NextResponse.json({ message: 'อัปเดตรีวิวสำเร็จ' });
+  } catch (error) {
+    console.error('Error updating review:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// DELETE /api/admin/reviews/[id] - Delete review
+export async function DELETE(request: Request, { params }: RouteParams) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const [existing] = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json({ error: 'ไม่พบรีวิว' }, { status: 404 });
+    }
+
+    await db.delete(reviews).where(eq(reviews.id, id));
+
+    return NextResponse.json({ message: 'ลบรีวิวสำเร็จ' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

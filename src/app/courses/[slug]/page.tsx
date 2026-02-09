@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
+import CourseReviewsWrapper from '@/components/course/CourseReviewsWrapper';
 import { db } from '@/lib/db';
 import { courses, lessons, users } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -202,6 +203,9 @@ export default async function CourseDetailPage({ params }: Props) {
                   courseSlug={course.slug}
                   lessons={course.lessons}
                 />
+
+                {/* Reviews Section */}
+                <CourseReviewsWrapper courseSlug={course.slug} />
               </div>
 
               {/* Right - Enrollment Card */}

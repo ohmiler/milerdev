@@ -288,6 +288,33 @@ export const courseTagsRelations = relations(courseTags, ({ one }) => ({
 }));
 
 // =====================
+// REVIEWS TABLE
+// =====================
+export const reviews = mysqlTable('reviews', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    rating: int('rating').notNull(),
+    comment: text('comment'),
+    displayName: varchar('display_name', { length: 255 }),
+    isVerified: boolean('is_verified').default(false),
+    isHidden: boolean('is_hidden').default(false),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
+});
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+    user: one(users, {
+        fields: [reviews.userId],
+        references: [users.id],
+    }),
+    course: one(courses, {
+        fields: [reviews.courseId],
+        references: [courses.id],
+    }),
+}));
+
+// =====================
 // TYPE EXPORTS
 // =====================
 export type User = typeof users.$inferSelect;
@@ -314,3 +341,5 @@ export type Announcement = typeof announcements.$inferSelect;
 export type NewAnnouncement = typeof announcements.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+export type Review = typeof reviews.$inferSelect;
+export type NewReview = typeof reviews.$inferInsert;
