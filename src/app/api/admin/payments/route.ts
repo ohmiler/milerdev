@@ -29,8 +29,19 @@ export async function GET(request: Request) {
       conditions.push(eq(payments.method, method as 'stripe' | 'promptpay' | 'bank_transfer'));
     }
 
+    // Search filter applied after join
+    const searchConditions = search
+      ? or(
+          like(users.name, `%${search}%`),
+          like(users.email, `%${search}%`),
+          like(courses.title, `%${search}%`)
+        )
+      : undefined;
+
+    const allConditions = [...conditions, ...(searchConditions ? [searchConditions] : [])];
+
     // Parallelize all independent queries using Promise.all() (async-parallel rule)
-    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereCondition = allConditions.length > 0 ? and(...allConditions) : undefined;
     
     const [paymentList, totalCountResult, statsResult] = await Promise.all([
       // Get payments with user and course info
@@ -57,10 +68,12 @@ export async function GET(request: Request) {
         .orderBy(desc(payments.createdAt))
         .limit(limit)
         .offset(offset),
-      // Get total count for pagination
+      // Get total count for pagination (needs joins for search)
       db
         .select({ count: sql<number>`count(*)` })
         .from(payments)
+        .leftJoin(users, eq(payments.userId, users.id))
+        .leftJoin(courses, eq(payments.courseId, courses.id))
         .where(whereCondition),
       // Get stats
       db

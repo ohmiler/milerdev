@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, users, courses } from '@/lib/db/schema';
-import { desc, eq, sql, and } from 'drizzle-orm';
+import { desc, eq, sql, and, like, or } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // GET /api/admin/enrollments - Get all enrollments
@@ -17,12 +17,22 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const courseId = searchParams.get('courseId');
+    const search = searchParams.get('search');
     const offset = (page - 1) * limit;
 
     // Build conditions
     const conditions = [];
     if (courseId && courseId !== 'all') {
       conditions.push(eq(enrollments.courseId, courseId));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          like(users.name, `%${search}%`),
+          like(users.email, `%${search}%`),
+          like(courses.title, `%${search}%`)
+        )!
+      );
     }
 
     // Parallelize all independent queries using Promise.all() (async-parallel rule)
@@ -50,10 +60,12 @@ export async function GET(request: Request) {
         .orderBy(desc(enrollments.enrolledAt))
         .limit(limit)
         .offset(offset),
-      // Get total count
+      // Get total count (needs joins for search)
       db
         .select({ count: sql<number>`count(*)` })
         .from(enrollments)
+        .leftJoin(users, eq(enrollments.userId, users.id))
+        .leftJoin(courses, eq(enrollments.courseId, courses.id))
         .where(whereCondition),
       // Get stats
       db

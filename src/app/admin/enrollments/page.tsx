@@ -54,6 +54,13 @@ export default function AdminEnrollmentsPage() {
   // Filters
   const [courseFilter, setCourseFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [searchDebounce, setSearchDebounce] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchDebounce(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Add enrollment modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -82,6 +89,7 @@ export default function AdminEnrollmentsPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         courseId: courseFilter,
+        ...(searchDebounce && { search: searchDebounce }),
       });
       
       const res = await fetch(`/api/admin/enrollments?${params}`);
@@ -110,7 +118,7 @@ export default function AdminEnrollmentsPage() {
 
   useEffect(() => {
     fetchEnrollments();
-  }, [courseFilter, currentPage]);
+  }, [courseFilter, currentPage, searchDebounce]);
 
   useEffect(() => {
     if (showAddModal && users.length === 0) {
@@ -388,7 +396,39 @@ export default function AdminEnrollmentsPage() {
       )}
 
       {/* Filters */}
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '350px' }}>
+          <svg
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '18px',
+              height: '18px',
+              color: '#94a3b8',
+            }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="ค้นหาชื่อ, อีเมล, คอร์ส..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            style={{
+              width: '100%',
+              padding: '10px 12px 10px 40px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '0.875rem',
+              background: 'white',
+            }}
+          />
+        </div>
         <select
           value={courseFilter}
           onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}

@@ -37,6 +37,13 @@ export default function AdminAuditLogsPage() {
   const [entityTypeFilter, setEntityTypeFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [searchDebounce, setSearchDebounce] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchDebounce(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -45,6 +52,7 @@ export default function AdminAuditLogsPage() {
         page: currentPage.toString(),
         entityType: entityTypeFilter,
         action: actionFilter,
+        ...(searchDebounce && { search: searchDebounce }),
       });
       const res = await fetch(`/api/admin/audit-logs?${params}`);
       const data = await res.json();
@@ -60,7 +68,7 @@ export default function AdminAuditLogsPage() {
 
   useEffect(() => {
     fetchLogs();
-  }, [currentPage, entityTypeFilter, actionFilter]);
+  }, [currentPage, entityTypeFilter, actionFilter, searchDebounce]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('th-TH', {
@@ -127,7 +135,40 @@ export default function AdminAuditLogsPage() {
         gap: '12px',
         marginBottom: '24px',
         flexWrap: 'wrap',
+        alignItems: 'center',
       }}>
+        <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '350px' }}>
+          <svg
+            style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '18px',
+              height: '18px',
+              color: '#94a3b8',
+            }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="ค้นหาชื่อผู้ใช้, อีเมล..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            style={{
+              width: '100%',
+              padding: '10px 12px 10px 40px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '0.875rem',
+              background: 'white',
+            }}
+          />
+        </div>
         <select
           value={entityTypeFilter}
           onChange={(e) => { setEntityTypeFilter(e.target.value); setCurrentPage(1); }}

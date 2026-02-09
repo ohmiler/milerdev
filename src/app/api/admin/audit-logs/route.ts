@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { auditLogs, users } from '@/lib/db/schema';
-import { desc, eq, sql, and, gte, lte } from 'drizzle-orm';
+import { desc, eq, sql, and, gte, lte, like, or } from 'drizzle-orm';
 
 // GET /api/admin/audit-logs - Get audit logs
 export async function GET(request: Request) {
@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const entityType = searchParams.get('entityType');
     const action = searchParams.get('action');
+    const search = searchParams.get('search');
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
     const offset = (page - 1) * limit;
@@ -30,6 +31,16 @@ export async function GET(request: Request) {
     
     if (action && action !== 'all') {
       conditions.push(eq(auditLogs.action, action));
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          like(users.name, `%${search}%`),
+          like(users.email, `%${search}%`),
+          like(auditLogs.entityId, `%${search}%`)
+        )!
+      );
     }
 
     if (dateFrom) {
