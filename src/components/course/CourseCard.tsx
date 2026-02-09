@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { getExcerpt } from '@/lib/sanitize';
 
 interface CourseCardProps {
     id: string;
@@ -84,7 +85,7 @@ export default function CourseCard({
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
                     }}>
-                        {description}
+                        {getExcerpt(description, 120)}
                     </p>
                 )}
 

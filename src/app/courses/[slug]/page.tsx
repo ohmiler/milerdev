@@ -346,13 +346,19 @@ export default async function CourseDetailPage({ params }: Props) {
         .course-description-content p {
           margin: 0.75em 0;
         }
-        .course-description-content ul,
+        .course-description-content ul {
+          padding-left: 1.5em;
+          margin: 0.75em 0;
+          list-style-type: disc;
+        }
         .course-description-content ol {
           padding-left: 1.5em;
           margin: 0.75em 0;
+          list-style-type: decimal;
         }
         .course-description-content li {
           margin: 0.4em 0;
+          display: list-item;
         }
         .course-description-content strong {
           font-weight: 600;

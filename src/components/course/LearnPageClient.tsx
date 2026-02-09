@@ -349,12 +349,19 @@ export default function LearnPageClient({
                 color: #e2e8f0;
                 margin: 1em 0 0.4em;
               }
-              .lesson-content ul, .lesson-content ol {
+              .lesson-content ul {
                 padding-left: 1.5em;
                 margin: 0.5em 0;
+                list-style-type: disc;
+              }
+              .lesson-content ol {
+                padding-left: 1.5em;
+                margin: 0.5em 0;
+                list-style-type: decimal;
               }
               .lesson-content li {
                 margin: 0.3em 0;
+                display: list-item;
               }
               .lesson-content a {
                 color: #60a5fa;

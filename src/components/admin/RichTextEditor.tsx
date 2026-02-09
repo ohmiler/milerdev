@@ -253,12 +253,19 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           font-weight: 600;
           margin: 0.8em 0 0.4em;
         }
-        .tiptap ul, .tiptap ol {
+        .tiptap ul {
           padding-left: 1.5em;
           margin: 0.5em 0;
+          list-style-type: disc;
+        }
+        .tiptap ol {
+          padding-left: 1.5em;
+          margin: 0.5em 0;
+          list-style-type: decimal;
         }
         .tiptap li {
           margin: 0.25em 0;
+          display: list-item;
         }
         .tiptap code {
           background: #f1f5f9;
