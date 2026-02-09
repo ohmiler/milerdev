@@ -61,6 +61,9 @@ jobs:
           NEXT_PUBLIC_BANK_NAME: Bank
           NEXT_PUBLIC_BANK_ACCOUNT: xxx-x-xxxxx-x
           NEXT_PUBLIC_BANK_ACCOUNT_NAME: MilerDev
+          BUNNY_STORAGE_API_KEY: placeholder
+          BUNNY_STORAGE_ZONE: placeholder
+          BUNNY_CDN_URL: https://placeholder.b-cdn.net
 
   # Uncomment when tests are added
   # test:

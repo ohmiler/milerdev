@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
+const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -239,36 +240,13 @@ export default function EditCoursePage({ params }: Props) {
 
         <div style={{ marginBottom: '24px' }}>
           <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-            URL รูปภาพปก
+            รูปภาพปก
           </label>
-          <input
-            type="url"
+          <ImageUpload
             value={formData.thumbnailUrl}
-            onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '1rem',
-            }}
+            onChange={(url) => setFormData(prev => ({ ...prev, thumbnailUrl: url }))}
+            folder="courses"
           />
-          {formData.thumbnailUrl && (
-            <div style={{ marginTop: '8px' }}>
-              <img
-                src={formData.thumbnailUrl}
-                alt="Preview"
-                style={{
-                  maxWidth: '200px',
-                  maxHeight: '120px',
-                  borderRadius: '8px',
-                  objectFit: 'cover',
-                  border: '1px solid #e2e8f0',
-                }}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
-            </div>
-          )}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
