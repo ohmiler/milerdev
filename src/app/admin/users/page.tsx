@@ -713,8 +713,11 @@ export default function AdminUsersPage() {
                       }}>
                         {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <div style={{ fontWeight: 500, color: '#1e293b' }}>
+                      <div
+                        onClick={() => window.location.href = `/admin/users/${user.id}`}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div style={{ fontWeight: 500, color: '#2563eb' }}>
                           {user.name || 'ไม่ระบุชื่อ'}
                         </div>
                         <div style={{ fontSize: '0.875rem', color: '#64748b' }}>

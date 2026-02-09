@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 
@@ -60,6 +60,21 @@ export default function AdminEnrollmentsPage() {
   const [addForm, setAddForm] = useState({ userId: '', courseId: '' });
   const [adding, setAdding] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Import CSV
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    success?: number;
+    skipped?: number;
+    userNotFound?: number;
+    courseNotFound?: number;
+    total?: number;
+    errors?: string[];
+    missingUsers?: string[];
+    missingCourses?: string[];
+    matchedAliases?: string[];
+  } | null>(null);
 
   const fetchEnrollments = async () => {
     setLoading(true);
@@ -158,6 +173,37 @@ export default function AdminEnrollmentsPage() {
     }
   };
 
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/admin/enrollments/import', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setImportResult(data.results);
+        await fetchEnrollments();
+        showToast(`นำเข้าสำเร็จ ${data.results?.success || 0} รายการ`, 'success');
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch {
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('th-TH', {
       year: 'numeric',
@@ -188,21 +234,131 @@ export default function AdminEnrollmentsPage() {
           </h1>
           <p style={{ color: '#64748b' }}>ดูและจัดการการลงทะเบียนคอร์สของผู้ใช้</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          style={{
-            padding: '12px 20px',
-            background: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
-          + เพิ่มการลงทะเบียน
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImportCSV}
+            accept=".csv"
+            style={{ display: 'none' }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            style={{
+              padding: '12px 20px',
+              background: '#f1f5f9',
+              color: '#475569',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 500,
+              cursor: importing ? 'not-allowed' : 'pointer',
+              opacity: importing ? 0.7 : 1,
+            }}
+          >
+            {importing ? 'กำลังนำเข้า...' : 'ไฟล์ CSV นำเข้าจากเว็บเก่า'}
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            style={{
+              padding: '12px 20px',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            + เพิ่มการลงทะเบียน
+          </button>
+        </div>
       </div>
+
+      {/* Import Result */}
+      {importResult && (
+        <div style={{
+          background: importResult.success && importResult.success > 0 ? '#f0fdf4' : '#fefce8',
+          border: `1px solid ${importResult.success && importResult.success > 0 ? '#bbf7d0' : '#fde68a'}`,
+          borderRadius: '12px',
+          padding: '20px',
+          marginBottom: '24px',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div>
+              <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '12px', fontSize: '1rem' }}>
+                ผลการนำเข้าข้อมูล
+              </div>
+              <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '0.875rem' }}>
+                <div>
+                  <span style={{ color: '#64748b' }}>ทั้งหมด: </span>
+                  <strong style={{ color: '#1e293b' }}>{importResult.total}</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b' }}>สำเร็จ: </span>
+                  <strong style={{ color: '#16a34a' }}>{importResult.success}</strong>
+                </div>
+                <div>
+                  <span style={{ color: '#64748b' }}>ข้าม: </span>
+                  <strong style={{ color: '#d97706' }}>{importResult.skipped}</strong>
+                </div>
+              </div>
+
+              {importResult.matchedAliases && importResult.matchedAliases.length > 0 && (
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2563eb', marginBottom: '4px' }}>
+                    คอร์สที่ match ชื่อใกล้เคียง ({importResult.matchedAliases.length}):
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#1d4ed8' }}>
+                    {importResult.matchedAliases.map((a, i) => (
+                      <div key={i}>• {a}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {importResult.missingCourses && importResult.missingCourses.length > 0 && (
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#dc2626', marginBottom: '4px' }}>
+                    คอร์สที่ไม่พบในระบบใหม่ ({importResult.courseNotFound} คอร์ส):
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#b91c1c' }}>
+                    {importResult.missingCourses.map((c, i) => (
+                      <div key={i}>• {c}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {importResult.missingUsers && importResult.missingUsers.length > 0 && (
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#d97706', marginBottom: '4px' }}>
+                    User ที่ไม่พบในระบบใหม่ ({importResult.userNotFound} คน):
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#92400e', maxHeight: '80px', overflowY: 'auto' }}>
+                    {importResult.missingUsers.map((u, i) => (
+                      <span key={i} style={{ marginRight: '8px' }}>{u}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setImportResult(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                color: '#64748b',
+                padding: '4px',
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       {stats && (
