@@ -78,11 +78,11 @@ export async function POST(request: Request) {
         slipFormData.append("log", "true");
 
         const slipResponse = await fetch(
-            `https://api.slipok.com/api/line/apikey/${process.env.SLIPOK_API_KEY}`,
+            `https://api.slipok.com/api/line/apikey/${process.env.SLIPOK_BRANCH_ID}`,
             {
                 method: "POST",
                 headers: {
-                    "x-authorization": process.env.SLIPOK_BRANCH_ID || "",
+                    "x-authorization": process.env.SLIPOK_API_KEY || "",
                 },
                 body: slipFormData,
             }

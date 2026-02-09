@@ -56,6 +56,11 @@ jobs:
           DATABASE_URL: mysql://user:pass@localhost:3306/db
           AUTH_SECRET: build-secret-placeholder
           NEXTAUTH_URL: http://localhost:3000
+          SLIPOK_API_KEY: placeholder
+          SLIPOK_BRANCH_ID: placeholder
+          NEXT_PUBLIC_BANK_NAME: Bank
+          NEXT_PUBLIC_BANK_ACCOUNT: xxx-x-xxxxx-x
+          NEXT_PUBLIC_BANK_ACCOUNT_NAME: MilerDev
 
   # Uncomment when tests are added
   # test:
