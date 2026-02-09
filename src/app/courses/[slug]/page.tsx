@@ -8,7 +8,7 @@ import CourseDetailClient, { CourseDetailProvider } from '@/components/course/Co
 import { db } from '@/lib/db';
 import { courses, lessons, users } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
-import { getExcerpt } from '@/lib/sanitize';
+import { getExcerpt, sanitizeRichContent } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
 
@@ -169,8 +169,25 @@ export default async function CourseDetailPage({ params }: Props) {
           <div className="container">
             <CourseDetailProvider>
             <div className="course-detail-grid">
-              {/* Left - Lessons */}
+              {/* Left - Description + Lessons */}
               <div className="course-detail-main">
+                {course.description && (
+                  <div style={{ marginBottom: '40px' }}>
+                    <h2 style={{
+                      fontSize: '1.5rem',
+                      fontWeight: 600,
+                      marginBottom: '24px',
+                      color: '#1e293b',
+                    }}>
+                      รายละเอียดคอร์ส
+                    </h2>
+                    <div
+                      className="course-description-content"
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichContent(course.description) }}
+                    />
+                  </div>
+                )}
+
                 <h2 style={{
                   fontSize: '1.5rem',
                   fontWeight: 600,
@@ -303,6 +320,83 @@ export default async function CourseDetailPage({ params }: Props) {
         }
         .course-detail-sidebar {
           order: 1;
+        }
+
+        .course-description-content {
+          color: #334155;
+          font-size: 1rem;
+          line-height: 1.8;
+        }
+        .course-description-content h2 {
+          font-size: 1.35rem;
+          font-weight: 600;
+          color: #1e293b;
+          margin: 1.5em 0 0.75em;
+        }
+        .course-description-content h3 {
+          font-size: 1.15rem;
+          font-weight: 600;
+          color: #1e293b;
+          margin: 1.25em 0 0.5em;
+        }
+        .course-description-content p {
+          margin: 0.75em 0;
+        }
+        .course-description-content ul,
+        .course-description-content ol {
+          padding-left: 1.5em;
+          margin: 0.75em 0;
+        }
+        .course-description-content li {
+          margin: 0.4em 0;
+        }
+        .course-description-content strong {
+          font-weight: 600;
+          color: #1e293b;
+        }
+        .course-description-content a {
+          color: #2563eb;
+          text-decoration: underline;
+        }
+        .course-description-content a:hover {
+          color: #1d4ed8;
+        }
+        .course-description-content blockquote {
+          border-left: 3px solid #3b82f6;
+          padding-left: 16px;
+          margin: 1em 0;
+          color: #64748b;
+          font-style: italic;
+        }
+        .course-description-content pre {
+          background: #1e293b;
+          color: #e2e8f0;
+          padding: 16px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 1em 0;
+          font-family: 'Fira Code', monospace;
+          font-size: 0.9em;
+          line-height: 1.6;
+        }
+        .course-description-content code {
+          background: #f1f5f9;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.9em;
+          color: #e11d48;
+          font-family: 'Fira Code', monospace;
+        }
+        .course-description-content pre code {
+          background: none;
+          color: inherit;
+          padding: 0;
+          font-size: inherit;
+        }
+        .course-description-content hr {
+          border: none;
+          border-top: 1px solid #e2e8f0;
+          margin: 1.5em 0;
         }
 
         @media (min-width: 1024px) {

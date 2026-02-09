@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
+
+const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -186,18 +189,9 @@ export default function EditCoursePage({ params }: Props) {
           <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
             คำอธิบาย
           </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={5}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              resize: 'vertical',
-            }}
+          <RichTextEditor
+            content={formData.description}
+            onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
           />
         </div>
 
