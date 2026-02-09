@@ -39,6 +39,38 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 }
 
+// DELETE /api/admin/payments/[id] - Delete payment
+export async function DELETE(request: Request, { params }: RouteParams) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const [existing] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, id))
+      .limit(1);
+
+    if (!existing) {
+      return NextResponse.json({ error: 'ไม่พบรายการชำระเงิน' }, { status: 404 });
+    }
+
+    await db.delete(payments).where(eq(payments.id, id));
+
+    return NextResponse.json({ message: 'ลบรายการชำระเงินสำเร็จ' });
+  } catch (error) {
+    console.error('Error deleting payment:', error);
+    return NextResponse.json(
+      { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
+      { status: 500 }
+    );
+  }
+}
+
 // PUT /api/admin/payments/[id] - Update payment status
 export async function PUT(request: Request, { params }: RouteParams) {
   try {

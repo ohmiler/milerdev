@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 
@@ -42,13 +41,12 @@ export default function AdminPaymentsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   
   // Filters
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusConfirm, setStatusConfirm] = useState<{ paymentId: string; status: string } | null>(null);
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -76,30 +74,19 @@ export default function AdminPaymentsPage() {
     fetchPayments();
   }, [statusFilter, methodFilter, currentPage]);
 
-  const confirmUpdateStatus = async () => {
-    if (!statusConfirm) return;
-    const { paymentId, status: newStatus } = statusConfirm;
-    setStatusConfirm(null);
-    
-    setUpdating(paymentId);
+  const handleDelete = async (id: string) => {
+    setDeleteConfirm(null);
     try {
-      const res = await fetch(`/api/admin/payments/${paymentId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
+      const res = await fetch(`/api/admin/payments/${id}`, { method: 'DELETE' });
       if (res.ok) {
+        showToast('ลบรายการชำระเงินสำเร็จ', 'success');
         await fetchPayments();
-        showToast('อัพเดทสถานะสำเร็จ', 'success');
       } else {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
     } catch {
       showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
-    } finally {
-      setUpdating(null);
     }
   };
 
@@ -108,7 +95,6 @@ export default function AdminPaymentsPage() {
       case 'pending': return 'รอดำเนินการ';
       case 'completed': return 'สำเร็จ';
       case 'failed': return 'ล้มเหลว';
-      case 'refunded': return 'คืนเงิน';
       default: return status;
     }
   };
@@ -118,7 +104,6 @@ export default function AdminPaymentsPage() {
       case 'pending': return { background: '#fef3c7', color: '#d97706' };
       case 'completed': return { background: '#dcfce7', color: '#16a34a' };
       case 'failed': return { background: '#fef2f2', color: '#dc2626' };
-      case 'refunded': return { background: '#f3e8ff', color: '#9333ea' };
       default: return { background: '#f1f5f9', color: '#64748b' };
     }
   };
@@ -163,17 +148,13 @@ export default function AdminPaymentsPage() {
       {stats && (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
           gap: '16px',
           marginBottom: '24px',
         }}>
           <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ทั้งหมด</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.total}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>รอดำเนินการ</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#d97706' }}>{stats.pending}</div>
           </div>
           <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>สำเร็จ</div>
@@ -205,10 +186,8 @@ export default function AdminPaymentsPage() {
           }}
         >
           <option value="all">สถานะทั้งหมด</option>
-          <option value="pending">รอดำเนินการ</option>
           <option value="completed">สำเร็จ</option>
           <option value="failed">ล้มเหลว</option>
-          <option value="refunded">คืนเงิน</option>
         </select>
 
         <select
@@ -268,8 +247,7 @@ export default function AdminPaymentsPage() {
                     <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
                       วันที่
                     </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                      การดำเนินการ
+                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem', width: '60px' }}>
                     </th>
                   </tr>
                 </thead>
@@ -277,17 +255,36 @@ export default function AdminPaymentsPage() {
                   {payments.map((payment) => (
                     <tr key={payment.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <td style={{ padding: '16px' }}>
-                        <div style={{ fontWeight: 500, color: '#1e293b', marginBottom: '4px' }}>
-                          {payment.userName || 'ไม่ระบุชื่อ'}
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                          {payment.userEmail || '-'}
+                        <div
+                          onClick={() => payment.userId && (window.location.href = `/admin/users/${payment.userId}`)}
+                          style={{ cursor: payment.userId ? 'pointer' : 'default' }}
+                        >
+                          <div style={{ fontWeight: 500, color: payment.userId ? '#2563eb' : '#1e293b', marginBottom: '4px' }}>
+                            {payment.userName || 'ไม่ระบุชื่อ'}
+                          </div>
+                          <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                            {payment.userEmail || '-'}
+                          </div>
                         </div>
                       </td>
                       <td style={{ padding: '16px' }}>
                         <div style={{ color: '#1e293b', fontSize: '0.875rem' }}>
                           {payment.courseTitle || '-'}
                         </div>
+                        {payment.slipUrl && (
+                          <a
+                            href={payment.slipUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              fontSize: '0.75rem',
+                              color: '#2563eb',
+                              textDecoration: 'none',
+                            }}
+                          >
+                            ดูสลิป
+                          </a>
+                        )}
                       </td>
                       <td style={{ padding: '16px', textAlign: 'center' }}>
                         <div style={{ fontWeight: 600, color: '#1e293b' }}>
@@ -320,80 +317,22 @@ export default function AdminPaymentsPage() {
                       <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.875rem', color: '#64748b' }}>
                         {formatDate(payment.createdAt)}
                       </td>
-                      <td style={{ padding: '16px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          {payment.slipUrl && (
-                            <a
-                              href={payment.slipUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                padding: '6px 12px',
-                                background: '#f1f5f9',
-                                color: '#475569',
-                                borderRadius: '6px',
-                                textDecoration: 'none',
-                                fontSize: '0.75rem',
-                              }}
-                            >
-                              ดูสลิป
-                            </a>
-                          )}
-                          {payment.status === 'pending' && (
-                            <>
-                              <button
-                                onClick={() => setStatusConfirm({ paymentId: payment.id, status: 'completed' })}
-                                disabled={updating === payment.id}
-                                style={{
-                                  padding: '6px 12px',
-                                  background: '#dcfce7',
-                                  color: '#16a34a',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  fontSize: '0.75rem',
-                                  cursor: updating === payment.id ? 'not-allowed' : 'pointer',
-                                  opacity: updating === payment.id ? 0.7 : 1,
-                                }}
-                              >
-                                ยืนยัน
-                              </button>
-                              <button
-                                onClick={() => setStatusConfirm({ paymentId: payment.id, status: 'failed' })}
-                                disabled={updating === payment.id}
-                                style={{
-                                  padding: '6px 12px',
-                                  background: '#fef2f2',
-                                  color: '#dc2626',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  fontSize: '0.75rem',
-                                  cursor: updating === payment.id ? 'not-allowed' : 'pointer',
-                                  opacity: updating === payment.id ? 0.7 : 1,
-                                }}
-                              >
-                                ปฏิเสธ
-                              </button>
-                            </>
-                          )}
-                          {payment.status === 'completed' && (
-                            <button
-                              onClick={() => setStatusConfirm({ paymentId: payment.id, status: 'refunded' })}
-                              disabled={updating === payment.id}
-                              style={{
-                                padding: '6px 12px',
-                                background: '#f3e8ff',
-                                color: '#9333ea',
-                                border: 'none',
-                                borderRadius: '6px',
-                                fontSize: '0.75rem',
-                                cursor: updating === payment.id ? 'not-allowed' : 'pointer',
-                                opacity: updating === payment.id ? 0.7 : 1,
-                              }}
-                            >
-                              คืนเงิน
-                            </button>
-                          )}
-                        </div>
+                      <td style={{ padding: '16px', textAlign: 'center' }}>
+                        <button
+                          onClick={() => setDeleteConfirm(payment.id)}
+                          title="ลบ"
+                          style={{
+                            padding: '6px 10px',
+                            background: '#fef2f2',
+                            color: '#dc2626',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ลบ
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -448,12 +387,12 @@ export default function AdminPaymentsPage() {
         )}
       </div>
       <ConfirmDialog
-        isOpen={!!statusConfirm}
-        title="เปลี่ยนสถานะการชำระเงิน"
-        message={`ยืนยันการเปลี่ยนสถานะเป็น "${statusConfirm ? getStatusText(statusConfirm.status) : ''}"?`}
-        confirmText="ยืนยัน"
-        onConfirm={confirmUpdateStatus}
-        onCancel={() => setStatusConfirm(null)}
+        isOpen={!!deleteConfirm}
+        title="ลบรายการชำระเงิน"
+        message="คุณแน่ใจหรือไม่ที่จะลบรายการชำระเงินนี้? การกระทำนี้ไม่สามารถย้อนกลับได้"
+        confirmText="ลบ"
+        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
+        onCancel={() => setDeleteConfirm(null)}
       />
     </div>
   );
