@@ -1,6 +1,12 @@
 import { Resend } from "resend";
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+    if (!_resend) {
+        _resend = new Resend(process.env.RESEND_API_KEY);
+    }
+    return _resend;
+}
 
 // Email sender configuration
 const EMAIL_FROM = process.env.EMAIL_FROM || "MilerDev <noreply@milerdev.com>";
@@ -30,7 +36,7 @@ interface SendPaymentConfirmationParams {
  * Send welcome email after registration
  */
 export async function sendWelcomeEmail({ email, name }: SendWelcomeEmailParams) {
-    await resend.emails.send({
+    await getResend().emails.send({
         from: EMAIL_FROM,
         to: email,
         subject: "ยินดีต้อนรับสู่ MilerDev! ",
@@ -57,7 +63,7 @@ export async function sendEnrollmentEmail({
     courseName,
     courseSlug,
 }: SendEnrollmentEmailParams) {
-    await resend.emails.send({
+    await getResend().emails.send({
         from: EMAIL_FROM,
         to: email,
         subject: `คุณได้ลงทะเบียนคอร์ส: ${courseName}`,
@@ -90,7 +96,7 @@ export async function sendPasswordResetEmail({
     resetToken,
 }: SendPasswordResetEmailParams) {
     const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
-    await resend.emails.send({
+    await getResend().emails.send({
         from: EMAIL_FROM,
         to: email,
         subject: "รีเซ็ตรหัสผ่าน - MilerDev",
@@ -119,7 +125,7 @@ export async function sendPaymentConfirmation({
     amount,
     paymentId,
 }: SendPaymentConfirmationParams) {
-    await resend.emails.send({
+    await getResend().emails.send({
         from: EMAIL_FROM,
         to: email,
         subject: `ยืนยันการชำระเงิน - ${courseName}`,
