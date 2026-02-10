@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
-import { enrollments, courses, lessons, lessonProgress, certificates } from '@/lib/db/schema';
+import { enrollments, courses, lessons, lessonProgress, certificates, payments } from '@/lib/db/schema';
 import { eq, desc, count, and, sql, isNull } from 'drizzle-orm';
 
 export const metadata: Metadata = {
@@ -100,6 +100,13 @@ export default async function DashboardPage() {
     .where(and(eq(certificates.userId, session.user.id), isNull(certificates.revokedAt)));
   const certificateCount = certCount?.count || 0;
 
+  // Get payment count
+  const [paymentCount] = await db
+    .select({ count: count() })
+    .from(payments)
+    .where(eq(payments.userId, session.user.id));
+  const totalPayments = paymentCount?.count || 0;
+
   return (
     <>
       <Navbar />
@@ -181,6 +188,23 @@ export default async function DashboardPage() {
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: 700, color: '#7c3aed' }}>
                   {certificateCount}
+                </div>
+              </div>
+            </Link>
+            <Link href="/dashboard/payments" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'white',
+                padding: '24px',
+                borderRadius: '12px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                transition: 'box-shadow 0.2s',
+                cursor: 'pointer',
+              }}>
+                <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '8px' }}>
+                  การชำระเงิน 💳
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f97316' }}>
+                  {totalPayments}
                 </div>
               </div>
             </Link>
