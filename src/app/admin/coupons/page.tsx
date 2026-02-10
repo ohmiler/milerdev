@@ -63,7 +63,7 @@ export default function AdminCouponsPage() {
     fetchCoupons();
     fetch('/api/admin/courses')
       .then(r => r.json())
-      .then(d => setCourseOptions((d.courses || []).map((c: any) => ({ id: c.id, title: c.title }))))
+      .then(d => setCourseOptions((d.courses || []).map((c: { id: string; title: string }) => ({ id: c.id, title: c.title }))))
       .catch(console.error);
   }, []);
 
@@ -182,7 +182,7 @@ export default function AdminCouponsPage() {
                 </div>
                 <div>
                   <label style={labelStyle}>ประเภทส่วนลด *</label>
-                  <select value={form.discountType} onChange={e => setForm(p => ({ ...p, discountType: e.target.value as any }))} style={inputStyle}>
+                  <select value={form.discountType} onChange={e => { const v = e.target.value; setForm(p => ({ ...p, discountType: v === 'fixed' ? 'fixed' : 'percentage' })); }} style={inputStyle}>
                     <option value="percentage">เปอร์เซ็นต์ (%)</option>
                     <option value="fixed">จำนวนเงิน (฿)</option>
                   </select>

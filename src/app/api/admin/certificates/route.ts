@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || 'all';
 
-    let conditions = [];
+    const conditions = [];
     if (search) {
       conditions.push(
         sql`(${certificates.recipientName} LIKE ${'%' + search + '%'} OR ${certificates.certificateCode} LIKE ${'%' + search + '%'} OR ${certificates.courseTitle} LIKE ${'%' + search + '%'})`
