@@ -11,6 +11,12 @@ import { courses, lessons, users } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { getExcerpt, sanitizeRichContent } from '@/lib/sanitize';
 
+function normalizeUrl(url: string | null): string | null {
+    if (!url || url.trim() === '') return null;
+    if (url.startsWith('http')) return url;
+    return `https://${url}`;
+}
+
 export const dynamic = 'force-dynamic';
 
 interface Props {
@@ -225,9 +231,9 @@ export default async function CourseDetailPage({ params }: Props) {
                     paddingTop: '56.25%',
                     background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
                   }}>
-                    {course.thumbnailUrl && course.thumbnailUrl.startsWith('http') ? (
+                    {normalizeUrl(course.thumbnailUrl) ? (
                       <img
-                        src={course.thumbnailUrl}
+                        src={normalizeUrl(course.thumbnailUrl)!}
                         alt={course.title}
                         style={{
                           position: 'absolute',

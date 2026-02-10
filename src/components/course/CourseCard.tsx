@@ -12,15 +12,22 @@ interface CourseCardProps {
     lessonCount: number;
 }
 
+function normalizeUrl(url: string | null): string | null {
+    if (!url || url.trim() === '') return null;
+    if (url.startsWith('http')) return url;
+    return `https://${url}`;
+}
+
 export default function CourseCard({
     title,
     slug,
     description,
-    thumbnailUrl,
+    thumbnailUrl: rawThumbnailUrl,
     price,
     instructorName,
     lessonCount,
 }: CourseCardProps) {
+    const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
     return (
         <Link href={`/courses/${slug}`} className="card block group">
             {/* Thumbnail */}
@@ -33,7 +40,7 @@ export default function CourseCard({
                     justifyContent: 'center',
                     position: 'relative'
                 }}>
-                    {thumbnailUrl && thumbnailUrl.startsWith('http') ? (
+                    {thumbnailUrl ? (
                         <img
                             src={thumbnailUrl}
                             alt={title}

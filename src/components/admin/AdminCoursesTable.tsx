@@ -22,6 +22,12 @@ interface AdminCoursesTableProps {
 
 const PER_PAGE_OPTIONS = [10, 25, 50];
 
+function normalizeUrl(url: string | null): string | null {
+    if (!url || url.trim() === '') return null;
+    if (url.startsWith('http')) return url;
+    return `https://${url}`;
+}
+
 export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -165,9 +171,9 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                             overflow: 'hidden',
                                             position: 'relative',
                                         }}>
-                                            {course.thumbnailUrl && course.thumbnailUrl.startsWith('http') && (
+                                            {normalizeUrl(course.thumbnailUrl) && (
                                                 <img
-                                                    src={course.thumbnailUrl}
+                                                    src={normalizeUrl(course.thumbnailUrl)!}
                                                     alt={course.title}
                                                     style={{
                                                         width: '100%',

@@ -86,8 +86,9 @@ export async function POST(request: Request) {
             );
         }
 
-        // Return CDN URL
-        const imageUrl = `${cdnUrl}/${filePath}`;
+        // Return CDN URL (ensure https:// prefix)
+        const normalizedCdnUrl = cdnUrl.startsWith('http') ? cdnUrl : `https://${cdnUrl}`;
+        const imageUrl = `${normalizedCdnUrl}/${filePath}`;
 
         return NextResponse.json({
             success: true,
