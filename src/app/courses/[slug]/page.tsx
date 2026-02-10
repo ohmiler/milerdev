@@ -132,6 +132,7 @@ export default async function CourseDetailPage({ params }: Props) {
                     <Link
                       key={tag.id}
                       href={`/courses?tag=${tag.slug}`}
+                      className="course-tag-badge"
                       style={{
                         padding: '4px 14px',
                         background: 'rgba(255,255,255,0.15)',
@@ -140,11 +141,7 @@ export default async function CourseDetailPage({ params }: Props) {
                         fontSize: '0.8125rem',
                         fontWeight: 500,
                         textDecoration: 'none',
-                        backdropFilter: 'blur(4px)',
-                        transition: 'background 0.15s',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
                     >
                       {tag.name}
                     </Link>

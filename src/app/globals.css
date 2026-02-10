@@ -215,6 +215,11 @@ h1, h2, h3, h4, h5, h6 {
   background: radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
 }
 
+/* Course Tag Badge */
+.course-tag-badge:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
 /* Price Badge */
 .price-badge {
   position: absolute;
