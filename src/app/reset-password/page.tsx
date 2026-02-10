@@ -310,7 +310,7 @@ export default function ResetPasswordPage() {
     <>
       <Navbar />
 
-      <main style={{ paddingTop: '64px', minHeight: '100vh', background: '#f8fafc' }}>
+      <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
         <div className="container" style={{ paddingTop: '60px', paddingBottom: '60px' }}>
           <div style={{
             maxWidth: '440px',

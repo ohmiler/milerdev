@@ -20,7 +20,7 @@ export default function DashboardLoading() {
         <>
             <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
             <Navbar />
-            <main style={{ paddingTop: '64px', minHeight: '100vh', background: '#f8fafc' }}>
+            <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
                 <div className="container" style={{ paddingTop: '40px', paddingBottom: '60px' }}>
                     {/* Header */}
                     <div style={{ marginBottom: '40px' }}>

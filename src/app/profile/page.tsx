@@ -54,7 +54,7 @@ export default async function ProfilePage() {
         <>
             <Navbar />
 
-            <main style={{ paddingTop: '64px', minHeight: '100vh', background: '#f8fafc' }}>
+            <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
                 <div className="container" style={{ paddingTop: '40px', paddingBottom: '60px', maxWidth: '800px' }}>
                     {/* Header */}
                     <div style={{ marginBottom: '32px' }}>

@@ -13,7 +13,7 @@ export default function AboutPage() {
     <>
       <Navbar />
       
-      <main style={{ paddingTop: '64px' }}>
+      <main style={{ paddingTop: '0' }}>
         {/* Hero Section */}
         <section style={{
           background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #eff6ff 100%)',

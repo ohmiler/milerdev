@@ -36,7 +36,7 @@ export default function CoursesPage() {
     <Suspense fallback={
       <>
         <Navbar />
-        <main style={{ paddingTop: '64px' }}>
+        <main style={{ paddingTop: '0' }}>
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748b' }}>กำลังโหลด...</div>
         </main>
         <Footer />
@@ -122,7 +122,7 @@ function CoursesContent() {
     <>
       <Navbar />
 
-      <main style={{ paddingTop: '64px' }}>
+      <main style={{ paddingTop: '0' }}>
         {/* Header */}
         <section style={{
           background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #eff6ff 100%)',

@@ -30,7 +30,7 @@ export default function ContactPage() {
         <>
             <Navbar />
             
-            <main style={{ paddingTop: '64px', minHeight: '100vh', background: '#f8fafc' }}>
+            <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
                 <div className="container" style={{ paddingTop: '60px', paddingBottom: '80px' }}>
                     {/* Header */}
                     <div style={{ textAlign: 'center', marginBottom: '48px' }}>

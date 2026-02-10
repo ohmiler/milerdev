@@ -105,7 +105,7 @@ export default async function BlogPostPage({ params }: Props) {
   return (
     <>
       <Navbar />
-      <main style={{ paddingTop: '64px' }}>
+      <main style={{ paddingTop: '0' }}>
         {/* Header */}
         <section style={{
           background: 'linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%)',

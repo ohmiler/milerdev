@@ -20,7 +20,7 @@ export default function CourseDetailLoading() {
         <>
             <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
             <Navbar />
-            <main style={{ paddingTop: '64px', minHeight: '100vh' }}>
+            <main style={{ minHeight: '100vh' }}>
                 {/* Hero Section */}
                 <div style={{
                     background: 'linear-gradient(135deg, #1e3a5f, #0f172a)',

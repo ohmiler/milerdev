@@ -108,7 +108,7 @@ export default async function CourseDetailPage({ params }: Props) {
     <>
       <Navbar />
 
-      <main style={{ paddingTop: '64px' }}>
+      <main style={{ paddingTop: '0' }}>
         {/* Course Header */}
         <section style={{
           background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',

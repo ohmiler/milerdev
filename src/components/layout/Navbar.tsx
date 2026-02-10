@@ -6,6 +6,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import AnnouncementBanner from '@/components/layout/AnnouncementBanner';
+import NotificationBell from '@/components/layout/NotificationBell';
 import {
     MenuIcon,
     CloseIcon,
@@ -159,15 +161,16 @@ export default function Navbar() {
         <>
             {/* Navbar */}
             <nav style={{
-                position: 'fixed',
+                position: 'sticky',
                 top: 0,
-                left: 0,
-                right: 0,
                 zIndex: 50,
                 background: 'rgba(255,255,255,0.95)',
                 backdropFilter: 'blur(8px)',
                 borderBottom: '1px solid #e2e8f0',
             }}>
+                {/* Announcement Banner */}
+                <AnnouncementBanner />
+
                 <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px' }}>
                     {/* Logo */}
                     <Logo />
@@ -195,10 +198,12 @@ export default function Navbar() {
                     </div>
 
                     {/* Desktop Auth */}
-                    <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {status === 'loading' ? (
                             <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e2e8f0' }} />
                         ) : session ? (
+                            <>
+                            <NotificationBell />
                             <div style={{ position: 'relative' }} ref={dropdownRef}>
                                 <button
                                     onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -351,6 +356,7 @@ export default function Navbar() {
                                     </div>
                                 )}
                             </div>
+                            </>
                         ) : (
                             <>
                                 <Link href="/login" style={{
@@ -391,39 +397,24 @@ export default function Navbar() {
                         )}
                     </button>
                 </div>
-            </nav>
 
-            {/* Mobile Backdrop */}
-            {isMenuOpen && (
-                <div
-                    onClick={() => setIsMenuOpen(false)}
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        background: 'rgba(0,0,0,0.3)',
-                        zIndex: 40,
-                    }}
-                    className="nav-mobile-only"
-                />
-            )}
-
-            {/* Mobile Menu */}
-            {isMenuOpen && (
-                <div
-                    className="nav-mobile-only"
-                    style={{
-                        position: 'fixed',
-                        top: '64px',
-                        left: 0,
-                        right: 0,
-                        background: 'white',
-                        zIndex: 50,
-                        borderBottom: '1px solid #e2e8f0',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                        maxHeight: 'calc(100vh - 64px)',
-                        overflowY: 'auto',
-                    }}
-                >
+                {/* Mobile Menu */}
+                {isMenuOpen && (
+                    <div
+                        className="nav-mobile-only"
+                        style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            background: 'white',
+                            zIndex: 50,
+                            borderBottom: '1px solid #e2e8f0',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                            maxHeight: 'calc(100vh - 64px)',
+                            overflowY: 'auto',
+                        }}
+                    >
                     <div style={{ padding: '16px' }}>
                         {/* User Info (logged in) */}
                         {session && (
@@ -615,6 +606,7 @@ export default function Navbar() {
                     </div>
                 </div>
             )}
+            </nav>
 
             {/* Responsive Styles */}
             <style>{`

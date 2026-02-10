@@ -51,7 +51,7 @@ export default function BlogPage() {
     <Suspense fallback={
       <>
         <Navbar />
-        <main style={{ paddingTop: '64px' }}>
+        <main style={{ paddingTop: '0' }}>
           <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748b' }}>กำลังโหลด...</div>
         </main>
         <Footer />
@@ -127,7 +127,7 @@ function BlogContent() {
   return (
     <>
       <Navbar />
-      <main style={{ paddingTop: '64px' }}>
+      <main style={{ paddingTop: '0' }}>
         {/* Header */}
         <section style={{
           background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #faf5ff 100%)',
