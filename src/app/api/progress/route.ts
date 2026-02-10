@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { lessonProgress, lessons, enrollments } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
+import { issueCertificate } from "@/lib/certificate";
 
 // POST /api/progress - Update lesson progress
 export async function POST(request: Request) {
@@ -103,6 +104,18 @@ export async function POST(request: Request) {
                     completedAt: progressPercent === 100 ? new Date() : null,
                 })
                 .where(eq(enrollments.id, enrollment.id));
+
+            // Auto-issue certificate on course completion
+            if (progressPercent === 100) {
+                try {
+                    const { certificate, isNew } = await issueCertificate(session.user.id, lesson.courseId);
+                    if (isNew) {
+                        console.log('[Certificate] Issued:', certificate.certificateCode, 'for user:', session.user.id);
+                    }
+                } catch (certError) {
+                    console.error('[Certificate] Error issuing:', certError);
+                }
+            }
         }
 
         return NextResponse.json({ success: true });

@@ -357,6 +357,33 @@ export const blogPostTagsRelations = relations(blogPostTags, ({ one }) => ({
 }));
 
 // =====================
+// CERTIFICATES TABLE
+// =====================
+export const certificates = mysqlTable('certificates', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    certificateCode: varchar('certificate_code', { length: 20 }).notNull().unique(),
+    recipientName: varchar('recipient_name', { length: 255 }).notNull(),
+    courseTitle: varchar('course_title', { length: 255 }).notNull(),
+    completedAt: datetime('completed_at').notNull(),
+    issuedAt: datetime('issued_at').$defaultFn(() => new Date()),
+    revokedAt: datetime('revoked_at'),
+    revokedReason: text('revoked_reason'),
+});
+
+export const certificatesRelations = relations(certificates, ({ one }) => ({
+    user: one(users, {
+        fields: [certificates.userId],
+        references: [users.id],
+    }),
+    course: one(courses, {
+        fields: [certificates.courseId],
+        references: [courses.id],
+    }),
+}));
+
+// =====================
 // TYPE EXPORTS
 // =====================
 export type User = typeof users.$inferSelect;
@@ -387,3 +414,5 @@ export type Review = typeof reviews.$inferSelect;
 export type NewReview = typeof reviews.$inferInsert;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type NewBlogPost = typeof blogPosts.$inferInsert;
+export type Certificate = typeof certificates.$inferSelect;
+export type NewCertificate = typeof certificates.$inferInsert;

@@ -6,8 +6,8 @@ import { auth } from '@/lib/auth';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
-import { enrollments, courses, lessons, lessonProgress } from '@/lib/db/schema';
-import { eq, desc, count, and, sql } from 'drizzle-orm';
+import { enrollments, courses, lessons, lessonProgress, certificates } from '@/lib/db/schema';
+import { eq, desc, count, and, sql, isNull } from 'drizzle-orm';
 
 export const metadata: Metadata = {
     title: 'แดชบอร์ด',
@@ -93,6 +93,13 @@ export default async function DashboardPage() {
 
   const userEnrollments = await getUserEnrollments(session.user.id);
 
+  // Get certificate count
+  const [certCount] = await db
+    .select({ count: count() })
+    .from(certificates)
+    .where(and(eq(certificates.userId, session.user.id), isNull(certificates.revokedAt)));
+  const certificateCount = certCount?.count || 0;
+
   return (
     <>
       <Navbar />
@@ -160,6 +167,23 @@ export default async function DashboardPage() {
                 {userEnrollments.filter((e) => !e.completedAt).length}
               </div>
             </div>
+            <Link href="/dashboard/certificates" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'white',
+                padding: '24px',
+                borderRadius: '12px',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                transition: 'box-shadow 0.2s',
+                cursor: 'pointer',
+              }}>
+                <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '8px' }}>
+                  ใบรับรอง 🎓
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 700, color: '#7c3aed' }}>
+                  {certificateCount}
+                </div>
+              </div>
+            </Link>
           </div>
 
           {/* My Courses */}
