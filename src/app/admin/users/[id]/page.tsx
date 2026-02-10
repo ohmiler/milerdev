@@ -25,6 +25,13 @@ interface Enrollment {
   courseImage: string | null;
 }
 
+interface AvailableCourse {
+  id: string;
+  title: string;
+  slug: string;
+  price: string | null;
+}
+
 export default function AdminUserDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -32,9 +39,13 @@ export default function AdminUserDetailPage() {
 
   const [user, setUser] = useState<UserInfo | null>(null);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<AvailableCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
+  const [searchAvailable, setSearchAvailable] = useState('');
+  const [searchEnrolled, setSearchEnrolled] = useState('');
 
   const fetchUserData = async () => {
     setLoading(true);
@@ -48,6 +59,7 @@ export default function AdminUserDetailPage() {
       const data = await res.json();
       setUser(data.user);
       setEnrollments(data.enrollments || []);
+      setAvailableCourses(data.availableCourses || []);
     } catch {
       showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
@@ -343,6 +355,171 @@ export default function AdminUserDetailPage() {
             </table>
           </div>
         )}
+      </div>
+
+      {/* Manual Enroll Section */}
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        overflow: 'hidden',
+        marginTop: '24px',
+      }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>
+            จัดการคอร์ส
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '4px' }}>
+            เลือกคอร์สจากด้านซ้ายเพื่อเพิ่มให้ผู้ใช้ หรือกดลบจากด้านขวาเพื่อถอนออก
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0', minHeight: '360px' }}>
+          {/* Available Courses (Left) */}
+          <div style={{ borderRight: '1px solid #e2e8f0' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>คอร์สทั้งหมด ({availableCourses.length})</div>
+              <input
+                type="text"
+                placeholder="ค้นหาคอร์ส..."
+                value={searchAvailable}
+                onChange={(e) => setSearchAvailable(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  fontSize: '0.8125rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+              {availableCourses
+                .filter(c => c.title.toLowerCase().includes(searchAvailable.toLowerCase()))
+                .map(course => (
+                  <div
+                    key={course.id}
+                    onClick={async () => {
+                      if (enrolling) return;
+                      setEnrolling(true);
+                      try {
+                        const res = await fetch(`/api/admin/users/${userId}/enrollments`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ courseId: course.id }),
+                        });
+                        if (res.ok) {
+                          showToast(`เพิ่ม "${course.title}" สำเร็จ`, 'success');
+                          await fetchUserData();
+                        } else {
+                          const data = await res.json();
+                          showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+                        }
+                      } catch {
+                        showToast('เกิดข้อผิดพลาด', 'error');
+                      } finally {
+                        setEnrolling(false);
+                      }
+                    }}
+                    style={{
+                      padding: '10px 16px',
+                      borderBottom: '1px solid #f1f5f9',
+                      cursor: enrolling ? 'wait' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'background 0.15s',
+                      fontSize: '0.8125rem',
+                      color: '#1e293b',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = '#f0f9ff')}
+                    onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 500 }}>{course.title}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {parseFloat(course.price || '0') === 0 ? 'ฟรี' : `฿${parseFloat(course.price || '0').toLocaleString()}`}
+                      </div>
+                    </div>
+                    <span style={{ color: '#16a34a', fontSize: '1.1rem', fontWeight: 700 }}>+</span>
+                  </div>
+                ))}
+              {availableCourses.filter(c => c.title.toLowerCase().includes(searchAvailable.toLowerCase())).length === 0 && (
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8125rem' }}>
+                  ไม่มีคอร์สที่สามารถเพิ่มได้
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Arrow Icons (Center) */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 12px', gap: '8px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#64748b', fontSize: '1rem' }}>→</span>
+            </div>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#64748b', fontSize: '1rem' }}>←</span>
+            </div>
+          </div>
+
+          {/* Enrolled Courses (Right) */}
+          <div style={{ borderLeft: '1px solid #e2e8f0' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>คอร์สที่ลงทะเบียน ({enrollments.length})</div>
+              <input
+                type="text"
+                placeholder="ค้นหาคอร์สที่ลงทะเบียน..."
+                value={searchEnrolled}
+                onChange={(e) => setSearchEnrolled(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  fontSize: '0.8125rem',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
+              {enrollments
+                .filter(e => (e.courseTitle || '').toLowerCase().includes(searchEnrolled.toLowerCase()))
+                .map(enrollment => (
+                  <div
+                    key={enrollment.id}
+                    onClick={() => setDeleteConfirm(enrollment.id)}
+                    style={{
+                      padding: '10px 16px',
+                      borderBottom: '1px solid #f1f5f9',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      transition: 'background 0.15s',
+                      fontSize: '0.8125rem',
+                      color: '#1e293b',
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                    onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 500 }}>{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {enrollment.progressPercent || 0}% • {enrollment.completedAt ? 'เรียนจบ' : 'กำลังเรียน'}
+                      </div>
+                    </div>
+                    <span style={{ color: '#dc2626', fontSize: '1.1rem', fontWeight: 700 }}>−</span>
+                  </div>
+                ))}
+              {enrollments.filter(e => (e.courseTitle || '').toLowerCase().includes(searchEnrolled.toLowerCase())).length === 0 && (
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8125rem' }}>
+                  ยังไม่มีคอร์สที่ลงทะเบียน
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <ConfirmDialog
