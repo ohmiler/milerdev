@@ -77,17 +77,11 @@ function Avatar({ image, name, size = 'md' }: { image?: string | null; name?: st
 function Logo() {
     return (
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <div style={{
-                width: 32,
-                height: 32,
-                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-            }}>
-                <span style={{ color: 'white', fontWeight: 700, fontSize: '0.875rem' }}>M</span>
-            </div>
+            <img
+                src="/milerdev-logo-transparent.png"
+                alt="MilerDev"
+                style={{ width: 32, height: 32 }}
+            />
             <span style={{ fontWeight: 700, fontSize: '1.25rem', color: '#1e293b' }}>MilerDev</span>
         </Link>
     );

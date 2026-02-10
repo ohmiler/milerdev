@@ -27,18 +27,11 @@ export default function Footer() {
                             marginBottom: '20px',
                             textDecoration: 'none',
                         }}>
-                            <div style={{
-                                width: '48px',
-                                height: '48px',
-                                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                                borderRadius: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)',
-                            }}>
-                                <span style={{ color: 'white', fontWeight: 700, fontSize: '1.25rem' }}>M</span>
-                            </div>
+                            <img
+                                src="/milerdev-logo-transparent.png"
+                                alt="MilerDev"
+                                style={{ width: 48, height: 48 }}
+                            />
                             <span style={{ 
                                 fontWeight: 700, 
                                 fontSize: '1.5rem',

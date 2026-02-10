@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { announcements } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { announcements, notifications } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -106,6 +106,14 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     if (!existing) {
       return NextResponse.json({ error: 'ไม่พบประกาศ' }, { status: 404 });
     }
+
+    // Delete related notifications (title pattern: 📢 {title}, link: /announcements)
+    await db.delete(notifications).where(
+      and(
+        eq(notifications.title, `📢 ${existing.title}`),
+        eq(notifications.link, '/announcements')
+      )
+    );
 
     // Delete announcement
     await db.delete(announcements).where(eq(announcements.id, id));

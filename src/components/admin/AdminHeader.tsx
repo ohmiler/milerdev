@@ -97,18 +97,11 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                     alignItems: 'center',
                     gap: '8px',
                 }}>
-                    <span style={{
-                        background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                        borderRadius: '8px',
-                        width: '32px',
-                        height: '32px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.875rem',
-                    }}>
-                        M
-                    </span>
+                    <img
+                        src="/milerdev-logo-transparent.png"
+                        alt="MilerDev"
+                        style={{ width: 32, height: 32 }}
+                    />
                     <span className="admin-logo-text">Admin</span>
                 </Link>
 

@@ -43,7 +43,6 @@ export default function AdminAnnouncementsPage() {
     isActive: true,
     startsAt: '',
     endsAt: '',
-    sendNotification: false,
   });
 
   const fetchAnnouncements = async () => {
@@ -74,7 +73,6 @@ export default function AdminAnnouncementsPage() {
       isActive: true,
       startsAt: '',
       endsAt: '',
-      sendNotification: false,
     });
     setEditingId(null);
   };
@@ -123,7 +121,6 @@ export default function AdminAnnouncementsPage() {
       isActive: announcement.isActive,
       startsAt: announcement.startsAt ? announcement.startsAt.split('T')[0] : '',
       endsAt: announcement.endsAt ? announcement.endsAt.split('T')[0] : '',
-      sendNotification: false,
     });
     setEditingId(announcement.id);
     setShowForm(true);
@@ -429,20 +426,6 @@ export default function AdminAnnouncementsPage() {
                   <span style={{ color: '#374151' }}>เปิดใช้งาน</span>
                 </label>
               </div>
-
-              {!editingId && (
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={form.sendNotification}
-                      onChange={(e) => setForm({ ...form, sendNotification: e.target.checked })}
-                      style={{ width: '18px', height: '18px' }}
-                    />
-                    <span style={{ color: '#374151' }}>ส่งการแจ้งเตือนให้ผู้ใช้</span>
-                  </label>
-                </div>
-              )}
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button

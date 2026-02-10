@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { announcements, users, notifications } from '@/lib/db/schema';
+import { announcements, users } from '@/lib/db/schema';
 import { desc, eq, sql, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, content, type, targetRole, isActive, startsAt, endsAt, sendNotification } = body;
+    const { title, content, type, targetRole, isActive, startsAt, endsAt } = body;
 
     if (!title || !content) {
       return NextResponse.json(
@@ -119,33 +119,6 @@ export async function POST(request: Request) {
       endsAt: endsAt ? new Date(endsAt) : null,
       createdBy: session.user.id,
     });
-
-    // Send notification to users if requested
-    if (sendNotification) {
-      // Get target users
-      const targetUsers = await db
-        .select({ id: users.id })
-        .from(users)
-        .where(
-          targetRole && targetRole !== 'all'
-            ? eq(users.role, targetRole)
-            : undefined
-        );
-
-      // Create notifications for each user
-      const notificationValues = targetUsers.map(user => ({
-        id: createId(),
-        userId: user.id,
-        title: `📢 ${title}`,
-        message: content.substring(0, 200) + (content.length > 200 ? '...' : ''),
-        type: type || 'info',
-        link: '/announcements',
-      }));
-
-      if (notificationValues.length > 0) {
-        await db.insert(notifications).values(notificationValues);
-      }
-    }
 
     return NextResponse.json({
       message: 'สร้างประกาศสำเร็จ',
