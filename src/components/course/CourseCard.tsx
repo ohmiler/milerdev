@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { getExcerpt } from '@/lib/sanitize';
 
 interface CourseCardProps {
@@ -34,13 +33,19 @@ export default function CourseCard({
                     justifyContent: 'center',
                     position: 'relative'
                 }}>
-                    {thumbnailUrl ? (
-                        <Image
+                    {thumbnailUrl && thumbnailUrl.startsWith('http') ? (
+                        <img
                             src={thumbnailUrl}
                             alt={title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            className="group-hover:scale-105 transition-transform duration-300 object-cover"
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                transition: 'transform 0.3s',
+                            }}
+                            className="group-hover:scale-105"
                         />
                     ) : (
                         <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">

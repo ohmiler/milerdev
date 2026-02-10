@@ -157,14 +157,26 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                 <td style={{ padding: '16px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{
-                                            width: '48px',
+                                            width: '80px',
                                             height: '48px',
                                             borderRadius: '8px',
-                                            background: course.thumbnailUrl
-                                                ? `url(${course.thumbnailUrl}) center/cover`
-                                                : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
                                             flexShrink: 0,
-                                        }} />
+                                            overflow: 'hidden',
+                                            position: 'relative',
+                                        }}>
+                                            {course.thumbnailUrl && course.thumbnailUrl.startsWith('http') && (
+                                                <img
+                                                    src={course.thumbnailUrl}
+                                                    alt={course.title}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover',
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
                                         <div>
                                             <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
                                                 {course.title}

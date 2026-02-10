@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+// Image import removed - using native img for external URLs
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -225,13 +225,17 @@ export default async function CourseDetailPage({ params }: Props) {
                     paddingTop: '56.25%',
                     background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
                   }}>
-                    {course.thumbnailUrl ? (
-                      <Image
+                    {course.thumbnailUrl && course.thumbnailUrl.startsWith('http') ? (
+                      <img
                         src={course.thumbnailUrl}
                         alt={course.title}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 400px"
-                        style={{ objectFit: 'cover' }}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
                       />
                     ) : (
                       <div style={{
