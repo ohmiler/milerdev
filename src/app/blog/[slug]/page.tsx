@@ -21,7 +21,8 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug);
   const [post] = await db
     .select({ title: blogPosts.title, excerpt: blogPosts.excerpt, thumbnailUrl: blogPosts.thumbnailUrl })
     .from(blogPosts)
@@ -43,15 +44,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 async function getPost(rawSlug: string) {
   const slug = decodeURIComponent(rawSlug);
+  console.log('[Blog] Looking for slug:', JSON.stringify(slug), 'length:', slug.length);
 
-  const [post] = await db
+  let [post] = await db
     .select()
     .from(blogPosts)
     .where(eq(blogPosts.slug, slug))
     .limit(1);
 
+  // Fallback: try matching by slug prefix (in case URL was truncated)
   if (!post) {
-    console.log('[Blog] Post not found for slug:', slug);
+    const allPosts = await db.select({ id: blogPosts.id, slug: blogPosts.slug, status: blogPosts.status }).from(blogPosts);
+    console.log('[Blog] Available slugs:', allPosts.map(p => JSON.stringify(p.slug)));
+    const match = allPosts.find(p => p.slug.startsWith(slug) || slug.startsWith(p.slug));
+    if (match) {
+      console.log('[Blog] Found partial match:', JSON.stringify(match.slug));
+      [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, match.id)).limit(1);
+    }
+  }
+
+  if (!post) {
+    console.log('[Blog] Post not found for slug:', JSON.stringify(slug));
     return null;
   }
   if (post.status !== 'published') {
