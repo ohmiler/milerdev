@@ -3,8 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { media } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { unlink } from 'fs/promises';
-import { join } from 'path';
+import { deleteFromBunny } from '@/lib/bunny-storage';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -61,13 +60,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'ไม่พบไฟล์' }, { status: 404 });
     }
 
-    // Delete file from disk
-    try {
-      const filePath = join(process.cwd(), 'public', mediaFile.url);
-      await unlink(filePath);
-    } catch (fileError) {
-      console.warn('Could not delete file from disk:', fileError);
-    }
+    // Delete file from Bunny Storage
+    await deleteFromBunny(mediaFile.url);
 
     // Delete from database
     await db.delete(media).where(eq(media.id, id));

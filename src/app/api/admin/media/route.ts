@@ -3,9 +3,8 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { media } from '@/lib/db/schema';
 import { desc, eq, sql, like } from 'drizzle-orm';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 import { createId } from '@paralleldrive/cuid2';
+import { uploadToBunny } from '@/lib/bunny-storage';
 
 // GET /api/admin/media - Get all media files
 export async function GET(request: Request) {
@@ -81,7 +80,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST /api/admin/media - Upload new media file
+// POST /api/admin/media - Upload new media file to Bunny CDN
 export async function POST(request: Request) {
   try {
     const session = await auth();
@@ -105,36 +104,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024;
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'ขนาดไฟล์ต้องไม่เกิน 5MB' },
+        { error: 'ขนาดไฟล์ต้องไม่เกิน 10MB' },
         { status: 400 }
       );
     }
 
-    // Generate unique filename
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const filename = `${createId()}.${fileExtension}`;
-
-    // Create uploads directory if not exists
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadDir, { recursive: true });
-
-    // Write file to disk
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const filePath = join(uploadDir, filename);
-    await writeFile(filePath, buffer);
+    // Upload to Bunny CDN
+    const { url, fileName } = await uploadToBunny(file, 'media');
 
     // Save to database
     const mediaId = createId();
-    const url = `/uploads/${filename}`;
 
     await db.insert(media).values({
       id: mediaId,
-      filename,
+      filename: fileName,
       originalName: file.name,
       mimeType: file.type,
       size: file.size,
@@ -147,7 +134,7 @@ export async function POST(request: Request) {
       message: 'อัพโหลดสำเร็จ',
       media: {
         id: mediaId,
-        filename,
+        filename: fileName,
         originalName: file.name,
         url,
         size: file.size,
