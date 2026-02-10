@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { sanitizeRichContent } from '@/lib/sanitize';
+import { sanitizeRichContent, enhanceBlogContent } from '@/lib/sanitize';
 
 function normalizeUrl(url: string | null): string | null {
   if (!url || url.trim() === '') return null;
@@ -41,14 +41,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-async function getPost(slug: string) {
+async function getPost(rawSlug: string) {
+  const slug = decodeURIComponent(rawSlug);
+
   const [post] = await db
     .select()
     .from(blogPosts)
     .where(eq(blogPosts.slug, slug))
     .limit(1);
 
-  if (!post || post.status !== 'published') return null;
+  if (!post) {
+    console.log('[Blog] Post not found for slug:', slug);
+    return null;
+  }
+  if (post.status !== 'published') {
+    console.log('[Blog] Post exists but status is:', post.status);
+    return null;
+  }
 
   const [authorResult, postTags] = await Promise.all([
     post.authorId
@@ -199,7 +208,7 @@ export default async function BlogPostPage({ params }: Props) {
                 lineHeight: 1.8,
                 color: '#334155',
               }}
-              dangerouslySetInnerHTML={{ __html: sanitizeRichContent(post.content) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRichContent(enhanceBlogContent(post.content)) }}
             />
           )}
 

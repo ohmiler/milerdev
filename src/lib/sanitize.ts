@@ -21,6 +21,38 @@ export function getExcerpt(html: string, maxLength: number = 200): string {
 }
 
 /**
+ * Enhance blog content by converting common plain-text patterns to semantic HTML.
+ * - Lines like "1. Title" or "2. Title (subtitle)" → <h2>
+ * - Lines ending with ":" that are short → <h3>
+ * - Lines starting with bold text followed by ":" → keeps as styled paragraph
+ */
+export function enhanceBlogContent(html: string): string {
+    // Process content line by line (split on closing </p> tags)
+    let enhanced = html;
+
+    // Convert numbered section headings: <p>1. Title...</p> → <h2>
+    enhanced = enhanced.replace(
+        /<p>\s*(\d+)\.\s+(.+?)\s*<\/p>/gi,
+        '<h2><span style="color:#2563eb">$1.</span> $2</h2>'
+    );
+
+    // Convert lines that are short and end with : or ? into <h3>
+    enhanced = enhanced.replace(
+        /<p>([^<]{5,80}[?:])(\s*)<\/p>/gi,
+        (match, content) => {
+            const plain = content.replace(/<[^>]*>/g, '').trim();
+            // Only convert if it looks like a heading (short, ends with : or ?)
+            if (plain.length < 80 && (plain.endsWith(':') || plain.endsWith('?'))) {
+                return `<h3>${content.trim()}</h3>`;
+            }
+            return match;
+        }
+    );
+
+    return enhanced;
+}
+
+/**
  * Sanitize HTML allowing safe tags for rich content display.
  */
 export function sanitizeRichContent(html: string): string {

@@ -369,6 +369,137 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Rich Content (Blog / Course descriptions) — overrides Tailwind Preflight */
+.rich-content h1,
+.rich-content h2,
+.rich-content h3,
+.rich-content h4 {
+  font-weight: 700 !important;
+  color: #1e293b !important;
+}
+
+.rich-content h1 {
+  font-size: 1.875rem !important;
+  margin: 2rem 0 1rem !important;
+  line-height: 1.3 !important;
+}
+
+.rich-content h2 {
+  font-size: 1.5rem !important;
+  margin: 1.75rem 0 0.75rem !important;
+  line-height: 1.35 !important;
+  padding-bottom: 0.5rem !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.rich-content h3 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  margin: 1.75rem 0 0.5rem !important;
+  line-height: 1.4 !important;
+}
+
+.rich-content p {
+  margin: 0 0 1.25rem !important;
+  line-height: 1.8 !important;
+}
+
+.rich-content strong,
+.rich-content b {
+  font-weight: 600 !important;
+  color: #1e293b !important;
+}
+
+.rich-content a {
+  color: #2563eb !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+}
+
+.rich-content a:hover {
+  color: #1d4ed8 !important;
+}
+
+.rich-content ul,
+.rich-content ol {
+  margin: 0 0 1.25rem !important;
+  padding-left: 1.75rem !important;
+}
+
+.rich-content ul {
+  list-style-type: disc !important;
+}
+
+.rich-content ol {
+  list-style-type: decimal !important;
+}
+
+.rich-content li {
+  margin-bottom: 0.5rem !important;
+  line-height: 1.7 !important;
+  display: list-item !important;
+}
+
+.rich-content li::marker {
+  color: #2563eb !important;
+}
+
+.rich-content blockquote {
+  margin: 1.5rem 0 !important;
+  padding: 1rem 1.5rem !important;
+  border-left: 4px solid #2563eb !important;
+  background: #f8fafc !important;
+  border-radius: 0 8px 8px 0 !important;
+  color: #475569 !important;
+  font-style: italic !important;
+}
+
+.rich-content pre {
+  margin: 1.5rem 0 !important;
+  padding: 1.25rem !important;
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-radius: 12px !important;
+  overflow-x: auto !important;
+  font-size: 0.875rem !important;
+  line-height: 1.7 !important;
+}
+
+.rich-content code {
+  font-family: 'Fira Code', 'JetBrains Mono', monospace !important;
+  font-size: 0.875em !important;
+}
+
+.rich-content :not(pre) > code {
+  padding: 0.15em 0.4em !important;
+  background: #f1f5f9 !important;
+  color: #e11d48 !important;
+  border-radius: 4px !important;
+  font-size: 0.85em !important;
+}
+
+.rich-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 12px !important;
+  margin: 1.5rem 0 !important;
+}
+
+.rich-content hr {
+  border: none !important;
+  border-top: 2px solid #e2e8f0 !important;
+  margin: 2rem 0 !important;
+}
+
+.rich-content > *:first-child {
+  margin-top: 0 !important;
+}
+
+.rich-content > *:last-child {
+  margin-bottom: 0 !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .section {
