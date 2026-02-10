@@ -24,7 +24,16 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
 
-        const priceNumber = parseFloat(course.price.toString());
+        const originalPrice = parseFloat(course.price.toString());
+
+        // Check if promotion is active
+        const now = new Date();
+        const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
+        const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
+        const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
+        const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+        const priceNumber = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
+
         if (priceNumber <= 0) {
             return NextResponse.json(
                 { error: "This course is free" },

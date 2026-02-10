@@ -9,6 +9,9 @@ interface Course {
     slug: string;
     description: string | null;
     price: string | null;
+    promoPrice: string | null;
+    promoStartsAt: Date | null;
+    promoEndsAt: Date | null;
     status: string;
     thumbnailUrl: string | null;
     createdAt: Date | null;
@@ -206,11 +209,39 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                     </span>
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
-                                    {parseFloat(course.price || '0') === 0 ? (
-                                        <span style={{ color: '#16a34a' }}>ฟรี</span>
-                                    ) : (
-                                        `฿${parseFloat(course.price || '0').toLocaleString()}`
-                                    )}
+                                    {(() => {
+                                        const price = parseFloat(course.price || '0');
+                                        const now = new Date();
+                                        const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
+                                        const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
+                                        const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
+                                        const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+                                        if (price === 0) return <span style={{ color: '#16a34a' }}>ฟรี</span>;
+                                        if (isPromoActive) {
+                                            const promo = parseFloat(course.promoPrice || '0');
+                                            return (
+                                                <div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.8125rem' }}>฿{price.toLocaleString()}</span>
+                                                        <span style={{ color: '#dc2626', fontWeight: 600 }}>฿{promo.toLocaleString()}</span>
+                                                    </div>
+                                                    <span style={{
+                                                        display: 'inline-block',
+                                                        marginTop: '4px',
+                                                        padding: '2px 8px',
+                                                        background: '#fef2f2',
+                                                        color: '#dc2626',
+                                                        borderRadius: '50px',
+                                                        fontSize: '0.6875rem',
+                                                        fontWeight: 500,
+                                                    }}>
+                                                        ลด {Math.round((1 - promo / price) * 100)}%
+                                                    </span>
+                                                </div>
+                                            );
+                                        }
+                                        return `฿${price.toLocaleString()}`;
+                                    })()}
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
                                     {course.lessonCount} บท

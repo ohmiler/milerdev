@@ -33,6 +33,9 @@ export default function EditCoursePage({ params }: Props) {
     status: 'draft',
     thumbnailUrl: '',
     certificateColor: '#2563eb',
+    promoPrice: '',
+    promoStartsAt: '',
+    promoEndsAt: '',
   });
 
   useEffect(() => {
@@ -51,6 +54,9 @@ export default function EditCoursePage({ params }: Props) {
               status: data.course.status || 'draft',
               thumbnailUrl: data.course.thumbnailUrl || '',
               certificateColor: data.course.certificateColor || '#2563eb',
+              promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
+              promoStartsAt: data.course.promoStartsAt ? new Date(data.course.promoStartsAt).toISOString().slice(0, 16) : '',
+              promoEndsAt: data.course.promoEndsAt ? new Date(data.course.promoEndsAt).toISOString().slice(0, 16) : '',
             });
           }
           if (data.tags) {
@@ -264,6 +270,90 @@ export default function EditCoursePage({ params }: Props) {
             value={formData.certificateColor}
             onChange={(color) => setFormData(prev => ({ ...prev, certificateColor: color }))}
           />
+        </div>
+
+        {/* Promotion Section */}
+        <div style={{
+          marginBottom: '20px',
+          padding: '20px',
+          background: '#fffbeb',
+          border: '1px solid #fde68a',
+          borderRadius: '12px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <svg style={{ width: '20px', height: '20px', color: '#d97706' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span style={{ fontWeight: 600, color: '#92400e', fontSize: '1rem' }}>โปรโมชั่น</span>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151', fontSize: '0.875rem' }}>
+              ราคาโปรโมชั่น (บาท)
+            </label>
+            <input
+              type="number"
+              value={formData.promoPrice}
+              onChange={(e) => setFormData({ ...formData, promoPrice: e.target.value })}
+              min="0"
+              placeholder="ว่างไว้ถ้าไม่มีโปรโมชั่น"
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '0.9375rem',
+                background: 'white',
+              }}
+            />
+            {formData.promoPrice && parseFloat(formData.price) > 0 && (
+              <div style={{ marginTop: '6px', fontSize: '0.8125rem', color: '#d97706' }}>
+                ลด {Math.round((1 - parseFloat(formData.promoPrice || '0') / parseFloat(formData.price)) * 100)}% (จาก ฿{parseFloat(formData.price).toLocaleString()} เหลือ ฿{parseFloat(formData.promoPrice).toLocaleString()})
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151', fontSize: '0.875rem' }}>
+                เริ่มต้น
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.promoStartsAt}
+                onChange={(e) => setFormData({ ...formData, promoStartsAt: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  background: 'white',
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151', fontSize: '0.875rem' }}>
+                สิ้นสุด
+              </label>
+              <input
+                type="datetime-local"
+                value={formData.promoEndsAt}
+                onChange={(e) => setFormData({ ...formData, promoEndsAt: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  background: 'white',
+                }}
+              />
+            </div>
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#92400e' }}>
+            * ถ้าไม่กำหนดวันเริ่มต้น/สิ้นสุด โปรโมชั่นจะใช้ได้ตลอด
+          </div>
         </div>
 
         <div style={{ marginBottom: '24px' }}>

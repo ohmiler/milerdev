@@ -103,6 +103,13 @@ export default async function CourseDetailPage({ params }: Props) {
   }
 
   const price = parseFloat(course.price || '0');
+  const now = new Date();
+  const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
+  const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
+  const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
+  const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+  const promoPrice = isPromoActive ? parseFloat(course.promoPrice || '0') : null;
+  const displayPrice = promoPrice !== null ? promoPrice : price;
 
   return (
     <>
@@ -296,19 +303,44 @@ export default async function CourseDetailPage({ params }: Props) {
                       borderRadius: '50px',
                       fontWeight: 600,
                       fontSize: '0.875rem',
-                      ...(price === 0
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      ...(displayPrice === 0
                         ? { background: '#dcfce7', color: '#16a34a' }
-                        : { background: '#fef3c7', color: '#b45309' }),
+                        : isPromoActive
+                          ? { background: '#fef2f2', color: '#dc2626' }
+                          : { background: '#fef3c7', color: '#b45309' }),
                     }}>
-                      {price === 0 ? 'ฟรี' : `฿${price.toLocaleString()}`}
+                      {displayPrice === 0 ? 'ฟรี' : isPromoActive ? (
+                        <>
+                          <span style={{ textDecoration: 'line-through', opacity: 0.6, fontSize: '0.75rem' }}>฿{price.toLocaleString()}</span>
+                          <span>฿{displayPrice.toLocaleString()}</span>
+                        </>
+                      ) : `฿${price.toLocaleString()}`}
                     </span>
                   </div>
 
                   <div style={{ padding: '24px' }}>
                     {/* Price Display */}
                     <div style={{ marginBottom: '20px' }}>
-                      {price === 0 ? (
+                      {displayPrice === 0 ? (
                         <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a' }}>ฟรี</div>
+                      ) : isPromoActive ? (
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                            <span style={{ fontSize: '1.75rem', fontWeight: 700, color: '#dc2626' }}>฿{displayPrice.toLocaleString()}</span>
+                            <span style={{ fontSize: '1.125rem', color: '#94a3b8', textDecoration: 'line-through' }}>฿{price.toLocaleString()}</span>
+                          </div>
+                          <div style={{ marginTop: '6px', fontSize: '0.8125rem', color: '#dc2626', fontWeight: 500 }}>
+                            ลด {Math.round((1 - displayPrice / price) * 100)}%
+                            {course.promoEndsAt && (
+                              <span style={{ color: '#64748b', fontWeight: 400 }}>
+                                {' '}ถึง {new Date(course.promoEndsAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       ) : (
                         <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b' }}>฿{price.toLocaleString()}</div>
                       )}
@@ -319,7 +351,7 @@ export default async function CourseDetailPage({ params }: Props) {
                       <CourseDetailClient
                         courseId={course.id}
                         courseSlug={course.slug}
-                        price={price}
+                        price={displayPrice}
                         renderMode="button"
                       />
                     </div>

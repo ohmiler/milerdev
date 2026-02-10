@@ -14,6 +14,8 @@ interface CourseCardProps {
     description: string | null;
     thumbnailUrl: string | null;
     price: number;
+    promoPrice?: number | null;
+    isPromoActive?: boolean;
     instructorName: string | null;
     lessonCount: number;
     tags?: Tag[];
@@ -31,10 +33,14 @@ export default function CourseCard({
     description,
     thumbnailUrl: rawThumbnailUrl,
     price,
+    promoPrice,
+    isPromoActive,
     instructorName,
     lessonCount,
     tags,
 }: CourseCardProps) {
+    const displayPrice = isPromoActive && promoPrice != null ? promoPrice : price;
+    const showOriginalPrice = isPromoActive && promoPrice != null && promoPrice < price;
     const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
     return (
         <Link href={`/courses/${slug}`} className="card block group">
@@ -71,10 +77,15 @@ export default function CourseCard({
                 </div>
 
                 {/* Price Badge */}
-                {price === 0 ? (
+                {displayPrice === 0 ? (
                     <span className="price-badge free">ฟรี</span>
+                ) : showOriginalPrice ? (
+                    <span className="price-badge paid" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ textDecoration: 'line-through', opacity: 0.6, fontSize: '0.75rem' }}>฿{price.toLocaleString()}</span>
+                        <span>฿{displayPrice.toLocaleString()}</span>
+                    </span>
                 ) : (
-                    <span className="price-badge paid">฿{price.toLocaleString()}</span>
+                    <span className="price-badge paid">฿{displayPrice.toLocaleString()}</span>
                 )}
             </div>
 

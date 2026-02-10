@@ -77,6 +77,9 @@ export async function GET(request: Request) {
                     description: courses.description,
                     thumbnailUrl: courses.thumbnailUrl,
                     price: courses.price,
+                    promoPrice: courses.promoPrice,
+                    promoStartsAt: courses.promoStartsAt,
+                    promoEndsAt: courses.promoEndsAt,
                     status: courses.status,
                     instructorId: courses.instructorId,
                     createdAt: courses.createdAt,
@@ -123,23 +126,36 @@ export async function GET(request: Request) {
         }
 
         // Format response
-        const formattedCourses = coursesWithDetails.map((row) => ({
-            id: row.id,
-            title: row.title,
-            slug: row.slug,
-            description: row.description,
-            thumbnailUrl: row.thumbnailUrl,
-            price: row.price,
-            status: row.status,
-            instructorId: row.instructorId,
-            createdAt: row.createdAt,
-            updatedAt: row.updatedAt,
-            instructor: row.instructorId
-                ? { id: row.instructorId, name: row.instructorName, avatarUrl: row.instructorAvatarUrl }
-                : null,
-            lessonCount: Number(row.lessonCount) || 0,
-            tags: tagsByCourse.get(row.id) || [],
-        }));
+        const now = new Date();
+        const formattedCourses = coursesWithDetails.map((row) => {
+            // Check if promotion is currently active
+            const hasPromo = row.promoPrice !== null && row.promoPrice !== undefined;
+            const promoStartOk = !row.promoStartsAt || new Date(row.promoStartsAt) <= now;
+            const promoEndOk = !row.promoEndsAt || new Date(row.promoEndsAt) >= now;
+            const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+
+            return {
+                id: row.id,
+                title: row.title,
+                slug: row.slug,
+                description: row.description,
+                thumbnailUrl: row.thumbnailUrl,
+                price: row.price,
+                promoPrice: row.promoPrice,
+                promoStartsAt: row.promoStartsAt,
+                promoEndsAt: row.promoEndsAt,
+                isPromoActive,
+                status: row.status,
+                instructorId: row.instructorId,
+                createdAt: row.createdAt,
+                updatedAt: row.updatedAt,
+                instructor: row.instructorId
+                    ? { id: row.instructorId, name: row.instructorName, avatarUrl: row.instructorAvatarUrl }
+                    : null,
+                lessonCount: Number(row.lessonCount) || 0,
+                tags: tagsByCourse.get(row.id) || [],
+            };
+        });
 
         return NextResponse.json({
             courses: formattedCourses,

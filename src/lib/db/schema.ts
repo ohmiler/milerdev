@@ -39,6 +39,9 @@ export const courses = mysqlTable('courses', {
     instructorId: varchar('instructor_id', { length: 36 }).references(() => users.id),
     certificateColor: varchar('certificate_color', { length: 20 }).default('blue'),
     certificateBadge: varchar('certificate_badge', { length: 50 }),
+    promoPrice: decimal('promo_price', { precision: 10, scale: 2 }),
+    promoStartsAt: datetime('promo_starts_at'),
+    promoEndsAt: datetime('promo_ends_at'),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
 });

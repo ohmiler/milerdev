@@ -19,6 +19,8 @@ interface Course {
   description: string | null;
   thumbnailUrl: string | null;
   price: string;
+  promoPrice: string | null;
+  isPromoActive: boolean;
   instructor: { id: string; name: string | null; avatarUrl: string | null } | null;
   lessonCount: number;
   tags: Tag[];
@@ -304,6 +306,8 @@ function CoursesContent() {
                       description={course.description}
                       thumbnailUrl={course.thumbnailUrl}
                       price={parseFloat(course.price || '0')}
+                      promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
+                      isPromoActive={course.isPromoActive}
                       instructorName={course.instructor?.name || null}
                       lessonCount={course.lessonCount}
                       tags={course.tags}

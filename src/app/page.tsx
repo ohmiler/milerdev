@@ -26,6 +26,9 @@ async function getFeaturedCourses() {
       description: courses.description,
       thumbnailUrl: courses.thumbnailUrl,
       price: courses.price,
+      promoPrice: courses.promoPrice,
+      promoStartsAt: courses.promoStartsAt,
+      promoEndsAt: courses.promoEndsAt,
       status: courses.status,
       instructorId: courses.instructorId,
       createdAt: courses.createdAt,
@@ -40,20 +43,30 @@ async function getFeaturedCourses() {
     .orderBy(desc(courses.createdAt))
     .limit(6);
 
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    description: row.description,
-    thumbnailUrl: row.thumbnailUrl,
-    price: row.price,
-    status: row.status,
-    instructorId: row.instructorId,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    instructor: row.instructorId ? { id: row.instructorId, name: row.instructorName } : null,
-    lessonCount: Number(row.lessonCount) || 0,
-  }));
+  const now = new Date();
+  return rows.map((row) => {
+    const hasPromo = row.promoPrice !== null && row.promoPrice !== undefined;
+    const promoStartOk = !row.promoStartsAt || new Date(row.promoStartsAt) <= now;
+    const promoEndOk = !row.promoEndsAt || new Date(row.promoEndsAt) >= now;
+    const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+
+    return {
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      description: row.description,
+      thumbnailUrl: row.thumbnailUrl,
+      price: row.price,
+      promoPrice: row.promoPrice,
+      isPromoActive,
+      status: row.status,
+      instructorId: row.instructorId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      instructor: row.instructorId ? { id: row.instructorId, name: row.instructorName } : null,
+      lessonCount: Number(row.lessonCount) || 0,
+    };
+  });
 }
 
 async function getStats() {
@@ -291,6 +304,8 @@ export default async function HomePage() {
                   description={course.description}
                   thumbnailUrl={course.thumbnailUrl}
                   price={parseFloat(course.price || '0')}
+                  promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
+                  isPromoActive={course.isPromoActive}
                   instructorName={course.instructor?.name || null}
                   lessonCount={course.lessonCount}
                 />
