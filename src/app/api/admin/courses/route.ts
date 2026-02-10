@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, price, status, thumbnailUrl, slug: customSlug, tagIds } = body;
+    const { title, description, price, status, thumbnailUrl, slug: customSlug, tagIds, certificateColor } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'กรุณาระบุชื่อคอร์ส' }, { status: 400 });
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       price: String(parseFloat(price) || 0),
       status: status || 'draft',
       thumbnailUrl: thumbnailUrl || null,
+      certificateColor: certificateColor || '#2563eb',
       instructorId: session.user.id,
       createdAt: new Date(),
       updatedAt: new Date(),

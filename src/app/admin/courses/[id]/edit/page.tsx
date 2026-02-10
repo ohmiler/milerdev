@@ -10,6 +10,7 @@ import { showToast } from '@/components/ui/Toast';
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
 const TagSelector = dynamic(() => import('@/components/admin/TagSelector'), { ssr: false });
+const CertificateColorPicker = dynamic(() => import('@/components/admin/CertificateColorPicker'), { ssr: false });
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -31,6 +32,7 @@ export default function EditCoursePage({ params }: Props) {
     price: '0',
     status: 'draft',
     thumbnailUrl: '',
+    certificateColor: '#2563eb',
   });
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function EditCoursePage({ params }: Props) {
               price: String(data.course.price || 0),
               status: data.course.status || 'draft',
               thumbnailUrl: data.course.thumbnailUrl || '',
+              certificateColor: data.course.certificateColor || '#2563eb',
             });
           }
           if (data.tags) {
@@ -250,6 +253,16 @@ export default function EditCoursePage({ params }: Props) {
           <TagSelector
             selectedTagIds={selectedTagIds}
             onChange={setSelectedTagIds}
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+            สีใบรับรอง (Certificate)
+          </label>
+          <CertificateColorPicker
+            value={formData.certificateColor}
+            onChange={(color) => setFormData(prev => ({ ...prev, certificateColor: color }))}
           />
         </div>
 

@@ -23,6 +23,7 @@ async function getCertificate(code: string) {
       completedAt: certificates.completedAt,
       issuedAt: certificates.issuedAt,
       revokedAt: certificates.revokedAt,
+      certificateTheme: certificates.certificateTheme,
       userId: certificates.userId,
       courseId: certificates.courseId,
     })
@@ -43,6 +44,7 @@ async function getCertificate(code: string) {
     completedAt: cert.completedAt.toISOString(),
     issuedAt: cert.issuedAt ? cert.issuedAt.toISOString() : null,
     revokedAt: cert.revokedAt ? cert.revokedAt.toISOString() : null,
+    certificateTheme: cert.certificateTheme || null,
     courseSlug: course?.slug || null,
   };
 }

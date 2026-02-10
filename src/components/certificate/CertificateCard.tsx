@@ -12,32 +12,50 @@ interface CertificateData {
   revokedAt: string | null;
   courseSlug: string | null;
   courseId: string;
+  certificateTheme?: string | null;
 }
 
-// Generate a consistent color theme based on course ID
-function getCourseTheme(courseId: string) {
-  const themes = [
-    { primary: '#2563eb', secondary: '#1e3a8a', gradient: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', light: '#eff6ff', accent: '#3b82f6', name: 'blue' },
-    { primary: '#7c3aed', secondary: '#4c1d95', gradient: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%)', light: '#f5f3ff', accent: '#8b5cf6', name: 'purple' },
-    { primary: '#059669', secondary: '#064e3b', gradient: 'linear-gradient(135deg, #064e3b 0%, #059669 100%)', light: '#ecfdf5', accent: '#10b981', name: 'green' },
-    { primary: '#dc2626', secondary: '#7f1d1d', gradient: 'linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%)', light: '#fef2f2', accent: '#ef4444', name: 'red' },
-    { primary: '#d97706', secondary: '#78350f', gradient: 'linear-gradient(135deg, #78350f 0%, #d97706 100%)', light: '#fffbeb', accent: '#f59e0b', name: 'amber' },
-    { primary: '#0891b2', secondary: '#164e63', gradient: 'linear-gradient(135deg, #164e63 0%, #0891b2 100%)', light: '#ecfeff', accent: '#06b6d4', name: 'cyan' },
-    { primary: '#be185d', secondary: '#831843', gradient: 'linear-gradient(135deg, #831843 0%, #be185d 100%)', light: '#fdf2f8', accent: '#ec4899', name: 'pink' },
-    { primary: '#4f46e5', secondary: '#312e81', gradient: 'linear-gradient(135deg, #312e81 0%, #4f46e5 100%)', light: '#eef2ff', accent: '#6366f1', name: 'indigo' },
-  ];
+// Generate a full theme from any hex color
+function hexToRgb(hex: string) {
+  const h = hex.replace('#', '');
+  return {
+    r: parseInt(h.substring(0, 2), 16) || 0,
+    g: parseInt(h.substring(2, 4), 16) || 0,
+    b: parseInt(h.substring(4, 6), 16) || 0,
+  };
+}
 
-  let hash = 0;
-  for (let i = 0; i < courseId.length; i++) {
-    hash = courseId.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return themes[Math.abs(hash) % themes.length];
+function darken(hex: string, amount: number) {
+  const { r, g, b } = hexToRgb(hex);
+  const f = 1 - amount;
+  const toHex = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
+  return `#${toHex(r * f)}${toHex(g * f)}${toHex(b * f)}`;
+}
+
+function lighten(hex: string, amount: number) {
+  const { r, g, b } = hexToRgb(hex);
+  const toHex = (n: number) => Math.max(0, Math.min(255, Math.round(n + (255 - n) * amount))).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function buildTheme(color: string) {
+  const primary = color.startsWith('#') && color.length === 7 ? color : '#2563eb';
+  const secondary = darken(primary, 0.4);
+  const accent = lighten(primary, 0.2);
+  const light = lighten(primary, 0.9);
+  return {
+    primary,
+    secondary,
+    accent,
+    light,
+    gradient: `linear-gradient(135deg, ${secondary} 0%, ${primary} 100%)`,
+  };
 }
 
 export default function CertificateCard({ cert }: { cert: CertificateData }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
-  const theme = getCourseTheme(cert.courseId);
+  const theme = buildTheme(cert.certificateTheme || '#2563eb');
   const isRevoked = !!cert.revokedAt;
 
   const completedDate = new Date(cert.completedAt).toLocaleDateString('th-TH', {

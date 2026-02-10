@@ -60,7 +60,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, price, status, thumbnailUrl, slug, tagIds } = body;
+    const { title, description, price, status, thumbnailUrl, slug, tagIds, certificateColor } = body;
 
     // Check if course exists
     const [existingCourse] = await db
@@ -83,6 +83,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         price: price !== undefined ? String(parseFloat(price) || 0) : existingCourse.price,
         status: status || existingCourse.status,
         thumbnailUrl: thumbnailUrl !== undefined ? thumbnailUrl : existingCourse.thumbnailUrl,
+        certificateColor: certificateColor || existingCourse.certificateColor,
         updatedAt: new Date(),
       })
       .where(eq(courses.id, id));

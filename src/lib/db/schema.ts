@@ -37,6 +37,8 @@ export const courses = mysqlTable('courses', {
     price: decimal('price', { precision: 10, scale: 2 }).notNull().default('0'),
     status: varchar('status', { length: 20, enum: ['draft', 'published', 'archived'] }).default('draft').notNull(),
     instructorId: varchar('instructor_id', { length: 36 }).references(() => users.id),
+    certificateColor: varchar('certificate_color', { length: 20 }).default('blue'),
+    certificateBadge: varchar('certificate_badge', { length: 50 }),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
 });
@@ -368,6 +370,7 @@ export const certificates = mysqlTable('certificates', {
     courseTitle: varchar('course_title', { length: 255 }).notNull(),
     completedAt: datetime('completed_at').notNull(),
     issuedAt: datetime('issued_at').$defaultFn(() => new Date()),
+    certificateTheme: varchar('certificate_theme', { length: 20 }),
     revokedAt: datetime('revoked_at'),
     revokedReason: text('revoked_reason'),
 });
