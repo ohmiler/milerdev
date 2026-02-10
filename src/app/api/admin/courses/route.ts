@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { courses } from '@/lib/db/schema';
+import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 
 // POST /api/admin/courses - Create new course
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, price, status, thumbnailUrl, slug: customSlug } = body;
+    const { title, description, price, status, thumbnailUrl, slug: customSlug, tagIds } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'กรุณาระบุชื่อคอร์ส' }, { status: 400 });
@@ -42,6 +42,17 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    // Save tags
+    if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
+      await db.insert(courseTags).values(
+        tagIds.map((tagId: string) => ({
+          id: createId(),
+          courseId,
+          tagId,
+        }))
+      );
+    }
 
     return NextResponse.json(
       { message: 'สร้างคอร์สสำเร็จ', courseId },

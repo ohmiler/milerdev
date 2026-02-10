@@ -6,6 +6,12 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
 
+interface Tag {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface Course {
   id: string;
   title: string;
@@ -15,6 +21,7 @@ interface Course {
   price: string;
   instructor: { id: string; name: string | null; avatarUrl: string | null } | null;
   lessonCount: number;
+  tags: Tag[];
 }
 
 interface Pagination {
@@ -31,10 +38,12 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
   
   // Filter states
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [priceFilter, setPriceFilter] = useState(searchParams.get('price') || 'all');
+  const [tagFilter, setTagFilter] = useState(searchParams.get('tag') || 'all');
   const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page') || '1'));
 
@@ -46,6 +55,7 @@ export default function CoursesPage() {
         limit: '12',
         search,
         price: priceFilter,
+        tag: tagFilter,
         sort,
       });
       
@@ -62,21 +72,30 @@ export default function CoursesPage() {
   };
 
   useEffect(() => {
+    // Fetch available tags for filter
+    fetch('/api/tags')
+      .then(res => res.json())
+      .then(data => setAllTags(data.tags || []))
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
     fetchCourses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, priceFilter, sort]);
+  }, [currentPage, priceFilter, tagFilter, sort]);
 
   useEffect(() => {
     // Update URL params
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (priceFilter !== 'all') params.set('price', priceFilter);
+    if (tagFilter !== 'all') params.set('tag', tagFilter);
     if (sort !== 'newest') params.set('sort', sort);
     if (currentPage > 1) params.set('page', currentPage.toString());
     
     const queryString = params.toString();
     router.replace(queryString ? `?${queryString}` : '/courses', { scroll: false });
-  }, [currentPage, priceFilter, sort, search, router]);
+  }, [currentPage, priceFilter, tagFilter, sort, search, router]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -159,6 +178,26 @@ export default function CoursesPage() {
                   <option value="free">ฟรี</option>
                   <option value="paid">มีค่าใช้จ่าย</option>
                 </select>
+
+                {/* Tag Filter */}
+                {allTags.length > 0 && (
+                  <select
+                    value={tagFilter}
+                    onChange={(e) => { setTagFilter(e.target.value); setCurrentPage(1); }}
+                    style={{
+                      padding: '10px 16px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      background: 'white',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <option value="all">ทุกแท็ก</option>
+                    {allTags.map(tag => (
+                      <option key={tag.id} value={tag.slug}>{tag.name}</option>
+                    ))}
+                  </select>
+                )}
 
                 {/* Sort */}
                 <select
@@ -251,6 +290,7 @@ export default function CoursesPage() {
                       price={parseFloat(course.price || '0')}
                       instructorName={course.instructor?.name || null}
                       lessonCount={course.lessonCount}
+                      tags={course.tags}
                     />
                   ))}
                 </div>

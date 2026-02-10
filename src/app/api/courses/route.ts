@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { courses, users, lessons } from "@/lib/db/schema";
+import { courses, users, lessons, courseTags, tags } from "@/lib/db/schema";
 import { eq, desc, asc, and, count, like, gt, sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 
@@ -13,6 +13,7 @@ export async function GET(request: Request) {
         const limit = parseInt(searchParams.get("limit") || "12");
         const search = searchParams.get("search") || "";
         const priceFilter = searchParams.get("price") || "all";
+        const tagSlug = searchParams.get("tag") || "all";
         const sort = searchParams.get("sort") || "newest";
         const offset = (page - 1) * limit;
 
@@ -27,6 +28,16 @@ export async function GET(request: Request) {
             conditions.push(eq(courses.price, "0"));
         } else if (priceFilter === "paid") {
             conditions.push(gt(courses.price, "0"));
+        }
+
+        if (tagSlug && tagSlug !== "all") {
+            conditions.push(
+                sql`${courses.id} IN (
+                    SELECT ct.course_id FROM course_tags ct
+                    INNER JOIN tags t ON ct.tag_id = t.id
+                    WHERE t.slug = ${tagSlug}
+                )`
+            );
         }
 
         // Build order
@@ -89,6 +100,28 @@ export async function GET(request: Request) {
 
         const total = totalResult[0]?.total ?? 0;
 
+        // Fetch tags for all courses in one query
+        const courseIds = coursesWithDetails.map(c => c.id);
+        const allCourseTags = courseIds.length > 0
+            ? await db
+                .select({
+                    courseId: courseTags.courseId,
+                    tagId: tags.id,
+                    tagName: tags.name,
+                    tagSlug: tags.slug,
+                })
+                .from(courseTags)
+                .innerJoin(tags, eq(courseTags.tagId, tags.id))
+                .where(sql`${courseTags.courseId} IN (${sql.join(courseIds.map(id => sql`${id}`), sql`, `)})`)
+            : [];
+
+        // Group tags by courseId
+        const tagsByCourse = new Map<string, { id: string; name: string; slug: string }[]>();
+        for (const ct of allCourseTags) {
+            if (!tagsByCourse.has(ct.courseId)) tagsByCourse.set(ct.courseId, []);
+            tagsByCourse.get(ct.courseId)!.push({ id: ct.tagId, name: ct.tagName, slug: ct.tagSlug });
+        }
+
         // Format response
         const formattedCourses = coursesWithDetails.map((row) => ({
             id: row.id,
@@ -105,6 +138,7 @@ export async function GET(request: Request) {
                 ? { id: row.instructorId, name: row.instructorName, avatarUrl: row.instructorAvatarUrl }
                 : null,
             lessonCount: Number(row.lessonCount) || 0,
+            tags: tagsByCourse.get(row.id) || [],
         }));
 
         return NextResponse.json({

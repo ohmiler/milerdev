@@ -9,6 +9,7 @@ import { showToast } from '@/components/ui/Toast';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
+const TagSelector = dynamic(() => import('@/components/admin/TagSelector'), { ssr: false });
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -21,6 +22,7 @@ export default function EditCoursePage({ params }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -48,6 +50,9 @@ export default function EditCoursePage({ params }: Props) {
               thumbnailUrl: data.course.thumbnailUrl || '',
             });
           }
+          if (data.tags) {
+            setSelectedTagIds(data.tags.map((t: { id: string }) => t.id));
+          }
         })
         .catch(console.error)
         .finally(() => setLoading(false));
@@ -65,7 +70,7 @@ export default function EditCoursePage({ params }: Props) {
       const res = await fetch(`/api/admin/courses/${courseId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, tagIds: selectedTagIds }),
       });
 
       const data = await res.json();
@@ -236,6 +241,16 @@ export default function EditCoursePage({ params }: Props) {
               <option value="published">เผยแพร่</option>
             </select>
           </div>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+            แท็ก
+          </label>
+          <TagSelector
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+          />
         </div>
 
         <div style={{ marginBottom: '24px' }}>

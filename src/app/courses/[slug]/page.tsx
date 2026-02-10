@@ -7,7 +7,7 @@ import Footer from '@/components/layout/Footer';
 import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
 import CourseReviewsWrapper from '@/components/course/CourseReviewsWrapper';
 import { db } from '@/lib/db';
-import { courses, lessons, users } from '@/lib/db/schema';
+import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { getExcerpt, sanitizeRichContent } from '@/lib/sanitize';
 
@@ -57,8 +57,8 @@ async function getCourse(slug: string) {
 
   if (!course) return null;
 
-  // Parallelize instructor and lessons queries
-  const [instructorResult, courseLessons] = await Promise.all([
+  // Parallelize instructor, lessons, and tags queries
+  const [instructorResult, courseLessons, courseTagRows] = await Promise.all([
     course.instructorId
       ? db
           .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
@@ -71,12 +71,18 @@ async function getCourse(slug: string) {
       .from(lessons)
       .where(eq(lessons.courseId, course.id))
       .orderBy(asc(lessons.orderIndex)),
+    db
+      .select({ id: tags.id, name: tags.name, slug: tags.slug })
+      .from(courseTags)
+      .innerJoin(tags, eq(courseTags.tagId, tags.id))
+      .where(eq(courseTags.courseId, course.id)),
   ]);
 
   return {
     ...course,
     instructor: instructorResult[0] || null,
     lessons: courseLessons,
+    tags: courseTagRows,
   };
 }
 
@@ -119,6 +125,32 @@ export default async function CourseDetailPage({ params }: Props) {
                 {' / '}
                 <span>{course.title}</span>
               </div>
+
+              {course.tags && course.tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                  {course.tags.map((tag: { id: string; name: string; slug: string }) => (
+                    <Link
+                      key={tag.id}
+                      href={`/courses?tag=${tag.slug}`}
+                      style={{
+                        padding: '4px 14px',
+                        background: 'rgba(255,255,255,0.15)',
+                        color: 'white',
+                        borderRadius: '50px',
+                        fontSize: '0.8125rem',
+                        fontWeight: 500,
+                        textDecoration: 'none',
+                        backdropFilter: 'blur(4px)',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.25)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
+                    >
+                      {tag.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               <h1 style={{
                 fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',

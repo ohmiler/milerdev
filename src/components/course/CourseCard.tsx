@@ -1,6 +1,12 @@
 import Link from 'next/link';
 import { getExcerpt } from '@/lib/sanitize';
 
+interface Tag {
+    id: string;
+    name: string;
+    slug: string;
+}
+
 interface CourseCardProps {
     id: string;
     title: string;
@@ -10,6 +16,7 @@ interface CourseCardProps {
     price: number;
     instructorName: string | null;
     lessonCount: number;
+    tags?: Tag[];
 }
 
 function normalizeUrl(url: string | null): string | null {
@@ -26,6 +33,7 @@ export default function CourseCard({
     price,
     instructorName,
     lessonCount,
+    tags,
 }: CourseCardProps) {
     const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
     return (
@@ -72,6 +80,28 @@ export default function CourseCard({
 
             {/* Content */}
             <div style={{ padding: '24px' }}>
+                {tags && tags.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                        {tags.slice(0, 3).map(tag => (
+                            <span
+                                key={tag.id}
+                                style={{
+                                    padding: '2px 10px',
+                                    background: '#eff6ff',
+                                    color: '#2563eb',
+                                    borderRadius: '50px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 500,
+                                }}
+                            >
+                                {tag.name}
+                            </span>
+                        ))}
+                        {tags.length > 3 && (
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>+{tags.length - 3}</span>
+                        )}
+                    </div>
+                )}
                 <h3 style={{
                     fontSize: '1.125rem',
                     fontWeight: 600,

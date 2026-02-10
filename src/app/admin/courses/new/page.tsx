@@ -7,6 +7,7 @@ import dynamic from 'next/dynamic';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
+const TagSelector = dynamic(() => import('@/components/admin/TagSelector'), { ssr: false });
 
 export default function NewCoursePage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function NewCoursePage() {
     status: 'draft',
     thumbnailUrl: '',
   });
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   const generateSlug = (title: string) => {
@@ -42,7 +44,7 @@ export default function NewCoursePage() {
       const res = await fetch('/api/admin/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, tagIds: selectedTagIds }),
       });
 
       const data = await res.json();
@@ -221,6 +223,16 @@ export default function NewCoursePage() {
               <option value="published">เผยแพร่</option>
             </select>
           </div>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+            แท็ก
+          </label>
+          <TagSelector
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+          />
         </div>
 
         <div style={{ marginBottom: '24px' }}>

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { courses } from '@/lib/db/schema';
+import { courses, courseTags, tags } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { createId } from '@paralleldrive/cuid2';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,7 +29,18 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'ไม่พบคอร์ส' }, { status: 404 });
     }
 
-    return NextResponse.json({ course });
+    // Fetch tags for this course
+    const courseTagRows = await db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        slug: tags.slug,
+      })
+      .from(courseTags)
+      .innerJoin(tags, eq(courseTags.tagId, tags.id))
+      .where(eq(courseTags.courseId, id));
+
+    return NextResponse.json({ course, tags: courseTagRows });
   } catch (error) {
     console.error('Error fetching course:', error);
     return NextResponse.json(
@@ -48,7 +60,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, price, status, thumbnailUrl, slug } = body;
+    const { title, description, price, status, thumbnailUrl, slug, tagIds } = body;
 
     // Check if course exists
     const [existingCourse] = await db
@@ -74,6 +86,22 @@ export async function PUT(request: Request, { params }: RouteParams) {
         updatedAt: new Date(),
       })
       .where(eq(courses.id, id));
+
+    // Update tags if provided
+    if (tagIds !== undefined && Array.isArray(tagIds)) {
+      // Delete existing tags
+      await db.delete(courseTags).where(eq(courseTags.courseId, id));
+      // Insert new tags
+      if (tagIds.length > 0) {
+        await db.insert(courseTags).values(
+          tagIds.map((tagId: string) => ({
+            id: createId(),
+            courseId: id,
+            tagId,
+          }))
+        );
+      }
+    }
 
     return NextResponse.json({ message: 'อัพเดทคอร์สสำเร็จ' });
   } catch (error) {
