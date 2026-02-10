@@ -359,6 +359,59 @@ export const blogPostTagsRelations = relations(blogPostTags, ({ one }) => ({
 }));
 
 // =====================
+// COUPONS TABLE
+// =====================
+export const coupons = mysqlTable('coupons', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    code: varchar('code', { length: 50 }).notNull().unique(),
+    description: text('description'),
+    discountType: varchar('discount_type', { length: 20, enum: ['percentage', 'fixed'] }).notNull(),
+    discountValue: decimal('discount_value', { precision: 10, scale: 2 }).notNull(),
+    minPurchase: decimal('min_purchase', { precision: 10, scale: 2 }).default('0'),
+    maxDiscount: decimal('max_discount', { precision: 10, scale: 2 }),
+    usageLimit: int('usage_limit'),
+    usageCount: int('usage_count').default(0),
+    perUserLimit: int('per_user_limit').default(1),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
+    isActive: boolean('is_active').default(true),
+    startsAt: datetime('starts_at'),
+    expiresAt: datetime('expires_at'),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+});
+
+export const couponUsages = mysqlTable('coupon_usages', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    couponId: varchar('coupon_id', { length: 36 }).references(() => coupons.id, { onDelete: 'cascade' }).notNull(),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
+    discountAmount: decimal('discount_amount', { precision: 10, scale: 2 }).notNull(),
+    usedAt: datetime('used_at').$defaultFn(() => new Date()),
+});
+
+export const couponsRelations = relations(coupons, ({ one, many }) => ({
+    course: one(courses, {
+        fields: [coupons.courseId],
+        references: [courses.id],
+    }),
+    usages: many(couponUsages),
+}));
+
+export const couponUsagesRelations = relations(couponUsages, ({ one }) => ({
+    coupon: one(coupons, {
+        fields: [couponUsages.couponId],
+        references: [coupons.id],
+    }),
+    user: one(users, {
+        fields: [couponUsages.userId],
+        references: [users.id],
+    }),
+    course: one(courses, {
+        fields: [couponUsages.courseId],
+        references: [courses.id],
+    }),
+}));
+
+// =====================
 // CERTIFICATES TABLE
 // =====================
 export const certificates = mysqlTable('certificates', {
@@ -419,3 +472,7 @@ export type BlogPost = typeof blogPosts.$inferSelect;
 export type NewBlogPost = typeof blogPosts.$inferInsert;
 export type Certificate = typeof certificates.$inferSelect;
 export type NewCertificate = typeof certificates.$inferInsert;
+export type Coupon = typeof coupons.$inferSelect;
+export type NewCoupon = typeof coupons.$inferInsert;
+export type CouponUsage = typeof couponUsages.$inferSelect;
+export type NewCouponUsage = typeof couponUsages.$inferInsert;

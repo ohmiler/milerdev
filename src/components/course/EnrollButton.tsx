@@ -25,6 +25,12 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    couponId: string; code: string; discountAmount: number; finalPrice: number; description: string | null;
+  } | null>(null);
   const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
     isOpen: false,
     type: 'success',
@@ -108,6 +114,45 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     } finally {
       setLoading(false);
     }
+  };
+
+  const effectivePrice = appliedCoupon ? appliedCoupon.finalPrice : price;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError(null);
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, courseId, originalPrice: price }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setAppliedCoupon({
+          couponId: data.couponId,
+          code: data.code,
+          discountAmount: data.discountAmount,
+          finalPrice: data.finalPrice,
+          description: data.description,
+        });
+        setCouponError(null);
+      } else {
+        setCouponError(data.error || 'คูปองไม่ถูกต้อง');
+        setAppliedCoupon(null);
+      }
+    } catch {
+      setCouponError('เกิดข้อผิดพลาด');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError(null);
   };
 
   const handleStripePayment = async () => {
@@ -323,63 +368,145 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
           <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '420px', width: '100%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px', textAlign: 'center' }}>เลือกช่องทางชำระเงิน</h3>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', textAlign: 'center', marginBottom: '24px' }}>ยอดชำระ <strong style={{ color: '#2563eb' }}>฿{price.toLocaleString()}</strong></p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {/* Stripe Card */}
-              <button
-                onClick={handleStripePayment}
-                disabled={loading}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '16px',
-                  padding: '16px 20px', background: '#f8fafc', border: '2px solid #e2e8f0',
-                  borderRadius: '12px', cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s', textAlign: 'left', width: '100%',
-                }}
-                onMouseOver={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#eff6ff'; }}
-                onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc'; }}
-              >
-                <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg style={{ width: '22px', height: '22px', color: 'white' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                </div>
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              {appliedCoupon ? (
                 <div>
-                  <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1rem' }}>บัตรเครดิต / เดบิต</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '2px' }}>Visa, Mastercard ผ่าน Stripe</div>
+                  <span style={{ color: '#94a3b8', textDecoration: 'line-through', fontSize: '0.9rem' }}>฿{price.toLocaleString()}</span>
+                  {' '}
+                  <strong style={{ color: '#16a34a', fontSize: '1.1rem' }}>฿{effectivePrice.toLocaleString()}</strong>
+                  <div style={{ fontSize: '0.8rem', color: '#16a34a', marginTop: '2px' }}>ใช้คูปอง {appliedCoupon.code} ลด ฿{appliedCoupon.discountAmount.toLocaleString()}</div>
                 </div>
-              </button>
-
-              {/* Bank Transfer */}
-              <button
-                onClick={() => setPaymentStep('transfer')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '16px',
-                  padding: '16px 20px', background: '#f8fafc', border: '2px solid #e2e8f0',
-                  borderRadius: '12px', cursor: 'pointer',
-                  transition: 'all 0.2s', textAlign: 'left', width: '100%',
-                }}
-                onMouseOver={(e) => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.background = '#f0fdf4'; }}
-                onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc'; }}
-              >
-                <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg style={{ width: '22px', height: '22px', color: 'white' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1rem' }}>โอนเงิน / PromptPay</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '2px' }}>โอนแล้วแนบสลิป ตรวจสอบอัตโนมัติ</div>
-                </div>
-              </button>
+              ) : (
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>ยอดชำระ <strong style={{ color: '#2563eb' }}>฿{price.toLocaleString()}</strong></p>
+              )}
             </div>
 
-            <button
-              onClick={() => setPaymentStep('idle')}
-              style={{ width: '100%', padding: '12px', marginTop: '16px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem' }}
-            >
-              ยกเลิก
-            </button>
+            {/* Coupon Input */}
+            <div style={{ marginBottom: '20px', padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>มีโค้ดส่วนลด?</label>
+              {appliedCoupon ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f0fdf4', padding: '10px 14px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                  <div>
+                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#16a34a' }}>{appliedCoupon.code}</span>
+                    {appliedCoupon.description && <span style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '8px' }}>{appliedCoupon.description}</span>}
+                  </div>
+                  <button onClick={handleRemoveCoupon} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500 }}>ลบ</button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    value={couponCode}
+                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
+                    placeholder="ใส่โค้ดส่วนลด"
+                    style={{ flex: 1, padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'monospace', textTransform: 'uppercase' }}
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponCode.trim()}
+                    style={{ padding: '10px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600, cursor: couponLoading ? 'wait' : 'pointer', opacity: couponLoading || !couponCode.trim() ? 0.5 : 1, whiteSpace: 'nowrap' }}
+                  >
+                    {couponLoading ? '...' : 'ใช้โค้ด'}
+                  </button>
+                </div>
+              )}
+              {couponError && <p style={{ color: '#dc2626', fontSize: '0.8125rem', marginTop: '6px', margin: '6px 0 0' }}>{couponError}</p>}
+            </div>
+
+            {/* If coupon makes it free, show enroll button instead of payment */}
+            {effectivePrice === 0 && appliedCoupon ? (
+              <>
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const res = await fetch('/api/enrollments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ courseId, couponId: appliedCoupon.couponId }),
+                      });
+                      const data = await res.json();
+                      if (res.ok) {
+                        updateEnrolled(true);
+                        setPaymentStep('idle');
+                        setModal({ isOpen: true, type: 'success', title: 'ลงทะเบียนสำเร็จ!', message: 'ใช้คูปองส่วนลด 100% ลงทะเบียนเรียบร้อยแล้ว' });
+                      } else {
+                        setModal({ isOpen: true, type: 'error', title: 'เกิดข้อผิดพลาด', message: data.error || 'ไม่สามารถลงทะเบียนได้' });
+                      }
+                    } catch { setModal({ isOpen: true, type: 'error', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถเชื่อมต่อได้' }); }
+                    finally { setLoading(false); }
+                  }}
+                  disabled={loading}
+                  style={{ width: '100%', padding: '14px', background: loading ? '#94a3b8' : 'linear-gradient(135deg, #16a34a, #15803d)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 600, fontSize: '1rem', cursor: loading ? 'not-allowed' : 'pointer' }}
+                >
+                  {loading ? 'กำลังดำเนินการ...' : 'ลงทะเบียนเรียนฟรี (คูปอง 100%)'}
+                </button>
+                <button
+                  onClick={() => setPaymentStep('idle')}
+                  style={{ width: '100%', padding: '12px', marginTop: '12px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem' }}
+                >
+                  ยกเลิก
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {/* Stripe Card */}
+                  <button
+                    onClick={handleStripePayment}
+                    disabled={loading}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '16px',
+                      padding: '16px 20px', background: '#f8fafc', border: '2px solid #e2e8f0',
+                      borderRadius: '12px', cursor: loading ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s', textAlign: 'left', width: '100%',
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#eff6ff'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc'; }}
+                  >
+                    <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg style={{ width: '22px', height: '22px', color: 'white' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1rem' }}>บัตรเครดิต / เดบิต</div>
+                      <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '2px' }}>Visa, Mastercard ผ่าน Stripe</div>
+                    </div>
+                  </button>
+
+                  {/* Bank Transfer */}
+                  <button
+                    onClick={() => setPaymentStep('transfer')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '16px',
+                      padding: '16px 20px', background: '#f8fafc', border: '2px solid #e2e8f0',
+                      borderRadius: '12px', cursor: 'pointer',
+                      transition: 'all 0.2s', textAlign: 'left', width: '100%',
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.background = '#f0fdf4'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc'; }}
+                  >
+                    <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg style={{ width: '22px', height: '22px', color: 'white' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1rem' }}>โอนเงิน / PromptPay</div>
+                      <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '2px' }}>โอนแล้วแนบสลิป ตรวจสอบอัตโนมัติ</div>
+                    </div>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setPaymentStep('idle')}
+                  style={{ width: '100%', padding: '12px', marginTop: '16px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem' }}
+                >
+                  ยกเลิก
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

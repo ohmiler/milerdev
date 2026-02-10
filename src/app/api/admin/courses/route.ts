@@ -3,6 +3,27 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
+import { desc } from 'drizzle-orm';
+
+// GET /api/admin/courses - List all courses
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const allCourses = await db
+      .select({ id: courses.id, title: courses.title, slug: courses.slug, status: courses.status, price: courses.price })
+      .from(courses)
+      .orderBy(desc(courses.createdAt));
+
+    return NextResponse.json({ courses: allCourses });
+  } catch (error) {
+    console.error('Error fetching courses:', error);
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
+  }
+}
 
 // POST /api/admin/courses - Create new course
 export async function POST(request: Request) {

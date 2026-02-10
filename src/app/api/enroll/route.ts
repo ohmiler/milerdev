@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { enrollments, courses, payments } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { enrollments, courses, payments, coupons, couponUsages } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/email";
 import { z } from "zod";
 import { createId } from "@paralleldrive/cuid2";
@@ -11,6 +11,7 @@ import { createId } from "@paralleldrive/cuid2";
 const enrollSchema = z.object({
     courseId: z.string().min(1, "Course ID is required"),
     paymentId: z.string().optional(),
+    couponId: z.string().optional(),
 });
 
 // POST /api/enroll - Enroll in a course
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
             );
         }
         
-        const { courseId, paymentId } = validation.data;
+        const { courseId, paymentId, couponId } = validation.data;
 
         // Check if course exists
         const course = await db.query.courses.findFirst({
@@ -75,6 +76,31 @@ export async function POST(request: Request) {
                     { status: 402 }
                 );
             }
+        } else if (coursePrice > 0 && couponId) {
+            // Coupon-based free enrollment — validate coupon makes it free
+            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
+            if (!coupon || !coupon.isActive) {
+                return NextResponse.json({ error: "คูปองไม่ถูกต้อง" }, { status: 400 });
+            }
+            let discount: number;
+            if (coupon.discountType === 'percentage') {
+                discount = coursePrice * (parseFloat(coupon.discountValue) / 100);
+                const maxD = coupon.maxDiscount ? parseFloat(coupon.maxDiscount) : null;
+                if (maxD && discount > maxD) discount = maxD;
+            } else {
+                discount = parseFloat(coupon.discountValue);
+            }
+            if (discount < coursePrice) {
+                return NextResponse.json({ error: "คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ" }, { status: 402 });
+            }
+            // Record coupon usage
+            await db.insert(couponUsages).values({
+                couponId: coupon.id,
+                userId: session.user.id,
+                courseId,
+                discountAmount: String(Math.min(discount, coursePrice)),
+            });
+            await db.update(coupons).set({ usageCount: sql`${coupons.usageCount} + 1` }).where(eq(coupons.id, coupon.id));
         } else if (coursePrice > 0) {
             return NextResponse.json(
                 { error: "Payment required for this course" },
