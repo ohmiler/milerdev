@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
@@ -47,6 +47,22 @@ function formatDate(dateStr: string | null): string {
 }
 
 export default function BlogPage() {
+  return (
+    <Suspense fallback={
+      <>
+        <Navbar />
+        <main style={{ paddingTop: '64px' }}>
+          <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748b' }}>กำลังโหลด...</div>
+        </main>
+        <Footer />
+      </>
+    }>
+      <BlogContent />
+    </Suspense>
+  );
+}
+
+function BlogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

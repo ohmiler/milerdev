@@ -36,7 +36,15 @@ export default function AdminCertificatesPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchCerts(); }, [statusFilter]);
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    fetch(`/api/admin/certificates?${params}`)
+      .then(res => res.json())
+      .then(data => setCerts(data.certificates || []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [statusFilter]);
 
   const handleRevoke = async (id: string) => {
     const res = await fetch(`/api/admin/certificates/${id}`, {

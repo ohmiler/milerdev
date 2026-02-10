@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -32,6 +32,22 @@ interface Pagination {
 }
 
 export default function CoursesPage() {
+  return (
+    <Suspense fallback={
+      <>
+        <Navbar />
+        <main style={{ paddingTop: '64px' }}>
+          <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748b' }}>กำลังโหลด...</div>
+        </main>
+        <Footer />
+      </>
+    }>
+      <CoursesContent />
+    </Suspense>
+  );
+}
+
+function CoursesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
