@@ -315,6 +315,48 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
 }));
 
 // =====================
+// BLOG POSTS TABLE
+// =====================
+export const blogPosts = mysqlTable('blog_posts', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    title: varchar('title', { length: 255 }).notNull(),
+    slug: varchar('slug', { length: 255 }).notNull().unique(),
+    excerpt: text('excerpt'),
+    content: text('content'),
+    thumbnailUrl: text('thumbnail_url'),
+    status: varchar('status', { length: 20, enum: ['draft', 'published'] }).default('draft').notNull(),
+    authorId: varchar('author_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
+    publishedAt: datetime('published_at'),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
+});
+
+export const blogPostTags = mysqlTable('blog_post_tags', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    postId: varchar('post_id', { length: 36 }).references(() => blogPosts.id, { onDelete: 'cascade' }).notNull(),
+    tagId: varchar('tag_id', { length: 36 }).references(() => tags.id, { onDelete: 'cascade' }).notNull(),
+});
+
+export const blogPostsRelations = relations(blogPosts, ({ one, many }) => ({
+    author: one(users, {
+        fields: [blogPosts.authorId],
+        references: [users.id],
+    }),
+    blogPostTags: many(blogPostTags),
+}));
+
+export const blogPostTagsRelations = relations(blogPostTags, ({ one }) => ({
+    post: one(blogPosts, {
+        fields: [blogPostTags.postId],
+        references: [blogPosts.id],
+    }),
+    tag: one(tags, {
+        fields: [blogPostTags.tagId],
+        references: [tags.id],
+    }),
+}));
+
+// =====================
 // TYPE EXPORTS
 // =====================
 export type User = typeof users.$inferSelect;
@@ -343,3 +385,5 @@ export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type Review = typeof reviews.$inferSelect;
 export type NewReview = typeof reviews.$inferInsert;
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type NewBlogPost = typeof blogPosts.$inferInsert;

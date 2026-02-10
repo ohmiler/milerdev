@@ -11,6 +11,7 @@ interface AdminHeaderProps {
 const primaryLinks = [
     { href: '/admin', label: 'แดชบอร์ด', icon: 'dashboard', exact: true },
     { href: '/admin/courses', label: 'คอร์ส', icon: 'courses' },
+    { href: '/admin/blog', label: 'บทความ', icon: 'blog' },
     { href: '/admin/users', label: 'ผู้ใช้', icon: 'users' },
     { href: '/admin/payments', label: 'การชำระเงิน', icon: 'payments' },
     { href: '/admin/enrollments', label: 'การลงทะเบียน', icon: 'enrollments' },

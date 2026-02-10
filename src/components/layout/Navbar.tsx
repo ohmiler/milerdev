@@ -17,6 +17,7 @@ import {
     LoginIcon,
     RegisterIcon,
     BookIcon,
+    PenIcon,
     InfoIcon,
     MailIcon,
 } from '@/components/ui/Icons';
@@ -24,6 +25,7 @@ import {
 // Navigation links config
 const NAV_LINKS = [
     { href: '/courses', label: 'คอร์สทั้งหมด', icon: BookIcon },
+    { href: '/blog', label: 'บทความ', icon: PenIcon },
     { href: '/about', label: 'เกี่ยวกับเรา', icon: InfoIcon },
     { href: '/contact', label: 'ติดต่อ', icon: MailIcon },
 ];
