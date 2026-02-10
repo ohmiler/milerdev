@@ -314,6 +314,96 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Client Showcase Section */}
+        <section style={{
+          padding: '80px 0',
+          background: '#f8fafc',
+          overflow: 'hidden',
+        }}>
+          <div className="container" style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <h2 style={{
+              fontSize: 'clamp(1.5rem, 3.5vw, 2rem)',
+              fontWeight: 700,
+              color: '#1e293b',
+              marginBottom: '12px',
+              lineHeight: 1.3,
+            }}>
+              ส่วนหนึ่งขององค์กรที่ไว้วางใจ MilerDev และเคยร่วมงาน
+            </h2>
+            <p style={{
+              color: '#64748b',
+              fontSize: '1rem',
+              maxWidth: '640px',
+              margin: '0 auto',
+            }}>
+              องค์กรที่ MilerDev ได้รับความไว้วางใจให้ทำหน้าที่เป็น วิทยากรอบรมและให้ความรู้การเขียนโปรแกรม
+            </p>
+          </div>
+
+          <div className="marquee-wrapper">
+            <div className="marquee-inner">
+              {[0, 1].map((copy) => (
+                <div key={copy} className="marquee-track" aria-hidden={copy === 1}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8].map((num, i) => (
+                    <div key={i} className="marquee-item">
+                      <img
+                        src={`/clients/0${num}-clients.png`}
+                        alt={`Client ${num}`}
+                        className="marquee-logo"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <style>{`
+            .marquee-wrapper {
+              width: 100%;
+              overflow: hidden;
+              mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+              -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+            }
+            .marquee-inner {
+              display: flex;
+              width: max-content;
+              animation: marquee 100s linear infinite;
+            }
+            .marquee-track {
+              display: flex;
+              align-items: center;
+              flex-shrink: 0;
+            }
+            .marquee-item {
+              flex-shrink: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 0 30px;
+            }
+            .marquee-logo {
+              max-height: 64px;
+              max-width: 160px;
+              object-fit: contain;
+              filter: grayscale(30%);
+              opacity: 0.85;
+              transition: all 0.3s;
+            }
+            .marquee-logo:hover {
+              filter: grayscale(0%);
+              opacity: 1;
+            }
+            @keyframes marquee {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            .marquee-wrapper:hover .marquee-inner {
+              animation-play-state: paused;
+            }
+          `}</style>
+        </section>
+
         {/* CTA Section */}
         <section className="cta-section" style={{ padding: '100px 0' }}>
           <div className="container" style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
