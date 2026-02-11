@@ -26,6 +26,7 @@ const secondaryLinks = [
     { href: '/admin/media', label: 'ไฟล์สื่อ', icon: 'media' },
     { href: '/admin/tags', label: 'แท็ก', icon: 'tags' },
     { href: '/admin/announcements', label: 'ประกาศ', icon: 'announcements' },
+    { href: '/admin/affiliate-banners', label: 'Affiliate Banners', icon: 'media' },
     { href: '/admin/audit-logs', label: 'บันทึกระบบ', icon: 'logs' },
     { href: '/admin/settings', label: 'ตั้งค่า', icon: 'settings' },
 ];

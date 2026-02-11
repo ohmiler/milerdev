@@ -4,6 +4,7 @@ import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
 import ShowcaseGallery from '@/components/home/ShowcaseGallery';
 import HeroCodeEditor from '@/components/home/HeroCodeEditor';
+import AffiliateBannerCarousel from '@/components/home/AffiliateBannerCarousel';
 import { db } from '@/lib/db';
 import { courses, lessons, users, bundles, bundleCourses } from '@/lib/db/schema';
 import { eq, desc, asc, count, sql } from 'drizzle-orm';
@@ -792,6 +793,9 @@ export default async function HomePage() {
 
         {/* Showcase Gallery */}
         <ShowcaseGallery />
+
+        {/* Affiliate Banner Carousel */}
+        <AffiliateBannerCarousel />
 
         {/* CTA Section */}
         <section className="cta-section" style={{ padding: '100px 0' }}>

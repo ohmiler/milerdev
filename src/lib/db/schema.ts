@@ -527,3 +527,20 @@ export type Bundle = typeof bundles.$inferSelect;
 export type NewBundle = typeof bundles.$inferInsert;
 export type BundleCourse = typeof bundleCourses.$inferSelect;
 export type NewBundleCourse = typeof bundleCourses.$inferInsert;
+
+// =====================
+// AFFILIATE BANNERS TABLE
+// =====================
+export const affiliateBanners = mysqlTable('affiliate_banners', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    title: varchar('title', { length: 255 }).notNull(),
+    imageUrl: text('image_url').notNull(),
+    linkUrl: text('link_url').notNull(),
+    orderIndex: int('order_index').default(0).notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
+});
+
+export type AffiliateBanner = typeof affiliateBanners.$inferSelect;
+export type NewAffiliateBanner = typeof affiliateBanners.$inferInsert;
