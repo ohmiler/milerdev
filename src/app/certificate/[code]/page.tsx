@@ -55,9 +55,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params;
   const cert = await getCertificate(code);
   if (!cert) return { title: 'ไม่พบใบรับรอง' };
+
+  const title = `ใบรับรอง - ${cert.recipientName}`;
+  const description = `ใบรับรองสำเร็จหลักสูตร "${cert.courseTitle}" โดย ${cert.recipientName} จาก MilerDev`;
+
   return {
-    title: `ใบรับรอง - ${cert.recipientName}`,
-    description: `ใบรับรองสำเร็จหลักสูตร "${cert.courseTitle}" โดย ${cert.recipientName}`,
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      title,
+      description,
+      url: `/certificate/${code}`,
+      siteName: 'MilerDev',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
   };
 }
 

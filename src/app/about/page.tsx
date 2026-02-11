@@ -6,6 +6,17 @@ import Footer from '@/components/layout/Footer';
 export const metadata: Metadata = {
   title: 'เกี่ยวกับเรา',
   description: 'แพลตฟอร์มเรียนออนไลน์สำหรับนักพัฒนาซอฟต์แวร์ สร้างโดย MilerDev',
+  openGraph: {
+    title: 'เกี่ยวกับเรา',
+    description: 'แพลตฟอร์มเรียนออนไลน์สำหรับนักพัฒนาซอฟต์แวร์ สร้างโดย MilerDev',
+    url: '/about',
+    siteName: 'MilerDev',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'เกี่ยวกับเรา - MilerDev',
+    description: 'แพลตฟอร์มเรียนออนไลน์สำหรับนักพัฒนาซอฟต์แวร์ สร้างโดย MilerDev',
+  },
 };
 
 export default function AboutPage() {

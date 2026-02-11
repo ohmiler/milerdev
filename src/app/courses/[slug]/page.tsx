@@ -37,13 +37,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const description = course.description ? getExcerpt(course.description, 160) : 'เรียนออนไลน์กับ MilerDev';
 
+  const thumbnailUrl = course.thumbnailUrl?.startsWith('http') ? course.thumbnailUrl : course.thumbnailUrl ? `https://${course.thumbnailUrl}` : null;
+
   return {
     title: course.title,
     description,
     openGraph: {
+      type: 'website',
       title: course.title,
       description,
-      ...(course.thumbnailUrl && { images: [course.thumbnailUrl] }),
+      url: `/courses/${slug}`,
+      siteName: 'MilerDev',
+      ...(thumbnailUrl && {
+        images: [{
+          url: thumbnailUrl,
+          width: 1200,
+          height: 630,
+          alt: course.title,
+        }],
+      }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: course.title,
+      description,
+      ...(thumbnailUrl && { images: [thumbnailUrl] }),
     },
   };
 }
