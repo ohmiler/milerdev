@@ -20,3 +20,7 @@ CREATE TABLE bundle_courses (
     FOREIGN KEY (bundle_id) REFERENCES bundles(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
 );
+
+-- Add bundle_id to payments table
+ALTER TABLE payments ADD COLUMN bundle_id VARCHAR(36) DEFAULT NULL AFTER course_id;
+ALTER TABLE payments ADD FOREIGN KEY (bundle_id) REFERENCES bundles(id) ON DELETE SET NULL;

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { payments, enrollments } from '@/lib/db/schema';
+import { payments, enrollments, bundleCourses, courses } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -107,15 +107,38 @@ export async function PUT(request: Request, { params }: RouteParams) {
       .where(eq(payments.id, id));
 
     // If status changed to 'completed', create enrollment
-    if (status === 'completed' && previousStatus !== 'completed') {
-      if (existingPayment.userId && existingPayment.courseId) {
-        // Check if enrollment already exists
+    if (status === 'completed' && previousStatus !== 'completed' && existingPayment.userId) {
+      if (existingPayment.bundleId) {
+        // Bundle payment — enroll in all bundle courses
+        const bCourses = await db
+          .select({ courseId: bundleCourses.courseId })
+          .from(bundleCourses)
+          .where(eq(bundleCourses.bundleId, existingPayment.bundleId));
+
+        for (const bc of bCourses) {
+          const [existing] = await db
+            .select()
+            .from(enrollments)
+            .where(and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, bc.courseId)))
+            .limit(1);
+          if (!existing) {
+            await db.insert(enrollments).values({
+              id: createId(),
+              userId: existingPayment.userId!,
+              courseId: bc.courseId,
+              enrolledAt: new Date(),
+              progressPercent: 0,
+            });
+          }
+        }
+      } else if (existingPayment.courseId) {
+        // Single course payment
         const [existingEnrollment] = await db
           .select()
           .from(enrollments)
           .where(
             and(
-              eq(enrollments.userId, existingPayment.userId),
+              eq(enrollments.userId, existingPayment.userId!),
               eq(enrollments.courseId, existingPayment.courseId)
             )
           )
@@ -124,7 +147,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         if (!existingEnrollment) {
           await db.insert(enrollments).values({
             id: createId(),
-            userId: existingPayment.userId,
+            userId: existingPayment.userId!,
             courseId: existingPayment.courseId,
             enrolledAt: new Date(),
             progressPercent: 0,

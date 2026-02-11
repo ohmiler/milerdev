@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { payments, users, courses } from '@/lib/db/schema';
+import { payments, users, courses, bundles } from '@/lib/db/schema';
 import { desc, eq, sql, and, like, or } from 'drizzle-orm';
 
 // GET /api/admin/payments - Get all payments with filters
@@ -57,13 +57,16 @@ export async function GET(request: Request) {
           createdAt: payments.createdAt,
           userId: payments.userId,
           courseId: payments.courseId,
+          bundleId: payments.bundleId,
           userName: users.name,
           userEmail: users.email,
           courseTitle: courses.title,
+          bundleTitle: bundles.title,
         })
         .from(payments)
         .leftJoin(users, eq(payments.userId, users.id))
         .leftJoin(courses, eq(payments.courseId, courses.id))
+        .leftJoin(bundles, eq(payments.bundleId, bundles.id))
         .where(whereCondition)
         .orderBy(desc(payments.createdAt))
         .limit(limit)

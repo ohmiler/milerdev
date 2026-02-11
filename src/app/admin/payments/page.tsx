@@ -15,9 +15,11 @@ interface Payment {
   createdAt: string;
   userId: string | null;
   courseId: string | null;
+  bundleId: string | null;
   userName: string | null;
   userEmail: string | null;
   courseTitle: string | null;
+  bundleTitle: string | null;
 }
 
 interface Stats {
@@ -310,7 +312,11 @@ export default function AdminPaymentsPage() {
                       </td>
                       <td style={{ padding: '16px' }}>
                         <div style={{ color: '#1e293b', fontSize: '0.875rem' }}>
-                          {payment.courseTitle || '-'}
+                          {payment.bundleTitle ? (
+                            <span>📦 {payment.bundleTitle}</span>
+                          ) : (
+                            payment.courseTitle || '-'
+                          )}
                         </div>
                         {payment.slipUrl && (
                           <a

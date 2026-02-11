@@ -132,6 +132,7 @@ export const payments = mysqlTable('payments', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
     userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
+    bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
     amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
     currency: varchar('currency', { length: 10 }).default('THB').notNull(),
     method: varchar('method', { length: 20, enum: ['stripe', 'promptpay', 'bank_transfer'] }).notNull(),
@@ -149,6 +150,10 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
     course: one(courses, {
         fields: [payments.courseId],
         references: [courses.id],
+    }),
+    bundle: one(bundles, {
+        fields: [payments.bundleId],
+        references: [bundles.id],
     }),
 }));
 
