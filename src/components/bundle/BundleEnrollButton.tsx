@@ -61,6 +61,30 @@ export default function BundleEnrollButton({ bundleId, price, bundleSlug }: Bund
         }
     };
 
+    const handleStripePayment = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/stripe/bundle-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bundleId }),
+            });
+            const data = await res.json();
+            if (res.ok && data.url) {
+                window.location.href = data.url;
+                return;
+            } else {
+                setPaymentStep('idle');
+                setModal({ isOpen: true, type: 'error', title: 'เกิดข้อผิดพลาด', message: data.error || 'ไม่สามารถสร้างหน้าชำระเงินได้ กรุณาลองใหม่' });
+            }
+        } catch {
+            setPaymentStep('idle');
+            setModal({ isOpen: true, type: 'error', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -197,6 +221,38 @@ export default function BundleEnrollButton({ bundleId, price, bundleSlug }: Bund
                                 <div>
                                     <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1rem' }}>โอนเงิน / PromptPay</div>
                                     <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>โอนเงินแล้วแนบสลิป ตรวจสอบอัตโนมัติ</div>
+                                </div>
+                            </button>
+
+                            {/* Stripe */}
+                            <button
+                                onClick={() => { setPaymentStep('idle'); handleStripePayment(); }}
+                                disabled={loading}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '16px',
+                                    padding: '16px 20px', background: 'white', border: '2px solid #e2e8f0',
+                                    borderRadius: '12px', cursor: loading ? 'not-allowed' : 'pointer', textAlign: 'left',
+                                    transition: 'all 0.2s', width: '100%',
+                                    opacity: loading ? 0.6 : 1,
+                                }}
+                                onMouseOver={(e) => { if (!loading) { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.background = '#faf5ff'; } }}
+                                onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = 'white'; }}
+                            >
+                                <div style={{
+                                    width: '48px', height: '48px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, #635bff, #7a73ff)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: 'white', fontSize: '1.25rem', flexShrink: 0,
+                                }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1rem' }}>
+                                        {loading ? 'กำลังเปิดหน้าชำระเงิน...' : 'บัตรเครดิต / เดบิต'}
+                                    </div>
+                                    <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>ชำระผ่าน Stripe (Visa, Mastercard)</div>
                                 </div>
                             </button>
                         </div>

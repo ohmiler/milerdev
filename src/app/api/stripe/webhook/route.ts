@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { payments, enrollments, courses } from "@/lib/db/schema";
+import { payments, enrollments, courses, bundles, bundleCourses } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import Stripe from "stripe";
@@ -30,22 +30,9 @@ export async function POST(request: Request) {
 
     if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { paymentId, userId, courseId } = session.metadata!;
+        const { paymentId, userId, courseId, bundleId, type } = session.metadata!;
 
         try {
-            // Check if already enrolled (idempotency)
-            const existingEnrollment = await db.query.enrollments.findFirst({
-                where: and(
-                    eq(enrollments.userId, userId),
-                    eq(enrollments.courseId, courseId)
-                ),
-            });
-
-            if (existingEnrollment) {
-                console.log(`User ${userId} already enrolled in course ${courseId}, skipping`);
-                return NextResponse.json({ received: true });
-            }
-
             // Update payment status
             await db
                 .update(payments)
@@ -55,41 +42,85 @@ export async function POST(request: Request) {
                 })
                 .where(eq(payments.id, paymentId));
 
-            // Create enrollment
-            await db.insert(enrollments).values({
-                userId,
-                courseId,
-            });
-
-            // Get course and user for email
             const [payment] = await db
                 .select()
                 .from(payments)
                 .where(eq(payments.id, paymentId));
 
-            const course = await db.query.courses.findFirst({
-                where: eq(courses.id, courseId),
-            });
+            const customerEmail = session.customer_details?.email;
+            const customerName = session.customer_details?.name || "คุณลูกค้า";
 
-            // Send confirmation emails
-            if (session.customer_details?.email && course) {
-                await sendPaymentConfirmation({
-                    email: session.customer_details.email,
-                    name: session.customer_details.name || "คุณลูกค้า",
-                    courseName: course.title,
-                    amount: parseFloat(payment.amount.toString()),
-                    paymentId: payment.id,
+            if (type === "bundle" && bundleId) {
+                // ===== BUNDLE PAYMENT =====
+                const bCourses = await db
+                    .select({ courseId: bundleCourses.courseId, courseSlug: courses.slug })
+                    .from(bundleCourses)
+                    .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
+                    .where(eq(bundleCourses.bundleId, bundleId));
+
+                for (const bc of bCourses) {
+                    const existing = await db.query.enrollments.findFirst({
+                        where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, bc.courseId)),
+                    });
+                    if (!existing) {
+                        await db.insert(enrollments).values({ userId, courseId: bc.courseId });
+                    }
+                }
+
+                const [bundle] = await db.select().from(bundles).where(eq(bundles.id, bundleId)).limit(1);
+
+                if (customerEmail && bundle) {
+                    await sendPaymentConfirmation({
+                        email: customerEmail,
+                        name: customerName,
+                        courseName: `${bundle.title} (Bundle)`,
+                        amount: parseFloat(payment.amount.toString()),
+                        paymentId: payment.id,
+                    });
+                    await sendEnrollmentEmail({
+                        email: customerEmail,
+                        name: customerName,
+                        courseName: `${bundle.title} (${bCourses.length} คอร์ส)`,
+                        courseSlug: bCourses[0]?.courseSlug || "",
+                    });
+                }
+
+                console.log(`Bundle payment ${paymentId} completed, enrolled in ${bCourses.length} courses`);
+            } else if (courseId) {
+                // ===== SINGLE COURSE PAYMENT =====
+                const existingEnrollment = await db.query.enrollments.findFirst({
+                    where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)),
                 });
 
-                await sendEnrollmentEmail({
-                    email: session.customer_details.email,
-                    name: session.customer_details.name || "คุณลูกค้า",
-                    courseName: course.title,
-                    courseSlug: course.slug,
+                if (existingEnrollment) {
+                    console.log(`User ${userId} already enrolled in course ${courseId}, skipping`);
+                    return NextResponse.json({ received: true });
+                }
+
+                await db.insert(enrollments).values({ userId, courseId });
+
+                const course = await db.query.courses.findFirst({
+                    where: eq(courses.id, courseId),
                 });
+
+                if (customerEmail && course) {
+                    await sendPaymentConfirmation({
+                        email: customerEmail,
+                        name: customerName,
+                        courseName: course.title,
+                        amount: parseFloat(payment.amount.toString()),
+                        paymentId: payment.id,
+                    });
+                    await sendEnrollmentEmail({
+                        email: customerEmail,
+                        name: customerName,
+                        courseName: course.title,
+                        courseSlug: course.slug,
+                    });
+                }
+
+                console.log(`Payment ${paymentId} completed and enrollment created`);
             }
-
-            console.log(`Payment ${paymentId} completed and enrollment created`);
         } catch (error) {
             console.error("Error processing webhook:", error);
             return NextResponse.json(
