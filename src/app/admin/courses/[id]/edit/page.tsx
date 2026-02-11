@@ -33,6 +33,7 @@ export default function EditCoursePage({ params }: Props) {
     status: 'draft',
     thumbnailUrl: '',
     certificateColor: '#2563eb',
+    certificateHeaderImage: '',
     promoPrice: '',
     promoStartsAt: '',
     promoEndsAt: '',
@@ -54,6 +55,7 @@ export default function EditCoursePage({ params }: Props) {
               status: data.course.status || 'draft',
               thumbnailUrl: data.course.thumbnailUrl || '',
               certificateColor: data.course.certificateColor || '#2563eb',
+              certificateHeaderImage: data.course.certificateHeaderImage || '',
               promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
               promoStartsAt: data.course.promoStartsAt ? new Date(data.course.promoStartsAt).toISOString().slice(0, 16) : '',
               promoEndsAt: data.course.promoEndsAt ? new Date(data.course.promoEndsAt).toISOString().slice(0, 16) : '',
@@ -270,6 +272,20 @@ export default function EditCoursePage({ params }: Props) {
             value={formData.certificateColor}
             onChange={(color) => setFormData(prev => ({ ...prev, certificateColor: color }))}
           />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+            รูปภาพ Header ใบรับรอง (ทดแทนสีพื้นหลัง)
+          </label>
+          <ImageUpload
+            value={formData.certificateHeaderImage}
+            onChange={(url) => setFormData(prev => ({ ...prev, certificateHeaderImage: url }))}
+            folder="certificates"
+          />
+          <p style={{ marginTop: '6px', fontSize: '0.8125rem', color: '#64748b' }}>
+            แนะนำขนาด 1800 × 500 px — ถ้าอัปโหลดรูปนี้จะใช้แทนพื้นหลังสี gradient ในใบรับรอง
+          </p>
         </div>
 
         {/* Promotion Section */}

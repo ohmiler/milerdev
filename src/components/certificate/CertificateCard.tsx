@@ -13,6 +13,7 @@ interface CertificateData {
   courseSlug: string | null;
   courseId: string;
   certificateTheme?: string | null;
+  certificateHeaderImage?: string | null;
 }
 
 // Generate a full theme from any hex color
@@ -102,16 +103,22 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
       >
         {/* Header */}
         <div style={{
-          background: theme.gradient,
+          background: cert.certificateHeaderImage
+            ? `url(${cert.certificateHeaderImage}) center/cover no-repeat`
+            : theme.gradient,
           padding: '48px 40px 40px',
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* Decorative elements */}
-          <div style={{ position: 'absolute', top: '-30px', left: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-          <div style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-          <div style={{ position: 'absolute', top: '20px', right: '60px', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
+          {/* Decorative elements (only show when no custom image) */}
+          {!cert.certificateHeaderImage && (
+            <>
+              <div style={{ position: 'absolute', top: '-30px', left: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+              <div style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+              <div style={{ position: 'absolute', top: '20px', right: '60px', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
+            </>
+          )}
 
           {/* Logo */}
           <div style={{

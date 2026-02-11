@@ -46,7 +46,7 @@ export async function issueCertificate(userId: string, courseId: string): Promis
   // Get user and course info
   const [[user], [course]] = await Promise.all([
     db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1),
-    db.select({ title: courses.title, certificateColor: courses.certificateColor }).from(courses).where(eq(courses.id, courseId)).limit(1),
+    db.select({ title: courses.title, certificateColor: courses.certificateColor, certificateHeaderImage: courses.certificateHeaderImage }).from(courses).where(eq(courses.id, courseId)).limit(1),
   ]);
 
   if (!user || !course) {
@@ -80,6 +80,7 @@ export async function issueCertificate(userId: string, courseId: string): Promis
     completedAt: now,
     issuedAt: now,
     certificateTheme: course.certificateColor || '#2563eb',
+    certificateHeaderImage: course.certificateHeaderImage || null,
   });
 
   const [certificate] = await db
