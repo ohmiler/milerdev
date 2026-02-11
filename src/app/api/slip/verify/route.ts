@@ -80,16 +80,6 @@ export async function POST(request: Request) {
         const apiKey = (process.env.SLIPOK_API_KEY || "").trim();
         const branchId = (process.env.SLIPOK_BRANCH_ID || "").trim();
 
-        console.log("[SlipOK] Sending request:", {
-            url: `https://api.slipok.com/api/line/apikey/${branchId}`,
-            apiKeyLength: apiKey.length,
-            apiKeyPrefix: apiKey.substring(0, 4),
-            branchIdLength: branchId.length,
-            fileSize: slipFile.size,
-            fileName: slipFile.name,
-            amount,
-        });
-
         const slipResponse = await fetch(
             `https://api.slipok.com/api/line/apikey/${branchId}`,
             {
@@ -102,7 +92,6 @@ export async function POST(request: Request) {
         );
 
         const slipResult = await slipResponse.json();
-        console.log("[SlipOK] Response:", { status: slipResponse.status, result: slipResult });
 
         // Handle SlipOK error codes
         if (!slipResult.success) {

@@ -6,6 +6,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/email";
 import { z } from "zod";
 import { createId } from "@paralleldrive/cuid2";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // Validation schema
 const enrollSchema = z.object({
@@ -20,6 +21,11 @@ export async function POST(request: Request) {
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const rateLimit = checkRateLimit(`enroll:${session.user.id}`, rateLimits.sensitive);
+        if (!rateLimit.success) {
+            return rateLimitResponse(rateLimit.resetTime);
         }
 
         const body = await request.json();

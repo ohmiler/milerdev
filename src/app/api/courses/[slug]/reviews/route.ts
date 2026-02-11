@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { reviews, courses, users, enrollments } from '@/lib/db/schema';
 import { eq, and, desc, sql, avg, count } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 type RouteParams = { params: Promise<{ slug: string }> };
 
@@ -121,6 +122,11 @@ export async function POST(request: Request, { params }: RouteParams) {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(`review:${session.user.id}`, rateLimits.sensitive);
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
     }
 
     const { slug } = await params;

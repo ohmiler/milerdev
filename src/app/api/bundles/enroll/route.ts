@@ -5,6 +5,7 @@ import { bundles, bundleCourses, courses, enrollments, payments } from '@/lib/db
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { sendEnrollmentEmail } from '@/lib/email';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 // POST /api/bundles/enroll - Enroll in all courses of a bundle
 export async function POST(request: Request) {
@@ -12,6 +13,11 @@ export async function POST(request: Request) {
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const rateLimit = checkRateLimit(`enroll:${session.user.id}`, rateLimits.sensitive);
+        if (!rateLimit.success) {
+            return rateLimitResponse(rateLimit.resetTime);
         }
 
         const body = await request.json();

@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { coupons, couponUsages } from '@/lib/db/schema';
 import { eq, and, count } from 'drizzle-orm';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 // POST /api/coupons/validate - Validate a coupon code
 export async function POST(request: Request) {
@@ -10,6 +11,11 @@ export async function POST(request: Request) {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(`coupon:${session.user.id}`, rateLimits.sensitive);
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
     }
 
     const { code, courseId, originalPrice } = await request.json();

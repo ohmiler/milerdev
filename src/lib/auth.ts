@@ -29,34 +29,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
-                    console.log("[AUTH] Missing email or password");
                     throw new Error("Invalid credentials");
                 }
-
-                console.log("[AUTH] Login attempt for:", credentials.email);
 
                 const user = await db.query.users.findFirst({
                     where: eq(schema.users.email, credentials.email as string),
                 });
 
                 if (!user) {
-                    console.log("[AUTH] User not found for email:", credentials.email);
                     throw new Error("Invalid credentials");
                 }
 
                 if (!user.passwordHash) {
-                    console.log("[AUTH] User found but passwordHash is NULL for:", credentials.email);
                     throw new Error("Invalid credentials");
                 }
-
-                console.log("[AUTH] User found, hash starts with:", user.passwordHash.substring(0, 10));
 
                 const isValidPassword = await bcrypt.compare(
                     credentials.password as string,
                     user.passwordHash
                 );
-
-                console.log("[AUTH] Password valid:", isValidPassword);
 
                 if (!isValidPassword) {
                     throw new Error("Invalid credentials");

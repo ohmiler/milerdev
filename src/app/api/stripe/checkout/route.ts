@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { courses, payments } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/stripe/checkout - Create Stripe checkout session
 export async function POST(request: Request) {
@@ -11,6 +12,11 @@ export async function POST(request: Request) {
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const rateLimit = checkRateLimit(`checkout:${session.user.id}`, rateLimits.sensitive);
+        if (!rateLimit.success) {
+            return rateLimitResponse(rateLimit.resetTime);
         }
 
         const { courseId } = await request.json();
@@ -77,6 +83,7 @@ export async function POST(request: Request) {
                 paymentId: paymentId,
                 userId: session.user.id,
                 courseId: course.id,
+                type: "course",
             },
             success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}/payment-success`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}?payment=cancelled`,
