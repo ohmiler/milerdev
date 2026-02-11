@@ -50,6 +50,8 @@ export default function LearnPageClient({
 }: LearnPageClientProps) {
   const [lockedMessage, setLockedMessage] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [lessonSearch, setLessonSearch] = useState('');
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
   const [markingComplete, setMarkingComplete] = useState(false);
 
@@ -157,6 +159,32 @@ export default function LearnPageClient({
               บทที่ {currentIndex + 1} / {allLessons.length}
             </div>
           </div>
+          {/* Desktop sidebar toggle */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hidden lg:flex"
+            title={sidebarCollapsed ? 'แสดงรายการบทเรียน' : 'ซ่อนรายการบทเรียน'}
+            style={{
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 12px',
+              background: '#334155',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {sidebarCollapsed ? (
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              ) : (
+                <path d="M9 3h6v18H9zM3 6h6M3 12h6M3 18h6" />
+              )}
+            </svg>
+            {sidebarCollapsed ? 'เนื้อหา' : ''}
+          </button>
           {/* Mobile sidebar toggle */}
           <button
             onClick={() => setSidebarOpen(true)}
@@ -513,12 +541,15 @@ export default function LearnPageClient({
         <aside 
           className={`learn-sidebar ${sidebarOpen ? 'open' : ''}`}
           style={{
-            width: '320px',
-            minWidth: '320px',
+            width: sidebarCollapsed ? '0px' : '320px',
+            minWidth: sidebarCollapsed ? '0px' : '320px',
             background: '#1e293b',
-            borderLeft: '1px solid #334155',
-            overflowY: 'auto',
+            borderLeft: sidebarCollapsed ? 'none' : '1px solid #334155',
+            overflow: 'hidden',
             flexShrink: 0,
+            transition: 'width 0.3s ease, min-width 0.3s ease',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {/* Mobile Close Button */}
@@ -550,22 +581,76 @@ export default function LearnPageClient({
             </button>
           </div>
 
-          <div style={{ padding: '16px' }}>
-            <div className="hidden lg:block" style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: '#94a3b8',
-              marginBottom: '16px',
-              padding: '0 16px',
+          {/* Sticky Header: Title + Progress + Search */}
+          <div style={{
+            padding: '12px 16px',
+            borderBottom: '1px solid #334155',
+            flexShrink: 0,
+            background: '#1e293b',
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '8px',
             }}>
-              เนื้อหาคอร์ส ({allLessons.length} บท)
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#94a3b8' }}>
+                เนื้อหาคอร์ส ({allLessons.length} บท)
+              </span>
+              {isEnrolled && (
+                <span style={{ fontSize: '0.6875rem', color: progressPercent === 100 ? '#4ade80' : '#64748b' }}>
+                  {completedCount}/{totalCount} ({progressPercent}%)
+                </span>
+              )}
             </div>
+
+            {/* Progress Bar */}
+            {isEnrolled && (
+              <div style={{
+                height: '3px',
+                background: '#334155',
+                borderRadius: '2px',
+                overflow: 'hidden',
+                marginBottom: '10px',
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${progressPercent}%`,
+                  background: progressPercent === 100 ? '#4ade80' : '#3b82f6',
+                  borderRadius: '2px',
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+            )}
+
+            {/* Search */}
+            <input
+              type="text"
+              value={lessonSearch}
+              onChange={(e) => setLessonSearch(e.target.value)}
+              placeholder="🔍 ค้นหาบทเรียน..."
+              style={{
+                width: '100%',
+                padding: '7px 10px',
+                background: '#0f172a',
+                border: '1px solid #334155',
+                borderRadius: '6px',
+                color: 'white',
+                fontSize: '0.8125rem',
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Scrollable Lesson List */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px' }}>
             <LessonList 
               lessons={allLessons} 
               courseSlug={course.slug}
               currentLessonId={currentLesson.id}
               isEnrolled={isEnrolled}
               completedLessonIds={completedIds}
+              searchQuery={lessonSearch}
               onLockedClick={(id) => {
                 handleLockedClick(id);
                 setSidebarOpen(false);

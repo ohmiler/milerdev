@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 interface Lesson {
@@ -16,7 +17,10 @@ interface LessonListProps {
   isEnrolled?: boolean;
   completedLessonIds?: Set<string>;
   onLockedClick?: (lessonId: string) => void;
+  searchQuery?: string;
 }
+
+const LESSONS_PER_PAGE = 20;
 
 const formatDuration = (seconds: number | null) => {
   if (!seconds || seconds <= 0) return null;
@@ -25,7 +29,38 @@ const formatDuration = (seconds: number | null) => {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-export default function LessonList({ lessons, courseSlug, currentLessonId, isEnrolled = false, completedLessonIds, onLockedClick }: LessonListProps) {
+export default function LessonList({ lessons, courseSlug, currentLessonId, isEnrolled = false, completedLessonIds, onLockedClick, searchQuery = '' }: LessonListProps) {
+  // Calculate which page the current lesson is on
+  const currentLessonPage = useMemo(() => {
+    if (!currentLessonId) return 0;
+    const idx = lessons.findIndex(l => l.id === currentLessonId);
+    return idx >= 0 ? Math.floor(idx / LESSONS_PER_PAGE) : 0;
+  }, [lessons, currentLessonId]);
+
+  const [page, setPage] = useState(currentLessonPage);
+
+  // Reset to current lesson page when lesson changes
+  useEffect(() => {
+    setPage(currentLessonPage);
+  }, [currentLessonPage]);
+
+  const isSearching = searchQuery.trim() !== '';
+
+  const filteredLessons = isSearching
+    ? lessons.filter(l => l.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : lessons;
+
+  const totalPages = Math.ceil(filteredLessons.length / LESSONS_PER_PAGE);
+  const paginatedLessons = isSearching
+    ? filteredLessons
+    : filteredLessons.slice(page * LESSONS_PER_PAGE, (page + 1) * LESSONS_PER_PAGE);
+
+  // Reset page when search changes
+  useEffect(() => {
+    if (isSearching) setPage(0);
+    else setPage(currentLessonPage);
+  }, [searchQuery, isSearching, currentLessonPage]);
+
   if (lessons.length === 0) {
     return (
       <div style={{
@@ -38,9 +73,18 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
     );
   }
 
+  if (filteredLessons.length === 0) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '0.8125rem' }}>
+        ไม่พบบทเรียนที่ตรงกับ &ldquo;{searchQuery}&rdquo;
+      </div>
+    );
+  }
+
   return (
-    <>
-      {lessons.map((lesson, index) => {
+    <div>
+      {paginatedLessons.map((lesson) => {
+        const originalIndex = lessons.findIndex(l => l.id === lesson.id);
         const isLocked = !isEnrolled && !lesson.isFreePreview;
         const isCurrent = lesson.id === currentLessonId;
         const isCompleted = completedLessonIds?.has(lesson.id) ?? false;
@@ -138,7 +182,7 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
                   <path d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
-                index + 1
+                originalIndex + 1
               )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -172,6 +216,72 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
           </Link>
         );
       })}
-    </>
+
+      {/* Pagination */}
+      {!isSearching && totalPages > 1 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          padding: '12px 0',
+          marginTop: '8px',
+          borderTop: '1px solid #334155',
+        }}>
+          <button
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            style={{
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: page === 0 ? '#1e293b' : '#334155',
+              color: page === 0 ? '#475569' : 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: page === 0 ? 'default' : 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <span style={{
+            padding: '6px 14px',
+            background: '#334155',
+            color: 'white',
+            borderRadius: '6px',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+          }}>
+            {page + 1} OF {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={page === totalPages - 1}
+            style={{
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: page === totalPages - 1 ? '#1e293b' : '#334155',
+              color: page === totalPages - 1 ? '#475569' : 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: page === totalPages - 1 ? 'default' : 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
