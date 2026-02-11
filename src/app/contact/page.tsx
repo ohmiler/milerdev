@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
@@ -11,19 +11,44 @@ export default function ContactPage() {
         subject: '',
         message: '',
     });
+    const [honey, setHoney] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [errorMessage, setErrorMessage] = useState('');
+    const formLoadTime = useRef(Date.now());
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
-        // Simulate form submission (replace with actual API call)
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setSubmitStatus('success');
-        setIsSubmitting(false);
-        setFormData({ name: '', email: '', subject: '', message: '' });
+        setErrorMessage('');
+
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    _honey: honey,
+                    _timestamp: formLoadTime.current,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setErrorMessage(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+                setSubmitStatus('error');
+            } else {
+                setSubmitStatus('success');
+                setFormData({ name: '', email: '', subject: '', message: '' });
+                formLoadTime.current = Date.now();
+            }
+        } catch {
+            setErrorMessage('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่');
+            setSubmitStatus('error');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -177,6 +202,31 @@ export default function ContactPage() {
                                 </div>
                             ) : (
                                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    {/* Honeypot — hidden from humans, bots will fill it */}
+                                    <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+                                        <input
+                                            type="text"
+                                            name="website"
+                                            tabIndex={-1}
+                                            autoComplete="off"
+                                            value={honey}
+                                            onChange={(e) => setHoney(e.target.value)}
+                                        />
+                                    </div>
+
+                                    {submitStatus === 'error' && errorMessage && (
+                                        <div style={{
+                                            background: '#fef2f2',
+                                            border: '1px solid #fecaca',
+                                            color: '#dc2626',
+                                            padding: '12px 16px',
+                                            borderRadius: '8px',
+                                            fontSize: '0.875rem',
+                                        }}>
+                                            {errorMessage}
+                                        </div>
+                                    )}
+
                                     <div>
                                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#374151' }}>
                                             ชื่อ
