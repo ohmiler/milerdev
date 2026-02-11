@@ -7,7 +7,6 @@ import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import AnnouncementBanner from '@/components/layout/AnnouncementBanner';
-import NotificationBell from '@/components/layout/NotificationBell';
 import {
     MenuIcon,
     CloseIcon,
@@ -22,6 +21,7 @@ import {
     PenIcon,
     InfoIcon,
     MailIcon,
+    MegaphoneIcon,
 } from '@/components/ui/Icons';
 
 // Navigation links config
@@ -34,6 +34,7 @@ const NAV_LINKS = [
 
 const USER_MENU_LINKS = [
     { href: '/dashboard', label: 'แดชบอร์ด', icon: HomeIcon },
+    { href: '/announcements', label: 'ประกาศ', icon: MegaphoneIcon },
     { href: '/profile', label: 'โปรไฟล์', icon: UserIcon },
     { href: '/settings', label: 'ตั้งค่า', icon: SettingsIcon },
 ];
@@ -197,7 +198,6 @@ export default function Navbar() {
                             <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e2e8f0' }} />
                         ) : session ? (
                             <>
-                            <NotificationBell />
                             <div style={{ position: 'relative' }} ref={dropdownRef}>
                                 <button
                                     onClick={() => setShowUserDropdown(!showUserDropdown)}
