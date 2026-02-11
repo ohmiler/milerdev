@@ -270,7 +270,7 @@ export default async function DashboardPage() {
                     }}>
                       {enrollment.course.thumbnailUrl ? (
                         <Image
-                          src={enrollment.course.thumbnailUrl}
+                          src={enrollment.course.thumbnailUrl.startsWith('http') ? enrollment.course.thumbnailUrl : `https://${enrollment.course.thumbnailUrl}`}
                           alt={enrollment.course.title}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
