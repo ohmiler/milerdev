@@ -92,7 +92,7 @@ export async function POST(request: Request) {
                 bundleId: bundle.id,
                 type: "bundle",
             },
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/bundles/${bundle.slug}?payment=success`,
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/bundles/${bundle.slug}/payment-success`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/bundles/${bundle.slug}?payment=cancelled`,
         });
 

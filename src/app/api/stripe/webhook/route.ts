@@ -30,10 +30,15 @@ export async function POST(request: Request) {
 
     if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { paymentId, userId, courseId, bundleId, type } = session.metadata!;
+        const { paymentId, userId, courseId, bundleId, type } = session.metadata || {};
 
+        if (!paymentId || !userId) {
+            console.error("Webhook missing required metadata:", session.metadata);
+            return NextResponse.json({ received: true });
+        }
+
+        // Step 1: Update payment status (always do this first)
         try {
-            // Update payment status
             await db
                 .update(payments)
                 .set({
@@ -41,7 +46,16 @@ export async function POST(request: Request) {
                     stripePaymentId: session.payment_intent as string,
                 })
                 .where(eq(payments.id, paymentId));
+        } catch (error) {
+            console.error(`Failed to update payment ${paymentId}:`, error);
+            return NextResponse.json(
+                { error: "Failed to update payment" },
+                { status: 500 }
+            );
+        }
 
+        // Step 2: Enroll and send emails
+        try {
             const [payment] = await db
                 .select()
                 .from(payments)
@@ -59,74 +73,80 @@ export async function POST(request: Request) {
                     .where(eq(bundleCourses.bundleId, bundleId));
 
                 for (const bc of bCourses) {
-                    const existing = await db.query.enrollments.findFirst({
-                        where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, bc.courseId)),
-                    });
-                    if (!existing) {
-                        await db.insert(enrollments).values({ userId, courseId: bc.courseId });
+                    try {
+                        const existing = await db.query.enrollments.findFirst({
+                            where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, bc.courseId)),
+                        });
+                        if (!existing) {
+                            await db.insert(enrollments).values({ userId, courseId: bc.courseId });
+                        }
+                    } catch (enrollError) {
+                        console.error(`Failed to enroll user ${userId} in course ${bc.courseId}:`, enrollError);
                     }
                 }
 
                 const [bundle] = await db.select().from(bundles).where(eq(bundles.id, bundleId)).limit(1);
 
                 if (customerEmail && bundle) {
-                    await sendPaymentConfirmation({
-                        email: customerEmail,
-                        name: customerName,
-                        courseName: `${bundle.title} (Bundle)`,
-                        amount: parseFloat(payment.amount.toString()),
-                        paymentId: payment.id,
-                    });
-                    await sendEnrollmentEmail({
-                        email: customerEmail,
-                        name: customerName,
-                        courseName: `${bundle.title} (${bCourses.length} คอร์ส)`,
-                        courseSlug: bCourses[0]?.courseSlug || "",
-                    });
+                    try {
+                        await sendPaymentConfirmation({
+                            email: customerEmail,
+                            name: customerName,
+                            courseName: `${bundle.title} (Bundle)`,
+                            amount: parseFloat(payment.amount.toString()),
+                            paymentId: payment.id,
+                        });
+                        await sendEnrollmentEmail({
+                            email: customerEmail,
+                            name: customerName,
+                            courseName: `${bundle.title} (${bCourses.length} คอร์ส)`,
+                            courseSlug: bCourses[0]?.courseSlug || "",
+                        });
+                    } catch (emailError) {
+                        console.error("Failed to send bundle emails:", emailError);
+                    }
                 }
 
-                console.log(`Bundle payment ${paymentId} completed, enrolled in ${bCourses.length} courses`);
+                console.log(`[Webhook] Bundle payment ${paymentId} completed, enrolled in ${bCourses.length} courses`);
             } else if (courseId) {
                 // ===== SINGLE COURSE PAYMENT =====
                 const existingEnrollment = await db.query.enrollments.findFirst({
                     where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)),
                 });
 
-                if (existingEnrollment) {
-                    console.log(`User ${userId} already enrolled in course ${courseId}, skipping`);
-                    return NextResponse.json({ received: true });
+                if (!existingEnrollment) {
+                    await db.insert(enrollments).values({ userId, courseId });
                 }
-
-                await db.insert(enrollments).values({ userId, courseId });
 
                 const course = await db.query.courses.findFirst({
                     where: eq(courses.id, courseId),
                 });
 
                 if (customerEmail && course) {
-                    await sendPaymentConfirmation({
-                        email: customerEmail,
-                        name: customerName,
-                        courseName: course.title,
-                        amount: parseFloat(payment.amount.toString()),
-                        paymentId: payment.id,
-                    });
-                    await sendEnrollmentEmail({
-                        email: customerEmail,
-                        name: customerName,
-                        courseName: course.title,
-                        courseSlug: course.slug,
-                    });
+                    try {
+                        await sendPaymentConfirmation({
+                            email: customerEmail,
+                            name: customerName,
+                            courseName: course.title,
+                            amount: parseFloat(payment.amount.toString()),
+                            paymentId: payment.id,
+                        });
+                        await sendEnrollmentEmail({
+                            email: customerEmail,
+                            name: customerName,
+                            courseName: course.title,
+                            courseSlug: course.slug,
+                        });
+                    } catch (emailError) {
+                        console.error("Failed to send course emails:", emailError);
+                    }
                 }
 
-                console.log(`Payment ${paymentId} completed and enrollment created`);
+                console.log(`[Webhook] Payment ${paymentId} completed and enrollment created`);
             }
         } catch (error) {
-            console.error("Error processing webhook:", error);
-            return NextResponse.json(
-                { error: "Webhook processing failed" },
-                { status: 500 }
-            );
+            console.error("Error processing enrollment/emails:", error);
+            // Payment already updated — don't return 500 to avoid Stripe retries
         }
     }
 
