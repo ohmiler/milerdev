@@ -121,6 +121,14 @@ export default async function CourseDetailPage({ params }: Props) {
   }
 
   const price = parseFloat(course.price || '0');
+
+  // Calculate total course duration
+  const totalSeconds = course.lessons.reduce((sum: number, l: { videoDuration: number | null }) => sum + (l.videoDuration || 0), 0);
+  const totalHours = Math.floor(totalSeconds / 3600);
+  const totalMinutes = Math.floor((totalSeconds % 3600) / 60);
+  const durationText = totalHours > 0
+    ? `${totalHours} ชั่วโมง ${totalMinutes > 0 ? `${totalMinutes} นาที` : ''}`
+    : `${totalMinutes} นาที`;
   const now = new Date();
   const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
   const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
@@ -220,6 +228,13 @@ export default async function CourseDetailPage({ params }: Props) {
                   <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>บทเรียน</div>
                   <div style={{ fontWeight: 500 }}>{course.lessons.length} บท</div>
                 </div>
+
+                {totalSeconds > 0 && (
+                  <div>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>ระยะเวลาเรียน</div>
+                    <div style={{ fontWeight: 500 }}>{durationText}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
