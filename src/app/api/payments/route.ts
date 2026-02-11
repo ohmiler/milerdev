@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { payments, courses } from '@/lib/db/schema';
+import { payments, courses, bundles } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 // GET /api/payments - Get current user's payment history
@@ -23,9 +23,13 @@ export async function GET() {
         courseId: payments.courseId,
         courseTitle: courses.title,
         courseSlug: courses.slug,
+        bundleId: payments.bundleId,
+        bundleTitle: bundles.title,
+        bundleSlug: bundles.slug,
       })
       .from(payments)
       .leftJoin(courses, eq(payments.courseId, courses.id))
+      .leftJoin(bundles, eq(payments.bundleId, bundles.id))
       .where(eq(payments.userId, session.user.id))
       .orderBy(desc(payments.createdAt));
 

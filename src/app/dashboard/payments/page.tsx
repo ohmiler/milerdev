@@ -15,6 +15,9 @@ interface Payment {
   courseId: string | null;
   courseTitle: string | null;
   courseSlug: string | null;
+  bundleId: string | null;
+  bundleTitle: string | null;
+  bundleSlug: string | null;
 }
 
 const methodLabels: Record<string, string> = {
@@ -171,7 +174,7 @@ export default function UserPaymentsPage() {
                       gap: '16px',
                       flexWrap: 'wrap',
                     }}>
-                      {/* Left: Course & method */}
+                      {/* Left: Course/Bundle & method */}
                       <div style={{ flex: 1, minWidth: '200px' }}>
                         {payment.courseTitle ? (
                           <Link
@@ -180,8 +183,15 @@ export default function UserPaymentsPage() {
                           >
                             {payment.courseTitle}
                           </Link>
+                        ) : payment.bundleTitle ? (
+                          <Link
+                            href={`/bundles/${payment.bundleSlug}`}
+                            style={{ color: '#1e293b', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}
+                          >
+                            📦 {payment.bundleTitle}
+                          </Link>
                         ) : (
-                          <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>คอร์สถูกลบแล้ว</span>
+                          <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>รายการถูกลบแล้ว</span>
                         )}
                         <div style={{ display: 'flex', gap: '12px', marginTop: '6px', flexWrap: 'wrap', fontSize: '0.8125rem', color: '#64748b' }}>
                           <span>{methodLabels[payment.method] || payment.method}</span>
