@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import Link from 'next/link';
 
 interface Lesson {
   id: string;
@@ -32,7 +33,6 @@ interface Lesson {
 interface DraggableLessonListProps {
   lessons: Lesson[];
   courseId: string;
-  onEdit: (lesson: Lesson) => void;
   onDelete: (lessonId: string) => void;
   onReorder: (lessonIds: string[]) => void;
 }
@@ -40,11 +40,10 @@ interface DraggableLessonListProps {
 interface SortableItemProps {
   lesson: Lesson;
   index: number;
-  onEdit: (lesson: Lesson) => void;
   onDelete: (lessonId: string) => void;
 }
 
-function SortableItem({ lesson, index, onEdit, onDelete }: SortableItemProps) {
+function SortableItem({ lesson, index, onDelete }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -110,12 +109,17 @@ function SortableItem({ lesson, index, onEdit, onDelete }: SortableItemProps) {
 
       {/* Lesson Info */}
       <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 500, color: '#1e293b', marginBottom: '4px' }}>
+        <Link
+          href={`/admin/lessons/${lesson.id}/edit`}
+          style={{ fontWeight: 500, color: '#1e293b', marginBottom: '4px', textDecoration: 'none', display: 'block' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#2563eb')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#1e293b')}
+        >
           {lesson.title}
-        </div>
+        </Link>
         <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '12px' }}>
           {lesson.videoDuration && lesson.videoDuration > 0 && (
-            <span>⏱️ {Math.floor(lesson.videoDuration / 60)} นาที</span>
+            <span>⏱️ {Math.floor(lesson.videoDuration / 60)}:{(lesson.videoDuration % 60) < 10 ? '0' : ''}{lesson.videoDuration % 60}</span>
           )}
           {lesson.isFreePreview && (
             <span style={{ color: '#16a34a' }}>🆓 ดูฟรี</span>
@@ -128,8 +132,8 @@ function SortableItem({ lesson, index, onEdit, onDelete }: SortableItemProps) {
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '8px' }}>
-        <button
-          onClick={() => onEdit(lesson)}
+        <Link
+          href={`/admin/lessons/${lesson.id}/edit`}
           style={{
             padding: '8px 12px',
             background: '#eff6ff',
@@ -138,10 +142,11 @@ function SortableItem({ lesson, index, onEdit, onDelete }: SortableItemProps) {
             borderRadius: '6px',
             fontSize: '0.875rem',
             cursor: 'pointer',
+            textDecoration: 'none',
           }}
         >
           แก้ไข
-        </button>
+        </Link>
         <button
           onClick={() => onDelete(lesson.id)}
           style={{
@@ -164,12 +169,16 @@ function SortableItem({ lesson, index, onEdit, onDelete }: SortableItemProps) {
 export default function DraggableLessonList({
   lessons: initialLessons,
   courseId,
-  onEdit,
   onDelete,
   onReorder,
 }: DraggableLessonListProps) {
   const [lessons, setLessons] = useState(initialLessons);
   const [saving, setSaving] = useState(false);
+
+  // Sync local state when parent fetches new lessons after save
+  useEffect(() => {
+    setLessons(initialLessons);
+  }, [initialLessons]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -260,7 +269,6 @@ export default function DraggableLessonList({
               key={lesson.id}
               lesson={lesson}
               index={index}
-              onEdit={onEdit}
               onDelete={onDelete}
             />
           ))}

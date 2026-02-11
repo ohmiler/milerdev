@@ -28,14 +28,13 @@ export default function ManageLessonsPage({ params }: Props) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     videoUrl: '',
-    videoDuration: '0',
+    videoDuration: '0:00',
     isFreePreview: false,
   });
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
@@ -62,25 +61,10 @@ export default function ManageLessonsPage({ params }: Props) {
       title: '',
       content: '',
       videoUrl: '',
-      videoDuration: '0',
+      videoDuration: '0:00',
       isFreePreview: false,
     });
-    setEditingLesson(null);
     setShowForm(false);
-  };
-
-  const handleEdit = (lesson: Lesson) => {
-    setEditingLesson(lesson);
-    // Convert seconds to minutes for display
-    const durationInMinutes = lesson.videoDuration ? (lesson.videoDuration / 60).toFixed(1) : '0';
-    setFormData({
-      title: lesson.title,
-      content: lesson.content || '',
-      videoUrl: lesson.videoUrl || '',
-      videoDuration: durationInMinutes,
-      isFreePreview: lesson.isFreePreview || false,
-    });
-    setShowForm(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,15 +74,17 @@ export default function ManageLessonsPage({ params }: Props) {
     setSaving(true);
 
     try {
-      const url = editingLesson
-        ? `/api/admin/lessons/${editingLesson.id}`
-        : `/api/admin/courses/${courseId}/lessons`;
+      // Convert MM:SS to seconds before sending
+      let durationInSeconds = 0;
+      if (formData.videoDuration.includes(':')) {
+        const [m, s] = formData.videoDuration.split(':');
+        durationInSeconds = (parseInt(m) || 0) * 60 + (parseInt(s) || 0);
+      } else {
+        durationInSeconds = Math.round(parseFloat(formData.videoDuration) * 60) || 0;
+      }
 
-      // Convert minutes to seconds before sending
-      const durationInSeconds = Math.round(parseFloat(formData.videoDuration) * 60) || 0;
-
-      const res = await fetch(url, {
-        method: editingLesson ? 'PUT' : 'POST',
+      const res = await fetch(`/api/admin/courses/${courseId}/lessons`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
@@ -109,7 +95,7 @@ export default function ManageLessonsPage({ params }: Props) {
       if (res.ok) {
         await fetchLessons(courseId);
         resetForm();
-        showToast(editingLesson ? 'บันทึกสำเร็จ' : 'เพิ่มบทเรียนสำเร็จ', 'success');
+        showToast('เพิ่มบทเรียนสำเร็จ', 'success');
       } else {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
@@ -189,7 +175,7 @@ export default function ManageLessonsPage({ params }: Props) {
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px', color: '#1e293b' }}>
-            {editingLesson ? 'แก้ไขบทเรียน' : 'เพิ่มบทเรียนใหม่'}
+            เพิ่มบทเรียนใหม่
           </h2>
 
           <form onSubmit={handleSubmit}>
@@ -244,15 +230,19 @@ export default function ManageLessonsPage({ params }: Props) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                  ระยะเวลา (นาที)
+                  ระยะเวลา (นาที:วินาที)
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={formData.videoDuration}
-                  onChange={(e) => setFormData({ ...formData, videoDuration: e.target.value })}
-                  min="0"
-                  step="0.5"
-                  placeholder="เช่น 10.5 = 10 นาที 30 วินาที"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    // Allow digits and colon only
+                    if (/^[0-9:]*$/.test(val)) {
+                      setFormData({ ...formData, videoDuration: val });
+                    }
+                  }}
+                  placeholder="เช่น 10:30 = 10 นาที 30 วินาที"
                   style={{
                     width: '100%',
                     padding: '12px 16px',
@@ -291,7 +281,7 @@ export default function ManageLessonsPage({ params }: Props) {
                   opacity: saving ? 0.7 : 1,
                 }}
               >
-                {saving ? 'กำลังบันทึก...' : editingLesson ? 'บันทึก' : 'เพิ่มบทเรียน'}
+                {saving ? 'กำลังบันทึก...' : 'เพิ่มบทเรียน'}
               </button>
               <button
                 type="button"
@@ -322,7 +312,6 @@ export default function ManageLessonsPage({ params }: Props) {
         <DraggableLessonList
           lessons={lessons}
           courseId={courseId || ''}
-          onEdit={handleEdit}
           onDelete={(id) => setDeletingLessonId(id)}
           onReorder={(newIds) => {
             // Update local state to match new order
