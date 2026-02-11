@@ -78,7 +78,7 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>อีเมล</div>
-                                        <div style={{ color: '#64748b' }}>support@milerdev.com</div>
+                                        <div style={{ color: '#64748b' }}>milerdev.official@gmail.com</div>
                                     </div>
                                 </div>
 
@@ -103,7 +103,7 @@ export default function ContactPage() {
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                                {/* <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
                                     <div style={{
                                         width: '48px',
                                         height: '48px',
@@ -122,7 +122,7 @@ export default function ContactPage() {
                                         <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>Discord Community</div>
                                         <div style={{ color: '#64748b' }}>เข้าร่วมกลุ่มเพื่อพูดคุยและแลกเปลี่ยน</div>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
 

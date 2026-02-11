@@ -222,36 +222,6 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="section" style={{ background: 'white' }}>
-          <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <h2 className="section-title" style={{ marginBottom: '16px' }}>
-                ตัวเลขที่พูดได้
-              </h2>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '32px',
-              textAlign: 'center',
-            }}>
-              {[
-                { value: '1,000+', label: 'นักเรียนที่มีความสุข' },
-                { value: '50+', label: 'คอร์สเรียนคุณภาพ' },
-                { value: '15+', label: 'ผู้สอนผู้เชี่ยวชาญ' },
-                { value: '98%', label: 'ความพึงพอใจ' },
-              ].map((stat, index) => (
-                <div key={index} className="stat-item">
-                  <div className="stat-value">{stat.value}</div>
-                  <div className="stat-label">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* CTA Section */}
         <section className="cta-section" style={{ padding: '100px 0' }}>
           <div className="container" style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
