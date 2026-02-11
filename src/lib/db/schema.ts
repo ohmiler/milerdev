@@ -138,6 +138,7 @@ export const payments = mysqlTable('payments', {
     method: varchar('method', { length: 20, enum: ['stripe', 'promptpay', 'bank_transfer'] }).notNull(),
     stripePaymentId: varchar('stripe_payment_id', { length: 255 }),
     slipUrl: text('slip_url'),
+    itemTitle: varchar('item_title', { length: 255 }),
     status: varchar('status', { length: 20, enum: ['pending', 'completed', 'failed', 'refunded'] }).default('pending').notNull(),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
 });

@@ -58,6 +58,7 @@ export async function GET(request: Request) {
           userId: payments.userId,
           courseId: payments.courseId,
           bundleId: payments.bundleId,
+          itemTitle: payments.itemTitle,
           userName: users.name,
           userEmail: users.email,
           courseTitle: courses.title,

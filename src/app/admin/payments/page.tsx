@@ -20,6 +20,7 @@ interface Payment {
   userEmail: string | null;
   courseTitle: string | null;
   bundleTitle: string | null;
+  itemTitle: string | null;
 }
 
 interface Stats {
@@ -314,8 +315,12 @@ export default function AdminPaymentsPage() {
                         <div style={{ color: '#1e293b', fontSize: '0.875rem' }}>
                           {payment.bundleTitle ? (
                             <span>📦 {payment.bundleTitle}</span>
+                          ) : payment.courseTitle ? (
+                            payment.courseTitle
+                          ) : payment.itemTitle ? (
+                            <span style={{ color: '#94a3b8' }}>{payment.itemTitle} (ถูกลบ)</span>
                           ) : (
-                            payment.courseTitle || '-'
+                            '-'
                           )}
                         </div>
                         {payment.slipUrl && (

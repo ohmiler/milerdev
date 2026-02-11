@@ -58,6 +58,7 @@ export async function POST(request: Request) {
                 amount: priceNumber.toString(),
                 currency: "THB",
                 method: "stripe",
+                itemTitle: course.title,
                 status: "pending",
             });
 

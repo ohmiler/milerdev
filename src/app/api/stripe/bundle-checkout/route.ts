@@ -60,6 +60,7 @@ export async function POST(request: Request) {
             amount: priceNumber.toString(),
             currency: "THB",
             method: "stripe",
+            itemTitle: `📦 ${bundle.title}`,
             status: "pending",
         });
 

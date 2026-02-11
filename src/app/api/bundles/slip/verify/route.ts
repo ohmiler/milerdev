@@ -69,6 +69,7 @@ export async function POST(request: Request) {
             amount: String(amount),
             currency: "THB",
             method: "promptpay",
+            itemTitle: `📦 ${bundle.title}`,
             status: "pending",
         } as typeof payments.$inferInsert);
 
