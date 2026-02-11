@@ -3,8 +3,8 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
 import { db } from '@/lib/db';
-import { courses, lessons, users } from '@/lib/db/schema';
-import { eq, desc, count, sql } from 'drizzle-orm';
+import { courses, lessons, users, bundles, bundleCourses } from '@/lib/db/schema';
+import { eq, desc, asc, count, sql } from 'drizzle-orm';
 
 async function getFeaturedCourses() {
   // Subquery for lesson counts
@@ -84,11 +84,50 @@ async function getStats() {
   };
 }
 
+async function getPublishedBundles() {
+  const allBundles = await db
+    .select()
+    .from(bundles)
+    .where(eq(bundles.status, 'published'))
+    .orderBy(desc(bundles.createdAt))
+    .limit(3);
+
+  return Promise.all(
+    allBundles.map(async (bundle) => {
+      const bCourses = await db
+        .select({
+          courseId: bundleCourses.courseId,
+          courseTitle: courses.title,
+          coursePrice: courses.price,
+        })
+        .from(bundleCourses)
+        .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
+        .where(eq(bundleCourses.bundleId, bundle.id))
+        .orderBy(asc(bundleCourses.orderIndex));
+
+      const totalOriginalPrice = bCourses.reduce(
+        (sum, c) => sum + parseFloat(c.coursePrice || '0'), 0
+      );
+
+      return {
+        ...bundle,
+        courses: bCourses,
+        courseCount: bCourses.length,
+        totalOriginalPrice,
+        discount: totalOriginalPrice > 0
+          ? Math.round((1 - parseFloat(bundle.price) / totalOriginalPrice) * 100)
+          : 0,
+      };
+    })
+  );
+}
+
 export default async function HomePage() {
   // Parallelize independent data fetching (async-parallel rule)
-  const [featuredCourses, stats] = await Promise.all([
+  const [featuredCourses, stats, publishedBundles] = await Promise.all([
     getFeaturedCourses(),
     getStats(),
+    getPublishedBundles(),
   ]);
 
   return (
@@ -313,6 +352,358 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Bundle Section — Gift Theme */}
+        {publishedBundles.length > 0 && (
+          <section className="bundle-gift-section">
+            {/* Floating particles */}
+            <div className="bundle-particles">
+              <span className="particle p1"></span>
+              <span className="particle p2"></span>
+              <span className="particle p3"></span>
+              <span className="particle p4"></span>
+              <span className="particle p5"></span>
+              <span className="particle p6"></span>
+              <span className="particle p7"></span>
+              <span className="particle p8"></span>
+            </div>
+
+            <div className="container" style={{ position: 'relative', zIndex: 2 }}>
+              {/* Header with gift icon */}
+              <div style={{ textAlign: 'center', marginBottom: '48px', color: 'white' }}>
+                <div className="gift-icon-wrapper">
+                  <svg className="gift-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 12 20 22 4 22 4 12"/>
+                    <rect x="2" y="7" width="20" height="5"/>
+                    <line x1="12" y1="22" x2="12" y2="7"/>
+                    <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/>
+                    <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
+                  </svg>
+                </div>
+
+                <h2 style={{
+                  fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
+                  fontWeight: 800,
+                  marginBottom: '8px',
+                  letterSpacing: '-0.02em',
+                }}>
+                  <span className="shimmer-text">ของขวัญสุดพิเศษ</span>
+                </h2>
+                <p style={{ opacity: 0.85, fontSize: '1.0625rem', maxWidth: '480px', margin: '0 auto', lineHeight: 1.6 }}>
+                  รวมคอร์สชุดพิเศษในราคาที่คุ้มค่ากว่าซื้อแยก
+                </p>
+              </div>
+
+              {/* Bundle Cards */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '24px',
+                maxWidth: '960px',
+                margin: '0 auto',
+              }}>
+                {publishedBundles.map((bundle, idx) => {
+                  const bundlePrice = parseFloat(bundle.price);
+                  return (
+                    <Link key={bundle.id} href={`/bundles/${bundle.slug}`} style={{ textDecoration: 'none' }}>
+                      <div className={`bundle-gift-card bundle-gift-card-${idx}`}>
+                        {/* Ribbon */}
+                        <div className="bundle-ribbon">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 12 20 22 4 22 4 12"/>
+                            <rect x="2" y="7" width="20" height="5"/>
+                            <line x1="12" y1="22" x2="12" y2="7"/>
+                            <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/>
+                            <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
+                          </svg>
+                          <span>{bundle.courseCount} คอร์ส</span>
+                        </div>
+
+                        {/* Discount badge */}
+                        {bundle.discount > 0 && (
+                          <div className="bundle-discount-badge">
+                            <span className="bundle-discount-value">-{bundle.discount}%</span>
+                          </div>
+                        )}
+
+                        {/* Card content */}
+                        <div style={{ padding: '32px 24px 24px' }}>
+                          <h3 style={{
+                            fontSize: '1.25rem',
+                            fontWeight: 700,
+                            margin: '0 0 10px',
+                            lineHeight: 1.3,
+                            color: 'white',
+                          }}>
+                            {bundle.title}
+                          </h3>
+
+                          {bundle.description && (
+                            <p style={{ fontSize: '0.875rem', opacity: 0.75, margin: '0 0 16px', lineHeight: 1.5, color: 'white' }}>
+                              {bundle.description.slice(0, 80)}{bundle.description.length > 80 ? '...' : ''}
+                            </p>
+                          )}
+
+                          {/* Course pills */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
+                            {bundle.courses.slice(0, 3).map((c, i) => (
+                              <span key={i} className="bundle-course-pill">
+                                {c.courseTitle}
+                              </span>
+                            ))}
+                            {bundle.courses.length > 3 && (
+                              <span style={{ fontSize: '0.75rem', opacity: 0.55, color: 'white', alignSelf: 'center' }}>
+                                +{bundle.courses.length - 3} อีก
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Price row */}
+                          <div className="bundle-price-row">
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                              <span style={{ fontSize: '1.625rem', fontWeight: 800, color: 'white' }}>
+                                ฿{bundlePrice.toLocaleString()}
+                              </span>
+                              <span style={{ textDecoration: 'line-through', opacity: 0.45, fontSize: '0.9375rem', color: 'white' }}>
+                                ฿{bundle.totalOriginalPrice.toLocaleString()}
+                              </span>
+                            </div>
+                            <span className="bundle-cta-arrow">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                                <polyline points="12 5 19 12 12 19"/>
+                              </svg>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Bottom shimmer line */}
+                        <div className="bundle-card-shimmer"></div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <style>{`
+              .bundle-gift-section {
+                padding: 100px 0;
+                background: linear-gradient(135deg, #0f0a2e 0%, #1a1145 30%, #2d1b69 60%, #1a1145 100%);
+                position: relative;
+                overflow: hidden;
+              }
+
+              /* Floating sparkle particles */
+              .bundle-particles {
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                z-index: 1;
+              }
+              .particle {
+                position: absolute;
+                border-radius: 50%;
+                background: radial-gradient(circle, rgba(251,191,36,0.8), transparent 70%);
+                animation: particleFloat 6s ease-in-out infinite;
+              }
+              .p1 { width: 4px; height: 4px; top: 15%; left: 10%; animation-delay: 0s; animation-duration: 7s; }
+              .p2 { width: 3px; height: 3px; top: 25%; left: 85%; animation-delay: 1s; animation-duration: 5s; }
+              .p3 { width: 5px; height: 5px; top: 60%; left: 20%; animation-delay: 2s; animation-duration: 8s; }
+              .p4 { width: 3px; height: 3px; top: 80%; left: 75%; animation-delay: 0.5s; animation-duration: 6s; }
+              .p5 { width: 4px; height: 4px; top: 40%; left: 50%; animation-delay: 3s; animation-duration: 7s; }
+              .p6 { width: 3px; height: 3px; top: 10%; left: 65%; animation-delay: 1.5s; animation-duration: 5.5s; }
+              .p7 { width: 5px; height: 5px; top: 70%; left: 40%; animation-delay: 4s; animation-duration: 6.5s; }
+              .p8 { width: 3px; height: 3px; top: 50%; left: 90%; animation-delay: 2.5s; animation-duration: 7.5s; }
+
+              @keyframes particleFloat {
+                0%, 100% { transform: translateY(0) scale(1); opacity: 0.3; }
+                50% { transform: translateY(-30px) scale(1.5); opacity: 1; }
+              }
+
+              /* Gift icon */
+              .gift-icon-wrapper {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,191,36,0.05));
+                border: 1px solid rgba(251,191,36,0.25);
+                margin-bottom: 20px;
+                animation: giftPulse 3s ease-in-out infinite;
+              }
+              .gift-icon {
+                color: #fbbf24;
+                animation: giftBounce 2s ease-in-out infinite;
+              }
+
+              @keyframes giftPulse {
+                0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.2); }
+                50% { box-shadow: 0 0 30px 10px rgba(251,191,36,0.15); }
+              }
+              @keyframes giftBounce {
+                0%, 100% { transform: translateY(0) rotate(0deg); }
+                25% { transform: translateY(-3px) rotate(-3deg); }
+                75% { transform: translateY(-3px) rotate(3deg); }
+              }
+
+              /* Shimmer text */
+              .shimmer-text {
+                background: linear-gradient(
+                  120deg,
+                  #ffffff 0%,
+                  #fbbf24 25%,
+                  #ffffff 50%,
+                  #fbbf24 75%,
+                  #ffffff 100%
+                );
+                background-size: 200% 100%;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                animation: shimmer 4s linear infinite;
+              }
+              @keyframes shimmer {
+                0% { background-position: 200% center; }
+                100% { background-position: -200% center; }
+              }
+
+              /* Bundle Card */
+              .bundle-gift-card {
+                position: relative;
+                border-radius: 20px;
+                overflow: hidden;
+                height: 100%;
+                cursor: pointer;
+                transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.35s ease;
+                background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+                border: 1px solid rgba(251,191,36,0.15);
+              }
+              .bundle-gift-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 60px rgba(251,191,36,0.15), 0 0 40px rgba(124,58,237,0.2);
+              }
+              .bundle-gift-card:hover .bundle-cta-arrow {
+                transform: translateX(4px);
+                opacity: 1;
+              }
+              .bundle-gift-card:hover .bundle-card-shimmer {
+                opacity: 1;
+              }
+              .bundle-gift-card:hover .bundle-ribbon {
+                background: rgba(251,191,36,0.25);
+              }
+
+              /* Ribbon tag */
+              .bundle-ribbon {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 14px;
+                margin: 20px 0 0 20px;
+                background: rgba(251,191,36,0.12);
+                border: 1px solid rgba(251,191,36,0.2);
+                border-radius: 50px;
+                color: #fbbf24;
+                font-size: 0.8125rem;
+                font-weight: 600;
+                transition: background 0.3s;
+              }
+              .bundle-ribbon svg { width: 14px; height: 14px; }
+
+              /* Discount badge */
+              .bundle-discount-badge {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                width: 52px;
+                height: 52px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: badgePop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+                box-shadow: 0 4px 15px rgba(239,68,68,0.4);
+              }
+              .bundle-discount-value {
+                color: white;
+                font-size: 0.8125rem;
+                font-weight: 800;
+              }
+              @keyframes badgePop {
+                0% { transform: scale(0) rotate(-20deg); }
+                100% { transform: scale(1) rotate(0deg); }
+              }
+
+              /* Course pills */
+              .bundle-course-pill {
+                background: rgba(251,191,36,0.08);
+                border: 1px solid rgba(251,191,36,0.15);
+                padding: 4px 12px;
+                border-radius: 50px;
+                font-size: 0.75rem;
+                color: rgba(255,255,255,0.8);
+                transition: background 0.2s;
+              }
+              .bundle-gift-card:hover .bundle-course-pill {
+                background: rgba(251,191,36,0.15);
+              }
+
+              /* Price row */
+              .bundle-price-row {
+                border-top: 1px solid rgba(251,191,36,0.12);
+                padding-top: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              }
+
+              /* CTA arrow */
+              .bundle-cta-arrow {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #1e1b4b;
+                opacity: 0.7;
+                transition: transform 0.3s, opacity 0.3s;
+                flex-shrink: 0;
+              }
+
+              /* Bottom shimmer line */
+              .bundle-card-shimmer {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+                opacity: 0;
+                transition: opacity 0.4s;
+                animation: shimmerSlide 2s linear infinite;
+              }
+              @keyframes shimmerSlide {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+              }
+
+              /* Stagger entrance for cards */
+              .bundle-gift-card-0 { animation: cardEntrance 0.6s ease-out both; }
+              .bundle-gift-card-1 { animation: cardEntrance 0.6s ease-out 0.15s both; }
+              .bundle-gift-card-2 { animation: cardEntrance 0.6s ease-out 0.3s both; }
+              @keyframes cardEntrance {
+                0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+                100% { opacity: 1; transform: translateY(0) scale(1); }
+              }
+            `}</style>
+          </section>
+        )}
 
         {/* Client Showcase Section */}
         <section style={{

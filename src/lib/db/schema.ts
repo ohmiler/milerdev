@@ -416,6 +416,43 @@ export const couponUsagesRelations = relations(couponUsages, ({ one }) => ({
 }));
 
 // =====================
+// BUNDLES TABLE
+// =====================
+export const bundles = mysqlTable('bundles', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    title: varchar('title', { length: 255 }).notNull(),
+    slug: varchar('slug', { length: 255 }).notNull().unique(),
+    description: text('description'),
+    thumbnailUrl: text('thumbnail_url'),
+    price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+    status: varchar('status', { length: 20, enum: ['draft', 'published', 'archived'] }).default('draft').notNull(),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
+});
+
+export const bundleCourses = mysqlTable('bundle_courses', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'cascade' }).notNull(),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    orderIndex: int('order_index').default(0),
+});
+
+export const bundlesRelations = relations(bundles, ({ many }) => ({
+    bundleCourses: many(bundleCourses),
+}));
+
+export const bundleCoursesRelations = relations(bundleCourses, ({ one }) => ({
+    bundle: one(bundles, {
+        fields: [bundleCourses.bundleId],
+        references: [bundles.id],
+    }),
+    course: one(courses, {
+        fields: [bundleCourses.courseId],
+        references: [courses.id],
+    }),
+}));
+
+// =====================
 // CERTIFICATES TABLE
 // =====================
 export const certificates = mysqlTable('certificates', {
@@ -481,3 +518,7 @@ export type Coupon = typeof coupons.$inferSelect;
 export type NewCoupon = typeof coupons.$inferInsert;
 export type CouponUsage = typeof couponUsages.$inferSelect;
 export type NewCouponUsage = typeof couponUsages.$inferInsert;
+export type Bundle = typeof bundles.$inferSelect;
+export type NewBundle = typeof bundles.$inferInsert;
+export type BundleCourse = typeof bundleCourses.$inferSelect;
+export type NewBundleCourse = typeof bundleCourses.$inferInsert;

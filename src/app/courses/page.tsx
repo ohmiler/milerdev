@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import Link from 'next/link';
 import CourseCard from '@/components/course/CourseCard';
 
 interface Tag {
@@ -33,6 +34,19 @@ interface Pagination {
   totalPages: number;
 }
 
+interface BundleItem {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  thumbnailUrl: string | null;
+  price: string;
+  courseCount: number;
+  totalOriginalPrice: number;
+  discount: number;
+  courses: { courseTitle: string }[];
+}
+
 export default function CoursesPage() {
   return (
     <Suspense fallback={
@@ -57,6 +71,7 @@ function CoursesContent() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [bundlesList, setBundlesList] = useState<BundleItem[]>([]);
   
   // Filter states
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -94,6 +109,11 @@ function CoursesContent() {
     fetch('/api/tags')
       .then(res => res.json())
       .then(data => setAllTags(data.tags || []))
+      .catch(console.error);
+    // Fetch bundles
+    fetch('/api/bundles')
+      .then(res => res.json())
+      .then(data => setBundlesList(data.bundles || []))
       .catch(console.error);
   }, []);
 
@@ -144,6 +164,76 @@ function CoursesContent() {
             </p>
           </div>
         </section>
+
+        {/* Bundles Section */}
+        {bundlesList.length > 0 && (
+          <section style={{ padding: '40px 0 0' }}>
+            <div className="container">
+              <h2 style={{ fontSize: '1.375rem', fontWeight: 700, color: '#1e293b', marginBottom: '16px' }}>
+                📦 Bundle สุดคุ้ม
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                {bundlesList.map((bundle) => (
+                  <Link key={bundle.id} href={`/bundles/${bundle.slug}`} style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #1e1b4b, #7c3aed)',
+                      borderRadius: '16px',
+                      padding: '24px',
+                      color: 'white',
+                      height: '100%',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }} className="bundle-card-hover">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '0.8125rem', opacity: 0.8 }}>
+                        📦 Bundle • {bundle.courseCount} คอร์ส
+                      </div>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: '0 0 8px' }}>{bundle.title}</h3>
+                      {bundle.description && (
+                        <p style={{ fontSize: '0.875rem', opacity: 0.8, margin: '0 0 12px', lineHeight: 1.5 }}>
+                          {bundle.description.slice(0, 80)}{bundle.description.length > 80 ? '...' : ''}
+                        </p>
+                      )}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+                        {bundle.courses.slice(0, 3).map((c, i) => (
+                          <span key={i} style={{
+                            background: 'rgba(255,255,255,0.15)',
+                            padding: '3px 10px',
+                            borderRadius: '50px',
+                            fontSize: '0.75rem',
+                          }}>
+                            {c.courseTitle}
+                          </span>
+                        ))}
+                        {bundle.courses.length > 3 && (
+                          <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>+{bundle.courses.length - 3} อีก</span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                          ฿{parseFloat(bundle.price).toLocaleString()}
+                        </span>
+                        <span style={{ textDecoration: 'line-through', opacity: 0.6, fontSize: '0.875rem' }}>
+                          ฿{bundle.totalOriginalPrice.toLocaleString()}
+                        </span>
+                        {bundle.discount > 0 && (
+                          <span style={{
+                            background: '#fbbf24',
+                            color: '#1e1b4b',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                          }}>
+                            ลด {bundle.discount}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Courses Grid */}
         <section className="section">
