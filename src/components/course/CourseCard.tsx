@@ -41,9 +41,12 @@ export default function CourseCard({
 }: CourseCardProps) {
     const displayPrice = isPromoActive && promoPrice != null ? promoPrice : price;
     const showOriginalPrice = isPromoActive && promoPrice != null && promoPrice < price;
+    const discountPercent = showOriginalPrice ? Math.round((1 - displayPrice / price) * 100) : 0;
     const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
     return (
-        <Link href={`/courses/${slug}`} className="card block group">
+        <Link href={`/courses/${slug}`} className="card block group" style={{
+            ...(showOriginalPrice ? { border: '1px solid #7000FF' } : {}),
+        }}>
             {/* Thumbnail */}
             <div className="course-thumbnail">
                 <div style={{
@@ -76,13 +79,37 @@ export default function CourseCard({
                     )}
                 </div>
 
-                {/* Price Badge */}
+                {/* Discount Badge - Top Left */}
+                {showOriginalPrice && (
+                    <span style={{
+                        position: 'absolute',
+                        top: '12px',
+                        left: '12px',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: '#7000FF',
+                        color: 'white',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        zIndex: 2,
+                    }}>
+                        ลด {discountPercent}%
+                    </span>
+                )}
+
+                {/* Price Badge - Top Right */}
                 {displayPrice === 0 ? (
                     <span className="price-badge free">ฟรี</span>
                 ) : showOriginalPrice ? (
-                    <span className="price-badge paid" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ textDecoration: 'line-through', opacity: 0.6, fontSize: '0.75rem' }}>฿{price.toLocaleString()}</span>
-                        <span>฿{displayPrice.toLocaleString()}</span>
+                    <span className="price-badge promo" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: '#7000FF',
+                        color: 'white',
+                    }}>
+                        <span style={{ textDecoration: 'line-through', opacity: 0.7, fontSize: '0.75rem' }}>฿{price.toLocaleString()}</span>
+                        <span style={{ fontWeight: 700 }}>฿{displayPrice.toLocaleString()}</span>
                     </span>
                 ) : (
                     <span className="price-badge paid">฿{displayPrice.toLocaleString()}</span>

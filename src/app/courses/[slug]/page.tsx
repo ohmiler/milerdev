@@ -327,32 +327,32 @@ export default async function CourseDetailPage({ params }: Props) {
                       </div>
                     )}
 
-                    {/* Price Badge */}
-                    <span style={{
-                      position: 'absolute',
-                      top: '12px',
-                      right: '12px',
-                      padding: '6px 14px',
-                      borderRadius: '50px',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
+                  </div>
+
+                  {/* Promo Banner */}
+                  {isPromoActive && promoPrice !== null && (
+                    <div style={{
+                      background: 'linear-gradient(135deg, #7000FF 0%, #dc2626 100%)',
+                      color: 'white',
+                      padding: '10px 24px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '6px',
-                      ...(displayPrice === 0
-                        ? { background: '#dcfce7', color: '#16a34a' }
-                        : isPromoActive
-                          ? { background: '#fef2f2', color: '#dc2626' }
-                          : { background: '#fef3c7', color: '#b45309' }),
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontSize: '0.875rem',
+                      fontWeight: 600,
                     }}>
-                      {displayPrice === 0 ? 'ฟรี' : isPromoActive ? (
-                        <>
-                          <span style={{ textDecoration: 'line-through', opacity: 0.6, fontSize: '0.75rem' }}>฿{price.toLocaleString()}</span>
-                          <span>฿{displayPrice.toLocaleString()}</span>
-                        </>
-                      ) : `฿${price.toLocaleString()}`}
-                    </span>
-                  </div>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9.375 3a1.875 1.875 0 000 3.75h1.875v4.5H3.375A1.875 1.875 0 011.5 9.375v-.75c0-1.036.84-1.875 1.875-1.875h3.193A3.375 3.375 0 0112 2.753a3.375 3.375 0 015.432 3.997h3.193c1.035 0 1.875.84 1.875 1.875v.75c0 1.036-.84 1.875-1.875 1.875H12.75v-4.5h1.875a1.875 1.875 0 10-1.875-1.875V6.75h-1.5V4.875C11.25 3.839 10.41 3 9.375 3zM11.25 12.75H3v6.75a2.25 2.25 0 002.25 2.25h6v-9zM12.75 12.75v9h6a2.25 2.25 0 002.25-2.25v-6.75h-8.25z" />
+                      </svg>
+                      โปรโมชั่นพิเศษ ลด {Math.round((1 - displayPrice / price) * 100)}%
+                      {course.promoEndsAt && (
+                        <span style={{ opacity: 0.85, fontWeight: 400 }}>
+                          ถึง {new Date(course.promoEndsAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   <div style={{ padding: '24px' }}>
                     {/* Price Display */}
@@ -362,16 +362,8 @@ export default async function CourseDetailPage({ params }: Props) {
                       ) : isPromoActive ? (
                         <div>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                            <span style={{ fontSize: '1.75rem', fontWeight: 700, color: '#dc2626' }}>฿{displayPrice.toLocaleString()}</span>
+                            <span style={{ fontSize: '1.75rem', fontWeight: 700, color: '#7000FF' }}>฿{displayPrice.toLocaleString()}</span>
                             <span style={{ fontSize: '1.125rem', color: '#94a3b8', textDecoration: 'line-through' }}>฿{price.toLocaleString()}</span>
-                          </div>
-                          <div style={{ marginTop: '6px', fontSize: '0.8125rem', color: '#dc2626', fontWeight: 500 }}>
-                            ลด {Math.round((1 - displayPrice / price) * 100)}%
-                            {course.promoEndsAt && (
-                              <span style={{ color: '#64748b', fontWeight: 400 }}>
-                                {' '}ถึง {new Date(course.promoEndsAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
-                              </span>
-                            )}
                           </div>
                         </div>
                       ) : (
