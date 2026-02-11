@@ -3,6 +3,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
 import ShowcaseGallery from '@/components/home/ShowcaseGallery';
+import HeroCodeEditor from '@/components/home/HeroCodeEditor';
 import { db } from '@/lib/db';
 import { courses, lessons, users, bundles, bundleCourses } from '@/lib/db/schema';
 import { eq, desc, asc, count, sql } from 'drizzle-orm';
@@ -137,111 +138,104 @@ export default async function HomePage() {
 
       <main style={{ paddingTop: '0' }}>
         {/* Hero Section */}
-        <section style={{
-          background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #eff6ff 100%)',
-          padding: '80px 0 100px',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          {/* Background decoration */}
-          <div style={{
-            position: 'absolute',
-            top: '-100px',
-            right: '-100px',
-            width: '500px',
-            height: '500px',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
-            borderRadius: '50%'
-          }} />
-          <div style={{
-            position: 'absolute',
-            bottom: '-150px',
-            left: '-100px',
-            width: '400px',
-            height: '400px',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
-            borderRadius: '50%'
-          }} />
+        <section className="hero-section">
+          {/* Background decorations */}
+          <div className="hero-bg-decoration hero-bg-1" />
+          <div className="hero-bg-decoration hero-bg-2" />
+          <div className="hero-bg-decoration hero-bg-3" />
 
-          <div className="container" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-            <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-              {/* Badge */}
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
-                color: '#2563eb',
-                padding: '10px 20px',
-                borderRadius: '50px',
-                fontSize: '14px',
-                fontWeight: 600,
-                marginBottom: '24px',
-                border: '1px solid #bfdbfe'
-              }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  background: '#3b82f6',
-                  borderRadius: '50%',
-                  animation: 'pulse 2s infinite'
-                }} />
-                🚀 เริ่มเรียนได้ทันที
+          <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1320px' }}>
+            <div className="hero-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '48px',
+              alignItems: 'center',
+            }}>
+              {/* Left: Text Content */}
+              <div className="hero-text">
+                {/* Badge */}
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
+                  color: '#2563eb',
+                  padding: '10px 20px',
+                  borderRadius: '50px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  marginBottom: '28px',
+                  border: '1px solid #bfdbfe'
+                }}>
+                  <span style={{
+                    width: '8px',
+                    height: '8px',
+                    background: '#3b82f6',
+                    borderRadius: '50%',
+                    animation: 'pulse 2s infinite'
+                  }} />
+                  เริ่มเรียนได้ทันที
+                </div>
+
+                {/* Title */}
+                <h1 className="hero-title" style={{ marginBottom: '24px', textAlign: 'left' }}>
+                  เรียน{' '}
+                  <span className="highlight">Coding</span>
+                  <br />
+                  ออนไลน์กับ MilerDev
+                </h1>
+
+                <p style={{
+                  fontSize: '1.15rem',
+                  color: '#64748b',
+                  marginBottom: '36px',
+                  lineHeight: 1.8,
+                  maxWidth: '480px',
+                }}>
+                  พัฒนาทักษะการเขียนโปรแกรมของคุณด้วยคอร์สคุณภาพสูง
+                  เรียนรู้จากโปรเจกต์จริง และก้าวสู่การเป็น Developer มืออาชีพ
+                </p>
+
+                {/* CTA Buttons */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '48px' }}>
+                  <Link href="/courses" className="btn btn-primary" style={{ fontSize: '1.05rem', padding: '14px 28px' }}>
+                    <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    เริ่มเรียนเลย
+                  </Link>
+                  <Link href="/courses" className="btn btn-secondary" style={{ fontSize: '1.05rem', padding: '14px 28px' }}>
+                    ดูคอร์สทั้งหมด
+                  </Link>
+                </div>
+
+                {/* Stats */}
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '36px',
+                  paddingTop: '28px',
+                  borderTop: '1px solid #e2e8f0',
+                }}>
+                  <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
+                    <div className="stat-value">{stats.users.toLocaleString()}+</div>
+                    <div className="stat-label">นักเรียน</div>
+                  </div>
+                  <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
+                    <div className="stat-value">{stats.lessons}+</div>
+                    <div className="stat-label">บทเรียน</div>
+                  </div>
+                  <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
+                    <div className="stat-value">{stats.courses}</div>
+                    <div className="stat-label">คอร์ส</div>
+                  </div>
+                </div>
               </div>
 
-              {/* Hero Title */}
-              <h1 className="hero-title" style={{ marginBottom: '24px' }}>
-                เรียน Coding{' '}
-                <span className="highlight">ออนไลน์</span>
-                <br />
-                กับ MilerDev
-              </h1>
-
-              <p style={{
-                fontSize: '1.25rem',
-                color: '#64748b',
-                marginBottom: '32px',
-                lineHeight: 1.8,
-              }}>
-                พัฒนาทักษะการเขียนโปรแกรมของคุณด้วยคอร์สคุณภาพสูง
-                เรียนรู้จากโปรเจกต์จริง และก้าวสู่การเป็น Developer มืออาชีพ
-              </p>
-
-              {/* CTA Buttons */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '48px', justifyContent: 'center' }}>
-                <Link href="/courses" className="btn btn-primary" style={{ fontSize: '1.1rem', padding: '16px 32px' }}>
-                  <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  เริ่มเรียนเลย
-                </Link>
-                <Link href="/courses" className="btn btn-secondary" style={{ fontSize: '1.1rem', padding: '16px 32px' }}>
-                  ดูคอร์สทั้งหมด
-                </Link>
-              </div>
-
-              {/* Stats */}
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '40px',
-                paddingTop: '32px',
-                borderTop: '1px solid #e2e8f0',
-                justifyContent: 'center'
-              }}>
-                <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                  <div className="stat-value">{stats.users.toLocaleString()}+</div>
-                  <div className="stat-label">นักเรียน</div>
-                </div>
-                <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                  <div className="stat-value">{stats.lessons}+</div>
-                  <div className="stat-label">บทเรียน</div>
-                </div>
-                <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                  <div className="stat-value">{stats.courses}</div>
-                  <div className="stat-label">คอร์ส</div>
-                </div>
+              {/* Right: IDE Animation */}
+              <div className="hero-ide">
+                <HeroCodeEditor />
               </div>
             </div>
           </div>

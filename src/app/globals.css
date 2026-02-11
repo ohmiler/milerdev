@@ -500,7 +500,105 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0 !important;
 }
 
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0f9ff 100%);
+  padding: 80px 0 100px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg-decoration {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-bg-1 {
+  top: -120px;
+  right: -80px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+}
+
+.hero-bg-2 {
+  bottom: -150px;
+  left: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+}
+
+.hero-bg-3 {
+  top: 50%;
+  left: 45%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+  transform: translateY(-50%);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.hero-text {
+  text-align: left;
+}
+
+.hero-ide {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.hero-section .container {
+  max-width: 1320px;
+}
+
 /* Responsive adjustments */
+@media (max-width: 860px) {
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 48px !important;
+  }
+
+  .hero-text {
+    text-align: center;
+  }
+
+  .hero-text .hero-title {
+    text-align: center !important;
+  }
+
+  .hero-text p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-text > div:last-child {
+    justify-content: center;
+  }
+
+  .hero-text > div[style*="flex-wrap"] {
+    justify-content: center;
+  }
+
+  .hero-ide {
+    justify-content: center;
+  }
+
+  .hero-section {
+    padding: 60px 0 80px;
+  }
+}
+
 @media (max-width: 768px) {
   .section {
     padding: 4rem 0;
@@ -513,5 +611,13 @@ h1, h2, h3, h4, h5, h6 {
   .btn {
     padding: 0.75rem 1.5rem;
     font-size: 0.9375rem;
+  }
+
+  .hero-section {
+    padding: 48px 0 64px;
+  }
+
+  .hero-grid {
+    gap: 36px;
   }
 }
