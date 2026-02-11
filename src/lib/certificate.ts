@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { certificates, courses, users } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { sendCertificateEmail } from '@/lib/email';
 
 /**
  * Generate a unique certificate code like "CERT-XXXX-XXXX"
@@ -45,7 +46,7 @@ export async function issueCertificate(userId: string, courseId: string): Promis
 
   // Get user and course info
   const [[user], [course]] = await Promise.all([
-    db.select({ name: users.name }).from(users).where(eq(users.id, userId)).limit(1),
+    db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, userId)).limit(1),
     db.select({ title: courses.title, certificateColor: courses.certificateColor, certificateHeaderImage: courses.certificateHeaderImage }).from(courses).where(eq(courses.id, courseId)).limit(1),
   ]);
 
@@ -88,6 +89,16 @@ export async function issueCertificate(userId: string, courseId: string): Promis
     .from(certificates)
     .where(eq(certificates.id, id))
     .limit(1);
+
+  // Send certificate email (non-blocking)
+  if (user.email) {
+    sendCertificateEmail({
+      email: user.email,
+      name: user.name || 'ผู้เรียน',
+      courseName: course.title,
+      certificateCode,
+    }).catch((err) => console.error('Failed to send certificate email:', err));
+  }
 
   return { certificate, isNew: true };
 }

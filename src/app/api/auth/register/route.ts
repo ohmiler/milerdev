@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { sendWelcomeEmail } from '@/lib/email';
 
 // Validation schema
 const registerSchema = z.object({
@@ -65,6 +66,11 @@ export async function POST(request: Request) {
       passwordHash,
       role: 'student',
     });
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail({ email, name }).catch((err) =>
+      console.error('Failed to send welcome email:', err)
+    );
 
     return NextResponse.json(
       { message: 'สมัครสมาชิกสำเร็จ' },
