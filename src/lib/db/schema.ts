@@ -40,6 +40,7 @@ export const courses = mysqlTable('courses', {
     certificateColor: varchar('certificate_color', { length: 20 }).default('blue'),
     certificateHeaderImage: text('certificate_header_image'),
     certificateBadge: varchar('certificate_badge', { length: 50 }),
+    previewVideoUrl: text('preview_video_url'),
     promoPrice: decimal('promo_price', { precision: 10, scale: 2 }),
     promoStartsAt: datetime('promo_starts_at'),
     promoEndsAt: datetime('promo_ends_at'),

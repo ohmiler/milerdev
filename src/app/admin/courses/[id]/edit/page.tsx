@@ -34,6 +34,7 @@ export default function EditCoursePage({ params }: Props) {
     thumbnailUrl: '',
     certificateColor: '#2563eb',
     certificateHeaderImage: '',
+    previewVideoUrl: '',
     promoPrice: '',
     promoStartsAt: '',
     promoEndsAt: '',
@@ -56,6 +57,7 @@ export default function EditCoursePage({ params }: Props) {
               thumbnailUrl: data.course.thumbnailUrl || '',
               certificateColor: data.course.certificateColor || '#2563eb',
               certificateHeaderImage: data.course.certificateHeaderImage || '',
+              previewVideoUrl: data.course.previewVideoUrl || '',
               promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
               promoStartsAt: data.course.promoStartsAt ? new Date(data.course.promoStartsAt).toISOString().slice(0, 16) : '',
               promoEndsAt: data.course.promoEndsAt ? new Date(data.course.promoEndsAt).toISOString().slice(0, 16) : '',
@@ -285,6 +287,28 @@ export default function EditCoursePage({ params }: Props) {
           />
           <p style={{ marginTop: '6px', fontSize: '0.8125rem', color: '#64748b' }}>
             แนะนำขนาด 1800 × 500 px — ถ้าอัปโหลดรูปนี้จะใช้แทนพื้นหลังสี gradient ในใบรับรอง
+          </p>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+            วิดีโอแนะนำคอร์ส (Preview Video)
+          </label>
+          <input
+            type="text"
+            value={formData.previewVideoUrl}
+            onChange={(e) => setFormData({ ...formData, previewVideoUrl: e.target.value })}
+            placeholder="วาง URL วิดีโอจาก Bunny.net, YouTube, หรือ Vimeo"
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '1rem',
+            }}
+          />
+          <p style={{ marginTop: '6px', fontSize: '0.8125rem', color: '#64748b' }}>
+            วิดีโอสั้นๆ แนะนำคอร์ส จะแสดงปุ่ม play บน thumbnail หน้า course detail
           </p>
         </div>
 

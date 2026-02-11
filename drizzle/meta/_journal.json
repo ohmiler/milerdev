@@ -8,6 +8,13 @@
       "when": 1769444236830,
       "tag": "0000_wakeful_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1770853458371,
+      "tag": "0001_smooth_kitty_pryde",
+      "breakpoints": true
     }
   ]
 }

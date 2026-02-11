@@ -60,7 +60,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     const { id } = await params;
     const body = await request.json();
-    const { title, description, price, status, thumbnailUrl, slug, tagIds, certificateColor, certificateHeaderImage, promoPrice, promoStartsAt, promoEndsAt } = body;
+    const { title, description, price, status, thumbnailUrl, slug, tagIds, certificateColor, certificateHeaderImage, previewVideoUrl, promoPrice, promoStartsAt, promoEndsAt } = body;
 
     // Check if course exists
     const [existingCourse] = await db
@@ -85,6 +85,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         thumbnailUrl: thumbnailUrl !== undefined ? thumbnailUrl : existingCourse.thumbnailUrl,
         certificateColor: certificateColor || existingCourse.certificateColor,
         certificateHeaderImage: certificateHeaderImage !== undefined ? (certificateHeaderImage || null) : existingCourse.certificateHeaderImage,
+        previewVideoUrl: previewVideoUrl !== undefined ? (previewVideoUrl || null) : existingCourse.previewVideoUrl,
         promoPrice: promoPrice !== undefined ? (promoPrice ? String(parseFloat(promoPrice)) : null) : existingCourse.promoPrice,
         promoStartsAt: promoStartsAt !== undefined ? (promoStartsAt ? new Date(promoStartsAt) : null) : existingCourse.promoStartsAt,
         promoEndsAt: promoEndsAt !== undefined ? (promoEndsAt ? new Date(promoEndsAt) : null) : existingCourse.promoEndsAt,
