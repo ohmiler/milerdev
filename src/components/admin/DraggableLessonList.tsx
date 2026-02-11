@@ -35,15 +35,32 @@ interface DraggableLessonListProps {
   courseId: string;
   onDelete: (lessonId: string) => void;
   onReorder: (lessonIds: string[]) => void;
+  onLessonUpdate?: (lessonId: string, data: Partial<Lesson>) => void;
 }
+
+type FilterType = 'all' | 'no-video' | 'has-video';
 
 interface SortableItemProps {
   lesson: Lesson;
   index: number;
   onDelete: (lessonId: string) => void;
+  editingVideoId: string | null;
+  onEditVideo: (lessonId: string | null) => void;
+  onSaveVideo: (lessonId: string, videoUrl: string, videoDuration: number) => void;
+  savingVideoId: string | null;
 }
 
-function SortableItem({ lesson, index, onDelete }: SortableItemProps) {
+function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, onSaveVideo, savingVideoId }: SortableItemProps) {
+  const [videoUrl, setVideoUrl] = useState(lesson.videoUrl || '');
+  const [videoDuration, setVideoDuration] = useState(() => {
+    const totalSeconds = lesson.videoDuration || 0;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  });
+  const isEditing = editingVideoId === lesson.id;
+  const isSaving = savingVideoId === lesson.id;
+
   const {
     attributes,
     listeners,
@@ -59,109 +76,213 @@ function SortableItem({ lesson, index, onDelete }: SortableItemProps) {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  useEffect(() => {
+    setVideoUrl(lesson.videoUrl || '');
+    const totalSeconds = lesson.videoDuration || 0;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    setVideoDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+  }, [lesson.videoUrl, lesson.videoDuration]);
+
+  const handleSave = () => {
+    let durationInSeconds = 0;
+    if (videoDuration.includes(':')) {
+      const [m, s] = videoDuration.split(':');
+      durationInSeconds = (parseInt(m) || 0) * 60 + (parseInt(s) || 0);
+    } else {
+      durationInSeconds = Math.round(parseFloat(videoDuration) * 60) || 0;
+    }
+    onSaveVideo(lesson.id, videoUrl, durationInSeconds);
+  };
+
   return (
-    <div
-      ref={setNodeRef}
-      style={{
-        ...style,
-        display: 'flex',
-        alignItems: 'center',
-        padding: '16px 20px',
-        borderBottom: '1px solid #e2e8f0',
-        background: isDragging ? '#f1f5f9' : 'white',
-      }}
-    >
-      {/* Drag Handle */}
+    <div ref={setNodeRef} style={style}>
       <div
-        {...attributes}
-        {...listeners}
         style={{
-          cursor: 'grab',
-          padding: '8px',
-          marginRight: '12px',
-          color: '#94a3b8',
           display: 'flex',
           alignItems: 'center',
+          padding: '10px 20px',
+          borderBottom: isEditing ? 'none' : '1px solid #e2e8f0',
+          background: isDragging ? '#f1f5f9' : isEditing ? '#f8fafc' : 'white',
         }}
       >
-        <svg style={{ width: '20px', height: '20px' }} fill="currentColor" viewBox="0 0 24 24">
-          <path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" />
-        </svg>
-      </div>
-
-      {/* Number Badge */}
-      <div style={{
-        width: '32px',
-        height: '32px',
-        borderRadius: '50%',
-        background: '#eff6ff',
-        color: '#2563eb',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontWeight: 600,
-        fontSize: '0.875rem',
-        marginRight: '16px',
-        flexShrink: 0,
-      }}>
-        {index + 1}
-      </div>
-
-      {/* Lesson Info */}
-      <div style={{ flex: 1 }}>
-        <Link
-          href={`/admin/lessons/${lesson.id}/edit`}
-          style={{ fontWeight: 500, color: '#1e293b', marginBottom: '4px', textDecoration: 'none', display: 'block' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#2563eb')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#1e293b')}
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          style={{
+            cursor: 'grab',
+            padding: '6px',
+            marginRight: '8px',
+            color: '#94a3b8',
+            display: 'flex',
+            alignItems: 'center',
+          }}
         >
-          {lesson.title}
-        </Link>
-        <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '12px' }}>
-          {lesson.videoDuration && lesson.videoDuration > 0 && (
-            <span>⏱️ {Math.floor(lesson.videoDuration / 60)}:{(lesson.videoDuration % 60) < 10 ? '0' : ''}{lesson.videoDuration % 60}</span>
-          )}
-          {lesson.isFreePreview && (
-            <span style={{ color: '#16a34a' }}>🆓 ดูฟรี</span>
-          )}
-          {lesson.videoUrl && (
-            <span style={{ color: '#2563eb' }}>🎬 มีวิดีโอ</span>
-          )}
+          <svg style={{ width: '16px', height: '16px' }} fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM14 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" />
+          </svg>
+        </div>
+
+        {/* Number Badge */}
+        <div style={{
+          width: '28px',
+          height: '28px',
+          borderRadius: '50%',
+          background: lesson.videoUrl ? '#dcfce7' : '#fef3c7',
+          color: lesson.videoUrl ? '#16a34a' : '#d97706',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 600,
+          fontSize: '0.75rem',
+          marginRight: '12px',
+          flexShrink: 0,
+        }}>
+          {index + 1}
+        </div>
+
+        {/* Lesson Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Link
+            href={`/admin/lessons/${lesson.id}/edit`}
+            style={{ fontWeight: 500, color: '#1e293b', textDecoration: 'none', display: 'block', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#2563eb')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#1e293b')}
+          >
+            {lesson.title}
+          </Link>
+          <div style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'flex', gap: '8px', marginTop: '2px' }}>
+            {lesson.videoDuration && lesson.videoDuration > 0 && (
+              <span>⏱️ {Math.floor(lesson.videoDuration / 60)}:{(lesson.videoDuration % 60) < 10 ? '0' : ''}{lesson.videoDuration % 60}</span>
+            )}
+            {lesson.isFreePreview && (
+              <span style={{ color: '#16a34a' }}>🆓 ดูฟรี</span>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+          <button
+            onClick={() => onEditVideo(isEditing ? null : lesson.id)}
+            title={lesson.videoUrl ? 'แก้ไข URL วิดีโอ' : 'เพิ่ม URL วิดีโอ'}
+            style={{
+              padding: '6px 10px',
+              background: lesson.videoUrl ? '#dcfce7' : '#fef3c7',
+              color: lesson.videoUrl ? '#16a34a' : '#d97706',
+              border: isEditing ? '2px solid #2563eb' : 'none',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {lesson.videoUrl ? '🎬 มีวิดีโอ' : '⚠️ ยังไม่มี'}
+          </button>
+          <Link
+            href={`/admin/lessons/${lesson.id}/edit`}
+            style={{
+              padding: '6px 10px',
+              background: '#eff6ff',
+              color: '#2563eb',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            แก้ไข
+          </Link>
+          <button
+            onClick={() => onDelete(lesson.id)}
+            style={{
+              padding: '6px 10px',
+              background: '#fef2f2',
+              color: '#dc2626',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+            }}
+          >
+            ลบ
+          </button>
         </div>
       </div>
 
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <Link
-          href={`/admin/lessons/${lesson.id}/edit`}
-          style={{
-            padding: '8px 12px',
-            background: '#eff6ff',
-            color: '#2563eb',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '0.875rem',
-            cursor: 'pointer',
-            textDecoration: 'none',
-          }}
-        >
-          แก้ไข
-        </Link>
-        <button
-          onClick={() => onDelete(lesson.id)}
-          style={{
-            padding: '8px 12px',
-            background: '#fef2f2',
-            color: '#dc2626',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '0.875rem',
-            cursor: 'pointer',
-          }}
-        >
-          ลบ
-        </button>
-      </div>
+      {/* Inline Video Edit */}
+      {isEditing && (
+        <div style={{
+          padding: '12px 20px 12px 76px',
+          background: '#f8fafc',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center',
+        }}>
+          <input
+            type="text"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="Bunny Video GUID หรือ Embed URL"
+            autoFocus
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+            }}
+          />
+          <input
+            type="text"
+            value={videoDuration}
+            onChange={(e) => {
+              if (/^[0-9:]*$/.test(e.target.value)) setVideoDuration(e.target.value);
+            }}
+            placeholder="นาที:วินาที"
+            style={{
+              width: '90px',
+              padding: '8px 12px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+            }}
+          />
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            style={{
+              padding: '8px 16px',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              cursor: isSaving ? 'not-allowed' : 'pointer',
+              opacity: isSaving ? 0.7 : 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isSaving ? '...' : 'บันทึก'}
+          </button>
+          <button
+            onClick={() => onEditVideo(null)}
+            style={{
+              padding: '8px 12px',
+              background: '#f1f5f9',
+              color: '#64748b',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              cursor: 'pointer',
+            }}
+          >
+            ยกเลิก
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -171,9 +292,14 @@ export default function DraggableLessonList({
   courseId,
   onDelete,
   onReorder,
+  onLessonUpdate,
 }: DraggableLessonListProps) {
   const [lessons, setLessons] = useState(initialLessons);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
+  const [savingVideoId, setSavingVideoId] = useState<string | null>(null);
 
   // Sync local state when parent fetches new lessons after save
   useEffect(() => {
@@ -186,6 +312,33 @@ export default function DraggableLessonList({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const handleSaveVideo = async (lessonId: string, videoUrl: string, videoDuration: number) => {
+    setSavingVideoId(lessonId);
+    try {
+      const res = await fetch(`/api/admin/lessons/${lessonId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoUrl: videoUrl || null, videoDuration }),
+      });
+      if (res.ok) {
+        // Update local state
+        setLessons(prev => prev.map(l =>
+          l.id === lessonId ? { ...l, videoUrl: videoUrl || null, videoDuration } : l
+        ));
+        if (onLessonUpdate) {
+          onLessonUpdate(lessonId, { videoUrl: videoUrl || null, videoDuration });
+        }
+        setEditingVideoId(null);
+      } else {
+        alert('ไม่สามารถบันทึกได้ กรุณาลองใหม่');
+      }
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setSavingVideoId(null);
+    }
+  };
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -207,7 +360,6 @@ export default function DraggableLessonList({
         });
 
         if (!res.ok) {
-          // Revert on error
           setLessons(lessons);
           alert('ไม่สามารถจัดลำดับได้ กรุณาลองใหม่');
         } else {
@@ -222,6 +374,19 @@ export default function DraggableLessonList({
     }
   };
 
+  // Filter & search
+  const isFiltering = search.trim() !== '' || filter !== 'all';
+  const filteredLessons = lessons.filter((l) => {
+    if (search.trim() && !l.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filter === 'no-video' && l.videoUrl) return false;
+    if (filter === 'has-video' && !l.videoUrl) return false;
+    return true;
+  });
+
+  const videoCount = lessons.filter(l => l.videoUrl).length;
+  const totalCount = lessons.length;
+  const progressPercent = totalCount > 0 ? Math.round((videoCount / totalCount) * 100) : 0;
+
   if (lessons.length === 0) {
     return (
       <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
@@ -229,6 +394,17 @@ export default function DraggableLessonList({
       </div>
     );
   }
+
+  const filterBtnStyle = (active: boolean) => ({
+    padding: '4px 12px',
+    background: active ? '#2563eb' : '#f1f5f9',
+    color: active ? 'white' : '#64748b',
+    border: 'none',
+    borderRadius: '20px',
+    fontSize: '0.75rem',
+    cursor: 'pointer' as const,
+    whiteSpace: 'nowrap' as const,
+  });
 
   return (
     <div style={{ position: 'relative' }}>
@@ -248,32 +424,114 @@ export default function DraggableLessonList({
         </div>
       )}
 
+      {/* Toolbar: Search + Filter + Progress */}
       <div style={{
         padding: '12px 20px',
         background: '#f8fafc',
         borderBottom: '1px solid #e2e8f0',
-        fontSize: '0.875rem',
-        color: '#64748b',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
       }}>
-        💡 ลากเพื่อจัดลำดับบทเรียน
+        {/* Search */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 ค้นหาบทเรียน..."
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+              background: 'white',
+            }}
+          />
+          <button onClick={() => setFilter('all')} style={filterBtnStyle(filter === 'all')}>
+            ทั้งหมด ({totalCount})
+          </button>
+          <button onClick={() => setFilter('no-video')} style={filterBtnStyle(filter === 'no-video')}>
+            ⚠️ ยังไม่มีวิดีโอ ({totalCount - videoCount})
+          </button>
+          <button onClick={() => setFilter('has-video')} style={filterBtnStyle(filter === 'has-video')}>
+            🎬 มีวิดีโอแล้ว ({videoCount})
+          </button>
+        </div>
+
+        {/* Progress Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ flex: 1, height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
+            <div style={{
+              width: `${progressPercent}%`,
+              height: '100%',
+              background: progressPercent === 100 ? '#16a34a' : '#2563eb',
+              borderRadius: '3px',
+              transition: 'width 0.3s ease',
+            }} />
+          </div>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+            {progressPercent === 100 ? '✅' : '🎬'} {videoCount}/{totalCount} ({progressPercent}%)
+          </span>
+        </div>
+
+        {!isFiltering && (
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+            💡 ลากเพื่อจัดลำดับ | กดปุ่มวิดีโอเพื่อเพิ่ม/แก้ไข URL ได้เลย
+          </div>
+        )}
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-          {lessons.map((lesson, index) => (
-            <SortableItem
-              key={lesson.id}
-              lesson={lesson}
-              index={index}
-              onDelete={onDelete}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
+      {/* Lesson List */}
+      {isFiltering ? (
+        // Simple list when filtering (no DnD)
+        <div>
+          {filteredLessons.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '0.875rem' }}>
+              ไม่พบบทเรียนที่ตรงกับเงื่อนไข
+            </div>
+          ) : (
+            filteredLessons.map((lesson) => {
+              const originalIndex = lessons.findIndex(l => l.id === lesson.id);
+              return (
+                <SortableItem
+                  key={lesson.id}
+                  lesson={lesson}
+                  index={originalIndex}
+                  onDelete={onDelete}
+                  editingVideoId={editingVideoId}
+                  onEditVideo={setEditingVideoId}
+                  onSaveVideo={handleSaveVideo}
+                  savingVideoId={savingVideoId}
+                />
+              );
+            })
+          )}
+        </div>
+      ) : (
+        // DnD list when not filtering
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={lessons.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+            {lessons.map((lesson, index) => (
+              <SortableItem
+                key={lesson.id}
+                lesson={lesson}
+                index={index}
+                onDelete={onDelete}
+                editingVideoId={editingVideoId}
+                onEditVideo={setEditingVideoId}
+                onSaveVideo={handleSaveVideo}
+                savingVideoId={savingVideoId}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      )}
     </div>
   );
 }
