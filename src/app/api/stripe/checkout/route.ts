@@ -72,7 +72,9 @@ export async function POST(request: Request) {
                         currency: "thb",
                         product_data: {
                             name: course.title,
-                            description: course.description || undefined,
+                            description: course.description
+                                ? course.description.replace(/<[^>]*>/g, '').substring(0, 500)
+                                : undefined,
                             images: course.thumbnailUrl ? [course.thumbnailUrl] : undefined,
                         },
                         unit_amount: Math.round(priceNumber * 100), // Convert to satang
