@@ -246,8 +246,21 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                 <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
                                     {course.lessonCount} บท
                                 </td>
-                                <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
-                                    {course.enrollmentCount} คน
+                                <td style={{ padding: '16px', textAlign: 'center' }}>
+                                    <Link
+                                        href={`/admin/courses/${course.id}/enrollments`}
+                                        style={{
+                                            color: '#2563eb',
+                                            textDecoration: 'none',
+                                            fontWeight: 500,
+                                            padding: '4px 10px',
+                                            borderRadius: '6px',
+                                            background: '#eff6ff',
+                                            fontSize: '0.875rem',
+                                        }}
+                                    >
+                                        {course.enrollmentCount} คน
+                                    </Link>
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'right' }}>
                                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
