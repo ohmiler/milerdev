@@ -58,31 +58,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic course pages
-  const publishedCourses = await db
-    .select({ slug: courses.slug, updatedAt: courses.updatedAt })
-    .from(courses)
-    .where(eq(courses.status, 'published'));
+  // Dynamic pages (may fail at build time if DB is not available)
+  let coursePages: MetadataRoute.Sitemap = [];
+  let bundlePages: MetadataRoute.Sitemap = [];
 
-  const coursePages: MetadataRoute.Sitemap = publishedCourses.map((course) => ({
-    url: `${siteUrl}/courses/${course.slug}`,
-    lastModified: course.updatedAt || new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
-  }));
+  try {
+    const publishedCourses = await db
+      .select({ slug: courses.slug, updatedAt: courses.updatedAt })
+      .from(courses)
+      .where(eq(courses.status, 'published'));
 
-  // Dynamic bundle pages
-  const publishedBundles = await db
-    .select({ slug: bundles.slug, updatedAt: bundles.updatedAt })
-    .from(bundles)
-    .where(eq(bundles.status, 'published'));
+    coursePages = publishedCourses.map((course) => ({
+      url: `${siteUrl}/courses/${course.slug}`,
+      lastModified: course.updatedAt || new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
 
-  const bundlePages: MetadataRoute.Sitemap = publishedBundles.map((bundle) => ({
-    url: `${siteUrl}/bundles/${bundle.slug}`,
-    lastModified: bundle.updatedAt || new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
+    const publishedBundles = await db
+      .select({ slug: bundles.slug, updatedAt: bundles.updatedAt })
+      .from(bundles)
+      .where(eq(bundles.status, 'published'));
+
+    bundlePages = publishedBundles.map((bundle) => ({
+      url: `${siteUrl}/bundles/${bundle.slug}`,
+      lastModified: bundle.updatedAt || new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+  } catch {
+    // DB not available at build time — return static pages only
+  }
 
   return [...staticPages, ...coursePages, ...bundlePages];
 }
