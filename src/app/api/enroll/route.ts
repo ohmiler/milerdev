@@ -7,6 +7,7 @@ import { sendEnrollmentEmail } from "@/lib/email";
 import { z } from "zod";
 import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { calculateDiscount } from "@/lib/coupon";
 
 // Validation schema
 const enrollSchema = z.object({
@@ -88,14 +89,12 @@ export async function POST(request: Request) {
             if (!coupon || !coupon.isActive) {
                 return NextResponse.json({ error: "คูปองไม่ถูกต้อง" }, { status: 400 });
             }
-            let discount: number;
-            if (coupon.discountType === 'percentage') {
-                discount = coursePrice * (parseFloat(coupon.discountValue) / 100);
-                const maxD = coupon.maxDiscount ? parseFloat(coupon.maxDiscount) : null;
-                if (maxD && discount > maxD) discount = maxD;
-            } else {
-                discount = parseFloat(coupon.discountValue);
-            }
+            const discount = calculateDiscount(
+                coursePrice,
+                coupon.discountType as 'percentage' | 'fixed',
+                coupon.discountValue,
+                coupon.maxDiscount,
+            );
             if (discount < coursePrice) {
                 return NextResponse.json({ error: "คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ" }, { status: 402 });
             }
