@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface Announcement {
   id: string;
@@ -63,24 +64,21 @@ export default function AnnouncementBanner() {
             }}
           >
             <span style={{ fontSize: '0.875rem' }}>{style.icon}</span>
-            <div style={{
-              flex: 1,
-              maxWidth: '900px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-            }}>
-              <span style={{ fontWeight: 600, color: style.color, fontSize: '0.875rem' }}>
-                {announcement.title}
-              </span>
-              {announcement.content && (
-                <span style={{ color: style.color, fontSize: '0.8125rem', opacity: 0.85 }}>
-                  — {announcement.content.length > 120 ? announcement.content.substring(0, 120) + '...' : announcement.content}
-                </span>
-              )}
-            </div>
+            <Link
+              href="/announcements"
+              style={{
+                flex: 1,
+                maxWidth: '900px',
+                textAlign: 'center',
+                fontWeight: 600,
+                color: style.color,
+                fontSize: '0.875rem',
+                textDecoration: 'none',
+              }}
+            >
+              {announcement.title}
+              <span style={{ marginLeft: '6px', fontSize: '0.75rem', opacity: 0.7 }}>อ่านเพิ่มเติม →</span>
+            </Link>
             <button
               onClick={() => dismiss(announcement.id)}
               style={{
