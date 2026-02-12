@@ -36,11 +36,18 @@ export const metadata: Metadata = {
     siteName: 'MilerDev',
     title: 'MilerDev - เรียน Coding ออนไลน์',
     description: siteDescription,
+    images: [{
+      url: `${siteUrl}/og-image.png`,
+      width: 1200,
+      height: 630,
+      alt: 'MilerDev - เรียน Coding ออนไลน์',
+    }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'MilerDev - เรียน Coding ออนไลน์',
     description: siteDescription,
+    images: [`${siteUrl}/og-image.png`],
   },
   robots: {
     index: true,
