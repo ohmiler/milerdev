@@ -50,13 +50,15 @@ export async function GET(request: Request) {
     // Build order
     const orderColumn = sortBy === 'name' ? users.name : 
                         sortBy === 'email' ? users.email :
-                        sortBy === 'role' ? users.role : users.createdAt;
+                        sortBy === 'role' ? users.role :
+                        sortBy === 'enrollmentCount' ? sql`(SELECT COUNT(*) FROM enrollments WHERE enrollments.user_id = ${users.id})` :
+                        users.createdAt;
 
     // Parallelize independent queries using Promise.all() (async-parallel rule)
     const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
     
-    const [userList, totalCountResult, statsResult] = await Promise.all([
-      // Get users with enrollment counts
+    const [userList, totalCountResult, statsResult, enrollmentCounts] = await Promise.all([
+      // Get users
       db
         .select({
           id: users.id,
@@ -66,7 +68,6 @@ export async function GET(request: Request) {
           avatarUrl: users.avatarUrl,
           emailVerifiedAt: users.emailVerifiedAt,
           createdAt: users.createdAt,
-          enrollmentCount: sql<number>`(SELECT COUNT(*) FROM enrollments WHERE enrollments.user_id = ${users.id})`,
         })
         .from(users)
         .where(whereCondition)
@@ -87,13 +88,40 @@ export async function GET(request: Request) {
           students: sql<number>`sum(case when role = 'student' then 1 else 0 end)`,
         })
         .from(users),
+      // Get enrollment counts per user (separate query to avoid BigInt issues)
+      db.execute(sql`SELECT user_id, COUNT(*) as cnt FROM enrollments GROUP BY user_id`),
     ]);
 
-    const totalCount = totalCountResult[0]?.count ?? 0;
+    // Build enrollment count map from raw query result
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const enrollRows = (enrollmentCounts as any)[0] as { user_id: string; cnt: number | bigint }[];
+    const enrollMap = new Map<string, number>();
+    if (Array.isArray(enrollRows)) {
+      for (const row of enrollRows) {
+        enrollMap.set(row.user_id, Number(row.cnt));
+      }
+    }
+
+    const totalCount = Number(totalCountResult[0]?.count ?? 0);
     const stats = statsResult[0];
 
+    // Merge enrollment counts into user list
+    const usersWithCounts = userList.map(u => ({
+      ...u,
+      enrollmentCount: enrollMap.get(u.id) || 0,
+    }));
+
+    // Sort by enrollmentCount if needed (since DB sort won't have this)
+    if (sortBy === 'enrollmentCount') {
+      usersWithCounts.sort((a, b) => 
+        sortOrder === 'desc' 
+          ? b.enrollmentCount - a.enrollmentCount 
+          : a.enrollmentCount - b.enrollmentCount
+      );
+    }
+
     return NextResponse.json({
-      users: userList,
+      users: usersWithCounts,
       pagination: {
         page,
         limit,

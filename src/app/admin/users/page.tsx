@@ -406,6 +406,7 @@ export default function AdminUsersPage() {
           <option value="createdAt">เรียงตามวันที่</option>
           <option value="name">เรียงตามชื่อ</option>
           <option value="email">เรียงตามอีเมล</option>
+          <option value="enrollmentCount">เรียงตามคอร์สที่ลง</option>
         </select>
       </div>
 
