@@ -60,13 +60,13 @@ export async function POST(request: Request) {
             })
             .where(eq(users.id, user.id));
 
-        // Send reset email
+        // Send reset email (fire-and-forget to avoid blocking response)
         if (user.email) {
-            await sendPasswordResetEmail({
+            sendPasswordResetEmail({
                 email: user.email,
                 name: user.name,
                 resetToken,
-            });
+            }).catch(err => console.error('[Reset] Email send failed:', err));
         }
 
         return NextResponse.json({
