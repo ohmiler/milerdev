@@ -99,14 +99,36 @@ export async function POST(request: Request) {
             if (discount < coursePrice) {
                 return NextResponse.json({ error: "คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ" }, { status: 402 });
             }
-            // Record coupon usage
-            await db.insert(couponUsages).values({
-                couponId: coupon.id,
-                userId: session.user.id,
-                courseId,
-                discountAmount: String(Math.min(discount, coursePrice)),
+            // Record coupon usage + enrollment in a transaction to prevent race conditions
+            const enrollmentId = createId();
+            await db.transaction(async (tx) => {
+                await tx.insert(couponUsages).values({
+                    couponId: coupon.id,
+                    userId: session.user.id,
+                    courseId,
+                    discountAmount: String(Math.min(discount, coursePrice)),
+                });
+                await tx.update(coupons).set({ usageCount: sql`${coupons.usageCount} + 1` }).where(eq(coupons.id, coupon.id));
+                await tx.insert(enrollments).values({
+                    id: enrollmentId,
+                    userId: session.user.id,
+                    courseId,
+                });
             });
-            await db.update(coupons).set({ usageCount: sql`${coupons.usageCount} + 1` }).where(eq(coupons.id, coupon.id));
+
+            const enrollment = { id: enrollmentId, userId: session.user.id, courseId };
+
+            // Send enrollment email (non-blocking)
+            if (session.user.email && session.user.name) {
+                sendEnrollmentEmail({
+                    email: session.user.email,
+                    name: session.user.name,
+                    courseName: course.title,
+                    courseSlug: course.slug,
+                }).catch((err) => console.error("Failed to send enrollment email:", err));
+            }
+
+            return NextResponse.json(enrollment, { status: 201 });
         } else if (coursePrice > 0) {
             return NextResponse.json(
                 { error: "Payment required for this course" },
@@ -114,7 +136,7 @@ export async function POST(request: Request) {
             );
         }
 
-        // Create enrollment (MySQL doesn't support .returning())
+        // Create enrollment (free course or paid with payment verification)
         const enrollmentId = createId();
         await db.insert(enrollments).values({
             id: enrollmentId,

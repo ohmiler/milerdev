@@ -5,6 +5,7 @@ import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { desc } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
+import { createCourseSchema, validateBody } from '@/lib/validations/admin';
 
 // GET /api/admin/courses - List all courses
 export async function GET() {
@@ -35,11 +36,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, price, status, thumbnailUrl, slug: customSlug, tagIds, certificateColor } = body;
-
-    if (!title) {
-      return NextResponse.json({ error: 'กรุณาระบุชื่อคอร์ส' }, { status: 400 });
+    const validation = validateBody(createCourseSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
+    const { title, description, price, status, thumbnailUrl, slug: customSlug, tagIds, certificateColor } = validation.data;
 
     // Use custom slug or generate from title
     const slug = (customSlug || title)
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       title,
       slug: slug || courseId,
       description: description || null,
-      price: String(parseFloat(price) || 0),
+      price: String(parseFloat(String(price ?? 0)) || 0),
       status: status || 'draft',
       thumbnailUrl: thumbnailUrl || null,
       certificateColor: certificateColor || '#2563eb',

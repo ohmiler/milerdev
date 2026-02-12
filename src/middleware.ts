@@ -1,7 +1,57 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(_request: NextRequest) {
+// Simple in-memory rate limiter for middleware (edge-compatible)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function middlewareRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
+    const now = Date.now();
+    const entry = rateLimitStore.get(key);
+    if (!entry || entry.resetTime < now) {
+        rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
+        return true;
+    }
+    entry.count++;
+    return entry.count <= maxRequests;
+}
+
+// Cleanup stale entries every 5 minutes
+if (typeof globalThis !== 'undefined') {
+    const cleanup = () => {
+        const now = Date.now();
+        for (const [key, entry] of rateLimitStore.entries()) {
+            if (entry.resetTime < now) rateLimitStore.delete(key);
+        }
+    };
+    setInterval(cleanup, 5 * 60 * 1000);
+}
+
+export function middleware(request: NextRequest) {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() 
+        || request.headers.get('x-real-ip') 
+        || 'unknown';
+    const pathname = request.nextUrl.pathname;
+
+    // Rate limit admin API: 60 requests per minute per IP
+    if (pathname.startsWith('/api/admin')) {
+        if (!middlewareRateLimit(`admin:${ip}`, 60, 60_000)) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.' },
+                { status: 429, headers: { 'Retry-After': '60' } }
+            );
+        }
+    }
+
+    // Rate limit auth login: 10 requests per minute per IP
+    if (pathname === '/api/auth/callback/credentials') {
+        if (!middlewareRateLimit(`login:${ip}`, 10, 60_000)) {
+            return NextResponse.json(
+                { error: 'Too many login attempts. Please try again later.' },
+                { status: 429, headers: { 'Retry-After': '60' } }
+            );
+        }
+    }
+
     const response = NextResponse.next();
 
     // Security Headers

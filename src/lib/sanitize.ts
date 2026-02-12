@@ -70,7 +70,7 @@ export function sanitizeRichContent(html: string): string {
         allowedAttributes: {
             'a': ['href', 'target', 'rel'],
             'img': ['src', 'alt', 'width', 'height'],
-            '*': ['class', 'style'],
+            '*': ['class'],
         },
         allowedSchemes: ['http', 'https', 'mailto'],
     });
