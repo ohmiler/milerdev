@@ -1,11 +1,22 @@
 import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 // =====================
-// SMTP TRANSPORTER
+// EMAIL PROVIDER (Resend for production, nodemailer for local)
 // =====================
+let _resend: Resend | null = null;
 let _transporter: nodemailer.Transporter | null = null;
 
-function getTransporter() {
+function getResend(): Resend | null {
+    if (!process.env.RESEND_API_KEY) return null;
+    if (!_resend) {
+        _resend = new Resend(process.env.RESEND_API_KEY);
+    }
+    return _resend;
+}
+
+function getTransporter(): nodemailer.Transporter | null {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
     if (!_transporter) {
         _transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -73,17 +84,32 @@ function infoBox(rows: { label: string; value: string }[]): string {
 // =====================
 async function sendEmail(to: string, subject: string, html: string) {
     try {
-        if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-            console.warn('[Email] SMTP not configured, skipping email to:', to);
+        // Try Resend first (HTTP API — works on Railway)
+        const resend = getResend();
+        if (resend) {
+            await resend.emails.send({
+                from: EMAIL_FROM,
+                to,
+                subject,
+                html,
+            });
+            console.log('[Email/Resend] Sent to:', to, '| Subject:', subject);
             return;
         }
-        await getTransporter().sendMail({
+
+        // Fallback to nodemailer (local dev)
+        const transporter = getTransporter();
+        if (!transporter) {
+            console.warn('[Email] No email provider configured, skipping email to:', to);
+            return;
+        }
+        await transporter.sendMail({
             from: EMAIL_FROM,
             to,
             subject,
             html,
         });
-        console.log('[Email] Sent to:', to, '| Subject:', subject);
+        console.log('[Email/SMTP] Sent to:', to, '| Subject:', subject);
     } catch (error) {
         console.error('[Email] Failed to send to:', to, error);
     }
