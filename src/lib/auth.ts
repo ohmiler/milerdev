@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+    trustHost: true,
     adapter: DrizzleAdapter(db, {
         usersTable: schema.users,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
