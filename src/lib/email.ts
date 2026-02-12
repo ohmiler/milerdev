@@ -82,7 +82,7 @@ function infoBox(rows: { label: string; value: string }[]): string {
 // =====================
 // SEND EMAIL HELPER
 // =====================
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(to: string, subject: string, html: string, options?: { replyTo?: string }) {
     try {
         // Try Resend first (HTTP API — works on Railway)
         const resend = getResend();
@@ -92,6 +92,7 @@ async function sendEmail(to: string, subject: string, html: string) {
                 to,
                 subject,
                 html,
+                ...(options?.replyTo && { replyTo: options.replyTo }),
             });
             console.log('[Email/Resend] Sent to:', to, '| Subject:', subject);
             return;
@@ -108,11 +109,57 @@ async function sendEmail(to: string, subject: string, html: string) {
             to,
             subject,
             html,
+            ...(options?.replyTo && { replyTo: options.replyTo }),
         });
         console.log('[Email/SMTP] Sent to:', to, '| Subject:', subject);
     } catch (error) {
         console.error('[Email] Failed to send to:', to, error);
     }
+}
+
+// =====================
+// CONTACT NOTIFICATION
+// =====================
+interface SendContactNotificationParams {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    clientIP: string;
+}
+
+export async function sendContactNotification({
+    name,
+    email,
+    subject,
+    message,
+    clientIP,
+}: SendContactNotificationParams) {
+    const adminEmail = process.env.CONTACT_EMAIL || 'milerdev.official@gmail.com';
+
+    function escapeHtml(str: string): string {
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    const html = emailLayout(`
+      <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">📬 ข้อความจากหน้าติดต่อ</h2>
+      ${infoBox([
+          { label: 'ชื่อ', value: escapeHtml(name) },
+          { label: 'อีเมล', value: `<a href="mailto:${escapeHtml(email)}" style="color:#2563eb;">${escapeHtml(email)}</a>` },
+          { label: 'หัวข้อ', value: escapeHtml(subject) },
+      ])}
+      <div style="color:#374151;line-height:1.7;white-space:pre-wrap;margin:16px 0;">${escapeHtml(message)}</div>
+      <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:24px;">
+        <p style="color:#94a3b8;font-size:0.75rem;margin:0;">IP: ${clientIP} | ${new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' })}</p>
+      </div>
+    `);
+
+    await sendEmail(adminEmail, `[Contact] ${subject}`, html, { replyTo: email });
 }
 
 // =====================
