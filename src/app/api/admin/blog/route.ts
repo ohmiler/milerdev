@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { eq, desc, sql, count } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 // GET /api/admin/blog - List all blog posts
 export async function GET() {
@@ -87,6 +88,8 @@ export async function POST(request: Request) {
         }))
       );
     }
+
+    await logAudit({ userId: session.user.id, action: 'create', entityType: 'blog', entityId: postId, newValue: title });
 
     return NextResponse.json(
       { message: 'สร้างบทความสำเร็จ', postId },

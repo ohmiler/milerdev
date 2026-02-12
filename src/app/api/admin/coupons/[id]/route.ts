@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { coupons } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -59,6 +60,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       expiresAt: expiresAt !== undefined ? (expiresAt ? new Date(expiresAt) : null) : existing.expiresAt,
     }).where(eq(coupons.id, id));
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'coupon', entityId: id, newValue: code ? code.toUpperCase() : existing.code });
+
     return NextResponse.json({ message: 'อัพเดทคูปองสำเร็จ' });
   } catch (error) {
     console.error('Error updating coupon:', error);
@@ -75,7 +78,11 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
 
     const { id } = await params;
+    const [existing] = await db.select({ code: coupons.code }).from(coupons).where(eq(coupons.id, id)).limit(1);
     await db.delete(coupons).where(eq(coupons.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'coupon', entityId: id, oldValue: existing?.code || id });
+
     return NextResponse.json({ message: 'ลบคูปองสำเร็จ' });
   } catch (error) {
     console.error('Error deleting coupon:', error);

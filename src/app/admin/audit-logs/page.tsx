@@ -107,6 +107,13 @@ export default function AdminAuditLogsPage() {
       lesson: 'บทเรียน',
       payment: 'การชำระเงิน',
       enrollment: 'การลงทะเบียน',
+      coupon: 'คูปอง',
+      announcement: 'ประกาศ',
+      review: 'รีวิว',
+      certificate: 'ใบรับรอง',
+      blog: 'บทความ',
+      bundle: 'Bundle',
+      tag: 'แท็ก',
     };
     return types[type] || type;
   };

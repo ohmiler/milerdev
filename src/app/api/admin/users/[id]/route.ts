@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -84,6 +85,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       })
       .where(eq(users.id, id));
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'user', entityId: id, oldValue: `role: ${existingUser.role}`, newValue: `role: ${role || existingUser.role}` });
+
     return NextResponse.json({ message: 'อัพเดทผู้ใช้สำเร็จ' });
   } catch (error) {
     console.error('Error updating user:', error);
@@ -122,6 +125,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Delete user (cascade will handle related records)
     await db.delete(users).where(eq(users.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'user', entityId: id, oldValue: existingUser.email });
 
     return NextResponse.json({ message: 'ลบผู้ใช้สำเร็จ' });
   } catch (error) {

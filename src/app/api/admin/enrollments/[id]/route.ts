@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, lessonProgress } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -70,6 +71,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       })
       .where(eq(enrollments.id, id));
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'enrollment', entityId: id });
+
     return NextResponse.json({ message: 'อัพเดทการลงทะเบียนสำเร็จ' });
   } catch (error) {
     console.error('Error updating enrollment:', error);
@@ -108,6 +111,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Delete enrollment
     await db.delete(enrollments).where(eq(enrollments.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'enrollment', entityId: id, oldValue: `user: ${existingEnrollment.userId}, course: ${existingEnrollment.courseId}` });
 
     return NextResponse.json({ message: 'ลบการลงทะเบียนสำเร็จ' });
   } catch (error) {

@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { reviews } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -37,6 +38,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     await db.update(reviews).set(updateData).where(eq(reviews.id, id));
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'review', entityId: id });
+
     return NextResponse.json({ message: 'อัปเดตรีวิวสำเร็จ' });
   } catch (error) {
     console.error('Error updating review:', error);
@@ -65,6 +68,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
 
     await db.delete(reviews).where(eq(reviews.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'review', entityId: id });
 
     return NextResponse.json({ message: 'ลบรีวิวสำเร็จ' });
   } catch (error) {

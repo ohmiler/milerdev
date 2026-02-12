@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { payments, enrollments, bundleCourses, courses } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -60,6 +61,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
 
     await db.delete(payments).where(eq(payments.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'payment', entityId: id, oldValue: `status: ${existing.status}` });
 
     return NextResponse.json({ message: 'ลบรายการชำระเงินสำเร็จ' });
   } catch (error) {
@@ -158,6 +161,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     // If status changed to 'refunded' from 'completed', you might want to remove enrollment
     // This is optional based on business logic
+
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'payment', entityId: id, oldValue: `status: ${previousStatus}`, newValue: `status: ${status}` });
 
     return NextResponse.json({ 
       message: 'อัพเดทสถานะสำเร็จ',

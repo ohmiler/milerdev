@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { desc, eq, asc } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 // GET /api/admin/bundles - List all bundles with their courses
 export async function GET() {
@@ -108,6 +109,8 @@ export async function POST(request: Request) {
                 orderIndex: index,
             }))
         );
+
+        await logAudit({ userId: session.user.id, action: 'create', entityType: 'bundle', entityId: bundleId, newValue: title });
 
         return NextResponse.json(
             { message: 'สร้าง Bundle สำเร็จ', bundleId },

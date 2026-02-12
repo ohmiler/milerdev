@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { lessons } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ lessonId: string }>;
@@ -74,6 +75,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       })
       .where(eq(lessons.id, lessonId));
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'lesson', entityId: lessonId, newValue: title || existingLesson.title });
+
     return NextResponse.json({ message: 'อัพเดทบทเรียนสำเร็จ' });
   } catch (error) {
     console.error('Error updating lesson:', error);
@@ -107,6 +110,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Delete lesson
     await db.delete(lessons).where(eq(lessons.id, lessonId));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'lesson', entityId: lessonId, oldValue: existingLesson.title });
 
     return NextResponse.json({ message: 'ลบบทเรียนสำเร็จ' });
   } catch (error) {

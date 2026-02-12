@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { desc } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 // GET /api/admin/courses - List all courses
 export async function GET() {
@@ -75,6 +76,8 @@ export async function POST(request: Request) {
         }))
       );
     }
+
+    await logAudit({ userId: session.user.id, action: 'create', entityType: 'course', entityId: courseId, newValue: title });
 
     return NextResponse.json(
       { message: 'สร้างคอร์สสำเร็จ', courseId },

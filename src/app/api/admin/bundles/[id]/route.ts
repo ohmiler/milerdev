@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { eq, asc } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -89,6 +90,8 @@ export async function PUT(request: Request, { params }: Props) {
             }
         }
 
+        await logAudit({ userId: session.user.id, action: 'update', entityType: 'bundle', entityId: id, newValue: title || existing.title });
+
         return NextResponse.json({ message: 'อัปเดต Bundle สำเร็จ' });
     } catch (error) {
         console.error('Error updating bundle:', error);
@@ -105,7 +108,10 @@ export async function DELETE(_request: Request, { params }: Props) {
         }
 
         const { id } = await params;
+        const [existing] = await db.select({ title: bundles.title }).from(bundles).where(eq(bundles.id, id)).limit(1);
         await db.delete(bundles).where(eq(bundles.id, id));
+
+        await logAudit({ userId: session.user.id, action: 'delete', entityType: 'bundle', entityId: id, oldValue: existing?.title || id });
 
         return NextResponse.json({ message: 'ลบ Bundle สำเร็จ' });
     } catch (error) {

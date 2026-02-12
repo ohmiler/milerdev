@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { tags, courseTags } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -49,6 +50,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       .set({ name: name.trim(), slug })
       .where(eq(tags.id, id));
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'tag', entityId: id, oldValue: existingTag.name, newValue: name.trim() });
+
     return NextResponse.json({ message: 'อัพเดทแท็กสำเร็จ' });
   } catch (error) {
     console.error('Error updating tag:', error);
@@ -85,6 +88,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Delete tag
     await db.delete(tags).where(eq(tags.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'tag', entityId: id, oldValue: existingTag.name });
 
     return NextResponse.json({ message: 'ลบแท็กสำเร็จ' });
   } catch (error) {

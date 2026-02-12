@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -95,6 +96,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       }
     }
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'blog', entityId: id, newValue: title || existing.title });
+
     return NextResponse.json({ message: 'อัพเดทบทความสำเร็จ' });
   } catch (error) {
     console.error('Error updating blog post:', error);
@@ -124,6 +127,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     await db.delete(blogPostTags).where(eq(blogPostTags.postId, id));
     await db.delete(blogPosts).where(eq(blogPosts.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'blog', entityId: id, oldValue: existing.title });
 
     return NextResponse.json({ message: 'ลบบทความสำเร็จ' });
   } catch (error) {

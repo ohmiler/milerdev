@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { announcements, notifications } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -76,6 +77,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       })
       .where(eq(announcements.id, id));
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'announcement', entityId: id, newValue: title || existing.title });
+
     return NextResponse.json({ message: 'อัพเดทประกาศสำเร็จ' });
   } catch (error) {
     console.error('Error updating announcement:', error);
@@ -117,6 +120,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Delete announcement
     await db.delete(announcements).where(eq(announcements.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'announcement', entityId: id, oldValue: existing.title });
 
     return NextResponse.json({ message: 'ลบประกาศสำเร็จ' });
   } catch (error) {

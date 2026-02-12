@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { coupons, courses } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 // GET /api/admin/coupons - List all coupons
 export async function GET() {
@@ -84,6 +85,8 @@ export async function POST(request: Request) {
       startsAt: startsAt ? new Date(startsAt) : null,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
     });
+
+    await logAudit({ userId: session.user.id, action: 'create', entityType: 'coupon', entityId: id, newValue: code.toUpperCase() });
 
     return NextResponse.json({ message: 'สร้างคูปองสำเร็จ', couponId: id }, { status: 201 });
   } catch (error) {

@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { certificates } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -49,12 +50,14 @@ export async function PUT(request: Request, { params }: RouteParams) {
         revokedAt: new Date(),
         revokedReason: reason || null,
       }).where(eq(certificates.id, id));
+      await logAudit({ userId: session.user.id, action: 'update', entityType: 'certificate', entityId: id, newValue: `revoked: ${reason || 'no reason'}` });
       return NextResponse.json({ message: 'เพิกถอนใบรับรองสำเร็จ' });
     } else if (action === 'restore') {
       await db.update(certificates).set({
         revokedAt: null,
         revokedReason: null,
       }).where(eq(certificates.id, id));
+      await logAudit({ userId: session.user.id, action: 'update', entityType: 'certificate', entityId: id, newValue: 'restored' });
       return NextResponse.json({ message: 'คืนสถานะใบรับรองสำเร็จ' });
     }
 
@@ -75,6 +78,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     const { id } = await params;
     await db.delete(certificates).where(eq(certificates.id, id));
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'certificate', entityId: id });
     return NextResponse.json({ message: 'ลบใบรับรองสำเร็จ' });
   } catch (error) {
     console.error('Error deleting certificate:', error);

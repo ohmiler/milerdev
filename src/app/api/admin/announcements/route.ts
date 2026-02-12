@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { announcements, users } from '@/lib/db/schema';
 import { desc, eq, sql, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 // GET /api/admin/announcements - Get all announcements
 export async function GET(request: Request) {
@@ -119,6 +120,8 @@ export async function POST(request: Request) {
       endsAt: endsAt ? new Date(endsAt) : null,
       createdBy: session.user.id,
     });
+
+    await logAudit({ userId: session.user.id, action: 'create', entityType: 'announcement', entityId: announcementId, newValue: title });
 
     return NextResponse.json({
       message: 'สร้างประกาศสำเร็จ',

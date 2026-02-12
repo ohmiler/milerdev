@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { enrollments, users, courses } from '@/lib/db/schema';
 import { desc, eq, sql, and, like, or } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 // GET /api/admin/enrollments - Get all enrollments
 export async function GET(request: Request) {
@@ -149,6 +150,8 @@ export async function POST(request: Request) {
       enrolledAt: new Date(),
       progressPercent: 0,
     });
+
+    await logAudit({ userId: session.user.id, action: 'create', entityType: 'enrollment', entityId: enrollmentId, newValue: `user: ${userId}, course: ${courseId}` });
 
     return NextResponse.json(
       { message: 'เพิ่มการลงทะเบียนสำเร็จ', enrollmentId },

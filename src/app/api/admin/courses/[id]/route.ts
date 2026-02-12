@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { courses, courseTags, tags } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -109,6 +110,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       }
     }
 
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'course', entityId: id, newValue: title || existingCourse.title });
+
     return NextResponse.json({ message: 'อัพเดทคอร์สสำเร็จ' });
   } catch (error) {
     console.error('Error updating course:', error);
@@ -142,6 +145,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Delete course
     await db.delete(courses).where(eq(courses.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'delete', entityType: 'course', entityId: id, oldValue: existingCourse.title });
 
     return NextResponse.json({ message: 'ลบคอร์สสำเร็จ' });
   } catch (error) {

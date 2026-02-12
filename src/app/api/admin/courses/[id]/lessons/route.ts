@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { lessons } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -75,6 +76,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       isFreePreview: isFreePreview || false,
       createdAt: new Date(),
     });
+
+    await logAudit({ userId: session.user.id, action: 'create', entityType: 'lesson', entityId: lessonId, newValue: title });
 
     return NextResponse.json(
       { message: 'สร้างบทเรียนสำเร็จ', lessonId },
