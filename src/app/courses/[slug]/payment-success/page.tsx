@@ -55,19 +55,36 @@ async function getPaymentStatus(slug: string, userId: string) {
 }
 
 // Auto-enroll if payment exists but not enrolled yet
-async function autoEnrollIfNeeded(userId: string, courseId: string, hasPayment: boolean, isEnrolled: boolean) {
-  if (hasPayment && !isEnrolled) {
-    try {
-      await db.insert(enrollments).values({
-        userId,
-        courseId,
-      });
-      return true;
-    } catch (error) {
-      // Already enrolled or error
-      console.error('Auto-enroll error:', error);
-      return false;
+async function autoEnrollIfNeeded(userId: string, courseId: string, payment: { id: string; status: string } | undefined, isEnrolled: boolean) {
+  if (!payment) return isEnrolled;
+
+  // Auto-enroll if payment is pending (just paid, webhook not processed yet) or completed
+  if (payment.status === 'pending' || payment.status === 'completed') {
+    // If payment is pending, mark as completed (Stripe checkout was successful)
+    if (payment.status === 'pending') {
+      try {
+        await db
+          .update(payments)
+          .set({ status: 'completed' })
+          .where(eq(payments.id, payment.id));
+      } catch (error) {
+        console.error('Auto-complete payment error:', error);
+      }
     }
+
+    if (!isEnrolled) {
+      try {
+        await db.insert(enrollments).values({
+          userId,
+          courseId,
+        });
+        return true;
+      } catch (error) {
+        console.error('Auto-enroll error:', error);
+        return false;
+      }
+    }
+    return true;
   }
   return isEnrolled;
 }
@@ -93,7 +110,7 @@ export default async function PaymentSuccessPage({ params }: Props) {
   const enrolled = await autoEnrollIfNeeded(
     session.user.id,
     course.id,
-    !!payment && payment.status === 'pending', // pending = just paid, webhook not processed yet
+    payment,
     isEnrolled
   );
 
