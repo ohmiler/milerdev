@@ -11,6 +11,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     trustHost: true,
     adapter: DrizzleAdapter(db, {
         usersTable: schema.users,
+        accountsTable: schema.accounts,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any),
     session: {
@@ -21,6 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         ...(process.env.AUTH_GOOGLE_ID ? [Google({
             clientId: process.env.AUTH_GOOGLE_ID,
             clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+            allowDangerousEmailAccountLinking: true,
         })] : []),
         Credentials({
             name: "credentials",
