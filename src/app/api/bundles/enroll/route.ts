@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { sendEnrollmentEmail } from '@/lib/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { safeInsertEnrollment } from '@/lib/db/safe-insert';
 
 // POST /api/bundles/enroll - Enroll in all courses of a bundle
 export async function POST(request: Request) {
@@ -73,29 +74,17 @@ export async function POST(request: Request) {
         }
 
         // Enroll in each course (skip if already enrolled)
+        // Uses safeInsertEnrollment to handle concurrent duplicate attempts
         const enrolled: string[] = [];
         const skipped: string[] = [];
 
         for (const course of bCourses) {
-            const existingEnrollment = await db.query.enrollments.findFirst({
-                where: and(
-                    eq(enrollments.userId, session.user.id),
-                    eq(enrollments.courseId, course.courseId)
-                ),
-            });
-
-            if (existingEnrollment) {
+            const { created } = await safeInsertEnrollment(session.user.id, course.courseId);
+            if (created) {
+                enrolled.push(course.courseTitle);
+            } else {
                 skipped.push(course.courseTitle);
-                continue;
             }
-
-            const enrollmentId = createId();
-            await db.insert(enrollments).values({
-                id: enrollmentId,
-                userId: session.user.id,
-                courseId: course.courseId,
-            });
-            enrolled.push(course.courseTitle);
         }
 
         // Send enrollment email for all new courses (non-blocking)

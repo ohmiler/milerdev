@@ -6,6 +6,7 @@ import { payments, enrollments, courses, bundles, bundleCourses, coupons, coupon
 import { eq, and, sql } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import Stripe from "stripe";
+import { safeInsertEnrollment, isDuplicateKeyError } from "@/lib/db/safe-insert";
 
 export async function POST(request: Request) {
     const body = await request.text();
@@ -74,12 +75,7 @@ export async function POST(request: Request) {
 
                 for (const bc of bCourses) {
                     try {
-                        const existing = await db.query.enrollments.findFirst({
-                            where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, bc.courseId)),
-                        });
-                        if (!existing) {
-                            await db.insert(enrollments).values({ userId, courseId: bc.courseId });
-                        }
+                        await safeInsertEnrollment(userId, bc.courseId);
                     } catch (enrollError) {
                         console.error(`Failed to enroll user ${userId} in course ${bc.courseId}:`, enrollError);
                     }
@@ -110,13 +106,7 @@ export async function POST(request: Request) {
                 console.log(`[Webhook] Bundle payment ${paymentId} completed, enrolled in ${bCourses.length} courses`);
             } else if (courseId) {
                 // ===== SINGLE COURSE PAYMENT =====
-                const existingEnrollment = await db.query.enrollments.findFirst({
-                    where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)),
-                });
-
-                if (!existingEnrollment) {
-                    await db.insert(enrollments).values({ userId, courseId });
-                }
+                await safeInsertEnrollment(userId, courseId);
 
                 const course = await db.query.courses.findFirst({
                     where: eq(courses.id, courseId),
@@ -148,16 +138,8 @@ export async function POST(request: Request) {
             // Record coupon usage if coupon was applied (idempotent — skip if already recorded)
             if (couponId && userId) {
                 try {
-                    const [existingUsage] = await db.select({ id: couponUsages.id }).from(couponUsages)
-                        .where(and(
-                            eq(couponUsages.couponId, couponId),
-                            eq(couponUsages.userId, userId),
-                            ...(type === 'course' && courseId ? [eq(couponUsages.courseId, courseId)] : []),
-                        ))
-                        .limit(1);
-
-                    if (!existingUsage) {
-                        const targetCourseId = type === 'course' ? courseId : null;
+                    const targetCourseId = type === 'course' ? courseId : null;
+                    try {
                         await db.insert(couponUsages).values({
                             couponId,
                             userId,
@@ -168,8 +150,12 @@ export async function POST(request: Request) {
                             .set({ usageCount: sql`${coupons.usageCount} + 1` })
                             .where(eq(coupons.id, couponId));
                         console.log(`[Webhook] Coupon ${couponId} usage recorded`);
-                    } else {
-                        console.log(`[Webhook] Coupon ${couponId} usage already recorded, skipping`);
+                    } catch (dupErr) {
+                        if (isDuplicateKeyError(dupErr)) {
+                            console.log(`[Webhook] Coupon ${couponId} usage already recorded, skipping`);
+                        } else {
+                            throw dupErr;
+                        }
                     }
                 } catch (couponError) {
                     console.error('Failed to record coupon usage:', couponError);

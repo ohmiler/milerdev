@@ -8,6 +8,7 @@ import { z } from "zod";
 import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
+import { safeInsertEnrollment } from "@/lib/db/safe-insert";
 
 // Validation schema
 const enrollSchema = z.object({
@@ -157,14 +158,14 @@ export async function POST(request: Request) {
         }
 
         // Create enrollment (free course or paid with payment verification)
-        const enrollmentId = createId();
-        await db.insert(enrollments).values({
-            id: enrollmentId,
-            userId: session.user.id,
-            courseId,
-        });
-        
-        const enrollment = { id: enrollmentId, userId: session.user.id, courseId };
+        // Uses safe insert to handle concurrent duplicate attempts via unique constraint
+        const { created, enrollment } = await safeInsertEnrollment(session.user.id, courseId);
+        if (!created) {
+            return NextResponse.json(
+                { error: "Already enrolled in this course" },
+                { status: 400 }
+            );
+        }
 
         // Send enrollment email (non-blocking)
         if (session.user.email && session.user.name) {

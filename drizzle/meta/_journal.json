@@ -15,6 +15,13 @@
       "when": 1770853458371,
       "tag": "0001_smooth_kitty_pryde",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1770970653278,
+      "tag": "0002_uneven_hobgoblin",
+      "breakpoints": true
     }
   ]
 }

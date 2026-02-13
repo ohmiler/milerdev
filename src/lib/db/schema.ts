@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, decimal, datetime, boolean } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, int, decimal, datetime, boolean, uniqueIndex } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -116,7 +116,9 @@ export const enrollments = mysqlTable('enrollments', {
     enrolledAt: datetime('enrolled_at').$defaultFn(() => new Date()),
     progressPercent: int('progress_percent').default(0),
     completedAt: datetime('completed_at'),
-});
+}, (table) => [
+    uniqueIndex('uq_enrollment_user_course').on(table.userId, table.courseId),
+]);
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
     user: one(users, {
@@ -423,7 +425,9 @@ export const couponUsages = mysqlTable('coupon_usages', {
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
     discountAmount: decimal('discount_amount', { precision: 10, scale: 2 }).notNull(),
     usedAt: datetime('used_at').$defaultFn(() => new Date()),
-});
+}, (table) => [
+    uniqueIndex('uq_coupon_user_course').on(table.couponId, table.userId, table.courseId),
+]);
 
 export const couponsRelations = relations(coupons, ({ one, many }) => ({
     course: one(courses, {
