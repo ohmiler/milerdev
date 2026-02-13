@@ -1,15 +1,23 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { courses, enrollments, payments } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
+import { safeInsertEnrollment } from '@/lib/db/safe-insert';
+import { stripe } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
 
+function normalizeUrl(url: string | null): string | null {
+  if (!url || url.trim() === '') return null;
+  if (url.startsWith('http')) return url;
+  return `https://${url}`;
+}
+
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ session_id?: string }>;
 }
 
 async function getPaymentStatus(slug: string, userId: string) {
@@ -54,26 +62,33 @@ async function getPaymentStatus(slug: string, userId: string) {
   };
 }
 
-// Check if enrollment exists (webhook handles actual enrollment)
-async function checkEnrollmentStatus(userId: string, courseId: string, isEnrolled: boolean) {
-  if (isEnrolled) return true;
+// Verify Stripe session and fulfill payment + enrollment if webhook hasn't done it yet
+async function verifyAndFulfill(sessionId: string | undefined, userId: string, courseId: string, paymentId: string | undefined) {
+  if (!sessionId) return;
 
-  // Re-check enrollment in case webhook processed while page was loading
-  const [enrollment] = await db
-    .select()
-    .from(enrollments)
-    .where(
-      and(
-        eq(enrollments.userId, userId),
-        eq(enrollments.courseId, courseId)
-      )
-    )
-    .limit(1);
+  try {
+    const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+    if (stripeSession.payment_status !== 'paid') return;
 
-  return !!enrollment;
+    // Update payment status if still pending
+    if (paymentId) {
+      await db
+        .update(payments)
+        .set({
+          status: 'completed',
+          stripePaymentId: stripeSession.payment_intent as string,
+        })
+        .where(and(eq(payments.id, paymentId), eq(payments.status, 'pending')));
+    }
+
+    // Create enrollment (safe — handles duplicates)
+    await safeInsertEnrollment(userId, courseId);
+  } catch (error) {
+    console.error('Stripe session verification fallback failed:', error);
+  }
 }
 
-export default async function PaymentSuccessPage({ params }: Props) {
+export default async function PaymentSuccessPage({ params, searchParams }: Props) {
   const session = await auth();
 
   if (!session?.user) {
@@ -89,13 +104,23 @@ export default async function PaymentSuccessPage({ params }: Props) {
   }
 
   const { course, isEnrolled, payment } = data;
+  const { session_id } = await searchParams;
 
-  // Check enrollment status (webhook handles actual enrollment)
-  const enrolled = await checkEnrollmentStatus(
-    session.user.id,
-    course.id,
-    isEnrolled
-  );
+  // If not enrolled yet, try to verify with Stripe and fulfill
+  if (!isEnrolled) {
+    await verifyAndFulfill(session_id, session.user.id, course.id, payment?.id);
+  }
+
+  // Re-check enrollment after potential fulfillment
+  let enrolled = isEnrolled;
+  if (!enrolled) {
+    const [enrollment] = await db
+      .select()
+      .from(enrollments)
+      .where(and(eq(enrollments.userId, session.user.id), eq(enrollments.courseId, course.id)))
+      .limit(1);
+    enrolled = !!enrollment;
+  }
 
   return (
     <div style={{
@@ -163,9 +188,9 @@ export default async function PaymentSuccessPage({ params }: Props) {
             gap: '12px',
             marginBottom: '12px',
           }}>
-            {course.thumbnailUrl && (
-              <Image
-                src={course.thumbnailUrl}
+            {normalizeUrl(course.thumbnailUrl) && (
+              <img
+                src={normalizeUrl(course.thumbnailUrl)!}
                 alt={course.title}
                 width={60}
                 height={40}

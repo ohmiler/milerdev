@@ -1,15 +1,23 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, enrollments, payments } from '@/lib/db/schema';
 import { eq, and, desc, asc } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
+import { safeInsertEnrollment } from '@/lib/db/safe-insert';
+import { stripe } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
 
+function normalizeUrl(url: string | null): string | null {
+  if (!url || url.trim() === '') return null;
+  if (url.startsWith('http')) return url;
+  return `https://${url}`;
+}
+
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ session_id?: string }>;
 }
 
 async function getBundlePaymentStatus(slug: string, userId: string) {
@@ -74,28 +82,44 @@ async function getBundlePaymentStatus(slug: string, userId: string) {
   };
 }
 
-// Check enrollment status (webhook handles actual enrollment)
-async function checkBundleEnrollment(
+// Verify Stripe session and fulfill payment + enrollment if webhook hasn't done it yet
+async function verifyAndFulfillBundle(
+  sessionId: string | undefined,
   userId: string,
-  bundleCourseList: { courseId: string; isEnrolled: boolean }[]
+  courseIds: string[],
+  paymentId: string | undefined
 ) {
-  // Re-check enrollment for courses that weren't enrolled on first check
-  const results = await Promise.all(
-    bundleCourseList.map(async (bc) => {
-      if (bc.isEnrolled) return true;
-      const [enrollment] = await db
-        .select()
-        .from(enrollments)
-        .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, bc.courseId)))
-        .limit(1);
-      return !!enrollment;
-    })
-  );
+  if (!sessionId) return;
 
-  return results.every(Boolean);
+  try {
+    const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+    if (stripeSession.payment_status !== 'paid') return;
+
+    // Update payment status if still pending
+    if (paymentId) {
+      await db
+        .update(payments)
+        .set({
+          status: 'completed',
+          stripePaymentId: stripeSession.payment_intent as string,
+        })
+        .where(and(eq(payments.id, paymentId), eq(payments.status, 'pending')));
+    }
+
+    // Create enrollment for each course (safe — handles duplicates)
+    for (const courseId of courseIds) {
+      try {
+        await safeInsertEnrollment(userId, courseId);
+      } catch (error) {
+        console.error(`Fallback enrollment failed for course ${courseId}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Stripe session verification fallback failed:', error);
+  }
 }
 
-export default async function BundlePaymentSuccessPage({ params }: Props) {
+export default async function BundlePaymentSuccessPage({ params, searchParams }: Props) {
   const session = await auth();
 
   if (!session?.user) {
@@ -111,12 +135,33 @@ export default async function BundlePaymentSuccessPage({ params }: Props) {
   }
 
   const { bundle, courses: bundleCourseList, payment } = data;
+  const { session_id } = await searchParams;
 
-  // Check enrollment status (webhook handles actual enrollment)
-  const enrolled = await checkBundleEnrollment(
-    session.user.id,
-    bundleCourseList
-  );
+  // If not all enrolled yet, try to verify with Stripe and fulfill
+  if (!data.allEnrolled) {
+    await verifyAndFulfillBundle(
+      session_id,
+      session.user.id,
+      bundleCourseList.map(c => c.courseId),
+      payment?.id
+    );
+  }
+
+  // Re-check enrollment after potential fulfillment
+  let enrolled = data.allEnrolled;
+  if (!enrolled) {
+    const results = await Promise.all(
+      bundleCourseList.map(async (bc) => {
+        const [enrollment] = await db
+          .select()
+          .from(enrollments)
+          .where(and(eq(enrollments.userId, session.user.id), eq(enrollments.courseId, bc.courseId)))
+          .limit(1);
+        return !!enrollment;
+      })
+    );
+    enrolled = results.every(Boolean);
+  }
 
   return (
     <div style={{
@@ -183,9 +228,9 @@ export default async function BundlePaymentSuccessPage({ params }: Props) {
             gap: '12px',
             marginBottom: '12px',
           }}>
-            {bundle.thumbnailUrl && (
-              <Image
-                src={bundle.thumbnailUrl}
+            {normalizeUrl(bundle.thumbnailUrl) && (
+              <img
+                src={normalizeUrl(bundle.thumbnailUrl)!}
                 alt={bundle.title}
                 width={60}
                 height={40}

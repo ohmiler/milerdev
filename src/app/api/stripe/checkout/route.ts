@@ -136,7 +136,7 @@ export async function POST(request: Request) {
                 type: "course",
                 ...(appliedCouponId && { couponId: appliedCouponId }),
             },
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}/payment-success`,
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}?payment=cancelled`,
         });
 
