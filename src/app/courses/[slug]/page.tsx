@@ -293,7 +293,7 @@ export default async function CourseDetailPage({ params }: Props) {
                   boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
                   overflow: 'hidden',
                   position: 'sticky',
-                  top: '80px',
+                  top: '120px',
                 }}>
                   {/* Thumbnail */}
                   <div style={{
