@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
 import { createCourseSchema, validateBody } from '@/lib/validations/admin';
 
@@ -51,12 +51,20 @@ export async function POST(request: Request) {
       .replace(/^-|-$/g, '')
       .substring(0, 100);
 
+    const finalSlug = slug || createId();
+
+    // Check for duplicate slug
+    const existingCourse = await db.select({ id: courses.id }).from(courses).where(eq(courses.slug, finalSlug)).limit(1);
+    if (existingCourse.length > 0) {
+      return NextResponse.json({ error: `Slug "${finalSlug}" ถูกใช้แล้ว กรุณาเปลี่ยน Slug` }, { status: 400 });
+    }
+
     const courseId = createId();
 
     await db.insert(courses).values({
       id: courseId,
       title,
-      slug: slug || courseId,
+      slug: finalSlug,
       description: description || null,
       price: String(parseFloat(String(price ?? 0)) || 0),
       status: status || 'draft',

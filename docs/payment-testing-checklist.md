@@ -34,34 +34,34 @@
 
 ## 2. ซื้อ Bundle (Stripe)
 
-- [ ] **2.1** กดซื้อ Bundle → redirect ไป Stripe Checkout
-- [ ] **2.2** จ่ายสำเร็จ → enrollment สร้างทุกคอร์สใน Bundle
-- [ ] **2.3** เช็คว่าทุกคอร์สใน Bundle เข้าถึงได้
-- [ ] **2.4** กดซื้อ Bundle เดิมอีก (ถ้าเรียนครบแล้ว) → แจ้งว่าลงทะเบียนครบแล้ว
+- [✅] **2.1** กดซื้อ Bundle → redirect ไป Stripe Checkout
+- [✅] **2.2** จ่ายสำเร็จ → enrollment สร้างทุกคอร์สใน Bundle
+- [✅] **2.3** เช็คว่าทุกคอร์สใน Bundle เข้าถึงได้
+- [✅] **2.4** กดซื้อ Bundle เดิมอีก (ถ้าเรียนครบแล้ว) → แจ้งว่าลงทะเบียนครบแล้ว
 
 ## 3. Promo Price
 
-- [ ] **3.1** ตั้ง promo price ที่ course → หน้าชำระแสดงราคา promo
-- [ ] **3.2** จ่ายด้วย promo price → Stripe amount = promo price (ไม่ใช่ original)
-- [ ] **3.3** Promo หมดอายุ → แสดง original price
+- [✅] **3.1** ตั้ง promo price ที่ course → หน้าชำระแสดงราคา promo
+- [✅] **3.2** จ่ายด้วย promo price → Stripe amount = promo price (ไม่ใช่ original)
+- [✅] **3.3** Promo หมดอายุ → แสดง original price
 
 ## 4. Coupon
 
-- [ ] **4.1** ใส่ coupon code ถูกต้อง → แสดงส่วนลด
-- [ ] **4.2** Coupon ลดบางส่วน → Stripe amount = ราคาหลังลด
-- [ ] **4.3** Coupon ลด 100% → ลงทะเบียนฟรี (ไม่ redirect ไป Stripe)
-- [ ] **4.4** Coupon หมดอายุ → แจ้ง error
-- [ ] **4.5** Coupon ใช้ครบจำนวน → แจ้ง error
-- [ ] **4.6** Coupon ที่กำหนดเฉพาะคอร์ส → ใช้กับคอร์สอื่นไม่ได้
-- [ ] **4.7** Coupon + Promo price → ลดจากราคา promo (ไม่ใช่ original)
-- [ ] **4.8** ใช้ coupon เดิมซ้ำ (ถ้า perUserLimit = 1) → แจ้ง error
+- [✅] **4.1** ใส่ coupon code ถูกต้อง → แสดงส่วนลด
+- [✅] **4.2** Coupon ลดบางส่วน → Stripe amount = ราคาหลังลด
+- [✅] **4.3** Coupon ลด 100% → ลงทะเบียนฟรี (ไม่ redirect ไป Stripe)
+- [✅] **4.4** Coupon หมดอายุ → แจ้ง error
+- [✅] **4.5** Coupon ใช้ครบจำนวน → แจ้ง error
+- [✅] **4.6** Coupon ที่กำหนดเฉพาะคอร์ส → ใช้กับคอร์สอื่นไม่ได้
+- [✅] **4.7** Coupon + Promo price → ลดจากราคา promo (ไม่ใช่ original)
+- [✅] **4.8** ใช้ coupon เดิมซ้ำ (ถ้า perUserLimit = 1) → แจ้ง error
 
 ## 5. Slip Payment (PromptPay)
 
-- [ ] **5.1** อัปโหลดสลิปถูกต้อง ยอดตรง → payment completed + enrollment สร้าง
+- [✅] **5.1** อัปโหลดสลิปถูกต้อง ยอดตรง → payment completed + enrollment สร้าง
 - [ ] **5.2** อัปโหลดสลิปยอดไม่ตรง (สลิป < ราคา) → แจ้ง error ยอดไม่ตรง
-- [ ] **5.3** อัปโหลดสลิปซ้ำ (reuse) → แจ้ง error สลิปซ้ำ (code 1003)
-- [ ] **5.4** อัปโหลดรูปที่ไม่ใช่สลิป → แจ้ง error อ่านไม่ได้
+- [✅] **5.3** อัปโหลดสลิปซ้ำ (reuse) → แจ้ง error สลิปซ้ำ (code 1003)
+- [✅] **5.4** อัปโหลดรูปที่ไม่ใช่สลิป → แจ้ง error อ่านไม่ได้
 - [ ] **5.5** Slip + Coupon → ยอดชำระหลังลด coupon
 
 ## 6. Bundle Slip Payment

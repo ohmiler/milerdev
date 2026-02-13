@@ -420,7 +420,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
                   onClick={async () => {
                     setLoading(true);
                     try {
-                      const res = await fetch('/api/enrollments', {
+                      const res = await fetch('/api/enroll', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ courseId, couponId: appliedCoupon.couponId }),

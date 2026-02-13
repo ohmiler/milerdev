@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { courses, enrollments, payments } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { courses, enrollments, payments, coupons, couponUsages } from '@/lib/db/schema';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { safeInsertEnrollment } from '@/lib/db/safe-insert';
+import { safeInsertEnrollment, isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { stripe } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
@@ -83,6 +83,26 @@ async function verifyAndFulfill(sessionId: string | undefined, userId: string, c
 
     // Create enrollment (safe — handles duplicates)
     await safeInsertEnrollment(userId, courseId);
+
+    // Record coupon usage if coupon was applied (idempotent)
+    const couponId = stripeSession.metadata?.couponId;
+    if (couponId && userId) {
+      try {
+        await db.insert(couponUsages).values({
+          couponId,
+          userId,
+          courseId,
+          discountAmount: '0',
+        });
+        await db.update(coupons)
+          .set({ usageCount: sql`${coupons.usageCount} + 1` })
+          .where(eq(coupons.id, couponId));
+      } catch (dupErr) {
+        if (!isDuplicateKeyError(dupErr)) {
+          console.error('Failed to record coupon usage:', dupErr);
+        }
+      }
+    }
   } catch (error) {
     console.error('Stripe session verification fallback failed:', error);
   }

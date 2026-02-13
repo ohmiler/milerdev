@@ -357,18 +357,26 @@ export default function AdminPaymentsPage() {
                           )}
                         </div>
                         {payment.slipUrl && (
-                          <a
-                            href={payment.slipUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              fontSize: '0.75rem',
-                              color: '#2563eb',
-                              textDecoration: 'none',
-                            }}
-                          >
-                            ดูสลิป
-                          </a>
+                          payment.slipUrl.startsWith('http') ? (
+                            <a
+                              href={payment.slipUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                fontSize: '0.75rem',
+                                color: '#2563eb',
+                                textDecoration: 'none',
+                                display: 'inline-block',
+                                marginTop: '4px',
+                              }}
+                            >
+                              🧾 ดูสลิป
+                            </a>
+                          ) : (
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                              🧾 Ref: <span style={{ fontFamily: 'monospace', color: '#475569', userSelect: 'all' }}>{payment.slipUrl}</span>
+                            </div>
+                          )
                         )}
                       </td>
                       <td style={{ padding: '16px', textAlign: 'center' }}>

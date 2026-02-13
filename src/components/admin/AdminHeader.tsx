@@ -213,7 +213,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                 </nav>
 
                 {/* Right Side */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto' }}>
                     <span className="admin-user-name" style={{
                         color: '#94a3b8',
                         fontSize: '0.8125rem',
