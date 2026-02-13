@@ -120,14 +120,14 @@ export async function GET(request: Request) {
       case 'revenue-monthly': {
         const data = await db
           .select({
-            month: sql<string>`strftime('%Y-%m', created_at)`,
+            month: sql<string>`DATE_FORMAT(created_at, '%Y-%m')`,
             revenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
             transactions: sql<number>`COUNT(CASE WHEN status = 'completed' THEN 1 END)`,
           })
           .from(payments)
           .where(gte(payments.createdAt, startDate))
-          .groupBy(sql`strftime('%Y-%m', created_at)`)
-          .orderBy(sql`strftime('%Y-%m', created_at)`);
+          .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
+          .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m')`);
 
         csvContent = 'เดือน,รายได้,จำนวนรายการ\n';
         data.forEach(row => {

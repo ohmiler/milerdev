@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { payments, enrollments, users, courses, lessons } from '@/lib/db/schema';
+import { payments, enrollments, users, courses, lessons, bundles } from '@/lib/db/schema';
 import { desc, eq, sql, gte, lte, and, count } from 'drizzle-orm';
 
 // GET /api/admin/reports - Get comprehensive report data
@@ -37,6 +37,7 @@ export async function GET(request: Request) {
       monthlyUsers,
       coursePerformance,
       revenueByCourse,
+      revenueByBundle,
       userStatsResult,
       completionStatsResult,
       paymentMethods,
@@ -100,7 +101,7 @@ export async function GET(request: Request) {
         .groupBy(courses.id, courses.title, courses.price)
         .orderBy(desc(sql`COUNT(DISTINCT ${enrollments.id})`))
         .limit(10),
-      // Revenue by Course
+      // Revenue by Course (single course payments only)
       db
         .select({
           courseId: courses.id,
@@ -111,6 +112,19 @@ export async function GET(request: Request) {
         .from(courses)
         .leftJoin(payments, eq(courses.id, payments.courseId))
         .groupBy(courses.id, courses.title)
+        .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`))
+        .limit(10),
+      // Revenue by Bundle
+      db
+        .select({
+          bundleId: bundles.id,
+          bundleTitle: bundles.title,
+          revenue: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`,
+          transactions: sql<number>`COUNT(CASE WHEN ${payments.status} = 'completed' THEN 1 END)`,
+        })
+        .from(bundles)
+        .leftJoin(payments, eq(bundles.id, payments.bundleId))
+        .groupBy(bundles.id, bundles.title)
         .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`))
         .limit(10),
       // User Growth Stats
@@ -186,6 +200,7 @@ export async function GET(request: Request) {
       monthlyUsers,
       coursePerformance,
       revenueByCourse,
+      revenueByBundle,
       userStats: userStats || { total: 0, admins: 0, instructors: 0, students: 0 },
       completionStats: completionStats || { total: 0, completed: 0, inProgress: 0, notStarted: 0 },
       paymentMethods,

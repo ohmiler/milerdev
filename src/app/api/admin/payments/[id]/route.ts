@@ -159,8 +159,25 @@ export async function PUT(request: Request, { params }: RouteParams) {
       }
     }
 
-    // If status changed to 'refunded' from 'completed', you might want to remove enrollment
-    // This is optional based on business logic
+    // If status changed to 'refunded' from 'completed', remove enrollment
+    if (status === 'refunded' && previousStatus === 'completed' && existingPayment.userId) {
+      if (existingPayment.bundleId) {
+        const bCourses = await db
+          .select({ courseId: bundleCourses.courseId })
+          .from(bundleCourses)
+          .where(eq(bundleCourses.bundleId, existingPayment.bundleId));
+
+        for (const bc of bCourses) {
+          await db.delete(enrollments).where(
+            and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, bc.courseId))
+          );
+        }
+      } else if (existingPayment.courseId) {
+        await db.delete(enrollments).where(
+          and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, existingPayment.courseId))
+        );
+      }
+    }
 
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'payment', entityId: id, oldValue: `status: ${previousStatus}`, newValue: `status: ${status}` });
 

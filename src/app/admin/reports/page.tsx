@@ -40,6 +40,13 @@ interface RevenueByCourse {
   transactions: number;
 }
 
+interface RevenueByBundle {
+  bundleId: string;
+  bundleTitle: string;
+  revenue: number;
+  transactions: number;
+}
+
 interface UserStats {
   total: number;
   admins: number;
@@ -68,6 +75,7 @@ interface ReportData {
   monthlyUsers: MonthlyData[];
   coursePerformance: CoursePerformance[];
   revenueByCourse: RevenueByCourse[];
+  revenueByBundle: RevenueByBundle[];
   userStats: UserStats;
   completionStats: CompletionStats;
   paymentMethods: PaymentMethod[];
@@ -469,6 +477,35 @@ export default function AdminReportsPage() {
               </div>
             )}
           </div>
+
+          {/* Revenue by Bundle */}
+          {data.revenueByBundle && data.revenueByBundle.length > 0 && (
+            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
+                📦 รายได้ตาม Bundle (Top 10)
+              </h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Bundle</th>
+                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>รายได้</th>
+                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>รายการ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.revenueByBundle.map((bundle) => (
+                      <tr key={bundle.bundleId} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '12px', color: '#1e293b' }}>{bundle.bundleTitle || 'ไม่ระบุ'}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#16a34a' }}>{formatCurrency(bundle.revenue)}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', color: '#64748b' }}>{bundle.transactions}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Course Performance */}
           <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>

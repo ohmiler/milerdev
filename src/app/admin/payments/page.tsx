@@ -101,6 +101,22 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  const handleCleanup = async () => {
+    if (!confirm('ต้องการลบรายการ pending ที่ค้างเกิน 24 ชั่วโมงทั้งหมดใช่ไหม?')) return;
+    try {
+      const res = await fetch('/api/admin/payments/cleanup', { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`${data.message} (${data.deleted} รายการ)`, 'success');
+        await fetchPayments();
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch {
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+    }
+  };
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'รอดำเนินการ';
@@ -148,11 +164,28 @@ export default function AdminPaymentsPage() {
   return (
     <div>
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-          จัดการการชำระเงิน
-        </h1>
-        <p style={{ color: '#64748b' }}>ตรวจสอบและจัดการรายการชำระเงินทั้งหมด</p>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+            จัดการการชำระเงิน
+          </h1>
+          <p style={{ color: '#64748b' }}>ตรวจสอบและจัดการรายการชำระเงินทั้งหมด</p>
+        </div>
+        <button
+          onClick={handleCleanup}
+          style={{
+            padding: '8px 16px',
+            background: '#fef3c7',
+            color: '#d97706',
+            border: '1px solid #fde68a',
+            borderRadius: '8px',
+            fontSize: '0.8125rem',
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          🧹 ล้าง Pending เก่า (24 ชม.)
+        </button>
       </div>
 
       {/* Stats Cards */}
