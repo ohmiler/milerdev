@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { bundles, bundleCourses, courses, payments } from "@/lib/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/stripe/bundle-checkout - Create Stripe checkout session for bundle
@@ -51,18 +51,39 @@ export async function POST(request: Request) {
 
         const courseNames = bCourses.map(c => c.courseTitle).join(', ');
 
-        // Create pending payment record
-        const paymentId = crypto.randomUUID();
-        await db.insert(payments).values({
-            id: paymentId,
-            userId: session.user.id,
-            bundleId: bundle.id,
-            amount: priceNumber.toString(),
-            currency: "THB",
-            method: "stripe",
-            itemTitle: `📦 ${bundle.title}`,
-            status: "pending",
-        });
+        // Reuse existing pending payment or create new one
+        const [existingPending] = await db
+            .select()
+            .from(payments)
+            .where(
+                and(
+                    eq(payments.userId, session.user.id),
+                    eq(payments.bundleId, bundle.id),
+                    eq(payments.status, 'pending'),
+                    eq(payments.method, 'stripe')
+                )
+            )
+            .limit(1);
+
+        let paymentId: string;
+        if (existingPending) {
+            paymentId = existingPending.id;
+            await db.update(payments).set({
+                amount: priceNumber.toString(),
+            }).where(eq(payments.id, existingPending.id));
+        } else {
+            paymentId = crypto.randomUUID();
+            await db.insert(payments).values({
+                id: paymentId,
+                userId: session.user.id,
+                bundleId: bundle.id,
+                amount: priceNumber.toString(),
+                currency: "THB",
+                method: "stripe",
+                itemTitle: `📦 ${bundle.title}`,
+                status: "pending",
+            });
+        }
 
         // Normalize thumbnail URL
         const thumbnailUrl = bundle.thumbnailUrl

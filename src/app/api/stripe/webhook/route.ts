@@ -145,20 +145,32 @@ export async function POST(request: Request) {
                 console.log(`[Webhook] Payment ${paymentId} completed and enrollment created`);
             }
 
-            // Record coupon usage if coupon was applied
+            // Record coupon usage if coupon was applied (idempotent — skip if already recorded)
             if (couponId && userId) {
                 try {
-                    const targetCourseId = type === 'course' ? courseId : null;
-                    await db.insert(couponUsages).values({
-                        couponId,
-                        userId,
-                        ...(targetCourseId && { courseId: targetCourseId }),
-                        discountAmount: '0', // Actual discount already applied at checkout
-                    });
-                    await db.update(coupons)
-                        .set({ usageCount: sql`${coupons.usageCount} + 1` })
-                        .where(eq(coupons.id, couponId));
-                    console.log(`[Webhook] Coupon ${couponId} usage recorded`);
+                    const [existingUsage] = await db.select({ id: couponUsages.id }).from(couponUsages)
+                        .where(and(
+                            eq(couponUsages.couponId, couponId),
+                            eq(couponUsages.userId, userId),
+                            ...(type === 'course' && courseId ? [eq(couponUsages.courseId, courseId)] : []),
+                        ))
+                        .limit(1);
+
+                    if (!existingUsage) {
+                        const targetCourseId = type === 'course' ? courseId : null;
+                        await db.insert(couponUsages).values({
+                            couponId,
+                            userId,
+                            ...(targetCourseId && { courseId: targetCourseId }),
+                            discountAmount: '0',
+                        });
+                        await db.update(coupons)
+                            .set({ usageCount: sql`${coupons.usageCount} + 1` })
+                            .where(eq(coupons.id, couponId));
+                        console.log(`[Webhook] Coupon ${couponId} usage recorded`);
+                    } else {
+                        console.log(`[Webhook] Coupon ${couponId} usage already recorded, skipping`);
+                    }
                 } catch (couponError) {
                     console.error('Failed to record coupon usage:', couponError);
                 }

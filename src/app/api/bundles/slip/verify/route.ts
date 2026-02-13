@@ -65,6 +65,24 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Bundle has no courses" }, { status: 400 });
         }
 
+        // Check if already enrolled in ALL courses of the bundle
+        let alreadyEnrolledCount = 0;
+        for (const bc of bCourses) {
+            const existing = await db.query.enrollments.findFirst({
+                where: and(
+                    eq(enrollments.userId, session.user.id),
+                    eq(enrollments.courseId, bc.courseId)
+                ),
+            });
+            if (existing) alreadyEnrolledCount++;
+        }
+        if (alreadyEnrolledCount === bCourses.length) {
+            return NextResponse.json(
+                { error: "คุณลงทะเบียนคอร์สทั้งหมดใน Bundle นี้แล้ว" },
+                { status: 400 }
+            );
+        }
+
         // Create pending payment record
         const paymentId = createId();
         await db.insert(payments).values({

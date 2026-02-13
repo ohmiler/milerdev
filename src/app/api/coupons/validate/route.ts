@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { coupons, couponUsages } from '@/lib/db/schema';
+import { coupons, couponUsages, courses } from '@/lib/db/schema';
 import { eq, and, count } from 'drizzle-orm';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
@@ -18,11 +18,30 @@ export async function POST(request: Request) {
       return rateLimitResponse(rateLimit.resetTime);
     }
 
-    const { code, courseId, originalPrice } = await request.json();
+    const { code, courseId } = await request.json();
 
-    if (!code || !courseId || originalPrice === undefined) {
-      return NextResponse.json({ error: 'กรุณาระบุรหัสคูปอง, คอร์ส, และราคา' }, { status: 400 });
+    if (!code || !courseId) {
+      return NextResponse.json({ error: 'กรุณาระบุรหัสคูปองและคอร์ส' }, { status: 400 });
     }
+
+    // Fetch course price from DB (never trust client)
+    const [course] = await db.select({
+      price: courses.price,
+      promoPrice: courses.promoPrice,
+      promoStartsAt: courses.promoStartsAt,
+      promoEndsAt: courses.promoEndsAt,
+    }).from(courses).where(eq(courses.id, courseId)).limit(1);
+
+    if (!course) {
+      return NextResponse.json({ error: 'ไม่พบคอร์ส' }, { status: 404 });
+    }
+
+    const now = new Date();
+    const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
+    const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
+    const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
+    const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+    const originalPrice = isPromoActive ? parseFloat(course.promoPrice!.toString()) : parseFloat(course.price || '0');
 
     const [coupon] = await db
       .select()
@@ -39,8 +58,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ valid: false, error: 'คูปองนี้ถูกปิดใช้งานแล้ว' }, { status: 400 });
     }
 
-    // Check date range
-    const now = new Date();
+    // Check date range (reuse 'now' from promo check above)
     if (coupon.startsAt && now < new Date(coupon.startsAt)) {
       return NextResponse.json({ valid: false, error: 'คูปองนี้ยังไม่เริ่มใช้งาน' }, { status: 400 });
     }
@@ -72,7 +90,7 @@ export async function POST(request: Request) {
     }
 
     // Check minimum purchase
-    const price = parseFloat(originalPrice);
+    const price = originalPrice;
     const minPurchase = parseFloat(coupon.minPurchase || '0');
     if (price < minPurchase) {
       return NextResponse.json({

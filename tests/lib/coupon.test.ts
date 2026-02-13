@@ -77,6 +77,17 @@ describe('Coupon Business Logic', () => {
         it('should return true for free course (price 0)', () => {
             expect(isCouponFullDiscount(0, 'percentage', '10')).toBe(true);
         });
+
+        // Edge case: promo price + coupon
+        it('should return true for fixed coupon covering promo price', () => {
+            // Course promo ฿990, coupon fixed ฿1000 → free
+            expect(isCouponFullDiscount(990, 'fixed', '1000')).toBe(true);
+        });
+
+        it('should return false for fixed coupon not covering promo price', () => {
+            // Course promo ฿990, coupon fixed ฿500 → not free
+            expect(isCouponFullDiscount(990, 'fixed', '500')).toBe(false);
+        });
     });
 
     describe('validateCouponEligibility', () => {
@@ -254,6 +265,26 @@ describe('Coupon Business Logic', () => {
             );
             expect(result.valid).toBe(false);
             expect(result.error).toContain('หมดอายุ');
+        });
+
+        // Edge case: promo price + coupon combined
+        it('should validate against promo price (not original)', () => {
+            // Course: original ฿1990, promo ฿990, coupon minPurchase ฿500
+            // Should pass because promo price ฿990 >= minPurchase ฿500
+            const result = validateCouponEligibility(
+                { ...baseCoupon, minPurchase: '500' },
+                { ...baseOpts, coursePrice: 990 }, // promo price, not original
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        it('should reject when promo price below minPurchase', () => {
+            // Course: promo ฿200, coupon minPurchase ฿500
+            const result = validateCouponEligibility(
+                { ...baseCoupon, minPurchase: '500' },
+                { ...baseOpts, coursePrice: 200 },
+            );
+            expect(result.valid).toBe(false);
         });
 
         it('should accept coupon when all conditions are met', () => {

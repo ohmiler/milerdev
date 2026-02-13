@@ -65,8 +65,16 @@ export async function POST(request: Request) {
             );
         }
 
+        // Calculate effective price (use promo price if active)
+        const originalPrice = parseFloat(course.price || '0');
+        const now = new Date();
+        const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
+        const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
+        const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
+        const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+        const coursePrice = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
+
         // If course is paid, verify payment
-        const coursePrice = parseFloat(course.price || '0');
         if (coursePrice > 0 && paymentId) {
             const payment = await db.query.payments.findFirst({
                 where: and(
