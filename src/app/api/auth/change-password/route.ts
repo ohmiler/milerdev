@@ -93,6 +93,8 @@ export async function POST(request: Request) {
             .update(users)
             .set({
                 passwordHash: newHash,
+                resetToken: null,
+                resetExpires: null,
                 updatedAt: new Date(),
             })
             .where(eq(users.id, session.user.id));

@@ -51,6 +51,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       .update(users)
       .set({
         passwordHash: hashedPassword,
+        resetToken: null,
+        resetExpires: null,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id));
