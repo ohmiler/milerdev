@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateDiscount, isCouponFullDiscount } from '@/lib/coupon';
+import { calculateDiscount, isCouponFullDiscount, validateCouponEligibility } from '@/lib/coupon';
 
 describe('Coupon Business Logic', () => {
     describe('calculateDiscount', () => {
@@ -76,6 +76,201 @@ describe('Coupon Business Logic', () => {
 
         it('should return true for free course (price 0)', () => {
             expect(isCouponFullDiscount(0, 'percentage', '10')).toBe(true);
+        });
+    });
+
+    describe('validateCouponEligibility', () => {
+        const baseCoupon = {
+            isActive: true,
+            startsAt: null,
+            expiresAt: null,
+            courseId: null,
+            usageLimit: null,
+            usageCount: 0,
+            perUserLimit: null,
+            minPurchase: null,
+        };
+        const baseOpts = { targetCourseId: 'course-1', userUsageCount: 0, coursePrice: 1000 };
+
+        // isActive
+        it('should reject inactive coupon', () => {
+            const result = validateCouponEligibility({ ...baseCoupon, isActive: false }, baseOpts);
+            expect(result.valid).toBe(false);
+            expect(result.error).toContain('ปิดใช้งาน');
+        });
+
+        it('should reject null isActive', () => {
+            const result = validateCouponEligibility({ ...baseCoupon, isActive: null }, baseOpts);
+            expect(result.valid).toBe(false);
+        });
+
+        it('should accept active coupon', () => {
+            const result = validateCouponEligibility(baseCoupon, baseOpts);
+            expect(result.valid).toBe(true);
+        });
+
+        // Date range
+        it('should reject coupon that has not started yet', () => {
+            const tomorrow = new Date(Date.now() + 86400000);
+            const result = validateCouponEligibility({ ...baseCoupon, startsAt: tomorrow }, baseOpts);
+            expect(result.valid).toBe(false);
+            expect(result.error).toContain('ยังไม่เริ่ม');
+        });
+
+        it('should reject expired coupon', () => {
+            const yesterday = new Date(Date.now() - 86400000);
+            const result = validateCouponEligibility({ ...baseCoupon, expiresAt: yesterday }, baseOpts);
+            expect(result.valid).toBe(false);
+            expect(result.error).toContain('หมดอายุ');
+        });
+
+        it('should accept coupon within date range', () => {
+            const yesterday = new Date(Date.now() - 86400000);
+            const tomorrow = new Date(Date.now() + 86400000);
+            const result = validateCouponEligibility(
+                { ...baseCoupon, startsAt: yesterday, expiresAt: tomorrow },
+                baseOpts,
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        it('should accept coupon with no date restrictions', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, startsAt: null, expiresAt: null },
+                baseOpts,
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        // Course restriction
+        it('should reject coupon for wrong course', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, courseId: 'course-99' },
+                { ...baseOpts, targetCourseId: 'course-1' },
+            );
+            expect(result.valid).toBe(false);
+            expect(result.error).toContain('ไม่สามารถใช้กับคอร์สนี้');
+        });
+
+        it('should accept coupon for matching course', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, courseId: 'course-1' },
+                { ...baseOpts, targetCourseId: 'course-1' },
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        it('should accept global coupon (no courseId) for any course', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, courseId: null },
+                { ...baseOpts, targetCourseId: 'course-1' },
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        // Usage limits
+        it('should reject coupon when total usage limit reached', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, usageLimit: 10, usageCount: 10 },
+                baseOpts,
+            );
+            expect(result.valid).toBe(false);
+            expect(result.error).toContain('ครบจำนวน');
+        });
+
+        it('should accept coupon when under total usage limit', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, usageLimit: 10, usageCount: 9 },
+                baseOpts,
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        it('should accept coupon with no usage limit', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, usageLimit: null, usageCount: 999 },
+                baseOpts,
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        // Per-user limit
+        it('should reject coupon when per-user limit reached', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, perUserLimit: 1 },
+                { ...baseOpts, userUsageCount: 1 },
+            );
+            expect(result.valid).toBe(false);
+            expect(result.error).toContain('คุณใช้คูปองนี้ครบ');
+        });
+
+        it('should accept coupon when under per-user limit', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, perUserLimit: 3 },
+                { ...baseOpts, userUsageCount: 2 },
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        it('should accept coupon with no per-user limit', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, perUserLimit: null },
+                { ...baseOpts, userUsageCount: 100 },
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        // Minimum purchase
+        it('should reject coupon when course price below minPurchase', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, minPurchase: '2000' },
+                { ...baseOpts, coursePrice: 1000 },
+            );
+            expect(result.valid).toBe(false);
+            expect(result.error).toContain('ราคาขั้นต่ำ');
+        });
+
+        it('should accept coupon when course price meets minPurchase', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, minPurchase: '500' },
+                { ...baseOpts, coursePrice: 1000 },
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        it('should accept coupon when minPurchase is null', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, minPurchase: null },
+                { ...baseOpts, coursePrice: 1 },
+            );
+            expect(result.valid).toBe(true);
+        });
+
+        // Combined: multiple conditions
+        it('should reject expired coupon even if everything else is valid', () => {
+            const result = validateCouponEligibility(
+                { ...baseCoupon, expiresAt: new Date(Date.now() - 1000), usageLimit: 100, usageCount: 0 },
+                { ...baseOpts, userUsageCount: 0 },
+            );
+            expect(result.valid).toBe(false);
+            expect(result.error).toContain('หมดอายุ');
+        });
+
+        it('should accept coupon when all conditions are met', () => {
+            const result = validateCouponEligibility(
+                {
+                    ...baseCoupon,
+                    startsAt: new Date(Date.now() - 86400000),
+                    expiresAt: new Date(Date.now() + 86400000),
+                    courseId: 'course-1',
+                    usageLimit: 100,
+                    usageCount: 50,
+                    perUserLimit: 3,
+                    minPurchase: '500',
+                },
+                { targetCourseId: 'course-1', userUsageCount: 1, coursePrice: 1990 },
+            );
+            expect(result.valid).toBe(true);
         });
     });
 });
