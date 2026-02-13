@@ -86,12 +86,11 @@ export async function POST(request: Request) {
     // Check if course is free or paid
     const price = parseFloat(course.price || '0');
     
-    // For paid courses, we would integrate payment here
-    // For now, we'll allow free enrollment or skip payment for demo
     if (price > 0) {
-      // TODO: Integrate payment gateway (Stripe, PromptPay, etc.)
-      // For demo purposes, we'll allow enrollment anyway
-      console.log(`Note: Course ${course.title} costs ${price} THB - payment skipped for demo`);
+      return NextResponse.json(
+        { error: 'คอร์สนี้ต้องชำระเงินก่อนลงทะเบียน' },
+        { status: 402 }
+      );
     }
 
     // Create enrollment

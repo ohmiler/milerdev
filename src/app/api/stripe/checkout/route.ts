@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { courses, payments } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { courses, payments, coupons, couponUsages } from "@/lib/db/schema";
+import { eq, and, count } from "drizzle-orm";
+import { calculateDiscount } from "@/lib/coupon";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/stripe/checkout - Create Stripe checkout session
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
             return rateLimitResponse(rateLimit.resetTime);
         }
 
-        const { courseId } = await request.json();
+        const { courseId, couponId } = await request.json();
 
         // Get course details
         const course = await db.query.courses.findFirst({
@@ -38,7 +39,34 @@ export async function POST(request: Request) {
         const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
         const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
         const isPromoActive = hasPromo && promoStartOk && promoEndOk;
-        const priceNumber = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
+        let priceNumber = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
+
+        // Apply coupon discount if provided
+        let appliedCouponId: string | null = null;
+        if (couponId) {
+            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
+            if (coupon && coupon.isActive) {
+                // Validate coupon is for this course or global
+                if (!coupon.courseId || coupon.courseId === courseId) {
+                    // Check usage limits
+                    const [userUsage] = await db.select({ count: count() }).from(couponUsages)
+                        .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
+                    const withinUserLimit = !coupon.perUserLimit || (userUsage?.count || 0) < coupon.perUserLimit;
+                    const withinTotalLimit = !coupon.usageLimit || (coupon.usageCount || 0) < coupon.usageLimit;
+
+                    if (withinUserLimit && withinTotalLimit) {
+                        const discount = calculateDiscount(
+                            priceNumber,
+                            coupon.discountType as 'percentage' | 'fixed',
+                            coupon.discountValue,
+                            coupon.maxDiscount,
+                        );
+                        priceNumber = Math.max(0, priceNumber - discount);
+                        appliedCouponId = coupon.id;
+                    }
+                }
+            }
+        }
 
         if (priceNumber <= 0) {
             return NextResponse.json(
@@ -47,11 +75,29 @@ export async function POST(request: Request) {
             );
         }
 
-        // Create pending payment record
-        const paymentId = crypto.randomUUID();
-        await db
-            .insert(payments)
-            .values({
+        // Reuse existing pending payment or create new one
+        const [existingPending] = await db
+            .select()
+            .from(payments)
+            .where(
+                and(
+                    eq(payments.userId, session.user.id),
+                    eq(payments.courseId, course.id),
+                    eq(payments.status, 'pending'),
+                    eq(payments.method, 'stripe')
+                )
+            )
+            .limit(1);
+
+        let paymentId: string;
+        if (existingPending) {
+            paymentId = existingPending.id;
+            await db.update(payments).set({
+                amount: priceNumber.toString(),
+            }).where(eq(payments.id, existingPending.id));
+        } else {
+            paymentId = crypto.randomUUID();
+            await db.insert(payments).values({
                 id: paymentId,
                 userId: session.user.id,
                 courseId: course.id,
@@ -61,6 +107,7 @@ export async function POST(request: Request) {
                 itemTitle: course.title,
                 status: "pending",
             });
+        }
 
         // Create Stripe checkout session
         const checkoutSession = await stripe.checkout.sessions.create({
@@ -87,6 +134,7 @@ export async function POST(request: Request) {
                 userId: session.user.id,
                 courseId: course.id,
                 type: "course",
+                ...(appliedCouponId && { couponId: appliedCouponId }),
             },
             success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}/payment-success`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}?payment=cancelled`,

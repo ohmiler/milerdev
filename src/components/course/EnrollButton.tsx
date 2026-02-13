@@ -161,7 +161,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId }),
+        body: JSON.stringify({ courseId, ...(appliedCoupon && { couponId: appliedCoupon.couponId }) }),
       });
 
       const data = await res.json();
@@ -229,7 +229,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       const formData = new FormData();
       formData.append('slip', slipFile);
       formData.append('courseId', courseId);
-      formData.append('amount', price.toString());
+      formData.append('amount', effectivePrice.toString());
 
       const res = await fetch('/api/slip/verify', {
         method: 'POST',
@@ -517,7 +517,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
           <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '480px', width: '100%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>โอนเงินและแนบสลิป</h3>
-            <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '20px' }}>ยอดชำระ <strong style={{ color: '#2563eb', fontSize: '1.1rem' }}>฿{price.toLocaleString()}</strong></p>
+            <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '20px' }}>ยอดชำระ <strong style={{ color: '#2563eb', fontSize: '1.1rem' }}>฿{effectivePrice.toLocaleString()}</strong></p>
 
             {/* Bank Info */}
             <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
@@ -537,7 +537,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#64748b', fontSize: '0.875rem' }}>จำนวนเงิน</span>
-                  <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '1.1rem' }}>฿{price.toLocaleString()}</span>
+                  <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '1.1rem' }}>฿{effectivePrice.toLocaleString()}</span>
                 </div>
               </div>
             </div>

@@ -54,39 +54,23 @@ async function getPaymentStatus(slug: string, userId: string) {
   };
 }
 
-// Auto-enroll if payment exists but not enrolled yet
-async function autoEnrollIfNeeded(userId: string, courseId: string, payment: { id: string; status: string } | undefined, isEnrolled: boolean) {
-  if (!payment) return isEnrolled;
+// Check if enrollment exists (webhook handles actual enrollment)
+async function checkEnrollmentStatus(userId: string, courseId: string, isEnrolled: boolean) {
+  if (isEnrolled) return true;
 
-  // Auto-enroll if payment is pending (just paid, webhook not processed yet) or completed
-  if (payment.status === 'pending' || payment.status === 'completed') {
-    // If payment is pending, mark as completed (Stripe checkout was successful)
-    if (payment.status === 'pending') {
-      try {
-        await db
-          .update(payments)
-          .set({ status: 'completed' })
-          .where(eq(payments.id, payment.id));
-      } catch (error) {
-        console.error('Auto-complete payment error:', error);
-      }
-    }
+  // Re-check enrollment in case webhook processed while page was loading
+  const [enrollment] = await db
+    .select()
+    .from(enrollments)
+    .where(
+      and(
+        eq(enrollments.userId, userId),
+        eq(enrollments.courseId, courseId)
+      )
+    )
+    .limit(1);
 
-    if (!isEnrolled) {
-      try {
-        await db.insert(enrollments).values({
-          userId,
-          courseId,
-        });
-        return true;
-      } catch (error) {
-        console.error('Auto-enroll error:', error);
-        return false;
-      }
-    }
-    return true;
-  }
-  return isEnrolled;
+  return !!enrollment;
 }
 
 export default async function PaymentSuccessPage({ params }: Props) {
@@ -106,11 +90,10 @@ export default async function PaymentSuccessPage({ params }: Props) {
 
   const { course, isEnrolled, payment } = data;
 
-  // Auto-enroll if payment completed but not enrolled
-  const enrolled = await autoEnrollIfNeeded(
+  // Check enrollment status (webhook handles actual enrollment)
+  const enrolled = await checkEnrollmentStatus(
     session.user.id,
     course.id,
-    payment,
     isEnrolled
   );
 
@@ -197,7 +180,7 @@ export default async function PaymentSuccessPage({ params }: Props) {
                 {course.title}
               </h3>
               <p style={{ color: '#16a34a', fontWeight: 600, fontSize: '0.875rem' }}>
-                ฿{parseFloat(course.price.toString()).toLocaleString()}
+                ฿{payment ? parseFloat(payment.amount.toString()).toLocaleString() : parseFloat(course.price.toString()).toLocaleString()}
               </p>
             </div>
           </div>

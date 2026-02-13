@@ -74,49 +74,25 @@ async function getBundlePaymentStatus(slug: string, userId: string) {
   };
 }
 
-// Auto-enroll in all bundle courses if payment exists but not enrolled
-async function autoEnrollBundle(
+// Check enrollment status (webhook handles actual enrollment)
+async function checkBundleEnrollment(
   userId: string,
-  bundleCourseList: { courseId: string; isEnrolled: boolean }[],
-  payment: { id: string; status: string } | undefined
+  bundleCourseList: { courseId: string; isEnrolled: boolean }[]
 ) {
-  if (!payment) return false;
+  // Re-check enrollment for courses that weren't enrolled on first check
+  const results = await Promise.all(
+    bundleCourseList.map(async (bc) => {
+      if (bc.isEnrolled) return true;
+      const [enrollment] = await db
+        .select()
+        .from(enrollments)
+        .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, bc.courseId)))
+        .limit(1);
+      return !!enrollment;
+    })
+  );
 
-  // Auto-enroll if payment is pending (just paid, webhook not processed yet) or completed
-  if (payment.status === 'pending' || payment.status === 'completed') {
-    let enrolled = false;
-
-    // If payment is pending, mark as completed (Stripe checkout was successful)
-    if (payment.status === 'pending') {
-      try {
-        await db
-          .update(payments)
-          .set({ status: 'completed' })
-          .where(eq(payments.id, payment.id));
-      } catch (error) {
-        console.error('Auto-complete payment error:', error);
-      }
-    }
-
-    for (const course of bundleCourseList) {
-      if (!course.isEnrolled) {
-        try {
-          await db.insert(enrollments).values({
-            userId,
-            courseId: course.courseId,
-          });
-          enrolled = true;
-        } catch (error) {
-          // Already enrolled or error — skip
-          console.error('Auto-enroll bundle course error:', error);
-        }
-      }
-    }
-
-    return enrolled || bundleCourseList.every((c) => c.isEnrolled);
-  }
-
-  return bundleCourseList.every((c) => c.isEnrolled);
+  return results.every(Boolean);
 }
 
 export default async function BundlePaymentSuccessPage({ params }: Props) {
@@ -136,11 +112,10 @@ export default async function BundlePaymentSuccessPage({ params }: Props) {
 
   const { bundle, courses: bundleCourseList, payment } = data;
 
-  // Auto-enroll fallback
-  const enrolled = await autoEnrollBundle(
+  // Check enrollment status (webhook handles actual enrollment)
+  const enrolled = await checkBundleEnrollment(
     session.user.id,
-    bundleCourseList,
-    payment
+    bundleCourseList
   );
 
   return (
