@@ -3,17 +3,19 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import Modal from '@/components/ui/Modal';
 
 interface BundleEnrollButtonProps {
     bundleId: string;
     price: number;
     bundleSlug: string;
+    allEnrolled?: boolean;
 }
 
 type PaymentStep = 'idle' | 'method' | 'transfer' | 'verifying';
 
-export default function BundleEnrollButton({ bundleId, price, bundleSlug }: BundleEnrollButtonProps) {
+export default function BundleEnrollButton({ bundleId, price, bundleSlug, allEnrolled = false }: BundleEnrollButtonProps) {
     const router = useRouter();
     const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
@@ -149,18 +151,22 @@ export default function BundleEnrollButton({ bundleId, price, bundleSlug }: Bund
     };
 
     // Already enrolled
-    if (enrolled) {
+    if (enrolled || allEnrolled) {
         return (
-            <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                background: '#dcfce7', color: '#16a34a', padding: '12px 24px',
-                borderRadius: '10px', fontWeight: 600, fontSize: '0.9375rem',
-            }}>
+            <Link
+                href="/dashboard"
+                style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    background: 'linear-gradient(135deg, #16a34a, #15803d)', color: 'white', padding: '12px 24px',
+                    borderRadius: '10px', fontWeight: 600, fontSize: '0.9375rem',
+                    textDecoration: 'none',
+                }}
+            >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><path d="m9 11 3 3L22 4" />
                 </svg>
-                ลงทะเบียนสำเร็จ!
-            </div>
+                ✅ ลงทะเบียนครบแล้ว — เข้าเรียน
+            </Link>
         );
     }
 

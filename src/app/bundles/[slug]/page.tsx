@@ -5,8 +5,9 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import BundleEnrollButton from '@/components/bundle/BundleEnrollButton';
 import { db } from '@/lib/db';
-import { bundles, bundleCourses, courses, lessons } from '@/lib/db/schema';
-import { eq, asc, count } from 'drizzle-orm';
+import { bundles, bundleCourses, courses, enrollments, lessons } from '@/lib/db/schema';
+import { auth } from '@/lib/auth';
+import { eq, asc, and, count } from 'drizzle-orm';
 import { getExcerpt } from '@/lib/sanitize';
 
 export const dynamic = 'force-dynamic';
@@ -112,6 +113,23 @@ export default async function BundleDetailPage({ params }: Props) {
 
     const bundlePrice = parseFloat(bundle.price);
     const savings = bundle.totalOriginalPrice - bundlePrice;
+
+    // Check if user is already enrolled in all bundle courses
+    let allEnrolled = false;
+    const session = await auth();
+    if (session?.user) {
+        const checks = await Promise.all(
+            bundle.courses.map(async (c) => {
+                const [enrollment] = await db
+                    .select()
+                    .from(enrollments)
+                    .where(and(eq(enrollments.userId, session.user.id), eq(enrollments.courseId, c.courseId)))
+                    .limit(1);
+                return !!enrollment;
+            })
+        );
+        allEnrolled = checks.every(Boolean);
+    }
 
     return (
         <>
@@ -221,7 +239,7 @@ export default async function BundleDetailPage({ params }: Props) {
                                             </div>
                                         )}
                                     </div>
-                                    <BundleEnrollButton bundleId={bundle.id} price={bundlePrice} bundleSlug={bundle.slug} />
+                                    <BundleEnrollButton bundleId={bundle.id} price={bundlePrice} bundleSlug={bundle.slug} allEnrolled={allEnrolled} />
                                 </div>
 
                                 <div style={{ display: 'flex', gap: '24px', color: '#64748b', fontSize: '0.875rem' }}>
@@ -335,7 +353,7 @@ export default async function BundleDetailPage({ params }: Props) {
                                         </div>
                                     </div>
                                 </div>
-                                <BundleEnrollButton bundleId={bundle.id} price={bundlePrice} bundleSlug={bundle.slug} />
+                                <BundleEnrollButton bundleId={bundle.id} price={bundlePrice} bundleSlug={bundle.slug} allEnrolled={allEnrolled} />
                             </div>
                         </div>
                     </div>

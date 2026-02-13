@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { bundles, bundleCourses, courses, payments } from "@/lib/db/schema";
+import { bundles, bundleCourses, courses, enrollments, payments } from "@/lib/db/schema";
 import { eq, asc, and } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -43,11 +43,29 @@ export async function POST(request: Request) {
 
         // Get courses in bundle for description
         const bCourses = await db
-            .select({ courseTitle: courses.title })
+            .select({ courseId: bundleCourses.courseId, courseTitle: courses.title })
             .from(bundleCourses)
             .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
             .where(eq(bundleCourses.bundleId, bundleId))
             .orderBy(asc(bundleCourses.orderIndex));
+
+        // Check if user is already enrolled in all courses
+        const enrollmentChecks = await Promise.all(
+            bCourses.map(async (c) => {
+                const [enrollment] = await db
+                    .select()
+                    .from(enrollments)
+                    .where(and(eq(enrollments.userId, session.user.id), eq(enrollments.courseId, c.courseId)))
+                    .limit(1);
+                return !!enrollment;
+            })
+        );
+        if (enrollmentChecks.every(Boolean)) {
+            return NextResponse.json(
+                { error: "คุณลงทะเบียนคอร์สทั้งหมดใน Bundle นี้แล้ว" },
+                { status: 400 }
+            );
+        }
 
         const courseNames = bCourses.map(c => c.courseTitle).join(', ');
 
