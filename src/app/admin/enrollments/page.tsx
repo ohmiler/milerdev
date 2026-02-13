@@ -563,7 +563,7 @@ export default function AdminEnrollmentsPage() {
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
       }}>
-        {loading ? (
+        {loading && enrollments.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
             กำลังโหลด...
           </div>

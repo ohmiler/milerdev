@@ -291,7 +291,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
         กำลังโหลด...
