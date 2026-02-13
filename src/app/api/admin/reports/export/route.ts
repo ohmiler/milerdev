@@ -4,6 +4,18 @@ import { db } from '@/lib/db';
 import { payments, enrollments, users, courses } from '@/lib/db/schema';
 import { desc, eq, sql, gte } from 'drizzle-orm';
 
+// Sanitize CSV field to prevent formula injection
+function csvSafe(value: string | number | null | undefined): string {
+  const str = String(value ?? '');
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `'${str}`;
+  }
+  if (/[,"\n\r]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
 // GET /api/admin/reports/export - Export data as CSV
 export async function GET(request: Request) {
   try {
@@ -43,7 +55,7 @@ export async function GET(request: Request) {
 
         csvContent = 'ID,จำนวนเงิน,สถานะ,วิธีชำระ,วันที่,ชื่อผู้ใช้,อีเมล,คอร์ส\n';
         data.forEach(row => {
-          csvContent += `${row.id},${row.amount},${row.status},${row.method || ''},${row.createdAt?.toISOString() || ''},${row.userName || ''},${row.userEmail || ''},${row.courseTitle || ''}\n`;
+          csvContent += `${csvSafe(row.id)},${csvSafe(row.amount)},${csvSafe(row.status)},${csvSafe(row.method)},${csvSafe(row.createdAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`;
         });
         filename = `payments-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
@@ -68,7 +80,7 @@ export async function GET(request: Request) {
 
         csvContent = 'ID,วันที่ลงทะเบียน,ความคืบหน้า(%),วันที่เรียนจบ,ชื่อผู้ใช้,อีเมล,คอร์ส\n';
         data.forEach(row => {
-          csvContent += `${row.id},${row.enrolledAt?.toISOString() || ''},${row.progressPercent || 0},${row.completedAt?.toISOString() || ''},${row.userName || ''},${row.userEmail || ''},${row.courseTitle || ''}\n`;
+          csvContent += `${csvSafe(row.id)},${csvSafe(row.enrolledAt?.toISOString())},${row.progressPercent || 0},${csvSafe(row.completedAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`;
         });
         filename = `enrollments-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
@@ -89,7 +101,7 @@ export async function GET(request: Request) {
 
         csvContent = 'ID,ชื่อ,อีเมล,บทบาท,วันที่สมัคร,จำนวนคอร์สที่ลงทะเบียน\n';
         data.forEach(row => {
-          csvContent += `${row.id},${row.name || ''},${row.email},${row.role},${row.createdAt?.toISOString() || ''},${row.enrollmentCount}\n`;
+          csvContent += `${csvSafe(row.id)},${csvSafe(row.name)},${csvSafe(row.email)},${csvSafe(row.role)},${csvSafe(row.createdAt?.toISOString())},${row.enrollmentCount}\n`;
         });
         filename = `users-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
@@ -111,7 +123,7 @@ export async function GET(request: Request) {
 
         csvContent = 'ID,ชื่อคอร์ส,ราคา,สถานะ,วันที่สร้าง,จำนวนการลงทะเบียน,รายได้\n';
         data.forEach(row => {
-          csvContent += `${row.id},${row.title},${row.price},${row.status},${row.createdAt?.toISOString() || ''},${row.enrollmentCount},${row.revenue}\n`;
+          csvContent += `${csvSafe(row.id)},${csvSafe(row.title)},${csvSafe(row.price)},${csvSafe(row.status)},${csvSafe(row.createdAt?.toISOString())},${row.enrollmentCount},${row.revenue}\n`;
         });
         filename = `courses-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;

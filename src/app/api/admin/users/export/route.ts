@@ -4,6 +4,20 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { desc, sql, eq } from 'drizzle-orm';
 
+// Sanitize CSV field to prevent formula injection
+function csvSafe(value: string | number | null | undefined): string {
+  const str = String(value ?? '');
+  // Prefix dangerous characters that Excel interprets as formulas
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `'${str}`;
+  }
+  // Wrap in quotes if contains comma, newline, or quote
+  if (/[,"\n\r]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
 // GET /api/admin/users/export - Export users as CSV
 export async function GET(request: Request) {
   try {
@@ -42,7 +56,7 @@ export async function GET(request: Request) {
     userList.forEach(user => {
       const verified = user.emailVerifiedAt ? 'ใช่' : 'ไม่';
       const createdAt = user.createdAt ? new Date(user.createdAt).toISOString() : '';
-      csvContent += `${user.id},"${user.name || ''}",${user.email},${user.role},${verified},${createdAt},${user.enrollmentCount}\n`;
+      csvContent += `${csvSafe(user.id)},${csvSafe(user.name)},${csvSafe(user.email)},${csvSafe(user.role)},${csvSafe(verified)},${csvSafe(createdAt)},${user.enrollmentCount}\n`;
     });
 
     // Add BOM for UTF-8 support in Excel

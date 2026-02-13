@@ -89,6 +89,12 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'กรุณาระบุ key' }, { status: 400 });
     }
 
+    // Only allow known settings keys
+    const allowedKeys = defaultSettings.map(s => s.key);
+    if (!allowedKeys.includes(key)) {
+      return NextResponse.json({ error: 'key ไม่ถูกต้อง' }, { status: 400 });
+    }
+
     // Get IP and User Agent for audit log
     const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';

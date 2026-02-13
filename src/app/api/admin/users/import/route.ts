@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       const password = passwordIndex !== -1 && row[passwordIndex] 
         ? row[passwordIndex] 
         : Math.random().toString(36).slice(-8);
-      const passwordHash = await bcrypt.hash(password, 10);
+      const passwordHash = await bcrypt.hash(password, 12);
 
       try {
         await db.insert(users).values({

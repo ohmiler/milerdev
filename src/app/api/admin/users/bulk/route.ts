@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq, inArray } from 'drizzle-orm';
+import { logAudit } from '@/lib/auditLog';
 
 // POST /api/admin/users/bulk - Bulk operations on users
 export async function POST(request: Request) {
@@ -64,6 +65,16 @@ export async function POST(request: Request) {
           { status: 400 }
         );
     }
+
+    await logAudit({
+      userId: session.user.id,
+      action: action === 'delete' ? 'delete' : 'update',
+      entityType: 'user',
+      entityId: `bulk:${userIds.length}`,
+      newValue: action === 'delete'
+        ? `Bulk deleted ${userIds.length} users`
+        : `Bulk updated role to ${data?.role} for ${userIds.length} users`,
+    });
 
     return NextResponse.json({
       message: 'ดำเนินการสำเร็จ',
