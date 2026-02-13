@@ -510,6 +510,17 @@ export default async function CourseDetailPage({ params }: Props) {
           margin: 1.5em 0;
         }
 
+        @media (max-width: 1023px) {
+          .course-detail-sidebar {
+            width: 100%;
+            max-width: 100%;
+          }
+          .course-detail-sidebar > div {
+            position: relative !important;
+            top: auto !important;
+          }
+        }
+
         @media (min-width: 1024px) {
           .course-detail-grid {
             display: grid;

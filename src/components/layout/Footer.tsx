@@ -12,12 +12,7 @@ export default function Footer() {
         }}>
             <div className="container">
                 {/* Main Footer Content */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: '40px',
-                    marginBottom: '60px',
-                }} className="grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                <div className="footer-grid">
                     {/* Brand */}
                     <div>
                         <Link href="/" style={{
@@ -269,6 +264,24 @@ export default function Footer() {
                     </p>
                 </div>
             </div>
+            <style>{`
+                .footer-grid {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    gap: 40px;
+                    margin-bottom: 60px;
+                }
+                @media (min-width: 640px) {
+                    .footer-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+                }
+                @media (min-width: 1024px) {
+                    .footer-grid {
+                        grid-template-columns: repeat(4, 1fr);
+                    }
+                }
+            `}</style>
         </footer>
     );
 }
