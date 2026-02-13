@@ -4,7 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { courses, payments, coupons, couponUsages } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
-import { calculateDiscount } from "@/lib/coupon";
+import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/stripe/checkout - Create Stripe checkout session
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
             where: eq(courses.id, courseId),
         });
 
-        if (!course) {
+        if (!course || course.status !== 'published') {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
 
@@ -45,25 +45,25 @@ export async function POST(request: Request) {
         let appliedCouponId: string | null = null;
         if (couponId) {
             const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
-            if (coupon && coupon.isActive) {
-                // Validate coupon is for this course or global
-                if (!coupon.courseId || coupon.courseId === courseId) {
-                    // Check usage limits
-                    const [userUsage] = await db.select({ count: count() }).from(couponUsages)
-                        .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
-                    const withinUserLimit = !coupon.perUserLimit || (userUsage?.count || 0) < coupon.perUserLimit;
-                    const withinTotalLimit = !coupon.usageLimit || (coupon.usageCount || 0) < coupon.usageLimit;
+            if (coupon) {
+                const [userUsage] = await db.select({ count: count() }).from(couponUsages)
+                    .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
 
-                    if (withinUserLimit && withinTotalLimit) {
-                        const discount = calculateDiscount(
-                            priceNumber,
-                            coupon.discountType as 'percentage' | 'fixed',
-                            coupon.discountValue,
-                            coupon.maxDiscount,
-                        );
-                        priceNumber = Math.max(0, priceNumber - discount);
-                        appliedCouponId = coupon.id;
-                    }
+                const eligibility = validateCouponEligibility(coupon, {
+                    targetCourseId: courseId,
+                    userUsageCount: userUsage?.count || 0,
+                    coursePrice: priceNumber,
+                });
+
+                if (eligibility.valid) {
+                    const discount = calculateDiscount(
+                        priceNumber,
+                        coupon.discountType as 'percentage' | 'fixed',
+                        coupon.discountValue,
+                        coupon.maxDiscount,
+                    );
+                    priceNumber = Math.max(0, priceNumber - discount);
+                    appliedCouponId = coupon.id;
                 }
             }
         }

@@ -44,6 +44,7 @@ export async function POST(request: Request) {
                     and(
                         eq(payments.id, paymentId),
                         eq(payments.userId, session.user.id),
+                        eq(payments.bundleId, bundleId),
                         eq(payments.status, 'completed')
                     )
                 )

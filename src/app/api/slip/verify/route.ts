@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { payments, enrollments, courses } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { payments, enrollments, courses, coupons, couponUsages } from "@/lib/db/schema";
+import { eq, and, sql, count } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 
 // POST /api/slip/verify - Verify slip payment (PromptPay)
 export async function POST(request: Request) {
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
         const formData = await request.formData();
         const slipFile = formData.get("slip") as File;
         const courseId = formData.get("courseId") as string;
+        const couponId = formData.get("couponId") as string | null;
 
         if (!slipFile || !courseId) {
             return NextResponse.json(
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
             where: eq(courses.id, courseId),
         });
 
-        if (!course) {
+        if (!course || course.status !== 'published') {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
 
@@ -48,10 +50,37 @@ export async function POST(request: Request) {
         const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
         const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
         const isPromoActive = hasPromo && promoStartOk && promoEndOk;
-        const amount = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
+        let amount = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
+
+        // Apply coupon discount if provided
+        let appliedCouponId: string | null = null;
+        if (couponId) {
+            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
+            if (coupon) {
+                const [userUsage] = await db.select({ count: count() }).from(couponUsages)
+                    .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
+
+                const eligibility = validateCouponEligibility(coupon, {
+                    targetCourseId: courseId,
+                    userUsageCount: userUsage?.count || 0,
+                    coursePrice: amount,
+                });
+
+                if (eligibility.valid) {
+                    const discount = calculateDiscount(
+                        amount,
+                        coupon.discountType as 'percentage' | 'fixed',
+                        coupon.discountValue,
+                        coupon.maxDiscount,
+                    );
+                    amount = Math.max(0, amount - discount);
+                    appliedCouponId = coupon.id;
+                }
+            }
+        }
 
         if (amount <= 0) {
-            return NextResponse.json({ error: "This course is free" }, { status: 400 });
+            return NextResponse.json({ error: "This course is free with coupon" }, { status: 400 });
         }
 
         // Check if already enrolled
@@ -159,6 +188,25 @@ export async function POST(request: Request) {
             userId: session.user.id,
             courseId,
         });
+
+        // Record coupon usage if coupon was applied
+        if (appliedCouponId) {
+            try {
+                await db.insert(couponUsages).values({
+                    couponId: appliedCouponId,
+                    userId: session.user.id,
+                    courseId,
+                    discountAmount: String(isPromoActive
+                        ? parseFloat(course.promoPrice!.toString()) - amount
+                        : originalPrice - amount),
+                });
+                await db.update(coupons)
+                    .set({ usageCount: sql`${coupons.usageCount} + 1` })
+                    .where(eq(coupons.id, appliedCouponId));
+            } catch (couponErr) {
+                console.error('Failed to record coupon usage:', couponErr);
+            }
+        }
 
         // Send confirmation emails (non-blocking)
         if (session.user.email && session.user.name) {

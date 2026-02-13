@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { enrollments, courses, payments, coupons, couponUsages } from "@/lib/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, count } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/email";
 import { z } from "zod";
 import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
-import { calculateDiscount } from "@/lib/coupon";
+import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 
 // Validation schema
 const enrollSchema = z.object({
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
             where: eq(courses.id, courseId),
         });
 
-        if (!course) {
+        if (!course || course.status !== 'published') {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
 
@@ -86,9 +86,22 @@ export async function POST(request: Request) {
         } else if (coursePrice > 0 && couponId) {
             // Coupon-based free enrollment — validate coupon makes it free
             const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
-            if (!coupon || !coupon.isActive) {
-                return NextResponse.json({ error: "คูปองไม่ถูกต้อง" }, { status: 400 });
+            if (!coupon) {
+                return NextResponse.json({ error: 'คูปองไม่ถูกต้อง' }, { status: 400 });
             }
+
+            const [userUsage] = await db.select({ count: count() }).from(couponUsages)
+                .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
+
+            const eligibility = validateCouponEligibility(coupon, {
+                targetCourseId: courseId,
+                userUsageCount: userUsage?.count || 0,
+                coursePrice,
+            });
+            if (!eligibility.valid) {
+                return NextResponse.json({ error: eligibility.error }, { status: 400 });
+            }
+
             const discount = calculateDiscount(
                 coursePrice,
                 coupon.discountType as 'percentage' | 'fixed',
@@ -96,7 +109,7 @@ export async function POST(request: Request) {
                 coupon.maxDiscount,
             );
             if (discount < coursePrice) {
-                return NextResponse.json({ error: "คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ" }, { status: 402 });
+                return NextResponse.json({ error: 'คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ' }, { status: 402 });
             }
             // Record coupon usage + enrollment in a transaction to prevent race conditions
             const enrollmentId = createId();
