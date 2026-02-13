@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { media } from '@/lib/db/schema';
-import { desc, eq, sql, like } from 'drizzle-orm';
+import { and, desc, eq, sql, like } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { uploadToBunny } from '@/lib/bunny-storage';
 
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const mediaList = await db
       .select()
       .from(media)
-      .where(conditions.length > 0 ? sql`${conditions.map(c => c).join(' AND ')}` : undefined)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(media.createdAt))
       .limit(limit)
       .offset(offset);

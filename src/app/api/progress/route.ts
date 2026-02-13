@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { lessonProgress, lessons, enrollments } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
 import { issueCertificate } from "@/lib/certificate";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/progress - Update lesson progress
 export async function POST(request: Request) {
@@ -11,6 +12,11 @@ export async function POST(request: Request) {
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const rateLimit = checkRateLimit(`progress:${session.user.id}`, rateLimits.general);
+        if (!rateLimit.success) {
+            return rateLimitResponse(rateLimit.resetTime);
         }
 
         const { lessonId, watchTimeSeconds, completed } = await request.json();

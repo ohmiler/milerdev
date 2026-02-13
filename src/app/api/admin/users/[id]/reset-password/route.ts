@@ -27,6 +27,12 @@ export async function POST(request: Request, { params }: RouteParams) {
         { status: 400 }
       );
     }
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      return NextResponse.json(
+        { error: 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลขอย่างน้อย 1 ตัว' },
+        { status: 400 }
+      );
+    }
 
     // Check if user exists
     const [user] = await db

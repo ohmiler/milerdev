@@ -24,9 +24,8 @@ export async function POST(request: Request) {
         const formData = await request.formData();
         const slipFile = formData.get("slip") as File;
         const bundleId = formData.get("bundleId") as string;
-        const amount = parseFloat(formData.get("amount") as string);
 
-        if (!slipFile || !bundleId || !amount) {
+        if (!slipFile || !bundleId) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
@@ -42,6 +41,12 @@ export async function POST(request: Request) {
 
         if (!bundle || bundle.status !== "published") {
             return NextResponse.json({ error: "Bundle not found" }, { status: 404 });
+        }
+
+        // Calculate amount server-side
+        const amount = parseFloat(bundle.price);
+        if (amount <= 0) {
+            return NextResponse.json({ error: "This bundle is free" }, { status: 400 });
         }
 
         // Get courses in bundle

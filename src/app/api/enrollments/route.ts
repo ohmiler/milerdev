@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       .where(eq(courses.id, courseId))
       .limit(1);
 
-    if (!course) {
+    if (!course || course.status !== 'published') {
       return NextResponse.json({ error: 'ไม่พบคอร์สนี้' }, { status: 404 });
     }
 

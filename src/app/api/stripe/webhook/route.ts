@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { payments, enrollments, courses, bundles, bundleCourses } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { payments, enrollments, courses, bundles, bundleCourses, coupons, couponUsages } from "@/lib/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import Stripe from "stripe";
 
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { paymentId, userId, courseId, bundleId, type } = session.metadata || {};
+        const { paymentId, userId, courseId, bundleId, type, couponId } = session.metadata || {};
 
         if (!paymentId || !userId) {
             console.error("Webhook missing required metadata:", session.metadata);
@@ -143,6 +143,25 @@ export async function POST(request: Request) {
                 }
 
                 console.log(`[Webhook] Payment ${paymentId} completed and enrollment created`);
+            }
+
+            // Record coupon usage if coupon was applied
+            if (couponId && userId) {
+                try {
+                    const targetCourseId = type === 'course' ? courseId : null;
+                    await db.insert(couponUsages).values({
+                        couponId,
+                        userId,
+                        ...(targetCourseId && { courseId: targetCourseId }),
+                        discountAmount: '0', // Actual discount already applied at checkout
+                    });
+                    await db.update(coupons)
+                        .set({ usageCount: sql`${coupons.usageCount} + 1` })
+                        .where(eq(coupons.id, couponId));
+                    console.log(`[Webhook] Coupon ${couponId} usage recorded`);
+                } catch (couponError) {
+                    console.error('Failed to record coupon usage:', couponError);
+                }
             }
         } catch (error) {
             console.error("Error processing enrollment/emails:", error);

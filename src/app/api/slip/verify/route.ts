@@ -24,9 +24,8 @@ export async function POST(request: Request) {
         const formData = await request.formData();
         const slipFile = formData.get("slip") as File;
         const courseId = formData.get("courseId") as string;
-        const amount = parseFloat(formData.get("amount") as string);
 
-        if (!slipFile || !courseId || !amount) {
+        if (!slipFile || !courseId) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
@@ -40,6 +39,19 @@ export async function POST(request: Request) {
 
         if (!course) {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
+        }
+
+        // Calculate amount server-side (use promo price if active)
+        const originalPrice = parseFloat(course.price || '0');
+        const now = new Date();
+        const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
+        const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
+        const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
+        const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+        const amount = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
+
+        if (amount <= 0) {
+            return NextResponse.json({ error: "This course is free" }, { status: 400 });
         }
 
         // Check if already enrolled
