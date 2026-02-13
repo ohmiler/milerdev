@@ -35,8 +35,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     throw new Error("Invalid credentials");
                 }
 
+                const normalizedEmail = (credentials.email as string).toLowerCase().trim();
                 const user = await db.query.users.findFirst({
-                    where: eq(schema.users.email, credentials.email as string),
+                    where: eq(schema.users.email, normalizedEmail),
                 });
 
                 if (!user) {

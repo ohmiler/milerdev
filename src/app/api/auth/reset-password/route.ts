@@ -31,7 +31,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const { email } = validation.data;
+        const email = validation.data.email.toLowerCase().trim();
 
         // Check if user exists
         const [user] = await db
