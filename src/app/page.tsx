@@ -213,27 +213,6 @@ export default async function HomePage() {
                   </Link>
                 </div>
 
-                {/* Stats */}
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '36px',
-                  paddingTop: '28px',
-                  borderTop: '1px solid #e2e8f0',
-                }}>
-                  <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                    <div className="stat-value">{stats.users.toLocaleString()}+</div>
-                    <div className="stat-label">นักเรียน</div>
-                  </div>
-                  <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                    <div className="stat-value">{stats.lessons}+</div>
-                    <div className="stat-label">บทเรียน</div>
-                  </div>
-                  <div className="stat-item" style={{ textAlign: 'left', padding: 0 }}>
-                    <div className="stat-value">{stats.courses}</div>
-                    <div className="stat-label">คอร์ส</div>
-                  </div>
-                </div>
               </div>
 
               {/* Right: IDE Animation */}
