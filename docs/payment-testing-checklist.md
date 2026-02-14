@@ -71,31 +71,31 @@
 
 ## 7. Webhook Reliability
 
-- [ ] **7.1** ตรวจ Stripe Dashboard > Webhooks > Recent events → ไม่มี failed
-- [ ] **7.2** ทดสอบ Stripe CLI: `stripe trigger checkout.session.completed`
-- [ ] **7.3** ตรวจว่า payment status อัปเดตเป็น `completed` ผ่าน webhook
+- [✅] **7.1** ตรวจ Stripe Dashboard > Webhooks > Recent events → ไม่มี failed
+- [✅] **7.2** ทดสอบ Stripe CLI: `stripe trigger checkout.session.completed`
+- [✅] **7.3** ตรวจว่า payment status อัปเดตเป็น `completed` ผ่าน webhook
 
 ## 8. Admin Payment Management
 
-- [ ] **8.1** Admin เปลี่ยน status pending → completed → enrollment สร้างอัตโนมัติ
-- [ ] **8.2** Admin เปลี่ยน status completed → refunded → enrollment ถูกลบ
-- [ ] **8.3** Admin ลบ payment → audit log บันทึก
-- [ ] **8.4** Admin เปลี่ยน status ของ bundle payment → enrollment ทุกคอร์สจัดการถูกต้อง
+- [✅] **8.1** Admin เปลี่ยน status pending → completed → enrollment สร้างอัตโนมัติ
+- [✅] **8.2** Admin เปลี่ยน status completed → refunded → enrollment ถูกลบ
+- [✅] **8.3** Admin ลบ payment → audit log บันทึก
+- [✅] **8.4** Admin เปลี่ยน status ของ bundle payment → enrollment ทุกคอร์สจัดการถูกต้อง
 
 ## 9. Edge Cases & Security
 
-- [ ] **9.1** กด checkout เร็วๆ หลายครั้ง → ไม่สร้าง pending payment ซ้ำ
-- [ ] **9.2** แก้ราคาใน DevTools → server คำนวณราคาจาก DB (ไม่ trust client)
-- [ ] **9.3** เปิด 2 tab กดซื้อพร้อมกัน → ไม่เกิด double enrollment
-- [ ] **9.4** ใช้ paymentId ของคนอื่น → reject (userId ไม่ตรง)
-- [ ] **9.5** ใช้ paymentId ของ course A กับ course B → reject (courseId ไม่ตรง)
-- [ ] **9.6** Rate limit: กดซื้อเร็วเกิน 10 ครั้ง/นาที → 429 Too Many Requests
+- [✅] **9.1** กด checkout เร็วๆ หลายครั้ง → ไม่สร้าง pending payment ซ้ำ
+- [✅] **9.2** แก้ราคาใน DevTools → server คำนวณราคาจาก DB (ไม่ trust client)
+- [✅] **9.3** เปิด 2 tab กดซื้อพร้อมกัน → ไม่เกิด double enrollment
+- [✅] **9.4** ใช้ paymentId ของคนอื่น → reject (userId ไม่ตรง)
+- [✅] **9.5** ใช้ paymentId ของ course A กับ course B → reject (courseId ไม่ตรง)
+- [✅] **9.6** Rate limit: กดซื้อเร็วเกิน 10 ครั้ง/นาที → 429 Too Many Requests
 
 ## 10. Email Notifications
 
-- [ ] **10.1** ซื้อคอร์สสำเร็จ → ได้รับ email ยืนยันการชำระเงิน
-- [ ] **10.2** ลงทะเบียนสำเร็จ → ได้รับ email ยืนยันการลงทะเบียน
-- [ ] **10.3** Email ไม่ block การทำงาน (non-blocking)
+- [✅] **10.1** ซื้อคอร์สสำเร็จ → ได้รับ email ยืนยันการชำระเงิน
+- [✅] **10.2** ลงทะเบียนสำเร็จ → ได้รับ email ยืนยันการลงทะเบียน
+- [✅] **10.3** Email ไม่ block การทำงาน (non-blocking)
 
 ---
 

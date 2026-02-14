@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, courses } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { sendEnrollmentEmail } from '@/lib/email';
 
 // GET /api/enrollments - Get user's enrollments
 export async function GET() {
@@ -100,6 +101,16 @@ export async function POST(request: Request) {
       enrolledAt: new Date(),
       progressPercent: 0,
     });
+
+    // Send enrollment email (non-blocking)
+    if (session.user.email) {
+      sendEnrollmentEmail({
+        email: session.user.email,
+        name: session.user.name || 'ผู้เรียน',
+        courseName: course.title,
+        courseSlug: course.slug,
+      }).catch((err) => console.error('[Email] Failed to send enrollment email:', err));
+    }
 
     return NextResponse.json(
       { 

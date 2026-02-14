@@ -45,6 +45,7 @@ export default function AdminPaymentsPage() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   
   // Filters
   const [statusFilter, setStatusFilter] = useState('all');
@@ -117,11 +118,34 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    setUpdatingStatus(id);
+    try {
+      const res = await fetch(`/api/admin/payments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(`เปลี่ยนสถานะเป็น "${getStatusText(newStatus)}" สำเร็จ`, 'success');
+        await fetchPayments();
+      } else {
+        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+      }
+    } catch {
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return 'รอดำเนินการ';
       case 'completed': return 'สำเร็จ';
       case 'failed': return 'ล้มเหลว';
+      case 'refunded': return 'คืนเงิน';
       default: return status;
     }
   };
@@ -131,6 +155,7 @@ export default function AdminPaymentsPage() {
       case 'pending': return { background: '#fef3c7', color: '#d97706' };
       case 'completed': return { background: '#dcfce7', color: '#16a34a' };
       case 'failed': return { background: '#fef2f2', color: '#dc2626' };
+      case 'refunded': return { background: '#faf5ff', color: '#7c3aed' };
       default: return { background: '#f1f5f9', color: '#64748b' };
     }
   };
@@ -397,15 +422,26 @@ export default function AdminPaymentsPage() {
                         </span>
                       </td>
                       <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <span style={{
-                          padding: '4px 12px',
-                          borderRadius: '50px',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          ...getStatusStyle(payment.status),
-                        }}>
-                          {getStatusText(payment.status)}
-                        </span>
+                        <select
+                          value={payment.status}
+                          onChange={(e) => handleStatusChange(payment.id, e.target.value)}
+                          disabled={updatingStatus === payment.id}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            border: '1px solid #e2e8f0',
+                            cursor: updatingStatus === payment.id ? 'wait' : 'pointer',
+                            opacity: updatingStatus === payment.id ? 0.5 : 1,
+                            ...getStatusStyle(payment.status),
+                          }}
+                        >
+                          <option value="pending">รอดำเนินการ</option>
+                          <option value="completed">สำเร็จ</option>
+                          <option value="failed">ล้มเหลว</option>
+                          <option value="refunded">คืนเงิน</option>
+                        </select>
                       </td>
                       <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.875rem', color: '#64748b' }}>
                         {formatDate(payment.createdAt)}
