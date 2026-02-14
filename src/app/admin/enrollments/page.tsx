@@ -118,12 +118,14 @@ export default function AdminEnrollmentsPage() {
 
   useEffect(() => {
     fetchEnrollments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseFilter, currentPage, searchDebounce]);
 
   useEffect(() => {
     if (showAddModal && users.length === 0) {
       fetchUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAddModal]);
 
   const confirmDeleteEnrollment = async () => {

@@ -162,6 +162,7 @@ export default function AdminBlogPage() {
                   overflow: 'hidden',
                 }}>
                   {normalizeUrl(post.thumbnailUrl) && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={normalizeUrl(post.thumbnailUrl)!}
                       alt={post.title}

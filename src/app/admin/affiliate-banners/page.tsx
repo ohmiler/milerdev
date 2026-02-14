@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import ImageUpload from '@/components/admin/ImageUpload';
 
 interface Banner {
@@ -299,6 +298,7 @@ export default function AdminAffiliateBannersPage() {
                             }}
                         >
                             {/* Preview image */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={banner.imageUrl}
                                 alt={banner.title}

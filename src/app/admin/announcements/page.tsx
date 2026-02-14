@@ -62,6 +62,7 @@ export default function AdminAnnouncementsPage() {
 
   useEffect(() => {
     fetchAnnouncements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const resetForm = () => {
@@ -105,7 +106,7 @@ export default function AdminAnnouncementsPage() {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
       setSaving(false);
@@ -144,7 +145,7 @@ export default function AdminAnnouncementsPage() {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
       setDeleting(null);
@@ -162,7 +163,7 @@ export default function AdminAnnouncementsPage() {
       if (res.ok) {
         await fetchAnnouncements();
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาด', 'error');
     }
   };

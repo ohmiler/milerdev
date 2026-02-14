@@ -221,6 +221,7 @@ export default async function CourseEnrollmentsPage({ params, searchParams }: Pa
                                                     overflow: 'hidden',
                                                 }}>
                                                     {user.userAvatar ? (
+                                                        /* eslint-disable-next-line @next/next/no-img-element */
                                                         <img src={user.userAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     ) : (
                                                         (user.userName || user.userEmail)?.[0]?.toUpperCase() || '?'

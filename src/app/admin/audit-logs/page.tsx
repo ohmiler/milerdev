@@ -68,6 +68,7 @@ export default function AdminAuditLogsPage() {
 
   useEffect(() => {
     fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, entityTypeFilter, actionFilter, searchDebounce]);
 
   const formatDate = (dateString: string) => {
