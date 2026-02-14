@@ -23,7 +23,7 @@ vi.mock('@/lib/db', () => ({
             enrollments: { findMany: vi.fn(), findFirst: vi.fn() },
             payments: { findMany: vi.fn(), findFirst: vi.fn() },
         },
-        transaction: vi.fn(async (fn: Function) => fn({
+        transaction: vi.fn(async (fn: (tx: Record<string, unknown>) => unknown) => fn({
             insert: vi.fn().mockReturnThis(),
             values: vi.fn().mockResolvedValue(undefined),
             update: vi.fn().mockReturnThis(),

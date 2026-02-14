@@ -108,7 +108,7 @@ vi.mock('@/lib/db', () => ({
                 findFirst: vi.fn().mockImplementation(() => Promise.resolve(mockDb.queryFindFirstResult)),
             },
         },
-        transaction: vi.fn().mockImplementation(async (fn: Function) => {
+        transaction: vi.fn().mockImplementation(async (fn: (tx: Record<string, unknown>) => unknown) => {
             mockDb.transactionCalled = true;
             return fn({
                 insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
