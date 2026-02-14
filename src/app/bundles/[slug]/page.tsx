@@ -220,36 +220,6 @@ export default async function BundleDetailPage({ params }: Props) {
                     <div className="container" style={{ maxWidth: '900px', margin: '0 auto' }}>
                         <div style={{ display: 'grid', gap: '32px' }}>
 
-                            {/* CTA Card */}
-                            <div style={{
-                                background: 'white',
-                                borderRadius: '16px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                                padding: '24px',
-                            }}>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-                                    <div>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>
-                                            {bundlePrice === 0 ? 'ฟรี' : `฿${bundlePrice.toLocaleString()}`}
-                                        </div>
-                                        {bundle.totalOriginalPrice > bundlePrice && (
-                                            <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                                                ราคาปกติรวม ฿{bundle.totalOriginalPrice.toLocaleString()} • <span style={{ color: '#16a34a', fontWeight: 600 }}>ประหยัด ฿{savings.toLocaleString()}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <BundleEnrollButton bundleId={bundle.id} price={bundlePrice} bundleSlug={bundle.slug} allEnrolled={allEnrolled} />
-                                </div>
-
-                                <div style={{ display: 'flex', gap: '24px', color: '#64748b', fontSize: '0.875rem' }}>
-                                    <span>📚 {bundle.courseCount} คอร์ส</span>
-                                    <span>📖 {bundle.courses.reduce((s, c) => s + c.lessonCount, 0)} บทเรียน</span>
-                                    <span>🎓 Certificate ทุกคอร์ส</span>
-                                    <span>♾️ เข้าถึงตลอดชีพ</span>
-                                </div>
-                            </div>
-
                             {/* Courses in Bundle */}
                             <div>
                                 <h2 style={{ fontSize: '1.375rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
@@ -322,14 +292,14 @@ export default async function BundleDetailPage({ params }: Props) {
                                 </div>
                             </div>
 
-                            {/* Price Comparison */}
+                            {/* Price Comparison + CTA */}
                             <div style={{
                                 background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
                                 borderRadius: '16px',
                                 padding: '32px',
                                 textAlign: 'center',
                             }}>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#166534', margin: '0 0 16px' }}>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#166534', margin: '0 0 20px' }}>
                                     ซื้อ Bundle คุ้มกว่า!
                                 </h3>
                                 <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', flexWrap: 'wrap', marginBottom: '20px' }}>
@@ -353,6 +323,14 @@ export default async function BundleDetailPage({ params }: Props) {
                                         </div>
                                     </div>
                                 </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '20px', color: '#475569', fontSize: '0.875rem' }}>
+                                    <span>📚 {bundle.courseCount} คอร์ส</span>
+                                    <span>📖 {bundle.courses.reduce((s, c) => s + c.lessonCount, 0)} บทเรียน</span>
+                                    <span>🎓 Certificate ทุกคอร์ส</span>
+                                    <span>♾️ เข้าถึงตลอดชีพ</span>
+                                </div>
+
                                 <BundleEnrollButton bundleId={bundle.id} price={bundlePrice} bundleSlug={bundle.slug} allEnrolled={allEnrolled} />
                             </div>
                         </div>
