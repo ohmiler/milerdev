@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { certificates, users, courses } from '@/lib/db/schema';
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { certificates, users } from '@/lib/db/schema';
+import { eq, desc, sql } from 'drizzle-orm';
 import { issueCertificate } from '@/lib/certificate';
 
 // GET /api/admin/certificates - List all certificates

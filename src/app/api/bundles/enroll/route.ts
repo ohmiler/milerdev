@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { bundles, bundleCourses, courses, enrollments, payments } from '@/lib/db/schema';
+import { bundles, bundleCourses, courses, payments } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
 import { sendEnrollmentEmail } from '@/lib/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';

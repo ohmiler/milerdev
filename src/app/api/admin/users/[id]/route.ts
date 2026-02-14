@@ -30,6 +30,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     // Don't return password hash
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user;
 
     return NextResponse.json({ user: userWithoutPassword });

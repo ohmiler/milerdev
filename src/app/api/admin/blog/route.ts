@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
-import { eq, desc, sql, count } from 'drizzle-orm';
+import { blogPosts, blogPostTags, users } from '@/lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
 

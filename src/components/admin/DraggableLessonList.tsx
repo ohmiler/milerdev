@@ -51,13 +51,24 @@ interface SortableItemProps {
 }
 
 function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, onSaveVideo, savingVideoId }: SortableItemProps) {
-  const [videoUrl, setVideoUrl] = useState(lesson.videoUrl || '');
-  const [videoDuration, setVideoDuration] = useState(() => {
-    const totalSeconds = lesson.videoDuration || 0;
+  const formatDurationStr = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  });
+  };
+
+  const [videoUrl, setVideoUrl] = useState(lesson.videoUrl || '');
+  const [videoDuration, setVideoDuration] = useState(() => formatDurationStr(lesson.videoDuration || 0));
+  const [prevVideoUrl, setPrevVideoUrl] = useState(lesson.videoUrl);
+  const [prevDuration, setPrevDuration] = useState(lesson.videoDuration);
+
+  if (lesson.videoUrl !== prevVideoUrl || lesson.videoDuration !== prevDuration) {
+    setVideoUrl(lesson.videoUrl || '');
+    setVideoDuration(formatDurationStr(lesson.videoDuration || 0));
+    setPrevVideoUrl(lesson.videoUrl);
+    setPrevDuration(lesson.videoDuration);
+  }
+
   const isEditing = editingVideoId === lesson.id;
   const isSaving = savingVideoId === lesson.id;
 
@@ -75,14 +86,6 @@ function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, on
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-
-  useEffect(() => {
-    setVideoUrl(lesson.videoUrl || '');
-    const totalSeconds = lesson.videoDuration || 0;
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    setVideoDuration(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
-  }, [lesson.videoUrl, lesson.videoDuration]);
 
   const handleSave = () => {
     let durationInSeconds = 0;

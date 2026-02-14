@@ -84,6 +84,7 @@ export default function AdminPaymentsPage() {
 
   useEffect(() => {
     fetchPayments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, methodFilter, currentPage, searchDebounce]);
 
   const handleDelete = async (id: string) => {

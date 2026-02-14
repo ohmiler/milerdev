@@ -69,6 +69,7 @@ export default function AdminUserDetailPage() {
 
   useEffect(() => {
     if (userId) fetchUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const handleUnenroll = async (enrollmentId: string) => {

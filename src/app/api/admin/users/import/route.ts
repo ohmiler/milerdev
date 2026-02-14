@@ -102,7 +102,7 @@ export async function POST(request: Request) {
           updatedAt: new Date(),
         });
         results.success++;
-      } catch (err) {
+      } catch {
         results.failed++;
         results.errors.push(`แถว ${i + 1}: ไม่สามารถสร้างผู้ใช้ได้`);
       }

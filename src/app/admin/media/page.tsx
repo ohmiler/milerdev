@@ -66,6 +66,7 @@ export default function AdminMediaPage() {
 
   useEffect(() => {
     fetchMedia();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, typeFilter]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

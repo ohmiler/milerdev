@@ -298,7 +298,6 @@ export default function AdminAffiliateBannersPage() {
                             }}
                         >
                             {/* Preview image */}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={banner.imageUrl}
                                 alt={banner.title}

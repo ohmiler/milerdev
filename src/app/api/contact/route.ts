@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendContactNotification } from '@/lib/email';
 
 const contactSchema = z.object({

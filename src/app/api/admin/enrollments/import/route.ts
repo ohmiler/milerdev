@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, users, courses } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // POST /api/admin/enrollments/import - Import enrollments from LearnDash CSV

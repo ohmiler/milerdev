@@ -6,7 +6,8 @@ import { eq, and, lte, sql } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
 
 // DELETE /api/admin/payments/cleanup - Clean up stale pending payments (older than 24 hours)
-export async function DELETE(request: Request) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function DELETE(_request: Request) {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== 'admin') {

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { payments, enrollments, users, courses, lessons, bundles } from '@/lib/db/schema';
-import { desc, eq, sql, gte, lte, and, count } from 'drizzle-orm';
+import { payments, enrollments, users, courses, bundles } from '@/lib/db/schema';
+import { desc, eq, sql, gte, count } from 'drizzle-orm';
 
 // GET /api/admin/reports - Get comprehensive report data
 export async function GET(request: Request) {
@@ -14,10 +14,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || '12'; // months
-    const type = searchParams.get('type') || 'all';
-
     // Calculate date range
-    const endDate = new Date();
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - parseInt(period));
     

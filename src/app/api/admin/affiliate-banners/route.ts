@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { affiliateBanners } from '@/lib/db/schema';
-import { desc, eq, asc } from 'drizzle-orm';
+import { desc, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // GET /api/admin/affiliate-banners - Get all banners

@@ -110,6 +110,7 @@ export default function AdminReportsPage() {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   const handleExport = async (type: string) => {
@@ -465,7 +466,7 @@ export default function AdminReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.revenueByCourse.map((course, index) => (
+                    {data.revenueByCourse.map((course) => (
                       <tr key={course.courseId} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         <td style={{ padding: '12px', color: '#1e293b' }}>{course.courseTitle || 'ไม่ระบุ'}</td>
                         <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#16a34a' }}>{formatCurrency(course.revenue)}</td>

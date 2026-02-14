@@ -41,7 +41,7 @@ export default function AdminUsersPage() {
   const [searchDebounce, setSearchDebounce] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
@@ -92,6 +92,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, roleFilter, sortBy, sortOrder, searchDebounce]);
 
   const handleEdit = (user: User) => {
@@ -223,7 +224,7 @@ export default function AdminUsersPage() {
       if (res.ok) {
         await fetchUsers();
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาดในการนำเข้า', 'error');
     } finally {
       setImporting(false);
@@ -284,7 +285,7 @@ export default function AdminUsersPage() {
       } else {
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
       setProcessingBulk(false);

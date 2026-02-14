@@ -61,7 +61,7 @@ export default function AdminTagsPage() {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาดในการสร้างแท็ก', 'error');
     } finally {
       setCreating(false);
@@ -90,7 +90,7 @@ export default function AdminTagsPage() {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาดในการอัพเดทแท็ก', 'error');
     }
   };
@@ -113,7 +113,7 @@ export default function AdminTagsPage() {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาดในการลบแท็ก', 'error');
     } finally {
       setDeleting(null);

@@ -23,10 +23,13 @@ export default function AnnouncementBanner() {
 
   useEffect(() => {
     // Load dismissed IDs from sessionStorage
-    try {
-      const stored = sessionStorage.getItem('dismissed_announcements');
-      if (stored) setDismissed(new Set(JSON.parse(stored)));
-    } catch {}
+    const loadDismissed = () => {
+      try {
+        const stored = sessionStorage.getItem('dismissed_announcements');
+        if (stored) setDismissed(new Set(JSON.parse(stored)));
+      } catch { /* ignore */ }
+    };
+    loadDismissed();
 
     fetch('/api/announcements')
       .then(res => res.json())

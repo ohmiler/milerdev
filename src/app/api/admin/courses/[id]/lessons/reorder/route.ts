@@ -17,7 +17,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id: courseId } = await params;
+    await params; // validate params
     const { lessonIds } = await request.json();
 
     if (!lessonIds || !Array.isArray(lessonIds)) {

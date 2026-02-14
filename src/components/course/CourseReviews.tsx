@@ -122,6 +122,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
 
   useEffect(() => {
     fetchReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, sort, filterRating]);
 
   const handleSubmit = async () => {

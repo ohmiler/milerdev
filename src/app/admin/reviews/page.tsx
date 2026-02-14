@@ -94,6 +94,7 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     fetchReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, courseFilter, ratingFilter, searchDebounce]);
 
   const toggleHidden = async (id: string, isHidden: boolean) => {

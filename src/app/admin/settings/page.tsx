@@ -20,7 +20,7 @@ interface GroupedSettings {
 }
 
 export default function AdminSettingsPage() {
-  const [settings, setSettings] = useState<Setting[]>([]);
+  const [, setSettings] = useState<Setting[]>([]);
   const [grouped, setGrouped] = useState<GroupedSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export default function AdminSettingsPage() {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
       }
-    } catch (error) {
+    } catch {
       showToast('เกิดข้อผิดพลาดในการบันทึก', 'error');
     } finally {
       setSaving(null);
