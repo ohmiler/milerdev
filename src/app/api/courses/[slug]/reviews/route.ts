@@ -4,17 +4,23 @@ import { db } from '@/lib/db';
 import { reviews, courses, users, enrollments } from '@/lib/db/schema';
 import { eq, and, desc, sql, avg, count } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { stripHtml } from '@/lib/sanitize';
 
 type RouteParams = { params: Promise<{ slug: string }> };
 
 // GET /api/courses/[slug]/reviews - Get reviews for a course (public)
 export async function GET(request: Request, { params }: RouteParams) {
   try {
+    // Rate limit public endpoint
+    const clientIP = getClientIP(request);
+    const rl = checkRateLimit(`reviews:${clientIP}`, rateLimits.general);
+    if (!rl.success) return rateLimitResponse(rl.resetTime);
+
     const { slug } = await params;
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10') || 10));
     const sortBy = searchParams.get('sort') || 'latest';
     const filterRating = searchParams.get('rating');
     const offset = (page - 1) * limit;
@@ -183,12 +189,15 @@ export async function POST(request: Request, { params }: RouteParams) {
       .where(eq(users.id, session.user.id!))
       .limit(1);
 
+    // Sanitize comment: strip all HTML and limit length
+    const safeComment = comment ? stripHtml(comment).slice(0, 2000) : null;
+
     const newReview = {
       id: createId(),
       userId: session.user.id!,
       courseId: course.id,
       rating: Math.round(rating),
-      comment: comment?.trim() || null,
+      comment: safeComment || null,
       displayName: user?.name || null,
       isVerified: true,
       isHidden: false,

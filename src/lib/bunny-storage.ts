@@ -28,9 +28,12 @@ export async function uploadToBunny(
 ): Promise<{ url: string; filePath: string; fileName: string }> {
     const { storageApiKey, storageZone, regionHost, normalizedCdnUrl } = getConfig();
 
+    // Defense-in-depth: sanitize folder to prevent path traversal
+    const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'media';
+
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${createId()}.${ext}`;
-    const filePath = `${folder}/${fileName}`;
+    const filePath = `${safeFolder}/${fileName}`;
 
     const fileBuffer = await file.arrayBuffer();
 

@@ -20,7 +20,9 @@ export async function POST(request: Request) {
 
         const formData = await request.formData();
         const file = formData.get("file") as File | null;
-        const folder = (formData.get("folder") as string) || "courses";
+        const rawFolder = (formData.get("folder") as string) || "courses";
+        // Sanitize folder: allow only alphanumeric, hyphens, underscores (prevent path traversal)
+        const folder = rawFolder.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 50) || "courses";
 
         if (!file) {
             return NextResponse.json(

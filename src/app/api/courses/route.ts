@@ -4,13 +4,19 @@ import { db } from "@/lib/db";
 import { courses, users, lessons, courseTags, tags } from "@/lib/db/schema";
 import { eq, desc, asc, and, count, like, gt, sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // GET /api/courses - Get all published courses with filters and pagination
 export async function GET(request: Request) {
     try {
+        // Rate limit public endpoint
+        const clientIP = getClientIP(request);
+        const rateLimit = checkRateLimit(`courses:${clientIP}`, rateLimits.general);
+        if (!rateLimit.success) return rateLimitResponse(rateLimit.resetTime);
+
         const { searchParams } = new URL(request.url);
-        const page = parseInt(searchParams.get("page") || "1");
-        const limit = parseInt(searchParams.get("limit") || "12");
+        const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "12") || 12));
         const search = searchParams.get("search") || "";
         const priceFilter = searchParams.get("price") || "all";
         const tagSlug = searchParams.get("tag") || "all";
