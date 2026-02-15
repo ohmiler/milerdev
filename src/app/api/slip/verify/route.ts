@@ -175,24 +175,24 @@ export async function POST(request: Request) {
             );
         }
 
-        // Success — update payment and create enrollment
-        await db
-            .update(payments)
-            .set({
-                status: "completed",
-                slipUrl: slipResult.data?.transRef || null,
-            })
-            .where(eq(payments.id, payment.id));
+        // Success — update payment, create enrollment, and record coupon in a single transaction
+        await db.transaction(async (tx) => {
+            await tx
+                .update(payments)
+                .set({
+                    status: "completed",
+                    slipUrl: slipResult.data?.transRef || null,
+                })
+                .where(eq(payments.id, payment.id));
 
-        await db.insert(enrollments).values({
-            userId: session.user.id,
-            courseId,
-        });
+            await tx.insert(enrollments).values({
+                userId: session.user.id,
+                courseId,
+            });
 
-        // Record coupon usage if coupon was applied
-        if (appliedCouponId) {
-            try {
-                await db.insert(couponUsages).values({
+            // Record coupon usage if coupon was applied
+            if (appliedCouponId) {
+                await tx.insert(couponUsages).values({
                     couponId: appliedCouponId,
                     userId: session.user.id,
                     courseId,
@@ -200,13 +200,11 @@ export async function POST(request: Request) {
                         ? parseFloat(course.promoPrice!.toString()) - amount
                         : originalPrice - amount),
                 });
-                await db.update(coupons)
+                await tx.update(coupons)
                     .set({ usageCount: sql`${coupons.usageCount} + 1` })
                     .where(eq(coupons.id, appliedCouponId));
-            } catch (couponErr) {
-                console.error('Failed to record coupon usage:', couponErr);
             }
-        }
+        });
 
         // Send confirmation emails (non-blocking)
         if (session.user.email && session.user.name) {

@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { enrollments, courses } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/email';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { safeInsertEnrollment } from '@/lib/db/safe-insert';
 
 // GET /api/enrollments - Get user's enrollments
 export async function GET() {
@@ -47,6 +49,10 @@ export async function POST(request: Request) {
     if (!session?.user) {
       return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 });
     }
+
+    // Rate limiting
+    const rateLimit = checkRateLimit(`enrollments:${session.user.id}`, rateLimits.sensitive);
+    if (!rateLimit.success) return rateLimitResponse(rateLimit.resetTime);
 
     const { courseId } = await request.json();
 
@@ -94,13 +100,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create enrollment
-    await db.insert(enrollments).values({
-      userId: session.user.id,
-      courseId: courseId,
-      enrolledAt: new Date(),
-      progressPercent: 0,
-    });
+    // Create enrollment (safe insert handles race conditions)
+    const { created } = await safeInsertEnrollment(session.user.id, courseId);
+    if (!created) {
+      return NextResponse.json(
+        { error: 'คุณลงทะเบียนคอร์สนี้แล้ว' },
+        { status: 400 }
+      );
+    }
 
     // Send enrollment email (non-blocking)
     if (session.user.email) {

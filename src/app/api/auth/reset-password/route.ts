@@ -4,7 +4,7 @@ import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/email';
-import { createId } from '@paralleldrive/cuid2';
+import { randomBytes } from 'crypto';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const resetSchema = z.object({
@@ -47,8 +47,8 @@ export async function POST(request: Request) {
             });
         }
 
-        // Generate reset token
-        const resetToken = createId();
+        // Generate cryptographically secure reset token
+        const resetToken = randomBytes(32).toString('hex');
         const resetExpires = new Date(Date.now() + 3600000); // 1 hour
 
         // Update user with reset token

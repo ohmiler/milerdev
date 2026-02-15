@@ -71,7 +71,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             if (user) {
                 token.id = user.id;
                 token.role = (user as { role?: string }).role;
+                token.roleCheckedAt = Date.now();
             }
+
+            // Refresh role from DB every 5 minutes to prevent privilege persistence
+            const ROLE_REFRESH_MS = 5 * 60 * 1000;
+            const lastChecked = (token.roleCheckedAt as number) || 0;
+            if (Date.now() - lastChecked > ROLE_REFRESH_MS && token.id) {
+                try {
+                    const freshUser = await db.query.users.findFirst({
+                        where: eq(schema.users.id, token.id as string),
+                        columns: { role: true },
+                    });
+                    if (freshUser) {
+                        token.role = freshUser.role;
+                    }
+                    token.roleCheckedAt = Date.now();
+                } catch {
+                    // On DB error, keep existing role — will retry next request
+                }
+            }
+
             return token;
         },
         async session({ session, token }) {
