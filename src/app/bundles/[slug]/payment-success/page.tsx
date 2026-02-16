@@ -86,6 +86,7 @@ async function getBundlePaymentStatus(slug: string, userId: string) {
 async function verifyAndFulfillBundle(
   sessionId: string | undefined,
   userId: string,
+  bundleId: string,
   courseIds: string[],
   paymentId: string | undefined
 ) {
@@ -98,6 +99,7 @@ async function verifyAndFulfillBundle(
     // Verify that the Stripe session metadata matches this user, bundle, and payment
     const meta = stripeSession.metadata || {};
     if (meta.userId && meta.userId !== userId) return;
+    if (meta.bundleId && meta.bundleId !== bundleId) return;
     if (meta.paymentId && paymentId && meta.paymentId !== paymentId) return;
     if (meta.type && meta.type !== 'bundle') return;
 
@@ -148,6 +150,7 @@ export default async function BundlePaymentSuccessPage({ params, searchParams }:
     await verifyAndFulfillBundle(
       session_id,
       session.user.id,
+      bundle.id,
       bundleCourseList.map(c => c.courseId),
       payment?.id
     );

@@ -160,45 +160,49 @@ export async function PUT(request: Request, { params }: RouteParams) {
       }
 
       // If status changed to 'refunded' from 'completed', remove enrollment
-      // BUT only if user has no other completed payment for the same course/bundle
+      // BUT only if user has no other completed payment for the same course
+      // This checks BOTH direct course payments AND other bundle payments that include the course
       if (status === 'refunded' && previousStatus === 'completed' && existingPayment.userId) {
+        const courseIdsToCheck: string[] = [];
+
         if (existingPayment.bundleId) {
           const bCourses = await tx
             .select({ courseId: bundleCourses.courseId })
             .from(bundleCourses)
             .where(eq(bundleCourses.bundleId, existingPayment.bundleId));
-
-          for (const bc of bCourses) {
-            // Check if user has another completed payment covering this course
-            const [otherPayment] = await tx
-              .select({ count: sql<number>`count(*)` })
-              .from(payments)
-              .where(and(
-                eq(payments.userId, existingPayment.userId!),
-                eq(payments.courseId, bc.courseId),
-                eq(payments.status, 'completed'),
-                ne(payments.id, id)
-              ));
-            if (!otherPayment?.count) {
-              await tx.delete(enrollments).where(
-                and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, bc.courseId))
-              );
-            }
-          }
+          courseIdsToCheck.push(...bCourses.map(bc => bc.courseId));
         } else if (existingPayment.courseId) {
-          // Check if user has another completed payment for the same course
-          const [otherPayment] = await tx
+          courseIdsToCheck.push(existingPayment.courseId);
+        }
+
+        for (const courseId of courseIdsToCheck) {
+          // Check 1: another completed direct course payment
+          const [directPayment] = await tx
             .select({ count: sql<number>`count(*)` })
             .from(payments)
             .where(and(
               eq(payments.userId, existingPayment.userId!),
-              eq(payments.courseId, existingPayment.courseId),
+              eq(payments.courseId, courseId),
               eq(payments.status, 'completed'),
               ne(payments.id, id)
             ));
-          if (!otherPayment?.count) {
+
+          // Check 2: another completed bundle payment that includes this course
+          const [bundlePayment] = await tx
+            .select({ count: sql<number>`count(*)` })
+            .from(payments)
+            .innerJoin(bundleCourses, eq(payments.bundleId, bundleCourses.bundleId))
+            .where(and(
+              eq(payments.userId, existingPayment.userId!),
+              eq(bundleCourses.courseId, courseId),
+              eq(payments.status, 'completed'),
+              ne(payments.id, id)
+            ));
+
+          const hasOtherEntitlement = (directPayment?.count || 0) > 0 || (bundlePayment?.count || 0) > 0;
+          if (!hasOtherEntitlement) {
             await tx.delete(enrollments).where(
-              and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, existingPayment.courseId))
+              and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, courseId))
             );
           }
         }

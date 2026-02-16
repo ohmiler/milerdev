@@ -141,16 +141,31 @@ export async function POST(request: Request) {
         const apiKey = (process.env.SLIPOK_API_KEY || "").trim();
         const branchId = (process.env.SLIPOK_BRANCH_ID || "").trim();
 
-        const slipResponse = await fetch(
-            `https://api.slipok.com/api/line/apikey/${branchId}`,
-            {
-                method: "POST",
-                headers: { "x-authorization": apiKey },
-                body: slipFormData,
-            }
-        );
+        const slipController = new AbortController();
+        const slipTimeout = setTimeout(() => slipController.abort(), 30_000);
 
-        const slipResult = await slipResponse.json();
+        let slipResult;
+        try {
+            const slipResponse = await fetch(
+                `https://api.slipok.com/api/line/apikey/${branchId}`,
+                {
+                    method: "POST",
+                    headers: { "x-authorization": apiKey },
+                    body: slipFormData,
+                    signal: slipController.signal,
+                }
+            );
+            slipResult = await slipResponse.json();
+        } catch (fetchError) {
+            await db.update(payments).set({ status: "failed" }).where(eq(payments.id, paymentId));
+            const isTimeout = fetchError instanceof DOMException && fetchError.name === 'AbortError';
+            return NextResponse.json(
+                { success: false, error: isTimeout ? "การตรวจสอบสลิปใช้เวลานานเกินไป กรุณาลองใหม่" : "ไม่สามารถเชื่อมต่อระบบตรวจสอบสลิปได้ กรุณาลองใหม่" },
+                { status: 503 }
+            );
+        } finally {
+            clearTimeout(slipTimeout);
+        }
 
         // Handle SlipOK error
         if (!slipResult.success) {

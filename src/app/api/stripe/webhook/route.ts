@@ -124,7 +124,7 @@ export async function POST(request: Request) {
                 }
 
                 console.log(`[Webhook] Bundle payment ${paymentId} completed, enrolled in ${bCourses.length} courses`);
-            } else if (courseId) {
+            } else if (type === "course" && courseId) {
                 // ===== SINGLE COURSE PAYMENT =====
                 await safeInsertEnrollment(userId, courseId);
 
