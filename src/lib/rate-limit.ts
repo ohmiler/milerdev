@@ -79,16 +79,96 @@ export function checkRateLimit(
 /**
  * Get client IP from request headers
  */
-export function getClientIP(request: Request): string {
-    const forwarded = request.headers.get("x-forwarded-for");
+function isValidIPv4(ip: string): boolean {
+    const parts = ip.split('.');
+    if (parts.length !== 4) return false;
+
+    return parts.every((part) => {
+        if (!/^\d{1,3}$/.test(part)) return false;
+        const value = Number(part);
+        return value >= 0 && value <= 255;
+    });
+}
+
+function isValidIPv6(ip: string): boolean {
+    if (!/^[0-9a-fA-F:]+$/.test(ip)) return false;
+    if (ip.includes(':::')) return false;
+
+    const parts = ip.split(':');
+    if (ip.includes('::')) {
+        if (parts.length > 8) return false;
+    } else if (parts.length !== 8) {
+        return false;
+    }
+
+    return parts.every((part) => part === '' || /^[0-9a-fA-F]{1,4}$/.test(part));
+}
+
+function normalizeIP(raw: string | null | undefined): string | null {
+    if (!raw) return null;
+
+    const value = raw.trim().replace(/^for=/i, '').replace(/^"|"$/g, '');
+    if (!value || value.toLowerCase() === 'unknown') return null;
+
+    // [IPv6]:port
+    const bracketedIPv6 = value.match(/^\[([0-9a-fA-F:]+)\](?::\d+)?$/);
+    const withoutBrackets = bracketedIPv6 ? bracketedIPv6[1] : value;
+
+    // IPv4:port
+    const ipv4WithPort = withoutBrackets.match(/^(\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?$/);
+    let candidate = ipv4WithPort ? ipv4WithPort[1] : withoutBrackets;
+
+    // IPv4-mapped IPv6 (::ffff:127.0.0.1)
+    if (candidate.toLowerCase().startsWith('::ffff:')) {
+        const mapped = candidate.slice(7);
+        if (isValidIPv4(mapped)) {
+            return mapped;
+        }
+    }
+
+    if (isValidIPv4(candidate)) {
+        return candidate;
+    }
+
+    candidate = candidate.toLowerCase();
+    if (isValidIPv6(candidate)) {
+        return candidate;
+    }
+
+    return null;
+}
+
+export function getClientIPFromHeaders(headers: Pick<Headers, 'get'>): string {
+    // Prefer single-IP headers set by trusted edge/load balancer when available
+    const directHeaders = ['cf-connecting-ip', 'x-real-ip', 'x-client-ip', 'fly-client-ip'];
+    for (const header of directHeaders) {
+        const ip = normalizeIP(headers.get(header));
+        if (ip) {
+            return ip;
+        }
+    }
+
+    // For X-Forwarded-For chains, use the right-most valid IP
+    const forwarded = headers.get('x-forwarded-for');
     if (forwarded) {
-        return forwarded.split(",")[0].trim();
+        const forwardedParts = forwarded
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean);
+
+        for (let i = forwardedParts.length - 1; i >= 0; i--) {
+            const ip = normalizeIP(forwardedParts[i]);
+            if (ip) {
+                return ip;
+            }
+        }
     }
-    const realIP = request.headers.get("x-real-ip");
-    if (realIP) {
-        return realIP;
-    }
+
     return "unknown";
+}
+
+export function getClientIP(request: Request): string {
+    return getClientIPFromHeaders(request.headers);
 }
 
 // Pre-configured rate limiters for common use cases

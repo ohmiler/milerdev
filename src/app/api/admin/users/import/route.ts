@@ -5,6 +5,12 @@ import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
+
+function generateSecurePassword(length: number = 16): string {
+  // base64url avoids characters commonly escaped in CSV/logs
+  return randomBytes(Math.ceil((length * 3) / 4)).toString('base64url').slice(0, length);
+}
 
 // POST /api/admin/users/import - Import users from CSV
 export async function POST(request: Request) {
@@ -97,7 +103,7 @@ export async function POST(request: Request) {
       // Hash password if provided, otherwise generate random
       const password = passwordIndex !== -1 && row[passwordIndex] 
         ? row[passwordIndex] 
-        : Math.random().toString(36).slice(-8);
+        : generateSecurePassword();
       const passwordHash = await bcrypt.hash(password, 12);
 
       try {

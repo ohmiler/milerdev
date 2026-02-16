@@ -21,6 +21,8 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const genericRegisterMessage = 'หากอีเมลนี้ยังไม่มีในระบบ บัญชีจะถูกสร้างให้อัตโนมัติ กรุณาลองเข้าสู่ระบบ';
+
     // Rate limiting - 5 requests per minute per IP
     const clientIP = getClientIP(request);
     const rateLimit = checkRateLimit(`register:${clientIP}`, rateLimits.auth);
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
     if (existingUser) {
       // Return generic message to prevent email enumeration
       return NextResponse.json(
-        { message: 'หากอีเมลนี้ยังไม่มีในระบบ บัญชีจะถูกสร้างให้อัตโนมัติ กรุณาลองเข้าสู่ระบบ' },
+        { message: genericRegisterMessage },
         { status: 200 }
       );
     }
@@ -75,8 +77,8 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json(
-      { message: 'หากอีเมลนี้ยังไม่มีในระบบ บัญชีจะถูกสร้างให้อัตโนมัติ กรุณาลองเข้าสู่ระบบ' },
-      { status: 201 }
+      { message: genericRegisterMessage },
+      { status: 200 }
     );
   } catch (error) {
     console.error('Registration error:', error);

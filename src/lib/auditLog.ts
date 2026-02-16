@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { auditLogs } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { headers } from 'next/headers';
+import { getClientIPFromHeaders } from '@/lib/rate-limit';
 
 interface AuditLogParams {
   userId: string;
@@ -22,7 +23,7 @@ export async function logAudit({
 }: AuditLogParams) {
   try {
     const headersList = await headers();
-    const ipAddress = (headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown').split(',')[0].trim();
+    const ipAddress = getClientIPFromHeaders(headersList);
     const userAgent = headersList.get('user-agent') || null;
 
     await db.insert(auditLogs).values({

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { settings, auditLogs } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { getClientIP } from '@/lib/rate-limit';
 
 // Default settings
 const defaultSettings = [
@@ -96,7 +97,7 @@ export async function PUT(request: Request) {
     }
 
     // Get IP and User Agent for audit log
-    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const ipAddress = getClientIP(request);
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
     // Check if setting exists
@@ -141,7 +142,7 @@ export async function PUT(request: Request) {
       entityId: key,
       oldValue: oldValue,
       newValue: String(value),
-      ipAddress: ipAddress.split(',')[0].trim(),
+      ipAddress,
       userAgent,
     });
 

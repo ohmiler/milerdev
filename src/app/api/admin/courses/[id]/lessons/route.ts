@@ -5,6 +5,7 @@ import { lessons } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { sanitizeRichContent } from '@/lib/sanitize';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -64,12 +65,13 @@ export async function POST(request: Request, { params }: RouteParams) {
       : 0;
 
     const lessonId = createId();
+    const safeContent = typeof content === 'string' ? sanitizeRichContent(content) : null;
 
     await db.insert(lessons).values({
       id: lessonId,
       courseId,
       title,
-      content: content || null,
+      content: safeContent || null,
       videoUrl: videoUrl || null,
       videoDuration: parseInt(videoDuration) || 0,
       orderIndex: orderIndex !== undefined ? orderIndex : maxOrder,

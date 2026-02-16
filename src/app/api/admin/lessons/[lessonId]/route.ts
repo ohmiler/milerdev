@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { lessons } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
+import { sanitizeRichContent } from '@/lib/sanitize';
 
 interface RouteParams {
   params: Promise<{ lessonId: string }>;
@@ -62,12 +63,16 @@ export async function PUT(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'ไม่พบบทเรียน' }, { status: 404 });
     }
 
+    const safeContent = content !== undefined
+      ? (typeof content === 'string' ? sanitizeRichContent(content) : null)
+      : existingLesson.content;
+
     // Update lesson
     await db
       .update(lessons)
       .set({
         title: title !== undefined ? title : existingLesson.title,
-        content: content !== undefined ? content : existingLesson.content,
+        content: safeContent,
         videoUrl: videoUrl !== undefined ? videoUrl : existingLesson.videoUrl,
         videoDuration: videoDuration !== undefined ? parseInt(videoDuration) : existingLesson.videoDuration,
         orderIndex: orderIndex !== undefined ? orderIndex : existingLesson.orderIndex,
