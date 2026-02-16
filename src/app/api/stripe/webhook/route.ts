@@ -61,6 +61,31 @@ export async function POST(request: Request) {
             return NextResponse.json({ received: true });
         }
 
+        // Strict type invariant: metadata type must match payment row shape
+        const isCoursePayment = !!paymentRow.courseId && !paymentRow.bundleId;
+        const isBundlePayment = !!paymentRow.bundleId && !paymentRow.courseId;
+        if (type === 'course' && !isCoursePayment) {
+            console.error(`[Webhook] type=course but payment row is not a course payment (id=${paymentId})`);
+            return NextResponse.json({ received: true });
+        }
+        if (type === 'bundle' && !isBundlePayment) {
+            console.error(`[Webhook] type=bundle but payment row is not a bundle payment (id=${paymentId})`);
+            return NextResponse.json({ received: true });
+        }
+
+        // Verify amount and currency match between Stripe and DB
+        const stripeAmountTotal = session.amount_total; // in satang (smallest unit)
+        const dbAmountSatang = Math.round(parseFloat(paymentRow.amount.toString()) * 100);
+        if (stripeAmountTotal && Math.abs(stripeAmountTotal - dbAmountSatang) > 1) {
+            console.error(`[Webhook] Amount mismatch: stripe=${stripeAmountTotal}, db=${dbAmountSatang} (paymentId=${paymentId})`);
+            return NextResponse.json({ received: true });
+        }
+        const stripeCurrency = session.currency?.toLowerCase();
+        if (stripeCurrency && paymentRow.currency && stripeCurrency !== paymentRow.currency.toLowerCase()) {
+            console.error(`[Webhook] Currency mismatch: stripe=${stripeCurrency}, db=${paymentRow.currency} (paymentId=${paymentId})`);
+            return NextResponse.json({ received: true });
+        }
+
         // Step 1: Update payment status (always do this first)
         try {
             await db

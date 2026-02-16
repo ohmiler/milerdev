@@ -51,9 +51,10 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (existingUser) {
+      // Return generic message to prevent email enumeration
       return NextResponse.json(
-        { error: 'อีเมลนี้ถูกใช้งานแล้ว' },
-        { status: 400 }
+        { message: 'หากอีเมลนี้ยังไม่มีในระบบ บัญชีจะถูกสร้างให้อัตโนมัติ กรุณาลองเข้าสู่ระบบ' },
+        { status: 200 }
       );
     }
 
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json(
-      { message: 'สมัครสมาชิกสำเร็จ' },
+      { message: 'หากอีเมลนี้ยังไม่มีในระบบ บัญชีจะถูกสร้างให้อัตโนมัติ กรุณาลองเข้าสู่ระบบ' },
       { status: 201 }
     );
   } catch (error) {

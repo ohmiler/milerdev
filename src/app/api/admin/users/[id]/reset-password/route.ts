@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -56,6 +57,8 @@ export async function POST(request: Request, { params }: RouteParams) {
         updatedAt: new Date(),
       })
       .where(eq(users.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'user', entityId: id, newValue: `Admin reset password for ${user.email}` });
 
     return NextResponse.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
   } catch (error) {

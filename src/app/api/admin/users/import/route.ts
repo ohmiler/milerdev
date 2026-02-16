@@ -21,6 +21,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'กรุณาเลือกไฟล์' }, { status: 400 });
     }
 
+    // File type and size validation
+    const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'text/plain'];
+    if (!allowedTypes.includes(file.type) && !file.name.endsWith('.csv')) {
+      return NextResponse.json({ error: 'รองรับเฉพาะไฟล์ CSV เท่านั้น' }, { status: 400 });
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: 'ไฟล์ต้องมีขนาดไม่เกิน 5MB' }, { status: 400 });
+    }
+
     // Read CSV content
     const content = await file.text();
     const lines = content.split('\n').filter(line => line.trim());

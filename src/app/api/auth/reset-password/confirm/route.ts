@@ -5,6 +5,7 @@ import { eq, and, gt } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { createHash } from 'crypto';
 
 const confirmResetSchema = z.object({
     token: z.string().min(1, 'Token ไม่ถูกต้อง'),
@@ -38,13 +39,16 @@ export async function POST(request: Request) {
 
         const { token, newPassword } = validation.data;
 
+        // Hash the incoming token to compare against stored hash
+        const tokenHash = createHash('sha256').update(token).digest('hex');
+
         // Find user with valid (non-expired) reset token
         const [user] = await db
             .select()
             .from(users)
             .where(
                 and(
-                    eq(users.resetToken, token),
+                    eq(users.resetToken, tokenHash),
                     gt(users.resetExpires, new Date())
                 )
             )

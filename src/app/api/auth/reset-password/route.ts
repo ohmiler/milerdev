@@ -4,7 +4,7 @@ import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/email';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const resetSchema = z.object({
@@ -49,13 +49,14 @@ export async function POST(request: Request) {
 
         // Generate cryptographically secure reset token
         const resetToken = randomBytes(32).toString('hex');
+        const resetTokenHash = createHash('sha256').update(resetToken).digest('hex');
         const resetExpires = new Date(Date.now() + 3600000); // 1 hour
 
-        // Update user with reset token
+        // Store hashed token in DB (plaintext sent to user via email)
         await db
             .update(users)
             .set({
-                resetToken,
+                resetToken: resetTokenHash,
                 resetExpires,
             })
             .where(eq(users.id, user.id));
