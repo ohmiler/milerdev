@@ -158,10 +158,12 @@ export async function POST(request: Request) {
             );
             slipResult = await slipResponse.json();
         } catch (fetchError) {
-            await db.update(payments).set({ status: "failed" }).where(eq(payments.id, paymentId));
             const isTimeout = fetchError instanceof DOMException && fetchError.name === 'AbortError';
+            await db.update(payments).set({
+                status: isTimeout ? "verifying" : "failed",
+            }).where(eq(payments.id, paymentId));
             return NextResponse.json(
-                { success: false, error: isTimeout ? "การตรวจสอบสลิปใช้เวลานานเกินไป กรุณาลองใหม่" : "ไม่สามารถเชื่อมต่อระบบตรวจสอบสลิปได้ กรุณาลองใหม่" },
+                { success: false, error: isTimeout ? "การตรวจสอบสลิปใช้เวลานานเกินไป ระบบจะตรวจสอบให้อัตโนมัติ" : "ไม่สามารถเชื่อมต่อระบบตรวจสอบสลิปได้ กรุณาลองใหม่" },
                 { status: 503 }
             );
         } finally {

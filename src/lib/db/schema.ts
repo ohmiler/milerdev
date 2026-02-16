@@ -170,7 +170,9 @@ export const payments = mysqlTable('payments', {
     stripePaymentId: varchar('stripe_payment_id', { length: 255 }),
     slipUrl: text('slip_url'),
     itemTitle: varchar('item_title', { length: 255 }),
-    status: varchar('status', { length: 20, enum: ['pending', 'completed', 'failed', 'refunded'] }).default('pending').notNull(),
+    status: varchar('status', { length: 20, enum: ['pending', 'completed', 'failed', 'refunded', 'verifying'] }).default('pending').notNull(),
+    retryCount: int('retry_count').default(0),
+    lastRetryAt: datetime('last_retry_at'),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
 });
 
