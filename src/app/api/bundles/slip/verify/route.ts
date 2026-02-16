@@ -32,6 +32,21 @@ export async function POST(request: Request) {
             );
         }
 
+        // Server-side file validation
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(slipFile.type)) {
+            return NextResponse.json(
+                { error: "รองรับเฉพาะไฟล์ JPG, PNG, WEBP เท่านั้น" },
+                { status: 400 }
+            );
+        }
+        if (slipFile.size > 5 * 1024 * 1024) {
+            return NextResponse.json(
+                { error: "ไฟล์ต้องมีขนาดไม่เกิน 5MB" },
+                { status: 400 }
+            );
+        }
+
         // Get bundle details
         const [bundle] = await db
             .select()
@@ -83,18 +98,39 @@ export async function POST(request: Request) {
             );
         }
 
-        // Create pending payment record
-        const paymentId = createId();
-        await db.insert(payments).values({
-            id: paymentId,
-            userId: session.user.id,
-            bundleId,
-            amount: String(amount),
-            currency: "THB",
-            method: "promptpay",
-            itemTitle: `📦 ${bundle.title}`,
-            status: "pending",
-        } as typeof payments.$inferInsert);
+        // Reuse existing pending payment or create new one
+        const [existingPending] = await db
+            .select()
+            .from(payments)
+            .where(
+                and(
+                    eq(payments.userId, session.user.id),
+                    eq(payments.bundleId, bundleId),
+                    eq(payments.status, 'pending'),
+                    eq(payments.method, 'promptpay')
+                )
+            )
+            .limit(1);
+
+        let paymentId: string;
+        if (existingPending) {
+            paymentId = existingPending.id;
+            await db.update(payments).set({
+                amount: String(amount),
+            }).where(eq(payments.id, existingPending.id));
+        } else {
+            paymentId = createId();
+            await db.insert(payments).values({
+                id: paymentId,
+                userId: session.user.id,
+                bundleId,
+                amount: String(amount),
+                currency: "THB",
+                method: "promptpay",
+                itemTitle: `📦 ${bundle.title}`,
+                status: "pending",
+            } as typeof payments.$inferInsert);
+        }
 
         // Verify slip with SlipOK API
         const slipFormData = new FormData();
@@ -156,34 +192,35 @@ export async function POST(request: Request) {
             );
         }
 
-        // Success — update payment
-        await db
-            .update(payments)
-            .set({
-                status: "completed",
-                slipUrl: slipResult.data?.transRef || null,
-            })
-            .where(eq(payments.id, paymentId));
-
-        // Enroll in all courses (skip if already enrolled)
+        // Success — update payment + enroll in a single transaction
         const enrolled: string[] = [];
-        for (const course of bCourses) {
-            const existingEnrollment = await db.query.enrollments.findFirst({
-                where: and(
-                    eq(enrollments.userId, session.user.id),
-                    eq(enrollments.courseId, course.courseId)
-                ),
-            });
+        await db.transaction(async (tx) => {
+            await tx
+                .update(payments)
+                .set({
+                    status: "completed",
+                    slipUrl: slipResult.data?.transRef || null,
+                })
+                .where(eq(payments.id, paymentId));
 
-            if (!existingEnrollment) {
-                await db.insert(enrollments).values({
-                    id: createId(),
-                    userId: session.user.id,
-                    courseId: course.courseId,
+            for (const course of bCourses) {
+                const existingEnrollment = await tx.query.enrollments.findFirst({
+                    where: and(
+                        eq(enrollments.userId, session.user.id),
+                        eq(enrollments.courseId, course.courseId)
+                    ),
                 });
-                enrolled.push(course.courseTitle);
+
+                if (!existingEnrollment) {
+                    await tx.insert(enrollments).values({
+                        id: createId(),
+                        userId: session.user.id,
+                        courseId: course.courseId,
+                    });
+                    enrolled.push(course.courseTitle);
+                }
             }
-        }
+        });
 
         // Send confirmation emails (non-blocking)
         if (session.user.email && session.user.name) {

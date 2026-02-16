@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { payments, enrollments, bundleCourses } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, ne, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
 
@@ -103,81 +103,107 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     const previousStatus = existingPayment.status;
 
-    // Update payment status
-    await db
-      .update(payments)
-      .set({ status })
-      .where(eq(payments.id, id));
+    // Wrap status update + enrollment changes in a transaction for atomicity
+    await db.transaction(async (tx) => {
+      // Update payment status
+      await tx
+        .update(payments)
+        .set({ status })
+        .where(eq(payments.id, id));
 
-    // If status changed to 'completed', create enrollment
-    if (status === 'completed' && previousStatus !== 'completed' && existingPayment.userId) {
-      if (existingPayment.bundleId) {
-        // Bundle payment — enroll in all bundle courses
-        const bCourses = await db
-          .select({ courseId: bundleCourses.courseId })
-          .from(bundleCourses)
-          .where(eq(bundleCourses.bundleId, existingPayment.bundleId));
+      // If status changed to 'completed', create enrollment
+      if (status === 'completed' && previousStatus !== 'completed' && existingPayment.userId) {
+        if (existingPayment.bundleId) {
+          const bCourses = await tx
+            .select({ courseId: bundleCourses.courseId })
+            .from(bundleCourses)
+            .where(eq(bundleCourses.bundleId, existingPayment.bundleId));
 
-        for (const bc of bCourses) {
-          const [existing] = await db
+          for (const bc of bCourses) {
+            const [existing] = await tx
+              .select()
+              .from(enrollments)
+              .where(and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, bc.courseId)))
+              .limit(1);
+            if (!existing) {
+              await tx.insert(enrollments).values({
+                id: createId(),
+                userId: existingPayment.userId!,
+                courseId: bc.courseId,
+                enrolledAt: new Date(),
+                progressPercent: 0,
+              });
+            }
+          }
+        } else if (existingPayment.courseId) {
+          const [existingEnrollment] = await tx
             .select()
             .from(enrollments)
-            .where(and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, bc.courseId)))
+            .where(
+              and(
+                eq(enrollments.userId, existingPayment.userId!),
+                eq(enrollments.courseId, existingPayment.courseId)
+              )
+            )
             .limit(1);
-          if (!existing) {
-            await db.insert(enrollments).values({
+
+          if (!existingEnrollment) {
+            await tx.insert(enrollments).values({
               id: createId(),
               userId: existingPayment.userId!,
-              courseId: bc.courseId,
+              courseId: existingPayment.courseId,
               enrolledAt: new Date(),
               progressPercent: 0,
             });
           }
         }
-      } else if (existingPayment.courseId) {
-        // Single course payment
-        const [existingEnrollment] = await db
-          .select()
-          .from(enrollments)
-          .where(
-            and(
-              eq(enrollments.userId, existingPayment.userId!),
-              eq(enrollments.courseId, existingPayment.courseId)
-            )
-          )
-          .limit(1);
+      }
 
-        if (!existingEnrollment) {
-          await db.insert(enrollments).values({
-            id: createId(),
-            userId: existingPayment.userId!,
-            courseId: existingPayment.courseId,
-            enrolledAt: new Date(),
-            progressPercent: 0,
-          });
+      // If status changed to 'refunded' from 'completed', remove enrollment
+      // BUT only if user has no other completed payment for the same course/bundle
+      if (status === 'refunded' && previousStatus === 'completed' && existingPayment.userId) {
+        if (existingPayment.bundleId) {
+          const bCourses = await tx
+            .select({ courseId: bundleCourses.courseId })
+            .from(bundleCourses)
+            .where(eq(bundleCourses.bundleId, existingPayment.bundleId));
+
+          for (const bc of bCourses) {
+            // Check if user has another completed payment covering this course
+            const [otherPayment] = await tx
+              .select({ count: sql<number>`count(*)` })
+              .from(payments)
+              .where(and(
+                eq(payments.userId, existingPayment.userId!),
+                eq(payments.courseId, bc.courseId),
+                eq(payments.status, 'completed'),
+                ne(payments.id, id)
+              ));
+            if (!otherPayment?.count) {
+              await tx.delete(enrollments).where(
+                and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, bc.courseId))
+              );
+            }
+          }
+        } else if (existingPayment.courseId) {
+          // Check if user has another completed payment for the same course
+          const [otherPayment] = await tx
+            .select({ count: sql<number>`count(*)` })
+            .from(payments)
+            .where(and(
+              eq(payments.userId, existingPayment.userId!),
+              eq(payments.courseId, existingPayment.courseId),
+              eq(payments.status, 'completed'),
+              ne(payments.id, id)
+            ));
+          if (!otherPayment?.count) {
+            await tx.delete(enrollments).where(
+              and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, existingPayment.courseId))
+            );
+          }
         }
       }
-    }
-
-    // If status changed to 'refunded' from 'completed', remove enrollment
-    if (status === 'refunded' && previousStatus === 'completed' && existingPayment.userId) {
-      if (existingPayment.bundleId) {
-        const bCourses = await db
-          .select({ courseId: bundleCourses.courseId })
-          .from(bundleCourses)
-          .where(eq(bundleCourses.bundleId, existingPayment.bundleId));
-
-        for (const bc of bCourses) {
-          await db.delete(enrollments).where(
-            and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, bc.courseId))
-          );
-        }
-      } else if (existingPayment.courseId) {
-        await db.delete(enrollments).where(
-          and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, existingPayment.courseId))
-        );
-      }
-    }
+    });
 
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'payment', entityId: id, oldValue: `status: ${previousStatus}`, newValue: `status: ${status}` });
 

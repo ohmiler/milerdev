@@ -95,6 +95,12 @@ async function verifyAndFulfillBundle(
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
     if (stripeSession.payment_status !== 'paid') return;
 
+    // Verify that the Stripe session metadata matches this user, bundle, and payment
+    const meta = stripeSession.metadata || {};
+    if (meta.userId && meta.userId !== userId) return;
+    if (meta.paymentId && paymentId && meta.paymentId !== paymentId) return;
+    if (meta.type && meta.type !== 'bundle') return;
+
     // Update payment status if still pending
     if (paymentId) {
       await db

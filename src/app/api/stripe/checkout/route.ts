@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { courses, payments, coupons, couponUsages } from "@/lib/db/schema";
+import { courses, payments, coupons, couponUsages, enrollments } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
@@ -29,6 +29,20 @@ export async function POST(request: Request) {
 
         if (!course || course.status !== 'published') {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
+        }
+
+        // Check if already enrolled — prevent paying for a course the user already has
+        const existingEnrollment = await db.query.enrollments.findFirst({
+            where: and(
+                eq(enrollments.userId, session.user.id),
+                eq(enrollments.courseId, courseId)
+            ),
+        });
+        if (existingEnrollment) {
+            return NextResponse.json(
+                { error: "คุณลงทะเบียนคอร์สนี้แล้ว" },
+                { status: 400 }
+            );
         }
 
         const originalPrice = parseFloat(course.price.toString());

@@ -34,6 +34,21 @@ export async function POST(request: Request) {
             );
         }
 
+        // Server-side file validation
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(slipFile.type)) {
+            return NextResponse.json(
+                { error: "รองรับเฉพาะไฟล์ JPG, PNG, WEBP เท่านั้น" },
+                { status: 400 }
+            );
+        }
+        if (slipFile.size > 5 * 1024 * 1024) {
+            return NextResponse.json(
+                { error: "ไฟล์ต้องมีขนาดไม่เกิน 5MB" },
+                { status: 400 }
+            );
+        }
+
         // Get course details
         const course = await db.query.courses.findFirst({
             where: eq(courses.id, courseId),
@@ -98,18 +113,39 @@ export async function POST(request: Request) {
             );
         }
 
-        // Create pending payment record first (MySQL doesn't support .returning())
-        const paymentId = createId();
-        await db.insert(payments).values({
-            id: paymentId,
-            userId: session.user.id,
-            courseId,
-            amount: String(amount),
-            currency: "THB",
-            method: "promptpay",
-            itemTitle: course.title,
-            status: "pending",
-        } as typeof payments.$inferInsert);
+        // Reuse existing pending payment or create new one
+        const [existingPending] = await db
+            .select()
+            .from(payments)
+            .where(
+                and(
+                    eq(payments.userId, session.user.id),
+                    eq(payments.courseId, courseId),
+                    eq(payments.status, 'pending'),
+                    eq(payments.method, 'promptpay')
+                )
+            )
+            .limit(1);
+
+        let paymentId: string;
+        if (existingPending) {
+            paymentId = existingPending.id;
+            await db.update(payments).set({
+                amount: String(amount),
+            }).where(eq(payments.id, existingPending.id));
+        } else {
+            paymentId = createId();
+            await db.insert(payments).values({
+                id: paymentId,
+                userId: session.user.id,
+                courseId,
+                amount: String(amount),
+                currency: "THB",
+                method: "promptpay",
+                itemTitle: course.title,
+                status: "pending",
+            } as typeof payments.$inferInsert);
+        }
         
         const payment = { id: paymentId, amount };
 

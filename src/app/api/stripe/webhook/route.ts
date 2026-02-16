@@ -38,6 +38,29 @@ export async function POST(request: Request) {
             return NextResponse.json({ received: true });
         }
 
+        // Cross-check: verify payment row exists and metadata matches DB record
+        const [paymentRow] = await db
+            .select()
+            .from(payments)
+            .where(eq(payments.id, paymentId));
+
+        if (!paymentRow) {
+            console.error(`[Webhook] Payment ${paymentId} not found in DB`);
+            return NextResponse.json({ received: true });
+        }
+        if (paymentRow.userId !== userId) {
+            console.error(`[Webhook] userId mismatch: metadata=${userId}, db=${paymentRow.userId}`);
+            return NextResponse.json({ received: true });
+        }
+        if (type === 'course' && courseId && paymentRow.courseId && paymentRow.courseId !== courseId) {
+            console.error(`[Webhook] courseId mismatch: metadata=${courseId}, db=${paymentRow.courseId}`);
+            return NextResponse.json({ received: true });
+        }
+        if (type === 'bundle' && bundleId && paymentRow.bundleId && paymentRow.bundleId !== bundleId) {
+            console.error(`[Webhook] bundleId mismatch: metadata=${bundleId}, db=${paymentRow.bundleId}`);
+            return NextResponse.json({ received: true });
+        }
+
         // Step 1: Update payment status (always do this first)
         try {
             await db
@@ -57,10 +80,7 @@ export async function POST(request: Request) {
 
         // Step 2: Enroll and send emails
         try {
-            const [payment] = await db
-                .select()
-                .from(payments)
-                .where(eq(payments.id, paymentId));
+            const payment = paymentRow;
 
             const customerEmail = session.customer_details?.email;
             const customerName = session.customer_details?.name || "คุณลูกค้า";
