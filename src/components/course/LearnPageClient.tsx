@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import LessonList from './LessonList';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
@@ -55,6 +55,71 @@ export default function LearnPageClient({
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
   const [markingComplete, setMarkingComplete] = useState(false);
 
+  // Watch time tracking
+  const watchTimeRef = useRef(0);
+  const lastSyncRef = useRef(0);
+  const isPlayingRef = useRef(false);
+  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const syncWatchTime = useCallback(async () => {
+    const currentWatchTime = Math.floor(watchTimeRef.current);
+    if (currentWatchTime <= lastSyncRef.current) return;
+    lastSyncRef.current = currentWatchTime;
+    try {
+      await fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId: currentLesson.id,
+          watchTimeSeconds: currentWatchTime,
+        }),
+      });
+    } catch {
+      // Silent fail — will retry on next interval
+    }
+  }, [currentLesson.id]);
+
+  // Auto-sync watch time every 30 seconds while playing
+  useEffect(() => {
+    syncIntervalRef.current = setInterval(() => {
+      if (isPlayingRef.current && watchTimeRef.current > lastSyncRef.current) {
+        syncWatchTime();
+      }
+    }, 30_000);
+    return () => {
+      if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
+      // Final sync on unmount
+      if (watchTimeRef.current > lastSyncRef.current) {
+        syncWatchTime();
+      }
+    };
+  }, [syncWatchTime]);
+
+  // Reset watch time tracking when lesson changes
+  useEffect(() => {
+    watchTimeRef.current = 0;
+    lastSyncRef.current = 0;
+    isPlayingRef.current = false;
+  }, [currentLesson.id]);
+
+  const handleTimeUpdate = useCallback((currentTime: number, _duration: number) => {
+    watchTimeRef.current = currentTime;
+  }, []);
+
+  const handlePlay = useCallback(() => {
+    isPlayingRef.current = true;
+  }, []);
+
+  const handlePause = useCallback(() => {
+    isPlayingRef.current = false;
+    syncWatchTime();
+  }, [syncWatchTime]);
+
+  const handleEnded = useCallback(() => {
+    isPlayingRef.current = false;
+    syncWatchTime();
+  }, [syncWatchTime]);
+
   const isCurrentCompleted = completedIds.has(currentLesson.id);
   const completedCount = completedIds.size;
   const totalCount = allLessons.length;
@@ -71,6 +136,7 @@ export default function LearnPageClient({
         body: JSON.stringify({
           lessonId: currentLesson.id,
           completed: newCompleted,
+          watchTimeSeconds: Math.floor(watchTimeRef.current) || undefined,
         }),
       });
       if (res.ok) {
@@ -278,7 +344,13 @@ export default function LearnPageClient({
                 </div>
               </div>
             ) : currentLesson.videoUrl ? (
-              <BunnyPlayer videoId={currentLesson.videoUrl} />
+              <BunnyPlayer
+                videoId={currentLesson.videoUrl}
+                onTimeUpdate={handleTimeUpdate}
+                onPlay={handlePlay}
+                onPause={handlePause}
+                onEnded={handleEnded}
+              />
             ) : (
               <div style={{
                 position: 'absolute',

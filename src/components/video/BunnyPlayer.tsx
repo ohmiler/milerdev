@@ -1,12 +1,16 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 
 interface BunnyPlayerProps {
   videoId: string;
   libraryId?: string;
   autoplay?: boolean;
   className?: string;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onEnded?: () => void;
 }
 
 type VideoType = 'youtube' | 'vimeo' | 'bunny' | 'unknown';
@@ -16,8 +20,46 @@ export default function BunnyPlayer({
   libraryId,
   autoplay = false,
   className = '',
+  onTimeUpdate,
+  onPlay,
+  onPause,
+  onEnded,
 }: BunnyPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Listen for postMessage events from Bunny.net iframe player
+  const handleMessage = useCallback((event: MessageEvent) => {
+    if (!event.data || typeof event.data !== 'object') return;
+
+    // Bunny.net player sends events like: { event: 'timeupdate', data: { currentTime, duration } }
+    const msg = event.data;
+    const eventName = msg.event || msg.type;
+    const data = msg.data || msg;
+
+    switch (eventName) {
+      case 'timeupdate':
+        if (onTimeUpdate && typeof data.currentTime === 'number') {
+          onTimeUpdate(data.currentTime, data.duration || 0);
+        }
+        break;
+      case 'play':
+      case 'playing':
+        onPlay?.();
+        break;
+      case 'pause':
+        onPause?.();
+        break;
+      case 'ended':
+      case 'complete':
+        onEnded?.();
+        break;
+    }
+  }, [onTimeUpdate, onPlay, onPause, onEnded]);
+
+  useEffect(() => {
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handleMessage]);
 
   // Detect video type from URL
   const detectVideoType = (url: string): VideoType => {
