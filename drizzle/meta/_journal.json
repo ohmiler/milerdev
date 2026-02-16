@@ -22,6 +22,13 @@
       "when": 1770970653278,
       "tag": "0002_uneven_hobgoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1771275800000,
+      "tag": "0003_product_analytics",
+      "breakpoints": true
     }
   ]
 }

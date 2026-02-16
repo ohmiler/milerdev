@@ -5,7 +5,8 @@ import { payments, enrollments, bundles, bundleCourses, courses } from "@/lib/db
 import { eq, and, asc } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import { createId } from "@paralleldrive/cuid2";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { trackAnalyticsEvent } from "@/lib/analytics";
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/bundles/slip/verify - Verify slip payment for bundle
 export async function POST(request: Request) {
@@ -235,6 +236,21 @@ export async function POST(request: Request) {
                     enrolled.push(course.courseTitle);
                 }
             }
+        });
+
+        await trackAnalyticsEvent({
+            eventName: "payment_success",
+            userId: session.user.id,
+            bundleId,
+            paymentId,
+            source: "server",
+            metadata: {
+                itemType: "bundle",
+                paymentMethod: "promptpay",
+                amount,
+            },
+            ipAddress: getClientIP(request),
+            userAgent: request.headers.get("user-agent") || "unknown",
         });
 
         // Send confirmation emails (non-blocking)

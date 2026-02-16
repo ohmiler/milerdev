@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Modal from '@/components/ui/Modal';
+import { trackClientAnalyticsEvent } from '@/lib/analytics-client';
 
 interface EnrollButtonProps {
   courseId: string;
@@ -118,6 +119,17 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
 
   const effectivePrice = appliedCoupon ? appliedCoupon.finalPrice : price;
 
+  const trackCheckoutStart = useCallback((paymentMethod: 'stripe' | 'promptpay' | 'coupon_free') => {
+    void trackClientAnalyticsEvent({
+      eventName: 'checkout_start',
+      courseId,
+      metadata: {
+        itemType: 'course',
+        paymentMethod,
+      },
+    });
+  }, [courseId]);
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
     setCouponLoading(true);
@@ -157,6 +169,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
 
   const handleStripePayment = async () => {
     setLoading(true);
+    trackCheckoutStart('stripe');
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -418,6 +431,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
               <>
                 <button
                   onClick={async () => {
+                    trackCheckoutStart('coupon_free');
                     setLoading(true);
                     try {
                       const res = await fetch('/api/enroll', {
@@ -477,7 +491,10 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
 
                   {/* Bank Transfer */}
                   <button
-                    onClick={() => setPaymentStep('transfer')}
+                    onClick={() => {
+                      trackCheckoutStart('promptpay');
+                      setPaymentStep('transfer');
+                    }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '16px',
                       padding: '16px 20px', background: '#f8fafc', border: '2px solid #e2e8f0',

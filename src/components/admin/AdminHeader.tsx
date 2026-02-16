@@ -21,6 +21,7 @@ const secondaryLinks = [
     { href: '/admin/bundles', label: 'Bundle', icon: 'bundles' },
     { href: '/admin/coupons', label: 'คูปอง', icon: 'coupons' },
     { href: '/admin/certificates', label: 'ใบรับรอง', icon: 'certificates' },
+    { href: '/admin/analytics', label: 'Analytics', icon: 'analytics' },
     { href: '/admin/reviews', label: 'รีวิว', icon: 'reviews' },
     { href: '/admin/reports', label: 'รายงาน', icon: 'reports' },
     { href: '/admin/media', label: 'ไฟล์สื่อ', icon: 'media' },
@@ -49,6 +50,7 @@ function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
         case 'bundles': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>;
         case 'coupons': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M2 9a3 3 0 003 3v0a3 3 0 003-3V5H2v4z"/><path d="M22 9a3 3 0 01-3 3v0a3 3 0 01-3-3V5h6v4z"/><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="6" y2="10"/><line x1="18" y1="10" x2="22" y2="10"/><line x1="12" y1="5" x2="12" y2="19"/></svg>;
         case 'certificates': return <svg style={s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>;
+        case 'analytics': return <svg style={s} viewBox="0 0 24 24" {...p}><line x1="4" y1="19" x2="20" y2="19"/><rect x="5" y="10" width="3" height="7" rx="1"/><rect x="10" y="7" width="3" height="10" rx="1"/><rect x="15" y="4" width="3" height="13" rx="1"/></svg>;
         case 'reviews': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>;
         case 'logs': return <svg style={s} viewBox="0 0 24 24" {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
         case 'settings': return <svg style={s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>;

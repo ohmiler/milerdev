@@ -4,7 +4,8 @@ import { db } from "@/lib/db";
 import { lessonProgress, lessons, enrollments } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
 import { issueCertificate } from "@/lib/certificate";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { trackAnalyticsEvent } from "@/lib/analytics";
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/progress - Update lesson progress
 export async function POST(request: Request) {
@@ -63,12 +64,17 @@ export async function POST(request: Request) {
             )
             .limit(1);
 
+        const wasCompleted = existingProgress?.completed === true;
+        const nextCompleted = typeof completed === "boolean"
+            ? completed
+            : existingProgress?.completed ?? false;
+
         if (existingProgress) {
             await db
                 .update(lessonProgress)
                 .set({
                     watchTimeSeconds: watchTimeSeconds || existingProgress.watchTimeSeconds,
-                    completed: completed ?? existingProgress.completed,
+                    completed: nextCompleted,
                     lastWatchedAt: new Date(),
                 })
                 .where(eq(lessonProgress.id, existingProgress.id));
@@ -77,8 +83,22 @@ export async function POST(request: Request) {
                 userId: session.user.id,
                 lessonId,
                 watchTimeSeconds: watchTimeSeconds || 0,
-                completed: completed || false,
+                completed: nextCompleted,
                 lastWatchedAt: new Date(),
+            });
+        }
+
+        if (!wasCompleted && nextCompleted) {
+            await trackAnalyticsEvent({
+                eventName: "lesson_completed",
+                userId: session.user.id,
+                courseId: lesson.courseId,
+                source: "server",
+                metadata: {
+                    lessonId,
+                },
+                ipAddress: getClientIP(request),
+                userAgent: request.headers.get("user-agent") || "unknown",
             });
         }
 

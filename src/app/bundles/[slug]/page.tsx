@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import BundleEnrollButton from '@/components/bundle/BundleEnrollButton';
+import ProductViewTracker from '@/components/analytics/ProductViewTracker';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, enrollments, lessons } from '@/lib/db/schema';
 import { auth } from '@/lib/auth';
@@ -134,6 +135,7 @@ export default async function BundleDetailPage({ params }: Props) {
     return (
         <>
             <Navbar />
+            <ProductViewTracker itemType="bundle" bundleId={bundle.id} />
             <main style={{ paddingTop: 0 }}>
                 {/* Header */}
                 <section style={{

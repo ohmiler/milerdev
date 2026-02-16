@@ -5,6 +5,7 @@ import { settings, auditLogs } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { getClientIP } from '@/lib/rate-limit';
+import { invalidateAnalyticsSettingsCache } from '@/lib/analytics';
 
 // Default settings
 const defaultSettings = [
@@ -145,6 +146,8 @@ export async function PUT(request: Request) {
       ipAddress,
       userAgent,
     });
+
+    invalidateAnalyticsSettingsCache();
 
     return NextResponse.json({ message: 'บันทึกการตั้งค่าสำเร็จ' });
   } catch (error) {

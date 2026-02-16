@@ -6,6 +6,7 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { safeInsertEnrollment, isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { stripe } from '@/lib/stripe';
+import { trackAnalyticsEvent } from '@/lib/analytics';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,6 +91,23 @@ async function verifyAndFulfill(sessionId: string | undefined, userId: string, c
 
     // Create enrollment (safe — handles duplicates)
     await safeInsertEnrollment(userId, courseId);
+
+    const trackedPaymentId = paymentId || stripeSession.metadata?.paymentId;
+    await trackAnalyticsEvent({
+      eventName: 'payment_success',
+      userId,
+      courseId,
+      paymentId: trackedPaymentId || null,
+      source: 'server',
+      metadata: {
+        itemType: 'course',
+        paymentMethod: 'stripe',
+        amount: stripeSession.amount_total ? stripeSession.amount_total / 100 : null,
+        source: 'payment_success_fallback',
+      },
+      ipAddress: 'unknown',
+      userAgent: 'server-render',
+    });
 
     // Record coupon usage if coupon was applied (idempotent)
     const couponId = stripeSession.metadata?.couponId;

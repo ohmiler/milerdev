@@ -5,7 +5,8 @@ import { payments, enrollments, courses, coupons, couponUsages } from "@/lib/db/
 import { eq, and, sql, count } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import { createId } from "@paralleldrive/cuid2";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { trackAnalyticsEvent } from "@/lib/analytics";
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 
 // POST /api/slip/verify - Verify slip payment (PromptPay)
@@ -255,6 +256,21 @@ export async function POST(request: Request) {
                     .set({ usageCount: sql`${coupons.usageCount} + 1` })
                     .where(eq(coupons.id, appliedCouponId));
             }
+        });
+
+        await trackAnalyticsEvent({
+            eventName: "payment_success",
+            userId: session.user.id,
+            courseId,
+            paymentId: payment.id,
+            source: "server",
+            metadata: {
+                itemType: "course",
+                paymentMethod: "promptpay",
+                amount,
+            },
+            ipAddress: getClientIP(request),
+            userAgent: request.headers.get("user-agent") || "unknown",
         });
 
         // Send confirmation emails (non-blocking)

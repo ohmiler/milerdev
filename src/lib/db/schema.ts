@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, decimal, datetime, boolean, uniqueIndex } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, int, decimal, datetime, boolean, uniqueIndex, index } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -24,6 +24,7 @@ export const usersRelations = relations(users, ({ many }) => ({
     payments: many(payments),
     lessonProgress: many(lessonProgress),
     accounts: many(accounts),
+    analyticsEvents: many(analyticsEvents),
 }));
 
 // =====================
@@ -81,6 +82,7 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
     }),
     lessons: many(lessons),
     enrollments: many(enrollments),
+    analyticsEvents: many(analyticsEvents),
 }));
 
 // =====================
@@ -172,7 +174,7 @@ export const payments = mysqlTable('payments', {
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
 });
 
-export const paymentsRelations = relations(payments, ({ one }) => ({
+export const paymentsRelations = relations(payments, ({ one, many }) => ({
     user: one(users, {
         fields: [payments.userId],
         references: [users.id],
@@ -185,6 +187,7 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
         fields: [payments.bundleId],
         references: [bundles.id],
     }),
+    analyticsEvents: many(analyticsEvents),
 }));
 
 // =====================
@@ -476,6 +479,7 @@ export const bundleCourses = mysqlTable('bundle_courses', {
 
 export const bundlesRelations = relations(bundles, ({ many }) => ({
     bundleCourses: many(bundleCourses),
+    analyticsEvents: many(analyticsEvents),
 }));
 
 export const bundleCoursesRelations = relations(bundleCourses, ({ one }) => ({
@@ -515,6 +519,49 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
     course: one(courses, {
         fields: [certificates.courseId],
         references: [courses.id],
+    }),
+}));
+
+// =====================
+// ANALYTICS EVENTS TABLE
+// =====================
+export const analyticsEvents = mysqlTable('analytics_events', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    eventName: varchar('event_name', { length: 100 }).notNull(),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
+    bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
+    paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id, { onDelete: 'set null' }),
+    source: varchar('source', { length: 20, enum: ['client', 'server'] }).default('server').notNull(),
+    metadata: text('metadata'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    userAgent: text('user_agent'),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+}, (table) => [
+    index('idx_analytics_event_name').on(table.eventName),
+    index('idx_analytics_created_at').on(table.createdAt),
+    index('idx_analytics_course_id').on(table.courseId),
+    index('idx_analytics_bundle_id').on(table.bundleId),
+    index('idx_analytics_payment_id').on(table.paymentId),
+    uniqueIndex('uq_analytics_event_payment').on(table.eventName, table.paymentId),
+]);
+
+export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
+    user: one(users, {
+        fields: [analyticsEvents.userId],
+        references: [users.id],
+    }),
+    course: one(courses, {
+        fields: [analyticsEvents.courseId],
+        references: [courses.id],
+    }),
+    bundle: one(bundles, {
+        fields: [analyticsEvents.bundleId],
+        references: [bundles.id],
+    }),
+    payment: one(payments, {
+        fields: [analyticsEvents.paymentId],
+        references: [payments.id],
     }),
 }));
 
@@ -559,6 +606,8 @@ export type Bundle = typeof bundles.$inferSelect;
 export type NewBundle = typeof bundles.$inferInsert;
 export type BundleCourse = typeof bundleCourses.$inferSelect;
 export type NewBundleCourse = typeof bundleCourses.$inferInsert;
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
 
 // =====================
 // AFFILIATE BANNERS TABLE
