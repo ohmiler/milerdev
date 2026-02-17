@@ -129,6 +129,7 @@ async function getPublishedBundles() {
 
 export default async function HomePage() {
   // Parallelize independent data fetching (async-parallel rule)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [featuredCourses, _stats, publishedBundles] = await Promise.all([
     getFeaturedCourses(),
     getStats(),

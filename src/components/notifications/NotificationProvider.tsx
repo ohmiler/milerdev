@@ -171,8 +171,10 @@ export default function NotificationProvider({ children }: { children: React.Rea
             };
         }
 
-        // Initial fetch
-        refreshNotifications();
+        // Initial fetch (deferred to avoid synchronous setState in effect)
+        void Promise.resolve().then(() => {
+            if (mounted) refreshNotifications();
+        });
         // Connect SSE
         connectSSE();
 

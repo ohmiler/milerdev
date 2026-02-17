@@ -127,6 +127,7 @@ export default function ReconciliationPage() {
         return new Date(d).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const formatAmount = (amount: string, _currency?: string) => {
         return `฿${parseFloat(amount).toLocaleString()}`;
     };
