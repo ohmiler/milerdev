@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { payments, enrollments, bundleCourses } from '@/lib/db/schema';
+import { payments, enrollments, bundleCourses, courses, bundles } from '@/lib/db/schema';
 import { eq, and, ne, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { notify } from '@/lib/notify';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -210,6 +211,27 @@ export async function PUT(request: Request, { params }: RouteParams) {
     });
 
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'payment', entityId: id, oldValue: `status: ${previousStatus}`, newValue: `status: ${status}` });
+
+    // Send notification when payment is completed (non-blocking)
+    if (status === 'completed' && previousStatus !== 'completed' && existingPayment.userId) {
+      (async () => {
+        let itemName = 'รายการ';
+        if (existingPayment.courseId) {
+          const [c] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, existingPayment.courseId)).limit(1);
+          if (c) itemName = c.title;
+        } else if (existingPayment.bundleId) {
+          const [b] = await db.select({ title: bundles.title }).from(bundles).where(eq(bundles.id, existingPayment.bundleId)).limit(1);
+          if (b) itemName = b.title;
+        }
+        await notify({
+          userId: existingPayment.userId!,
+          title: '✅ ชำระเงินสำเร็จ',
+          message: `การชำระเงินสำหรับ "${itemName}" ได้รับการยืนยันแล้ว`,
+          type: 'success',
+          link: '/dashboard',
+        });
+      })().catch(err => console.error('Failed to send payment notification:', err));
+    }
 
     return NextResponse.json({ 
       message: 'อัพเดทสถานะสำเร็จ',

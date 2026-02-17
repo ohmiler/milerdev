@@ -6,6 +6,7 @@ import { payments, enrollments, courses, bundles, bundleCourses, users } from '@
 import { createId } from '@paralleldrive/cuid2';
 import { sendPaymentConfirmation, sendEnrollmentEmail } from '@/lib/email';
 import { trackAnalyticsEvent } from '@/lib/analytics';
+import { notify } from '@/lib/notify';
 
 const MAX_RETRIES = 5;
 
@@ -178,6 +179,18 @@ async function approveCoursePayment(
         ]).catch((err) => console.error('Failed to send reconciliation emails:', err));
     }
 
+    // Send in-app notification (non-blocking)
+    if (payment.userId) {
+        const courseName = course?.title || 'คอร์ส';
+        notify({
+            userId: payment.userId,
+            title: '✅ ชำระเงินสำเร็จ',
+            message: `การชำระเงินสำหรับ "${courseName}" ได้รับการยืนยันแล้ว`,
+            type: 'success',
+            link: '/dashboard',
+        }).catch(err => console.error('Failed to send payment notification:', err));
+    }
+
     return NextResponse.json({
         success: true,
         message: 'Payment approved and user enrolled',
@@ -244,6 +257,19 @@ async function approveBundlePayment(
             reconciledBy: adminUser.id,
         },
     });
+
+    // Send in-app notification (non-blocking)
+    if (payment.userId) {
+        const [bundle] = await db.select({ title: bundles.title }).from(bundles).where(eq(bundles.id, payment.bundleId)).limit(1);
+        const bundleName = bundle?.title || 'Bundle';
+        notify({
+            userId: payment.userId,
+            title: '✅ ชำระเงินสำเร็จ',
+            message: `การชำระเงินสำหรับ "${bundleName}" ได้รับการยืนยันแล้ว`,
+            type: 'success',
+            link: '/dashboard',
+        }).catch(err => console.error('Failed to send bundle payment notification:', err));
+    }
 
     return NextResponse.json({
         success: true,

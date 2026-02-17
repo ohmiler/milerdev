@@ -5,6 +5,7 @@ import { courses, courseTags, tags } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { notify } from '@/lib/notify';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -111,6 +112,19 @@ export async function PUT(request: Request, { params }: RouteParams) {
     }
 
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'course', entityId: id, newValue: title || existingCourse.title });
+
+    // Send notification when course is newly published (non-blocking)
+    if (status === 'published' && existingCourse.status !== 'published') {
+      const courseName = title || existingCourse.title;
+      const courseSlug = slug || existingCourse.slug;
+      notify({
+        allUsers: true,
+        title: `🎉 คอร์สใหม่: ${courseName}`,
+        message: `คอร์ส "${courseName}" เปิดให้ลงทะเบียนแล้ว!`,
+        type: 'info',
+        link: `/courses/${courseSlug}`,
+      }).catch(err => console.error('Failed to send new course notification:', err));
+    }
 
     return NextResponse.json({ message: 'อัพเดทคอร์สสำเร็จ' });
   } catch (error) {

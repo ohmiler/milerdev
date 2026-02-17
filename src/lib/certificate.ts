@@ -3,6 +3,7 @@ import { certificates, courses, users } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { sendCertificateEmail } from '@/lib/email';
+import { notify } from '@/lib/notify';
 
 /**
  * Generate a unique certificate code like "CERT-XXXX-XXXX"
@@ -99,6 +100,15 @@ export async function issueCertificate(userId: string, courseId: string): Promis
       certificateCode,
     }).catch((err) => console.error('Failed to send certificate email:', err));
   }
+
+  // Send in-app notification (non-blocking)
+  notify({
+    userId,
+    title: `🎓 ยินดีด้วย! คุณได้รับใบรับรอง`,
+    message: `สำเร็จหลักสูตร "${course.title}"`,
+    type: 'success',
+    link: `/certificate/${certificateCode}`,
+  }).catch((err) => console.error('Failed to send certificate notification:', err));
 
   return { certificate, isNew: true };
 }

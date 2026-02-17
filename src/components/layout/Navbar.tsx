@@ -108,7 +108,7 @@ export default function Navbar() {
     const pathname = usePathname();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const notiRef = useRef<HTMLDivElement>(null);
-    const { unreadCount, notifications: notiList, markAsRead } = useNotifications();
+    const { unreadCount, notifications: notiList, markAsRead, deleteRead } = useNotifications();
 
     const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
     const isAdmin = session?.user?.role === 'admin';
@@ -334,6 +334,26 @@ export default function Navbar() {
                                                 ))
                                             )}
                                         </div>
+                                        {/* Delete read notifications button */}
+                                        {notiList.some(n => n.isRead) && (
+                                            <div style={{ padding: '8px 16px', borderTop: '1px solid #f1f5f9' }}>
+                                                <button
+                                                    onClick={() => { deleteRead(); }}
+                                                    style={{
+                                                        width: '100%',
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: '#ef4444',
+                                                        fontSize: '0.8125rem',
+                                                        cursor: 'pointer',
+                                                        fontWeight: 500,
+                                                        padding: '6px 0',
+                                                    }}
+                                                >
+                                                    ลบที่อ่านแล้ว
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

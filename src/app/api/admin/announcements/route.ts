@@ -5,6 +5,7 @@ import { announcements, users } from '@/lib/db/schema';
 import { desc, eq, sql, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { notify } from '@/lib/notify';
 
 // GET /api/admin/announcements - Get all announcements
 export async function GET(request: Request) {
@@ -122,6 +123,18 @@ export async function POST(request: Request) {
     });
 
     await logAudit({ userId: session.user.id, action: 'create', entityType: 'announcement', entityId: announcementId, newValue: title });
+
+    // Send notification to target users (non-blocking)
+    if (isActive !== false) {
+      const role = targetRole && targetRole !== 'all' ? targetRole : undefined;
+      notify({
+        ...(role ? { targetRole: role } : { allUsers: true }),
+        title: `📢 ${title}`,
+        message: content?.slice(0, 100) || undefined,
+        type: (type as 'info' | 'success' | 'warning' | 'error') || 'info',
+        link: '/announcements',
+      }).catch(err => console.error('Failed to send announcement notifications:', err));
+    }
 
     return NextResponse.json({
       message: 'สร้างประกาศสำเร็จ',

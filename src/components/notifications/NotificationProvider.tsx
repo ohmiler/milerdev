@@ -18,6 +18,7 @@ interface NotificationContextType {
     notifications: Notification[];
     toasts: Notification[];
     markAsRead: (ids?: string[]) => Promise<void>;
+    deleteRead: () => Promise<void>;
     dismissToast: (id: string) => void;
     refreshNotifications: () => Promise<void>;
 }
@@ -27,6 +28,7 @@ const NotificationContext = createContext<NotificationContextType>({
     notifications: [],
     toasts: [],
     markAsRead: async () => {},
+    deleteRead: async () => {},
     dismissToast: () => {},
     refreshNotifications: async () => {},
 });
@@ -101,6 +103,16 @@ export default function NotificationProvider({ children }: { children: React.Rea
                 setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
                 setUnreadCount(0);
             }
+        } catch {
+            // Silent fail
+        }
+    }, []);
+
+    // Delete all read notifications
+    const deleteRead = useCallback(async () => {
+        try {
+            await fetch('/api/notifications?mode=read', { method: 'DELETE' });
+            setNotifications(prev => prev.filter(n => !n.isRead));
         } catch {
             // Silent fail
         }
@@ -187,6 +199,7 @@ export default function NotificationProvider({ children }: { children: React.Rea
             notifications,
             toasts,
             markAsRead,
+            deleteRead,
             dismissToast,
             refreshNotifications,
         }}>
