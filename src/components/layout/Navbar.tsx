@@ -7,6 +7,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import AnnouncementBanner from '@/components/layout/AnnouncementBanner';
+import { useNotifications } from '@/components/notifications/NotificationProvider';
 import {
     MenuIcon,
     CloseIcon,
@@ -102,9 +103,12 @@ export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
+    const [showNotiDropdown, setShowNotiDropdown] = useState(false);
     const { data: session, status } = useSession();
     const pathname = usePathname();
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const notiRef = useRef<HTMLDivElement>(null);
+    const { unreadCount, notifications: notiList, markAsRead } = useNotifications();
 
     const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
     const isAdmin = session?.user?.role === 'admin';
@@ -113,6 +117,7 @@ export default function Navbar() {
     const closeAllMenus = useCallback(() => {
         setIsMenuOpen(false);
         setShowUserDropdown(false);
+        setShowNotiDropdown(false);
     }, []);
 
     // Handle logout click
@@ -145,12 +150,15 @@ export default function Navbar() {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
                 setShowUserDropdown(false);
             }
+            if (notiRef.current && !notiRef.current.contains(e.target as Node)) {
+                setShowNotiDropdown(false);
+            }
         };
-        if (showUserDropdown) {
+        if (showUserDropdown || showNotiDropdown) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showUserDropdown]);
+    }, [showUserDropdown, showNotiDropdown]);
 
     return (
         <>
@@ -198,6 +206,138 @@ export default function Navbar() {
                             <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e2e8f0' }} />
                         ) : session ? (
                             <>
+                            {/* Notification Bell */}
+                            <div style={{ position: 'relative' }} ref={notiRef}>
+                                <button
+                                    onClick={() => { setShowNotiDropdown(!showNotiDropdown); setShowUserDropdown(false); }}
+                                    style={{
+                                        position: 'relative',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '8px',
+                                        borderRadius: '8px',
+                                        color: '#64748b',
+                                    }}
+                                    aria-label="Notifications"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                        <path d="M13.73 21a2 2 0 01-3.46 0" />
+                                    </svg>
+                                    {unreadCount > 0 && (
+                                        <span style={{
+                                            position: 'absolute',
+                                            top: '4px',
+                                            right: '4px',
+                                            width: '18px',
+                                            height: '18px',
+                                            borderRadius: '50%',
+                                            background: '#ef4444',
+                                            color: 'white',
+                                            fontSize: '0.6875rem',
+                                            fontWeight: 700,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            lineHeight: 1,
+                                        }}>
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+
+                                {showNotiDropdown && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        right: 0,
+                                        top: '100%',
+                                        marginTop: '8px',
+                                        width: '360px',
+                                        background: 'white',
+                                        borderRadius: '16px',
+                                        border: '1px solid #e2e8f0',
+                                        boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+                                        zIndex: 100,
+                                        overflow: 'hidden',
+                                    }}>
+                                        <div style={{
+                                            padding: '14px 16px',
+                                            borderBottom: '1px solid #f1f5f9',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                        }}>
+                                            <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.9375rem' }}>
+                                                การแจ้งเตือน {unreadCount > 0 && `(${unreadCount})`}
+                                            </span>
+                                            {unreadCount > 0 && (
+                                                <button
+                                                    onClick={() => markAsRead()}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: '#2563eb',
+                                                        fontSize: '0.8125rem',
+                                                        cursor: 'pointer',
+                                                        fontWeight: 500,
+                                                    }}
+                                                >
+                                                    อ่านทั้งหมด
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                                            {notiList.length === 0 ? (
+                                                <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.875rem' }}>
+                                                    ไม่มีการแจ้งเตือน
+                                                </div>
+                                            ) : (
+                                                notiList.slice(0, 10).map(n => (
+                                                    <a
+                                                        key={n.id}
+                                                        href={n.link || '#'}
+                                                        onClick={() => {
+                                                            if (!n.isRead) markAsRead([n.id]);
+                                                            setShowNotiDropdown(false);
+                                                        }}
+                                                        style={{
+                                                            display: 'flex',
+                                                            gap: '10px',
+                                                            padding: '12px 16px',
+                                                            textDecoration: 'none',
+                                                            borderBottom: '1px solid #f8fafc',
+                                                            background: n.isRead ? 'transparent' : '#f0f9ff',
+                                                            transition: 'background 0.15s',
+                                                        }}
+                                                    >
+                                                        <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '2px' }}>
+                                                            {n.type === 'success' ? '✅' : n.type === 'warning' ? '⚠️' : n.type === 'error' ? '❌' : 'ℹ️'}
+                                                        </span>
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{ fontWeight: n.isRead ? 400 : 600, color: '#1e293b', fontSize: '0.8125rem', marginBottom: '2px' }}>
+                                                                {n.title}
+                                                            </div>
+                                                            {n.message && (
+                                                                <div style={{ color: '#64748b', fontSize: '0.75rem', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                    {n.message}
+                                                                </div>
+                                                            )}
+                                                            <div style={{ color: '#94a3b8', fontSize: '0.6875rem', marginTop: '4px' }}>
+                                                                {new Date(n.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                            </div>
+                                                        </div>
+                                                        {!n.isRead && (
+                                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb', flexShrink: 0, marginTop: '6px' }} />
+                                                        )}
+                                                    </a>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             <div style={{ position: 'relative' }} ref={dropdownRef}>
                                 <button
                                     onClick={() => setShowUserDropdown(!showUserDropdown)}

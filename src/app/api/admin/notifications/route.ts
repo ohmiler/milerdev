@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { notifications, users } from '@/lib/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { notificationPubSub } from '@/lib/notification-pubsub';
 
 // GET /api/admin/notifications - Get all notifications (admin view)
 export async function GET(request: Request) {
@@ -113,6 +114,18 @@ export async function POST(request: Request) {
     }));
 
     await db.insert(notifications).values(notificationValues);
+
+    // Broadcast to connected SSE clients in real-time
+    for (const noti of notificationValues) {
+      notificationPubSub.publish(noti.userId, {
+        id: noti.id,
+        title: noti.title,
+        message: noti.message,
+        type: noti.type,
+        link: noti.link,
+        createdAt: new Date().toISOString(),
+      });
+    }
 
     return NextResponse.json({
       message: `ส่งการแจ้งเตือนไปยัง ${targetUsers.length} ผู้ใช้สำเร็จ`,

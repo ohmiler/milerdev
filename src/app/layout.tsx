@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
+import NotificationProvider from "@/components/notifications/NotificationProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -72,7 +73,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${notoSansThai.variable} antialiased`}
       >
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <NotificationProvider>{children}</NotificationProvider>
+        </SessionProvider>
       </body>
     </html>
   );
