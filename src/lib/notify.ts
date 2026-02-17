@@ -40,27 +40,33 @@ export async function notify(opts: NotifyOptions) {
     if (targetUserIds.length === 0) return;
 
     const now = new Date();
-    const values = targetUserIds.map(uid => ({
-        id: createId(),
-        userId: uid,
-        title,
-        message: message || null,
-        type,
-        link: link || null,
-    }));
+    const BATCH_SIZE = 500;
 
-    // Insert into DB
-    await db.insert(notifications).values(values);
+    // Process in batches to avoid DB overload on mass notifications
+    for (let i = 0; i < targetUserIds.length; i += BATCH_SIZE) {
+        const batch = targetUserIds.slice(i, i + BATCH_SIZE);
+        const values = batch.map(uid => ({
+            id: createId(),
+            userId: uid,
+            title,
+            message: message || null,
+            type,
+            link: link || null,
+        }));
 
-    // Broadcast to SSE clients
-    for (const noti of values) {
-        notificationPubSub.publish(noti.userId, {
-            id: noti.id,
-            title: noti.title,
-            message: noti.message,
-            type: noti.type,
-            link: noti.link,
-            createdAt: now.toISOString(),
-        });
+        // Insert batch into DB
+        await db.insert(notifications).values(values);
+
+        // Broadcast to SSE clients
+        for (const noti of values) {
+            notificationPubSub.publish(noti.userId, {
+                id: noti.id,
+                title: noti.title,
+                message: noti.message,
+                type: noti.type,
+                link: noti.link,
+                createdAt: now.toISOString(),
+            });
+        }
     }
 }

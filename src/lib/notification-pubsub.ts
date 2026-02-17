@@ -14,19 +14,35 @@ type Listener = (notification: NotificationPayload) => void;
 
 class NotificationPubSub {
     private listeners = new Map<string, Set<Listener>>();
+    private static MAX_CONNECTIONS_PER_USER = 3;
+    private static MAX_TOTAL_CONNECTIONS = 500;
 
     subscribe(userId: string, listener: Listener): () => void {
         if (!this.listeners.has(userId)) {
             this.listeners.set(userId, new Set());
         }
-        this.listeners.get(userId)!.add(listener);
+
+        const userListeners = this.listeners.get(userId)!;
+
+        // Limit connections per user (evict oldest if exceeded)
+        if (userListeners.size >= NotificationPubSub.MAX_CONNECTIONS_PER_USER) {
+            const oldest = userListeners.values().next().value;
+            if (oldest) userListeners.delete(oldest);
+        }
+
+        // Global connection limit
+        if (this.getActiveConnections() >= NotificationPubSub.MAX_TOTAL_CONNECTIONS) {
+            throw new Error('Too many active connections');
+        }
+
+        userListeners.add(listener);
 
         // Return unsubscribe function
         return () => {
-            const userListeners = this.listeners.get(userId);
-            if (userListeners) {
-                userListeners.delete(listener);
-                if (userListeners.size === 0) {
+            const ul = this.listeners.get(userId);
+            if (ul) {
+                ul.delete(listener);
+                if (ul.size === 0) {
                     this.listeners.delete(userId);
                 }
             }

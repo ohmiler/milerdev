@@ -22,14 +22,21 @@ export async function GET() {
             controller.enqueue(encoder.encode(`event: connected\ndata: ${JSON.stringify({ userId })}\n\n`));
 
             // Subscribe to notifications for this user
-            unsubscribe = notificationPubSub.subscribe(userId, (notification) => {
-                try {
-                    const data = JSON.stringify(notification);
-                    controller.enqueue(encoder.encode(`event: notification\ndata: ${data}\n\n`));
-                } catch {
-                    // Connection closed
-                }
-            });
+            try {
+                unsubscribe = notificationPubSub.subscribe(userId, (notification) => {
+                    try {
+                        const data = JSON.stringify(notification);
+                        controller.enqueue(encoder.encode(`event: notification\ndata: ${data}\n\n`));
+                    } catch {
+                        // Connection closed
+                    }
+                });
+            } catch {
+                // Too many connections — close stream gracefully
+                controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ error: 'Too many connections' })}\n\n`));
+                controller.close();
+                return;
+            }
 
             // Heartbeat every 30 seconds to keep connection alive
             heartbeatInterval = setInterval(() => {
