@@ -61,13 +61,17 @@ const mockDb = {
     transactionCalled: false,
 };
 
+function makeWhereResult() {
+    const result = Promise.resolve(mockDb.selectResults);
+    (result as unknown as Record<string, unknown>).limit = vi.fn().mockImplementation(() => Promise.resolve(mockDb.selectResults));
+    return result;
+}
+
 vi.mock('@/lib/db', () => ({
     db: {
         select: vi.fn().mockImplementation(() => ({
             from: vi.fn().mockImplementation(() => ({
-                where: vi.fn().mockImplementation(() => ({
-                    limit: vi.fn().mockImplementation(() => Promise.resolve(mockDb.selectResults)),
-                })),
+                where: vi.fn().mockImplementation(() => makeWhereResult()),
                 leftJoin: vi.fn().mockReturnValue({
                     where: vi.fn().mockReturnValue({
                         limit: vi.fn().mockResolvedValue(mockDb.selectResults),
@@ -128,7 +132,8 @@ import { db } from '@/lib/db';
 
 const mockedAuth = vi.mocked(auth);
 const mockedRateLimit = vi.mocked(checkRateLimit);
-const mockedStripe = vi.mocked(stripe);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockedStripe = stripe as any;
 const mockedCalcDiscount = vi.mocked(calculateDiscount);
 const mockedValidateCoupon = vi.mocked(validateCouponEligibility);
 
@@ -207,19 +212,19 @@ describe('POST /api/stripe/checkout', () => {
     });
 
     it('should reject unpublished course', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, status: 'draft' });
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, status: 'draft' } as never);
         const res = await callCheckout({ courseId: 'course-1' });
         expect(res.status).toBe(404);
     });
 
     it('should reject non-existent course', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue(null);
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(null as never);
         const res = await callCheckout({ courseId: 'nonexistent' });
         expect(res.status).toBe(404);
     });
 
     it('should create checkout session for published course', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse);
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
         mockDb.selectResults = []; // no existing pending payment
         const res = await callCheckout({ courseId: 'course-1' });
         expect(res.status).toBe(200);
@@ -229,12 +234,12 @@ describe('POST /api/stripe/checkout', () => {
     });
 
     it('should use promo price when promo is active', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue(promoCourse);
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(promoCourse as never);
         mockDb.selectResults = [];
         const res = await callCheckout({ courseId: 'course-1' });
         expect(res.status).toBe(200);
         // Verify Stripe was called with promo price (990 * 100 = 99000 satang)
-        const stripeCall = mockedStripe.checkout.sessions.create.mock.calls[0]?.[0];
+        const stripeCall = (mockedStripe.checkout.sessions.create as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
         expect(stripeCall?.line_items?.[0]?.price_data?.unit_amount).toBe(99000);
     });
 
@@ -263,26 +268,28 @@ describe('POST /api/stripe/webhook', () => {
     }
 
     it('should return 400 for invalid signature', async () => {
-        mockedStripe.webhooks.constructEvent.mockImplementation(() => { throw new Error('Invalid sig'); });
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockImplementation(() => { throw new Error('Invalid sig'); });
         const res = await callWebhook('invalid');
         expect(res.status).toBe(400);
     });
 
     it('should process checkout.session.completed and create enrollment', async () => {
-        mockedStripe.webhooks.constructEvent.mockReturnValue({
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
             type: 'checkout.session.completed',
             data: {
                 object: {
                     metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
                     payment_intent: 'pi_test',
+                    amount_total: 99000,
+                    currency: 'thb',
                     customer_details: { email: 'test@example.com', name: 'Test' },
                 },
             },
-        } as never);
+        });
 
-        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null); // not enrolled
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse);
-        mockDb.selectResults = [{ id: 'pay-1', amount: '990' }]; // payment record
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never); // not enrolled
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', status: 'pending' }];
 
         const res = await callWebhook('valid-body');
         expect(res.status).toBe(200);
@@ -290,19 +297,21 @@ describe('POST /api/stripe/webhook', () => {
     });
 
     it('should skip duplicate enrollment on webhook retry', async () => {
-        mockedStripe.webhooks.constructEvent.mockReturnValue({
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
             type: 'checkout.session.completed',
             data: {
                 object: {
                     metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
                     payment_intent: 'pi_test',
+                    amount_total: 99000,
+                    currency: 'thb',
                     customer_details: { email: 'test@example.com', name: 'Test' },
                 },
             },
-        } as never);
+        });
 
-        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue({ id: 'enroll-1' }); // already enrolled
-        mockDb.selectResults = [{ id: 'pay-1', amount: '990' }];
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue({ id: 'enroll-1' } as never); // already enrolled
+        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', status: 'pending' }];
 
         const res = await callWebhook('valid-body');
         expect(res.status).toBe(200);
@@ -310,12 +319,12 @@ describe('POST /api/stripe/webhook', () => {
     });
 
     it('should handle missing metadata gracefully', async () => {
-        mockedStripe.webhooks.constructEvent.mockReturnValue({
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
             type: 'checkout.session.completed',
             data: {
                 object: { metadata: {}, payment_intent: 'pi_test' },
             },
-        } as never);
+        });
 
         const res = await callWebhook('valid-body');
         expect(res.status).toBe(200); // returns received: true, no error
@@ -343,44 +352,44 @@ describe('POST /api/enroll', () => {
     });
 
     it('should enroll in free course', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, price: '0' });
-        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null);
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, price: '0' } as never);
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never);
         const res = await callEnroll({ courseId: 'course-1' });
         expect(res.status).toBe(201);
     });
 
     it('should reject if already enrolled', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, price: '0' });
-        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue({ id: 'enroll-1' });
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, price: '0' } as never);
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue({ id: 'enroll-1' } as never);
         const res = await callEnroll({ courseId: 'course-1' });
         expect(res.status).toBe(400);
     });
 
     it('should require payment for paid course without paymentId', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse);
-        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null);
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never);
         const res = await callEnroll({ courseId: 'course-1' });
         expect(res.status).toBe(402);
     });
 
     it('should reject unpublished course', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, status: 'draft' });
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, status: 'draft' } as never);
         const res = await callEnroll({ courseId: 'course-1' });
         expect(res.status).toBe(404);
     });
 
     it('should accept paid course with valid paymentId', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse);
-        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null);
-        vi.mocked(db.query.payments.findFirst).mockResolvedValue({ id: 'pay-1', status: 'completed' });
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never);
+        vi.mocked(db.query.payments.findFirst).mockResolvedValue({ id: 'pay-1', status: 'completed' } as never);
         const res = await callEnroll({ courseId: 'course-1', paymentId: 'pay-1' });
         expect(res.status).toBe(201);
     });
 
     it('should reject paid course with invalid paymentId', async () => {
-        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse);
-        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null);
-        vi.mocked(db.query.payments.findFirst).mockResolvedValue(null); // no valid payment
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never);
+        vi.mocked(db.query.payments.findFirst).mockResolvedValue(null as never); // no valid payment
         const res = await callEnroll({ courseId: 'course-1', paymentId: 'fake-pay' });
         expect(res.status).toBe(402);
     });

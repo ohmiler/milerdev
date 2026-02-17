@@ -102,7 +102,8 @@ export default function LearnPageClient({
     isPlayingRef.current = false;
   }, [currentLesson.id]);
 
-  const handleTimeUpdate = useCallback((currentTime: number, _duration: number) => {
+  const handleTimeUpdate = useCallback((currentTime: number, _duration?: number) => {
+    void _duration;
     watchTimeRef.current = currentTime;
   }, []);
 

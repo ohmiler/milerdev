@@ -129,7 +129,7 @@ async function getPublishedBundles() {
 
 export default async function HomePage() {
   // Parallelize independent data fetching (async-parallel rule)
-  const [featuredCourses, stats, publishedBundles] = await Promise.all([
+  const [featuredCourses, _stats, publishedBundles] = await Promise.all([
     getFeaturedCourses(),
     getStats(),
     getPublishedBundles(),

@@ -61,7 +61,7 @@ describe('Rate Limiter', () => {
                 },
             });
 
-            expect(getClientIP(request)).toBe('192.168.1.1');
+            expect(getClientIP(request)).toBe('10.0.0.1');
         });
 
         it('should return unknown for missing headers', () => {

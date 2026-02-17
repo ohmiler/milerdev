@@ -176,6 +176,8 @@ export default function NotificationProvider({ children }: { children: React.Rea
         // Connect SSE
         connectSSE();
 
+        const timers = toastTimersRef.current;
+
         return () => {
             mounted = false;
             if (eventSourceRef.current) {
@@ -186,10 +188,10 @@ export default function NotificationProvider({ children }: { children: React.Rea
                 clearInterval(pollIntervalRef.current);
                 pollIntervalRef.current = null;
             }
-            for (const timer of toastTimersRef.current.values()) {
+            for (const timer of timers.values()) {
                 clearTimeout(timer);
             }
-            toastTimersRef.current.clear();
+            timers.clear();
         };
     }, [isAuthenticated, refreshNotifications, addToast]);
 

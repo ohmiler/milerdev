@@ -109,7 +109,7 @@ describe('POST /api/auth/register', () => {
 
     it('should register a valid user', async () => {
         const res = await callRegister({ name: 'Test User', email: 'test@example.com', password: 'Test1234' });
-        expect(res.status).toBe(201);
+        expect(res.status).toBe(200);
         expect(mockDbState.insertCalled).toBe(true);
     });
 
@@ -148,17 +148,18 @@ describe('POST /api/auth/register', () => {
         expect(res.status).toBe(400);
     });
 
-    it('should reject duplicate email', async () => {
+    it('should return generic 200 for duplicate email (anti-enumeration)', async () => {
         mockDbState.selectResult = [{ id: 'existing-user', email: 'test@example.com' }];
         const res = await callRegister({ name: 'Test', email: 'test@example.com', password: 'Test1234' });
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(200);
         const data = await res.json();
-        expect(data.error).toContain('ถูกใช้งานแล้ว');
+        expect(data.message).toBeTruthy();
+        expect(mockDbState.insertCalled).toBe(false);
     });
 
     it('should normalize email (lowercase)', async () => {
         const res = await callRegister({ name: 'Test', email: 'Test@Example.COM', password: 'Test1234' });
-        expect(res.status).toBe(201);
+        expect(res.status).toBe(200);
     });
 
     it('should return 429 when rate limited', async () => {
@@ -170,7 +171,7 @@ describe('POST /api/auth/register', () => {
     it('should always assign student role', async () => {
         const { db } = await import('@/lib/db');
         const res = await callRegister({ name: 'Test', email: 'test@example.com', password: 'Test1234' });
-        expect(res.status).toBe(201);
+        expect(res.status).toBe(200);
         // Verify insert was called with role: 'student'
         const insertMock = vi.mocked(db.insert);
         const valuesMock = insertMock.mock.results[0]?.value?.values;
