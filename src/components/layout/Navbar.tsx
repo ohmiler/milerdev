@@ -297,9 +297,11 @@ export default function Navbar() {
                                                     <a
                                                         key={n.id}
                                                         href={n.link || '#'}
-                                                        onClick={() => {
-                                                            if (!n.isRead) markAsRead([n.id]);
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            if (!n.isRead) await markAsRead([n.id]);
                                                             setShowNotiDropdown(false);
+                                                            if (n.link) window.location.href = n.link;
                                                         }}
                                                         style={{
                                                             display: 'flex',
