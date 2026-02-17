@@ -82,7 +82,7 @@ function infoBox(rows: { label: string; value: string }[]): string {
 // =====================
 // SEND EMAIL HELPER
 // =====================
-async function sendEmail(to: string, subject: string, html: string, options?: { replyTo?: string }) {
+async function sendEmail(to: string, subject: string, html: string, options?: { replyTo?: string; priority?: 'high' | 'normal' }) {
     try {
         // Try Resend first (HTTP API — works on Railway)
         const resend = getResend();
@@ -93,6 +93,13 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
                 subject,
                 html,
                 ...(options?.replyTo && { replyTo: options.replyTo }),
+                ...(options?.priority === 'high' && {
+                    headers: {
+                        'X-Priority': '1',
+                        'X-MSMail-Priority': 'High',
+                        'Importance': 'high',
+                    },
+                }),
             });
             console.log('[Email/Resend] Sent to:', to, '| Subject:', subject);
             return;
@@ -110,6 +117,14 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
             subject,
             html,
             ...(options?.replyTo && { replyTo: options.replyTo }),
+            ...(options?.priority === 'high' && {
+                priority: 'high',
+                headers: {
+                    'X-Priority': '1',
+                    'X-MSMail-Priority': 'High',
+                    'Importance': 'high',
+                },
+            }),
         });
         console.log('[Email/SMTP] Sent to:', to, '| Subject:', subject);
     } catch (error) {
@@ -339,5 +354,5 @@ export async function sendCertificateEmail({
         คุณสามารถดาวน์โหลดใบรับรองเป็นรูปภาพ หรือแชร์ลิงก์ให้ผู้อื่นตรวจสอบได้
       </p>
     `);
-    await sendEmail(email, `ใบรับรองสำเร็จหลักสูตร: ${courseName}`, html);
+    await sendEmail(email, `ใบรับรองสำเร็จหลักสูตร: ${courseName}`, html, { priority: 'high' });
 }

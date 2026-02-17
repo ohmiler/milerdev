@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 
 interface CertificateData {
@@ -53,11 +53,37 @@ function buildTheme(color: string) {
   };
 }
 
+// Convert an image URL to a data URL for html-to-image compatibility
+async function toDataUrl(url: string): Promise<string> {
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    const blob = await res.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return url;
+  }
+}
+
 export default function CertificateCard({ cert }: { cert: CertificateData }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState<string>('/milerdev-logo-transparent.png');
+  const [headerDataUrl, setHeaderDataUrl] = useState<string | null>(cert.certificateHeaderImage || null);
   const theme = buildTheme(cert.certificateTheme || '#2563eb');
   const isRevoked = !!cert.revokedAt;
+
+  // Pre-cache images as data URLs for download compatibility
+  useEffect(() => {
+    toDataUrl('/milerdev-logo-transparent.png').then(setLogoDataUrl);
+    if (cert.certificateHeaderImage) {
+      toDataUrl(cert.certificateHeaderImage).then(setHeaderDataUrl);
+    }
+  }, [cert.certificateHeaderImage]);
 
   const completedDate = new Date(cert.completedAt).toLocaleDateString('th-TH', {
     year: 'numeric', month: 'long', day: 'numeric',
@@ -74,6 +100,7 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
         quality: 1,
         pixelRatio: 2,
         backgroundColor: '#ffffff',
+        cacheBust: true,
       });
       const link = document.createElement('a');
       link.download = `certificate-${cert.certificateCode}.png`;
@@ -103,16 +130,30 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
       >
         {/* Header */}
         <div style={{
-          background: cert.certificateHeaderImage
-            ? `url(${cert.certificateHeaderImage}) center/cover no-repeat`
-            : theme.gradient,
+          background: headerDataUrl ? undefined : theme.gradient,
           padding: '48px 40px 40px',
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
         }}>
+          {/* Header background image (using img tag for download compatibility) */}
+          {headerDataUrl && (
+            <img
+              src={headerDataUrl}
+              alt=""
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                zIndex: 0,
+              }}
+            />
+          )}
           {/* Decorative elements (only show when no custom image) */}
-          {!cert.certificateHeaderImage && (
+          {!headerDataUrl && (
             <>
               <div style={{ position: 'absolute', top: '-30px', left: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
               <div style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
@@ -131,9 +172,11 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            position: 'relative',
+            zIndex: 1,
           }}>
             <img
-              src="/milerdev-logo-transparent.png"
+              src={logoDataUrl}
               alt="MilerDev"
               style={{ width: '52px', height: '52px', objectFit: 'contain' }}
             />
@@ -146,10 +189,12 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
             textTransform: 'uppercase',
             marginBottom: '8px',
             fontWeight: 500,
+            position: 'relative',
+            zIndex: 1,
           }}>
             Certificate of Completion
           </p>
-          <h1 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>
+          <h1 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 600, margin: 0, position: 'relative', zIndex: 1 }}>
             ใบรับรองสำเร็จหลักสูตร
           </h1>
         </div>
