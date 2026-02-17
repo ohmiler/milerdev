@@ -56,14 +56,24 @@ function buildTheme(color: string) {
 // Convert an image URL to a data URL for html-to-image compatibility
 async function toDataUrl(url: string): Promise<string> {
   try {
-    const res = await fetch(url, { mode: 'cors' });
-    const blob = await res.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    // For same-origin images (e.g. /milerdev-logo-transparent.png), fetch directly
+    if (url.startsWith('/') && !url.startsWith('//')) {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+    // For cross-origin images (e.g. Bunny CDN), use server-side proxy to bypass CORS/CSP
+    const proxyRes = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
+    if (proxyRes.ok) {
+      const data = await proxyRes.json();
+      if (data.dataUrl) return data.dataUrl;
+    }
+    return url;
   } catch {
     return url;
   }
