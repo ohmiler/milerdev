@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { sendCertificateEmail } from '@/lib/email';
 import { notify } from '@/lib/notify';
+import { logError } from '@/lib/error-handler';
 
 /**
  * Generate a unique certificate code like "CERT-XXXX-XXXX"
@@ -58,7 +59,8 @@ export async function issueCertificate(userId: string, courseId: string): Promis
   // Generate unique code (retry if collision)
   let certificateCode = generateCertificateCode();
   let retries = 0;
-  while (retries < 5) {
+  const MAX_RETRIES = 5;
+  while (retries < MAX_RETRIES) {
     const [exists] = await db
       .select({ id: certificates.id })
       .from(certificates)
@@ -67,6 +69,9 @@ export async function issueCertificate(userId: string, courseId: string): Promis
     if (!exists) break;
     certificateCode = generateCertificateCode();
     retries++;
+    if (retries === MAX_RETRIES) {
+      throw new Error(`Failed to generate unique certificate code after ${MAX_RETRIES} retries`);
+    }
   }
 
   const id = createId();
@@ -98,7 +103,7 @@ export async function issueCertificate(userId: string, courseId: string): Promis
       name: user.name || 'ผู้เรียน',
       courseName: course.title,
       certificateCode,
-    }).catch((err) => console.error('Failed to send certificate email:', err));
+    }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'Failed to send certificate email' }));
   }
 
   // Send in-app notification (non-blocking)
@@ -108,7 +113,7 @@ export async function issueCertificate(userId: string, courseId: string): Promis
     message: `สำเร็จหลักสูตร "${course.title}"`,
     type: 'success',
     link: `/certificate/${certificateCode}`,
-  }).catch((err) => console.error('Failed to send certificate notification:', err));
+  }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'Failed to send certificate notification' }));
 
   return { certificate, isNew: true };
 }

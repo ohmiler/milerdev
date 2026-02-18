@@ -248,7 +248,17 @@ export async function POST(request: Request) {
             });
 
             // Record coupon usage if coupon was applied
+            // Conditional update guards against TOCTOU: only increments if still under limit
             if (appliedCouponId) {
+                const couponUpdate = await tx.update(coupons)
+                    .set({ usageCount: sql`${coupons.usageCount} + 1` })
+                    .where(and(
+                        eq(coupons.id, appliedCouponId),
+                        sql`(${coupons.usageLimit} IS NULL OR ${coupons.usageCount} < ${coupons.usageLimit})`
+                    ));
+                if (couponUpdate[0].affectedRows === 0) {
+                    throw new Error('COUPON_LIMIT_EXCEEDED');
+                }
                 await tx.insert(couponUsages).values({
                     couponId: appliedCouponId,
                     userId: session.user.id,
@@ -257,9 +267,6 @@ export async function POST(request: Request) {
                         ? parseFloat(course.promoPrice!.toString()) - amount
                         : originalPrice - amount),
                 });
-                await tx.update(coupons)
-                    .set({ usageCount: sql`${coupons.usageCount} + 1` })
-                    .where(eq(coupons.id, appliedCouponId));
             }
         });
 
@@ -294,7 +301,7 @@ export async function POST(request: Request) {
                     courseName: course.title,
                     courseSlug: course.slug,
                 }),
-            ]).catch((err) => console.error("Failed to send emails:", err));
+            ]).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'Failed to send emails' }));
         }
 
         return NextResponse.json({
@@ -303,7 +310,10 @@ export async function POST(request: Request) {
             paymentId: payment.id,
         });
     } catch (error) {
-        console.error("Error verifying slip:", error);
+        if (error instanceof Error && error.message === 'COUPON_LIMIT_EXCEEDED') {
+            return NextResponse.json({ error: 'คูปองนี้ถูกใช้ครบจำนวนแล้ว' }, { status: 400 });
+        }
+        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error verifying slip' });
         return NextResponse.json(
             { error: "Failed to verify slip" },
             { status: 500 }

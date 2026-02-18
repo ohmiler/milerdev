@@ -122,15 +122,24 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: 'คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ' }, { status: 402 });
             }
             // Record coupon usage + enrollment in a transaction to prevent race conditions
+            // Conditional update guards against TOCTOU: only increments if still under limit
             const enrollmentId = createId();
             await db.transaction(async (tx) => {
+                const updateResult = await tx.update(coupons)
+                    .set({ usageCount: sql`${coupons.usageCount} + 1` })
+                    .where(and(
+                        eq(coupons.id, coupon.id),
+                        sql`(${coupons.usageLimit} IS NULL OR ${coupons.usageCount} < ${coupons.usageLimit})`
+                    ));
+                if (updateResult[0].affectedRows === 0) {
+                    throw new Error('COUPON_LIMIT_EXCEEDED');
+                }
                 await tx.insert(couponUsages).values({
                     couponId: coupon.id,
                     userId: session.user.id,
                     courseId,
                     discountAmount: String(Math.min(discount, coursePrice)),
                 });
-                await tx.update(coupons).set({ usageCount: sql`${coupons.usageCount} + 1` }).where(eq(coupons.id, coupon.id));
                 await tx.insert(enrollments).values({
                     id: enrollmentId,
                     userId: session.user.id,
@@ -147,7 +156,7 @@ export async function POST(request: Request) {
                     name: session.user.name,
                     courseName: course.title,
                     courseSlug: course.slug,
-                }).catch((err) => console.error("Failed to send enrollment email:", err));
+                }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'Failed to send enrollment email' }));
             }
 
             return NextResponse.json(enrollment, { status: 201 });
@@ -175,12 +184,15 @@ export async function POST(request: Request) {
                 name: session.user.name,
                 courseName: course.title,
                 courseSlug: course.slug,
-            }).catch((err) => console.error("Failed to send enrollment email:", err));
+            }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'Failed to send enrollment email' }));
         }
 
         return NextResponse.json(enrollment, { status: 201 });
     } catch (error) {
-        console.error("Error enrolling:", error);
+        if (error instanceof Error && error.message === 'COUPON_LIMIT_EXCEEDED') {
+            return NextResponse.json({ error: 'คูปองนี้ถูกใช้ครบจำนวนแล้ว' }, { status: 400 });
+        }
+        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error enrolling' });
         return NextResponse.json(
             { error: "Failed to enroll" },
             { status: 500 }
@@ -218,7 +230,7 @@ export async function GET(request: Request) {
             enrollment: enrollment || null,
         });
     } catch (error) {
-        console.error("Error checking enrollment:", error);
+        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error checking enrollment' });
         return NextResponse.json(
             { error: "Failed to check enrollment" },
             { status: 500 }

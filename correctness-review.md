@@ -184,7 +184,7 @@ if (!enrollment && !lesson.isFreePreview) {
 2. ~~SlipOK amount check bypass~~ — `typeof slipAmount !== 'number' || slipAmount < amount`
 3. ~~`parseInt(period)` NaN~~ — validate + clamp 1-60 months
 
-### ยังค้าง
-4. **Coupon TOCTOU** — เพิ่ม conditional update ใน transaction
-5. **`console.error` ใน `.catch()`** — migrate 5 จุด
-6. **Certificate collision** — throw หลัง retry ครบ (แทนที่ silent failure)
+### ✅ แก้แล้วทั้งหมด
+4. ~~**Coupon TOCTOU**~~ — conditional UPDATE ใน transaction ทั้ง `enroll/route.ts` และ `slip/verify/route.ts`
+5. ~~**`console.error` ใน `.catch()`**~~ — migrate 5 จุดใน `enroll`, `slip/verify`, `progress`, `certificate.ts`
+6. ~~**Certificate collision**~~ — throw `Error` ชัดเจนหลัง 5 retries ครบ

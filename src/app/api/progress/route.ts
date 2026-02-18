@@ -145,14 +145,14 @@ export async function POST(request: Request) {
                         console.log('[Certificate] Issued:', certificate.certificateCode, 'for user:', session.user.id);
                     }
                 } catch (certError) {
-                    console.error('[Certificate] Error issuing:', certError);
+                    logError(certError instanceof Error ? certError : new Error(String(certError)), { action: '[Certificate] Error issuing' });
                 }
             }
         }
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("Error updating progress:", error);
+        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating progress' });
         return NextResponse.json(
             { error: "Failed to update progress" },
             { status: 500 }
@@ -213,7 +213,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ progress: progressMap });
     } catch (error) {
-        console.error("Error getting progress:", error);
+        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error getting progress' });
         return NextResponse.json(
             { error: "Failed to get progress" },
             { status: 500 }
