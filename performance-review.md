@@ -9,14 +9,14 @@
 
 | หมวด | สถานะ | สรุป |
 |------|--------|------|
-| N+1 Queries | 🔴 พบปัญหา | `getPublishedBundles()`, Admin CSV export |
-| Missing DB Indexes | 🔴 พบปัญหา | 13 columns ที่ query บ่อยไม่มี index |
-| SELECT * Over-fetching | 🟡 พบปัญหา | `progress/route.ts` หลายจุด |
-| Waterfall Queries | 🟡 พบปัญหา | Dashboard, learn page, progress route |
-| Rendering Strategy | 🔴 พบปัญหา | `force-dynamic` บนทุก page แม้ข้อมูลไม่เปลี่ยน |
-| Correlated Subqueries | 🔴 พบปัญหา | Admin report ทำ N+1 ที่ DB level |
-| Search Performance | 🟡 พบปัญหา | LIKE `%text%` ใช้ full table scan |
-| Pagination | 🟡 พบปัญหา | Admin blog endpoint ไม่มี limit |
+| N+1 Queries | ✅ แก้แล้ว (บางส่วน) | `getPublishedBundles()` แก้แล้ว, Admin CSV export ยังค้าง |
+| Missing DB Indexes | ✅ แก้แล้ว | เพิ่ม 12 indexes + migrate local & production |
+| SELECT * Over-fetching | ✅ แก้แล้ว | `progress/route.ts` เปลี่ยนเป็น select เฉพาะ column ที่ใช้ |
+| Waterfall Queries | ✅ แก้แล้ว | Dashboard + Progress route ใช้ Promise.all() แล้ว |
+| Rendering Strategy | 🔴 ยังค้าง | `force-dynamic` บนทุก page แม้ข้อมูลไม่เปลี่ยน |
+| Correlated Subqueries | 🔴 ยังค้าง | Admin report ทำ N+1 ที่ DB level |
+| Search Performance | 🟡 ยังค้าง | LIKE `%text%` ใช้ full table scan |
+| Pagination | ✅ แก้แล้ว | Admin blog endpoint เพิ่ม pagination (20/page, max 100) |
 | Client-side Fetching | 🔵 สังเกต | Courses page เป็น Client Component ทั้งหมด |
 
 ---
@@ -25,10 +25,10 @@
 
 ---
 
-### 1. N+1 Query — `getPublishedBundles()` ใน Home Page
+### 1. ~~N+1 Query — `getPublishedBundles()` ใน Home Page~~ ✅ แก้แล้ว
 
-**ไฟล์:** `src/app/page.tsx:92-128`  
-**ผลกระทบ:** 3 bundles = 4 queries (1 + N) ทุกครั้งที่โหลด Home
+**ไฟล์:** `src/app/page.tsx`  
+**แก้ไข:** เปลี่ยนเป็น single JOIN query + group ใน JavaScript แทน N+1 queries
 
 ```typescript
 // ❌ N+1 pattern — 1 query หา bundles แล้ว loop query ต่อ bundle
@@ -54,7 +54,7 @@ const rows = await db
 
 ---
 
-### 2. Correlated Subquery — Admin Reports (N+1 ที่ DB Level)
+### 2. Correlated Subquery — Admin Reports (N+1 ที่ DB Level) 🔴 ยังค้าง
 
 **ไฟล์:** `src/app/api/admin/reports/export/route.ts:89-130`  
 **ผลกระทบ:** 100 users = 201 queries, 50 courses = 101 queries ต่อ request
@@ -77,10 +77,10 @@ const data = await db
 
 ---
 
-### 3. Missing Database Indexes — 13 Columns
+### 3. ~~Missing Database Indexes — 13 Columns~~ ✅ แก้แล้ว
 
 **ไฟล์:** `src/lib/db/schema.ts`  
-**ผลกระทบ:** Full Table Scan ทุก query บน columns เหล่านี้
+**แก้ไข:** เพิ่ม 12 indexes ใน schema + migration `0005_bitter_rafael_vega.sql` — apply แล้วทั้ง local และ production
 
 | Table | Column | ใช้ใน | สถานะ |
 |-------|--------|--------|-------|
@@ -133,7 +133,7 @@ export const bundleCourses = mysqlTable('bundle_courses', { /*...*/ }, (table) =
 
 ---
 
-### 4. `force-dynamic` บนทุก Page — ปิด Caching ทั้งหมด
+### 4. `force-dynamic` บนทุก Page — ปิด Caching ทั้งหมด 🔴 ยังค้าง
 
 **ผลกระทบ:** ทุก request ต้อง query DB ใหม่แม้ข้อมูลไม่เปลี่ยน
 
@@ -164,9 +164,10 @@ revalidatePath('/blog');
 
 ---
 
-### 5. Waterfall Queries — Dashboard Page
+### 5. ~~Waterfall Queries — Dashboard Page~~ ✅ แก้แล้ว
 
-**ไฟล์:** `src/app/dashboard/page.tsx:94-108`
+**ไฟล์:** `src/app/dashboard/page.tsx`  
+**แก้ไข:** รวม `getUserEnrollments` + `certCount` + `paymentCount` เป็น `Promise.all()` เดียว
 
 ```typescript
 // ❌ Sequential — certCount รอ getUserEnrollments ก่อน, paymentCount รอ certCount ก่อน
@@ -186,9 +187,10 @@ const [userEnrollments, [certCount], [paymentCount]] = await Promise.all([
 
 ---
 
-### 6. Waterfall Queries — Progress Route POST
+### 6. ~~Waterfall Queries — Progress Route POST~~ ✅ แก้แล้ว
 
-**ไฟล์:** `src/app/api/progress/route.ts:107-123`
+**ไฟล์:** `src/app/api/progress/route.ts`  
+**แก้ไข:** รวม `totalLessons` + `completedLessons` เป็น `Promise.all()` เดียว
 
 ```typescript
 // ❌ Sequential
@@ -206,10 +208,10 @@ const [[{ totalLessons }], [{ completedLessons }]] = await Promise.all([
 
 ---
 
-### 7. SELECT * Over-fetching — Progress Route
+### 7. ~~SELECT * Over-fetching — Progress Route~~ ✅ แก้แล้ว
 
-**ไฟล์:** `src/app/api/progress/route.ts:26-65`  
-**ผลกระทบ:** ดึง `content` (text field ขนาดใหญ่!) จาก lessons ทั้งที่ไม่ได้ใช้
+**ไฟล์:** `src/app/api/progress/route.ts`  
+**แก้ไข:** เปลี่ยน 3 queries ให้ select เฉพาะ columns ที่ใช้ (ไม่ดึง `content` field ขนาดใหญ่)
 
 ```typescript
 // ❌ SELECT * ดึง content field ด้วย (อาจใหญ่มาก)
@@ -231,7 +233,7 @@ const [existingProgress] = await db
 
 ---
 
-### 8. LIKE `%text%` — Full Table Scan เมื่อค้นหาคอร์ส
+### 8. LIKE `%text%` — Full Table Scan เมื่อค้นหาคอร์ส 🟡 ยังค้าง
 
 **ไฟล์:** `src/app/api/courses/route.ts:30`
 
@@ -251,9 +253,10 @@ if (search.length >= 3) {
 
 ---
 
-### 9. Admin Blog — ไม่มี Pagination
+### 9. ~~Admin Blog — ไม่มี Pagination~~ ✅ แก้แล้ว
 
-**ไฟล์:** `src/app/api/admin/blog/route.ts:17-32`
+**ไฟล์:** `src/app/api/admin/blog/route.ts`  
+**แก้ไข:** เพิ่ม pagination (default 20/page, max 100) + `Promise.all()` สำหรับ posts + total count
 
 ```typescript
 // ❌ ดึงทั้งหมดไม่มี limit
@@ -300,16 +303,18 @@ const [posts, [{ total }]] = await Promise.all([
 
 ## Priority Action Plan
 
-### ทำก่อน (ROI สูง)
-1. **เพิ่ม DB Indexes** — แก้ schema + migrate → ผลทันทีกับทุก query
-2. **แก้ N+1 ใน `getPublishedBundles()`** — แก้ 1 function ใน home page
-3. **Parallelized queries ใน Dashboard** — เพิ่ม `Promise.all()` 3 บรรทัด
+### ✅ เสร็จแล้ว
+1. ~~**เพิ่ม DB Indexes**~~ — 12 indexes, migrate local + production (commit 3455e94)
+2. ~~**แก้ N+1 ใน `getPublishedBundles()`**~~ — single JOIN query
+3. ~~**Parallelize Dashboard**~~ — Promise.all() รวม 3 queries
+4. ~~**Parallelize Progress route**~~ — Promise.all() totalLessons + completedLessons
+5. ~~**แก้ SELECT * ใน progress route**~~ — select เฉพาะ columns ที่ใช้
+6. ~~**เพิ่ม pagination ใน admin blog**~~ — 20/page, max 100
 
-### ทำถัดไป
-4. **เปลี่ยน `force-dynamic` เป็น ISR** — ลด DB load มาก (ต้องเพิ่ม `revalidatePath()` ใน admin)
-5. **แก้ Correlated Subquery ใน Admin Reports** — LEFT JOIN แทน subquery
-6. **แก้ SELECT * ใน progress route** — ลด data transfer
-7. **เพิ่ม pagination ใน admin blog** — ป้องกัน scaling issue
+### ยังค้าง
+7. **เปลี่ยน `force-dynamic` เป็น ISR** — ลด DB load มาก (ต้องเพิ่ม `revalidatePath()` ใน admin)
+8. **แก้ Correlated Subquery ใน Admin Reports** — LEFT JOIN แทน subquery
+9. **FULLTEXT index** สำหรับ course search (แทน LIKE `%text%`)
 
 ---
 
