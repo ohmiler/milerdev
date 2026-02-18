@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { inArray } from 'drizzle-orm';
@@ -8,10 +8,9 @@ import { logAudit } from '@/lib/auditLog';
 // POST /api/admin/users/bulk - Bulk operations on users
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const body = await request.json();
     const { action, userIds, data } = body;

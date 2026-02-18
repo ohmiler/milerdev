@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { certificates } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -10,10 +10,9 @@ type RouteParams = { params: Promise<{ id: string }> };
 // GET /api/admin/certificates/[id] - Get single certificate
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     const [cert] = await db.select().from(certificates).where(eq(certificates.id, id)).limit(1);
@@ -32,10 +31,9 @@ export async function GET(request: Request, { params }: RouteParams) {
 // PUT /api/admin/certificates/[id] - Revoke or restore certificate
 export async function PUT(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     const { action, reason } = await request.json();
@@ -71,10 +69,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
 // DELETE /api/admin/certificates/[id] - Delete certificate
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     await db.delete(certificates).where(eq(certificates.id, id));

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { payments, enrollments, users, courses } from '@/lib/db/schema';
 import { desc, eq, sql, gte } from 'drizzle-orm';
@@ -19,10 +19,9 @@ function csvSafe(value: string | number | null | undefined): string {
 // GET /api/admin/reports/export - Export data as CSV
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'payments';

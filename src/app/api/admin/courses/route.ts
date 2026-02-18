@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
@@ -10,10 +10,9 @@ import { createCourseSchema, validateBody } from '@/lib/validations/admin';
 // GET /api/admin/courses - List all courses
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const allCourses = await db
       .select({ id: courses.id, title: courses.title, slug: courses.slug, status: courses.status, price: courses.price })
@@ -30,10 +29,9 @@ export async function GET() {
 // POST /api/admin/courses - Create new course
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const body = await request.json();
     const validation = validateBody(createCourseSchema, body);

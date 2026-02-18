@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { desc, sql, eq, like, and, or, gte, lte } from 'drizzle-orm';
@@ -7,10 +7,9 @@ import { desc, sql, eq, like, and, or, gte, lte } from 'drizzle-orm';
 // GET /api/admin/users - Get all users with stats and advanced filtering
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);

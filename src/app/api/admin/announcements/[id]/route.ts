@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { announcements, notifications } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -12,10 +12,9 @@ interface RouteParams {
 // GET /api/admin/announcements/[id] - Get single announcement
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
 
@@ -42,10 +41,9 @@ export async function GET(request: Request, { params }: RouteParams) {
 // PUT /api/admin/announcements/[id] - Update announcement
 export async function PUT(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     const body = await request.json();
@@ -92,10 +90,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
 // DELETE /api/admin/announcements/[id] - Delete announcement
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
 

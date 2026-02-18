@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { enrollments, courses, users } from '@/lib/db/schema';
 import { eq, and, notInArray } from 'drizzle-orm';
@@ -12,10 +12,9 @@ interface RouteParams {
 // GET /api/admin/users/[id]/enrollments - Get user's enrollments with course info
 export async function GET(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
 
@@ -87,10 +86,9 @@ export async function GET(request: Request, { params }: RouteParams) {
 // POST /api/admin/users/[id]/enrollments - Manual enroll user in a course
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     const body = await request.json();

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, users } from '@/lib/db/schema';
 import { eq, desc, count } from 'drizzle-orm';
@@ -9,10 +9,9 @@ import { logAudit } from '@/lib/auditLog';
 // GET /api/admin/blog - List all blog posts
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
@@ -54,10 +53,9 @@ export async function GET(request: Request) {
 // POST /api/admin/blog - Create blog post
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const body = await request.json();
     const { title, slug: customSlug, excerpt, content, thumbnailUrl, status, tagIds } = body;

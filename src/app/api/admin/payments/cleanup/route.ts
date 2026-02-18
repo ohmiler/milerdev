@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { payments } from '@/lib/db/schema';
 import { eq, and, lte, sql } from 'drizzle-orm';
@@ -9,10 +9,9 @@ import { logAudit } from '@/lib/auditLog';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function DELETE(_request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
 
