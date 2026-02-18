@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { reviews, courses, users, enrollments } from '@/lib/db/schema';
@@ -117,7 +118,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error('Error fetching reviews:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching reviews:' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -207,7 +208,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ review: newReview }, { status: 201 });
   } catch (error) {
-    console.error('Error creating review:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating review:' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

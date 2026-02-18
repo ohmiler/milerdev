@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { db } from '@/lib/db';
 import { affiliateBanners } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';

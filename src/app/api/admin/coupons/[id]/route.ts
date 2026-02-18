@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { coupons } from '@/lib/db/schema';
@@ -20,7 +21,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ coupon });
   } catch (error) {
-    console.error('Error fetching coupon:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching coupon:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -62,7 +63,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทคูปองสำเร็จ' });
   } catch (error) {
-    console.error('Error updating coupon:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating coupon:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -82,7 +83,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบคูปองสำเร็จ' });
   } catch (error) {
-    console.error('Error deleting coupon:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting coupon:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

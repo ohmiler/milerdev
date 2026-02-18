@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { announcements, users } from '@/lib/db/schema';
@@ -81,7 +82,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error fetching announcements:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching announcements:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -139,7 +140,7 @@ export async function POST(request: Request) {
       announcement: { id: announcementId },
     });
   } catch (error) {
-    console.error('Error creating announcement:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating announcement:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการสร้างประกาศ' },
       { status: 500 }

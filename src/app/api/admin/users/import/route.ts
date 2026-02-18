@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
       results,
     });
   } catch (error) {
-    console.error('Error importing users:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error importing users:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล' },
       { status: 500 }

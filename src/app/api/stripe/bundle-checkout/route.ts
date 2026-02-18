@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";

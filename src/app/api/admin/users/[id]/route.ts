@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
@@ -34,7 +35,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ user: userWithoutPassword });
   } catch (error) {
-    console.error('Error fetching user:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -88,7 +89,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทผู้ใช้สำเร็จ' });
   } catch (error) {
-    console.error('Error updating user:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating user:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }
@@ -128,7 +129,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบผู้ใช้สำเร็จ' });
   } catch (error) {
-    console.error('Error deleting user:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting user:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

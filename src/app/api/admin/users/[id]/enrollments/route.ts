@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { enrollments, courses, users } from '@/lib/db/schema';
@@ -75,7 +76,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ user, enrollments: userEnrollments, availableCourses });
   } catch (error) {
-    console.error('Error fetching user enrollments:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user enrollments:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -131,7 +132,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลงทะเบียนสำเร็จ', enrollmentId });
   } catch (error) {
-    console.error('Error manual enrolling:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error manual enrolling:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }

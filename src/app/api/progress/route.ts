@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { lessonProgress, lessons, enrollments } from "@/lib/db/schema";

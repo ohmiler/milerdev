@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { payments, courses, bundles } from '@/lib/db/schema';
@@ -35,7 +36,7 @@ export async function GET() {
 
     return NextResponse.json({ payments: userPayments });
   } catch (error) {
-    console.error('Error fetching user payments:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user payments:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

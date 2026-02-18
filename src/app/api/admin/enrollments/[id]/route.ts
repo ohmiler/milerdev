@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { enrollments, lessonProgress } from '@/lib/db/schema';
@@ -30,7 +31,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ enrollment });
   } catch (error) {
-    console.error('Error fetching enrollment:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching enrollment:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -73,7 +74,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทการลงทะเบียนสำเร็จ' });
   } catch (error) {
-    console.error('Error updating enrollment:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating enrollment:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }
@@ -113,7 +114,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบการลงทะเบียนสำเร็จ' });
   } catch (error) {
-    console.error('Error deleting enrollment:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting enrollment:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

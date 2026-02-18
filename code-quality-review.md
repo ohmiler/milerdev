@@ -9,13 +9,13 @@
 
 | หมวด | สถานะ | สรุป |
 |------|--------|------|
-| Error Handling Consistency | 🔴 พบปัญหา | 73 routes ใช้ inline error format แตกต่างกัน |
-| Dead Utility Code | 🔴 พบปัญหา | `api-response.ts`, `error-handler.ts` สร้างไว้ดีแต่ไม่ถูกใช้ |
-| DRY — Validation | 🟡 พบปัญหา | `validateBody()` ใช้แค่ 1 route จาก 40+ routes |
-| console.error ใน Production | 🟡 พบปัญหา | 214 matches ใน 110 ไฟล์ ไม่ผ่าน logError() |
+| Error Handling Consistency | � ดีขึ้น | catch blocks ใช้ `logError()` แล้ว, response format ยังค้าง |
+| Dead Utility Code | ✅ แก้แล้ว (บางส่วน) | `logError()` ใช้แล้วใน 73 routes, `api-response.ts` ยังค้าง |
+| DRY — Validation | 🟡 ยังค้าง | `validateBody()` ใช้แค่ 1 route จาก 40+ routes |
+| console.error ใน Production | ✅ แก้แล้ว | 73 routes migrate ให้ใช้ `logError()` แล้ว |
 | Type Safety (`any`) | 🟡 พบปัญหา | 38 matches — ส่วนใหญ่ใน schema.ts และ middleware |
-| TODO Comments | 🔵 สังเกต | 8 ไฟล์ — Sentry, FIXME ที่ยังค้าง |
-| Response Format | 🔴 พบปัญหา | บาง route ตอบ `{ error }` บาง route ตอบ `{ success, error }` |
+| TODO Comments | 🔵 ยังค้าง | 8 ไฟล์ — Sentry integration ยังค้าง |
+| Response Format | 🔴 ยังค้าง | บาง route ตอบ `{ error }` บาง route ตอบ `{ success, error }` |
 
 ---
 
@@ -23,10 +23,16 @@
 
 ---
 
-### 1. Dead Utility Code — `api-response.ts` และ `error-handler.ts`
+### 1. ~~Dead Utility Code — `error-handler.ts`~~ ✅ แก้แล้ว (บางส่วน)
 
-**ไฟล์:** `src/lib/api-response.ts`, `src/lib/error-handler.ts`  
-**ผลกระทบ:** มี utility ที่ดีมากแต่ไม่มีใครใช้ — เป็น dead code ที่ทำให้ codebase สับสน
+**แก้ไข:** `logError()` ถูก migrate เข้า 73 routes แล้ว — catch blocks ทุกตัวใน `/api` ใช้ structured logging แทน `console.error` ตรงๆ
+
+---
+
+### 1b. Dead Utility Code — `api-response.ts`
+
+**ไฟล์:** `src/lib/api-response.ts`  
+**ผลกระทบ:** มี helper ครบ (`ok()`, `unauthorized()`, `serverError()` ฯลฯ) แต่ยังไม่มี route ใช้
 
 มีการสร้าง helper ครบครัน:
 - `ok()`, `created()`, `badRequest()`, `unauthorized()`, `forbidden()`, `notFound()`, `serverError()`
@@ -71,9 +77,15 @@ return serverError(error, { userId, action: 'updateProfile' });
 
 ---
 
-### 3. DRY Violation — Auth Check ซ้ำทุก Route
+### 3. ~~DRY Violation — Auth Check ซ้ำทุก Route~~ ✅ แก้แล้ว
 
-**ผลกระทบ:** Admin auth check เขียนซ้ำ ~40 ครั้ง
+**แก้ไข:** สร้าง `src/lib/auth-helpers.ts` — `requireAdmin()` และ `requireAuth()` — migrate 42 admin routes แล้ว
+
+---
+
+### 3b. DRY Violation — Auth Check (เดิม)
+
+**ผลกระทบ (เดิม):** Admin auth check เขียนซ้ำ ~40 ครั้ง
 
 ```typescript
 // ❌ เขียนซ้ำใน ~40 admin routes
@@ -102,10 +114,15 @@ const session = await requireAdmin(); // 1 บรรทัด แทน 4 บร
 
 ---
 
-### 4. `console.error` ใน Production ไม่ผ่าน Structured Logger
+### 4. ~~`console.error` ใน Production ไม่ผ่าน Structured Logger~~ ✅ แก้แล้ว
 
-**ไฟล์:** 110 ไฟล์, 214 matches  
-**ผลกระทบ:** Log ไม่มี structure — ไม่มี timestamp, userId, action context — ทำให้ debug production ยาก
+**แก้ไข:** Migrate 73 API routes ให้ใช้ `logError()` จาก `error-handler.ts` — log มี timestamp, action context ครบ
+
+---
+
+### 4b. `console.error` (เดิม)
+
+**ผลกระทบ (เดิม):** Log ไม่มี structure — ไม่มี timestamp, userId, action context
 
 ```typescript
 // ❌ ปัจจุบัน — ทุก catch block
@@ -218,16 +235,17 @@ private listeners: Map<string, NotificationListener[]> = new Map();
 
 ## Priority Action Plan
 
-### ทำก่อน (High ROI — เพิ่ม consistency ทันที)
-1. **สร้าง `requireAdmin()` helper** — ลด boilerplate 40 routes (~4 บรรทัด/route)
-2. **เริ่มใช้ `validateBody()`** ใน admin routes ที่ยังไม่ใช้
-3. **ตัดสินใจ** เรื่อง `api-response.ts` — ใช้หรือลบ
+### ✅ เสร็จแล้ว
+1. ~~**สร้าง `requireAdmin()` helper**~~ — migrate 42 admin routes (commit 8a31ce2)
+2. ~~**Migrate catch blocks ให้ใช้ `logError()`**~~ — 73 routes (commit ถัดไป)
 
-### ทำถัดไป (Medium)
-4. **Migrate catch blocks** ให้ใช้ `logError()` แทน `console.error` ตรงๆ
+### ยังค้าง
+3. **ตัดสินใจ** เรื่อง `api-response.ts` — ใช้หรือลบ (dead code)
+4. **เริ่มใช้ `validateBody()`** ใน admin routes ที่ยังไม่ใช้
 5. **แก้ `any` types** ใน notification-pubsub และ stream route
 6. **ตรวจสอบ** `enroll` vs `enrollments` route ว่าซ้ำซ้อนไหม
 
 ### พิจารณาระยะยาว (Low)
-7. **แตก large components** ใน admin pages
-8. **Resolve TODO comments** หรือ convert เป็น GitHub Issues
+7. **Standardize response format** ทั้ง codebase เป็น `{ success, error, code }`
+8. **แตก large components** ใน admin pages
+9. **Resolve TODO comments** หรือ convert เป็น GitHub Issues

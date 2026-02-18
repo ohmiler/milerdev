@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { certificates } from '@/lib/db/schema';
@@ -25,7 +26,7 @@ export async function GET() {
 
     return NextResponse.json({ certificates: userCerts });
   } catch (error) {
-    console.error('Error fetching user certificates:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user certificates:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

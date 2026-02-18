@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { certificates, users } from '@/lib/db/schema';
@@ -51,7 +52,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ certificates: allCerts });
   } catch (error) {
-    console.error('Error fetching certificates:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching certificates:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       isNew,
     }, { status: isNew ? 201 : 200 });
   } catch (error) {
-    console.error('Error issuing certificate:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error issuing certificate:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

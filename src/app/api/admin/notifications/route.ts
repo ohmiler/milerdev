@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { notifications, users } from '@/lib/db/schema';
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching notifications:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -130,7 +131,7 @@ export async function POST(request: Request) {
       sentCount: targetUsers.length,
     });
   } catch (error) {
-    console.error('Error sending notifications:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error sending notifications:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการส่งการแจ้งเตือน' },
       { status: 500 }

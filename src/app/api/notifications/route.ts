@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
       unreadCount,
     });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching notifications:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -92,7 +93,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ message: 'อ่านการแจ้งเตือนแล้ว' });
   } catch (error) {
-    console.error('Error marking notifications:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error marking notifications:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -140,7 +141,7 @@ export async function DELETE(request: Request) {
       deletedCount,
     });
   } catch (error) {
-    console.error('Error deleting notifications:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting notifications:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }

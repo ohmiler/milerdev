@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { payments, enrollments, bundleCourses, courses, bundles } from '@/lib/db/schema';
@@ -32,7 +33,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ payment });
   } catch (error) {
-    console.error('Error fetching payment:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching payment:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -65,7 +66,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบรายการชำระเงินสำเร็จ' });
   } catch (error) {
-    console.error('Error deleting payment:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting payment:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }
@@ -236,7 +237,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       newStatus: status,
     });
   } catch (error) {
-    console.error('Error updating payment:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating payment:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

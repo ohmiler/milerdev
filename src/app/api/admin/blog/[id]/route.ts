@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags } from '@/lib/db/schema';
@@ -37,7 +38,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ post, tags: postTags });
   } catch (error) {
-    console.error('Error fetching blog post:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching blog post:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -98,7 +99,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทบทความสำเร็จ' });
   } catch (error) {
-    console.error('Error updating blog post:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating blog post:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }
@@ -129,7 +130,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบบทความสำเร็จ' });
   } catch (error) {
-    console.error('Error deleting blog post:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting blog post:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }

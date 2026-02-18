@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { db } from '@/lib/db';
 import { announcements, users } from '@/lib/db/schema';
 import { desc, eq, and, sql } from 'drizzle-orm';
@@ -41,7 +42,7 @@ export async function GET() {
 
     return NextResponse.json({ announcements: activeAnnouncements });
   } catch (error) {
-    console.error('Error fetching announcements:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching announcements:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

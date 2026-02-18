@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { tags } from '@/lib/db/schema';
@@ -27,7 +28,7 @@ export async function GET() {
 
     return NextResponse.json({ tags: tagList });
   } catch (error) {
-    console.error('Error fetching tags:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching tags:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
       tag: { id: tagId, name: name.trim(), slug },
     });
   } catch (error) {
-    console.error('Error creating tag:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating tag:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการสร้างแท็ก' },
       { status: 500 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { certificates } from '@/lib/db/schema';
@@ -23,7 +24,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ certificate: cert });
   } catch (error) {
-    console.error('Error fetching certificate:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching certificate:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -61,7 +62,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Error updating certificate:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating certificate:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -78,7 +79,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await logAudit({ userId: session.user.id, action: 'delete', entityType: 'certificate', entityId: id });
     return NextResponse.json({ message: 'ลบใบรับรองสำเร็จ' });
   } catch (error) {
-    console.error('Error deleting certificate:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting certificate:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

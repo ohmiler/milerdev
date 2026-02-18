@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { media } from '@/lib/db/schema';
@@ -71,7 +72,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error fetching media:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching media:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -140,7 +141,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error uploading media:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error uploading media:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการอัพโหลด' },
       { status: 500 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { payments } from '@/lib/db/schema';
@@ -45,7 +46,7 @@ export async function DELETE(_request: Request) {
       deleted: staleCount,
     });
   } catch (error) {
-    console.error('Error cleaning up payments:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error cleaning up payments:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }

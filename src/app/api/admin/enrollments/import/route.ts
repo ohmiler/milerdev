@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { enrollments, users, courses } from '@/lib/db/schema';
@@ -194,7 +195,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error importing enrollments:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error importing enrollments:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการนำเข้า' },
       { status: 500 }

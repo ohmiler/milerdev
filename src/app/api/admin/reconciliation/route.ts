@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { auth } from '@/lib/auth';

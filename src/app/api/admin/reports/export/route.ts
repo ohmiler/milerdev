@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { payments, enrollments, users, courses } from '@/lib/db/schema';
@@ -163,7 +164,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error exporting data:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error exporting data:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการส่งออกข้อมูล' },
       { status: 500 }

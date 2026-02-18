@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
@@ -61,7 +62,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
   } catch (error) {
-    console.error('Error resetting password:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error resetting password:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

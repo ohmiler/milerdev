@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
@@ -203,7 +204,7 @@ export async function GET(request: Request) {
       checkoutMethods,
     });
   } catch (error) {
-    console.error('Error fetching analytics funnel data:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching analytics funnel data:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูล Analytics' }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { coupons, couponUsages, courses } from '@/lib/db/schema';
@@ -126,7 +127,7 @@ export async function POST(request: Request) {
       description: coupon.description,
     });
   } catch (error) {
-    console.error('Error validating coupon:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error validating coupon:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { reviews } from '@/lib/db/schema';
@@ -41,7 +42,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัปเดตรีวิวสำเร็จ' });
   } catch (error) {
-    console.error('Error updating review:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating review:' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -71,7 +72,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบรีวิวสำเร็จ' });
   } catch (error) {
-    console.error('Error deleting review:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting review:' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

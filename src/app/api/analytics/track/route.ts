@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { isClientTrackableAnalyticsEvent } from '@/lib/analytics-events';
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, tracked });
   } catch (error) {
-    console.error('Error tracking analytics event:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error tracking analytics event:' });
     return NextResponse.json({ error: 'Failed to track analytics event' }, { status: 500 });
   }
 }

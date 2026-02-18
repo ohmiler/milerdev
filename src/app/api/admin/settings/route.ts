@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { settings, auditLogs } from '@/lib/db/schema';
@@ -67,7 +68,7 @@ export async function GET() {
 
     return NextResponse.json({ settings: mergedSettings, grouped });
   } catch (error) {
-    console.error('Error fetching settings:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching settings:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -149,7 +150,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ message: 'บันทึกการตั้งค่าสำเร็จ' });
   } catch (error) {
-    console.error('Error updating setting:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating setting:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการบันทึก' },
       { status: 500 }
