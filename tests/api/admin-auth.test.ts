@@ -123,9 +123,9 @@ describe('Admin API Access Control', () => {
 
         for (const route of adminRoutes) {
             for (const method of route.methods) {
-                it(`${method} ${route.path} should return 401 for non-admin`, async () => {
+                it(`${method} ${route.path} should return 403 for non-admin`, async () => {
                     const response = await callRoute(route.path, method, route.body);
-                    expect(response.status).toBe(401);
+                    expect(response.status).toBe(403);
                 });
             }
         }
