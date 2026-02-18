@@ -98,7 +98,9 @@ export const lessons = mysqlTable('lessons', {
     orderIndex: int('order_index').notNull(),
     isFreePreview: boolean('is_free_preview').default(false),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
-});
+}, (table) => [
+    index('idx_lessons_course_id').on(table.courseId),
+]);
 
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
     course: one(courses, {
@@ -143,7 +145,10 @@ export const lessonProgress = mysqlTable('lesson_progress', {
     completed: boolean('completed').default(false),
     watchTimeSeconds: int('watch_time_seconds').default(0),
     lastWatchedAt: datetime('last_watched_at'),
-});
+}, (table) => [
+    index('idx_lesson_progress_user_id').on(table.userId),
+    index('idx_lesson_progress_lesson_id').on(table.lessonId),
+]);
 
 export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
     user: one(users, {
@@ -174,7 +179,11 @@ export const payments = mysqlTable('payments', {
     retryCount: int('retry_count').default(0),
     lastRetryAt: datetime('last_retry_at'),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
-});
+}, (table) => [
+    index('idx_payments_user_id').on(table.userId),
+    index('idx_payments_created_at').on(table.createdAt),
+    index('idx_payments_status').on(table.status),
+]);
 
 export const paymentsRelations = relations(payments, ({ one, many }) => ({
     user: one(users, {
@@ -228,7 +237,9 @@ export const notifications = mysqlTable('notifications', {
     link: varchar('link', { length: 500 }),
     isRead: boolean('is_read').default(false),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
-});
+}, (table) => [
+    index('idx_notifications_user_id').on(table.userId),
+]);
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
     user: one(users, {
@@ -347,7 +358,9 @@ export const reviews = mysqlTable('reviews', {
     isHidden: boolean('is_hidden').default(false),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
-});
+}, (table) => [
+    index('idx_reviews_course_hidden').on(table.courseId, table.isHidden),
+]);
 
 export const reviewsRelations = relations(reviews, ({ one }) => ({
     user: one(users, {
@@ -375,7 +388,10 @@ export const blogPosts = mysqlTable('blog_posts', {
     publishedAt: datetime('published_at'),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
-});
+}, (table) => [
+    index('idx_blog_posts_status').on(table.status),
+    index('idx_blog_posts_published_at').on(table.publishedAt),
+]);
 
 export const blogPostTags = mysqlTable('blog_post_tags', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
@@ -477,7 +493,9 @@ export const bundleCourses = mysqlTable('bundle_courses', {
     bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'cascade' }).notNull(),
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
     orderIndex: int('order_index').default(0),
-});
+}, (table) => [
+    index('idx_bundle_courses_bundle_id').on(table.bundleId),
+]);
 
 export const bundlesRelations = relations(bundles, ({ many }) => ({
     bundleCourses: many(bundleCourses),
@@ -511,7 +529,9 @@ export const certificates = mysqlTable('certificates', {
     certificateHeaderImage: text('certificate_header_image'),
     revokedAt: datetime('revoked_at'),
     revokedReason: text('revoked_reason'),
-});
+}, (table) => [
+    index('idx_certificates_user_id').on(table.userId),
+]);
 
 export const certificatesRelations = relations(certificates, ({ one }) => ({
     user: one(users, {

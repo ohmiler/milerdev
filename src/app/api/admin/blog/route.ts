@@ -2,36 +2,49 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, users } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, count } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
 
 // GET /api/admin/blog - List all blog posts
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const posts = await db
-      .select({
-        id: blogPosts.id,
-        title: blogPosts.title,
-        slug: blogPosts.slug,
-        excerpt: blogPosts.excerpt,
-        thumbnailUrl: blogPosts.thumbnailUrl,
-        status: blogPosts.status,
-        authorName: users.name,
-        publishedAt: blogPosts.publishedAt,
-        createdAt: blogPosts.createdAt,
-        updatedAt: blogPosts.updatedAt,
-      })
-      .from(blogPosts)
-      .leftJoin(users, eq(blogPosts.authorId, users.id))
-      .orderBy(desc(blogPosts.createdAt));
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20));
+    const offset = (page - 1) * limit;
 
-    return NextResponse.json({ posts });
+    const [posts, [{ total }]] = await Promise.all([
+      db
+        .select({
+          id: blogPosts.id,
+          title: blogPosts.title,
+          slug: blogPosts.slug,
+          excerpt: blogPosts.excerpt,
+          thumbnailUrl: blogPosts.thumbnailUrl,
+          status: blogPosts.status,
+          authorName: users.name,
+          publishedAt: blogPosts.publishedAt,
+          createdAt: blogPosts.createdAt,
+          updatedAt: blogPosts.updatedAt,
+        })
+        .from(blogPosts)
+        .leftJoin(users, eq(blogPosts.authorId, users.id))
+        .orderBy(desc(blogPosts.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ total: count() }).from(blogPosts),
+    ]);
+
+    return NextResponse.json({
+      posts,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   } catch (error) {
     console.error('Error fetching blog posts:', error);
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });

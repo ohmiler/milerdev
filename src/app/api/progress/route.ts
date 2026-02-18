@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
         // Get lesson
         const [lesson] = await db
-            .select()
+            .select({ id: lessons.id, courseId: lessons.courseId, isFreePreview: lessons.isFreePreview })
             .from(lessons)
             .where(eq(lessons.id, lessonId))
             .limit(1);
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
         // Check enrollment
         const [enrollment] = await db
-            .select()
+            .select({ id: enrollments.id })
             .from(enrollments)
             .where(
                 and(
@@ -54,7 +54,11 @@ export async function POST(request: Request) {
 
         // Update or create progress
         const [existingProgress] = await db
-            .select()
+            .select({
+                id: lessonProgress.id,
+                completed: lessonProgress.completed,
+                watchTimeSeconds: lessonProgress.watchTimeSeconds,
+            })
             .from(lessonProgress)
             .where(
                 and(
@@ -104,22 +108,21 @@ export async function POST(request: Request) {
 
         // Calculate and update course progress
         if (enrollment) {
-            const [{ totalLessons }] = await db
-                .select({ totalLessons: count() })
-                .from(lessons)
-                .where(eq(lessons.courseId, lesson.courseId));
-
-            const [{ completedLessons }] = await db
-                .select({ completedLessons: count() })
-                .from(lessonProgress)
-                .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
-                .where(
-                    and(
-                        eq(lessonProgress.userId, session.user.id),
-                        eq(lessons.courseId, lesson.courseId),
-                        eq(lessonProgress.completed, true)
-                    )
-                );
+            const [[{ totalLessons }], [{ completedLessons }]] = await Promise.all([
+                db.select({ totalLessons: count() })
+                    .from(lessons)
+                    .where(eq(lessons.courseId, lesson.courseId)),
+                db.select({ completedLessons: count() })
+                    .from(lessonProgress)
+                    .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+                    .where(
+                        and(
+                            eq(lessonProgress.userId, session.user.id),
+                            eq(lessons.courseId, lesson.courseId),
+                            eq(lessonProgress.completed, true)
+                        )
+                    ),
+            ]);
 
             const progressPercent = Math.round((completedLessons / totalLessons) * 100);
 

@@ -91,20 +91,14 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const userEnrollments = await getUserEnrollments(session.user.id);
-
-  // Get certificate count
-  const [certCount] = await db
-    .select({ count: count() })
-    .from(certificates)
-    .where(and(eq(certificates.userId, session.user.id), isNull(certificates.revokedAt)));
+  const [userEnrollments, [certCount], [paymentCount]] = await Promise.all([
+    getUserEnrollments(session.user.id),
+    db.select({ count: count() }).from(certificates)
+      .where(and(eq(certificates.userId, session.user.id), isNull(certificates.revokedAt))),
+    db.select({ count: count() }).from(payments)
+      .where(eq(payments.userId, session.user.id)),
+  ]);
   const certificateCount = certCount?.count || 0;
-
-  // Get payment count
-  const [paymentCount] = await db
-    .select({ count: count() })
-    .from(payments)
-    .where(eq(payments.userId, session.user.id));
   const totalPayments = paymentCount?.count || 0;
 
   return (

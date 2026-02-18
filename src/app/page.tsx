@@ -90,41 +90,69 @@ async function getStats() {
 }
 
 async function getPublishedBundles() {
-  const allBundles = await db
-    .select()
+  const rows = await db
+    .select({
+      id: bundles.id,
+      title: bundles.title,
+      slug: bundles.slug,
+      description: bundles.description,
+      thumbnailUrl: bundles.thumbnailUrl,
+      price: bundles.price,
+      status: bundles.status,
+      createdAt: bundles.createdAt,
+      updatedAt: bundles.updatedAt,
+      courseId: bundleCourses.courseId,
+      courseTitle: courses.title,
+      coursePrice: courses.price,
+      orderIndex: bundleCourses.orderIndex,
+    })
     .from(bundles)
+    .leftJoin(bundleCourses, eq(bundles.id, bundleCourses.bundleId))
+    .leftJoin(courses, eq(bundleCourses.courseId, courses.id))
     .where(eq(bundles.status, 'published'))
-    .orderBy(desc(bundles.createdAt))
-    .limit(3);
+    .orderBy(desc(bundles.createdAt), asc(bundleCourses.orderIndex));
 
-  return Promise.all(
-    allBundles.map(async (bundle) => {
-      const bCourses = await db
-        .select({
-          courseId: bundleCourses.courseId,
-          courseTitle: courses.title,
-          coursePrice: courses.price,
-        })
-        .from(bundleCourses)
-        .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
-        .where(eq(bundleCourses.bundleId, bundle.id))
-        .orderBy(asc(bundleCourses.orderIndex));
+  // Group rows by bundle
+  const bundleMap = new Map<string, {
+    id: string; title: string; slug: string; description: string | null;
+    thumbnailUrl: string | null; price: string; status: string;
+    createdAt: Date | null; updatedAt: Date | null;
+    courses: { courseId: string | null; courseTitle: string | null; coursePrice: string | null }[];
+  }>();
 
-      const totalOriginalPrice = bCourses.reduce(
+  for (const row of rows) {
+    if (!bundleMap.has(row.id)) {
+      bundleMap.set(row.id, {
+        id: row.id, title: row.title, slug: row.slug, description: row.description,
+        thumbnailUrl: row.thumbnailUrl, price: row.price, status: row.status,
+        createdAt: row.createdAt, updatedAt: row.updatedAt,
+        courses: [],
+      });
+    }
+    if (row.courseId) {
+      bundleMap.get(row.id)!.courses.push({
+        courseId: row.courseId,
+        courseTitle: row.courseTitle,
+        coursePrice: row.coursePrice,
+      });
+    }
+  }
+
+  return Array.from(bundleMap.values())
+    .slice(0, 3)
+    .map((bundle) => {
+      const totalOriginalPrice = bundle.courses.reduce(
         (sum, c) => sum + parseFloat(c.coursePrice || '0'), 0
       );
-
       return {
         ...bundle,
-        courses: bCourses,
-        courseCount: bCourses.length,
+        courseCount: bundle.courses.length,
         totalOriginalPrice,
         discount: totalOriginalPrice > 0
           ? Math.round((1 - parseFloat(bundle.price) / totalOriginalPrice) * 100)
           : 0,
       };
-    })
-  );
+    });
 }
 
 export default async function HomePage() {

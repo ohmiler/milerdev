@@ -36,6 +36,13 @@
       "when": 1771260754354,
       "tag": "0004_payment_reconciliation",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1771434561960,
+      "tag": "0005_bitter_rafael_vega",
+      "breakpoints": true
     }
   ]
 }
