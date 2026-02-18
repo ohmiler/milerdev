@@ -214,17 +214,19 @@ export async function POST(request: Request) {
             );
         }
 
-        // Check amount matches
-        if (slipResult.data?.amount < amount) {
+        // Check amount matches — also reject if slipResult.data.amount is missing/undefined
+        const slipAmount = slipResult.data?.amount;
+        if (typeof slipAmount !== 'number' || slipAmount < amount) {
             await db
                 .update(payments)
                 .set({ status: "failed" })
                 .where(eq(payments.id, payment.id));
 
+            const slipAmountDisplay = typeof slipAmount === 'number' ? `฿${slipAmount.toLocaleString()}` : 'ไม่พบข้อมูล';
             return NextResponse.json(
                 {
                     success: false,
-                    error: `ยอดเงินในสลิปไม่ตรง (สลิป: ฿${slipResult.data.amount.toLocaleString()} / ต้องชำระ: ฿${amount.toLocaleString()})`,
+                    error: `ยอดเงินในสลิปไม่ตรง (สลิป: ${slipAmountDisplay} / ต้องชำระ: ฿${amount.toLocaleString()})`,
                 },
                 { status: 400 }
             );

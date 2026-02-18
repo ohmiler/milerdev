@@ -13,10 +13,11 @@ export async function GET(request: Request) {
     const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period') || '12'; // months
+    const periodRaw = parseInt(searchParams.get('period') || '12', 10);
+    const period = Number.isFinite(periodRaw) && periodRaw > 0 ? Math.min(periodRaw, 60) : 12;
     // Calculate date range
     const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - parseInt(period));
+    startDate.setMonth(startDate.getMonth() - period);
     
     // Recent Activity date range (last 30 days)
     const last30Days = new Date();

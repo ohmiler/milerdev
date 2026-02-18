@@ -125,7 +125,9 @@ export async function POST(request: Request) {
                     ),
             ]);
 
-            const progressPercent = Math.round((completedLessons / totalLessons) * 100);
+            const progressPercent = totalLessons > 0
+                ? Math.round((completedLessons / totalLessons) * 100)
+                : 0;
 
             await db
                 .update(enrollments)
