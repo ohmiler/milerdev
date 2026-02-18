@@ -5,7 +5,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, like, or } from 'drizzle-orm';
 import { sanitizeRichContent, enhanceBlogContent } from '@/lib/sanitize';
 
 function normalizeUrl(url: string | null): string | null {
@@ -74,7 +74,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 async function getPost(rawSlug: string) {
   const slug = decodeURIComponent(rawSlug);
-  console.log('[Blog] Looking for slug:', JSON.stringify(slug), 'length:', slug.length);
 
   let [post] = await db
     .select()
@@ -84,23 +83,16 @@ async function getPost(rawSlug: string) {
 
   // Fallback: try matching by slug prefix (in case URL was truncated)
   if (!post) {
-    const allPosts = await db.select({ id: blogPosts.id, slug: blogPosts.slug, status: blogPosts.status }).from(blogPosts);
-    console.log('[Blog] Available slugs:', allPosts.map(p => JSON.stringify(p.slug)));
-    const match = allPosts.find(p => p.slug.startsWith(slug) || slug.startsWith(p.slug));
-    if (match) {
-      console.log('[Blog] Found partial match:', JSON.stringify(match.slug));
-      [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, match.id)).limit(1);
-    }
+    const [match] = await db
+      .select()
+      .from(blogPosts)
+      .where(or(like(blogPosts.slug, `${slug}%`), like(blogPosts.slug, `%${slug}`)))
+      .limit(1);
+    if (match) post = match;
   }
 
-  if (!post) {
-    console.log('[Blog] Post not found for slug:', JSON.stringify(slug));
-    return null;
-  }
-  if (post.status !== 'published') {
-    console.log('[Blog] Post exists but status is:', post.status);
-    return null;
-  }
+  if (!post) return null;
+  if (post.status !== 'published') return null;
 
   const [authorResult, postTags] = await Promise.all([
     post.authorId

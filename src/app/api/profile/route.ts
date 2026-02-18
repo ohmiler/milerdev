@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const updateProfileSchema = z.object({
     name: z.string().min(2, 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร').max(100).optional(),
@@ -15,6 +16,11 @@ export async function PUT(request: Request) {
         const session = await auth();
         if (!session?.user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const rateLimit = checkRateLimit(`profile:${session.user.id}`, rateLimits.api);
+        if (!rateLimit.success) {
+            return rateLimitResponse(rateLimit.resetTime);
         }
 
         const body = await request.json();
