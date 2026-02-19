@@ -12,6 +12,7 @@ import ReadingProgress from '@/components/blog/ReadingProgress';
 import CodeCopyButton from '@/components/blog/CodeCopyButton';
 import TableOfContents from '@/components/blog/TableOfContents';
 import ScrollToTop from '@/components/blog/ScrollToTop';
+import BlogViewTracker from '@/components/blog/BlogViewTracker';
 
 function getReadingTime(html: string): number {
   const text = html.replace(/<[^>]*>/g, ' ');
@@ -168,6 +169,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
+      <BlogViewTracker slug={post.slug} />
       <ReadingProgress />
       <Navbar />
       <main style={{ paddingTop: '0' }}>
@@ -257,6 +259,12 @@ export default async function BlogPostPage({ params }: Props) {
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
                 อ่าน {readingTime} นาที
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
+                </svg>
+                {(post.viewCount ?? 0).toLocaleString()} ครั้ง
               </span>
             </div>
           </div>

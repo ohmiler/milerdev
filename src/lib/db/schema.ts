@@ -386,6 +386,7 @@ export const blogPosts = mysqlTable('blog_posts', {
     status: varchar('status', { length: 20, enum: ['draft', 'published'] }).default('draft').notNull(),
     authorId: varchar('author_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
     publishedAt: datetime('published_at'),
+    viewCount: int('view_count').default(0).notNull(),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
 }, (table) => [
