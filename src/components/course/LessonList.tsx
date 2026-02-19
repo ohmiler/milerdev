@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 
 interface Lesson {
@@ -30,6 +30,15 @@ const formatDuration = (seconds: number | null) => {
 };
 
 export default function LessonList({ lessons, courseSlug, currentLessonId, isEnrolled = false, completedLessonIds, onLockedClick, searchQuery = '' }: LessonListProps) {
+  const currentItemRef = useRef<HTMLAnchorElement | HTMLDivElement | null>(null);
+
+  // Scroll to current lesson whenever it changes
+  useEffect(() => {
+    if (currentItemRef.current) {
+      currentItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [currentLessonId]);
+
   // Calculate which page the current lesson is on
   const currentLessonPage = useMemo(() => {
     if (!currentLessonId) return 0;
@@ -98,10 +107,10 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                padding: '12px 16px',
+                padding: '10px 12px',
                 borderRadius: '8px',
                 color: '#64748b',
-                marginBottom: '4px',
+                marginBottom: '2px',
                 cursor: 'pointer',
                 transition: 'background 0.2s',
               }}
@@ -149,21 +158,23 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
         return (
           <Link
             key={lesson.id}
+            ref={isCurrent ? (currentItemRef as React.RefObject<HTMLAnchorElement>) : null}
             href={`/courses/${courseSlug}/learn/${lesson.id}`}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              padding: '12px 16px',
+              padding: '10px 12px',
               borderRadius: '8px',
               textDecoration: 'none',
               color: 'white',
-              marginBottom: '4px',
+              marginBottom: '2px',
               transition: 'background 0.2s',
               background: isCurrent ? '#334155' : 'transparent',
+              borderLeft: isCurrent ? '3px solid #3b82f6' : '3px solid transparent',
             }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#334155'}
-            onMouseOut={(e) => !isCurrent && (e.currentTarget.style.background = 'transparent')}
+            onMouseOver={(e) => { if (!isCurrent) e.currentTarget.style.background = '#2d3f55'; }}
+            onMouseOut={(e) => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
           >
             <div style={{
               width: '28px',
@@ -250,14 +261,14 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
             </svg>
           </button>
           <span style={{
-            padding: '6px 14px',
+            padding: '5px 12px',
             background: '#334155',
             color: 'white',
             borderRadius: '6px',
             fontSize: '0.75rem',
             fontWeight: 600,
           }}>
-            {page + 1} OF {totalPages}
+            หน้า {page + 1} / {totalPages}
           </span>
           <button
             onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LessonList from './LessonList';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
@@ -48,12 +49,17 @@ export default function LearnPageClient({
   isEnrolled,
   completedLessonIds: initialCompletedIds,
 }: LearnPageClientProps) {
+  const router = useRouter();
   const [lockedMessage, setLockedMessage] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [lessonSearch, setLessonSearch] = useState('');
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
   const [markingComplete, setMarkingComplete] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState<number | null>(null);
+  const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoAdvanceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Watch time tracking
   const watchTimeRef = useRef(0);
@@ -100,7 +106,25 @@ export default function LearnPageClient({
     watchTimeRef.current = 0;
     lastSyncRef.current = 0;
     isPlayingRef.current = false;
+    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+    if (autoAdvanceIntervalRef.current) clearInterval(autoAdvanceIntervalRef.current);
+    setAutoAdvanceCountdown(null);
   }, [currentLesson.id]);
+
+  // Keyboard navigation: ArrowLeft / ArrowRight
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === 'ArrowLeft' && prevLesson) {
+        router.push(`/courses/${course.slug}/learn/${prevLesson.id}`);
+      } else if (e.key === 'ArrowRight' && nextLesson && (isEnrolled || nextLesson.isFreePreview)) {
+        router.push(`/courses/${course.slug}/learn/${nextLesson.id}`);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [prevLesson, nextLesson, isEnrolled, router, course.slug]);
 
   const handleTimeUpdate = useCallback((currentTime: number, _duration?: number) => {
     void _duration;
@@ -119,7 +143,22 @@ export default function LearnPageClient({
   const handleEnded = useCallback(() => {
     isPlayingRef.current = false;
     syncWatchTime();
-  }, [syncWatchTime]);
+    if (isEnrolled && nextLesson) {
+      setAutoAdvanceCountdown(5);
+      autoAdvanceIntervalRef.current = setInterval(() => {
+        setAutoAdvanceCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            if (autoAdvanceIntervalRef.current) clearInterval(autoAdvanceIntervalRef.current);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        router.push(`/courses/${course.slug}/learn/${nextLesson.id}`);
+      }, 5000);
+    }
+  }, [syncWatchTime, isEnrolled, nextLesson, router, course.slug]);
 
   const isCurrentCompleted = completedIds.has(currentLesson.id);
   const completedCount = completedIds.size;
@@ -145,6 +184,10 @@ export default function LearnPageClient({
           const next = new Set(prev);
           if (newCompleted) {
             next.add(currentLesson.id);
+            if (next.size === totalCount) {
+              setShowCelebration(true);
+              setTimeout(() => setShowCelebration(false), 4000);
+            }
           } else {
             next.delete(currentLesson.id);
           }
@@ -165,8 +208,35 @@ export default function LearnPageClient({
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a' }}>
+      {/* Completion Celebration Toast */}
+      {showCelebration && (
+        <div style={{
+          position: 'fixed',
+          top: '72px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 200,
+          background: 'linear-gradient(135deg, #16a34a, #15803d)',
+          color: 'white',
+          padding: '14px 28px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 32px rgba(22,163,74,0.45)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          fontSize: '0.9375rem',
+          fontWeight: 600,
+          pointerEvents: 'none',
+        }}>
+          🎉 ยินดีด้วย! คุณเรียนจบคอร์สนี้แล้ว!
+        </div>
+      )}
+
       {/* Header */}
       <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
         background: '#1e293b',
         borderBottom: '1px solid #334155',
         padding: '12px 24px',
@@ -200,30 +270,37 @@ export default function LearnPageClient({
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '8px',
                 fontSize: '0.75rem',
                 color: progressPercent === 100 ? '#4ade80' : '#94a3b8',
               }}>
                 <div style={{
-                  width: '60px',
-                  height: '4px',
+                  width: '80px',
+                  height: '6px',
                   background: '#334155',
-                  borderRadius: '2px',
+                  borderRadius: '3px',
                   overflow: 'hidden',
                 }}>
                   <div style={{
                     height: '100%',
                     width: `${progressPercent}%`,
                     background: progressPercent === 100 ? '#4ade80' : '#3b82f6',
-                    borderRadius: '2px',
-                    transition: 'width 0.3s ease',
+                    borderRadius: '3px',
+                    transition: 'width 0.4s ease',
                   }} />
                 </div>
-                {progressPercent}%
+                <span style={{ fontWeight: 600, minWidth: '30px' }}>{progressPercent}%</span>
               </div>
             )}
-            <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-              บทที่ {currentIndex + 1} / {allLessons.length}
+            <div style={{
+              color: '#94a3b8',
+              fontSize: '0.8125rem',
+              background: '#334155',
+              padding: '3px 10px',
+              borderRadius: '6px',
+              fontWeight: 500,
+            }}>
+              {currentIndex + 1} / {allLessons.length}
             </div>
           </div>
           {/* Desktop sidebar toggle */}
@@ -278,7 +355,7 @@ export default function LearnPageClient({
 
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 57px)' }}>
         {/* Video Area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* Video Player or Locked Message */}
           <div style={{ width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative', flexShrink: 0 }}>
             {lockedMessage ? (
@@ -366,24 +443,54 @@ export default function LearnPageClient({
             )}
           </div>
 
-          {/* Lesson Info */}
-          <div style={{ padding: '24px', flex: 1, overflowY: 'auto', background: '#0f172a' }}>
-            <h1 style={{
-              fontSize: '1.5rem',
-              fontWeight: 600,
-              color: 'white',
-              marginBottom: '8px',
+          {/* Auto-advance banner */}
+          {autoAdvanceCountdown !== null && nextLesson && (
+            <div style={{
+              background: '#1e293b',
+              borderBottom: '1px solid #334155',
+              padding: '10px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexShrink: 0,
             }}>
-              {currentLesson.title}
-            </h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.875rem', minWidth: 0 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span>บทถัดไป:</span>
+                <span style={{ color: 'white', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextLesson.title}</span>
+                <span style={{ color: '#3b82f6', fontWeight: 700, flexShrink: 0 }}>({autoAdvanceCountdown}s)</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                <button
+                  onClick={() => {
+                    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+                    if (autoAdvanceIntervalRef.current) clearInterval(autoAdvanceIntervalRef.current);
+                    setAutoAdvanceCountdown(null);
+                  }}
+                  style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #475569', color: '#94a3b8', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}
+                >
+                  ยกเลิก
+                </button>
+                <Link
+                  href={`/courses/${course.slug}/learn/${nextLesson.id}`}
+                  style={{ padding: '5px 12px', background: '#2563eb', color: 'white', borderRadius: '6px', textDecoration: 'none', fontSize: '0.8125rem', fontWeight: 500 }}
+                >
+                  ไปเลย
+                </Link>
+              </div>
+            </div>
+          )}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
-              {formatDuration(currentLesson.videoDuration) && (
-                <div style={{ color: '#64748b', fontSize: '0.875rem' }}>
-                  ⏱️ {formatDuration(currentLesson.videoDuration)}
-                </div>
-              )}
-
+          {/* Lesson Info */}
+          <div style={{ padding: '20px 24px', flex: 1, overflowY: 'auto', background: '#0f172a' }}>
+            {/* Title row + Mark Complete */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '10px' }}>
+              <h1 style={{ fontSize: '1.375rem', fontWeight: 600, color: 'white', lineHeight: 1.4, flex: 1, margin: 0 }}>
+                {currentLesson.title}
+              </h1>
               {isEnrolled && (
                 <button
                   onClick={handleMarkComplete}
@@ -392,29 +499,43 @@ export default function LearnPageClient({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '6px 14px',
+                    padding: '8px 16px',
                     borderRadius: '8px',
                     border: isCurrentCompleted ? '1px solid #22c55e' : '1px solid #475569',
-                    background: isCurrentCompleted ? 'rgba(34, 197, 94, 0.1)' : 'transparent',
+                    background: isCurrentCompleted ? 'rgba(34,197,94,0.12)' : '#1e293b',
                     color: isCurrentCompleted ? '#4ade80' : '#94a3b8',
                     cursor: markingComplete ? 'wait' : 'pointer',
-                    fontSize: '0.875rem',
+                    fontSize: '0.8125rem',
                     fontWeight: 500,
                     transition: 'all 0.2s',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {isCurrentCompleted ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M5 13l4 4L19 7" />
                     </svg>
                   ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="12" cy="12" r="10" />
                     </svg>
                   )}
                   {markingComplete ? 'กำลังบันทึก...' : isCurrentCompleted ? 'เรียนจบแล้ว' : 'ทำเครื่องหมายว่าเรียนจบ'}
                 </button>
               )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              {formatDuration(currentLesson.videoDuration) && (
+                <div style={{ color: '#64748b', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {formatDuration(currentLesson.videoDuration)}
+                </div>
+              )}
+              <div style={{ color: '#475569', fontSize: '0.8125rem' }}>บทที่ {currentIndex + 1} จาก {allLessons.length}</div>
             </div>
 
             {currentLesson.content && (
@@ -520,20 +641,14 @@ export default function LearnPageClient({
             `}</style>
 
             {/* Navigation */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: '12px',
-              paddingTop: '16px',
-              borderTop: '1px solid #334155',
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid #1e293b' }}>
               {prevLesson ? (
                 <Link
                   href={`/courses/${course.slug}/learn/${prevLesson.id}`}
                   style={{
-                    padding: '12px 24px',
-                    background: '#334155',
-                    color: 'white',
+                    padding: '10px 18px',
+                    background: '#1e293b',
+                    color: '#cbd5e1',
                     textDecoration: 'none',
                     borderRadius: '8px',
                     display: 'flex',
@@ -541,7 +656,11 @@ export default function LearnPageClient({
                     gap: '8px',
                     fontSize: '0.875rem',
                     fontWeight: 500,
+                    border: '1px solid #334155',
+                    transition: 'background 0.2s',
                   }}
+                  onMouseOver={(e) => (e.currentTarget.style.background = '#334155')}
+                  onMouseOut={(e) => (e.currentTarget.style.background = '#1e293b')}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -551,11 +670,16 @@ export default function LearnPageClient({
               ) : (
                 <div />
               )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#334155', fontSize: '0.75rem' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+                <span className="hidden sm:inline" style={{ color: '#475569' }}>← → เปลี่ยนบท</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+              </div>
               {nextLesson && (isEnrolled || nextLesson.isFreePreview) ? (
                 <Link
                   href={`/courses/${course.slug}/learn/${nextLesson.id}`}
                   style={{
-                    padding: '12px 24px',
+                    padding: '10px 18px',
                     background: '#2563eb',
                     color: 'white',
                     textDecoration: 'none',
@@ -565,7 +689,10 @@ export default function LearnPageClient({
                     gap: '8px',
                     fontSize: '0.875rem',
                     fontWeight: 500,
+                    transition: 'background 0.2s',
                   }}
+                  onMouseOver={(e) => (e.currentTarget.style.background = '#1d4ed8')}
+                  onMouseOut={(e) => (e.currentTarget.style.background = '#2563eb')}
                 >
                   บทถัดไป
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -576,10 +703,10 @@ export default function LearnPageClient({
                 <button
                   onClick={() => handleLockedClick(nextLesson.id)}
                   style={{
-                    padding: '12px 24px',
-                    background: '#475569',
-                    color: '#94a3b8',
-                    border: 'none',
+                    padding: '10px 18px',
+                    background: '#1e293b',
+                    color: '#64748b',
+                    border: '1px solid #334155',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
@@ -589,7 +716,10 @@ export default function LearnPageClient({
                     fontWeight: 500,
                   }}
                 >
-                  🔒 บทถัดไป
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C9.24 2 7 4.24 7 7v3H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V12c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v3H9V7c0-1.66 1.34-3 3-3z"/>
+                  </svg>
+                  บทถัดไป
                 </button>
               ) : null}
             </div>
@@ -623,6 +753,9 @@ export default function LearnPageClient({
             transition: 'width 0.3s ease, min-width 0.3s ease',
             display: 'flex',
             flexDirection: 'column',
+            position: 'sticky',
+            top: '57px',
+            height: 'calc(100vh - 57px)',
           }}
         >
           {/* Mobile Close Button */}
