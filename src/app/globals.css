@@ -55,6 +55,7 @@ body {
   font-size: 16px;
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
   -moz-osx-font-smoothing: grayscale;
 }
 
@@ -464,6 +465,9 @@ h1, h2, h3, h4, h5, h6 {
   overflow-x: auto !important;
   font-size: 0.875rem !important;
   line-height: 1.7 !important;
+  max-width: 100% !important;
+  white-space: pre !important;
+  word-break: normal !important;
 }
 
 .rich-content code {
@@ -608,6 +612,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 20px;
   border-radius: 10px;
   overflow-x: auto;
+  max-width: 100%;
   margin: 1.25em 0;
   font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
   font-size: 0.9rem;
@@ -809,9 +814,17 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 1024px) {
   .blog-toc-layout {
     grid-template-columns: 1fr !important;
+    gap: 0 !important;
   }
   .blog-toc-sidebar {
     display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .blog-toc-layout {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
   }
 }
 
