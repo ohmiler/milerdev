@@ -1,4 +1,56 @@
 import sanitizeHtml from 'sanitize-html';
+import { common, createLowlight } from 'lowlight';
+
+const lowlight = createLowlight(common);
+
+type HastNode = {
+  type: string;
+  tagName?: string;
+  value?: string;
+  properties?: Record<string, unknown>;
+  children?: HastNode[];
+};
+
+function hastToHtml(node: HastNode): string {
+  if (node.type === 'text') return (node.value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (node.type === 'element') {
+    const tag = node.tagName ?? 'span';
+    const cls = Array.isArray(node.properties?.className) ? (node.properties!.className as string[]).join(' ') : '';
+    const attrs = cls ? ` class="${cls}"` : '';
+    const inner = (node.children ?? []).map(hastToHtml).join('');
+    return `<${tag}${attrs}>${inner}</${tag}>`;
+  }
+  if (node.type === 'root') return (node.children ?? []).map(hastToHtml).join('');
+  return '';
+}
+
+/**
+ * Re-highlight <pre><code> blocks in an HTML string using lowlight (server-side).
+ * Tiptap's getHTML() does not include hljs spans, so we process them here.
+ */
+export function highlightCodeBlocks(html: string): string {
+  return html.replace(
+    /<pre(?:[^>]*)><code(?:\s+class="language-([^"]*)")?>([\s\S]*?)<\/code><\/pre>/gi,
+    (_match, lang: string | undefined, rawCode: string) => {
+      const code = rawCode
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      try {
+        const tree = lang && lowlight.registered(lang)
+          ? lowlight.highlight(lang, code)
+          : lowlight.highlightAuto(code);
+        const highlighted = hastToHtml(tree as HastNode);
+        const langAttr = lang ? ` data-language="${lang}"` : '';
+        return `<pre${langAttr}><code>${highlighted}</code></pre>`;
+      } catch {
+        return _match;
+      }
+    }
+  );
+}
 
 /**
  * Strip all HTML tags and return plain text.
@@ -70,6 +122,7 @@ export function sanitizeRichContent(html: string): string {
         allowedAttributes: {
             'a': ['href', 'target', 'rel'],
             'img': ['src', 'alt', 'width', 'height'],
+            'pre': ['class', 'data-language'],
             '*': ['class'],
         },
         allowedSchemes: ['http', 'https', 'mailto'],

@@ -6,9 +6,18 @@ import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { eq, like, or, ne, and, sql } from 'drizzle-orm';
-import { sanitizeRichContent, enhanceBlogContent } from '@/lib/sanitize';
+import { sanitizeRichContent, enhanceBlogContent, highlightCodeBlocks } from '@/lib/sanitize';
 import ShareButtons from '@/components/blog/ShareButtons';
 import ReadingProgress from '@/components/blog/ReadingProgress';
+import CodeCopyButton from '@/components/blog/CodeCopyButton';
+import TableOfContents from '@/components/blog/TableOfContents';
+import ScrollToTop from '@/components/blog/ScrollToTop';
+
+function getReadingTime(html: string): number {
+  const text = html.replace(/<[^>]*>/g, ' ');
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
 
 function normalizeUrl(url: string | null): string | null {
   if (!url || url.trim() === '') return null;
@@ -154,6 +163,8 @@ export default async function BlogPostPage({ params }: Props) {
   }
 
   const relatedPosts = await getRelatedPosts(post.id, post.tags);
+  const readingTime = getReadingTime(post.content ?? '');
+  const processedContent = sanitizeRichContent(highlightCodeBlocks(enhanceBlogContent(post.content ?? '')));
 
   return (
     <>
@@ -166,7 +177,8 @@ export default async function BlogPostPage({ params }: Props) {
           padding: '60px 0',
           color: 'white',
         }}>
-          <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <div className="blog-toc-layout" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: 'minmax(0, 800px) 240px', gap: '40px', justifyContent: 'center' }}>
+          <div>
             {/* Breadcrumb */}
             <div style={{ marginBottom: '24px', fontSize: '0.875rem', opacity: 0.8 }}>
               <Link href="/" style={{ color: 'white', textDecoration: 'none' }}>หน้าแรก</Link>
@@ -210,7 +222,7 @@ export default async function BlogPostPage({ params }: Props) {
             </h1>
 
             {/* Meta */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', opacity: 0.9 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '16px', opacity: 0.9 }}>
               {post.author?.name && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{
@@ -240,13 +252,21 @@ export default async function BlogPostPage({ params }: Props) {
                   })}
                 </span>
               )}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                </svg>
+                อ่าน {readingTime} นาที
+              </span>
             </div>
+          </div>
+          <div />
           </div>
         </section>
 
         {/* Thumbnail */}
         {normalizeUrl(post.thumbnailUrl) && (
-          <div style={{ maxWidth: '800px', margin: '-40px auto 0', padding: '0 16px' }}>
+          <div className="blog-toc-layout" style={{ maxWidth: '1100px', margin: '-40px auto 0', padding: '0 24px', display: 'grid', gridTemplateColumns: 'minmax(0, 800px) 240px', gap: '40px', justifyContent: 'center' }}>
             <img
               src={normalizeUrl(post.thumbnailUrl)!}
               alt={post.title}
@@ -261,23 +281,21 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         )}
 
-        {/* Content */}
-        <article style={{
-          maxWidth: '800px',
-          margin: '0 auto',
-          padding: '48px 16px 80px',
-        }}>
-          {post.content && (
-            <div
-              className="rich-content"
-              style={{
-                fontSize: '1.0625rem',
-                lineHeight: 1.8,
-                color: '#334155',
-              }}
-              dangerouslySetInnerHTML={{ __html: sanitizeRichContent(enhanceBlogContent(post.content)) }}
-            />
-          )}
+        {/* Content + TOC layout */}
+        <div className="blog-toc-layout" style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 24px 80px', display: 'grid', gridTemplateColumns: 'minmax(0, 800px) 240px', gap: '40px', alignItems: 'start', justifyContent: 'center' }}>
+          <article>
+            {post.content && (
+              <div
+                className="rich-content"
+                style={{
+                  fontSize: '1.0625rem',
+                  lineHeight: 1.8,
+                  color: '#334155',
+                }}
+                dangerouslySetInnerHTML={{ __html: processedContent }}
+              />
+            )}
+            <CodeCopyButton />
 
           {/* Related Posts */}
           {relatedPosts.length > 0 && (
@@ -341,8 +359,15 @@ export default async function BlogPostPage({ params }: Props) {
               ← กลับไปบทความทั้งหมด
             </Link>
           </div>
-        </article>
+          </article>
+
+          {/* TOC Sidebar */}
+          <div className="blog-toc-sidebar">
+            <TableOfContents contentHtml={processedContent} />
+          </div>
+        </div>
       </main>
+      <ScrollToTop />
       <Footer />
     </>
   );

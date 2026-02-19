@@ -3,9 +3,10 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, ne } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { sanitizeRichContent } from '@/lib/sanitize';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -64,6 +65,18 @@ export async function PUT(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'ไม่พบบทความ' }, { status: 404 });
     }
 
+    // Check slug uniqueness (excluding self)
+    if (slug && slug !== existing.slug) {
+      const [slugConflict] = await db
+        .select({ id: blogPosts.id })
+        .from(blogPosts)
+        .where(and(eq(blogPosts.slug, slug), ne(blogPosts.id, id)))
+        .limit(1);
+      if (slugConflict) {
+        return NextResponse.json({ error: `Slug "${slug}" มีอยู่แล้ว กรุณาแก้ slug ใหม่` }, { status: 409 });
+      }
+    }
+
     // If publishing for the first time, set publishedAt
     const isNewlyPublished = status === 'published' && existing.status !== 'published';
 
@@ -73,7 +86,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         title: title || existing.title,
         slug: slug || existing.slug,
         excerpt: excerpt !== undefined ? excerpt : existing.excerpt,
-        content: content !== undefined ? content : existing.content,
+        content: content !== undefined ? (content ? sanitizeRichContent(content) : null) : existing.content,
         thumbnailUrl: thumbnailUrl !== undefined ? thumbnailUrl : existing.thumbnailUrl,
         status: status || existing.status,
         publishedAt: isNewlyPublished ? new Date() : existing.publishedAt,
@@ -101,6 +114,40 @@ export async function PUT(request: Request, { params }: RouteParams) {
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating blog post:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
+  }
+}
+
+// PATCH /api/admin/blog/[id] - Quick status toggle
+export async function PATCH(request: Request, { params }: RouteParams) {
+  try {
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
+
+    const { id } = await params;
+    const { status } = await request.json();
+
+    if (!['draft', 'published'].includes(status)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
+    }
+
+    const [existing] = await db.select().from(blogPosts).where(eq(blogPosts.id, id)).limit(1);
+    if (!existing) return NextResponse.json({ error: 'ไม่พบบทความ' }, { status: 404 });
+
+    const isNewlyPublished = status === 'published' && existing.status !== 'published';
+
+    await db.update(blogPosts).set({
+      status,
+      publishedAt: isNewlyPublished ? new Date() : existing.publishedAt,
+      updatedAt: new Date(),
+    }).where(eq(blogPosts.id, id));
+
+    await logAudit({ userId: session.user.id, action: 'update', entityType: 'blog', entityId: id, newValue: status });
+
+    return NextResponse.json({ message: 'อัพเดทสถานะสำเร็จ', status });
+  } catch (error) {
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error toggling blog status:' });
+    return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
 

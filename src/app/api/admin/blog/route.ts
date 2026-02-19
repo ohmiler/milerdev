@@ -3,9 +3,10 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, users } from '@/lib/db/schema';
-import { eq, desc, count } from 'drizzle-orm';
+import { eq, desc, count, and, ne } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { sanitizeRichContent } from '@/lib/sanitize';
 
 // GET /api/admin/blog - List all blog posts
 export async function GET(request: Request) {
@@ -73,6 +74,12 @@ export async function POST(request: Request) {
       .replace(/^-|-$/g, '')
       .substring(0, 200);
 
+    // Check slug uniqueness
+    const [existing] = await db.select({ id: blogPosts.id }).from(blogPosts).where(eq(blogPosts.slug, slug)).limit(1);
+    if (existing) {
+      return NextResponse.json({ error: `Slug "${slug}" มีอยู่แล้ว กรุณาเปลี่ยนชื่อบทความหรือแก้ slug` }, { status: 409 });
+    }
+
     const postId = createId();
     const isPublished = status === 'published';
 
@@ -81,7 +88,7 @@ export async function POST(request: Request) {
       title,
       slug: slug || postId,
       excerpt: excerpt || null,
-      content: content || null,
+      content: content ? sanitizeRichContent(content) : null,
       thumbnailUrl: thumbnailUrl || null,
       status: status || 'draft',
       authorId: session.user.id,

@@ -138,6 +138,31 @@ export default function EditBlogPostPage({ params }: Props) {
         </div>
         {/* Top action buttons */}
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          {formData.status === 'published' && formData.slug && (
+            <Link
+              href={`/blog/${formData.slug}`}
+              target="_blank"
+              style={{
+                padding: '10px 16px',
+                background: '#f0fdf4',
+                color: '#16a34a',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                fontSize: '0.9375rem',
+                textDecoration: 'none',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              ดูบนเว็บ
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setShowDeleteConfirm(true)}

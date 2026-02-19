@@ -54,7 +54,7 @@ export default function NewBlogPostPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/admin/blog');
+        router.push(`/admin/blog/${data.postId}/edit`);
       } else {
         setError(data.error || 'เกิดข้อผิดพลาด');
       }

@@ -197,6 +197,35 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         >
           {'{ }'}
         </MenuButton>
+        {editor.isActive('codeBlock') && (
+          <select
+            value={editor.getAttributes('codeBlock').language || ''}
+            onChange={(e) => {
+              editor.chain().focus().setCodeBlock({ language: e.target.value }).run();
+            }}
+            style={{
+              padding: '4px 8px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              color: '#475569',
+              background: 'white',
+              cursor: 'pointer',
+              height: '32px',
+            }}
+          >
+            <option value="">Auto</option>
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="tsx">TSX / JSX</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="python">Python</option>
+            <option value="bash">Bash / Shell</option>
+            <option value="sql">SQL</option>
+            <option value="json">JSON</option>
+          </select>
+        )}
 
         <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
 
@@ -311,6 +340,31 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           border-top: 1px solid #e2e8f0;
           margin: 1em 0;
         }
+        /* Syntax Highlighting (lowlight / highlight.js classes) */
+        .tiptap pre .hljs-keyword,
+        .tiptap pre .hljs-selector-tag { color: #c792ea; }
+        .tiptap pre .hljs-string,
+        .tiptap pre .hljs-template-string,
+        .tiptap pre .hljs-template-variable { color: #c3e88d; }
+        .tiptap pre .hljs-number,
+        .tiptap pre .hljs-literal { color: #f78c6c; }
+        .tiptap pre .hljs-comment { color: #546e7a; font-style: italic; }
+        .tiptap pre .hljs-title,
+        .tiptap pre .hljs-function,
+        .tiptap pre .hljs-title.function_ { color: #82aaff; }
+        .tiptap pre .hljs-variable,
+        .tiptap pre .hljs-params { color: #e2e8f0; }
+        .tiptap pre .hljs-attr,
+        .tiptap pre .hljs-attribute { color: #f07178; }
+        .tiptap pre .hljs-built_in,
+        .tiptap pre .hljs-type { color: #ffcb6b; }
+        .tiptap pre .hljs-tag { color: #f07178; }
+        .tiptap pre .hljs-name { color: #c792ea; }
+        .tiptap pre .hljs-operator,
+        .tiptap pre .hljs-punctuation { color: #89ddff; }
+        .tiptap pre .hljs-property { color: #f07178; }
+        .tiptap pre .hljs-meta { color: #ffcb6b; }
+        .tiptap pre .hljs-symbol { color: #f78c6c; }
       `}</style>
     </div>
   );
