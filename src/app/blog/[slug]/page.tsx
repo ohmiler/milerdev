@@ -266,7 +266,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Thumbnail */}
         {normalizeUrl(post.thumbnailUrl) && (
-          <div className="blog-toc-layout" style={{ maxWidth: '1100px', margin: '-40px auto 0', padding: '0 24px', display: 'grid', gridTemplateColumns: 'minmax(0, 800px) 240px', gap: '40px', justifyContent: 'center' }}>
+          <div style={{ maxWidth: '800px', margin: '-40px auto 0', padding: '0 24px' }}>
             <img
               src={normalizeUrl(post.thumbnailUrl)!}
               alt={post.title}
@@ -275,7 +275,8 @@ export default async function BlogPostPage({ params }: Props) {
                 borderRadius: '12px',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                 objectFit: 'cover',
-                maxHeight: '400px',
+                maxHeight: '420px',
+                display: 'block',
               }}
             />
           </div>
@@ -362,7 +363,7 @@ export default async function BlogPostPage({ params }: Props) {
           </article>
 
           {/* TOC Sidebar */}
-          <div className="blog-toc-sidebar">
+          <div className="blog-toc-sidebar" style={{ position: 'sticky', top: '80px', alignSelf: 'start' }}>
             <TableOfContents contentHtml={processedContent} />
           </div>
         </div>

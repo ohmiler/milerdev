@@ -25,23 +25,24 @@ export default function TableOfContents({ contentHtml }: Props) {
   }, []);
 
   const items = useMemo<TocItem[]>(() => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(contentHtml, 'text/html');
-    const headings = doc.querySelectorAll<HTMLElement>('h2, h3');
     const parsed: TocItem[] = [];
-    headings.forEach((h, i) => {
-      const text = h.textContent?.trim() ?? '';
-      if (!text) return;
-      const id = `toc-${i}-${text.toLowerCase().replace(/[^a-z0-9ก-๙]+/g, '-').replace(/^-|-$/g, '')}`;
-      parsed.push({ id, text, level: h.tagName === 'H2' ? 2 : 3 });
-    });
+    const regex = /<h2[^>]*>([\s\S]*?)<\/h2>/gi;
+    let match;
+    let i = 0;
+    while ((match = regex.exec(contentHtml)) !== null) {
+      const rawText = match[1].replace(/<[^>]+>/g, '').trim();
+      if (!rawText) continue;
+      const id = `toc-${i}-${rawText.toLowerCase().replace(/[^a-z0-9ก-๙]+/g, '-').replace(/^-|-$/g, '')}`;
+      parsed.push({ id, text: rawText, level: 2 });
+      i++;
+    }
     return parsed;
   }, [contentHtml]);
 
   useEffect(() => {
     if (items.length === 0) return;
 
-    const realHeadings = document.querySelectorAll<HTMLElement>('.rich-content h2, .rich-content h3');
+    const realHeadings = document.querySelectorAll<HTMLElement>('.rich-content h2');
     realHeadings.forEach((h, i) => {
       if (items[i]) h.id = items[i].id;
     });
@@ -64,8 +65,6 @@ export default function TableOfContents({ contentHtml }: Props) {
 
   return (
     <div style={{
-      position: 'sticky',
-      top: '80px',
       background: 'white',
       border: '1px solid #e2e8f0',
       borderRadius: '12px',
