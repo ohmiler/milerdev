@@ -3,7 +3,7 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, users } from '@/lib/db/schema';
-import { eq, desc, count, and, ne } from 'drizzle-orm';
+import { eq, desc, count } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
 import { sanitizeRichContent } from '@/lib/sanitize';

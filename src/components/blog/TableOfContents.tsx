@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 interface TocItem {
   id: string;
@@ -13,7 +13,6 @@ interface Props {
 }
 
 export default function TableOfContents({ contentHtml }: Props) {
-  const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [open, setOpen] = useState(true);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
@@ -25,11 +24,10 @@ export default function TableOfContents({ contentHtml }: Props) {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  useEffect(() => {
+  const items = useMemo<TocItem[]>(() => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(contentHtml, 'text/html');
     const headings = doc.querySelectorAll<HTMLElement>('h2, h3');
-
     const parsed: TocItem[] = [];
     headings.forEach((h, i) => {
       const text = h.textContent?.trim() ?? '';
@@ -37,7 +35,7 @@ export default function TableOfContents({ contentHtml }: Props) {
       const id = `toc-${i}-${text.toLowerCase().replace(/[^a-z0-9ก-๙]+/g, '-').replace(/^-|-$/g, '')}`;
       parsed.push({ id, text, level: h.tagName === 'H2' ? 2 : 3 });
     });
-    setItems(parsed);
+    return parsed;
   }, [contentHtml]);
 
   useEffect(() => {

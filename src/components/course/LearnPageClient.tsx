@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LessonList from './LessonList';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
+import { sanitizeRichContent } from '@/lib/sanitize';
 
 interface Lesson {
   id: string;
@@ -126,7 +127,7 @@ export default function LearnPageClient({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [prevLesson, nextLesson, isEnrolled, router, course.slug]);
 
-  const handleTimeUpdate = useCallback((currentTime: number, _duration?: number) => {
+  const handleTimeUpdate = useCallback((currentTime: number, _duration: number) => {
     void _duration;
     watchTimeRef.current = currentTime;
   }, []);
@@ -143,6 +144,30 @@ export default function LearnPageClient({
   const handleEnded = useCallback(() => {
     isPlayingRef.current = false;
     syncWatchTime();
+    // Auto mark current lesson as complete when video ends
+    if (isEnrolled && !completedIds.has(currentLesson.id)) {
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId: currentLesson.id,
+          completed: true,
+          watchTimeSeconds: Math.floor(watchTimeRef.current) || undefined,
+        }),
+      }).then(res => {
+        if (res.ok) {
+          setCompletedIds(prev => {
+            const next = new Set(prev);
+            next.add(currentLesson.id);
+            if (next.size === allLessons.length) {
+              setShowCelebration(true);
+              setTimeout(() => setShowCelebration(false), 4000);
+            }
+            return next;
+          });
+        }
+      }).catch(() => {});
+    }
     if (isEnrolled && nextLesson) {
       setAutoAdvanceCountdown(5);
       autoAdvanceIntervalRef.current = setInterval(() => {
@@ -158,7 +183,7 @@ export default function LearnPageClient({
         router.push(`/courses/${course.slug}/learn/${nextLesson.id}`);
       }, 5000);
     }
-  }, [syncWatchTime, isEnrolled, nextLesson, router, course.slug]);
+  }, [syncWatchTime, isEnrolled, nextLesson, router, course.slug, currentLesson.id, completedIds, allLessons.length]);
 
   const isCurrentCompleted = completedIds.has(currentLesson.id);
   const completedCount = completedIds.size;
@@ -199,7 +224,7 @@ export default function LearnPageClient({
     } finally {
       setMarkingComplete(false);
     }
-  }, [currentLesson.id, isCurrentCompleted, markingComplete]);
+  }, [currentLesson.id, isCurrentCompleted, markingComplete, totalCount]);
 
   const handleLockedClick = (lessonId: string) => {
     const lesson = allLessons.find(l => l.id === lessonId);
@@ -265,7 +290,6 @@ export default function LearnPageClient({
           <span style={{ color: 'white', fontWeight: 500 }}>{course.title}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {isEnrolled && (
               <div style={{
                 display: 'flex',
@@ -302,7 +326,6 @@ export default function LearnPageClient({
             }}>
               {currentIndex + 1} / {allLessons.length}
             </div>
-          </div>
           {/* Desktop sidebar toggle */}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -550,95 +573,9 @@ export default function LearnPageClient({
                   background: '#1e293b',
                   borderRadius: '12px',
                 }}
-                dangerouslySetInnerHTML={{ __html: currentLesson.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichContent(currentLesson.content ?? '') }}
               />
             )}
-
-            {/* Lesson content styles */}
-            <style>{`
-              .lesson-content p {
-                margin: 0.6em 0;
-              }
-              .lesson-content h2 {
-                font-size: 1.35rem;
-                font-weight: 600;
-                color: #f1f5f9;
-                margin: 1.2em 0 0.5em;
-              }
-              .lesson-content h3 {
-                font-size: 1.1rem;
-                font-weight: 600;
-                color: #e2e8f0;
-                margin: 1em 0 0.4em;
-              }
-              .lesson-content ul {
-                padding-left: 1.5em;
-                margin: 0.5em 0;
-                list-style-type: disc;
-              }
-              .lesson-content ol {
-                padding-left: 1.5em;
-                margin: 0.5em 0;
-                list-style-type: decimal;
-              }
-              .lesson-content li {
-                margin: 0.3em 0;
-                display: list-item;
-              }
-              .lesson-content a {
-                color: #60a5fa;
-                text-decoration: underline;
-              }
-              .lesson-content a:hover {
-                color: #93bbfd;
-              }
-              .lesson-content code {
-                background: #334155;
-                padding: 2px 6px;
-                border-radius: 4px;
-                font-size: 0.9em;
-                color: #f472b6;
-                font-family: 'Fira Code', 'Consolas', monospace;
-              }
-              .lesson-content pre {
-                background: #0f172a;
-                border: 1px solid #334155;
-                color: #e2e8f0;
-                padding: 16px;
-                border-radius: 8px;
-                overflow-x: auto;
-                margin: 0.75em 0;
-                font-family: 'Fira Code', 'Consolas', monospace;
-                font-size: 0.9em;
-                line-height: 1.6;
-              }
-              .lesson-content pre code {
-                background: none;
-                color: inherit;
-                padding: 0;
-                border-radius: 0;
-                font-size: inherit;
-              }
-              .lesson-content blockquote {
-                border-left: 3px solid #3b82f6;
-                padding-left: 16px;
-                margin: 0.75em 0;
-                color: #94a3b8;
-                font-style: italic;
-              }
-              .lesson-content hr {
-                border: none;
-                border-top: 1px solid #334155;
-                margin: 1.2em 0;
-              }
-              .lesson-content strong {
-                color: #f1f5f9;
-                font-weight: 600;
-              }
-              .lesson-content em {
-                color: #cbd5e1;
-              }
-            `}</style>
 
             {/* Navigation */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid #1e293b' }}>
