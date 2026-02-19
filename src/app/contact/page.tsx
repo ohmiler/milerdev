@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import PageHeader from '@/components/layout/PageHeader';
 
 export default function ContactPage() {
     const [formData, setFormData] = useState({
@@ -56,21 +57,13 @@ export default function ContactPage() {
             <Navbar />
             
             <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
-                <div className="container" style={{ paddingTop: '60px', paddingBottom: '80px' }}>
-                    {/* Header */}
-                    <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-                        <h1 style={{
-                            fontSize: 'clamp(2rem, 4vw, 2.5rem)',
-                            fontWeight: 700,
-                            color: '#1e293b',
-                            marginBottom: '16px',
-                        }}>
-                            ติดต่อเรา
-                        </h1>
-                        <p style={{ color: '#64748b', fontSize: '1.125rem', maxWidth: '600px', margin: '0 auto' }}>
-                            มีคำถามหรือข้อเสนอแนะ? เราพร้อมรับฟังและช่วยเหลือคุณ
-                        </p>
-                    </div>
+                <PageHeader
+                    badge="ติดต่อเรา"
+                    title="ยินดีต้อนรับทุกคำถาม"
+                    description="มีคำถามหรือข้อเสนอแนะ? เราพร้อมรับฟังและช่วยเหลือคุณ"
+                    align="center"
+                />
+                <div className="container" style={{ paddingTop: '48px', paddingBottom: '80px' }}>
 
                     <div style={{
                         display: 'grid',

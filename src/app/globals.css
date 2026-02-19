@@ -48,7 +48,7 @@
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -59,7 +59,7 @@ body {
   font-size: 16px;
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip;
   -moz-osx-font-smoothing: grayscale;
 }
 
@@ -832,6 +832,135 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* =============================================
+   Page Header Component
+   ============================================= */
+@keyframes ph-blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(15px, -20px) scale(1.05); }
+  66%       { transform: translate(-10px, 10px) scale(0.97); }
+}
+
+@keyframes ph-pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+}
+
+@keyframes ph-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-header-section {
+  background: linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #eff6ff 100%);
+  padding: 80px 0 90px;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header-blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.page-header-blob--1 {
+  width: 500px;
+  height: 500px;
+  top: -120px;
+  right: -120px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+  animation: ph-blob-drift 12s ease-in-out infinite;
+}
+
+.page-header-blob--2 {
+  width: 380px;
+  height: 380px;
+  bottom: -140px;
+  left: -80px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+  animation: ph-blob-drift 16s ease-in-out infinite reverse;
+}
+
+.page-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  color: #2563eb;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border: 1px solid #bfdbfe;
+  animation: ph-fade-up 0.5s ease both;
+  cursor: default;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.page-header-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.page-header-badge-dot {
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: ph-pulse-dot 2s ease-in-out infinite;
+}
+
+.page-header-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  animation: ph-fade-up 0.5s 0.1s ease both;
+}
+
+.page-header-desc {
+  color: #64748b;
+  font-size: 1.125rem;
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0 auto;
+  animation: ph-fade-up 0.5s 0.2s ease both;
+}
+
+.page-header-actions {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  animation: ph-fade-up 0.5s 0.3s ease both;
+}
+
+@media (max-width: 640px) {
+  .page-header-section {
+    padding: 56px 0 64px;
+  }
+  .page-header-blob--1 { width: 300px; height: 300px; }
+  .page-header-blob--2 { width: 240px; height: 240px; }
+}
+
+/* =============================================
+   Micro interaction utilities
+   ============================================= */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 768px) {
   .section {
     padding: 4rem 0;
@@ -853,4 +982,55 @@ h1, h2, h3, h4, h5, h6 {
   .hero-grid {
     gap: 36px;
   }
+}
+
+/* =============================================
+   Scroll Reveal
+   ============================================= */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =============================================
+   Hero Entrance Animations
+   ============================================= */
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes hero-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes hero-blob-drift {
+  0%, 100% { transform: scale(1) translate(0, 0); }
+  40%       { transform: scale(1.06) translate(12px, -16px); }
+  70%       { transform: scale(0.96) translate(-8px, 10px); }
+}
+
+.hero-badge-anim  { animation: hero-fade-up 0.5s ease both; }
+.hero-title-anim  { animation: hero-fade-up 0.5s 0.1s ease both; }
+.hero-desc-anim   { animation: hero-fade-up 0.5s 0.2s ease both; }
+.hero-cta-anim    { animation: hero-fade-up 0.5s 0.3s ease both; }
+.hero-ide-anim    { animation: hero-fade-in 0.7s 0.25s ease both; }
+
+.hero-bg-1 { animation: hero-blob-drift 14s ease-in-out infinite; }
+.hero-bg-2 { animation: hero-blob-drift 18s ease-in-out infinite reverse; }
+.hero-bg-3 { animation: hero-blob-drift 11s ease-in-out infinite 2s; }
+
+/* Feature card hover */
+.feature-card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  border-radius: 16px;
+}
+.feature-card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(59, 130, 246, 0.1);
+  background: #f8fafc;
 }

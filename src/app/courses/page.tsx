@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Link from 'next/link';
 import CourseCard from '@/components/course/CourseCard';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Tag {
   id: string;
@@ -145,25 +146,12 @@ function CoursesContent() {
       <Navbar />
 
       <main style={{ paddingTop: '0' }}>
-        {/* Header */}
-        <section style={{
-          background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #eff6ff 100%)',
-          padding: '60px 0',
-        }}>
-          <div className="container">
-            <h1 style={{
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-              fontWeight: 700,
-              color: '#1e293b',
-              marginBottom: '16px',
-            }}>
-              คอร์สทั้งหมด
-            </h1>
-            <p style={{ color: '#64748b', fontSize: '1.125rem' }}>
-              เลือกคอร์สที่ใช่สำหรับคุณ และเริ่มต้นเส้นทางสู่การเป็น Developer มืออาชีพ
-            </p>
-          </div>
-        </section>
+        <PageHeader
+          badge="คอร์สทั้งหมด"
+          title="เรียนรู้ได้ทุกที่ ทุกเวลา"
+          description="เลือกคอร์สที่ใช่สำหรับคุณ และเริ่มต้นเส้นทางสู่การเป็น Developer มืออาชีพ"
+          align="center"
+        />
 
         {/* Bundles Section */}
         {bundlesList.length > 0 && (

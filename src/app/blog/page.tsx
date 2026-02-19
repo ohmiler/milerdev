@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import PageHeader from '@/components/layout/PageHeader';
 
 interface Tag {
   id: string;
@@ -142,25 +143,12 @@ function BlogContent() {
     <>
       <Navbar />
       <main style={{ paddingTop: '0' }}>
-        {/* Header */}
-        <section style={{
-          background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #faf5ff 100%)',
-          padding: '60px 0',
-        }}>
-          <div className="container">
-            <h1 style={{
-              fontSize: 'clamp(2rem, 4vw, 3rem)',
-              fontWeight: 700,
-              color: '#1e293b',
-              marginBottom: '16px',
-            }}>
-              บทความ
-            </h1>
-            <p style={{ color: '#64748b', fontSize: '1.125rem' }}>
-              เรียนรู้เทคนิคและแนวคิดด้านการเขียนโปรแกรมจากบทความของเรา
-            </p>
-          </div>
-        </section>
+        <PageHeader
+          badge="บทความ"
+          title="ความรู้ด้าน Dev จากมืออาชีพ"
+          description="เรียนรู้เทคนิคและแนวคิดด้านการเขียนโปรแกรมจากบทความของเรา"
+          align="center"
+        />
 
         {/* Blog Grid */}
         <section className="section">

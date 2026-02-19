@@ -175,19 +175,24 @@ export default async function BlogPostPage({ params }: Props) {
       <main style={{ paddingTop: '0' }}>
         {/* Header */}
         <section style={{
-          background: 'linear-gradient(135deg, #1e1b4b 0%, #4c1d95 100%)',
-          padding: '60px 0',
-          color: 'white',
+          background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #eff6ff 100%)',
+          padding: '64px 0 72px',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
-          <div className="blog-toc-layout" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: 'minmax(0, 800px) 240px', gap: '40px', justifyContent: 'center' }}>
+          {/* Decorative blobs */}
+          <div className="ph-blob1" style={{ position: 'absolute', width: '480px', height: '480px', top: '-120px', right: '-100px', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+          <div className="ph-blob2" style={{ position: 'absolute', width: '340px', height: '340px', bottom: '-120px', left: '-60px', background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+
+          <div className="blog-toc-layout" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: 'minmax(0, 800px) 240px', gap: '40px', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
           <div>
             {/* Breadcrumb */}
-            <div style={{ marginBottom: '24px', fontSize: '0.875rem', opacity: 0.8 }}>
-              <Link href="/" style={{ color: 'white', textDecoration: 'none' }}>หน้าแรก</Link>
-              {' / '}
-              <Link href="/blog" style={{ color: 'white', textDecoration: 'none' }}>บทความ</Link>
-              {' / '}
-              <span>{post.title}</span>
+            <div style={{ marginBottom: '20px', fontSize: '0.8125rem', color: '#94a3b8' }}>
+              <Link href="/" style={{ color: '#64748b', textDecoration: 'none' }}>หน้าแรก</Link>
+              <span style={{ margin: '0 6px', color: '#cbd5e1' }}>/</span>
+              <Link href="/blog" style={{ color: '#64748b', textDecoration: 'none' }}>บทความ</Link>
+              <span style={{ margin: '0 6px', color: '#cbd5e1' }}>/</span>
+              <span style={{ color: '#94a3b8' }}>{post.title.slice(0, 40)}{post.title.length > 40 ? '…' : ''}</span>
             </div>
 
             {/* Tags */}
@@ -197,15 +202,15 @@ export default async function BlogPostPage({ params }: Props) {
                   <Link
                     key={tag.id}
                     href={`/blog?tag=${tag.slug}`}
-                    className="course-tag-badge"
                     style={{
                       padding: '4px 14px',
-                      background: 'rgba(255,255,255,0.15)',
-                      color: 'white',
+                      background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
+                      color: '#2563eb',
                       borderRadius: '50px',
                       fontSize: '0.8125rem',
                       fontWeight: 500,
                       textDecoration: 'none',
+                      border: '1px solid #bfdbfe',
                     }}
                   >
                     {tag.name}
@@ -215,24 +220,27 @@ export default async function BlogPostPage({ params }: Props) {
             )}
 
             <h1 style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: 700,
-              marginBottom: '16px',
-              lineHeight: 1.3,
+              fontSize: 'clamp(1.75rem, 4vw, 2.75rem)',
+              fontWeight: 800,
+              marginBottom: '20px',
+              lineHeight: 1.25,
+              letterSpacing: '-0.02em',
+              color: '#1e293b',
             }}>
               {post.title}
             </h1>
 
             {/* Meta */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '16px', opacity: 0.9 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '16px', color: '#64748b', fontSize: '0.875rem' }}>
               {post.author?.name && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.2)',
+                    background: '#e2e8f0',
                     overflow: 'hidden',
+                    flexShrink: 0,
                   }}>
                     {normalizeUrl(post.author.avatarUrl) && (
                       <img
@@ -242,7 +250,7 @@ export default async function BlogPostPage({ params }: Props) {
                       />
                     )}
                   </div>
-                  <span>{post.author.name}</span>
+                  <span style={{ fontWeight: 500, color: '#475569' }}>{post.author.name}</span>
                 </div>
               )}
               {post.publishedAt && (
@@ -274,7 +282,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Thumbnail */}
         {normalizeUrl(post.thumbnailUrl) && (
-          <div style={{ maxWidth: '800px', margin: '-40px auto 0', padding: '0 24px' }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 24px', marginTop: '-32px', position: 'relative', zIndex: 2 }}>
             <img
               src={normalizeUrl(post.thumbnailUrl)!}
               alt={post.title}

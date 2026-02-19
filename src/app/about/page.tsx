@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import PageHeader from '@/components/layout/PageHeader';
 
 export const metadata: Metadata = {
   title: 'เกี่ยวกับเรา',
@@ -28,85 +29,19 @@ export default function AboutPage() {
       <Navbar />
       
       <main style={{ paddingTop: '0' }}>
-        {/* Hero Section */}
-        <section style={{
-          background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #eff6ff 100%)',
-          padding: '80px 0 100px',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          {/* Background decoration */}
-          <div style={{
-            position: 'absolute',
-            top: '-100px',
-            right: '-100px',
-            width: '500px',
-            height: '500px',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)',
-            borderRadius: '50%'
-          }} />
-          <div style={{
-            position: 'absolute',
-            bottom: '-150px',
-            left: '-100px',
-            width: '400px',
-            height: '400px',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
-            borderRadius: '50%'
-          }} />
-
-          <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
-              {/* Badge */}
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
-                color: '#2563eb',
-                padding: '10px 20px',
-                borderRadius: '50px',
-                fontSize: '14px',
-                fontWeight: 600,
-                marginBottom: '24px',
-                border: '1px solid #bfdbfe'
-              }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  background: '#3b82f6',
-                  borderRadius: '50%',
-                }} />
-                เกี่ยวกับเรา
-              </div>
-
-              <h1 className="hero-title" style={{ marginBottom: '24px' }}>
-                รู้จัก{' '}
-                <span className="highlight">MilerDev</span>
-              </h1>
-
-              <p style={{
-                fontSize: '1.25rem',
-                color: '#64748b',
-                marginBottom: '32px',
-                lineHeight: 1.8,
-                maxWidth: '600px',
-                margin: '0 auto 32px'
-              }}>
-                แพลตฟอร์มเรียนออนไลน์สำหรับนักพัฒนาซอฟต์แวร์ ที่สร้างขึ้นมาเพื่อให้ความรู้และประสบการณ์การเรียนรู้ที่ดีที่สุด
-              </p>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center' }}>
-                <Link href="/courses" className="btn btn-primary" style={{ fontSize: '1.1rem', padding: '16px 32px' }}>
-                  ดูคอร์สทั้งหมด
-                </Link>
-                <Link href="/register" className="btn btn-secondary" style={{ fontSize: '1.1rem', padding: '16px 32px' }}>
-                  สมัครสมาชิกฟรี
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+        <PageHeader
+          badge="เกี่ยวกับเรา"
+          title="รู้จัก MilerDev"
+          description="แพลตฟอร์มเรียนออนไลน์สำหรับนักพัฒนาซอฟต์แวร์ ที่สร้างขึ้นมาเพื่อให้ความรู้และประสบการณ์การเรียนรู้ที่ดีที่สุด"
+          align="center"
+        >
+          <Link href="/courses" className="btn btn-primary" style={{ fontSize: '1.0625rem', padding: '14px 28px' }}>
+            ดูคอร์สทั้งหมด
+          </Link>
+          <Link href="/register" className="btn btn-secondary" style={{ fontSize: '1.0625rem', padding: '14px 28px' }}>
+            สมัครสมาชิกฟรี
+          </Link>
+        </PageHeader>
 
         {/* Mission Section */}
         <section className="section" style={{ background: 'white' }}>
