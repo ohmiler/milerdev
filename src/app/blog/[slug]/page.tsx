@@ -5,8 +5,10 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
-import { eq, like, or } from 'drizzle-orm';
+import { eq, like, or, ne, and, sql } from 'drizzle-orm';
 import { sanitizeRichContent, enhanceBlogContent } from '@/lib/sanitize';
+import ShareButtons from '@/components/blog/ShareButtons';
+import ReadingProgress from '@/components/blog/ReadingProgress';
 
 function normalizeUrl(url: string | null): string | null {
   if (!url || url.trim() === '') return null;
@@ -72,6 +74,33 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+async function getRelatedPosts(postId: string, postTags: { id: string }[], limit = 3) {
+  if (postTags.length === 0) {
+    return db
+      .select({ id: blogPosts.id, title: blogPosts.title, slug: blogPosts.slug, excerpt: blogPosts.excerpt, thumbnailUrl: blogPosts.thumbnailUrl, publishedAt: blogPosts.publishedAt })
+      .from(blogPosts)
+      .where(and(eq(blogPosts.status, 'published'), ne(blogPosts.id, postId)))
+      .orderBy(sql`RAND()`)
+      .limit(limit);
+  }
+  const tagIds = postTags.map(t => t.id);
+  const related = await db
+    .select({ id: blogPosts.id, title: blogPosts.title, slug: blogPosts.slug, excerpt: blogPosts.excerpt, thumbnailUrl: blogPosts.thumbnailUrl, publishedAt: blogPosts.publishedAt })
+    .from(blogPosts)
+    .where(
+      and(
+        eq(blogPosts.status, 'published'),
+        ne(blogPosts.id, postId),
+        sql`${blogPosts.id} IN (
+          SELECT post_id FROM blog_post_tags WHERE tag_id IN (${sql.join(tagIds.map(id => sql`${id}`), sql`, `)})
+        )`
+      )
+    )
+    .orderBy(sql`RAND()`)
+    .limit(limit);
+  return related;
+}
+
 async function getPost(rawSlug: string) {
   const slug = decodeURIComponent(rawSlug);
 
@@ -124,8 +153,11 @@ export default async function BlogPostPage({ params }: Props) {
     notFound();
   }
 
+  const relatedPosts = await getRelatedPosts(post.id, post.tags);
+
   return (
     <>
+      <ReadingProgress />
       <Navbar />
       <main style={{ paddingTop: '0' }}>
         {/* Header */}
@@ -247,12 +279,54 @@ export default async function BlogPostPage({ params }: Props) {
             />
           )}
 
-          {/* Back link */}
+          {/* Related Posts */}
+          {relatedPosts.length > 0 && (
+            <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid #e2e8f0' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1e293b', marginBottom: '20px' }}>
+                บทความที่เกี่ยวข้อง
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+                {relatedPosts.map(rp => (
+                  <Link key={rp.id} href={`/blog/${rp.slug}`} style={{ textDecoration: 'none' }}>
+                    <div style={{ background: '#f8fafc', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0', transition: 'box-shadow 0.2s' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
+                    >
+                      <div style={{ aspectRatio: '16/9', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', overflow: 'hidden' }}>
+                        {normalizeUrl(rp.thumbnailUrl) && (
+                          <img src={normalizeUrl(rp.thumbnailUrl)!} alt={rp.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        )}
+                      </div>
+                      <div style={{ padding: '12px' }}>
+                        <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>
+                          {rp.title}
+                        </p>
+                        {rp.publishedAt && (
+                          <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '6px', margin: '6px 0 0' }}>
+                            {new Date(rp.publishedAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Share + Back link */}
           <div style={{
             marginTop: '48px',
             paddingTop: '24px',
             borderTop: '1px solid #e2e8f0',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
           }}>
+            <ShareButtons
+              url={`https://milerdev.com/blog/${post.slug}`}
+              title={post.title}
+            />
             <Link
               href="/blog"
               style={{

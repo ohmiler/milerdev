@@ -33,6 +33,16 @@ export default function EditBlogPostPage({ params }: Props) {
     status: 'draft',
   });
 
+  const normalizeSlug = (value: string) => {
+    return value
+      .toLowerCase()
+      .replace(/[^a-z0-9ก-๙\s-]+/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-/, '')
+      .substring(0, 200);
+  };
+
   useEffect(() => {
     params.then(({ id }) => {
       setPostId(id);
@@ -75,6 +85,7 @@ export default function EditBlogPostPage({ params }: Props) {
       const data = await res.json();
 
       if (res.ok) {
+        showToast('บันทึกบทความสำเร็จ', 'success');
         router.push('/admin/blog');
       } else {
         setError(data.error || 'เกิดข้อผิดพลาด');
@@ -114,14 +125,68 @@ export default function EditBlogPostPage({ params }: Props) {
   }
 
   return (
-    <div style={{ maxWidth: '800px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Link href="/admin/blog" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
-          ← กลับไปรายการบทความ
-        </Link>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginTop: '8px' }}>
-          แก้ไขบทความ
-        </h1>
+    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Page Header */}
+      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <Link href="/admin/blog" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
+            ← กลับไปรายการบทความ
+          </Link>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginTop: '8px' }}>
+            แก้ไขบทความ
+          </h1>
+        </div>
+        {/* Top action buttons */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            style={{
+              padding: '10px 20px',
+              background: '#fef2f2',
+              color: '#dc2626',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              fontSize: '0.9375rem',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            ลบบทความ
+          </button>
+          <Link
+            href="/admin/blog"
+            style={{
+              padding: '10px 20px',
+              background: '#f1f5f9',
+              color: '#475569',
+              borderRadius: '8px',
+              fontSize: '0.9375rem',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            ยกเลิก
+          </Link>
+          <button
+            form="blog-edit-form"
+            type="submit"
+            disabled={saving}
+            style={{
+              padding: '10px 24px',
+              background: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '0.9375rem',
+              fontWeight: 600,
+              cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.7 : 1,
+            }}
+          >
+            {saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -131,92 +196,104 @@ export default function EditBlogPostPage({ params }: Props) {
           color: '#dc2626',
           padding: '12px 16px',
           borderRadius: '8px',
-          marginBottom: '24px',
+          marginBottom: '20px',
         }}>
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-      }}>
-        {/* Title */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-            ชื่อบทความ *
-          </label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            required
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '1rem',
-            }}
-          />
+      {/* Two-column layout */}
+      <form id="blog-edit-form" onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px', alignItems: 'start' }}>
+        {/* Left: Main content */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Title + Slug */}
+          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+              ชื่อบทความ *
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '1.0625rem',
+                boxSizing: 'border-box',
+              }}
+            />
+
+            {/* Slug */}
+            <div style={{ marginTop: '16px' }}>
+              <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+                Slug (URL)
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>/blog/</span>
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: normalizeSlug(e.target.value) })}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    color: '#475569',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Excerpt */}
+          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+              เนื้อหาย่อ (Excerpt)
+            </label>
+            <textarea
+              value={formData.excerpt}
+              onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+              placeholder="สรุปเนื้อหาสั้นๆ สำหรับแสดงในหน้ารายการและ SEO..."
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '0.9375rem',
+                resize: 'vertical',
+                boxSizing: 'border-box',
+                lineHeight: 1.6,
+              }}
+            />
+          </div>
+
+          {/* Content */}
+          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '12px', color: '#374151' }}>
+              เนื้อหา
+            </label>
+            <RichTextEditor
+              content={formData.content}
+              onChange={(html) => setFormData(prev => ({ ...prev, content: html }))}
+            />
+          </div>
         </div>
 
-        {/* Slug */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-            Slug (URL)
-          </label>
-          <input
-            type="text"
-            value={formData.slug}
-            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '1rem',
-            }}
-          />
-        </div>
-
-        {/* Excerpt */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-            เนื้อหาย่อ (Excerpt)
-          </label>
-          <textarea
-            value={formData.excerpt}
-            onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-            rows={3}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              resize: 'vertical',
-            }}
-          />
-        </div>
-
-        {/* Content */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-            เนื้อหา
-          </label>
-          <RichTextEditor
-            content={formData.content}
-            onChange={(html) => setFormData(prev => ({ ...prev, content: html }))}
-          />
-        </div>
-
-        {/* Status + Tags */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-          <div>
-            <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+        {/* Right: Sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Publish settings */}
+          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
+              การเผยแพร่
+            </h3>
+            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
               สถานะ
             </label>
             <select
@@ -224,90 +301,41 @@ export default function EditBlogPostPage({ params }: Props) {
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: '10px 12px',
                 border: '1px solid #e2e8f0',
                 borderRadius: '8px',
-                fontSize: '1rem',
+                fontSize: '0.9375rem',
                 background: 'white',
+                boxSizing: 'border-box',
               }}
             >
               <option value="draft">แบบร่าง</option>
               <option value="published">เผยแพร่</option>
             </select>
           </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+
+          {/* Tags */}
+          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
               แท็ก
-            </label>
+            </h3>
             <TagSelector
               selectedTagIds={selectedTagIds}
               onChange={setSelectedTagIds}
             />
           </div>
-        </div>
 
-        {/* Thumbnail */}
-        <div style={{ marginBottom: '24px' }}>
-          <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-            รูปภาพปก
-          </label>
-          <ImageUpload
-            value={formData.thumbnailUrl}
-            onChange={(url) => setFormData(prev => ({ ...prev, thumbnailUrl: url }))}
-            folder="blog"
-          />
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              type="submit"
-              disabled={saving}
-              style={{
-                padding: '12px 24px',
-                background: '#2563eb',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: 500,
-                cursor: saving ? 'not-allowed' : 'pointer',
-                opacity: saving ? 0.7 : 1,
-              }}
-            >
-              {saving ? 'กำลังบันทึก...' : 'บันทึก'}
-            </button>
-            <Link
-              href="/admin/blog"
-              style={{
-                padding: '12px 24px',
-                background: '#f1f5f9',
-                color: '#475569',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                textDecoration: 'none',
-              }}
-            >
-              ยกเลิก
-            </Link>
+          {/* Thumbnail */}
+          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
+              รูปภาพปก
+            </h3>
+            <ImageUpload
+              value={formData.thumbnailUrl}
+              onChange={(url) => setFormData(prev => ({ ...prev, thumbnailUrl: url }))}
+              folder="blog"
+            />
           </div>
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            style={{
-              padding: '12px 24px',
-              background: '#fef2f2',
-              color: '#dc2626',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-            }}
-          >
-            ลบบทความ
-          </button>
         </div>
       </form>
 

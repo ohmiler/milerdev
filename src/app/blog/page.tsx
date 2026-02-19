@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
@@ -75,19 +75,14 @@ function BlogContent() {
   const [tagFilter, setTagFilter] = useState(searchParams.get('tag') || 'all');
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page') || '1'));
 
-  const fetchPosts = async () => {
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchPosts = async (searchVal: string, tagVal: string, page: number) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: '12',
-        search,
-        tag: tagFilter,
-      });
-
+      const params = new URLSearchParams({ page: page.toString(), limit: '12', search: searchVal, tag: tagVal });
       const res = await fetch(`/api/blog?${params}`);
       const data = await res.json();
-
       setPosts(data.posts || []);
       setPagination(data.pagination || null);
     } catch (error) {
@@ -104,24 +99,43 @@ function BlogContent() {
       .catch(console.error);
   }, []);
 
+  // Debounce search input
   useEffect(() => {
-    fetchPosts();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setCurrentPage(1);
+      fetchPosts(search, tagFilter, 1);
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, tagFilter]);
+  }, [search]);
 
+  // Tag or page change
+  useEffect(() => {
+    fetchPosts(search, tagFilter, currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tagFilter, currentPage]);
+
+  // Sync URL
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (tagFilter !== 'all') params.set('tag', tagFilter);
     if (currentPage > 1) params.set('page', currentPage.toString());
-
     const queryString = params.toString();
     router.replace(queryString ? `?${queryString}` : '/blog', { scroll: false });
   }, [currentPage, tagFilter, search, router]);
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-    fetchPosts();
+  const handleTagChange = (slug: string) => { setTagFilter(slug); setCurrentPage(1); };
+
+  const getPageNumbers = (total: number, current: number): (number | '...')[] => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const pages: (number | '...')[] = [1];
+    if (current > 3) pages.push('...');
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+    if (current < total - 2) pages.push('...');
+    pages.push(total);
+    return pages;
   };
 
   return (
@@ -151,74 +165,37 @@ function BlogContent() {
         {/* Blog Grid */}
         <section className="section">
           <div className="container">
-            {/* Filters */}
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '12px',
-              alignItems: 'center',
-              marginBottom: '32px',
-              padding: '20px',
-              background: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            }}>
-              <div style={{ position: 'relative', minWidth: '200px', flex: 1, maxWidth: '300px' }}>
+            {/* Search bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', padding: '14px 20px', background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+              <div style={{ position: 'relative', flex: 1, maxWidth: '360px' }}>
+                <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <input
                   type="text"
                   placeholder="ค้นหาบทความ..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                  }}
+                  style={{ width: '100%', padding: '10px 16px 10px 38px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', boxSizing: 'border-box' }}
                 />
               </div>
-
-              {allTags.length > 0 && (
-                <select
-                  value={tagFilter}
-                  onChange={(e) => { setTagFilter(e.target.value); setCurrentPage(1); }}
-                  style={{
-                    padding: '10px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    background: 'white',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  <option value="all">ทุกแท็ก</option>
-                  {allTags.map(tag => (
-                    <option key={tag.id} value={tag.slug}>{tag.name}</option>
-                  ))}
-                </select>
-              )}
-
-              <button
-                onClick={handleSearch}
-                style={{
-                  padding: '10px 20px',
-                  background: '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}
-              >
-                ค้นหา
-              </button>
-
-              <div style={{ marginLeft: 'auto', color: '#64748b', fontSize: '0.875rem' }}>
-                {pagination ? `${pagination.total} บทความ` : '...'}
+              <div style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '0.8125rem' }}>
+                {pagination ? `${pagination.total} บทความ` : ''}
               </div>
             </div>
+
+            {/* Tag pills */}
+            {allTags.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '28px' }}>
+                {[{ id: 'all', name: 'ทั้งหมด', slug: 'all' }, ...allTags].map(tag => (
+                  <button
+                    key={tag.id}
+                    onClick={() => handleTagChange(tag.slug)}
+                    style={{ padding: '6px 16px', borderRadius: '50px', border: tagFilter === tag.slug ? '2px solid #2563eb' : '2px solid #e2e8f0', background: tagFilter === tag.slug ? '#2563eb' : 'white', color: tagFilter === tag.slug ? 'white' : '#475569', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', transition: 'all 0.15s' }}
+                  >
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Loading */}
             {loading ? (
@@ -372,42 +349,28 @@ function BlogContent() {
 
                 {/* Pagination */}
                 {pagination && pagination.totalPages > 1 && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    marginTop: '48px',
-                  }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '48px' }}>
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      style={{
-                        padding: '10px 20px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                        opacity: currentPage === 1 ? 0.5 : 1,
-                        fontWeight: 500,
-                      }}
-                    >
-                      ← ก่อนหน้า
-                    </button>
+                      style={{ padding: '8px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.4 : 1, fontWeight: 500, fontSize: '0.875rem' }}
+                    >←</button>
+                    {getPageNumbers(pagination.totalPages, currentPage).map((p, i) =>
+                      p === '...' ? (
+                        <span key={`dots-${i}`} style={{ padding: '8px 4px', color: '#94a3b8', fontSize: '0.875rem' }}>…</span>
+                      ) : (
+                        <button
+                          key={p}
+                          onClick={() => setCurrentPage(p as number)}
+                          style={{ minWidth: '38px', padding: '8px', border: currentPage === p ? '2px solid #2563eb' : '1px solid #e2e8f0', borderRadius: '8px', background: currentPage === p ? '#2563eb' : 'white', color: currentPage === p ? 'white' : '#374151', cursor: 'pointer', fontWeight: currentPage === p ? 600 : 400, fontSize: '0.875rem' }}
+                        >{p}</button>
+                      )
+                    )}
                     <button
                       onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
                       disabled={currentPage === pagination.totalPages}
-                      style={{
-                        padding: '10px 20px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        background: 'white',
-                        cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
-                        opacity: currentPage === pagination.totalPages ? 0.5 : 1,
-                        fontWeight: 500,
-                      }}
-                    >
-                      ถัดไป →
-                    </button>
+                      style={{ padding: '8px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === pagination.totalPages ? 0.4 : 1, fontWeight: 500, fontSize: '0.875rem' }}
+                    >→</button>
                   </div>
                 )}
               </>
