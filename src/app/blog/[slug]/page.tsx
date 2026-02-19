@@ -292,7 +292,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Content + TOC layout */}
         <div className="blog-toc-layout" style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 24px 80px', display: 'grid', gridTemplateColumns: 'minmax(0, 800px) 240px', gap: '40px', alignItems: 'start', justifyContent: 'center' }}>
-          <article>
+          <article style={{ minWidth: 0, overflowX: 'hidden' }}>
             {post.content && (
               <div
                 className="rich-content"
