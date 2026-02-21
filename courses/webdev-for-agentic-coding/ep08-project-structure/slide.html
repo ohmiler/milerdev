@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP08: โครงสร้างโปรเจกต์ - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 08</div>
+    <h1>โครงสร้างโปรเจกต์</h1>
+    <p class="subtitle">จัดระเบียบโค้ดอย่างมืออาชีพ — ให้ทั้งคนและ AI เข้าใจ</p>
+  </div>
+
+  <!-- Slide 2: Why Structure Matters -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🤔</span> ทำไมโครงสร้างถึงสำคัญ</div>
+    <ul>
+      <li><strong>หาไฟล์ง่าย</strong> — รู้ว่าอะไรอยู่ที่ไหน</li>
+      <li><strong>ทำงานเป็นทีมได้</strong> — ทุกคนเข้าใจตรงกัน</li>
+      <li><strong>Scale ได้</strong> — โปรเจกต์โตขึ้นไม่พัง</li>
+      <li><strong>AI เข้าใจง่าย</strong> — Agentic Coding ทำงานได้ดีขึ้นเมื่อโครงสร้างชัดเจน</li>
+      <li><strong>Convention over Configuration</strong> — Framework มีมาตรฐานที่ทุกคนเข้าใจ</li>
+    </ul>
+  </div>
+
+  <!-- Slide 3: Basic HTML Project -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📁</span> โปรเจกต์ HTML/CSS/JS พื้นฐาน</div>
+    <pre><code>my-website/
+├── index.html          <span class="cm"># หน้าหลัก</span>
+├── about.html          <span class="cm"># หน้าเกี่ยวกับ</span>
+├── css/
+│   ├── style.css       <span class="cm"># สไตล์หลัก</span>
+│   └── responsive.css  <span class="cm"># สไตล์ responsive</span>
+├── js/
+│   └── script.js       <span class="cm"># JavaScript หลัก</span>
+├── images/
+│   ├── logo.png
+│   └── hero.jpg
+└── README.md           <span class="cm"># คำอธิบายโปรเจกต์</span></code></pre>
+  </div>
+
+  <!-- Slide 4: Next.js Project -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">⚡</span> โปรเจกต์ Next.js (React)</div>
+    <pre><code>my-app/
+├── public/             <span class="cm"># ไฟล์ static (รูป, fonts)</span>
+├── src/
+│   ├── app/            <span class="cm"># Pages & Routes</span>
+│   │   ├── layout.tsx  <span class="cm"># Layout หลัก</span>
+│   │   ├── page.tsx    <span class="cm"># หน้าแรก (/)</span>
+│   │   └── about/
+│   │       └── page.tsx <span class="cm"># หน้า /about</span>
+│   ├── components/     <span class="cm"># UI Components</span>
+│   │   ├── Header.tsx
+│   │   └── Footer.tsx
+│   └── lib/            <span class="cm"># Utilities & Helpers</span>
+├── package.json
+├── tsconfig.json       <span class="cm"># TypeScript config</span>
+├── tailwind.config.js  <span class="cm"># Tailwind CSS config</span>
+└── .gitignore</code></pre>
+  </div>
+
+  <!-- Slide 5: Config Files -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">⚙️</span> Config Files ที่พบบ่อย</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>ไฟล์</th><th>ทำอะไร</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>package.json</code></td><td>Dependencies & scripts ของโปรเจกต์</td></tr>
+        <tr><td><code>tsconfig.json</code></td><td>ตั้งค่า TypeScript</td></tr>
+        <tr><td><code>tailwind.config.js</code></td><td>ตั้งค่า Tailwind CSS</td></tr>
+        <tr><td><code>.eslintrc.json</code></td><td>กฎ Linting — ตรวจโค้ด</td></tr>
+        <tr><td><code>.prettierrc</code></td><td>กฎ Formatting — จัดรูปแบบโค้ด</td></tr>
+        <tr><td><code>.gitignore</code></td><td>ไฟล์ที่ Git ไม่ต้อง track</td></tr>
+        <tr><td><code>.env</code></td><td>Environment variables (ห้าม commit!)</td></tr>
+        <tr><td><code>README.md</code></td><td>เอกสารอธิบายโปรเจกต์</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Slide 6: Common Folders -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📂</span> โฟลเดอร์ที่พบบ่อยใน Web Projects</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4><code>src/</code></h4>
+        <p>Source code หลัก — โค้ดที่เราเขียน</p>
+      </div>
+      <div class="card">
+        <h4><code>public/</code></h4>
+        <p>ไฟล์ static — รูปภาพ, fonts, favicon</p>
+      </div>
+      <div class="card">
+        <h4><code>components/</code></h4>
+        <p>UI Components ที่ใช้ซ้ำได้ — Button, Card, Modal</p>
+      </div>
+      <div class="card">
+        <h4><code>lib/</code> หรือ <code>utils/</code></h4>
+        <p>Helper functions, utilities</p>
+      </div>
+      <div class="card">
+        <h4><code>styles/</code></h4>
+        <p>CSS / Tailwind styles</p>
+      </div>
+      <div class="card">
+        <h4><code>api/</code></h4>
+        <p>API routes / Backend logic</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: README.md -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> README.md — เอกสารสำคัญที่สุด</div>
+    <pre><code><span class="cm"># Project Name</span>
+
+คำอธิบายสั้นๆ ว่าโปรเจกต์นี้คืออะไร
+
+<span class="cm">## Getting Started</span>
+
+```bash
+npm install
+npm run dev
+```
+
+<span class="cm">## Tech Stack</span>
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+
+<span class="cm">## Project Structure</span>
+อธิบายโครงสร้างโฟลเดอร์สำคัญ</code></pre>
+    <div class="highlight-box green" style="margin-top: 16px;">
+      <p>✅ README ที่ดี = คนใหม่ (หรือ AI) อ่านแล้วเริ่มทำงานกับโปรเจกต์ได้ทันที</p>
+    </div>
+  </div>
+
+  <!-- Slide 8: Dependencies -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📦</span> Dependencies — Library ที่โปรเจกต์ใช้</div>
+    <div class="two-col">
+      <div class="col">
+        <h3>dependencies</h3>
+        <p>ต้องใช้ใน production</p>
+        <pre><code><span class="str">"dependencies"</span>: {
+  <span class="str">"next"</span>: <span class="str">"^14.0.0"</span>,
+  <span class="str">"react"</span>: <span class="str">"^18.0.0"</span>,
+  <span class="str">"axios"</span>: <span class="str">"^1.6.0"</span>
+}</code></pre>
+      </div>
+      <div class="col">
+        <h3>devDependencies</h3>
+        <p>ใช้เฉพาะตอน develop</p>
+        <pre><code><span class="str">"devDependencies"</span>: {
+  <span class="str">"typescript"</span>: <span class="str">"^5.0.0"</span>,
+  <span class="str">"eslint"</span>: <span class="str">"^8.0.0"</span>,
+  <span class="str">"prettier"</span>: <span class="str">"^3.0.0"</span>
+}</code></pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 <code>npm install</code> ติดตั้ง library ที่ระบุใน package.json → เก็บใน <code>node_modules/</code></p>
+    </div>
+  </div>
+
+  <!-- Slide 9: AI & Project Structure -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🤖</span> โครงสร้างที่ AI ชอบ</div>
+    <ul>
+      <li><strong>ตั้งชื่อไฟล์สื่อความหมาย</strong> — <code>UserProfile.tsx</code> ไม่ใช่ <code>comp1.tsx</code></li>
+      <li><strong>แยกไฟล์ตาม feature</strong> — ไม่ยัดทุกอย่างในไฟล์เดียว</li>
+      <li><strong>มี README ที่ชัดเจน</strong> — AI อ่านแล้วเข้าใจโปรเจกต์ทันที</li>
+      <li><strong>ใช้ TypeScript</strong> — มี type information ช่วย AI เข้าใจโค้ด</li>
+      <li><strong>โครงสร้างเป็นมาตรฐาน</strong> — ใช้ convention ของ framework</li>
+    </ul>
+    <div class="highlight-box yellow" style="margin-top: 16px;">
+      <p>⚠️ โครงสร้างที่ดี = AI สร้างโค้ดที่ถูกต้องและเข้ากับโปรเจกต์ได้ง่ายกว่า</p>
+    </div>
+  </div>
+
+  <!-- Slide 10: Summary -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> สรุป EP08</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>📁 Basic Project</h4>
+        <p>HTML + CSS + JS + images</p>
+      </div>
+      <div class="card">
+        <h4>⚡ Framework Project</h4>
+        <p>src/, components/, lib/, public/</p>
+      </div>
+      <div class="card">
+        <h4>⚙️ Config Files</h4>
+        <p>package.json, tsconfig, .gitignore</p>
+      </div>
+      <div class="card">
+        <h4>📝 README</h4>
+        <p>เอกสารที่ต้องมี — อธิบายวิธีใช้</p>
+      </div>
+      <div class="card">
+        <h4>📦 Dependencies</h4>
+        <p>dependencies vs devDependencies</p>
+      </div>
+      <div class="card">
+        <h4>🤖 AI-Friendly</h4>
+        <p>ชื่อชัด, แยก feature, มี types</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge">EP 08 — จบ</div>
+    <h1>เจอกัน EP ถัดไป!</h1>
+    <p class="subtitle">EP09: API & การดึงข้อมูล — เชื่อมต่อกับโลกภายนอก 🌐</p>
+  </div>
+
+</div>
+
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

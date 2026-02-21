@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP06: Terminal & Command Line - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 06</div>
+    <h1>Terminal & Command Line</h1>
+    <p class="subtitle">สั่งงานคอมพิวเตอร์ด้วยข้อความ — ทักษะที่ขาดไม่ได้</p>
+  </div>
+
+  <!-- Slide 2: What is Terminal -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">💻</span> Terminal คืออะไร</div>
+    <p style="margin-bottom: 20px;">โปรแกรมที่ให้คุณ <strong>สั่งงานคอมพิวเตอร์ด้วยการพิมพ์คำสั่ง</strong> แทนการคลิกเมาส์</p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🪟</div>
+        <h4>Windows</h4>
+        <p>PowerShell, Command Prompt, Windows Terminal</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🍎</div>
+        <h4>macOS</h4>
+        <p>Terminal.app, iTerm2</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🐧</div>
+        <h4>Linux</h4>
+        <p>GNOME Terminal, Konsole</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 <strong>VS Code มี Terminal ในตัว!</strong> กด <code>Ctrl+`</code> เพื่อเปิด — ใช้ง่ายสุด</p>
+    </div>
+  </div>
+
+  <!-- Slide 3: Why Terminal -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🤔</span> ทำไมต้องใช้ Terminal</div>
+    <ul>
+      <li><strong>เร็วกว่า</strong> — พิมพ์คำสั่งเดียวทำงานเสร็จ แทนคลิกหลายขั้นตอน</li>
+      <li><strong>จำเป็นสำหรับ Dev</strong> — รัน server, install packages, git, deploy</li>
+      <li><strong>AI ใช้ Terminal</strong> — Agentic Coding tools รันคำสั่งผ่าน Terminal</li>
+      <li><strong>Automation</strong> — เขียน script ทำงานซ้ำๆ อัตโนมัติ</li>
+      <li><strong>Server</strong> — Server ส่วนใหญ่ไม่มี GUI ต้องใช้ Terminal เท่านั้น</li>
+    </ul>
+  </div>
+
+  <!-- Slide 4: Basic Navigation -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📂</span> คำสั่งนำทาง (Navigation)</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>คำสั่ง</th><th>ทำอะไร</th><th>ตัวอย่าง</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>pwd</code></td><td>แสดงตำแหน่งปัจจุบัน</td><td><code>/Users/you/projects</code></td></tr>
+        <tr><td><code>ls</code></td><td>แสดงไฟล์/โฟลเดอร์</td><td><code>ls -la</code> (แสดงทั้งหมด)</td></tr>
+        <tr><td><code>cd</code></td><td>เปลี่ยน directory</td><td><code>cd my-project</code></td></tr>
+        <tr><td><code>cd ..</code></td><td>ย้อนกลับ 1 ระดับ</td><td><code>cd ../..</code> (2 ระดับ)</td></tr>
+        <tr><td><code>cd ~</code></td><td>กลับ Home directory</td><td></td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 <strong>Tab Completion:</strong> พิมพ์ชื่อไม่กี่ตัว แล้วกด <code>Tab</code> เพื่อ autocomplete!</p>
+    </div>
+  </div>
+
+  <!-- Slide 5: File Operations -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📄</span> คำสั่งจัดการไฟล์</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>คำสั่ง</th><th>ทำอะไร</th><th>ตัวอย่าง</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>mkdir</code></td><td>สร้างโฟลเดอร์</td><td><code>mkdir my-project</code></td></tr>
+        <tr><td><code>touch</code></td><td>สร้างไฟล์เปล่า</td><td><code>touch index.html</code></td></tr>
+        <tr><td><code>cp</code></td><td>คัดลอกไฟล์</td><td><code>cp file.txt copy.txt</code></td></tr>
+        <tr><td><code>mv</code></td><td>ย้าย/เปลี่ยนชื่อ</td><td><code>mv old.txt new.txt</code></td></tr>
+        <tr><td><code>rm</code></td><td>ลบไฟล์</td><td><code>rm file.txt</code></td></tr>
+        <tr><td><code>rm -rf</code></td><td>ลบโฟลเดอร์ทั้งหมด</td><td><code>rm -rf old-folder</code></td></tr>
+        <tr><td><code>cat</code></td><td>แสดงเนื้อหาไฟล์</td><td><code>cat index.html</code></td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box red" style="margin-top: 16px;">
+      <p>⚠️ <strong>ระวัง:</strong> <code>rm -rf</code> ลบถาวร ไม่มีถังขยะ! ตรวจสอบดีๆ ก่อนรัน</p>
+    </div>
+  </div>
+
+  <!-- Slide 6: Node.js & npm -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📦</span> Node.js & npm</div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card">
+          <div class="card-icon">🟢</div>
+          <h4>Node.js</h4>
+          <p>รัน JavaScript นอก Browser — ใช้สร้าง server, scripts, tools</p>
+          <pre style="margin-top: 8px;"><code><span class="cm"># ตรวจ version</span>
+node --version
+<span class="cm"># รัน JS file</span>
+node script.js</code></pre>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-icon">📦</div>
+          <h4>npm</h4>
+          <p>Package Manager — ติดตั้ง library/tools จาก registry</p>
+          <pre style="margin-top: 8px;"><code><span class="cm"># ตรวจ version</span>
+npm --version
+<span class="cm"># ติดตั้ง package</span>
+npm install axios</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: npm commands -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔧</span> npm Commands ที่ใช้บ่อย</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>คำสั่ง</th><th>ทำอะไร</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>npm init -y</code></td><td>สร้าง package.json ใหม่</td></tr>
+        <tr><td><code>npm install</code></td><td>ติดตั้ง dependencies ทั้งหมดใน package.json</td></tr>
+        <tr><td><code>npm install &lt;pkg&gt;</code></td><td>ติดตั้ง package ใหม่</td></tr>
+        <tr><td><code>npm install -D &lt;pkg&gt;</code></td><td>ติดตั้งเป็น dev dependency</td></tr>
+        <tr><td><code>npm run dev</code></td><td>รัน script "dev" (เปิด dev server)</td></tr>
+        <tr><td><code>npm run build</code></td><td>รัน script "build" (build สำหรับ production)</td></tr>
+        <tr><td><code>npm uninstall &lt;pkg&gt;</code></td><td>ลบ package</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Slide 8: package.json -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📋</span> package.json — สูตรของโปรเจกต์</div>
+    <pre><code>{
+  <span class="str">"name"</span>: <span class="str">"my-project"</span>,
+  <span class="str">"version"</span>: <span class="str">"1.0.0"</span>,
+  <span class="str">"scripts"</span>: {
+    <span class="str">"dev"</span>: <span class="str">"next dev"</span>,        <span class="cm">// npm run dev</span>
+    <span class="str">"build"</span>: <span class="str">"next build"</span>,    <span class="cm">// npm run build</span>
+    <span class="str">"start"</span>: <span class="str">"next start"</span>     <span class="cm">// npm start</span>
+  },
+  <span class="str">"dependencies"</span>: {          <span class="cm">// packages ที่ต้องใช้</span>
+    <span class="str">"next"</span>: <span class="str">"^14.0.0"</span>,
+    <span class="str">"react"</span>: <span class="str">"^18.0.0"</span>
+  },
+  <span class="str">"devDependencies"</span>: {       <span class="cm">// packages สำหรับตอน dev</span>
+    <span class="str">"typescript"</span>: <span class="str">"^5.0.0"</span>
+  }
+}</code></pre>
+  </div>
+
+  <!-- Slide 9: Creating a project -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🚀</span> สร้างโปรเจกต์ใหม่</div>
+    <pre><code><span class="cm"># สร้างโปรเจกต์ Next.js</span>
+npx create-next-app@latest my-app
+
+<span class="cm"># สร้างโปรเจกต์ Vite (React)</span>
+npm create vite@latest my-app
+
+<span class="cm"># เข้าโฟลเดอร์โปรเจกต์</span>
+cd my-app
+
+<span class="cm"># ติดตั้ง dependencies</span>
+npm install
+
+<span class="cm"># เปิด dev server</span>
+npm run dev</code></pre>
+    <div class="highlight-box green" style="margin-top: 16px;">
+      <p>✅ <strong>npx</strong> = รัน package โดยไม่ต้องติดตั้งถาวร — ใช้สำหรับ CLI tools ที่ใช้ครั้งเดียว</p>
+    </div>
+  </div>
+
+  <!-- Slide 10: Summary -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> สรุป EP06</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>📂 Navigation</h4>
+        <p>pwd, ls, cd — นำทางในไฟล์ระบบ</p>
+      </div>
+      <div class="card">
+        <h4>📄 Files</h4>
+        <p>mkdir, touch, cp, mv, rm</p>
+      </div>
+      <div class="card">
+        <h4>🟢 Node.js</h4>
+        <p>รัน JS นอก Browser</p>
+      </div>
+      <div class="card">
+        <h4>📦 npm</h4>
+        <p>install, run dev, run build</p>
+      </div>
+      <div class="card">
+        <h4>📋 package.json</h4>
+        <p>สูตรของโปรเจกต์ — scripts, dependencies</p>
+      </div>
+      <div class="card">
+        <h4>🚀 Create Project</h4>
+        <p>npx create-next-app, npm create vite</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge">EP 06 — จบ</div>
+    <h1>เจอกัน EP ถัดไป!</h1>
+    <p class="subtitle">EP07: Git & Version Control — ติดตามการเปลี่ยนแปลงโค้ด 📜</p>
+  </div>
+
+</div>
+
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

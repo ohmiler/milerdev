@@ -4,7 +4,7 @@ export const metadata: Metadata = {
     title: 'ติดต่อเรา',
     description: 'ติดต่อทีมงาน MilerDev สำหรับคำถาม ข้อเสนอแนะ หรือความร่วมมือทางธุรกิจ',
     alternates: {
-        canonical: 'https://milerdev.com/contact',
+        canonical: '/contact',
     },
     openGraph: {
         title: 'ติดต่อเรา',

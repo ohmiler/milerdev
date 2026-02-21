@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP02: HTML พื้นฐาน - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 02</div>
+    <h1>HTML พื้นฐาน</h1>
+    <p class="subtitle">เริ่มเขียนโค้ดบรรทัดแรก — ภาษาของโครงสร้างเว็บ</p>
+  </div>
+
+  <!-- Slide 2: What is HTML -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📄</span> HTML คืออะไร</div>
+    <p style="margin-bottom: 20px;"><strong>HTML</strong> = <strong>H</strong>yper<strong>T</strong>ext <strong>M</strong>arkup <strong>L</strong>anguage</p>
+    <ul>
+      <li>ไม่ใช่ภาษาโปรแกรม — เป็น <strong>ภาษา Markup</strong> (ใช้ "แท็ก" กำกับเนื้อหา)</li>
+      <li>บอก Browser ว่าเนื้อหาแต่ละส่วนคืออะไร (หัวข้อ, ย่อหน้า, รูปภาพ, ลิงก์)</li>
+      <li>เป็น <strong>โครงกระดูก</strong> ของทุกเว็บไซต์</li>
+    </ul>
+    <div class="highlight-box" style="margin-top: 20px;">
+      <p>💡 ทุกเว็บไซต์ที่คุณเคยเห็น ล้วนเริ่มต้นจาก HTML ทั้งสิ้น!</p>
+    </div>
+  </div>
+
+  <!-- Slide 3: Anatomy of an HTML Tag -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🏷️</span> โครงสร้างของ HTML Tag</div>
+    <pre><code><span class="tag">&lt;p</span> <span class="attr">class</span>=<span class="val">"intro"</span><span class="tag">&gt;</span>สวัสดีชาวโลก<span class="tag">&lt;/p&gt;</span>
+<span class="cm"> │  │           │        │              │</span>
+<span class="cm"> │  │           │        │              └─ Closing Tag (แท็กปิด)</span>
+<span class="cm"> │  │           │        └─ Content (เนื้อหา)</span>
+<span class="cm"> │  │           └─ Attribute Value (ค่า)</span>
+<span class="cm"> │  └─ Attribute Name (ชื่อ attribute)</span>
+<span class="cm"> └─ Opening Tag (แท็กเปิด)</span></code></pre>
+    <div class="card-grid" style="margin-top: 20px;">
+      <div class="card">
+        <h4>Opening Tag</h4>
+        <p><code>&lt;p&gt;</code> — เริ่มต้น element</p>
+      </div>
+      <div class="card">
+        <h4>Closing Tag</h4>
+        <p><code>&lt;/p&gt;</code> — จบ element (มี /)</p>
+      </div>
+      <div class="card">
+        <h4>Attribute</h4>
+        <p><code>class="intro"</code> — ข้อมูลเพิ่มเติม</p>
+      </div>
+      <div class="card">
+        <h4>Self-closing</h4>
+        <p><code>&lt;img /&gt;</code> <code>&lt;br /&gt;</code> — ไม่มี closing tag</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: Basic HTML Structure -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🏗️</span> โครงสร้าง HTML พื้นฐาน</div>
+    <pre><code><span class="tag">&lt;!DOCTYPE html&gt;</span>           <span class="cm">&lt;!-- บอกว่าเป็น HTML5 --&gt;</span>
+<span class="tag">&lt;html</span> <span class="attr">lang</span>=<span class="val">"th"</span><span class="tag">&gt;</span>              <span class="cm">&lt;!-- root element --&gt;</span>
+  <span class="tag">&lt;head&gt;</span>                       <span class="cm">&lt;!-- ข้อมูล metadata --&gt;</span>
+    <span class="tag">&lt;meta</span> <span class="attr">charset</span>=<span class="val">"UTF-8"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;title&gt;</span>เว็บไซต์แรกของฉัน<span class="tag">&lt;/title&gt;</span>
+  <span class="tag">&lt;/head&gt;</span>
+  <span class="tag">&lt;body&gt;</span>                       <span class="cm">&lt;!-- เนื้อหาที่แสดงผล --&gt;</span>
+    <span class="tag">&lt;h1&gt;</span>สวัสดี!<span class="tag">&lt;/h1&gt;</span>
+    <span class="tag">&lt;p&gt;</span>นี่คือเว็บไซต์แรกของฉัน<span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;/body&gt;</span>
+<span class="tag">&lt;/html&gt;</span></code></pre>
+  </div>
+
+  <!-- Slide 5: Headings -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📰</span> Headings — หัวข้อ</div>
+    <div class="two-col">
+      <div class="col">
+        <pre><code><span class="tag">&lt;h1&gt;</span>หัวข้อหลัก<span class="tag">&lt;/h1&gt;</span>
+<span class="tag">&lt;h2&gt;</span>หัวข้อรอง<span class="tag">&lt;/h2&gt;</span>
+<span class="tag">&lt;h3&gt;</span>หัวข้อย่อย<span class="tag">&lt;/h3&gt;</span>
+<span class="tag">&lt;h4&gt;</span>หัวข้อย่อยย่อย<span class="tag">&lt;/h4&gt;</span>
+<span class="tag">&lt;h5&gt;</span>ระดับ 5<span class="tag">&lt;/h5&gt;</span>
+<span class="tag">&lt;h6&gt;</span>ระดับ 6<span class="tag">&lt;/h6&gt;</span></code></pre>
+      </div>
+      <div class="col">
+        <ul>
+          <li><code>&lt;h1&gt;</code> — ใหญ่สุด ใช้ 1 ครั้งต่อหน้า</li>
+          <li><code>&lt;h2&gt;</code> ถึง <code>&lt;h6&gt;</code> — เล็กลงตามลำดับ</li>
+          <li>ช่วยเรื่อง <strong>SEO</strong> และ <strong>Accessibility</strong></li>
+          <li>ไม่ควรข้ามลำดับ (h1 → h3)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Text Tags -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">✏️</span> Tags สำหรับข้อความ</div>
+    <div class="two-col">
+      <div class="col">
+        <pre><code><span class="tag">&lt;p&gt;</span>ย่อหน้า<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;strong&gt;</span>ตัวหนา (สำคัญ)<span class="tag">&lt;/strong&gt;</span>
+<span class="tag">&lt;em&gt;</span>ตัวเอียง (เน้น)<span class="tag">&lt;/em&gt;</span>
+<span class="tag">&lt;br&gt;</span>  <span class="cm">&lt;!-- ขึ้นบรรทัดใหม่ --&gt;</span>
+<span class="tag">&lt;hr&gt;</span>  <span class="cm">&lt;!-- เส้นคั่น --&gt;</span>
+<span class="tag">&lt;span&gt;</span>ข้อความ inline<span class="tag">&lt;/span&gt;</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="val">"https://..."</span><span class="tag">&gt;</span>ลิงก์<span class="tag">&lt;/a&gt;</span></code></pre>
+      </div>
+      <div class="col">
+        <ul>
+          <li><code>&lt;p&gt;</code> — ย่อหน้า (block element)</li>
+          <li><code>&lt;strong&gt;</code> — สำคัญ (ไม่ใช่แค่ตัวหนา)</li>
+          <li><code>&lt;em&gt;</code> — เน้นความหมาย</li>
+          <li><code>&lt;a&gt;</code> — ลิงก์ไปที่อื่น</li>
+          <li><code>&lt;span&gt;</code> — จัดกลุ่มข้อความ inline</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Lists -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📋</span> Lists — รายการ</div>
+    <div class="two-col">
+      <div class="col">
+        <h3>Unordered List (ไม่เรียงลำดับ)</h3>
+        <pre><code><span class="tag">&lt;ul&gt;</span>
+  <span class="tag">&lt;li&gt;</span>HTML<span class="tag">&lt;/li&gt;</span>
+  <span class="tag">&lt;li&gt;</span>CSS<span class="tag">&lt;/li&gt;</span>
+  <span class="tag">&lt;li&gt;</span>JavaScript<span class="tag">&lt;/li&gt;</span>
+<span class="tag">&lt;/ul&gt;</span></code></pre>
+      </div>
+      <div class="col">
+        <h3>Ordered List (เรียงลำดับ)</h3>
+        <pre><code><span class="tag">&lt;ol&gt;</span>
+  <span class="tag">&lt;li&gt;</span>เปิด Editor<span class="tag">&lt;/li&gt;</span>
+  <span class="tag">&lt;li&gt;</span>เขียนโค้ด<span class="tag">&lt;/li&gt;</span>
+  <span class="tag">&lt;li&gt;</span>เปิด Browser<span class="tag">&lt;/li&gt;</span>
+<span class="tag">&lt;/ol&gt;</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: Images -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🖼️</span> Images & Links</div>
+    <h3>รูปภาพ</h3>
+    <pre><code><span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="val">"photo.jpg"</span> <span class="attr">alt</span>=<span class="val">"คำอธิบายรูป"</span> <span class="attr">width</span>=<span class="val">"300"</span><span class="tag">&gt;</span></code></pre>
+    <ul>
+      <li><code>src</code> — ที่อยู่ของรูป (URL หรือ path)</li>
+      <li><code>alt</code> — คำอธิบาย (สำคัญมากสำหรับ SEO และ Accessibility)</li>
+    </ul>
+    <h3 style="margin-top: 20px;">ลิงก์</h3>
+    <pre><code><span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="val">"https://milerdev.com"</span> <span class="attr">target</span>=<span class="val">"_blank"</span><span class="tag">&gt;</span>
+  เยี่ยมชม MilerDev
+<span class="tag">&lt;/a&gt;</span></code></pre>
+    <ul>
+      <li><code>href</code> — URL ปลายทาง</li>
+      <li><code>target="_blank"</code> — เปิดใน Tab ใหม่</li>
+    </ul>
+  </div>
+
+  <!-- Slide 9: Semantic HTML -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🧩</span> Semantic HTML — แท็กที่มีความหมาย</div>
+    <div class="two-col">
+      <div class="col">
+        <h3 style="color: var(--red);">❌ ไม่ Semantic</h3>
+        <pre><code><span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"header"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"nav"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"main"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"footer"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span></code></pre>
+      </div>
+      <div class="col">
+        <h3 style="color: var(--green);">✅ Semantic</h3>
+        <pre><code><span class="tag">&lt;header&gt;</span>...<span class="tag">&lt;/header&gt;</span>
+<span class="tag">&lt;nav&gt;</span>...<span class="tag">&lt;/nav&gt;</span>
+<span class="tag">&lt;main&gt;</span>...<span class="tag">&lt;/main&gt;</span>
+<span class="tag">&lt;footer&gt;</span>...<span class="tag">&lt;/footer&gt;</span></code></pre>
+      </div>
+    </div>
+    <div class="highlight-box green" style="margin-top: 20px;">
+      <p>✅ Semantic HTML ช่วย: SEO ดีขึ้น, Accessibility ดีขึ้น, โค้ดอ่านง่ายขึ้น, AI เข้าใจง่ายขึ้น</p>
+    </div>
+  </div>
+
+  <!-- Slide 10: Common Semantic Tags -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🏛️</span> Semantic Tags ที่ใช้บ่อย</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4><code>&lt;header&gt;</code></h4>
+        <p>ส่วนหัวของหน้า — โลโก้, เมนูนำทาง</p>
+      </div>
+      <div class="card">
+        <h4><code>&lt;nav&gt;</code></h4>
+        <p>เมนูนำทาง — ลิงก์หลักของเว็บ</p>
+      </div>
+      <div class="card">
+        <h4><code>&lt;main&gt;</code></h4>
+        <p>เนื้อหาหลักของหน้า (ใช้ 1 ครั้ง)</p>
+      </div>
+      <div class="card">
+        <h4><code>&lt;section&gt;</code></h4>
+        <p>กลุ่มเนื้อหาที่เกี่ยวข้องกัน</p>
+      </div>
+      <div class="card">
+        <h4><code>&lt;article&gt;</code></h4>
+        <p>เนื้อหาที่อยู่ได้ด้วยตัวเอง (บทความ, โพสต์)</p>
+      </div>
+      <div class="card">
+        <h4><code>&lt;footer&gt;</code></h4>
+        <p>ส่วนท้าย — ลิขสิทธิ์, ลิงก์เพิ่มเติม</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: Forms -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> Forms — ฟอร์มรับข้อมูล</div>
+    <pre><code><span class="tag">&lt;form</span> <span class="attr">action</span>=<span class="val">"/submit"</span> <span class="attr">method</span>=<span class="val">"POST"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;label</span> <span class="attr">for</span>=<span class="val">"name"</span><span class="tag">&gt;</span>ชื่อ:<span class="tag">&lt;/label&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="val">"text"</span> <span class="attr">id</span>=<span class="val">"name"</span> <span class="attr">name</span>=<span class="val">"name"</span> <span class="attr">required</span><span class="tag">&gt;</span>
+
+  <span class="tag">&lt;label</span> <span class="attr">for</span>=<span class="val">"email"</span><span class="tag">&gt;</span>อีเมล:<span class="tag">&lt;/label&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="val">"email"</span> <span class="attr">id</span>=<span class="val">"email"</span> <span class="attr">name</span>=<span class="val">"email"</span><span class="tag">&gt;</span>
+
+  <span class="tag">&lt;label</span> <span class="attr">for</span>=<span class="val">"msg"</span><span class="tag">&gt;</span>ข้อความ:<span class="tag">&lt;/label&gt;</span>
+  <span class="tag">&lt;textarea</span> <span class="attr">id</span>=<span class="val">"msg"</span> <span class="attr">name</span>=<span class="val">"message"</span><span class="tag">&gt;&lt;/textarea&gt;</span>
+
+  <span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="val">"submit"</span><span class="tag">&gt;</span>ส่ง<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span></code></pre>
+  </div>
+
+  <!-- Slide 12: Input Types -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">⌨️</span> Input Types ที่ใช้บ่อย</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>Type</th><th>ใช้สำหรับ</th><th>ตัวอย่าง</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>text</code></td><td>ข้อความทั่วไป</td><td>ชื่อ, ที่อยู่</td></tr>
+        <tr><td><code>email</code></td><td>อีเมล (มี validation)</td><td>user@example.com</td></tr>
+        <tr><td><code>password</code></td><td>รหัสผ่าน (ซ่อนตัวอักษร)</td><td>••••••</td></tr>
+        <tr><td><code>number</code></td><td>ตัวเลข</td><td>จำนวน, อายุ</td></tr>
+        <tr><td><code>checkbox</code></td><td>เลือกหลายตัวเลือก</td><td>ยอมรับเงื่อนไข</td></tr>
+        <tr><td><code>radio</code></td><td>เลือกตัวเลือกเดียว</td><td>เพศ, แผนราคา</td></tr>
+        <tr><td><code>file</code></td><td>อัปโหลดไฟล์</td><td>รูปโปรไฟล์</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Slide 13: div vs span -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📦</span> div vs span</div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card">
+          <h4><code>&lt;div&gt;</code> — Block Element</h4>
+          <p>กล่องใหญ่ กินพื้นที่เต็มบรรทัด<br>ใช้จัดกลุ่ม element หลายตัว</p>
+          <pre style="margin-top: 12px;"><code><span class="tag">&lt;div&gt;</span>
+  <span class="tag">&lt;h2&gt;</span>หัวข้อ<span class="tag">&lt;/h2&gt;</span>
+  <span class="tag">&lt;p&gt;</span>เนื้อหา<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/div&gt;</span></code></pre>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <h4><code>&lt;span&gt;</code> — Inline Element</h4>
+          <p>กล่องเล็ก อยู่ในบรรทัดเดียวกัน<br>ใช้จัดกลุ่มข้อความบางส่วน</p>
+          <pre style="margin-top: 12px;"><code><span class="tag">&lt;p&gt;</span>
+  ราคา <span class="tag">&lt;span</span> <span class="attr">class</span>=<span class="val">"price"</span><span class="tag">&gt;</span>
+    ฿299
+  <span class="tag">&lt;/span&gt;</span>
+<span class="tag">&lt;/p&gt;</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 14: Summary -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> สรุป EP02</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>🏷️ Tag Structure</h4>
+        <p>Opening + Content + Closing + Attributes</p>
+      </div>
+      <div class="card">
+        <h4>🏗️ โครงสร้าง</h4>
+        <p>DOCTYPE → html → head + body</p>
+      </div>
+      <div class="card">
+        <h4>📰 ข้อความ</h4>
+        <p>h1-h6, p, strong, em, a, span</p>
+      </div>
+      <div class="card">
+        <h4>🧩 Semantic</h4>
+        <p>header, nav, main, section, article, footer</p>
+      </div>
+      <div class="card">
+        <h4>📝 Forms</h4>
+        <p>form, input, textarea, button, label</p>
+      </div>
+      <div class="card">
+        <h4>📦 Block vs Inline</h4>
+        <p>div (block) vs span (inline)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 15: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge">EP 02 — จบ</div>
+    <h1>เจอกัน EP ถัดไป!</h1>
+    <p class="subtitle">EP03: CSS พื้นฐาน — ตกแต่งเว็บให้สวยงาม 🎨</p>
+  </div>
+
+</div>
+
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

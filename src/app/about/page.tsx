@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'เกี่ยวกับเรา',
   description: 'แพลตฟอร์มเรียนออนไลน์สำหรับนักพัฒนาซอฟต์แวร์ สร้างโดย MilerDev',
   alternates: {
-    canonical: 'https://milerdev.com/about',
+    canonical: '/about',
   },
   openGraph: {
     title: 'เกี่ยวกับเรา',

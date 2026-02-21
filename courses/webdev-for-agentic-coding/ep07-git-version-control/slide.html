@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP07: Git & Version Control - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 07</div>
+    <h1>Git & Version Control</h1>
+    <p class="subtitle">ติดตามการเปลี่ยนแปลงโค้ด — ไม่มีวันหลงทาง</p>
+  </div>
+
+  <!-- Slide 2: Why Git -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🤔</span> ทำไมต้อง Version Control</div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card" style="border-top: 3px solid var(--red);">
+          <h4>❌ ไม่มี Version Control</h4>
+          <pre><code>project-v1/
+project-v2/
+project-v2-final/
+project-v2-final-REAL/
+project-v2-final-REAL-2/</code></pre>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card" style="border-top: 3px solid var(--green);">
+          <h4>✅ ใช้ Git</h4>
+          <pre><code>project/
+  ├─ .git/  <span class="cm">(ประวัติทั้งหมด)</span>
+  ├─ src/
+  └─ package.json
+<span class="cm">ย้อนกลับไปจุดไหนก็ได้!</span></code></pre>
+        </div>
+      </div>
+    </div>
+    <ul style="margin-top: 16px;">
+      <li><strong>ย้อนกลับ</strong> ไปจุดไหนก็ได้ถ้าทำพัง</li>
+      <li><strong>ทำงานร่วมกัน</strong> หลายคนแก้โค้ดพร้อมกันได้</li>
+      <li><strong>ติดตาม</strong> ว่าใครแก้อะไร เมื่อไหร่</li>
+    </ul>
+  </div>
+
+  <!-- Slide 3: Git Basics -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📚</span> Git Workflow พื้นฐาน</div>
+    <div class="diagram">
+      <div class="diagram-box">
+        <div class="icon">📂</div>
+        <div class="label">Working Directory</div>
+        <div class="desc">ไฟล์ที่คุณแก้ไข</div>
+      </div>
+      <div class="diagram-arrow">→ git add →</div>
+      <div class="diagram-box" style="border-color: var(--yellow);">
+        <div class="icon">📋</div>
+        <div class="label">Staging Area</div>
+        <div class="desc">เตรียมไว้สำหรับ commit</div>
+      </div>
+      <div class="diagram-arrow">→ git commit →</div>
+      <div class="diagram-box" style="border-color: var(--green);">
+        <div class="icon">📦</div>
+        <div class="label">Repository</div>
+        <div class="desc">ประวัติถาวร</div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top: 20px;">
+      <p>💡 <strong>3 ขั้นตอน:</strong> แก้ไฟล์ → <code>git add</code> (เลือกไฟล์) → <code>git commit</code> (บันทึกประวัติ)</p>
+    </div>
+  </div>
+
+  <!-- Slide 4: Essential Commands -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">⌨️</span> คำสั่ง Git พื้นฐาน</div>
+    <pre><code><span class="cm"># เริ่มต้นใช้ Git ในโปรเจกต์</span>
+git init
+
+<span class="cm"># ดูสถานะ (ไฟล์ไหนเปลี่ยน/ยังไม่ track)</span>
+git status
+
+<span class="cm"># เพิ่มไฟล์เข้า staging</span>
+git add index.html       <span class="cm"># เฉพาะไฟล์</span>
+git add .                <span class="cm"># ทุกไฟล์ที่เปลี่ยน</span>
+
+<span class="cm"># บันทึกประวัติ (commit)</span>
+git commit -m <span class="str">"เพิ่มหน้า homepage"</span>
+
+<span class="cm"># ดูประวัติ</span>
+git log --oneline</code></pre>
+  </div>
+
+  <!-- Slide 5: Commit Messages -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">✍️</span> เขียน Commit Message ที่ดี</div>
+    <div class="two-col">
+      <div class="col">
+        <h3 style="color: var(--red);">❌ ไม่ดี</h3>
+        <pre><code>git commit -m <span class="str">"fix"</span>
+git commit -m <span class="str">"update"</span>
+git commit -m <span class="str">"aaa"</span>
+git commit -m <span class="str">"555"</span></code></pre>
+      </div>
+      <div class="col">
+        <h3 style="color: var(--green);">✅ ดี</h3>
+        <pre><code>git commit -m <span class="str">"fix: แก้ปุ่มไม่ทำงาน"</span>
+git commit -m <span class="str">"feat: เพิ่มหน้า login"</span>
+git commit -m <span class="str">"style: ปรับ navbar"</span>
+git commit -m <span class="str">"docs: อัปเดต README"</span></code></pre>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 <strong>รูปแบบ:</strong> <code>type: คำอธิบายสั้นๆ</code> — feat, fix, style, docs, refactor, chore</p>
+    </div>
+  </div>
+
+  <!-- Slide 6: Branches -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🌿</span> Branches — แยกสายการทำงาน</div>
+    <pre><code><span class="cm"># สร้าง branch ใหม่</span>
+git branch feature-login
+
+<span class="cm"># สลับไป branch</span>
+git checkout feature-login
+<span class="cm"># หรือแบบสั้น (สร้าง + สลับ)</span>
+git checkout -b feature-login
+
+<span class="cm"># กลับไป main</span>
+git checkout main
+
+<span class="cm"># รวม branch เข้า main</span>
+git merge feature-login
+
+<span class="cm"># ลบ branch ที่ merge แล้ว</span>
+git branch -d feature-login</code></pre>
+    <div class="highlight-box green" style="margin-top: 16px;">
+      <p>✅ <strong>หลักการ:</strong> ทำฟีเจอร์ใหม่ = สร้าง branch ใหม่ → ทำเสร็จ = merge กลับ main</p>
+    </div>
+  </div>
+
+  <!-- Slide 7: GitHub -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🐙</span> GitHub — เก็บโค้ดบน Cloud</div>
+    <pre><code><span class="cm"># เชื่อมต่อกับ GitHub repo</span>
+git remote add origin https://github.com/you/repo.git
+
+<span class="cm"># ส่งโค้ดขึ้น GitHub (ครั้งแรก)</span>
+git push -u origin main
+
+<span class="cm"># ส่งโค้ดขึ้น (ครั้งต่อไป)</span>
+git push
+
+<span class="cm"># ดึงโค้ดล่าสุดจาก GitHub</span>
+git pull
+
+<span class="cm"># Clone repo มาจาก GitHub</span>
+git clone https://github.com/user/repo.git</code></pre>
+    <div class="card-grid" style="margin-top: 16px;">
+      <div class="card">
+        <h4>git push</h4>
+        <p>ส่งโค้ดจากเครื่องคุณ → GitHub</p>
+      </div>
+      <div class="card">
+        <h4>git pull</h4>
+        <p>ดึงโค้ดจาก GitHub → เครื่องคุณ</p>
+      </div>
+      <div class="card">
+        <h4>git clone</h4>
+        <p>Copy repo ทั้งหมดมาเครื่อง</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: .gitignore -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🚫</span> .gitignore — ไฟล์ที่ไม่ต้อง track</div>
+    <pre><code><span class="cm"># .gitignore</span>
+
+<span class="cm"># Dependencies</span>
+node_modules/
+
+<span class="cm"># Environment variables (ห้าม commit!)</span>
+.env
+.env.local
+
+<span class="cm"># Build output</span>
+.next/
+dist/
+build/
+
+<span class="cm"># OS files</span>
+.DS_Store
+Thumbs.db
+
+<span class="cm"># Editor</span>
+.vscode/
+.idea/</code></pre>
+    <div class="highlight-box red" style="margin-top: 16px;">
+      <p>⚠️ <strong>สำคัญมาก:</strong> ห้าม commit ไฟล์ <code>.env</code> ที่มี API keys หรือ secrets!</p>
+    </div>
+  </div>
+
+  <!-- Slide 9: Daily Workflow -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔄</span> Git Workflow ประจำวัน</div>
+    <ol>
+      <li><code>git pull</code> — ดึงโค้ดล่าสุด</li>
+      <li><code>git checkout -b feature-xxx</code> — สร้าง branch ใหม่</li>
+      <li>เขียนโค้ด / แก้ไข</li>
+      <li><code>git add .</code> — เพิ่มไฟล์ที่เปลี่ยน</li>
+      <li><code>git commit -m "feat: ..."</code> — บันทึก</li>
+      <li><code>git push</code> — ส่งขึ้น GitHub</li>
+      <li>สร้าง <strong>Pull Request</strong> บน GitHub</li>
+      <li>Review → Merge → Done!</li>
+    </ol>
+  </div>
+
+  <!-- Slide 10: Summary -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> สรุป EP07</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>📚 Workflow</h4>
+        <p>edit → add → commit</p>
+      </div>
+      <div class="card">
+        <h4>⌨️ Commands</h4>
+        <p>init, status, add, commit, log</p>
+      </div>
+      <div class="card">
+        <h4>🌿 Branches</h4>
+        <p>branch, checkout, merge</p>
+      </div>
+      <div class="card">
+        <h4>🐙 GitHub</h4>
+        <p>push, pull, clone, PR</p>
+      </div>
+      <div class="card">
+        <h4>🚫 .gitignore</h4>
+        <p>node_modules, .env, build</p>
+      </div>
+      <div class="card">
+        <h4>✍️ Commit Messages</h4>
+        <p>feat:, fix:, style:, docs:</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 11: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge">EP 07 — จบ</div>
+    <h1>เจอกัน EP ถัดไป!</h1>
+    <p class="subtitle">EP08: โครงสร้างโปรเจกต์ — จัดระเบียบโค้ดอย่างมืออาชีพ 📁</p>
+  </div>
+
+</div>
+
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

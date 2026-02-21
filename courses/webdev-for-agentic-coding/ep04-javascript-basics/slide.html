@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP04: JavaScript พื้นฐาน - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 04</div>
+    <h1>JavaScript พื้นฐาน</h1>
+    <p class="subtitle">ทำให้เว็บมีชีวิต — ภาษาโปรแกรมของเว็บ</p>
+  </div>
+
+  <!-- Slide 2: What is JS -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">⚡</span> JavaScript คืออะไร</div>
+    <ul>
+      <li><strong>ภาษาโปรแกรม</strong> ที่ทำให้เว็บมีความสามารถเชิงโต้ตอบ (Interactive)</li>
+      <li>รันได้ทั้งใน <strong>Browser</strong> และ <strong>Server</strong> (Node.js)</li>
+      <li>เป็นภาษาที่ AI / Agentic Coding ใช้เขียน <strong>บ่อยที่สุด</strong></li>
+    </ul>
+    <div class="card-grid" style="margin-top: 20px;">
+      <div class="card">
+        <div class="card-icon">🖱️</div>
+        <h4>ตอบสนองผู้ใช้</h4>
+        <p>คลิกปุ่ม, กรอกฟอร์ม, เลื่อนหน้า</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <h4>เปลี่ยนเนื้อหา</h4>
+        <p>แสดง/ซ่อน, อัปเดตข้อความ, เพิ่ม element</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h4>ดึงข้อมูล</h4>
+        <p>โหลดข้อมูลจาก API โดยไม่ต้อง refresh</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Variables -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📦</span> Variables — ตัวแปร</div>
+    <pre><code><span class="cm">// let — เปลี่ยนค่าได้</span>
+<span class="kw">let</span> name = <span class="str">"สมชาย"</span>;
+name = <span class="str">"สมหญิง"</span>;       <span class="cm">// ✅ เปลี่ยนได้</span>
+
+<span class="cm">// const — เปลี่ยนค่าไม่ได้</span>
+<span class="kw">const</span> PI = <span class="num">3.14159</span>;
+PI = <span class="num">3</span>;                 <span class="cm">// ❌ Error!</span>
+
+<span class="cm">// var — แบบเก่า (หลีกเลี่ยง)</span>
+<span class="kw">var</span> old = <span class="str">"ไม่แนะนำ"</span>;</code></pre>
+    <div class="highlight-box green" style="margin-top: 16px;">
+      <p>✅ <strong>กฎง่ายๆ:</strong> ใช้ <code>const</code> เป็นค่าเริ่มต้น → ถ้าต้องเปลี่ยนค่า ค่อยใช้ <code>let</code> → ไม่ใช้ <code>var</code></p>
+    </div>
+  </div>
+
+  <!-- Slide 4: Data Types -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🏷️</span> Data Types — ประเภทข้อมูล</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>Type</th><th>ตัวอย่าง</th><th>อธิบาย</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="tag blue">String</span></td><td><code>"สวัสดี"</code>, <code>'Hello'</code>, <code>`Hi ${name}`</code></td><td>ข้อความ</td></tr>
+        <tr><td><span class="tag green">Number</span></td><td><code>42</code>, <code>3.14</code>, <code>-10</code></td><td>ตัวเลข</td></tr>
+        <tr><td><span class="tag yellow">Boolean</span></td><td><code>true</code>, <code>false</code></td><td>จริง/เท็จ</td></tr>
+        <tr><td><span class="tag purple">Array</span></td><td><code>[1, 2, 3]</code></td><td>รายการ/ลำดับ</td></tr>
+        <tr><td><span class="tag red">Object</span></td><td><code>{ name: "A", age: 25 }</code></td><td>ข้อมูลแบบ key-value</td></tr>
+        <tr><td><span class="tag">null</span></td><td><code>null</code></td><td>ไม่มีค่า (ตั้งใจ)</td></tr>
+        <tr><td><span class="tag">undefined</span></td><td><code>undefined</code></td><td>ยังไม่ได้กำหนดค่า</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Slide 5: Template Literals -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">✨</span> Template Literals — สร้างข้อความแบบฉลาด</div>
+    <pre><code><span class="kw">const</span> name = <span class="str">"สมชาย"</span>;
+<span class="kw">const</span> age = <span class="num">25</span>;
+
+<span class="cm">// แบบเก่า — ต่อ string ด้วย +</span>
+<span class="kw">const</span> msg1 = <span class="str">"สวัสดี "</span> + name + <span class="str">" อายุ "</span> + age + <span class="str">" ปี"</span>;
+
+<span class="cm">// แบบใหม่ — Template Literal (backtick `)</span>
+<span class="kw">const</span> msg2 = <span class="str">`สวัสดี ${name} อายุ ${age} ปี`</span>;
+
+<span class="cm">// ใส่ expression ได้</span>
+<span class="kw">const</span> msg3 = <span class="str">`ปีหน้าอายุ ${age + <span class="num">1</span>} ปี`</span>;</code></pre>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 ใช้ backtick <code>`</code> แทน quote แล้วใส่ตัวแปรด้วย <code>${...}</code></p>
+    </div>
+  </div>
+
+  <!-- Slide 6: Functions -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔧</span> Functions — ฟังก์ชัน</div>
+    <pre><code><span class="cm">// Function Declaration</span>
+<span class="kw">function</span> <span class="fn">greet</span>(name) {
+  <span class="kw">return</span> <span class="str">`สวัสดี ${name}!`</span>;
+}
+
+<span class="cm">// Arrow Function (แบบใหม่ — ใช้บ่อยมาก)</span>
+<span class="kw">const</span> <span class="fn">greet</span> = (name) => {
+  <span class="kw">return</span> <span class="str">`สวัสดี ${name}!`</span>;
+};
+
+<span class="cm">// Arrow Function แบบสั้น (1 บรรทัด)</span>
+<span class="kw">const</span> <span class="fn">greet</span> = (name) => <span class="str">`สวัสดี ${name}!`</span>;
+
+<span class="cm">// เรียกใช้</span>
+<span class="fn">greet</span>(<span class="str">"สมชาย"</span>); <span class="cm">// "สวัสดี สมชาย!"</span></code></pre>
+  </div>
+
+  <!-- Slide 7: Conditionals -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔀</span> Conditionals — เงื่อนไข</div>
+    <pre><code><span class="kw">const</span> age = <span class="num">18</span>;
+
+<span class="cm">// if-else</span>
+<span class="kw">if</span> (age >= <span class="num">18</span>) {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"เข้าได้"</span>);
+} <span class="kw">else if</span> (age >= <span class="num">13</span>) {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"ต้องมีผู้ปกครอง"</span>);
+} <span class="kw">else</span> {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"เข้าไม่ได้"</span>);
+}
+
+<span class="cm">// Ternary (สั้นกระชับ)</span>
+<span class="kw">const</span> status = age >= <span class="num">18</span> ? <span class="str">"ผู้ใหญ่"</span> : <span class="str">"เด็ก"</span>;</code></pre>
+  </div>
+
+  <!-- Slide 8: Arrays -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📚</span> Arrays — รายการข้อมูล</div>
+    <pre><code><span class="kw">const</span> fruits = [<span class="str">"แอปเปิ้ล"</span>, <span class="str">"กล้วย"</span>, <span class="str">"ส้ม"</span>];
+
+fruits.<span class="fn">push</span>(<span class="str">"มะม่วง"</span>);        <span class="cm">// เพิ่มท้าย</span>
+fruits.<span class="fn">pop</span>();                   <span class="cm">// ลบตัวท้าย</span>
+fruits[<span class="num">0</span>];                     <span class="cm">// "แอปเปิ้ล" (index เริ่มจาก 0)</span>
+fruits.<span class="fn">length</span>;                  <span class="cm">// 3</span>
+
+<span class="cm">// วนลูป</span>
+fruits.<span class="fn">forEach</span>((fruit) => {
+  <span class="fn">console</span>.<span class="fn">log</span>(fruit);
+});
+
+<span class="cm">// แปลงข้อมูล (สำคัญมาก!)</span>
+<span class="kw">const</span> upper = fruits.<span class="fn">map</span>((f) => f.<span class="fn">toUpperCase</span>());
+
+<span class="cm">// กรองข้อมูล</span>
+<span class="kw">const</span> short = fruits.<span class="fn">filter</span>((f) => f.<span class="fn">length</span> < <span class="num">4</span>);</code></pre>
+  </div>
+
+  <!-- Slide 9: Objects -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🗃️</span> Objects — ข้อมูลแบบ key-value</div>
+    <pre><code><span class="kw">const</span> user = {
+  name: <span class="str">"สมชาย"</span>,
+  age: <span class="num">25</span>,
+  email: <span class="str">"somchai@email.com"</span>,
+  skills: [<span class="str">"HTML"</span>, <span class="str">"CSS"</span>, <span class="str">"JS"</span>],
+};
+
+<span class="cm">// เข้าถึงข้อมูล</span>
+user.name;              <span class="cm">// "สมชาย"</span>
+user[<span class="str">"email"</span>];           <span class="cm">// "somchai@email.com"</span>
+
+<span class="cm">// Destructuring (แกะข้อมูลออกมา)</span>
+<span class="kw">const</span> { name, age } = user;
+<span class="fn">console</span>.<span class="fn">log</span>(name);       <span class="cm">// "สมชาย"</span>
+
+<span class="cm">// Spread (คัดลอก + เพิ่มข้อมูล)</span>
+<span class="kw">const</span> updated = { ...user, age: <span class="num">26</span> };</code></pre>
+  </div>
+
+  <!-- Slide 10: DOM Manipulation -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🎮</span> DOM — ควบคุม HTML ด้วย JavaScript</div>
+    <pre><code><span class="cm">// เลือก element</span>
+<span class="kw">const</span> title = <span class="fn">document</span>.<span class="fn">querySelector</span>(<span class="str">"h1"</span>);
+<span class="kw">const</span> btn = <span class="fn">document</span>.<span class="fn">querySelector</span>(<span class="str">".btn"</span>);
+<span class="kw">const</span> items = <span class="fn">document</span>.<span class="fn">querySelectorAll</span>(<span class="str">"li"</span>);
+
+<span class="cm">// เปลี่ยนเนื้อหา</span>
+title.<span class="fn">textContent</span> = <span class="str">"หัวข้อใหม่"</span>;
+title.<span class="fn">innerHTML</span> = <span class="str">"&lt;em&gt;หัวข้อใหม่&lt;/em&gt;"</span>;
+
+<span class="cm">// เปลี่ยนสไตล์</span>
+title.<span class="fn">style</span>.color = <span class="str">"blue"</span>;
+
+<span class="cm">// เพิ่ม/ลบ class</span>
+title.<span class="fn">classList</span>.<span class="fn">add</span>(<span class="str">"active"</span>);
+title.<span class="fn">classList</span>.<span class="fn">toggle</span>(<span class="str">"hidden"</span>);</code></pre>
+  </div>
+
+  <!-- Slide 11: Events -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🖱️</span> Events — ตอบสนองผู้ใช้</div>
+    <pre><code><span class="kw">const</span> btn = <span class="fn">document</span>.<span class="fn">querySelector</span>(<span class="str">".btn"</span>);
+
+<span class="cm">// คลิก</span>
+btn.<span class="fn">addEventListener</span>(<span class="str">"click"</span>, () => {
+  <span class="fn">alert</span>(<span class="str">"คลิกแล้ว!"</span>);
+});
+
+<span class="cm">// พิมพ์ใน input</span>
+input.<span class="fn">addEventListener</span>(<span class="str">"input"</span>, (e) => {
+  <span class="fn">console</span>.<span class="fn">log</span>(e.target.value);
+});
+
+<span class="cm">// กด Enter ในฟอร์ม</span>
+form.<span class="fn">addEventListener</span>(<span class="str">"submit"</span>, (e) => {
+  e.<span class="fn">preventDefault</span>();  <span class="cm">// ป้องกัน refresh</span>
+  <span class="cm">// จัดการข้อมูลฟอร์ม...</span>
+});</code></pre>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 Events ที่ใช้บ่อย: <code>click</code>, <code>input</code>, <code>submit</code>, <code>keydown</code>, <code>scroll</code>, <code>load</code></p>
+    </div>
+  </div>
+
+  <!-- Slide 12: Console.log -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔍</span> console.log — เพื่อนที่ดีที่สุดของคุณ</div>
+    <pre><code><span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"ข้อความ"</span>);           <span class="cm">// แสดงข้อความ</span>
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"ชื่อ:"</span>, name);       <span class="cm">// แสดงตัวแปร</span>
+<span class="fn">console</span>.<span class="fn">log</span>({ name, age });       <span class="cm">// แสดง object</span>
+<span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"มีข้อผิดพลาด!"</span>);  <span class="cm">// แสดง error (สีแดง)</span>
+<span class="fn">console</span>.<span class="fn">warn</span>(<span class="str">"คำเตือน"</span>);         <span class="cm">// แสดง warning (สีเหลือง)</span>
+<span class="fn">console</span>.<span class="fn">table</span>(users);            <span class="cm">// แสดงเป็นตาราง</span></code></pre>
+    <div class="highlight-box yellow" style="margin-top: 16px;">
+      <p>⚠️ <strong>Debugging 101:</strong> ไม่แน่ใจว่าค่าอะไร? → <code>console.log()</code> ก่อนเสมอ! เปิด DevTools (F12) > Console เพื่อดูผลลัพธ์</p>
+    </div>
+  </div>
+
+  <!-- Slide 13: Summary -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> สรุป EP04</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>📦 Variables</h4>
+        <p>const (ค่าคงที่) / let (เปลี่ยนได้)</p>
+      </div>
+      <div class="card">
+        <h4>🏷️ Data Types</h4>
+        <p>String, Number, Boolean, Array, Object</p>
+      </div>
+      <div class="card">
+        <h4>🔧 Functions</h4>
+        <p>function / arrow function =></p>
+      </div>
+      <div class="card">
+        <h4>🔀 Conditionals</h4>
+        <p>if/else, ternary (?:)</p>
+      </div>
+      <div class="card">
+        <h4>🎮 DOM</h4>
+        <p>querySelector, textContent, classList</p>
+      </div>
+      <div class="card">
+        <h4>🖱️ Events</h4>
+        <p>addEventListener (click, input, submit)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 14: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge">EP 04 — จบ</div>
+    <h1>เจอกัน EP ถัดไป!</h1>
+    <p class="subtitle">EP05: เครื่องมือนักพัฒนา — Chrome DevTools 🔧</p>
+  </div>
+
+</div>
+
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

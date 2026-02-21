@@ -4,7 +4,7 @@ export const metadata: Metadata = {
     title: 'นโยบายความเป็นส่วนตัว',
     description: 'นโยบายความเป็นส่วนตัวของ MilerDev การเก็บรวบรวมและใช้ข้อมูลส่วนบุคคล',
     alternates: {
-        canonical: 'https://milerdev.com/privacy',
+        canonical: '/privacy',
     },
     openGraph: {
         title: 'นโยบายความเป็นส่วนตัว',

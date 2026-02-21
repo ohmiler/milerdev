@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP10: เริ่มต้น Agentic Coding - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 10</div>
+    <h1>เริ่มต้น Agentic Coding</h1>
+    <p class="subtitle">ใช้ AI เขียนโค้ดอย่างมืออาชีพ — จุดที่ทุกอย่างมารวมกัน</p>
+  </div>
+
+  <!-- Slide 2: What is Agentic Coding -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🤖</span> Agentic Coding คืออะไร</div>
+    <p style="margin-bottom: 20px;">AI ที่สามารถ <strong>ลงมือทำ</strong> แทนแค่แนะนำ — อ่านโค้ด, เขียนโค้ด, รันคำสั่ง, แก้ bug ได้ด้วยตัวเอง</p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">💬</div>
+        <h4>AI Chatbot (เดิม)</h4>
+        <p>"ลองเขียนแบบนี้นะ..." → คุณต้อง copy-paste เอง</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🤖</div>
+        <h4>Agentic Coding (ใหม่)</h4>
+        <p>AI อ่านโค้ดคุณ → เขียนแก้ไขให้ → รันทดสอบให้ → เสร็จ!</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 Agentic = มี "ความสามารถในการกระทำ" (Agency) — AI ไม่ใช่แค่ตอบคำถาม แต่ลงมือทำได้จริง</p>
+    </div>
+  </div>
+
+  <!-- Slide 3: Tools -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🛠️</span> เครื่องมือ Agentic Coding</div>
+    <div class="card-grid">
+      <div class="card" style="border-top: 3px solid var(--cyan);">
+        <div class="card-icon">🌊</div>
+        <h4>Windsurf (Cascade)</h4>
+        <p>AI Agent ที่ทำงานใน IDE — อ่าน, เขียน, รันโค้ดได้เอง</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--purple);">
+        <div class="card-icon">🔮</div>
+        <h4>Cursor</h4>
+        <p>AI-powered code editor — autocomplete + chat + composer</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <div class="card-icon">🐙</div>
+        <h4>GitHub Copilot</h4>
+        <p>AI autocomplete ใน VS Code — เขียนโค้ดต่อให้อัตโนมัติ</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--orange);">
+        <div class="card-icon">🧠</div>
+        <h4>Claude / ChatGPT</h4>
+        <p>AI chatbot — ถามคำถาม, อธิบายโค้ด, สร้างโค้ดจาก prompt</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: How AI Reads Code -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">👁️</span> AI อ่านโค้ดอย่างไร</div>
+    <ol>
+      <li><strong>ชื่อไฟล์ & โฟลเดอร์</strong> — เข้าใจโครงสร้างโปรเจกต์</li>
+      <li><strong>Import statements</strong> — รู้ว่าใช้ library อะไร</li>
+      <li><strong>Type definitions</strong> — เข้าใจรูปแบบข้อมูล</li>
+      <li><strong>Function/Variable names</strong> — เข้าใจจุดประสงค์</li>
+      <li><strong>Comments & README</strong> — เข้าใจ context</li>
+      <li><strong>Error messages</strong> — วิเคราะห์ปัญหา</li>
+    </ol>
+    <div class="highlight-box green" style="margin-top: 16px;">
+      <p>✅ ยิ่งโค้ดเขียนดี ตั้งชื่อชัด มี type → AI ยิ่งช่วยได้ดีขึ้น!</p>
+    </div>
+  </div>
+
+  <!-- Slide 5: How to Prompt -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">✍️</span> วิธีสั่ง AI ให้ได้ผลลัพธ์ดี</div>
+    <div class="two-col">
+      <div class="col">
+        <h3 style="color: var(--red);">❌ Prompt ไม่ดี</h3>
+        <pre><code><span class="str">"ทำเว็บให้หน่อย"</span>
+
+<span class="str">"แก้ bug"</span>
+
+<span class="str">"เขียน code"</span></code></pre>
+      </div>
+      <div class="col">
+        <h3 style="color: var(--green);">✅ Prompt ดี</h3>
+        <pre><code><span class="str">"สร้างหน้า login ด้วย Next.js
++ Tailwind CSS ที่มี email
+และ password field พร้อม
+validation"</span>
+
+<span class="str">"แก้ bug: กดปุ่ม submit แล้ว
+หน้าเว็บ refresh แทนที่จะ
+ส่ง form ผ่าน API"</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Prompting Framework -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📋</span> สูตรการเขียน Prompt</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>1. บริบท (Context)</h4>
+        <p>"ในโปรเจกต์ Next.js ที่ใช้ Tailwind..."</p>
+      </div>
+      <div class="card">
+        <h4>2. งานที่ต้องทำ (Task)</h4>
+        <p>"สร้าง component สำหรับ..."</p>
+      </div>
+      <div class="card">
+        <h4>3. รายละเอียด (Details)</h4>
+        <p>"ต้องมี responsive, dark mode, animation..."</p>
+      </div>
+      <div class="card">
+        <h4>4. ข้อจำกัด (Constraints)</h4>
+        <p>"ใช้เฉพาะ Tailwind ไม่ใช้ library เพิ่ม..."</p>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 ยิ่งให้ข้อมูลชัดเจน → AI ยิ่งสร้างโค้ดที่ตรงความต้องการ</p>
+    </div>
+  </div>
+
+  <!-- Slide 7: Reading AI Code -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔍</span> อ่านโค้ดที่ AI เขียนให้</div>
+    <ul>
+      <li><strong>อ่านทุกบรรทัด</strong> — อย่า accept โดยไม่อ่าน!</li>
+      <li><strong>เข้าใจ logic</strong> — โค้ดทำอะไร ทำไมถึงเขียนแบบนี้</li>
+      <li><strong>ตรวจ imports</strong> — library ที่ใช้ถูกต้องไหม มีอยู่ในโปรเจกต์ไหม</li>
+      <li><strong>ทดสอบ</strong> — รันจริง ทดสอบ edge cases</li>
+      <li><strong>ตรวจ security</strong> — ไม่มี hardcoded secrets, XSS, SQL injection</li>
+    </ul>
+    <div class="highlight-box red" style="margin-top: 16px;">
+      <p>⚠️ <strong>AI ไม่ perfect!</strong> มันอาจ: ใช้ API ที่ไม่มีอยู่, สร้าง function ที่ไม่ถูกต้อง, หรือเขียนโค้ดที่ดูถูกแต่มี bug ซ่อน</p>
+    </div>
+  </div>
+
+  <!-- Slide 8: Workflow -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔄</span> Agentic Coding Workflow</div>
+    <ol>
+      <li><strong>วางแผน</strong> — คิดก่อนว่าจะทำอะไร ต้องการอะไร</li>
+      <li><strong>สั่ง AI</strong> — เขียน prompt ที่ชัดเจน ให้ context เพียงพอ</li>
+      <li><strong>Review โค้ด</strong> — อ่านและทำความเข้าใจโค้ดที่ AI สร้าง</li>
+      <li><strong>ทดสอบ</strong> — รันโค้ด ทดสอบ ดูว่าทำงานถูกไหม</li>
+      <li><strong>ปรับแก้</strong> — ถ้าไม่ถูก สั่ง AI แก้ หรือแก้เอง</li>
+      <li><strong>Commit</strong> — บันทึกด้วย Git เมื่อพอใจ</li>
+      <li><strong>ทำซ้ำ</strong> — วนกลับขั้นตอนที่ 1</li>
+    </ol>
+  </div>
+
+  <!-- Slide 9: What Web Dev Knowledge Helps -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🧠</span> พื้นฐาน Web Dev ช่วยอย่างไร</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>EP01-04: HTML/CSS/JS</h4>
+        <p>อ่านโค้ดที่ AI เขียนให้ได้ รู้ว่าถูกหรือผิด</p>
+      </div>
+      <div class="card">
+        <h4>EP05: DevTools</h4>
+        <p>Debug เมื่อ AI เขียนโค้ดผิด ดู error ใน Console/Network</p>
+      </div>
+      <div class="card">
+        <h4>EP06: Terminal</h4>
+        <p>รันคำสั่งที่ AI แนะนำ install packages, start server</p>
+      </div>
+      <div class="card">
+        <h4>EP07: Git</h4>
+        <p>ย้อนกลับเมื่อ AI ทำพัง บันทึกจุดที่โค้ดทำงานได้</p>
+      </div>
+      <div class="card">
+        <h4>EP08: Project Structure</h4>
+        <p>จัดโครงสร้างที่ AI เข้าใจ วางไฟล์ถูกที่</p>
+      </div>
+      <div class="card">
+        <h4>EP09: APIs</h4>
+        <p>เข้าใจ data flow เมื่อ AI สร้าง API route หรือ fetch data</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: Common Mistakes -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">⚠️</span> ข้อผิดพลาดที่มือใหม่มักทำ</div>
+    <ul>
+      <li><strong>Accept โดยไม่อ่าน</strong> — AI เขียนผิดบ่อย ต้องอ่านทุกครั้ง</li>
+      <li><strong>ไม่เข้าใจโค้ดที่ AI สร้าง</strong> — ถ้าไม่เข้าใจ ถาม AI ให้อธิบาย!</li>
+      <li><strong>ไม่ใช้ Git</strong> — พอ AI ทำพัง ย้อนกลับไม่ได้</li>
+      <li><strong>Prompt ไม่ชัด</strong> — ผลลัพธ์ไม่ตรง → เสียเวลาแก้</li>
+      <li><strong>ไม่ทดสอบ</strong> — โค้ดดูถูกแต่รันจริงไม่ทำงาน</li>
+      <li><strong>พึ่ง AI 100%</strong> — ต้องมีพื้นฐานเพื่อ verify</li>
+    </ul>
+  </div>
+
+  <!-- Slide 11: Best Practices -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">✅</span> Best Practices</div>
+    <ol>
+      <li><strong>Commit บ่อย</strong> — ก่อนให้ AI แก้โค้ดใหญ่ commit ก่อนเสมอ</li>
+      <li><strong>เริ่มจากเล็กไปใหญ่</strong> — ให้ AI ทำทีละส่วน ไม่ใช่ทั้งโปรเจกต์ทีเดียว</li>
+      <li><strong>ถามให้อธิบาย</strong> — ไม่เข้าใจอะไร ถาม AI ได้เสมอ</li>
+      <li><strong>เรียนรู้จากโค้ดที่ AI สร้าง</strong> — ใช้เป็นสื่อการเรียนรู้</li>
+      <li><strong>ฝึกเขียนเองด้วย</strong> — ไม่ควรพึ่ง AI 100%</li>
+      <li><strong>ทดสอบเสมอ</strong> — รัน, ดู DevTools, ทดสอบ edge cases</li>
+    </ol>
+  </div>
+
+  <!-- Slide 12: Your Journey -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🗺️</span> เส้นทางการเรียนรู้ต่อ</div>
+    <div class="card-grid">
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <h4>ระดับ 1: เริ่มต้น</h4>
+        <p>ใช้ AI สร้างหน้าเว็บง่ายๆ → ปรับแต่ง HTML/CSS → Deploy</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--accent);">
+        <h4>ระดับ 2: กลาง</h4>
+        <p>สร้าง React app → ใช้ API → เพิ่ม features → ทำ responsive</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--purple);">
+        <h4>ระดับ 3: ขั้นสูง</h4>
+        <p>Full-stack app → Database → Auth → Deploy to production</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--orange);">
+        <h4>ระดับ 4: มืออาชีพ</h4>
+        <p>สร้างโปรเจกต์จริง → ขายได้ → ทำงานได้ → สอนคนอื่นได้</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 13: Course Recap -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🏆</span> สรุปคอร์สทั้งหมด</div>
+    <div class="card-grid">
+      <div class="card"><h4>EP01</h4><p>เว็บทำงานอย่างไร</p></div>
+      <div class="card"><h4>EP02</h4><p>HTML พื้นฐาน</p></div>
+      <div class="card"><h4>EP03</h4><p>CSS พื้นฐาน</p></div>
+      <div class="card"><h4>EP04</h4><p>JavaScript พื้นฐาน</p></div>
+      <div class="card"><h4>EP05</h4><p>เครื่องมือนักพัฒนา</p></div>
+      <div class="card"><h4>EP06</h4><p>Terminal & Command Line</p></div>
+      <div class="card"><h4>EP07</h4><p>Git & Version Control</p></div>
+      <div class="card"><h4>EP08</h4><p>โครงสร้างโปรเจกต์</p></div>
+      <div class="card"><h4>EP09</h4><p>API & การดึงข้อมูล</p></div>
+      <div class="card"><h4>EP10</h4><p>เริ่มต้น Agentic Coding</p></div>
+    </div>
+  </div>
+
+  <!-- Slide 14: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge" style="background: linear-gradient(135deg, #22c55e, #3b82f6);">จบคอร์ส!</div>
+    <h1>ยินดีด้วย! 🎉</h1>
+    <p class="subtitle">คุณมีพื้นฐานพร้อมแล้วสำหรับ Agentic Coding<br>เริ่มสร้างสิ่งที่คุณอยากสร้างได้เลย!</p>
+    <p style="margin-top: 24px; color: var(--text-muted); font-size: 1rem;">MilerDev — พื้นฐาน Web Dev ที่ต้องรู้ก่อนใช้ Agentic Coding</p>
+  </div>
+
+</div>
+
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

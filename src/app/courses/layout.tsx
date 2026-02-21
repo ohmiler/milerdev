@@ -4,7 +4,7 @@ export const metadata: Metadata = {
     title: 'คอร์สทั้งหมด',
     description: 'ค้นหาและเรียนรู้คอร์สเขียนโปรแกรมออนไลน์คุณภาพสูง ครอบคลุมทุกระดับตั้งแต่เริ่มต้นจนถึงขั้นสูง',
     alternates: {
-        canonical: 'https://milerdev.com/courses',
+        canonical: '/courses',
     },
     openGraph: {
         title: 'คอร์สทั้งหมด',

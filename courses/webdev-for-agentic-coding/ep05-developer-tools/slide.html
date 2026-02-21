@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP05: เครื่องมือนักพัฒนา - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 05</div>
+    <h1>เครื่องมือนักพัฒนา</h1>
+    <p class="subtitle">Chrome DevTools — อาวุธลับที่ทุกนักพัฒนาต้องใช้เป็น</p>
+  </div>
+
+  <!-- Slide 2: Why DevTools -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔧</span> ทำไมต้องรู้จัก DevTools</div>
+    <ul>
+      <li><strong>ดูและแก้ไข HTML/CSS</strong> แบบ real-time ไม่ต้อง refresh</li>
+      <li><strong>Debug JavaScript</strong> — หาจุดที่โค้ดทำงานผิด</li>
+      <li><strong>ดู Network</strong> — ติดตามทุก request ที่เว็บส่ง</li>
+      <li><strong>ตรวจ Performance</strong> — หาจุดที่เว็บช้า</li>
+      <li><strong>ใช้ร่วมกับ AI</strong> — copy error ไปให้ AI แก้ได้ทันที</li>
+    </ul>
+    <div class="highlight-box" style="margin-top: 20px;">
+      <p>💡 เปิด DevTools: กด <code>F12</code> หรือ <code>Ctrl+Shift+I</code> (Windows) / <code>Cmd+Opt+I</code> (Mac)</p>
+    </div>
+  </div>
+
+  <!-- Slide 3: Elements Panel -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🏗️</span> Elements Panel — ดู HTML & CSS</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>ดูโครงสร้าง HTML</h4>
+        <p>เห็น DOM Tree ทั้งหมด — คลิกขยายดู element ซ้อนกัน</p>
+      </div>
+      <div class="card">
+        <h4>แก้ไข HTML สด</h4>
+        <p>ดับเบิลคลิก element เพื่อแก้ข้อความ หรือ attribute</p>
+      </div>
+      <div class="card">
+        <h4>ดู CSS Styles</h4>
+        <p>แผง Styles ด้านขวา — ดูทุก CSS rule ที่ใช้กับ element</p>
+      </div>
+      <div class="card">
+        <h4>แก้ไข CSS สด</h4>
+        <p>คลิกค่า CSS เพื่อแก้ไขทันที — เห็นผลทันที!</p>
+      </div>
+    </div>
+    <div class="highlight-box green" style="margin-top: 16px;">
+      <p>✅ <strong>เคล็ดลับ:</strong> คลิกขวาที่ element → "Inspect" เพื่อกระโดดไปที่ element นั้นใน DevTools</p>
+    </div>
+  </div>
+
+  <!-- Slide 4: Box Model in DevTools -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📦</span> Box Model Visualizer</div>
+    <p style="margin-bottom: 16px;">ใน Elements panel → ดูแผง <strong>Computed</strong> จะเห็น Box Model แบบ visual</p>
+    <div class="diagram">
+      <div class="diagram-box" style="padding: 16px; background: rgba(239, 68, 68, 0.1); border-color: var(--red); min-width: 380px;">
+        <div class="desc" style="color: var(--red);">margin</div>
+        <div style="background: rgba(234, 179, 8, 0.1); border: 1px dashed var(--yellow); border-radius: 8px; padding: 12px; margin-top: 8px;">
+          <div class="desc" style="color: var(--yellow);">border</div>
+          <div style="background: rgba(34, 197, 94, 0.1); border: 1px dashed var(--green); border-radius: 6px; padding: 12px; margin-top: 8px;">
+            <div class="desc" style="color: var(--green);">padding</div>
+            <div style="background: rgba(59, 130, 246, 0.15); border-radius: 4px; padding: 12px; margin-top: 8px; text-align: center;">
+              <span style="color: var(--accent-light); font-weight: 600;">320 × 48</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top: 16px;">คลิกตัวเลขแต่ละด้านเพื่อแก้ไขค่า margin, padding, border ได้ทันที</p>
+  </div>
+
+  <!-- Slide 5: Console Panel -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">💬</span> Console Panel — ดู log & รันโค้ด</div>
+    <div class="two-col">
+      <div class="col">
+        <h3>ดู Output</h3>
+        <ul>
+          <li><code>console.log()</code> — ข้อความปกติ</li>
+          <li><code>console.error()</code> — สีแดง</li>
+          <li><code>console.warn()</code> — สีเหลือง</li>
+          <li>ดู <strong>JavaScript errors</strong> ที่เกิดขึ้น</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>รันโค้ดสด</h3>
+        <ul>
+          <li>พิมพ์ JavaScript แล้วกด Enter</li>
+          <li>ทดสอบ <code>document.querySelector()</code></li>
+          <li>ดูค่าตัวแปร</li>
+          <li>ทดลอง function ใหม่</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box yellow" style="margin-top: 16px;">
+      <p>⚠️ <strong>สำคัญ:</strong> เจอ error สีแดงใน Console? → Copy ข้อความ error ไปให้ AI อ่าน = แก้ปัญหาได้เร็วมาก!</p>
+    </div>
+  </div>
+
+  <!-- Slide 6: Network Panel -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🌐</span> Network Panel — ติดตาม Requests</div>
+    <ul>
+      <li>เห็น <strong>ทุก request</strong> ที่ Browser ส่ง (HTML, CSS, JS, images, API calls)</li>
+      <li>ดู <strong>Status Code</strong> — 200, 404, 500 ...</li>
+      <li>ดู <strong>Response</strong> — ข้อมูลที่ Server ส่งกลับ</li>
+      <li>ดู <strong>เวลาที่ใช้</strong> — request ไหนช้า?</li>
+      <li><strong>Filter</strong> ตาม type: XHR/Fetch, JS, CSS, Img</li>
+    </ul>
+    <div class="card-grid" style="margin-top: 16px;">
+      <div class="card">
+        <h4>Headers</h4>
+        <p>ดู Request & Response headers</p>
+      </div>
+      <div class="card">
+        <h4>Preview</h4>
+        <p>ดูข้อมูล response แบบ formatted</p>
+      </div>
+      <div class="card">
+        <h4>Response</h4>
+        <p>ดู raw response data</p>
+      </div>
+      <div class="card">
+        <h4>Timing</h4>
+        <p>ดูเวลาแต่ละขั้นตอน</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Application Panel -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">💾</span> Application Panel — Storage & Cookies</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>Local Storage</h4>
+        <p>เก็บข้อมูลถาวรใน Browser — key-value pairs</p>
+      </div>
+      <div class="card">
+        <h4>Session Storage</h4>
+        <p>เก็บข้อมูลชั่วคราว — หายเมื่อปิด Tab</p>
+      </div>
+      <div class="card">
+        <h4>Cookies</h4>
+        <p>ข้อมูลเล็กๆ ที่ Server ส่งมาเก็บ — ใช้กับ authentication</p>
+      </div>
+      <div class="card">
+        <h4>Cache</h4>
+        <p>ไฟล์ที่ถูก cache ไว้ — ดู/ลบได้</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: Device Mode -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📱</span> Device Mode — จำลองมือถือ</div>
+    <ul>
+      <li>กดปุ่ม <strong>📱 Toggle Device</strong> (มุมบนซ้ายของ DevTools)</li>
+      <li>เลือก device: iPhone, iPad, Samsung, Pixel ...</li>
+      <li>ปรับขนาดหน้าจอแบบ custom ได้</li>
+      <li>ทดสอบ <strong>Responsive Design</strong> โดยไม่ต้องมีมือถือจริง</li>
+      <li>จำลอง <strong>Touch Events</strong></li>
+    </ul>
+    <div class="highlight-box" style="margin-top: 16px;">
+      <p>💡 <strong>Shortcut:</strong> <code>Ctrl+Shift+M</code> (Windows) / <code>Cmd+Shift+M</code> (Mac) เพื่อเปิด/ปิด Device Mode</p>
+    </div>
+  </div>
+
+  <!-- Slide 9: Common Debugging Flow -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🐛</span> ขั้นตอนการ Debug</div>
+    <ol>
+      <li><strong>เปิด Console</strong> — มี error สีแดงไหม?</li>
+      <li><strong>อ่าน error message</strong> — บอกว่าผิดที่ไหน บรรทัดอะไร</li>
+      <li><strong>เพิ่ม console.log()</strong> — ดูค่าตัวแปรในจุดที่สงสัย</li>
+      <li><strong>ดู Network</strong> — API call สำเร็จหรือ fail?</li>
+      <li><strong>ตรวจ Elements</strong> — HTML/CSS ถูกต้องไหม?</li>
+      <li><strong>Copy error → AI</strong> — ให้ AI ช่วยวิเคราะห์</li>
+    </ol>
+    <div class="highlight-box green" style="margin-top: 16px;">
+      <p>✅ <strong>Pro Tip:</strong> เจอ error? → Copy ข้อความ error ทั้งหมด + screenshot → ส่งให้ AI = ได้คำตอบเร็วที่สุด</p>
+    </div>
+  </div>
+
+  <!-- Slide 10: Useful Shortcuts -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">⌨️</span> Shortcuts ที่ต้องรู้</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>Shortcut (Windows)</th><th>ทำอะไร</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>F12</code></td><td>เปิด/ปิด DevTools</td></tr>
+        <tr><td><code>Ctrl+Shift+C</code></td><td>Inspect element mode</td></tr>
+        <tr><td><code>Ctrl+Shift+J</code></td><td>เปิด Console โดยตรง</td></tr>
+        <tr><td><code>Ctrl+Shift+M</code></td><td>Toggle Device Mode</td></tr>
+        <tr><td><code>Ctrl+L</code> (ใน Console)</td><td>Clear console</td></tr>
+        <tr><td><code>Ctrl+Shift+R</code></td><td>Hard refresh (ล้าง cache)</td></tr>
+        <tr><td><code>Esc</code> (ใน DevTools)</td><td>Toggle Console drawer</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Slide 11: Summary -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> สรุป EP05</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>🏗️ Elements</h4>
+        <p>ดู/แก้ HTML & CSS แบบ real-time</p>
+      </div>
+      <div class="card">
+        <h4>💬 Console</h4>
+        <p>ดู log, errors, รัน JS สด</p>
+      </div>
+      <div class="card">
+        <h4>🌐 Network</h4>
+        <p>ติดตาม requests, status codes</p>
+      </div>
+      <div class="card">
+        <h4>💾 Application</h4>
+        <p>Storage, Cookies, Cache</p>
+      </div>
+      <div class="card">
+        <h4>📱 Device Mode</h4>
+        <p>จำลองมือถือ, ทดสอบ responsive</p>
+      </div>
+      <div class="card">
+        <h4>🐛 Debug Flow</h4>
+        <p>Console → Error → Log → Network → AI</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 12: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge">EP 05 — จบ</div>
+    <h1>เจอกัน EP ถัดไป!</h1>
+    <p class="subtitle">EP06: Terminal & Command Line — สั่งงานคอมพิวเตอร์ด้วยข้อความ 💻</p>
+  </div>
+
+</div>
+
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

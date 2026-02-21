@@ -62,6 +62,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: `/certificate/${code}`,
+    },
     openGraph: {
       type: 'website',
       title,

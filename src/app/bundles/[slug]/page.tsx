@@ -88,7 +88,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: bundle.title,
         description,
         alternates: {
-            canonical: `https://milerdev.com/bundles/${slug}`,
+            canonical: `/bundles/${slug}`,
         },
         openGraph: {
             type: 'website',

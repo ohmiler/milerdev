@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP01: เว็บทำงานอย่างไร - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 01</div>
+    <h1>เว็บทำงานอย่างไร</h1>
+    <p class="subtitle">How the Web Works — พื้นฐานที่ต้องรู้ก่อนเขียนเว็บแม้แต่บรรทัดเดียว</p>
+  </div>
+
+  <!-- Slide 2: What you'll learn -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🎯</span> สิ่งที่จะได้เรียนรู้ใน EP นี้</div>
+    <ul>
+      <li>Internet กับ Web ต่างกันอย่างไร</li>
+      <li>Client-Server Model คืออะไร</li>
+      <li>HTTP/HTTPS ทำงานอย่างไร</li>
+      <li>URL มีโครงสร้างแบบไหน</li>
+      <li>Browser แสดงเว็บไซต์ได้อย่างไร</li>
+    </ul>
+  </div>
+
+  <!-- Slide 3: Internet vs Web -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🌍</span> Internet vs Web</div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card">
+          <div class="card-icon">🔌</div>
+          <h4>Internet</h4>
+          <p>เครือข่ายคอมพิวเตอร์ขนาดใหญ่ทั่วโลกที่เชื่อมต่อกัน — เหมือน "ถนน" ที่ข้อมูลวิ่งผ่าน</p>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-icon">🌐</div>
+          <h4>Web (World Wide Web)</h4>
+          <p>"บริการ" หนึ่งที่ทำงานบน Internet — เว็บไซต์ที่เราเปิดดูผ่าน Browser</p>
+        </div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top: 24px;">
+      <p>💡 Web เป็นแค่ส่วนหนึ่งของ Internet — Email, Chat, Game Online ก็ใช้ Internet เหมือนกัน</p>
+    </div>
+  </div>
+
+  <!-- Slide 4: Client-Server Model -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔄</span> Client-Server Model</div>
+    <div class="diagram">
+      <div class="diagram-box">
+        <div class="icon">💻</div>
+        <div class="label">Client</div>
+        <div class="desc">Browser ของคุณ</div>
+      </div>
+      <div class="diagram-arrow">→ Request →</div>
+      <div class="diagram-box">
+        <div class="icon">🌐</div>
+        <div class="label">Internet</div>
+        <div class="desc">เครือข่าย</div>
+      </div>
+      <div class="diagram-arrow">→ Request →</div>
+      <div class="diagram-box">
+        <div class="icon">🖥️</div>
+        <div class="label">Server</div>
+        <div class="desc">คอมพิวเตอร์ที่เก็บเว็บ</div>
+      </div>
+    </div>
+    <div class="diagram" style="margin-top: 12px;">
+      <div class="diagram-box" style="border-color: var(--green);">
+        <div class="icon">💻</div>
+        <div class="label">Client</div>
+      </div>
+      <div class="diagram-arrow" style="color: var(--green);">← Response ←</div>
+      <div class="diagram-box" style="border-color: var(--green);">
+        <div class="icon">🌐</div>
+        <div class="label">Internet</div>
+      </div>
+      <div class="diagram-arrow" style="color: var(--green);">← Response ←</div>
+      <div class="diagram-box" style="border-color: var(--green);">
+        <div class="icon">🖥️</div>
+        <div class="label">Server</div>
+      </div>
+    </div>
+    <p style="margin-top: 20px; text-align: center;">Client <strong>ขอ (Request)</strong> → Server <strong>ตอบ (Response)</strong> — ง่ายๆ แค่นี้!</p>
+  </div>
+
+  <!-- Slide 5: What is HTTP -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📡</span> HTTP / HTTPS คืออะไร</div>
+    <p style="margin-bottom: 20px;"><strong>HTTP</strong> = HyperText Transfer Protocol — "ภาษา" ที่ Client กับ Server ใช้คุยกัน</p>
+    <div class="card-grid">
+      <div class="card">
+        <h4>🔓 HTTP</h4>
+        <p>ส่งข้อมูลแบบไม่เข้ารหัส — ใครดักจับได้ก็อ่านได้</p>
+      </div>
+      <div class="card">
+        <h4>🔒 HTTPS</h4>
+        <p>เหมือน HTTP แต่เข้ารหัส (SSL/TLS) — ปลอดภัยกว่า ใช้กันเป็นมาตรฐาน</p>
+      </div>
+    </div>
+    <div class="highlight-box green" style="margin-top: 20px;">
+      <p>✅ ปัจจุบันเว็บส่วนใหญ่ใช้ HTTPS — สังเกตจากรูปกุญแจ 🔒 ใน Address Bar</p>
+    </div>
+  </div>
+
+  <!-- Slide 6: HTTP Methods -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📋</span> HTTP Methods ที่ใช้บ่อย</div>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>ทำอะไร</th>
+          <th>ตัวอย่าง</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag blue">GET</span></td>
+          <td>ขอข้อมูล (อ่าน)</td>
+          <td>เปิดหน้าเว็บ, ดูรูปภาพ</td>
+        </tr>
+        <tr>
+          <td><span class="tag green">POST</span></td>
+          <td>ส่งข้อมูล (สร้างใหม่)</td>
+          <td>สมัครสมาชิก, โพสต์ข้อความ</td>
+        </tr>
+        <tr>
+          <td><span class="tag yellow">PUT</span></td>
+          <td>อัปเดตข้อมูล (แก้ไข)</td>
+          <td>แก้ไขโปรไฟล์</td>
+        </tr>
+        <tr>
+          <td><span class="tag red">DELETE</span></td>
+          <td>ลบข้อมูล</td>
+          <td>ลบโพสต์, ลบบัญชี</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Slide 7: HTTP Status Codes -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🚦</span> HTTP Status Codes</div>
+    <p style="margin-bottom: 16px;">Server ตอบกลับมาพร้อม "รหัสสถานะ" บอกว่าสำเร็จหรือไม่</p>
+    <div class="card-grid">
+      <div class="card">
+        <h4 style="color: var(--green);">2xx — สำเร็จ ✅</h4>
+        <p><code>200 OK</code> — ทุกอย่างปกติ<br><code>201 Created</code> — สร้างสำเร็จ</p>
+      </div>
+      <div class="card">
+        <h4 style="color: var(--yellow);">3xx — Redirect 🔀</h4>
+        <p><code>301</code> — ย้ายถาวร<br><code>302</code> — ย้ายชั่วคราว</p>
+      </div>
+      <div class="card">
+        <h4 style="color: var(--orange);">4xx — Client Error ❌</h4>
+        <p><code>404 Not Found</code> — ไม่เจอ<br><code>403 Forbidden</code> — ไม่มีสิทธิ์</p>
+      </div>
+      <div class="card">
+        <h4 style="color: var(--red);">5xx — Server Error 💥</h4>
+        <p><code>500</code> — Server พัง<br><code>503</code> — Service ไม่พร้อม</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: URL Structure -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🔗</span> โครงสร้างของ URL</div>
+    <pre><code>https://www.example.com:443/products/shoes?color=red&size=42#reviews
+<span class="cm">│       │               │   │              │                   │</span>
+<span class="cm">│       │               │   │              │                   └─ Fragment</span>
+<span class="cm">│       │               │   │              └─ Query Parameters</span>
+<span class="cm">│       │               │   └─ Path</span>
+<span class="cm">│       │               └─ Port</span>
+<span class="cm">│       └─ Domain (Host)</span>
+<span class="cm">└─ Protocol (Scheme)</span></code></pre>
+    <div class="card-grid" style="margin-top: 20px;">
+      <div class="card">
+        <h4>Protocol</h4>
+        <p><code>https://</code> — วิธีการสื่อสาร</p>
+      </div>
+      <div class="card">
+        <h4>Domain</h4>
+        <p><code>www.example.com</code> — ที่อยู่เว็บ</p>
+      </div>
+      <div class="card">
+        <h4>Path</h4>
+        <p><code>/products/shoes</code> — เส้นทางไปหน้าที่ต้องการ</p>
+      </div>
+      <div class="card">
+        <h4>Query</h4>
+        <p><code>?color=red</code> — ข้อมูลเพิ่มเติม</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 9: DNS -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📖</span> DNS — สมุดโทรศัพท์ของ Internet</div>
+    <p style="margin-bottom: 20px;">คอมพิวเตอร์ไม่เข้าใจชื่อเว็บ — ต้องแปลงเป็นหมายเลข IP ก่อน</p>
+    <div class="diagram">
+      <div class="diagram-box">
+        <div class="icon">👤</div>
+        <div class="label">พิมพ์</div>
+        <div class="desc">google.com</div>
+      </div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box" style="border-color: var(--purple);">
+        <div class="icon">📖</div>
+        <div class="label">DNS Server</div>
+        <div class="desc">แปลงชื่อ → IP</div>
+      </div>
+      <div class="diagram-arrow">→</div>
+      <div class="diagram-box" style="border-color: var(--green);">
+        <div class="icon">🖥️</div>
+        <div class="label">142.250.199.46</div>
+        <div class="desc">IP Address จริง</div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top: 20px;">
+      <p>💡 <strong>DNS</strong> (Domain Name System) เปรียบเหมือนสมุดโทรศัพท์ — แปลงชื่อที่คนจำง่าย ให้เป็นตัวเลขที่คอมพิวเตอร์เข้าใจ</p>
+    </div>
+  </div>
+
+  <!-- Slide 10: How Browser Renders -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🎨</span> Browser แสดงเว็บไซต์อย่างไร</div>
+    <ol>
+      <li>Browser ส่ง <strong>HTTP Request</strong> ไปยัง Server</li>
+      <li>Server ส่ง <strong>HTML</strong> กลับมา</li>
+      <li>Browser อ่าน HTML แล้วสร้าง <strong>DOM</strong> (โครงสร้างของหน้า)</li>
+      <li>โหลดไฟล์ <strong>CSS</strong> แล้วสร้าง Style Rules</li>
+      <li>รวม DOM + CSS เป็น <strong>Render Tree</strong></li>
+      <li>โหลดและรัน <strong>JavaScript</strong></li>
+      <li><strong>Paint</strong> — วาดหน้าเว็บให้เราเห็น!</li>
+    </ol>
+  </div>
+
+  <!-- Slide 11: HTML CSS JS trio -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🏗️</span> สามเสาหลักของเว็บ</div>
+    <div class="card-grid">
+      <div class="card" style="border-top: 3px solid var(--orange);">
+        <div class="card-icon">📄</div>
+        <h4>HTML</h4>
+        <p><strong>โครงสร้าง</strong> — กำหนดว่ามีอะไรบ้างในหน้า (ข้อความ, รูป, ปุ่ม)</p>
+        <p style="margin-top: 8px;">เปรียบเหมือน <em>โครงกระดูก</em></p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--accent);">
+        <div class="card-icon">🎨</div>
+        <h4>CSS</h4>
+        <p><strong>รูปลักษณ์</strong> — กำหนดว่าหน้าตาเป็นอย่างไร (สี, ขนาด, ตำแหน่ง)</p>
+        <p style="margin-top: 8px;">เปรียบเหมือน <em>เสื้อผ้า/การแต่งตัว</em></p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--yellow);">
+        <div class="card-icon">⚡</div>
+        <h4>JavaScript</h4>
+        <p><strong>พฤติกรรม</strong> — ทำให้หน้าเว็บมีชีวิต (คลิก, แสดง/ซ่อน, โหลดข้อมูล)</p>
+        <p style="margin-top: 8px;">เปรียบเหมือน <em>สมองและกล้ามเนื้อ</em></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 12: Why this matters for Agentic Coding -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🤖</span> ทำไมต้องรู้สิ่งเหล่านี้ก่อนใช้ AI?</div>
+    <ul>
+      <li><strong>อ่านโค้ดที่ AI สร้างให้ได้</strong> — ต้องรู้ว่า HTML, CSS, JS ทำอะไร</li>
+      <li><strong>สั่ง AI ได้ตรงจุด</strong> — รู้ศัพท์เทคนิค เช่น "เพิ่ม header", "ทำ responsive"</li>
+      <li><strong>Debug ได้</strong> — เข้าใจ HTTP errors, เปิด DevTools ดู Network ได้</li>
+      <li><strong>ตัดสินใจได้</strong> — เลือก framework, เข้าใจ trade-offs</li>
+      <li><strong>ไม่ถูกหลอก</strong> — รู้ว่าโค้ดที่ AI เขียนมา ถูกหรือผิด</li>
+    </ul>
+    <div class="highlight-box yellow" style="margin-top: 20px;">
+      <p>⚠️ AI เป็นเครื่องมือที่ทรงพลัง แต่ถ้าไม่มีพื้นฐาน — คุณจะไม่รู้ว่ามันเขียนผิดตอนไหน</p>
+    </div>
+  </div>
+
+  <!-- Slide 13: Summary -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> สรุป EP01</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>🌍 Internet vs Web</h4>
+        <p>Internet = ถนน, Web = รถที่วิ่งบนถนน</p>
+      </div>
+      <div class="card">
+        <h4>🔄 Client-Server</h4>
+        <p>Browser ขอ (Request) → Server ตอบ (Response)</p>
+      </div>
+      <div class="card">
+        <h4>📡 HTTP/HTTPS</h4>
+        <p>ภาษาที่ใช้คุยกัน + รหัสสถานะ (200, 404, 500)</p>
+      </div>
+      <div class="card">
+        <h4>🔗 URL</h4>
+        <p>Protocol + Domain + Path + Query</p>
+      </div>
+      <div class="card">
+        <h4>📖 DNS</h4>
+        <p>แปลงชื่อเว็บ → IP Address</p>
+      </div>
+      <div class="card">
+        <h4>🏗️ HTML + CSS + JS</h4>
+        <p>โครงสร้าง + รูปลักษณ์ + พฤติกรรม</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 14: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge">EP 01 — จบ</div>
+    <h1>เจอกัน EP ถัดไป!</h1>
+    <p class="subtitle">EP02: HTML พื้นฐาน — เริ่มเขียนโค้ดบรรทัดแรกกัน 🚀</p>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

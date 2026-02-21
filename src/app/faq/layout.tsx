@@ -4,7 +4,7 @@ export const metadata: Metadata = {
     title: 'คำถามที่พบบ่อย',
     description: 'คำถามและคำตอบที่พบบ่อยเกี่ยวกับ MilerDev แพลตฟอร์มเรียนเขียนโปรแกรมออนไลน์',
     alternates: {
-        canonical: 'https://milerdev.com/faq',
+        canonical: '/faq',
     },
     openGraph: {
         title: 'คำถามที่พบบ่อย',

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EP03: CSS พื้นฐาน - Web Dev for Agentic Coding</title>
+  <link rel="stylesheet" href="../assets/slide.css">
+</head>
+<body>
+
+<div class="progress-bar"></div>
+
+<div class="slide-deck">
+
+  <!-- Slide 1: Title -->
+  <div class="slide title-slide">
+    <div class="ep-badge">EP 03</div>
+    <h1>CSS พื้นฐาน</h1>
+    <p class="subtitle">ตกแต่งเว็บให้สวยงาม — ภาษาของการจัดรูปแบบ</p>
+  </div>
+
+  <!-- Slide 2: What is CSS -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🎨</span> CSS คืออะไร</div>
+    <p style="margin-bottom: 20px;"><strong>CSS</strong> = <strong>C</strong>ascading <strong>S</strong>tyle <strong>S</strong>heets — กำหนดว่าเว็บ <em>หน้าตาเป็นอย่างไร</em></p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🎨</div>
+        <h4>สี & ฟอนต์</h4>
+        <p>สีข้อความ, สีพื้นหลัง, ขนาดฟอนต์, font-family</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📐</div>
+        <h4>ขนาด & ระยะห่าง</h4>
+        <p>width, height, margin, padding</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📱</div>
+        <h4>Layout & Responsive</h4>
+        <p>Flexbox, Grid, Media Queries</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: 3 Ways to add CSS -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📎</span> 3 วิธีเพิ่ม CSS</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>1. Inline Style</h4>
+        <pre><code><span class="tag">&lt;p</span> <span class="attr">style</span>=<span class="val">"color: red;"</span><span class="tag">&gt;</span>
+  สวัสดี
+<span class="tag">&lt;/p&gt;</span></code></pre>
+        <p><span class="tag red">❌ ไม่แนะนำ</span> — แก้ไขยาก</p>
+      </div>
+      <div class="card">
+        <h4>2. Internal (style tag)</h4>
+        <pre><code><span class="tag">&lt;style&gt;</span>
+  <span class="sel">p</span> { <span class="prop">color</span>: <span class="val">red</span>; }
+<span class="tag">&lt;/style&gt;</span></code></pre>
+        <p><span class="tag yellow">⚠️ พอได้</span> — ใช้กับหน้าเดียว</p>
+      </div>
+      <div class="card">
+        <h4>3. External (file .css)</h4>
+        <pre><code><span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="val">"stylesheet"</span>
+  <span class="attr">href</span>=<span class="val">"style.css"</span><span class="tag">&gt;</span></code></pre>
+        <p><span class="tag green">✅ แนะนำ</span> — แยกไฟล์ ใช้ซ้ำได้</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: CSS Syntax -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">✍️</span> CSS Syntax</div>
+    <pre><code><span class="sel">h1</span> {                    <span class="cm">/* Selector — เลือก element */</span>
+  <span class="prop">color</span>: <span class="val">#3b82f6</span>;       <span class="cm">/* Property: Value; */</span>
+  <span class="prop">font-size</span>: <span class="val">2rem</span>;      <span class="cm">/* Property: Value; */</span>
+  <span class="prop">margin-bottom</span>: <span class="val">16px</span>; <span class="cm">/* Property: Value; */</span>
+}                        <span class="cm">/* Declaration Block */</span></code></pre>
+    <div class="highlight-box" style="margin-top: 20px;">
+      <p>💡 <strong>Selector</strong> เลือก element → <strong>Declaration Block</strong> { } กำหนดสไตล์ → แต่ละบรรทัดคือ <strong>property: value;</strong></p>
+    </div>
+  </div>
+
+  <!-- Slide 5: Selectors -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🎯</span> CSS Selectors</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>Selector</th><th>เลือกอะไร</th><th>ตัวอย่าง</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>element</code></td><td>ทุกตัวที่เป็น tag นั้น</td><td><code>p { ... }</code></td></tr>
+        <tr><td><code>.class</code></td><td>element ที่มี class นั้น</td><td><code>.btn { ... }</code></td></tr>
+        <tr><td><code>#id</code></td><td>element ที่มี id นั้น (เฉพาะตัว)</td><td><code>#header { ... }</code></td></tr>
+        <tr><td><code>A B</code></td><td>B ที่อยู่ข้างใน A</td><td><code>nav a { ... }</code></td></tr>
+        <tr><td><code>A, B</code></td><td>ทั้ง A และ B</td><td><code>h1, h2 { ... }</code></td></tr>
+        <tr><td><code>A > B</code></td><td>B ที่เป็นลูกตรงของ A</td><td><code>ul > li { ... }</code></td></tr>
+        <tr><td><code>:hover</code></td><td>ตอนเอาเมาส์ชี้</td><td><code>a:hover { ... }</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Slide 6: Colors & Typography -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">🎨</span> สี & ฟอนต์</div>
+    <div class="two-col">
+      <div class="col">
+        <h3>สี (Colors)</h3>
+        <pre><code><span class="cm">/* ชื่อสี */</span>
+<span class="prop">color</span>: <span class="val">red</span>;
+<span class="cm">/* Hex */</span>
+<span class="prop">color</span>: <span class="val">#3b82f6</span>;
+<span class="cm">/* RGB */</span>
+<span class="prop">color</span>: <span class="fn">rgb</span>(<span class="num">59</span>, <span class="num">130</span>, <span class="num">246</span>);
+<span class="cm">/* HSL */</span>
+<span class="prop">color</span>: <span class="fn">hsl</span>(<span class="num">217</span>, <span class="num">91%</span>, <span class="num">60%</span>);</code></pre>
+      </div>
+      <div class="col">
+        <h3>ฟอนต์ (Typography)</h3>
+        <pre><code><span class="prop">font-family</span>: <span class="val">'Inter', sans-serif</span>;
+<span class="prop">font-size</span>: <span class="val">16px</span>;
+<span class="prop">font-weight</span>: <span class="val">bold</span>;  <span class="cm">/* 700 */</span>
+<span class="prop">line-height</span>: <span class="val">1.6</span>;
+<span class="prop">text-align</span>: <span class="val">center</span>;
+<span class="prop">text-decoration</span>: <span class="val">underline</span>;</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Box Model -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📦</span> Box Model — หัวใจของ CSS</div>
+    <div class="diagram">
+      <div class="diagram-box" style="padding: 16px; background: rgba(239, 68, 68, 0.15); border-color: var(--red); min-width: 400px;">
+        <div class="desc" style="color: var(--red); margin-bottom: 8px;">Margin (ระยะห่างภายนอก)</div>
+        <div style="background: rgba(234, 179, 8, 0.15); border: 1px dashed var(--yellow); border-radius: 8px; padding: 12px;">
+          <div class="desc" style="color: var(--yellow); margin-bottom: 8px;">Border (ขอบ)</div>
+          <div style="background: rgba(34, 197, 94, 0.15); border: 1px dashed var(--green); border-radius: 6px; padding: 12px;">
+            <div class="desc" style="color: var(--green); margin-bottom: 8px;">Padding (ระยะห่างภายใน)</div>
+            <div style="background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent); border-radius: 4px; padding: 16px; text-align: center;">
+              <span style="color: var(--accent-light); font-weight: 600;">Content</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <pre style="margin-top: 16px;"><code><span class="sel">.box</span> {
+  <span class="prop">width</span>: <span class="val">300px</span>;          <span class="cm">/* ขนาดเนื้อหา */</span>
+  <span class="prop">padding</span>: <span class="val">20px</span>;         <span class="cm">/* ระยะห่างภายใน */</span>
+  <span class="prop">border</span>: <span class="val">2px solid #333</span>; <span class="cm">/* ขอบ */</span>
+  <span class="prop">margin</span>: <span class="val">16px</span>;          <span class="cm">/* ระยะห่างภายนอก */</span>
+}</code></pre>
+  </div>
+
+  <!-- Slide 8: Margin & Padding shorthand -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📏</span> Margin & Padding Shorthand</div>
+    <pre><code><span class="cm">/* ทุกด้านเท่ากัน */</span>
+<span class="prop">padding</span>: <span class="val">20px</span>;
+
+<span class="cm">/* บน-ล่าง | ซ้าย-ขวา */</span>
+<span class="prop">padding</span>: <span class="val">20px 40px</span>;
+
+<span class="cm">/* บน | ซ้าย-ขวา | ล่าง */</span>
+<span class="prop">padding</span>: <span class="val">10px 20px 30px</span>;
+
+<span class="cm">/* บน | ขวา | ล่าง | ซ้าย (ตามเข็มนาฬิกา) */</span>
+<span class="prop">padding</span>: <span class="val">10px 20px 30px 40px</span>;
+
+<span class="cm">/* จัดกึ่งกลาง element แบบ block */</span>
+<span class="prop">margin</span>: <span class="val">0 auto</span>;</code></pre>
+  </div>
+
+  <!-- Slide 9: Flexbox -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">💪</span> Flexbox — จัดวาง Layout อย่างง่าย</div>
+    <pre><code><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;               <span class="cm">/* เปิด flexbox */</span>
+  <span class="prop">justify-content</span>: <span class="val">center</span>;     <span class="cm">/* จัดแนวนอน */</span>
+  <span class="prop">align-items</span>: <span class="val">center</span>;         <span class="cm">/* จัดแนวตั้ง */</span>
+  <span class="prop">gap</span>: <span class="val">16px</span>;                   <span class="cm">/* ระยะห่างระหว่าง items */</span>
+}</code></pre>
+    <div class="card-grid" style="margin-top: 16px;">
+      <div class="card">
+        <h4>justify-content</h4>
+        <p><code>flex-start</code> | <code>center</code> | <code>flex-end</code> | <code>space-between</code> | <code>space-around</code></p>
+      </div>
+      <div class="card">
+        <h4>align-items</h4>
+        <p><code>flex-start</code> | <code>center</code> | <code>flex-end</code> | <code>stretch</code> | <code>baseline</code></p>
+      </div>
+      <div class="card">
+        <h4>flex-direction</h4>
+        <p><code>row</code> (default) | <code>column</code> | <code>row-reverse</code> | <code>column-reverse</code></p>
+      </div>
+      <div class="card">
+        <h4>flex-wrap</h4>
+        <p><code>nowrap</code> (default) | <code>wrap</code> — ขึ้นบรรทัดใหม่เมื่อล้น</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 10: Units -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📐</span> CSS Units — หน่วยวัด</div>
+    <table class="comparison-table">
+      <thead>
+        <tr><th>หน่วย</th><th>ประเภท</th><th>อธิบาย</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>px</code></td><td>Absolute</td><td>pixel — ขนาดตายตัว</td></tr>
+        <tr><td><code>rem</code></td><td>Relative</td><td>เทียบกับ font-size ของ root (html)</td></tr>
+        <tr><td><code>em</code></td><td>Relative</td><td>เทียบกับ font-size ของ parent</td></tr>
+        <tr><td><code>%</code></td><td>Relative</td><td>เทียบกับขนาดของ parent</td></tr>
+        <tr><td><code>vw / vh</code></td><td>Viewport</td><td>% ของความกว้าง/สูงหน้าจอ</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box green" style="margin-top: 16px;">
+      <p>✅ <strong>แนะนำ:</strong> ใช้ <code>rem</code> สำหรับ font-size, <code>px</code> สำหรับ border/shadow, <code>%</code> หรือ <code>vw</code> สำหรับ layout</p>
+    </div>
+  </div>
+
+  <!-- Slide 11: Responsive -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📱</span> Responsive Design — Media Queries</div>
+    <pre><code><span class="cm">/* สไตล์ปกติ (ทุกขนาดหน้าจอ) */</span>
+<span class="sel">.container</span> {
+  <span class="prop">width</span>: <span class="val">100%</span>;
+  <span class="prop">max-width</span>: <span class="val">1200px</span>;
+  <span class="prop">padding</span>: <span class="val">0 20px</span>;
+}
+
+<span class="cm">/* เมื่อหน้าจอเล็กกว่า 768px (Tablet) */</span>
+<span class="kw">@media</span> (<span class="prop">max-width</span>: <span class="val">768px</span>) {
+  <span class="sel">.container</span> {
+    <span class="prop">padding</span>: <span class="val">0 16px</span>;
+  }
+}
+
+<span class="cm">/* เมื่อหน้าจอเล็กกว่า 480px (Mobile) */</span>
+<span class="kw">@media</span> (<span class="prop">max-width</span>: <span class="val">480px</span>) {
+  <span class="sel">.container</span> {
+    <span class="prop">padding</span>: <span class="val">0 12px</span>;
+  }
+}</code></pre>
+  </div>
+
+  <!-- Slide 12: Summary -->
+  <div class="slide content-slide">
+    <div class="slide-title"><span class="icon">📝</span> สรุป EP03</div>
+    <div class="card-grid">
+      <div class="card">
+        <h4>📎 เพิ่ม CSS</h4>
+        <p>Inline / Internal / External (แนะนำ)</p>
+      </div>
+      <div class="card">
+        <h4>🎯 Selectors</h4>
+        <p>element, .class, #id, :hover, ...</p>
+      </div>
+      <div class="card">
+        <h4>📦 Box Model</h4>
+        <p>Content → Padding → Border → Margin</p>
+      </div>
+      <div class="card">
+        <h4>💪 Flexbox</h4>
+        <p>display: flex + justify/align/gap</p>
+      </div>
+      <div class="card">
+        <h4>📐 Units</h4>
+        <p>px, rem, em, %, vw/vh</p>
+      </div>
+      <div class="card">
+        <h4>📱 Responsive</h4>
+        <p>@media queries สำหรับแต่ละขนาดหน้าจอ</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 13: End -->
+  <div class="slide end-slide">
+    <div class="ep-badge">EP 03 — จบ</div>
+    <h1>เจอกัน EP ถัดไป!</h1>
+    <p class="subtitle">EP04: JavaScript พื้นฐาน — ทำให้เว็บมีชีวิต ⚡</p>
+  </div>
+
+</div>
+
+<div class="slide-footer">MilerDev — Web Dev for Agentic Coding</div>
+<div class="nav-controls">
+  <button class="nav-btn nav-prev" aria-label="Previous">←</button>
+  <span class="slide-counter"></span>
+  <button class="nav-btn nav-next" aria-label="Next">→</button>
+</div>
+
+<script src="../assets/slide.js"></script>
+</body>
+</html>

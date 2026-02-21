@@ -4,7 +4,7 @@ export const metadata: Metadata = {
     title: 'ข้อกำหนดการใช้งาน',
     description: 'ข้อกำหนดและเงื่อนไขการใช้งานแพลตฟอร์ม MilerDev',
     alternates: {
-        canonical: 'https://milerdev.com/terms',
+        canonical: '/terms',
     },
     openGraph: {
         title: 'ข้อกำหนดการใช้งาน',
