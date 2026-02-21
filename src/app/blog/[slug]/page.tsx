@@ -15,6 +15,8 @@ import TableOfContents from '@/components/blog/TableOfContents';
 import ScrollToTop from '@/components/blog/ScrollToTop';
 import BlogViewTracker from '@/components/blog/BlogViewTracker';
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
+
 function getReadingTime(html: string): number {
   const text = html.replace(/<[^>]*>/g, ' ');
   const words = text.trim().split(/\s+/).filter(Boolean).length;
@@ -168,8 +170,33 @@ export default async function BlogPostPage({ params }: Props) {
   const readingTime = getReadingTime(post.content ?? '');
   const processedContent = sanitizeRichContent(highlightCodeBlocks(enhanceBlogContent(post.content ?? '')));
 
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt || 'บทความจาก MilerDev',
+    url: `${siteUrl}/blog/${post.slug}`,
+    ...(normalizeUrl(post.thumbnailUrl) && { image: normalizeUrl(post.thumbnailUrl) }),
+    ...(post.publishedAt && { datePublished: new Date(post.publishedAt).toISOString() }),
+    ...(post.updatedAt && { dateModified: new Date(post.updatedAt).toISOString() }),
+    author: {
+      '@type': 'Person',
+      name: post.author?.name || 'MilerDev',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'MilerDev',
+      url: siteUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/milerdev-logo-transparent.png`,
+      },
+    },
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <BlogViewTracker slug={post.slug} />
       <ReadingProgress />
       <Navbar />

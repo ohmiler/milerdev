@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
-import { courses, bundles } from '@/lib/db/schema';
+import { courses, bundles, blogPosts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
@@ -61,6 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic pages (may fail at build time if DB is not available)
   let coursePages: MetadataRoute.Sitemap = [];
   let bundlePages: MetadataRoute.Sitemap = [];
+  let blogPostPages: MetadataRoute.Sitemap = [];
 
   try {
     const publishedCourses = await db
@@ -86,9 +87,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
+    const publishedPosts = await db
+      .select({ slug: blogPosts.slug, updatedAt: blogPosts.updatedAt })
+      .from(blogPosts)
+      .where(eq(blogPosts.status, 'published'));
+
+    blogPostPages = publishedPosts.map((post) => ({
+      url: `${siteUrl}/blog/${post.slug}`,
+      lastModified: post.updatedAt || new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }));
   } catch {
     // DB not available at build time — return static pages only
   }
 
-  return [...staticPages, ...coursePages, ...bundlePages];
+  return [...staticPages, ...coursePages, ...bundlePages, ...blogPostPages];
 }

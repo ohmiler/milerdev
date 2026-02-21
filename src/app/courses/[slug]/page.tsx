@@ -13,6 +13,8 @@ import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { getExcerpt, sanitizeRichContent } from '@/lib/sanitize';
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
+
 function normalizeUrl(url: string | null): string | null {
     if (!url || url.trim() === '') return null;
     if (url.startsWith('http')) return url;
@@ -142,8 +144,34 @@ export default async function CourseDetailPage({ params }: Props) {
   const promoPrice = isPromoActive ? parseFloat(course.promoPrice || '0') : null;
   const displayPrice = promoPrice !== null ? promoPrice : price;
 
+  const courseJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: course.title,
+    description: course.description ? getExcerpt(course.description, 160) : 'เรียนออนไลน์กับ MilerDev',
+    url: `${siteUrl}/courses/${slug}`,
+    ...(normalizeUrl(course.thumbnailUrl) && { image: normalizeUrl(course.thumbnailUrl) }),
+    provider: {
+      '@type': 'Organization',
+      name: 'MilerDev',
+      sameAs: siteUrl,
+    },
+    offers: {
+      '@type': 'Offer',
+      price: displayPrice,
+      priceCurrency: 'THB',
+      availability: 'https://schema.org/InStock',
+      url: `${siteUrl}/courses/${slug}`,
+    },
+    hasCourseInstance: {
+      '@type': 'CourseInstance',
+      courseMode: 'online',
+    },
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }} />
       <Navbar />
       <ProductViewTracker itemType="course" courseId={course.id} />
 

@@ -76,6 +76,25 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${notoSansThai.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'MilerDev',
+              url: siteUrl,
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                  '@type': 'EntryPoint',
+                  urlTemplate: `${siteUrl}/courses?search={search_term_string}`,
+                },
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
         <SessionProvider>
           <NotificationProvider>{children}</NotificationProvider>
         </SessionProvider>
