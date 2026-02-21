@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -12,13 +12,9 @@ const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ss
 const TagSelector = dynamic(() => import('@/components/admin/TagSelector'), { ssr: false });
 const CertificateColorPicker = dynamic(() => import('@/components/admin/CertificateColorPicker'), { ssr: false });
 
-interface Props {
-  params: Promise<{ id: string }>;
-}
-
-export default function EditCoursePage({ params }: Props) {
+export default function EditCoursePage() {
   const router = useRouter();
-  const [courseId, setCourseId] = useState<string | null>(null);
+  const { id: courseId } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -41,36 +37,32 @@ export default function EditCoursePage({ params }: Props) {
   });
 
   useEffect(() => {
-    params.then(({ id }) => {
-      setCourseId(id);
-      // Fetch course data
-      fetch(`/api/admin/courses/${id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.course) {
-            setFormData({
-              title: data.course.title || '',
-              slug: data.course.slug || '',
-              description: data.course.description || '',
-              price: String(data.course.price || 0),
-              status: data.course.status || 'draft',
-              thumbnailUrl: data.course.thumbnailUrl || '',
-              certificateColor: data.course.certificateColor || '#2563eb',
-              certificateHeaderImage: data.course.certificateHeaderImage || '',
-              previewVideoUrl: data.course.previewVideoUrl || '',
-              promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
-              promoStartsAt: data.course.promoStartsAt ? new Date(data.course.promoStartsAt).toISOString().slice(0, 16) : '',
-              promoEndsAt: data.course.promoEndsAt ? new Date(data.course.promoEndsAt).toISOString().slice(0, 16) : '',
-            });
-          }
-          if (data.tags) {
-            setSelectedTagIds(data.tags.map((t: { id: string }) => t.id));
-          }
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    });
-  }, [params]);
+    fetch(`/api/admin/courses/${courseId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.course) {
+          setFormData({
+            title: data.course.title || '',
+            slug: data.course.slug || '',
+            description: data.course.description || '',
+            price: String(data.course.price || 0),
+            status: data.course.status || 'draft',
+            thumbnailUrl: data.course.thumbnailUrl || '',
+            certificateColor: data.course.certificateColor || '#2563eb',
+            certificateHeaderImage: data.course.certificateHeaderImage || '',
+            previewVideoUrl: data.course.previewVideoUrl || '',
+            promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
+            promoStartsAt: data.course.promoStartsAt ? new Date(data.course.promoStartsAt).toISOString().slice(0, 16) : '',
+            promoEndsAt: data.course.promoEndsAt ? new Date(data.course.promoEndsAt).toISOString().slice(0, 16) : '',
+          });
+        }
+        if (data.tags) {
+          setSelectedTagIds(data.tags.map((t: { id: string }) => t.id));
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [courseId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

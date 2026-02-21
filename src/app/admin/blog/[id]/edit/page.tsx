@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -11,13 +11,9 @@ const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor')
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
 const TagSelector = dynamic(() => import('@/components/admin/TagSelector'), { ssr: false });
 
-interface Props {
-  params: Promise<{ id: string }>;
-}
-
-export default function EditBlogPostPage({ params }: Props) {
+export default function EditBlogPostPage() {
   const router = useRouter();
-  const [postId, setPostId] = useState<string | null>(null);
+  const { id: postId } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -44,29 +40,26 @@ export default function EditBlogPostPage({ params }: Props) {
   };
 
   useEffect(() => {
-    params.then(({ id }) => {
-      setPostId(id);
-      fetch(`/api/admin/blog/${id}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.post) {
-            setFormData({
-              title: data.post.title || '',
-              slug: data.post.slug || '',
-              excerpt: data.post.excerpt || '',
-              content: data.post.content || '',
-              thumbnailUrl: data.post.thumbnailUrl || '',
-              status: data.post.status || 'draft',
-            });
-          }
-          if (data.tags) {
-            setSelectedTagIds(data.tags.map((t: { id: string }) => t.id));
-          }
-        })
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    });
-  }, [params]);
+    fetch(`/api/admin/blog/${postId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.post) {
+          setFormData({
+            title: data.post.title || '',
+            slug: data.post.slug || '',
+            excerpt: data.post.excerpt || '',
+            content: data.post.content || '',
+            thumbnailUrl: data.post.thumbnailUrl || '',
+            status: data.post.status || 'draft',
+          });
+        }
+        if (data.tags) {
+          setSelectedTagIds(data.tags.map((t: { id: string }) => t.id));
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [postId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

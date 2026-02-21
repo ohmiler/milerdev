@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -327,9 +328,9 @@ export default async function BlogPostPage({ params }: Props) {
                       onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)')}
                       onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
                     >
-                      <div style={{ aspectRatio: '16/9', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', overflow: 'hidden' }}>
+                      <div style={{ aspectRatio: '16/9', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', overflow: 'hidden', position: 'relative' }}>
                         {normalizeUrl(rp.thumbnailUrl) && (
-                          <img src={normalizeUrl(rp.thumbnailUrl)!} alt={rp.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <Image src={normalizeUrl(rp.thumbnailUrl)!} alt={rp.title} fill sizes="220px" style={{ objectFit: 'cover' }} />
                         )}
                       </div>
                       <div style={{ padding: '12px' }}>

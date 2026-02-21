@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import DraggableLessonList from '@/components/admin/DraggableLessonList';
 import dynamic from 'next/dynamic';
@@ -19,12 +20,8 @@ interface Lesson {
   isFreePreview: boolean | null;
 }
 
-interface Props {
-  params: Promise<{ id: string }>;
-}
-
-export default function ManageLessonsPage({ params }: Props) {
-  const [courseId, setCourseId] = useState<string | null>(null);
+export default function ManageLessonsPage() {
+  const { id: courseId } = useParams<{ id: string }>();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -50,11 +47,8 @@ export default function ManageLessonsPage({ params }: Props) {
   };
 
   useEffect(() => {
-    params.then(({ id }) => {
-      setCourseId(id);
-      fetchLessons(id).finally(() => setLoading(false));
-    });
-  }, [params]);
+    fetchLessons(courseId).finally(() => setLoading(false));
+  }, [courseId]);
 
   const resetForm = () => {
     setFormData({

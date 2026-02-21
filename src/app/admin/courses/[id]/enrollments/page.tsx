@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { db } from '@/lib/db';
 import { courses, enrollments, users, lessonProgress, lessons } from '@/lib/db/schema';
 import { eq, sql, desc, and } from 'drizzle-orm';
@@ -221,7 +222,7 @@ export default async function CourseEnrollmentsPage({ params, searchParams }: Pa
                                                     overflow: 'hidden',
                                                 }}>
                                                     {user.userAvatar ? (
-                                                        <img src={user.userAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        <Image src={user.userAvatar} alt="" width={36} height={36} style={{ objectFit: 'cover' }} />
                                                     ) : (
                                                         (user.userName || user.userEmail)?.[0]?.toUpperCase() || '?'
                                                     )}

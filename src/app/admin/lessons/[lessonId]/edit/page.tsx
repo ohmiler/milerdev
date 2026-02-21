@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { showToast } from '@/components/ui/Toast';
@@ -19,13 +19,9 @@ interface Lesson {
   courseId: string;
 }
 
-interface Props {
-  params: Promise<{ lessonId: string }>;
-}
-
-export default function EditLessonPage({ params }: Props) {
+export default function EditLessonPage() {
   const router = useRouter();
-  const [lessonId, setLessonId] = useState<string | null>(null);
+  const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,11 +35,8 @@ export default function EditLessonPage({ params }: Props) {
   });
 
   useEffect(() => {
-    params.then(({ lessonId: id }) => {
-      setLessonId(id);
-      fetchLesson(id);
-    });
-  }, [params]);
+    fetchLesson(lessonId);
+  }, [lessonId]);
 
   const fetchLesson = async (id: string) => {
     try {
