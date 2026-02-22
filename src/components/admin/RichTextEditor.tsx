@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
+import { TextSelection } from '@tiptap/pm/state';
 import { useEffect, useCallback } from 'react';
 
 const lowlight = createLowlight(common);
@@ -66,6 +67,8 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       }),
       CodeBlockLowlight.configure({
         lowlight,
+        exitOnTripleEnter: true,
+        exitOnArrowDown: true,
       }),
     ],
     content: content || '',
@@ -83,6 +86,83 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           'color: #1e293b',
         ].join(';'),
       },
+      handleKeyDown(view, event) {
+        const { state } = view;
+        const { $from } = state.selection;
+
+        // Find code block depth (handles nested blocks too)
+        let cbDepth = -1;
+        for (let d = $from.depth; d >= 1; d--) {
+          if ($from.node(d).type.name === 'codeBlock') { cbDepth = d; break; }
+        }
+        if (cbDepth < 0) return false;
+
+        // Reliable position & text via node.textContent
+        const cbStart = $from.start(cbDepth);
+        const text = $from.node(cbDepth).textContent;
+        const offset = $from.pos - cbStart;
+        const beforeCursor = text.slice(0, offset);
+        const lineStartOff = beforeCursor.lastIndexOf('\n') + 1;
+
+        // Tab → indent 2 spaces
+        if (event.key === 'Tab' && !event.shiftKey) {
+          event.preventDefault();
+          view.dispatch(state.tr.insertText('  '));
+          return true;
+        }
+
+        // Shift+Tab → dedent 2 spaces at current line start
+        if (event.key === 'Tab' && event.shiftKey) {
+          event.preventDefault();
+          const lineText = text.slice(lineStartOff);
+          const delPos = cbStart + lineStartOff;
+          if (lineText.startsWith('  ')) {
+            view.dispatch(state.tr.delete(delPos, delPos + 2));
+          } else if (lineText.startsWith(' ')) {
+            view.dispatch(state.tr.delete(delPos, delPos + 1));
+          }
+          return true;
+        }
+
+        // Backspace → if only whitespace before cursor on this line, dedent by 2
+        if (event.key === 'Backspace' && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+          if (offset === 0) return false; // very start of code block
+          const lineContent = text.slice(lineStartOff, offset);
+          if (/^\s+$/.test(lineContent) && lineContent.length >= 2) {
+            event.preventDefault();
+            view.dispatch(state.tr.delete($from.pos - 2, $from.pos));
+            return true;
+          }
+          return false;
+        }
+
+        // Enter → auto-indent (inherit current line's leading whitespace)
+        if (event.key === 'Enter' && !event.shiftKey) {
+          const fullLine = text.slice(lineStartOff).split('\n')[0];
+          const indentMatch = fullLine.match(/^(\s+)/);
+          if (indentMatch && fullLine.trim().length > 0) {
+            event.preventDefault();
+            view.dispatch(state.tr.insertText('\n' + indentMatch[1]));
+            return true;
+          }
+          // else: let TipTap handle (enables exitOnTripleEnter)
+        }
+
+        // Escape → exit code block (insert paragraph after)
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          const codeBlockEnd = $from.after(cbDepth);
+          const tr = state.tr;
+          const para = state.schema.nodes.paragraph.create();
+          tr.insert(codeBlockEnd, para);
+          tr.setSelection(TextSelection.near(tr.doc.resolve(codeBlockEnd + 1)));
+          view.dispatch(tr);
+          view.focus();
+          return true;
+        }
+
+        return false;
+      },
     },
   });
 
@@ -92,6 +172,24 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
+
+  const exitCodeBlock = useCallback(() => {
+    if (!editor || !editor.isActive('codeBlock')) return;
+    const { state, view } = editor;
+    const { $to } = state.selection;
+    let cbDepth = -1;
+    for (let d = $to.depth; d >= 1; d--) {
+      if ($to.node(d).type.name === 'codeBlock') { cbDepth = d; break; }
+    }
+    if (cbDepth < 0) return;
+    const after = $to.after(cbDepth);
+    if (after > state.doc.content.size) return;
+    const paragraphNode = state.schema.nodes.paragraph.create();
+    const tr = state.tr.insert(after, paragraphNode);
+    tr.setSelection(TextSelection.near(tr.doc.resolve(after + 1)));
+    view.dispatch(tr);
+    view.focus();
+  }, [editor]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -198,33 +296,41 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           {'{ }'}
         </MenuButton>
         {editor.isActive('codeBlock') && (
-          <select
-            value={editor.getAttributes('codeBlock').language || ''}
-            onChange={(e) => {
-              editor.chain().focus().setCodeBlock({ language: e.target.value }).run();
-            }}
-            style={{
-              padding: '4px 8px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              fontSize: '0.8rem',
-              color: '#475569',
-              background: 'white',
-              cursor: 'pointer',
-              height: '32px',
-            }}
-          >
-            <option value="">Auto</option>
-            <option value="javascript">JavaScript</option>
-            <option value="typescript">TypeScript</option>
-            <option value="tsx">TSX / JSX</option>
-            <option value="html">HTML</option>
-            <option value="css">CSS</option>
-            <option value="python">Python</option>
-            <option value="bash">Bash / Shell</option>
-            <option value="sql">SQL</option>
-            <option value="json">JSON</option>
-          </select>
+          <>
+            <select
+              value={editor.getAttributes('codeBlock').language || ''}
+              onChange={(e) => {
+                editor.chain().focus().setCodeBlock({ language: e.target.value }).run();
+              }}
+              style={{
+                padding: '4px 8px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                color: '#475569',
+                background: 'white',
+                cursor: 'pointer',
+                height: '32px',
+              }}
+            >
+              <option value="">Auto</option>
+              <option value="javascript">JavaScript</option>
+              <option value="typescript">TypeScript</option>
+              <option value="tsx">TSX / JSX</option>
+              <option value="html">HTML</option>
+              <option value="css">CSS</option>
+              <option value="python">Python</option>
+              <option value="bash">Bash / Shell</option>
+              <option value="sql">SQL</option>
+              <option value="json">JSON</option>
+            </select>
+            <MenuButton
+              onClick={exitCodeBlock}
+              title="ออกจาก Code Block (↓ Arrow Down ท้ายบล็อก)"
+            >
+              ↓ ออก
+            </MenuButton>
+          </>
         )}
 
         <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
@@ -308,13 +414,28 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         .tiptap pre {
           background: #1e293b;
           color: #e2e8f0;
-          padding: 16px;
+          padding: 40px 16px 16px;
           border-radius: 8px;
           overflow-x: auto;
           margin: 0.75em 0;
           font-family: 'Fira Code', monospace;
           font-size: 0.9em;
           line-height: 1.6;
+          position: relative;
+        }
+        .tiptap pre::before {
+          content: 'CODE — Tab: indent · Shift+Tab: dedent · Enter: auto-indent · Esc: exit';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          padding: 5px 12px;
+          font-size: 0.65rem;
+          font-family: monospace;
+          color: #64748b;
+          background: rgba(255,255,255,0.05);
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+          border-radius: 8px 8px 0 0;
+          letter-spacing: 0.05em;
+          pointer-events: none;
         }
         .tiptap pre code {
           background: none;

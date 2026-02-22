@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 
-export default function CodeCopyButton() {
+export default function CodeCopyButton({ selector = '.rich-content pre' }: { selector?: string } = {}) {
   useEffect(() => {
-    const blocks = document.querySelectorAll<HTMLPreElement>('.rich-content pre');
+    const blocks = document.querySelectorAll<HTMLPreElement>(selector);
 
     blocks.forEach((pre) => {
       if (pre.querySelector('.code-copy-btn')) return;
@@ -32,7 +32,7 @@ export default function CodeCopyButton() {
       pre.style.position = 'relative';
       pre.appendChild(btn);
     });
-  }, []);
+  }, [selector]);
 
   return null;
 }

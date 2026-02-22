@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
-import { courses, bundles, blogPosts } from '@/lib/db/schema';
+import { courses, bundles, blogPosts, docs } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
@@ -39,6 +39,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
+      url: `${siteUrl}/docs`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
       url: `${siteUrl}/faq`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -62,6 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let coursePages: MetadataRoute.Sitemap = [];
   let bundlePages: MetadataRoute.Sitemap = [];
   let blogPostPages: MetadataRoute.Sitemap = [];
+  let docPages: MetadataRoute.Sitemap = [];
 
   try {
     const publishedCourses = await db
@@ -98,9 +105,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     }));
+
+    const publishedDocs = await db
+      .select({ slug: docs.slug, updatedAt: docs.updatedAt })
+      .from(docs)
+      .where(eq(docs.status, 'published'));
+
+    docPages = publishedDocs.map((doc) => ({
+      url: `${siteUrl}/docs/${doc.slug}`,
+      lastModified: doc.updatedAt || new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
   } catch {
     // DB not available at build time — return static pages only
   }
 
-  return [...staticPages, ...coursePages, ...bundlePages, ...blogPostPages];
+  return [...staticPages, ...coursePages, ...bundlePages, ...blogPostPages, ...docPages];
 }

@@ -43,6 +43,13 @@
       "when": 1771434561960,
       "tag": "0005_bitter_rafael_vega",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1771754029999,
+      "tag": "0006_quiet_midnight",
+      "breakpoints": true
     }
   ]
 }
