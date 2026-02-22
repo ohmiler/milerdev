@@ -50,3 +50,17 @@ BUNNY_CDN_HOSTNAME="your-cdn-hostname.b-cdn.net"
 # 3. RESEND_API_KEY: สมัครที่ resend.com
 # 4. EMAIL_FROM: ต้องใช้ domain ที่ verify แล้วใน Resend
 # 5. STRIPE: ใช้ test keys สำหรับ development
+
+# ======================
+# Setup เครื่องใหม่
+# ======================
+# 1. git clone → npm install
+# 2. สร้าง .env.local ตามไฟล์นี้
+# 3. สร้าง database: mysql -u root -e "CREATE DATABASE course_platform;"
+# 4. รัน migration: npx tsx src/lib/db/migrate.ts
+# 5. Seed ข้อมูลทดสอบ: npm run db:seed
+#
+# Login ทดสอบ:
+#   Admin:      admin@milerdev.com / admin1234
+#   Instructor: instructor@milerdev.com / instructor1234
+#   Student:    student@milerdev.com / student1234
