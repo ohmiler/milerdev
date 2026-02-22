@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx tsx src/lib/db/migrate.ts && next build",
-    "start": "next start",
+    "build": "next build",
+    "start": "npx tsx src/lib/db/migrate.ts && next start",
     "lint": "eslint",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
