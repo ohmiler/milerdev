@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "infisical run --env=dev -- next dev",
     "build": "next build",
     "start": "npx tsx src/lib/db/migrate.ts && next start",
     "lint": "eslint",
@@ -15,7 +16,11 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "npx tsx scripts/seed.ts"
+    "db:seed": "npx tsx scripts/seed.ts",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs mysql",
+    "docker:mysql": "docker exec -it milerdev-mysql mysql -uroot -proot milerdev"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
