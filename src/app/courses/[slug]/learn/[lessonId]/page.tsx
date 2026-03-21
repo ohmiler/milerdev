@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { courses, lessons, enrollments, lessonProgress } from '@/lib/db/schema';
 import { eq, and, asc } from 'drizzle-orm';
 import LearnPageClient from '@/components/course/LearnPageClient';
-import { generateSignedVideoUrl, extractBunnyVideoId, isBunnyVideo } from '@/lib/bunny';
+import { generateSignedVideoUrl, extractBunnyVideoInfo, isBunnyVideo } from '@/lib/bunny';
 import sanitizeHtml from 'sanitize-html';
 
 export const dynamic = 'force-dynamic';
@@ -159,9 +159,9 @@ export default async function LessonPage({ params }: Props) {
 
   // Sign Bunny.net video URL on the server
   if (signedLesson.videoUrl && isBunnyVideo(signedLesson.videoUrl)) {
-    const videoGuid = extractBunnyVideoId(signedLesson.videoUrl);
-    if (videoGuid) {
-      signedLesson.videoUrl = generateSignedVideoUrl(videoGuid);
+    const bunnyVideo = extractBunnyVideoInfo(signedLesson.videoUrl);
+    if (bunnyVideo) {
+      signedLesson.videoUrl = generateSignedVideoUrl(bunnyVideo.videoId, 3600, bunnyVideo.libraryId);
     }
   }
 

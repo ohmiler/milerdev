@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 
 interface BunnyPlayerProps {
   videoId: string;
@@ -26,6 +26,8 @@ export default function BunnyPlayer({
   onEnded,
 }: BunnyPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [showDebugOverlay, setShowDebugOverlay] = useState(false);
 
   // Listen for postMessage events from Bunny.net iframe player
   const handleMessage = useCallback((event: MessageEvent) => {
@@ -56,45 +58,38 @@ export default function BunnyPlayer({
     }
   }, [onTimeUpdate, onPlay, onPause, onEnded]);
 
-  useEffect(() => {
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [handleMessage]);
+  const embedUrl = useMemo(() => {
+    // Detect video type from URL
+    const detectVideoType = (url: string): VideoType => {
+      if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+      if (url.includes('vimeo.com')) return 'vimeo';
+      if (url.includes('iframe.mediadelivery.net') || url.includes('video.bunnycdn.com')) return 'bunny';
+      return 'unknown';
+    };
 
-  // Detect video type from URL
-  const detectVideoType = (url: string): VideoType => {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
-    if (url.includes('vimeo.com')) return 'vimeo';
-    if (url.includes('iframe.mediadelivery.net') || url.includes('video.bunnycdn.com')) return 'bunny';
-    return 'unknown';
-  };
+    // Extract YouTube video ID
+    const getYouTubeId = (url: string): string | null => {
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=)([^&\s]+)/,
+        /(?:youtu\.be\/)([^?\s]+)/,
+        /(?:youtube\.com\/embed\/)([^?\s]+)/,
+        /(?:youtube\.com\/v\/)([^?\s]+)/,
+      ];
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+      }
+      return null;
+    };
 
-  // Extract YouTube video ID
-  const getYouTubeId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=)([^&\s]+)/,
-      /(?:youtu\.be\/)([^?\s]+)/,
-      /(?:youtube\.com\/embed\/)([^?\s]+)/,
-      /(?:youtube\.com\/v\/)([^?\s]+)/,
-    ];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
+    // Extract Vimeo video ID
+    const getVimeoId = (url: string): string | null => {
+      const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      return match ? match[1] : null;
+    };
 
-  // Extract Vimeo video ID
-  const getVimeoId = (url: string): string | null => {
-    const match = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-    return match ? match[1] : null;
-  };
-
-  // Get embed URL based on video type
-  const getEmbedUrl = () => {
     const videoType = detectVideoType(videoId);
 
-    // YouTube
     if (videoType === 'youtube') {
       const ytId = getYouTubeId(videoId);
       if (ytId) {
@@ -103,7 +98,6 @@ export default function BunnyPlayer({
       }
     }
 
-    // Vimeo
     if (videoType === 'vimeo') {
       const vimeoId = getVimeoId(videoId);
       if (vimeoId) {
@@ -112,7 +106,6 @@ export default function BunnyPlayer({
       }
     }
 
-    // Bunny.net
     if (videoType === 'bunny') {
       if (videoId.includes('/play/')) {
         return videoId.replace('/play/', '/embed/');
@@ -126,23 +119,41 @@ export default function BunnyPlayer({
       }
       return videoId;
     }
-    
-    // If it's just a video ID (UUID format for Bunny)
+
     if (/^[a-f0-9-]{36}$/i.test(videoId) && libraryId) {
       return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}`;
     }
-    
-    // If libraryId is provided and videoId looks like just an ID
+
     if (libraryId && !videoId.includes('http')) {
       return `https://iframe.mediadelivery.net/embed/${libraryId}/${videoId}`;
     }
 
-    // Return as-is (might be a full URL)
     return videoId;
-  };
+  }, [autoplay, libraryId, videoId]);
 
-  const embedUrl = getEmbedUrl();
+  useEffect(() => {
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handleMessage]);
+
   const finalUrl = embedUrl;
+
+  useEffect(() => {
+    setIframeLoaded(false);
+    setShowDebugOverlay(false);
+  }, [finalUrl]);
+
+  useEffect(() => {
+    if (!finalUrl) return;
+
+    const timer = window.setTimeout(() => {
+      if (!iframeLoaded) {
+        setShowDebugOverlay(true);
+      }
+    }, 8000);
+
+    return () => window.clearTimeout(timer);
+  }, [finalUrl, iframeLoaded]);
 
   if (!videoId) {
     return (
@@ -183,6 +194,7 @@ export default function BunnyPlayer({
         ref={iframeRef}
         src={finalUrl}
         loading="lazy"
+        onLoad={() => setIframeLoaded(true)}
         style={{
           position: 'absolute',
           top: 0,
@@ -194,6 +206,31 @@ export default function BunnyPlayer({
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
         allowFullScreen
       />
+      {showDebugOverlay && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.72)',
+            color: '#e2e8f0',
+            padding: '24px',
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ maxWidth: '520px' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '10px' }}>วิดีโอกำลังโหลดช้าผิดปกติ</div>
+            <div style={{ color: '#94a3b8', fontSize: '0.875rem', lineHeight: 1.7, marginBottom: '14px' }}>
+              หากหน้าจอยังคงเป็นสีดำ อาจเกิดจากเครือข่ายหรือผู้ให้บริการอินเทอร์เน็ตบล็อกการเชื่อมต่อกับระบบวิดีโอ
+            </div>
+            <div style={{ color: '#64748b', fontSize: '0.75rem', lineHeight: 1.7, wordBreak: 'break-all' }}>
+              {finalUrl}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
