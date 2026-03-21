@@ -11,6 +11,7 @@ import ProductViewTracker from '@/components/analytics/ProductViewTracker';
 import { db } from '@/lib/db';
 import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
+import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny';
 import { getExcerpt, sanitizeRichContent } from '@/lib/sanitize';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
@@ -126,6 +127,15 @@ export default async function CourseDetailPage({ params }: Props) {
   if (!course) {
     notFound();
   }
+
+  const signedPreviewVideoUrl = course.previewVideoUrl && isBunnyVideo(course.previewVideoUrl)
+    ? (() => {
+        const bunnyVideo = extractBunnyVideoInfo(course.previewVideoUrl);
+        return bunnyVideo
+          ? generateSignedVideoUrl(bunnyVideo.videoId, 3600, bunnyVideo.libraryId)
+          : course.previewVideoUrl;
+      })()
+    : course.previewVideoUrl;
 
   const price = parseFloat(course.price || '0');
 
@@ -362,8 +372,8 @@ export default async function CourseDetailPage({ params }: Props) {
                     )}
 
                     {/* Preview Video Play Button */}
-                    {course.previewVideoUrl && (
-                      <CoursePreviewVideo previewVideoUrl={course.previewVideoUrl} />
+                    {signedPreviewVideoUrl && (
+                      <CoursePreviewVideo previewVideoUrl={signedPreviewVideoUrl} />
                     )}
                   </div>
 
