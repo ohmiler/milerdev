@@ -70,6 +70,78 @@ async function getRecentEnrollments() {
   return recent;
 }
 
+async function getSevenDayRevenue() {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 6);
+  startDate.setHours(0, 0, 0, 0);
+
+  const rows = await db
+    .select({
+      date: sql<string>`DATE_FORMAT(${payments.createdAt}, '%Y-%m-%d')`,
+      total: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`,
+    })
+    .from(payments)
+    .where(gte(payments.createdAt, startDate))
+    .groupBy(sql`DATE_FORMAT(${payments.createdAt}, '%Y-%m-%d')`)
+    .orderBy(sql`DATE_FORMAT(${payments.createdAt}, '%Y-%m-%d')`);
+
+  const rowMap = new Map(rows.map((row) => [row.date, Number(row.total || 0)]));
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + index);
+    const key = date.toISOString().slice(0, 10);
+    return {
+      date: key,
+      total: rowMap.get(key) || 0,
+    };
+  });
+}
+
+async function getSevenDayEnrollmentTrend() {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 6);
+  startDate.setHours(0, 0, 0, 0);
+
+  const rows = await db
+    .select({
+      date: sql<string>`DATE_FORMAT(${enrollments.enrolledAt}, '%Y-%m-%d')`,
+      count: sql<number>`COUNT(*)`,
+    })
+    .from(enrollments)
+    .where(gte(enrollments.enrolledAt, startDate))
+    .groupBy(sql`DATE_FORMAT(${enrollments.enrolledAt}, '%Y-%m-%d')`)
+    .orderBy(sql`DATE_FORMAT(${enrollments.enrolledAt}, '%Y-%m-%d')`);
+
+  const rowMap = new Map(rows.map((row) => [row.date, Number(row.count || 0)]));
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + index);
+    const key = date.toISOString().slice(0, 10);
+    return {
+      date: key,
+      count: rowMap.get(key) || 0,
+    };
+  });
+}
+
+async function getPaymentHealthStats() {
+  const [healthRow] = await db
+    .select({
+      completed: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN 1 ELSE 0 END), 0)`,
+      pending: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'pending' THEN 1 ELSE 0 END), 0)`,
+      failed: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'failed' THEN 1 ELSE 0 END), 0)`,
+    })
+    .from(payments);
+
+  return {
+    completed: Number(healthRow?.completed || 0),
+    pending: Number(healthRow?.pending || 0),
+    failed: Number(healthRow?.failed || 0),
+  };
+}
+
 async function getRecentPayments() {
   const recent = await db
     .select({
@@ -101,10 +173,15 @@ function getInitials(nameOrEmail: string) {
 }
 
 export default async function AdminDashboard() {
-  const stats = await getStats();
-  const revenueStats = await getRevenueStats();
-  const recentEnrollments = await getRecentEnrollments();
-  const recentPayments = await getRecentPayments();
+  const [stats, revenueStats, recentEnrollments, recentPayments, sevenDayRevenue, sevenDayEnrollments, paymentHealth] = await Promise.all([
+    getStats(),
+    getRevenueStats(),
+    getRecentEnrollments(),
+    getRecentPayments(),
+    getSevenDayRevenue(),
+    getSevenDayEnrollmentTrend(),
+    getPaymentHealthStats(),
+  ]);
 
   const formatCurrency = (amount: number | string) => {
     return new Intl.NumberFormat('th-TH', {
@@ -120,6 +197,13 @@ export default async function AdminDashboard() {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+    });
+  };
+
+  const formatShortDate = (date: string) => {
+    return new Date(date).toLocaleDateString('th-TH', {
+      month: 'short',
+      day: 'numeric',
     });
   };
 
@@ -194,6 +278,11 @@ export default async function AdminDashboard() {
       ],
     },
   ];
+
+  const maxRevenueValue = Math.max(...sevenDayRevenue.map((item) => item.total), 1);
+  const maxEnrollmentValue = Math.max(...sevenDayEnrollments.map((item) => item.count), 1);
+  const totalPayments = paymentHealth.completed + paymentHealth.pending + paymentHealth.failed;
+  const paymentSuccessRate = totalPayments > 0 ? (paymentHealth.completed / totalPayments) * 100 : 0;
 
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
@@ -292,6 +381,88 @@ export default async function AdminDashboard() {
             <div style={{ fontSize: '1.8rem', fontWeight: 800, color: item.tone, lineHeight: 1.1 }}>{item.value}</div>
           </div>
         ))}
+      </section>
+
+      <section style={{ display: 'grid', gap: '16px' }}>
+        <div>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>Trend Widgets</h2>
+          <div style={{ color: '#64748b', fontSize: '0.84rem' }}>สรุป movement ระยะสั้นเพื่อช่วยมอง momentum ของรายได้ การลงทะเบียน และสุขภาพการชำระเงิน</div>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '16px',
+        }}>
+          <div style={{ background: 'white', borderRadius: '18px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
+            <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>รายได้ 7 วัน</div>
+            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7, marginBottom: '14px' }}>ยอดชำระสำเร็จรายวันในช่วง 7 วันที่ผ่านมา</div>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {sevenDayRevenue.map((item) => (
+                <div key={item.date}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.78rem' }}>
+                    <span style={{ color: '#64748b' }}>{formatShortDate(item.date)}</span>
+                    <span style={{ color: '#0f172a', fontWeight: 600 }}>{formatCurrency(item.total)}</span>
+                  </div>
+                  <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${Math.max((item.total / maxRevenueValue) * 100, item.total > 0 ? 8 : 0)}%`, background: 'linear-gradient(90deg, #2563eb, #1d4ed8)', borderRadius: '999px' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: 'white', borderRadius: '18px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
+            <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Enrollment Trend</div>
+            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7, marginBottom: '14px' }}>จำนวนการลงทะเบียนใหม่ต่อวันในช่วง 7 วันที่ผ่านมา</div>
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {sevenDayEnrollments.map((item) => (
+                <div key={item.date}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.78rem' }}>
+                    <span style={{ color: '#64748b' }}>{formatShortDate(item.date)}</span>
+                    <span style={{ color: '#0f172a', fontWeight: 600 }}>{item.count} รายการ</span>
+                  </div>
+                  <div style={{ height: '8px', background: '#ede9fe', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${Math.max((item.count / maxEnrollmentValue) * 100, item.count > 0 ? 8 : 0)}%`, background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', borderRadius: '999px' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: 'white', borderRadius: '18px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
+            <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Payment Health</div>
+            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7, marginBottom: '14px' }}>ภาพรวมสถานะการชำระเงินทั้งหมด เพื่อดูสัดส่วนรายการสำเร็จและรายการที่ต้องติดตาม</div>
+            <div style={{ display: 'grid', gap: '14px' }}>
+              <div style={{ padding: '14px 16px', borderRadius: '14px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                <div style={{ color: '#64748b', fontSize: '0.78rem', marginBottom: '6px' }}>Success Rate</div>
+                <div style={{ color: paymentSuccessRate >= 70 ? '#16a34a' : paymentSuccessRate >= 40 ? '#d97706' : '#dc2626', fontSize: '1.9rem', fontWeight: 800, lineHeight: 1.1 }}>
+                  {paymentSuccessRate.toFixed(1)}%
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '0.76rem', marginTop: '6px' }}>คิดจาก completed เทียบกับ payment ทั้งหมดในระบบ</div>
+              </div>
+              <div style={{ display: 'grid', gap: '10px' }}>
+                {[
+                  { label: 'Completed', value: paymentHealth.completed, color: '#16a34a', bg: '#dcfce7' },
+                  { label: 'Pending', value: paymentHealth.pending, color: '#c2410c', bg: '#ffedd5' },
+                  { label: 'Failed', value: paymentHealth.failed, color: '#b91c1c', bg: '#fee2e2' },
+                ].map((item) => {
+                  const width = totalPayments > 0 ? (item.value / totalPayments) * 100 : 0;
+                  return (
+                    <div key={item.label}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.78rem' }}>
+                        <span style={{ color: '#475569', fontWeight: 600 }}>{item.label}</span>
+                        <span style={{ color: '#0f172a' }}>{item.value} รายการ</span>
+                      </div>
+                      <div style={{ height: '8px', background: item.bg, borderRadius: '999px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${width}%`, background: item.color, borderRadius: '999px' }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section style={{ display: 'grid', gap: '16px' }}>
