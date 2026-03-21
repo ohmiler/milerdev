@@ -71,6 +71,8 @@ function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, on
 
   const isEditing = editingVideoId === lesson.id;
   const isSaving = savingVideoId === lesson.id;
+  const hasContent = Boolean(lesson.content && lesson.content.trim().length > 0);
+  const needsAttention = !lesson.videoUrl || !hasContent;
 
   const {
     attributes,
@@ -104,9 +106,9 @@ function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, on
         style={{
           display: 'flex',
           alignItems: 'center',
-          padding: '10px 20px',
+          padding: '14px 20px',
           borderBottom: isEditing ? 'none' : '1px solid #e2e8f0',
-          background: isDragging ? '#f1f5f9' : isEditing ? '#f8fafc' : 'white',
+          background: isDragging ? '#f1f5f9' : isEditing ? '#f8fafc' : needsAttention ? 'linear-gradient(90deg, rgba(255,247,237,0.65), rgba(255,255,255,0))' : 'white',
         }}
       >
         {/* Drag Handle */}
@@ -132,8 +134,8 @@ function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, on
           width: '28px',
           height: '28px',
           borderRadius: '50%',
-          background: lesson.videoUrl ? '#dcfce7' : '#fef3c7',
-          color: lesson.videoUrl ? '#16a34a' : '#d97706',
+          background: lesson.videoUrl && hasContent ? '#dcfce7' : '#fef3c7',
+          color: lesson.videoUrl && hasContent ? '#16a34a' : '#d97706',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -149,29 +151,54 @@ function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, on
         <div style={{ flex: 1, minWidth: 0 }}>
           <Link
             href={`/admin/lessons/${lesson.id}/edit`}
-            style={{ fontWeight: 500, color: '#1e293b', textDecoration: 'none', display: 'block', fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            style={{ fontWeight: 600, color: '#1e293b', textDecoration: 'none', display: 'block', fontSize: '0.92rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#2563eb')}
             onMouseLeave={(e) => (e.currentTarget.style.color = '#1e293b')}
           >
             {lesson.title}
           </Link>
-          <div style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'flex', gap: '8px', marginTop: '2px' }}>
+          <div style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
             {lesson.videoDuration && lesson.videoDuration > 0 && (
               <span>⏱️ {Math.floor(lesson.videoDuration / 60)}:{(lesson.videoDuration % 60) < 10 ? '0' : ''}{lesson.videoDuration % 60}</span>
             )}
             {lesson.isFreePreview && (
               <span style={{ color: '#16a34a' }}>🆓 ดูฟรี</span>
             )}
+            {hasContent && (
+              <span>📝 มีเนื้อหา</span>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+            {!lesson.videoUrl && (
+              <span style={{ padding: '4px 8px', borderRadius: '999px', background: '#fff7ed', color: '#c2410c', fontSize: '0.68rem', fontWeight: 600 }}>
+                ยังไม่มีวิดีโอ
+              </span>
+            )}
+            {!hasContent && (
+              <span style={{ padding: '4px 8px', borderRadius: '999px', background: '#fef2f2', color: '#dc2626', fontSize: '0.68rem', fontWeight: 600 }}>
+                ยังไม่มีเนื้อหา
+              </span>
+            )}
+            {lesson.videoUrl && hasContent && (
+              <span style={{ padding: '4px 8px', borderRadius: '999px', background: '#dcfce7', color: '#166534', fontSize: '0.68rem', fontWeight: 600 }}>
+                พร้อมใช้งาน
+              </span>
+            )}
+            {needsAttention && (
+              <span style={{ padding: '4px 8px', borderRadius: '999px', background: '#fff7ed', color: '#9a3412', fontSize: '0.68rem', fontWeight: 600 }}>
+                ควรตรวจ
+              </span>
+            )}
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <button
             onClick={() => onEditVideo(isEditing ? null : lesson.id)}
             title={lesson.videoUrl ? 'แก้ไข URL วิดีโอ' : 'เพิ่ม URL วิดีโอ'}
             style={{
-              padding: '6px 10px',
+              padding: '7px 10px',
               background: lesson.videoUrl ? '#dcfce7' : '#fef3c7',
               color: lesson.videoUrl ? '#16a34a' : '#d97706',
               border: isEditing ? '2px solid #2563eb' : 'none',
@@ -181,12 +208,12 @@ function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, on
               whiteSpace: 'nowrap',
             }}
           >
-            {lesson.videoUrl ? '🎬 มีวิดีโอ' : '⚠️ ยังไม่มี'}
+            {lesson.videoUrl ? 'แก้ไขวิดีโอ' : 'เพิ่มวิดีโอ'}
           </button>
           <Link
             href={`/admin/lessons/${lesson.id}/edit`}
             style={{
-              padding: '6px 10px',
+              padding: '7px 10px',
               background: '#eff6ff',
               color: '#2563eb',
               borderRadius: '6px',
@@ -200,7 +227,7 @@ function SortableItem({ lesson, index, onDelete, editingVideoId, onEditVideo, on
           <button
             onClick={() => onDelete(lesson.id)}
             style={{
-              padding: '6px 10px',
+              padding: '7px 10px',
               background: '#fef2f2',
               color: '#dc2626',
               border: 'none',
@@ -389,11 +416,14 @@ export default function DraggableLessonList({
   const videoCount = lessons.filter(l => l.videoUrl).length;
   const totalCount = lessons.length;
   const progressPercent = totalCount > 0 ? Math.round((videoCount / totalCount) * 100) : 0;
+  const contentCount = lessons.filter(l => l.content && l.content.trim().length > 0).length;
+  const previewCount = lessons.filter(l => l.isFreePreview).length;
 
   if (lessons.length === 0) {
     return (
       <div style={{ padding: '60px 20px', textAlign: 'center', color: '#64748b' }}>
-        <p>ยังไม่มีบทเรียน</p>
+        <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>ยังไม่มีบทเรียน</div>
+        <div style={{ fontSize: '0.85rem', lineHeight: 1.7 }}>เริ่มเพิ่มบทเรียนแรกเพื่อสร้างโครงสร้างคอร์ส และค่อยเติมวิดีโอหรือเนื้อหาในลำดับถัดไป</div>
       </div>
     );
   }
@@ -429,25 +459,26 @@ export default function DraggableLessonList({
 
       {/* Toolbar: Search + Filter + Progress */}
       <div style={{
-        padding: '12px 20px',
+        padding: '16px 20px',
         background: '#f8fafc',
         borderBottom: '1px solid #e2e8f0',
         display: 'flex',
         flexDirection: 'column',
-        gap: '10px',
+        gap: '12px',
       }}>
         {/* Search */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="🔍 ค้นหาบทเรียน..."
+            placeholder="ค้นหาบทเรียน..."
             style={{
               flex: 1,
-              padding: '8px 12px',
+              minWidth: '240px',
+              padding: '9px 12px',
               border: '1px solid #e2e8f0',
-              borderRadius: '6px',
+              borderRadius: '8px',
               fontSize: '0.85rem',
               background: 'white',
             }}
@@ -461,6 +492,31 @@ export default function DraggableLessonList({
           <button onClick={() => setFilter('has-video')} style={filterBtnStyle(filter === 'has-video')}>
             🎬 มีวิดีโอแล้ว ({videoCount})
           </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ padding: '6px 10px', borderRadius: '999px', background: '#eff6ff', color: '#1d4ed8', fontWeight: 600, fontSize: '0.75rem' }}>
+            เนื้อหาพร้อม {contentCount}/{totalCount}
+          </span>
+          <span style={{ padding: '6px 10px', borderRadius: '999px', background: '#f5f3ff', color: '#7c3aed', fontWeight: 600, fontSize: '0.75rem' }}>
+            Preview ฟรี {previewCount}
+          </span>
+          {isFiltering && (
+            <button
+              onClick={() => { setSearch(''); setFilter('all'); }}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: '#2563eb',
+                fontWeight: 600,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              ล้างตัวกรอง
+            </button>
+          )}
         </div>
 
         {/* Progress Bar */}
@@ -481,7 +537,7 @@ export default function DraggableLessonList({
 
         {!isFiltering && (
           <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-            💡 ลากเพื่อจัดลำดับ | กดปุ่มวิดีโอเพื่อเพิ่ม/แก้ไข URL ได้เลย
+            ลากเพื่อจัดลำดับ และใช้ quick action เพื่อเติมวิดีโอได้ทันทีจาก list นี้
           </div>
         )}
       </div>

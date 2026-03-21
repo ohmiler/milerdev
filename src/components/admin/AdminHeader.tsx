@@ -34,6 +34,38 @@ const secondaryLinks = [
     { href: '/admin/settings', label: 'ตั้งค่า', icon: 'settings' },
 ];
 
+const secondaryLinkGroups = [
+    {
+        title: 'Growth & Commerce',
+        items: [
+            { href: '/admin/bundles', label: 'Bundle', icon: 'bundles' },
+            { href: '/admin/coupons', label: 'คูปอง', icon: 'coupons' },
+            { href: '/admin/analytics', label: 'Analytics', icon: 'analytics' },
+            { href: '/admin/reconciliation', label: 'Reconcile', icon: 'reconciliation' },
+            { href: '/admin/reviews', label: 'รีวิว', icon: 'reviews' },
+            { href: '/admin/reports', label: 'รายงาน', icon: 'reports' },
+        ],
+    },
+    {
+        title: 'Content & Assets',
+        items: [
+            { href: '/admin/docs', label: 'คลังความรู้', icon: 'docs' },
+            { href: '/admin/media', label: 'ไฟล์สื่อ', icon: 'media' },
+            { href: '/admin/tags', label: 'แท็ก', icon: 'tags' },
+            { href: '/admin/announcements', label: 'ประกาศ', icon: 'announcements' },
+            { href: '/admin/affiliate-banners', label: 'Affiliate Banners', icon: 'media' },
+            { href: '/admin/certificates', label: 'ใบรับรอง', icon: 'certificates' },
+        ],
+    },
+    {
+        title: 'System',
+        items: [
+            { href: '/admin/audit-logs', label: 'บันทึกระบบ', icon: 'logs' },
+            { href: '/admin/settings', label: 'ตั้งค่า', icon: 'settings' },
+        ],
+    },
+];
+
 const allLinks = [...primaryLinks, ...secondaryLinks];
 
 function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
@@ -74,6 +106,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
     };
 
     const isSecondaryActive = secondaryLinks.some(l => pathname.startsWith(l.href));
+    const activeSecondaryLink = secondaryLinks.find(l => isActive(l.href));
 
     useEffect(() => {
         const handleClick = (e: MouseEvent) => {
@@ -165,7 +198,14 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                                 transition: 'all 0.15s',
                             }}
                         >
-                            เพิ่มเติม
+                            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+                                <span>เพิ่มเติม</span>
+                                {activeSecondaryLink && (
+                                    <span style={{ fontSize: '0.65rem', color: '#93c5fd', marginTop: '3px', fontWeight: 600 }}>
+                                        {activeSecondaryLink.label}
+                                    </span>
+                                )}
+                            </span>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
                                 <polyline points="6 9 12 15 18 9" />
                             </svg>
@@ -177,42 +217,57 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                                 top: 'calc(100% + 8px)',
                                 left: 0,
                                 background: '#1e293b',
-                                borderRadius: '12px',
-                                padding: '6px',
-                                minWidth: '200px',
+                                borderRadius: '16px',
+                                padding: '8px',
+                                minWidth: '320px',
                                 boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
                                 border: '1px solid #334155',
                                 zIndex: 100,
                             }}>
-                                {secondaryLinks.map(link => (
-                                    <Link
-                                        key={link.href}
-                                        href={link.href}
-                                        onClick={() => setMoreOpen(false)}
-                                        style={{
-                                            color: isActive(link.href) ? '#ffffff' : '#cbd5e1',
-                                            textDecoration: 'none',
-                                            fontSize: '0.8125rem',
-                                            fontWeight: isActive(link.href) ? 600 : 400,
-                                            padding: '10px 12px',
-                                            borderRadius: '8px',
-                                            background: isActive(link.href) ? 'rgba(59,130,246,0.15)' : 'transparent',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '10px',
-                                            transition: 'background 0.1s',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isActive(link.href)) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isActive(link.href)) e.currentTarget.style.background = 'transparent';
-                                        }}
-                                    >
-                                        <NavIcon name={link.icon} size={15} />
-                                        {link.label}
-                                    </Link>
-                                ))}
+                                <div style={{ padding: '8px 10px 10px', borderBottom: '1px solid rgba(148,163,184,0.18)', marginBottom: '8px' }}>
+                                    <div style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>เมนูเพิ่มเติม</div>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.74rem', lineHeight: 1.6 }}>รวมหน้าจัดการที่ใช้เป็นครั้งคราว แยกตามหมวดเพื่อให้หาได้ง่ายขึ้น</div>
+                                </div>
+                                <div style={{ display: 'grid', gap: '10px' }}>
+                                    {secondaryLinkGroups.map((group) => (
+                                        <div key={group.title} style={{ padding: '0 4px' }}>
+                                            <div style={{ color: '#94a3b8', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 8px 6px' }}>
+                                                {group.title}
+                                            </div>
+                                            <div style={{ display: 'grid', gap: '4px' }}>
+                                                {group.items.map(link => (
+                                                    <Link
+                                                        key={link.href}
+                                                        href={link.href}
+                                                        onClick={() => setMoreOpen(false)}
+                                                        style={{
+                                                            color: isActive(link.href) ? '#ffffff' : '#cbd5e1',
+                                                            textDecoration: 'none',
+                                                            fontSize: '0.8125rem',
+                                                            fontWeight: isActive(link.href) ? 600 : 400,
+                                                            padding: '10px 12px',
+                                                            borderRadius: '10px',
+                                                            background: isActive(link.href) ? 'rgba(59,130,246,0.15)' : 'transparent',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '10px',
+                                                            transition: 'background 0.1s',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            if (!isActive(link.href)) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            if (!isActive(link.href)) e.currentTarget.style.background = 'transparent';
+                                                        }}
+                                                    >
+                                                        <NavIcon name={link.icon} size={15} />
+                                                        {link.label}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -287,32 +342,75 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                         overflowY: 'auto',
                     }}
                 >
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: '4px',
-                    }}>
-                        {allLinks.map(link => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={() => setMenuOpen(false)}
-                                style={{
-                                    color: isActive(link.href, (link as typeof primaryLinks[0]).exact) ? '#ffffff' : '#94a3b8',
-                                    textDecoration: 'none',
-                                    fontSize: '0.8125rem',
-                                    fontWeight: isActive(link.href, (link as typeof primaryLinks[0]).exact) ? 600 : 400,
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    background: isActive(link.href, (link as typeof primaryLinks[0]).exact) ? 'rgba(59,130,246,0.15)' : 'transparent',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                }}
-                            >
-                                <NavIcon name={link.icon} size={16} />
-                                {link.label}
-                            </Link>
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                        <div>
+                            <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '6px 8px' }}>
+                                Primary
+                            </div>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: '4px',
+                            }}>
+                                {primaryLinks.map(link => (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        onClick={() => setMenuOpen(false)}
+                                        style={{
+                                            color: isActive(link.href, link.exact) ? '#ffffff' : '#94a3b8',
+                                            textDecoration: 'none',
+                                            fontSize: '0.8125rem',
+                                            fontWeight: isActive(link.href, link.exact) ? 600 : 400,
+                                            padding: '12px',
+                                            borderRadius: '8px',
+                                            background: isActive(link.href, link.exact) ? 'rgba(59,130,246,0.15)' : 'transparent',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                        }}
+                                    >
+                                        <NavIcon name={link.icon} size={16} />
+                                        {link.label}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+
+                        {secondaryLinkGroups.map((group) => (
+                            <div key={group.title}>
+                                <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '6px 8px' }}>
+                                    {group.title}
+                                </div>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(2, 1fr)',
+                                    gap: '4px',
+                                }}>
+                                    {group.items.map(link => (
+                                        <Link
+                                            key={link.href}
+                                            href={link.href}
+                                            onClick={() => setMenuOpen(false)}
+                                            style={{
+                                                color: isActive(link.href) ? '#ffffff' : '#94a3b8',
+                                                textDecoration: 'none',
+                                                fontSize: '0.8125rem',
+                                                fontWeight: isActive(link.href) ? 600 : 400,
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                background: isActive(link.href) ? 'rgba(59,130,246,0.15)' : 'transparent',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                            }}
+                                        >
+                                            <NavIcon name={link.icon} size={16} />
+                                            {link.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
                         ))}
                     </div>
                     <div style={{
