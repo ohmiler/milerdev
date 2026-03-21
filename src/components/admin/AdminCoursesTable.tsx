@@ -31,6 +31,14 @@ function normalizeUrl(url: string | null): string | null {
     return `https://${url}`;
 }
 
+function formatDate(value: Date | null) {
+    if (!value) return '-';
+    return new Date(value).toLocaleDateString('th-TH', {
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
 export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -50,94 +58,133 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
 
     const publishedCount = courses.filter(c => c.status === 'published').length;
     const draftCount = courses.filter(c => c.status === 'draft').length;
+    const noLessonCount = filtered.filter(c => Number(c.lessonCount || 0) === 0).length;
+    const withStudentsCount = filtered.filter(c => Number(c.enrollmentCount || 0) > 0).length;
 
     return (
         <>
             {/* Filters */}
-            <div style={{
-                display: 'flex',
-                gap: '12px',
-                marginBottom: '16px',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-            }}>
-                {/* Search */}
-                <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '400px' }}>
-                    <svg
-                        style={{
-                            position: 'absolute',
-                            left: '12px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            width: '18px',
-                            height: '18px',
-                            color: '#94a3b8',
-                        }}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input
-                        type="text"
-                        placeholder="ค้นหาคอร์ส..."
-                        value={search}
-                        onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                        style={{
-                            width: '100%',
-                            padding: '10px 12px 10px 40px',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px',
-                            fontSize: '0.875rem',
-                            background: 'white',
-                        }}
-                    />
-                </div>
-
-                {/* Status Filter Tabs */}
+            <div style={{ display: 'grid', gap: '14px', marginBottom: '16px' }}>
                 <div style={{
                     display: 'flex',
-                    gap: '4px',
-                    background: '#f1f5f9',
-                    borderRadius: '8px',
-                    padding: '4px',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                 }}>
-                    {[
-                        { value: 'all', label: 'ทั้งหมด', count: courses.length },
-                        { value: 'published', label: 'เผยแพร่', count: publishedCount },
-                        { value: 'draft', label: 'แบบร่าง', count: draftCount },
-                    ].map((tab) => (
-                        <button
-                            key={tab.value}
-                            onClick={() => { setStatusFilter(tab.value); setCurrentPage(1); }}
+                    <div style={{ position: 'relative', flex: '1', minWidth: '220px', maxWidth: '420px' }}>
+                        <svg
                             style={{
-                                padding: '6px 14px',
-                                borderRadius: '6px',
+                                position: 'absolute',
+                                left: '12px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                width: '18px',
+                                height: '18px',
+                                color: '#94a3b8',
+                            }}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="ค้นหาจากชื่อคอร์สหรือ slug"
+                            value={search}
+                            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                            style={{
+                                width: '100%',
+                                padding: '10px 12px 10px 40px',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '10px',
+                                fontSize: '0.875rem',
+                                background: 'white',
+                            }}
+                        />
+                    </div>
+
+                    <div style={{
+                        display: 'flex',
+                        gap: '4px',
+                        background: '#f1f5f9',
+                        borderRadius: '10px',
+                        padding: '4px',
+                        flexWrap: 'wrap',
+                    }}>
+                        {[
+                            { value: 'all', label: 'ทั้งหมด', count: courses.length },
+                            { value: 'published', label: 'เผยแพร่', count: publishedCount },
+                            { value: 'draft', label: 'แบบร่าง', count: draftCount },
+                        ].map((tab) => (
+                            <button
+                                key={tab.value}
+                                onClick={() => { setStatusFilter(tab.value); setCurrentPage(1); }}
+                                style={{
+                                    padding: '7px 14px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    fontSize: '0.8125rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    background: statusFilter === tab.value ? 'white' : 'transparent',
+                                    color: statusFilter === tab.value ? '#1e293b' : '#64748b',
+                                    boxShadow: statusFilter === tab.value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                                    transition: 'all 0.15s',
+                                }}
+                            >
+                                {tab.label} ({tab.count})
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div style={{
+                    display: 'flex',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    color: '#64748b',
+                    fontSize: '0.8rem',
+                }}>
+                    <span style={{ padding: '6px 10px', borderRadius: '999px', background: '#eff6ff', color: '#1d4ed8', fontWeight: 600 }}>
+                        ผลลัพธ์ {filtered.length} คอร์ส
+                    </span>
+                    <span style={{ padding: '6px 10px', borderRadius: '999px', background: '#fef2f2', color: '#dc2626', fontWeight: 600 }}>
+                        ไม่มีบทเรียน {noLessonCount}
+                    </span>
+                    <span style={{ padding: '6px 10px', borderRadius: '999px', background: '#f5f3ff', color: '#7c3aed', fontWeight: 600 }}>
+                        มีผู้เรียน {withStudentsCount}
+                    </span>
+                    {(search || statusFilter !== 'all') && (
+                        <button
+                            onClick={() => { setSearch(''); setStatusFilter('all'); setCurrentPage(1); }}
+                            style={{
                                 border: 'none',
-                                fontSize: '0.8125rem',
-                                fontWeight: 500,
+                                background: 'transparent',
+                                color: '#2563eb',
+                                fontWeight: 600,
                                 cursor: 'pointer',
-                                background: statusFilter === tab.value ? 'white' : 'transparent',
-                                color: statusFilter === tab.value ? '#1e293b' : '#64748b',
-                                boxShadow: statusFilter === tab.value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                                transition: 'all 0.15s',
+                                padding: 0,
                             }}
                         >
-                            {tab.label} ({tab.count})
+                            ล้างตัวกรอง
                         </button>
-                    ))}
+                    )}
                 </div>
             </div>
 
             {/* Table */}
             <div style={{
                 background: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                borderRadius: '18px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)',
                 overflow: 'hidden',
             }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                             <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
@@ -161,8 +208,20 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {paginatedCourses.map((course) => (
-                            <tr key={course.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                        {paginatedCourses.map((course) => {
+                            const price = parseFloat(course.price || '0');
+                            const now = new Date();
+                            const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
+                            const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
+                            const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
+                            const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+                            const lessonCount = Number(course.lessonCount || 0);
+                            const enrollmentCount = Number(course.enrollmentCount || 0);
+                            const thumbnail = normalizeUrl(course.thumbnailUrl);
+                            const needsAttention = lessonCount === 0 || (course.status === 'published' && !thumbnail);
+
+                            return (
+                            <tr key={course.id} style={{ borderBottom: '1px solid #e2e8f0', background: needsAttention ? 'linear-gradient(90deg, rgba(254,242,242,0.55), rgba(255,255,255,0))' : 'white' }}>
                                 <td style={{ padding: '16px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{
@@ -174,9 +233,9 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                             overflow: 'hidden',
                                             position: 'relative',
                                         }}>
-                                            {normalizeUrl(course.thumbnailUrl) && (
+                                            {thumbnail && (
                                                 <img
-                                                    src={normalizeUrl(course.thumbnailUrl)!}
+                                                    src={thumbnail}
                                                     alt={course.title}
                                                     style={{
                                                         width: '100%',
@@ -186,12 +245,37 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                                 />
                                             )}
                                         </div>
-                                        <div>
+                                        <div style={{ minWidth: 0 }}>
                                             <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
                                                 {course.title}
                                             </div>
                                             <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
                                                 /{course.slug}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                                                {lessonCount === 0 && (
+                                                    <span style={{ padding: '4px 8px', borderRadius: '999px', background: '#fef2f2', color: '#dc2626', fontSize: '0.68rem', fontWeight: 600 }}>
+                                                        ยังไม่มีบทเรียน
+                                                    </span>
+                                                )}
+                                                {!thumbnail && (
+                                                    <span style={{ padding: '4px 8px', borderRadius: '999px', background: '#fff7ed', color: '#c2410c', fontSize: '0.68rem', fontWeight: 600 }}>
+                                                        ไม่มีภาพปก
+                                                    </span>
+                                                )}
+                                                {enrollmentCount > 0 && (
+                                                    <span style={{ padding: '4px 8px', borderRadius: '999px', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.68rem', fontWeight: 600 }}>
+                                                        มีผู้เรียนแล้ว
+                                                    </span>
+                                                )}
+                                                {isPromoActive && (
+                                                    <span style={{ padding: '4px 8px', borderRadius: '999px', background: '#f5f3ff', color: '#7c3aed', fontSize: '0.68rem', fontWeight: 600 }}>
+                                                        โปรโมชันกำลังใช้งาน
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '8px' }}>
+                                                สร้างเมื่อ {formatDate(course.createdAt)}
                                             </div>
                                         </div>
                                     </div>
@@ -207,44 +291,41 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                     }}>
                                         {course.status === 'published' ? 'เผยแพร่' : 'แบบร่าง'}
                                     </span>
+                                    {needsAttention && (
+                                        <div style={{ color: '#dc2626', fontSize: '0.7rem', fontWeight: 600, marginTop: '8px' }}>
+                                            ควรตรวจ
+                                        </div>
+                                    )}
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
-                                    {(() => {
-                                        const price = parseFloat(course.price || '0');
-                                        const now = new Date();
-                                        const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
-                                        const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
-                                        const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
-                                        const isPromoActive = hasPromo && promoStartOk && promoEndOk;
-                                        if (price === 0) return <span style={{ color: '#16a34a' }}>ฟรี</span>;
-                                        if (isPromoActive) {
-                                            const promo = parseFloat(course.promoPrice || '0');
-                                            return (
-                                                <div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                                                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.8125rem' }}>฿{price.toLocaleString()}</span>
-                                                        <span style={{ color: '#dc2626', fontWeight: 600 }}>฿{promo.toLocaleString()}</span>
-                                                    </div>
-                                                    <span style={{
-                                                        display: 'inline-block',
-                                                        marginTop: '4px',
-                                                        padding: '2px 8px',
-                                                        background: '#fef2f2',
-                                                        color: '#dc2626',
-                                                        borderRadius: '50px',
-                                                        fontSize: '0.6875rem',
-                                                        fontWeight: 500,
-                                                    }}>
-                                                        ลด {Math.round((1 - promo / price) * 100)}%
-                                                    </span>
-                                                </div>
-                                            );
-                                        }
-                                        return `฿${price.toLocaleString()}`;
-                                    })()}
+                                    {price === 0 ? <span style={{ color: '#16a34a' }}>ฟรี</span> : isPromoActive ? (
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                                <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.8125rem' }}>฿{price.toLocaleString()}</span>
+                                                <span style={{ color: '#dc2626', fontWeight: 600 }}>฿{parseFloat(course.promoPrice || '0').toLocaleString()}</span>
+                                            </div>
+                                            <span style={{
+                                                display: 'inline-block',
+                                                marginTop: '4px',
+                                                padding: '2px 8px',
+                                                background: '#fef2f2',
+                                                color: '#dc2626',
+                                                borderRadius: '50px',
+                                                fontSize: '0.6875rem',
+                                                fontWeight: 500,
+                                            }}>
+                                                ลด {Math.round((1 - parseFloat(course.promoPrice || '0') / price) * 100)}%
+                                            </span>
+                                        </div>
+                                    ) : `฿${price.toLocaleString()}`}
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
-                                    {course.lessonCount} บท
+                                    <div style={{ fontWeight: 600, color: lessonCount === 0 ? '#dc2626' : '#1e293b' }}>
+                                        {lessonCount} บท
+                                    </div>
+                                    <div style={{ fontSize: '0.72rem', color: lessonCount === 0 ? '#dc2626' : '#94a3b8', marginTop: '4px' }}>
+                                        {lessonCount === 0 ? 'ยังไม่พร้อมขาย' : 'พร้อมจัดการเนื้อหา'}
+                                    </div>
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'center' }}>
                                     <Link
@@ -259,11 +340,29 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                             fontSize: '0.875rem',
                                         }}
                                     >
-                                        {course.enrollmentCount} คน
+                                        {enrollmentCount} คน
                                     </Link>
+                                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '6px' }}>
+                                        {enrollmentCount > 0 ? 'เปิดดูรายชื่อผู้เรียน' : 'ยังไม่มีผู้เรียน'}
+                                    </div>
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'right' }}>
-                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                        <Link
+                                            href={`/courses/${course.slug}`}
+                                            target="_blank"
+                                            style={{
+                                                padding: '8px 12px',
+                                                background: '#ffffff',
+                                                color: '#475569',
+                                                borderRadius: '6px',
+                                                textDecoration: 'none',
+                                                fontSize: '0.875rem',
+                                                border: '1px solid #e2e8f0',
+                                            }}
+                                        >
+                                            ดูหน้าเว็บ
+                                        </Link>
                                         <Link
                                             href={`/admin/courses/${course.id}/lessons`}
                                             style={{
@@ -293,9 +392,10 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                     </div>
                                 </td>
                             </tr>
-                        ))}
+                        )})}
                     </tbody>
                 </table>
+                </div>
 
                 {/* Pagination */}
                 {filtered.length > 0 && (
