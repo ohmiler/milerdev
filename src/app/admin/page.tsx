@@ -238,16 +238,16 @@ export default async function AdminDashboard() {
       value: recentEnrollments[0]?.userName || recentEnrollments[0]?.userEmail || 'ยังไม่มีข้อมูล',
       description: recentEnrollments[0]?.courseTitle ? `ลงทะเบียนใน ${recentEnrollments[0].courseTitle}` : 'ยังไม่มีการลงทะเบียนล่าสุดให้แสดง',
       href: '/admin/enrollments',
-      accent: '#8b5cf6',
+      accent: '#0f766e',
       cta: 'ดูการลงทะเบียนทั้งหมด',
     },
   ];
 
   const operationalStats = [
-    { label: 'คอร์สทั้งหมด', value: stats.courses, tone: '#2563eb' },
-    { label: 'บทเรียน', value: stats.lessons, tone: '#8b5cf6' },
-    { label: 'ผู้ใช้', value: stats.users, tone: '#f59e0b' },
-    { label: 'การลงทะเบียน', value: stats.enrollments, tone: '#16a34a' },
+    { label: 'คอร์ส', value: stats.courses, tone: '#2563eb' },
+    { label: 'บทเรียน', value: stats.lessons, tone: '#0f766e' },
+    { label: 'ผู้ใช้', value: stats.users, tone: '#b45309' },
+    { label: 'ลงทะเบียน', value: stats.enrollments, tone: '#ea580c' },
   ];
 
   const topPriorityAction = revenueStats.pendingPayments > 0
@@ -262,27 +262,9 @@ export default async function AdminDashboard() {
       note: 'ไม่มีรายการค้างตรวจเร่งด่วนในตอนนี้',
     };
 
-  const focusItems = [
-    {
-      label: 'ยอดเดือนนี้',
-      value: formatCurrency(revenueStats.monthlyRevenue),
-      detail: 'อัปเดตล่าสุดจากรายการชำระเงินสำเร็จ',
-    },
-    {
-      label: 'งานเร่งด่วน',
-      value: `${revenueStats.pendingPayments} รายการ`,
-      detail: revenueStats.pendingPayments > 0 ? 'ควรตรวจสอบทันที' : 'ไม่มีรายการค้างตอนนี้',
-    },
-    {
-      label: 'นักเรียนล่าสุด',
-      value: recentEnrollments[0]?.userName || recentEnrollments[0]?.userEmail || 'ยังไม่มีข้อมูล',
-      detail: recentEnrollments[0]?.courseTitle || 'รอข้อมูลการลงทะเบียนล่าสุด',
-    },
-  ];
-
   const quickActionGroups = [
     {
-      title: 'Create',
+      title: 'สร้าง',
       description: 'เริ่มงานสร้างคอนเทนต์หรือทรัพยากรใหม่อย่างรวดเร็ว',
       actions: [
         { href: '/admin/courses/new', label: 'สร้างคอร์สใหม่', emphasis: true },
@@ -290,8 +272,8 @@ export default async function AdminDashboard() {
       ],
     },
     {
-      title: 'Manage',
-      description: 'เข้าถึงหน้าที่ใช้จัดการธุรกรรม ผู้ใช้ และเนื้อหาหลัก',
+      title: 'จัดการ',
+      description: 'เข้าถึงหน้าที่ใช้ดูแลธุรกรรม ผู้ใช้ และเนื้อหาหลัก',
       actions: [
         { href: '/admin/courses', label: 'จัดการคอร์ส' },
         { href: '/admin/users', label: 'จัดการผู้ใช้' },
@@ -299,7 +281,7 @@ export default async function AdminDashboard() {
       ],
     },
     {
-      title: 'Monitor',
+      title: 'ติดตาม',
       description: 'ดูสถานะธุรกิจ การชำระเงิน และข้อมูลเชิงวิเคราะห์',
       actions: [
         { href: '/admin/payments', label: 'ตรวจสอบการชำระเงิน' },
@@ -317,6 +299,38 @@ export default async function AdminDashboard() {
   const sevenDayEnrollmentTotal = sevenDayEnrollments.reduce((sum, item) => sum + item.count, 0);
   const averageLessonsPerCourse = stats.courses > 0 ? (stats.lessons / stats.courses).toFixed(1) : '0.0';
   const averageEnrollmentsPerCourse = stats.courses > 0 ? (stats.enrollments / stats.courses).toFixed(1) : '0.0';
+  const paymentSuccessTone = paymentSuccessRate >= 70 ? '#16a34a' : paymentSuccessRate >= 40 ? '#d97706' : '#dc2626';
+  const paymentMixItems = [
+    { label: 'Completed', value: paymentHealth.completed, color: '#16a34a', bg: '#dcfce7' },
+    { label: 'Pending', value: paymentHealth.pending, color: '#c2410c', bg: '#ffedd5' },
+    { label: 'Failed', value: paymentHealth.failed, color: '#b91c1c', bg: '#fee2e2' },
+  ];
+  const snapshotItems = [
+    {
+      label: 'รายได้รวมสะสม',
+      value: formatCurrency(revenueStats.totalRevenue),
+      detail: 'ยอด completed ทั้งหมดในระบบ',
+      tone: '#0f172a',
+    },
+    {
+      label: 'รายได้ 7 วัน',
+      value: formatCurrency(sevenDayRevenueTotal),
+      detail: 'ภาพรวมโมเมนตัมรายได้ระยะสั้น',
+      tone: '#2563eb',
+    },
+    {
+      label: 'ลงทะเบียน 7 วัน',
+      value: `${sevenDayEnrollmentTotal} รายการ`,
+      detail: 'สัญญาณ demand ล่าสุดของคอร์ส',
+      tone: '#ea580c',
+    },
+    {
+      label: 'Payment success rate',
+      value: `${paymentSuccessRate.toFixed(1)}%`,
+      detail: 'สัดส่วน completed เทียบกับ payment ทั้งหมด',
+      tone: paymentSuccessTone,
+    },
+  ];
 
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
@@ -330,78 +344,70 @@ export default async function AdminDashboard() {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.65fr) minmax(320px, 0.95fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: '28px',
           alignItems: 'stretch',
         }}>
-          <div style={{ display: 'grid', gap: '22px' }}>
+          <div style={{ display: 'grid', gap: '24px' }}>
             <div>
               <div style={{ color: '#0f172a', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>
-                Admin Control Center
+                Admin Overview
               </div>
               <h1 style={{ fontSize: '2.35rem', fontWeight: 800, color: '#0f172a', marginBottom: '12px', lineHeight: 1.02, maxWidth: '760px' }}>
-                ศูนย์ควบคุมสำหรับตัดสินใจเรื่องธุรกิจ การชำระเงิน และงาน admin ที่ต้องทำตอนนี้
+                หน้า dashboard ที่สรุปสิ่งสำคัญให้เห็นเร็วขึ้น ตัดสิ่งรบกวนออก และพาไปทำงานต่อได้ทันที
               </h1>
               <p style={{ color: '#334155', fontSize: '0.98rem', lineHeight: 1.85, maxWidth: '720px' }}>
-                ดูภาพรวมของรายได้ ความพร้อมของคอร์ส การลงทะเบียนล่าสุด และรายการที่ต้องรีบจัดการจาก composition เดียวที่อ่านง่ายกว่าเดิมและเริ่มงานต่อได้ทันที
+                เริ่มจากภาพรวมของรายได้ งานที่ต้องจัดการก่อน และขนาดของระบบ โดยไม่ต้องไล่อ่านการ์ดหลายชั้นหรือข้อมูลที่ซ้ำกัน
               </p>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gap: '18px',
-            }}>
+            <div style={{ display: 'grid', gap: '18px' }}>
               <div style={{
+                background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+                color: 'white',
+                borderRadius: '24px',
+                padding: '24px',
                 display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1.25fr) repeat(2, minmax(160px, 0.8fr))',
-                gap: '14px',
-                alignItems: 'stretch',
+                gap: '16px',
               }}>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Today Focus</div>
+                <div style={{ fontSize: '2.35rem', fontWeight: 800, lineHeight: 1.02 }}>{formatCurrency(revenueStats.monthlyRevenue)}</div>
+                <div style={{ color: 'rgba(255,255,255,0.76)', fontSize: '0.88rem', lineHeight: 1.8, maxWidth: '620px' }}>
+                  โฟกัสที่ยอดชำระสำเร็จของเดือนนี้และงานที่ควรทำก่อน เพื่อให้ dashboard เป็นจุดเริ่มต้นของการตัดสินใจ ไม่ใช่แค่จอรวมข้อมูล
+                </div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <Link href={topPriorityAction.href} style={{ padding: '11px 14px', borderRadius: '999px', background: 'white', color: '#0f172a', textDecoration: 'none', fontSize: '0.82rem', fontWeight: 700 }}>
+                    {topPriorityAction.label} →
+                  </Link>
+                  <span style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.78rem' }}>{topPriorityAction.note}</span>
+                </div>
                 <div style={{
-                  background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-                  color: 'white',
-                  borderRadius: '22px',
-                  padding: '22px',
                   display: 'grid',
-                  gap: '12px',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                  gap: '14px',
+                  paddingTop: '14px',
+                  borderTop: '1px solid rgba(255,255,255,0.12)',
                 }}>
-                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Today Focus</div>
-                  <div style={{ fontSize: '2.1rem', fontWeight: 800, lineHeight: 1.02 }}>{formatCurrency(revenueStats.monthlyRevenue)}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.76)', fontSize: '0.86rem', lineHeight: 1.7 }}>
-                    ยอดที่ชำระสำเร็จในเดือนนี้ พร้อม priority action ที่พาคุณไปยังงานสำคัญที่สุดของวันนี้
+                  <div>
+                    <div style={{ color: 'rgba(255,255,255,0.66)', fontSize: '0.75rem', marginBottom: '6px' }}>รายได้รวมสะสม</div>
+                    <div style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.15 }}>{formatCurrency(revenueStats.totalRevenue)}</div>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Link href={topPriorityAction.href} style={{ padding: '11px 14px', borderRadius: '999px', background: 'white', color: '#0f172a', textDecoration: 'none', fontSize: '0.82rem', fontWeight: 700 }}>
-                      {topPriorityAction.label} →
-                    </Link>
-                    <span style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.78rem' }}>{topPriorityAction.note}</span>
+                  <div>
+                    <div style={{ color: 'rgba(255,255,255,0.66)', fontSize: '0.75rem', marginBottom: '6px' }}>Pending queue</div>
+                    <div style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.15 }}>{revenueStats.pendingPayments} รายการ</div>
                   </div>
                 </div>
-
-                {focusItems.slice(1).map((item) => (
-                  <div key={item.label} style={{
-                    padding: '18px 18px 16px',
-                    borderRadius: '20px',
-                    background: 'rgba(255,255,255,0.72)',
-                    border: '1px solid rgba(148,163,184,0.22)',
-                    display: 'grid',
-                    alignContent: 'space-between',
-                    gap: '10px',
-                  }}>
-                    <div style={{ color: '#64748b', fontSize: '0.76rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.label}</div>
-                    <div style={{ color: '#0f172a', fontSize: '1.3rem', fontWeight: 800, lineHeight: 1.1 }}>{item.value}</div>
-                    <div style={{ color: '#475569', fontSize: '0.8rem', lineHeight: 1.6 }}>{item.detail}</div>
-                  </div>
-                ))}
               </div>
 
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                gap: '12px',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                gap: '16px',
+                paddingTop: '4px',
+                borderTop: '1px solid rgba(148,163,184,0.24)',
               }}>
                 {operationalStats.map((item) => (
-                  <div key={item.label} style={{ padding: '14px 0' }}>
+                  <div key={item.label} style={{ paddingTop: '14px' }}>
                     <div style={{ color: '#64748b', fontSize: '0.78rem', marginBottom: '6px' }}>{item.label}</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 800, color: item.tone, lineHeight: 1.05 }}>{item.value}</div>
                   </div>
@@ -410,25 +416,24 @@ export default async function AdminDashboard() {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '24px', padding: '22px', display: 'grid', gap: '14px', backdropFilter: 'blur(8px)' }}>
+          <div style={{ background: 'rgba(255,255,255,0.72)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '24px', padding: '22px', display: 'grid', gap: '10px', backdropFilter: 'blur(8px)' }}>
             <div>
               <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Priority Queue</div>
-              <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>เริ่มจากสิ่งที่กระทบการดำเนินงานมากที่สุดก่อน แล้วค่อยไล่ดูภาพรวมส่วนอื่นของระบบ</div>
+              <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>เริ่มจากงานที่กระทบระบบมากที่สุดก่อน แล้วค่อยไล่ดูสัญญาณรองลงมา</div>
             </div>
             {healthItems.map((item, index) => (
-              <div key={item.title} style={{ borderRadius: '18px', border: '1px solid #e2e8f0', background: index === 0 ? '#fffaf0' : 'white', padding: '16px', boxShadow: '0 12px 28px rgba(15,23,42,0.04)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start' }}>
-                  <div>
+              <div key={item.title} style={{ padding: index === 0 ? '10px 0 14px' : '14px 0', borderTop: index === 0 ? 'none' : '1px solid rgba(226,232,240,0.9)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', alignItems: 'flex-start' }}>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ color: '#94a3b8', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
                       {index === 0 ? 'Top Priority' : index === 1 ? 'Monitor' : 'Recent Signal'}
                     </div>
-                    <div style={{ color: '#0f172a', fontSize: '0.88rem', fontWeight: 700, marginBottom: '6px' }}>{item.title}</div>
-                    <div style={{ color: item.accent, fontSize: '1.3rem', fontWeight: 800, lineHeight: 1.1 }}>{item.value}</div>
+                    <div style={{ color: '#0f172a', fontSize: '0.92rem', fontWeight: 700, marginBottom: '6px' }}>{item.title}</div>
+                    <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>{item.description}</div>
                   </div>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: item.accent, marginTop: '8px', flexShrink: 0 }} />
+                  <div style={{ color: item.accent, fontSize: '1.05rem', fontWeight: 800, lineHeight: 1.2, textAlign: 'right', flexShrink: 0 }}>{item.value}</div>
                 </div>
-                <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7, marginTop: '10px' }}>{item.description}</div>
-                <div style={{ marginTop: '12px' }}>
+                <div style={{ marginTop: '10px' }}>
                   <Link href={item.href} style={{ color: '#2563eb', textDecoration: 'none', fontSize: '0.82rem', fontWeight: 600 }}>
                     {item.cta} →
                   </Link>
@@ -440,119 +445,60 @@ export default async function AdminDashboard() {
       </section>
 
       <section style={{
+        background: 'white',
+        borderRadius: '24px',
+        padding: '24px',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 12px 30px rgba(15,23,42,0.05)',
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 0.85fr)',
-        gap: '16px',
+        gap: '22px',
       }}>
-        <div style={{ background: 'white', borderRadius: '20px', padding: '22px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
-          <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Content Health</div>
-          <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7, marginBottom: '18px' }}>ดูความหนาแน่นของคอนเทนต์ในระบบแบบเร็ว ๆ เพื่อประเมินว่าคอร์สมีน้ำหนักและความพร้อมมากน้อยแค่ไหน</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '16px' }}>
-            <div>
-              <div style={{ color: '#64748b', fontSize: '0.76rem', marginBottom: '6px' }}>Lessons / Course</div>
-              <div style={{ color: '#2563eb', fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.1 }}>{averageLessonsPerCourse}</div>
-              <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '6px' }}>เฉลี่ยของบทเรียนต่อคอร์สทั้งหมด</div>
-            </div>
-            <div>
-              <div style={{ color: '#64748b', fontSize: '0.76rem', marginBottom: '6px' }}>Enrollments / Course</div>
-              <div style={{ color: '#d97706', fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.1 }}>{averageEnrollmentsPerCourse}</div>
-              <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '6px' }}>เฉลี่ยจำนวนผู้เรียนต่อคอร์ส</div>
-            </div>
-            <div>
-              <div style={{ color: '#64748b', fontSize: '0.76rem', marginBottom: '6px' }}>Total Lesson Inventory</div>
-              <div style={{ color: '#7c3aed', fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.1 }}>{stats.lessons}</div>
-              <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '6px' }}>จำนวนบทเรียนทั้งหมดในระบบ</div>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ background: 'white', borderRadius: '20px', padding: '22px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
-          <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Short-Term Signals</div>
-          <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7, marginBottom: '18px' }}>สรุป momentum ระยะสั้นแบบอ่านเร็ว ก่อนลงไปดูกราฟรายวันด้านล่าง</div>
-          <div style={{ display: 'grid', gap: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline' }}>
-              <span style={{ color: '#475569', fontSize: '0.82rem' }}>รายได้ 7 วันล่าสุด</span>
-              <span style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700 }}>{formatCurrency(sevenDayRevenueTotal)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline' }}>
-              <span style={{ color: '#475569', fontSize: '0.82rem' }}>การลงทะเบียน 7 วันล่าสุด</span>
-              <span style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700 }}>{sevenDayEnrollmentTotal} รายการ</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline' }}>
-              <span style={{ color: '#475569', fontSize: '0.82rem' }}>Payment success rate</span>
-              <span style={{ color: paymentSuccessRate >= 70 ? '#16a34a' : paymentSuccessRate >= 40 ? '#d97706' : '#dc2626', fontSize: '1rem', fontWeight: 700 }}>{paymentSuccessRate.toFixed(1)}%</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section style={{ display: 'grid', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>Trend Widgets</h2>
-          <div style={{ color: '#64748b', fontSize: '0.84rem' }}>สรุป movement ระยะสั้นเพื่อช่วยมอง momentum ของรายได้ การลงทะเบียน และสุขภาพการชำระเงิน</div>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>Operational Snapshot</h2>
+          <div style={{ color: '#64748b', fontSize: '0.84rem' }}>รวมตัวเลขที่ใช้ตัดสินใจเร็วไว้ในพื้นที่เดียว เพื่อลดการไล่อ่านหลาย section ที่ซ้ำกัน</div>
         </div>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-          gap: '16px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '24px',
         }}>
-          <div style={{ background: 'white', borderRadius: '18px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
-            <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>รายได้ 7 วัน</div>
-            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7, marginBottom: '14px' }}>ยอดชำระสำเร็จรายวันในช่วง 7 วันที่ผ่านมา</div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              {sevenDayRevenue.map((item) => (
-                <div key={item.date}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.78rem' }}>
-                    <span style={{ color: '#64748b' }}>{formatShortDate(item.date)}</span>
-                    <span style={{ color: '#0f172a', fontWeight: 600 }}>{formatCurrency(item.total)}</span>
-                  </div>
-                  <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${Math.max((item.total / maxRevenueValue) * 100, item.total > 0 ? 8 : 0)}%`, background: 'linear-gradient(90deg, #2563eb, #1d4ed8)', borderRadius: '999px' }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ background: 'white', borderRadius: '18px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
-            <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Enrollment Trend</div>
-            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7, marginBottom: '14px' }}>จำนวนการลงทะเบียนใหม่ต่อวันในช่วง 7 วันที่ผ่านมา</div>
-            <div style={{ display: 'grid', gap: '8px' }}>
-              {sevenDayEnrollments.map((item) => (
-                <div key={item.date}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.78rem' }}>
-                    <span style={{ color: '#64748b' }}>{formatShortDate(item.date)}</span>
-                    <span style={{ color: '#0f172a', fontWeight: 600 }}>{item.count} รายการ</span>
-                  </div>
-                  <div style={{ height: '8px', background: '#ede9fe', borderRadius: '999px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${Math.max((item.count / maxEnrollmentValue) * 100, item.count > 0 ? 8 : 0)}%`, background: 'linear-gradient(90deg, #8b5cf6, #7c3aed)', borderRadius: '999px' }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ background: 'white', borderRadius: '18px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
-            <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Payment Health</div>
-            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7, marginBottom: '14px' }}>ภาพรวมสถานะการชำระเงินทั้งหมด เพื่อดูสัดส่วนรายการสำเร็จและรายการที่ต้องติดตาม</div>
-            <div style={{ display: 'grid', gap: '14px' }}>
-              <div style={{ padding: '14px 16px', borderRadius: '14px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                <div style={{ color: '#64748b', fontSize: '0.78rem', marginBottom: '6px' }}>Success Rate</div>
-                <div style={{ color: paymentSuccessRate >= 70 ? '#16a34a' : paymentSuccessRate >= 40 ? '#d97706' : '#dc2626', fontSize: '1.9rem', fontWeight: 800, lineHeight: 1.1 }}>
-                  {paymentSuccessRate.toFixed(1)}%
-                </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.76rem', marginTop: '6px' }}>คิดจาก completed เทียบกับ payment ทั้งหมดในระบบ</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '18px 20px' }}>
+            {snapshotItems.map((item) => (
+              <div key={item.label} style={{ paddingTop: '4px' }}>
+                <div style={{ color: '#64748b', fontSize: '0.76rem', marginBottom: '8px' }}>{item.label}</div>
+                <div style={{ color: item.tone, fontSize: '1.65rem', fontWeight: 800, lineHeight: 1.1 }}>{item.value}</div>
+                <div style={{ color: '#94a3b8', fontSize: '0.76rem', marginTop: '8px', lineHeight: 1.6 }}>{item.detail}</div>
               </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gap: '18px' }}>
+            <div style={{ padding: '18px 20px', borderRadius: '18px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div style={{ color: '#0f172a', fontSize: '0.96rem', fontWeight: 700, marginBottom: '12px' }}>Content Health</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '16px' }}>
+                <div>
+                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '6px' }}>Lessons / Course</div>
+                  <div style={{ color: '#2563eb', fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.1 }}>{averageLessonsPerCourse}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '6px' }}>Enrollments / Course</div>
+                  <div style={{ color: '#ea580c', fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.1 }}>{averageEnrollmentsPerCourse}</div>
+                </div>
+                <div>
+                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '6px' }}>Total Lessons</div>
+                  <div style={{ color: '#0f766e', fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.1 }}>{stats.lessons}</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div style={{ color: '#0f172a', fontSize: '0.96rem', fontWeight: 700, marginBottom: '10px' }}>Payment Mix</div>
               <div style={{ display: 'grid', gap: '10px' }}>
-                {[
-                  { label: 'Completed', value: paymentHealth.completed, color: '#16a34a', bg: '#dcfce7' },
-                  { label: 'Pending', value: paymentHealth.pending, color: '#c2410c', bg: '#ffedd5' },
-                  { label: 'Failed', value: paymentHealth.failed, color: '#b91c1c', bg: '#fee2e2' },
-                ].map((item) => {
+                {paymentMixItems.map((item) => {
                   const width = totalPayments > 0 ? (item.value / totalPayments) * 100 : 0;
                   return (
                     <div key={item.label}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.78rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '0.78rem' }}>
                         <span style={{ color: '#475569', fontWeight: 600 }}>{item.label}</span>
                         <span style={{ color: '#0f172a' }}>{item.value} รายการ</span>
                       </div>
@@ -568,47 +514,86 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
-      <section style={{ display: 'grid', gap: '16px' }}>
-        <div>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>Quick Actions</h2>
-          <div style={{ color: '#64748b', fontSize: '0.84rem' }}>รวมทางลัดที่ใช้บ่อย แยกตามประเภทงานเพื่อให้เข้าหน้าเป้าหมายได้เร็วขึ้น</div>
-        </div>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '16px',
-        }}>
-          {quickActionGroups.map((group) => (
-            <div key={group.title} style={{ background: 'white', borderRadius: '18px', padding: '20px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
-              <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>{group.title}</div>
-              <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7, marginBottom: '14px' }}>{group.description}</div>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {group.actions.map((action) => (
-                  <Link
-                    key={action.href}
-                    href={action.href}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '12px 14px',
-                      borderRadius: '12px',
-                      textDecoration: 'none',
-                      color: action.emphasis ? 'white' : '#0f172a',
-                      background: action.emphasis ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : '#f8fafc',
-                      border: action.emphasis ? 'none' : '1px solid #e2e8f0',
-                      fontWeight: 600,
-                      fontSize: '0.88rem',
-                    }}
-                  >
-                    <span>{action.label}</span>
-                    <span style={{ opacity: action.emphasis ? 0.92 : 0.5 }}>→</span>
-                  </Link>
+      <section style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: '16px',
+      }}>
+        <div style={{ background: 'white', borderRadius: '20px', padding: '22px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
+          <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Movement</div>
+          <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7, marginBottom: '18px' }}>ดู momentum ระยะสั้นของรายได้และการลงทะเบียนจากพื้นที่เดียว</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+            <div>
+              <div style={{ color: '#0f172a', fontSize: '0.9rem', fontWeight: 700, marginBottom: '10px' }}>รายได้ 7 วัน</div>
+              <div style={{ display: 'grid', gap: '8px' }}>
+                {sevenDayRevenue.map((item) => (
+                  <div key={item.date}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.78rem' }}>
+                      <span style={{ color: '#64748b' }}>{formatShortDate(item.date)}</span>
+                      <span style={{ color: '#0f172a', fontWeight: 600 }}>{formatCurrency(item.total)}</span>
+                    </div>
+                    <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.max((item.total / maxRevenueValue) * 100, item.total > 0 ? 8 : 0)}%`, background: 'linear-gradient(90deg, #2563eb, #1d4ed8)', borderRadius: '999px' }} />
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
-          ))}
+            <div>
+              <div style={{ color: '#0f172a', fontSize: '0.9rem', fontWeight: 700, marginBottom: '10px' }}>การลงทะเบียน 7 วัน</div>
+              <div style={{ display: 'grid', gap: '8px' }}>
+                {sevenDayEnrollments.map((item) => (
+                  <div key={item.date}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '0.78rem' }}>
+                      <span style={{ color: '#64748b' }}>{formatShortDate(item.date)}</span>
+                      <span style={{ color: '#0f172a', fontWeight: 600 }}>{item.count} รายการ</span>
+                    </div>
+                    <div style={{ height: '8px', background: '#ffedd5', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.max((item.count / maxEnrollmentValue) * 100, item.count > 0 ? 8 : 0)}%`, background: 'linear-gradient(90deg, #f59e0b, #ea580c)', borderRadius: '999px' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ background: 'white', borderRadius: '20px', padding: '22px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
+          <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Quick Access</div>
+          <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7, marginBottom: '10px' }}>รวมทางลัดที่ใช้บ่อยในรูปแบบที่เบาและสแกนง่ายกว่าเดิม</div>
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {quickActionGroups.map((group, groupIndex) => (
+              <div key={group.title} style={{ paddingTop: groupIndex === 0 ? '4px' : '14px', borderTop: groupIndex === 0 ? 'none' : '1px solid #e2e8f0' }}>
+                <div style={{ color: '#0f172a', fontSize: '0.92rem', fontWeight: 700, marginBottom: '4px' }}>{group.title}</div>
+                <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.6, marginBottom: '10px' }}>{group.description}</div>
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  {group.actions.map((action) => (
+                    <Link
+                      key={action.href}
+                      href={action.href}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '11px 14px',
+                        borderRadius: '12px',
+                        textDecoration: 'none',
+                        color: action.emphasis ? 'white' : '#0f172a',
+                        background: action.emphasis ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : '#f8fafc',
+                        border: action.emphasis ? 'none' : '1px solid #e2e8f0',
+                        fontWeight: 600,
+                        fontSize: '0.86rem',
+                      }}
+                    >
+                      <span>{action.label}</span>
+                      <span style={{ opacity: action.emphasis ? 0.92 : 0.5 }}>→</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
