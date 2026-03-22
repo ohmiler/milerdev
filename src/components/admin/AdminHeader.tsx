@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -15,23 +15,6 @@ const primaryLinks = [
     { href: '/admin/users', label: 'ผู้ใช้', icon: 'users' },
     { href: '/admin/payments', label: 'การชำระเงิน', icon: 'payments' },
     { href: '/admin/enrollments', label: 'การลงทะเบียน', icon: 'enrollments' },
-];
-
-const secondaryLinks = [
-    { href: '/admin/docs', label: 'คลังความรู้', icon: 'docs' },
-    { href: '/admin/bundles', label: 'Bundle', icon: 'bundles' },
-    { href: '/admin/coupons', label: 'คูปอง', icon: 'coupons' },
-    { href: '/admin/certificates', label: 'ใบรับรอง', icon: 'certificates' },
-    { href: '/admin/analytics', label: 'Analytics', icon: 'analytics' },
-    { href: '/admin/reconciliation', label: 'Reconcile', icon: 'reconciliation' },
-    { href: '/admin/reviews', label: 'รีวิว', icon: 'reviews' },
-    { href: '/admin/reports', label: 'รายงาน', icon: 'reports' },
-    { href: '/admin/media', label: 'ไฟล์สื่อ', icon: 'media' },
-    { href: '/admin/tags', label: 'แท็ก', icon: 'tags' },
-    { href: '/admin/announcements', label: 'ประกาศ', icon: 'announcements' },
-    { href: '/admin/affiliate-banners', label: 'Affiliate Banners', icon: 'media' },
-    { href: '/admin/audit-logs', label: 'บันทึกระบบ', icon: 'logs' },
-    { href: '/admin/settings', label: 'ตั้งค่า', icon: 'settings' },
 ];
 
 const secondaryLinkGroups = [
@@ -66,13 +49,12 @@ const secondaryLinkGroups = [
     },
 ];
 
-const allLinks = [...primaryLinks, ...secondaryLinks];
-
 function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
     const s = { width: size, height: size, flexShrink: 0 };
     const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
     switch (name) {
         case 'dashboard': return <svg style={s} viewBox="0 0 24 24" {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
+        case 'courses': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg>;
         case 'blog': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>;
         case 'docs': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>;
         case 'users': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>;
@@ -96,8 +78,6 @@ function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
 
 export default function AdminHeader({ userName }: AdminHeaderProps) {
     const [menuOpen, setMenuOpen] = useState(false);
-    const [moreOpen, setMoreOpen] = useState(false);
-    const moreRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
 
     const isActive = (href: string, exact?: boolean) => {
@@ -105,359 +85,178 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
         return pathname.startsWith(href);
     };
 
-    const isSecondaryActive = secondaryLinks.some(l => pathname.startsWith(l.href));
-    const activeSecondaryLink = secondaryLinks.find(l => isActive(l.href));
-
-    useEffect(() => {
-        const handleClick = (e: MouseEvent) => {
-            if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-                setMoreOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClick);
-        return () => document.removeEventListener('mousedown', handleClick);
-    }, []);
-
     return (
-        <header style={{ background: '#0f172a', position: 'relative', borderBottom: '1px solid #1e293b' }}>
-            <div style={{
-                padding: '0 20px',
-                display: 'flex',
-                alignItems: 'center',
-                height: '56px',
-                gap: '8px',
-            }}>
-                {/* Logo */}
-                <Link href="/admin" style={{
-                    color: 'white',
-                    fontSize: '1rem',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    whiteSpace: 'nowrap',
-                    marginRight: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                }}>
-                    <img
-                        src="/milerdev-logo-transparent.png"
-                        alt="MilerDev"
-                        style={{ width: 32, height: 32 }}
-                    />
-                    <span className="admin-logo-text">Admin</span>
-                </Link>
-
-                {/* Desktop Nav - Primary */}
-                <nav className="admin-nav-desktop" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '2px',
-                    flex: 1,
-                }}>
-                    {primaryLinks.map(link => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            style={{
-                                color: isActive(link.href, link.exact) ? '#ffffff' : '#94a3b8',
-                                textDecoration: 'none',
-                                fontSize: '0.8125rem',
-                                fontWeight: isActive(link.href, link.exact) ? 600 : 400,
-                                padding: '8px 12px',
-                                borderRadius: '8px',
-                                background: isActive(link.href, link.exact) ? 'rgba(59,130,246,0.15)' : 'transparent',
-                                transition: 'all 0.15s',
-                                whiteSpace: 'nowrap',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                            }}
-                        >
-                            <NavIcon name={link.icon} size={15} />
-                            {link.label}
-                        </Link>
-                    ))}
-
-                    {/* More Dropdown */}
-                    <div ref={moreRef} style={{ position: 'relative' }}>
-                        <button
-                            onClick={() => setMoreOpen(!moreOpen)}
-                            style={{
-                                color: isSecondaryActive ? '#ffffff' : '#94a3b8',
-                                background: moreOpen || isSecondaryActive ? 'rgba(59,130,246,0.15)' : 'transparent',
-                                border: 'none',
-                                fontSize: '0.8125rem',
-                                fontWeight: isSecondaryActive ? 600 : 400,
-                                padding: '8px 12px',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                whiteSpace: 'nowrap',
-                                transition: 'all 0.15s',
-                            }}
-                        >
-                            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
-                                <span>เพิ่มเติม</span>
-                                {activeSecondaryLink && (
-                                    <span style={{ fontSize: '0.65rem', color: '#93c5fd', marginTop: '3px', fontWeight: 600 }}>
-                                        {activeSecondaryLink.label}
-                                    </span>
-                                )}
-                            </span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
-                                <polyline points="6 9 12 15 18 9" />
-                            </svg>
-                        </button>
-
-                        {moreOpen && (
-                            <div style={{
-                                position: 'absolute',
-                                top: 'calc(100% + 8px)',
-                                left: 0,
-                                background: '#1e293b',
-                                borderRadius: '16px',
-                                padding: '8px',
-                                minWidth: '320px',
-                                boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
-                                border: '1px solid #334155',
-                                zIndex: 100,
-                            }}>
-                                <div style={{ padding: '8px 10px 10px', borderBottom: '1px solid rgba(148,163,184,0.18)', marginBottom: '8px' }}>
-                                    <div style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>เมนูเพิ่มเติม</div>
-                                    <div style={{ color: '#94a3b8', fontSize: '0.74rem', lineHeight: 1.6 }}>รวมหน้าจัดการที่ใช้เป็นครั้งคราว แยกตามหมวดเพื่อให้หาได้ง่ายขึ้น</div>
-                                </div>
-                                <div style={{ display: 'grid', gap: '10px' }}>
-                                    {secondaryLinkGroups.map((group) => (
-                                        <div key={group.title} style={{ padding: '0 4px' }}>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 8px 6px' }}>
-                                                {group.title}
-                                            </div>
-                                            <div style={{ display: 'grid', gap: '4px' }}>
-                                                {group.items.map(link => (
-                                                    <Link
-                                                        key={link.href}
-                                                        href={link.href}
-                                                        onClick={() => setMoreOpen(false)}
-                                                        style={{
-                                                            color: isActive(link.href) ? '#ffffff' : '#cbd5e1',
-                                                            textDecoration: 'none',
-                                                            fontSize: '0.8125rem',
-                                                            fontWeight: isActive(link.href) ? 600 : 400,
-                                                            padding: '10px 12px',
-                                                            borderRadius: '10px',
-                                                            background: isActive(link.href) ? 'rgba(59,130,246,0.15)' : 'transparent',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '10px',
-                                                            transition: 'background 0.1s',
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            if (!isActive(link.href)) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            if (!isActive(link.href)) e.currentTarget.style.background = 'transparent';
-                                                        }}
-                                                    >
-                                                        <NavIcon name={link.icon} size={15} />
-                                                        {link.label}
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </nav>
-
-                {/* Right Side */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto' }}>
-                    <span className="admin-user-name" style={{
-                        color: '#94a3b8',
-                        fontSize: '0.8125rem',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '140px',
-                    }}>
-                        {userName}
-                    </span>
-                    <Link href="/" className="admin-back-link" style={{
-                        color: '#94a3b8',
-                        textDecoration: 'none',
-                        fontSize: '0.75rem',
-                        whiteSpace: 'nowrap',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid #334155',
-                        transition: 'all 0.15s',
-                    }}>
-                        กลับหน้าเว็บ
+        <>
+            <header className="admin-mobile-header" style={{ position: 'sticky', top: 0, zIndex: 40, background: 'rgba(15, 23, 42, 0.92)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #1e293b' }}>
+                <div style={{ padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '64px', gap: '12px' }}>
+                    <Link href="/admin" style={{ color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                        <img
+                            src="/milerdev-logo-transparent.png"
+                            alt="MilerDev"
+                            style={{ width: 32, height: 32, flexShrink: 0 }}
+                        />
+                        <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>MilerDev Admin</div>
+                            <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '3px' }}>Navigation</div>
+                        </div>
                     </Link>
 
-                    {/* Hamburger Button */}
                     <button
-                        className="admin-menu-btn"
-                        onClick={() => setMenuOpen(!menuOpen)}
-                        aria-label="Toggle menu"
+                        type="button"
+                        onClick={() => setMenuOpen(true)}
+                        aria-label="Open navigation"
                         style={{
-                            background: 'none',
-                            border: 'none',
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '12px',
+                            border: '1px solid #334155',
+                            background: '#111827',
                             color: 'white',
                             cursor: 'pointer',
-                            padding: '8px',
-                            display: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
                         }}
                     >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            {menuOpen ? (
-                                <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>
-                            ) : (
-                                <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>
-                            )}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
                         </svg>
                     </button>
                 </div>
-            </div>
+            </header>
 
-            {/* Mobile Nav Dropdown */}
             {menuOpen && (
-                <nav
-                    className="admin-nav-mobile"
-                    style={{
-                        position: 'absolute',
-                        top: '56px',
-                        left: 0,
-                        right: 0,
-                        background: '#0f172a',
-                        borderTop: '1px solid #1e293b',
-                        padding: '8px',
-                        display: 'none',
-                        zIndex: 50,
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-                        maxHeight: '80vh',
-                        overflowY: 'auto',
-                    }}
-                >
-                    <div style={{ display: 'grid', gap: '12px' }}>
-                        <div>
-                            <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '6px 8px' }}>
-                                Primary
-                            </div>
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(2, 1fr)',
-                                gap: '4px',
-                            }}>
-                                {primaryLinks.map(link => (
-                                    <Link
-                                        key={link.href}
-                                        href={link.href}
-                                        onClick={() => setMenuOpen(false)}
-                                        style={{
-                                            color: isActive(link.href, link.exact) ? '#ffffff' : '#94a3b8',
-                                            textDecoration: 'none',
-                                            fontSize: '0.8125rem',
-                                            fontWeight: isActive(link.href, link.exact) ? 600 : 400,
-                                            padding: '12px',
-                                            borderRadius: '8px',
-                                            background: isActive(link.href, link.exact) ? 'rgba(59,130,246,0.15)' : 'transparent',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '8px',
-                                        }}
-                                    >
-                                        <NavIcon name={link.icon} size={16} />
-                                        {link.label}
-                                    </Link>
-                                ))}
-                            </div>
+                <>
+                    <button
+                        type="button"
+                        aria-label="Close navigation overlay"
+                        onClick={() => setMenuOpen(false)}
+                        style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', border: 'none', padding: 0, zIndex: 49, cursor: 'pointer' }}
+                    />
+                    <nav style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 'min(88vw, 320px)', background: '#0f172a', borderRight: '1px solid #1e293b', zIndex: 50, display: 'grid', gridTemplateRows: 'auto 1fr auto', boxShadow: '0 20px 60px rgba(0,0,0,0.35)' }}>
+                        <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid rgba(148,163,184,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                            <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                                <img
+                                    src="/milerdev-logo-transparent.png"
+                                    alt="MilerDev"
+                                    style={{ width: 32, height: 32, flexShrink: 0 }}
+                                />
+                                <div style={{ minWidth: 0 }}>
+                                    <div style={{ fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.1 }}>MilerDev Admin</div>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '3px' }}>Menu</div>
+                                </div>
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={() => setMenuOpen(false)}
+                                aria-label="Close navigation"
+                                style={{ width: '38px', height: '38px', borderRadius: '12px', border: '1px solid #334155', background: '#111827', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
                         </div>
 
-                        {secondaryLinkGroups.map((group) => (
-                            <div key={group.title}>
-                                <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '6px 8px' }}>
-                                    {group.title}
+                        <div style={{ overflowY: 'auto', padding: '16px 12px', display: 'grid', gap: '16px' }}>
+                            <div>
+                                <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 10px 8px' }}>
+                                    Core
                                 </div>
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(2, 1fr)',
-                                    gap: '4px',
-                                }}>
-                                    {group.items.map(link => (
-                                        <Link
-                                            key={link.href}
-                                            href={link.href}
-                                            onClick={() => setMenuOpen(false)}
-                                            style={{
-                                                color: isActive(link.href) ? '#ffffff' : '#94a3b8',
-                                                textDecoration: 'none',
-                                                fontSize: '0.8125rem',
-                                                fontWeight: isActive(link.href) ? 600 : 400,
-                                                padding: '12px',
-                                                borderRadius: '8px',
-                                                background: isActive(link.href) ? 'rgba(59,130,246,0.15)' : 'transparent',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px',
-                                            }}
-                                        >
-                                            <NavIcon name={link.icon} size={16} />
-                                            {link.label}
-                                        </Link>
-                                    ))}
+                                <div style={{ display: 'grid', gap: '4px' }}>
+                                    {primaryLinks.map(link => {
+                                        const active = isActive(link.href, link.exact);
+                                        return (
+                                            <Link
+                                                key={link.href}
+                                                href={link.href}
+                                                onClick={() => setMenuOpen(false)}
+                                                style={{
+                                                    color: active ? '#ffffff' : '#cbd5e1',
+                                                    textDecoration: 'none',
+                                                    fontSize: '0.84rem',
+                                                    fontWeight: active ? 700 : 500,
+                                                    padding: '11px 12px',
+                                                    borderRadius: '12px',
+                                                    background: active ? 'linear-gradient(135deg, rgba(37,99,235,0.28), rgba(29,78,216,0.2))' : 'transparent',
+                                                    border: active ? '1px solid rgba(96,165,250,0.28)' : '1px solid transparent',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '10px',
+                                                }}
+                                            >
+                                                <NavIcon name={link.icon} size={16} />
+                                                {link.label}
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                    <div style={{
-                        borderTop: '1px solid #1e293b',
-                        marginTop: '8px',
-                        paddingTop: '8px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 12px',
-                    }}>
-                        <span style={{ color: '#64748b', fontSize: '0.8125rem' }}>{userName}</span>
-                        <Link
-                            href="/"
-                            onClick={() => setMenuOpen(false)}
-                            style={{
-                                color: '#94a3b8',
-                                textDecoration: 'none',
-                                fontSize: '0.8125rem',
-                                padding: '6px 12px',
-                                borderRadius: '6px',
-                                border: '1px solid #334155',
-                            }}
-                        >
-                            กลับหน้าเว็บ
-                        </Link>
-                    </div>
-                </nav>
+
+                            {secondaryLinkGroups.map((group) => (
+                                <div key={group.title}>
+                                    <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 10px 8px' }}>
+                                        {group.title}
+                                    </div>
+                                    <div style={{ display: 'grid', gap: '4px' }}>
+                                        {group.items.map(link => {
+                                            const active = isActive(link.href);
+                                            return (
+                                                <Link
+                                                    key={link.href}
+                                                    href={link.href}
+                                                    onClick={() => setMenuOpen(false)}
+                                                    style={{
+                                                        color: active ? '#ffffff' : '#94a3b8',
+                                                        textDecoration: 'none',
+                                                        fontSize: '0.8125rem',
+                                                        fontWeight: active ? 600 : 500,
+                                                        padding: '10px 12px',
+                                                        borderRadius: '12px',
+                                                        background: active ? 'rgba(59,130,246,0.14)' : 'transparent',
+                                                        border: active ? '1px solid rgba(96,165,250,0.24)' : '1px solid transparent',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '10px',
+                                                    }}
+                                                >
+                                                    <NavIcon name={link.icon} size={15} />
+                                                    {link.label}
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div style={{ padding: '16px', borderTop: '1px solid rgba(148,163,184,0.16)' }}>
+                            <div style={{ color: '#e2e8f0', fontSize: '0.82rem', fontWeight: 600, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {userName}
+                            </div>
+                            <div style={{ color: '#64748b', fontSize: '0.74rem', marginBottom: '12px' }}>Admin session</div>
+                            <Link
+                                href="/"
+                                onClick={() => setMenuOpen(false)}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', textDecoration: 'none', fontSize: '0.78rem', padding: '9px 12px', borderRadius: '10px', border: '1px solid #334155', background: '#111827' }}
+                            >
+                                กลับหน้าเว็บ
+                            </Link>
+                        </div>
+                    </nav>
+                </>
             )}
 
             <style>{`
-                .admin-nav-desktop { display: flex; }
-                .admin-menu-btn { display: none !important; }
-                .admin-nav-mobile { display: none !important; }
-                .admin-logo-text { display: inline; }
-
+                .admin-mobile-header { display: none; }
                 @media (max-width: 1024px) {
-                    .admin-nav-desktop { display: none !important; }
-                    .admin-menu-btn { display: flex !important; }
-                    .admin-nav-mobile { display: block !important; }
-                    .admin-user-name { display: none !important; }
-                    .admin-back-link { display: none !important; }
-                }
-                @media (max-width: 480px) {
-                    .admin-logo-text { display: none !important; }
+                    .admin-mobile-header { display: block !important; }
                 }
             `}</style>
-        </header>
+        </>
     );
 }
