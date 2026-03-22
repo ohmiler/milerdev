@@ -116,6 +116,7 @@ export default function NewCoursePage() {
     },
   ];
   const readinessCount = readinessItems.filter((item) => item.ready).length;
+  const completionPercent = Math.round((readinessCount / readinessItems.length) * 100);
 
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
@@ -127,92 +128,33 @@ export default function NewCoursePage() {
         boxShadow: '0 24px 60px rgba(15, 23, 42, 0.08)',
         overflow: 'hidden',
       }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.65fr) minmax(300px, 0.95fr)',
-          gap: '28px',
-          alignItems: 'stretch',
-        }}>
-          <div style={{ display: 'grid', gap: '22px' }}>
-            <div>
-              <Link href="/admin/courses" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
-                ← กลับไปรายการคอร์ส
-              </Link>
-              <div style={{ color: '#0f172a', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '14px', marginBottom: '12px' }}>
-                Create New Course
-              </div>
-              <h1 style={{ fontSize: '2.3rem', fontWeight: 800, color: '#0f172a', marginBottom: '12px', lineHeight: 1.04, maxWidth: '760px' }}>
-                สร้างคอร์สใหม่แบบมีโครงสร้างชัด ตั้งข้อมูลหลักให้พร้อม และส่งต่อไปขั้นจัดบทเรียนได้ลื่นขึ้น
-              </h1>
-              <p style={{ color: '#334155', fontSize: '0.98rem', lineHeight: 1.85, maxWidth: '760px' }}>
-                จัดลำดับการกรอกข้อมูลให้เห็นทั้งชื่อคอร์ส URL ราคา สถานะ ภาพปก แท็ก และธีมใบรับรองใน workflow เดียว เพื่อให้การสร้างคอร์สใหม่ชัดเจนตั้งแต่ต้นทาง
-              </p>
+        <div style={{ display: 'grid', gap: '18px', maxWidth: '920px' }}>
+          <div>
+            <Link href="/admin/courses" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
+              ← กลับไปรายการคอร์ส
+            </Link>
+            <div style={{ color: '#0f172a', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '14px', marginBottom: '12px' }}>
+              Create New Course
             </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'minmax(0, 1.2fr) repeat(2, minmax(170px, 0.8fr))',
-              gap: '14px',
-            }}>
-              <div style={{
-                background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-                color: 'white',
-                borderRadius: '22px',
-                padding: '22px',
-                display: 'grid',
-                gap: '12px',
-              }}>
-                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Creation Focus</div>
-                <div style={{ fontSize: '1.95rem', fontWeight: 800, lineHeight: 1.04 }}>{readinessCount}/{readinessItems.length}</div>
-                <div style={{ color: 'rgba(255,255,255,0.74)', fontSize: '0.86rem', lineHeight: 1.7 }}>
-                  เช็กความพร้อมของข้อมูลตั้งต้นก่อนสร้างคอร์ส เพื่อให้ step ถัดไปอย่างการเพิ่มบทเรียนและปรับหน้า course detail ทำได้ลื่นขึ้น
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', lineHeight: 1.7 }}>{topPriorityAction}</div>
-              </div>
-
-              {setupSignals.slice(1).map((item) => (
-                <div key={item.label} style={{ background: 'rgba(255,255,255,0.76)', borderRadius: '20px', padding: '18px', border: '1px solid rgba(148,163,184,0.22)' }}>
-                  <div style={{ color: '#64748b', fontSize: '0.76rem', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.label}</div>
-                  <div style={{ color: item.tone, fontSize: item.label === 'URL Preview' ? '0.98rem' : '1.4rem', fontWeight: 800, lineHeight: 1.2, wordBreak: 'break-word' }}>{item.value}</div>
-                  <div style={{ color: '#475569', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>{item.detail}</div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-              gap: '12px',
-            }}>
-              {setupSignals.map((item) => (
-                <div key={item.label} style={{ padding: '12px 0' }}>
-                  <div style={{ color: '#64748b', fontSize: '0.76rem', marginBottom: '6px' }}>{item.label}</div>
-                  <div style={{ color: item.tone, fontSize: item.label === 'URL Preview' ? '0.9rem' : '1.35rem', fontWeight: 800, lineHeight: 1.15, wordBreak: 'break-word' }}>{item.value}</div>
-                </div>
-              ))}
-            </div>
+            <h1 style={{ fontSize: '2.3rem', fontWeight: 800, color: '#0f172a', marginBottom: '12px', lineHeight: 1.04, maxWidth: '800px' }}>
+              สร้างคอร์สใหม่ให้ flow ชัดตั้งแต่ชื่อคอร์ส ไปจนถึงความพร้อมสำหรับส่งต่อไปจัดบทเรียน
+            </h1>
+            <p style={{ color: '#334155', fontSize: '0.98rem', lineHeight: 1.85, maxWidth: '780px' }}>
+              หน้านี้ถูกจัดใหม่ให้คุณโฟกัสกับการตั้งตัวตนของคอร์ส ราคา สถานะ ภาพปก และโทนของ certificate แบบเป็นลำดับเดียว ไม่ต้องสลับอ่านหลายกล่องใน viewport แรก
+            </p>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.72)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '24px', padding: '22px', display: 'grid', gap: '14px', backdropFilter: 'blur(8px)' }}>
-            <div>
-              <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Readiness Checklist</div>
-              <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>ใช้เช็กอย่างรวดเร็วว่าข้อมูลตั้งต้นครบพอสำหรับสร้างคอร์สและไปทำงานต่อในหน้าถัดไปหรือยัง</div>
-            </div>
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {readinessItems.map((item) => (
-                <div key={item.label} style={{ borderRadius: '16px', background: 'white', border: '1px solid #e2e8f0', padding: '14px 16px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: item.ready ? '#16a34a' : '#f59e0b', marginTop: '6px', flexShrink: 0 }} />
-                  <div>
-                    <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>{item.label}</div>
-                    <div style={{ color: item.ready ? '#166534' : '#92400e', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>{item.hint}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div style={{ borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px 16px' }}>
-              <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>หลังจากสร้างแล้ว</div>
-              <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.7 }}>แนะนำให้เข้าไปเพิ่มบทเรียน ตั้ง preview video และตรวจหน้าคอร์สจริงก่อนเปิดขายเต็มรูปแบบ</div>
-            </div>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <a href="#course-setup-form" style={{ padding: '11px 16px', borderRadius: '999px', background: '#0f172a', color: 'white', textDecoration: 'none', fontSize: '0.84rem', fontWeight: 700 }}>
+              เริ่มกรอกข้อมูล
+            </a>
+            <span style={{ padding: '8px 12px', borderRadius: '999px', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.8rem', fontWeight: 700 }}>
+              พร้อมแล้ว {readinessCount}/{readinessItems.length} จุด
+            </span>
+          </div>
+
+          <div style={{ color: '#475569', fontSize: '0.84rem', lineHeight: 1.75, maxWidth: '860px' }}>
+            <span style={{ color: '#0f172a', fontWeight: 700 }}>โฟกัสตอนนี้:</span> {topPriorityAction}
           </div>
         </div>
       </section>
@@ -232,252 +174,332 @@ export default function NewCoursePage() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} style={{
+      <form id="course-setup-form" onSubmit={handleSubmit} style={{
         display: 'grid',
         gap: '20px',
       }}>
-        <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-          <div style={{ marginBottom: '18px' }}>
-            <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ก่อนเริ่มกรอก</div>
-            <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>ลำดับที่แนะนำคือ ตั้งชื่อคอร์ส → เช็ก URL → ใส่คำอธิบาย → กำหนดราคา/สถานะ → เลือกภาพปกและธีมใบรับรอง แล้วค่อยกดสร้าง</div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
-            <div style={{ padding: '14px 16px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <div style={{ color: '#0f172a', fontSize: '0.84rem', fontWeight: 700, marginBottom: '4px' }}>1. ตั้งตัวตนคอร์ส</div>
-              <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.6 }}>ชื่อ, slug, คำอธิบาย และแท็ก ควรชัดตั้งแต่แรกเพื่อให้แก้ต่อภายหลังน้อยลง</div>
-            </div>
-            <div style={{ padding: '14px 16px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <div style={{ color: '#0f172a', fontSize: '0.84rem', fontWeight: 700, marginBottom: '4px' }}>2. กำหนดรูปแบบการขาย</div>
-              <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.6 }}>เลือกว่าคอร์สฟรีหรือเสียเงิน และควรเริ่มเป็น draft หรือเผยแพร่ทันที</div>
-            </div>
-            <div style={{ padding: '14px 16px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <div style={{ color: '#0f172a', fontSize: '0.84rem', fontWeight: 700, marginBottom: '4px' }}>3. ทำให้หน้าเว็บพร้อม</div>
-              <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.6 }}>เพิ่มภาพปกและสีใบรับรองเพื่อให้หน้าคอร์สดูพร้อมใช้งานตั้งแต่แรก</div>
-            </div>
-          </div>
-        </section>
+        <div className="new-course-shell" style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1.2fr) minmax(300px, 0.78fr)',
+          gap: '24px',
+          alignItems: 'start',
+        }}>
+          <div style={{ display: 'grid', gap: '20px' }}>
+            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ตัวตนและบริบทของคอร์ส</div>
+                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>เริ่มจากข้อมูลที่นิยามคอร์สให้ชัดก่อน ได้แก่ ชื่อ URL คำอธิบาย และแท็ก เพื่อให้การจัดการต่อในหน้าถัดไปเป็นระบบมากขึ้น</div>
+              </div>
 
-        <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-          <div style={{ marginBottom: '18px' }}>
-            <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ข้อมูลพื้นฐานของคอร์ส</div>
-            <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>ส่วนนี้กำหนดตัวตนหลักของคอร์ส ได้แก่ ชื่อ URL คำอธิบาย และแท็กสำหรับจัดหมวดหมู่</div>
+              <div className="new-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '18px' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                    ชื่อคอร์ส *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => {
+                      const newTitle = e.target.value;
+                      setFormData(prev => ({
+                        ...prev,
+                        title: newTitle,
+                        ...(!slugManuallyEdited ? { slug: generateSlug(newTitle) } : {}),
+                      }));
+                    }}
+                    required
+                    placeholder="เช่น JavaScript for Beginners"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      fontSize: '1rem',
+                    }}
+                  />
+                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
+                    ตั้งชื่อให้ชัดพอที่จะใช้ทั้งในหน้าขาย การจัดการภายใน และการค้นหาในระบบ
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                    Slug (URL)
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#64748b', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>/courses/</span>
+                    <input
+                      type="text"
+                      value={formData.slug}
+                      onChange={(e) => {
+                        setSlugManuallyEdited(true);
+                        setFormData({ ...formData, slug: e.target.value });
+                      }}
+                      placeholder="auto-generated-from-title"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '1rem',
+                      }}
+                    />
+                    {slugManuallyEdited && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSlugManuallyEdited(false);
+                          setFormData(prev => ({ ...prev, slug: generateSlug(prev.title) }));
+                        }}
+                        style={{
+                          padding: '8px 12px',
+                          background: '#f1f5f9',
+                          border: 'none',
+                          borderRadius: '6px',
+                          color: '#475569',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        รีเซ็ต
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
+                    URL นี้ใช้สำหรับหน้าคอร์สจริงบนเว็บ ควรสั้น อ่านง่าย และเปลี่ยนให้น้อยที่สุดเมื่อเริ่มมีการแชร์ลิงก์แล้ว
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '20px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  คำอธิบาย
+                </label>
+                <RichTextEditor
+                  content={formData.description}
+                  onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
+                />
+              </div>
+
+              <div style={{ marginTop: '20px' }}>
+                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                  แท็ก
+                </label>
+                <TagSelector
+                  selectedTagIds={selectedTagIds}
+                  onChange={setSelectedTagIds}
+                />
+              </div>
+            </section>
+
+            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>รูปแบบการขายและการมองเห็น</div>
+                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>กำหนดว่าคอร์สนี้จะเริ่มเป็นแบบร่างหรือเผยแพร่ทันที และอยู่ในรูปแบบฟรีหรือเสียเงิน</div>
+              </div>
+
+              <div className="new-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                    ราคา (บาท)
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    min="0"
+                    placeholder="0 = ฟรี"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      fontSize: '1rem',
+                    }}
+                  />
+                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
+                    ใส่ `0` หากต้องการทำเป็นคอร์สฟรี และสามารถตั้งโปรโมชั่นเพิ่มเติมในภายหลังได้
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                    สถานะ
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '10px',
+                      fontSize: '1rem',
+                      background: 'white',
+                    }}
+                  >
+                    <option value="draft">แบบร่าง</option>
+                    <option value="published">เผยแพร่</option>
+                  </select>
+                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
+                    ถ้ายังไม่พร้อมเปิดขาย แนะนำให้สร้างเป็นแบบร่างก่อน แล้วค่อยเพิ่มบทเรียนและตรวจหน้าคอร์สให้ครบ
+                  </div>
+                </div>
+              </div>
+
+              <div className="new-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px', marginTop: '18px' }}>
+                {setupSignals.slice(0, 2).map((item) => (
+                  <div key={item.label} style={{ padding: '14px 16px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div style={{ color: '#64748b', fontSize: '0.74rem', marginBottom: '6px' }}>{item.label}</div>
+                    <div style={{ color: item.tone, fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.15 }}>{item.value}</div>
+                    <div style={{ color: '#64748b', fontSize: '0.76rem', marginTop: '8px', lineHeight: 1.6 }}>{item.detail}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ภาพลักษณ์และความพร้อมของหน้าเว็บ</div>
+                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>เพิ่มภาพปกและเลือกสี certificate เพื่อให้หน้าคอร์สดูพร้อมใช้งานตั้งแต่การเปิดดูครั้งแรก</div>
+              </div>
+
+              <div className="new-course-visual-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.08fr) minmax(260px, 0.92fr)', gap: '20px', alignItems: 'start' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                    รูปภาพปก
+                  </label>
+                  <ImageUpload
+                    value={formData.thumbnailUrl}
+                    onChange={(url) => setFormData(prev => ({ ...prev, thumbnailUrl: url }))}
+                    folder="courses"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+                    สีใบรับรอง (Certificate)
+                  </label>
+                  <CertificateColorPicker
+                    value={formData.certificateColor}
+                    onChange={(color) => setFormData(prev => ({ ...prev, certificateColor: color }))}
+                  />
+                </div>
+              </div>
+            </section>
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-              ชื่อคอร์ส *
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => {
-                const newTitle = e.target.value;
-                setFormData(prev => ({
-                  ...prev,
-                  title: newTitle,
-                  ...(!slugManuallyEdited ? { slug: generateSlug(newTitle) } : {}),
-                }));
-              }}
-              required
-              placeholder="เช่น JavaScript for Beginners"
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '10px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
+          <aside style={{ display: 'grid', gap: '16px' }}>
+            <div className="new-course-sticky" style={{ position: 'sticky', top: '96px', display: 'grid', gap: '16px' }}>
+              <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '20px', display: 'grid', gap: '14px' }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+                  color: 'white',
+                  borderRadius: '18px',
+                  padding: '18px',
+                  display: 'grid',
+                  gap: '10px',
+                }}>
+                  <div style={{ color: 'rgba(255,255,255,0.68)', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Setup Snapshot</div>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 800, lineHeight: 1.05 }}>{completionPercent}%</div>
+                  <div style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', lineHeight: 1.7 }}>
+                    พร้อมแล้ว {readinessCount}/{readinessItems.length} จุดสำหรับการสร้างคอร์สใหม่
+                  </div>
+                  <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.78rem', lineHeight: 1.7 }}>{topPriorityAction}</div>
+                </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-              Slug (URL)
-            </label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ color: '#64748b', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>/courses/</span>
-              <input
-                type="text"
-                value={formData.slug}
-                onChange={(e) => {
-                  setSlugManuallyEdited(true);
-                  setFormData({ ...formData, slug: e.target.value });
-                }}
-                placeholder="auto-generated-from-title"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                }}
-              />
-              {slugManuallyEdited && (
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {setupSignals.map((item, index) => (
+                    <div key={item.label} style={{ padding: index === 0 ? '4px 0 10px' : '12px 0 10px', borderTop: index === 0 ? 'none' : '1px solid #e2e8f0' }}>
+                      <div style={{ color: '#64748b', fontSize: '0.73rem', marginBottom: '6px' }}>{item.label}</div>
+                      <div style={{ color: item.tone, fontSize: item.label === 'URL Preview' ? '0.94rem' : '1.08rem', fontWeight: 800, lineHeight: 1.2, wordBreak: 'break-word' }}>{item.value}</div>
+                      <div style={{ color: '#64748b', fontSize: '0.76rem', marginTop: '6px', lineHeight: 1.6 }}>{item.detail}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '20px', display: 'grid', gap: '12px' }}>
+                <div>
+                  <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>Readiness Checklist</div>
+                  <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>ใช้เช็กอย่างรวดเร็วว่าข้อมูลตั้งต้นครบพอสำหรับสร้างคอร์สและไปทำงานต่อในหน้าถัดไปหรือยัง</div>
+                </div>
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {readinessItems.map((item) => (
+                    <div key={item.label} style={{ borderRadius: '16px', background: 'white', border: '1px solid #e2e8f0', padding: '14px 16px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: item.ready ? '#16a34a' : '#f59e0b', marginTop: '6px', flexShrink: 0 }} />
+                      <div>
+                        <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>{item.label}</div>
+                        <div style={{ color: item.ready ? '#166534' : '#92400e', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>{item.hint}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px 16px' }}>
+                  <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>หลังจากสร้างแล้ว</div>
+                  <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.7 }}>แนะนำให้เข้าไปเพิ่มบทเรียน ตั้ง preview video และตรวจหน้าคอร์สจริงก่อนเปิดขายเต็มรูปแบบ</div>
+                </div>
+              </section>
+
+              <div style={{ display: 'grid', gap: '10px' }}>
                 <button
-                  type="button"
-                  onClick={() => {
-                    setSlugManuallyEdited(false);
-                    setFormData(prev => ({ ...prev, slug: generateSlug(prev.title) }));
-                  }}
+                  type="submit"
+                  disabled={loading}
                   style={{
-                    padding: '8px 12px',
-                    background: '#f1f5f9',
+                    padding: '13px 18px',
+                    background: '#2563eb',
+                    color: 'white',
                     border: 'none',
-                    borderRadius: '6px',
-                    color: '#475569',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
+                    borderRadius: '12px',
+                    fontSize: '0.96rem',
+                    fontWeight: 700,
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    opacity: loading ? 0.7 : 1,
                   }}
                 >
-                  รีเซ็ต
+                  {loading ? 'กำลังสร้าง...' : 'สร้างคอร์ส'}
                 </button>
-              )}
-            </div>
-            <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-              URL นี้ใช้สำหรับหน้าคอร์สจริงบนเว็บ ควรสั้น อ่านง่าย และเปลี่ยนให้น้อยที่สุดเมื่อเริ่มมีการแชร์ลิงก์แล้ว
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-              คำอธิบาย
-            </label>
-            <RichTextEditor
-              content={formData.description}
-              onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-              แท็ก
-            </label>
-            <TagSelector
-              selectedTagIds={selectedTagIds}
-              onChange={setSelectedTagIds}
-            />
-          </div>
-        </section>
-
-        <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-          <div style={{ marginBottom: '18px' }}>
-            <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ราคาและสถานะการเผยแพร่</div>
-            <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>กำหนดว่าคอร์สนี้เป็นคอร์สฟรีหรือคอร์สเสียเงิน และจะสร้างออกมาเป็น draft หรือเผยแพร่ทันที</div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                ราคา (บาท)
-              </label>
-              <input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                min="0"
-                placeholder="0 = ฟรี"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                }}
-              />
-              <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-                ใส่ `0` หากต้องการทำเป็นคอร์สฟรี และสามารถตั้งโปรโมชั่นเพิ่มเติมในภายหลังได้
+                <Link
+                  href="/admin/courses"
+                  style={{
+                    padding: '12px 18px',
+                    background: '#f1f5f9',
+                    color: '#475569',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    fontSize: '0.94rem',
+                    textDecoration: 'none',
+                    textAlign: 'center',
+                    fontWeight: 600,
+                  }}
+                >
+                  ยกเลิก
+                </Link>
               </div>
             </div>
-
-            <div>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                สถานะ
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  fontSize: '1rem',
-                  background: 'white',
-                }}
-              >
-                <option value="draft">แบบร่าง</option>
-                <option value="published">เผยแพร่</option>
-              </select>
-              <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-                ถ้ายังไม่พร้อมเปิดขาย แนะนำให้สร้างเป็นแบบร่างก่อน แล้วค่อยเพิ่มบทเรียนและตรวจหน้าคอร์สให้ครบ
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-          <div style={{ marginBottom: '18px' }}>
-            <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ภาพลักษณ์ของคอร์ส</div>
-            <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>กำหนดภาพปกและสีใบรับรองเพื่อให้คอร์สดูพร้อมใช้งานบนหน้าเว็บและใบประกาศ</div>
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-              สีใบรับรอง (Certificate)
-            </label>
-            <CertificateColorPicker
-              value={formData.certificateColor}
-              onChange={(color) => setFormData(prev => ({ ...prev, certificateColor: color }))}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-              รูปภาพปก
-            </label>
-            <ImageUpload
-              value={formData.thumbnailUrl}
-              onChange={(url) => setFormData(prev => ({ ...prev, thumbnailUrl: url }))}
-              folder="courses"
-            />
-          </div>
-        </section>
-
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              padding: '12px 24px',
-              background: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '1rem',
-              fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? 'กำลังสร้าง...' : 'สร้างคอร์ส'}
-          </button>
-          <Link
-            href="/admin/courses"
-            style={{
-              padding: '12px 24px',
-              background: '#f1f5f9',
-              color: '#475569',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '1rem',
-              textDecoration: 'none',
-            }}
-          >
-            ยกเลิก
-          </Link>
+          </aside>
         </div>
       </form>
+      <style>{`
+        @media (max-width: 1120px) {
+          .new-course-shell {
+            grid-template-columns: 1fr !important;
+          }
+
+          .new-course-sticky {
+            position: static !important;
+            top: auto !important;
+          }
+        }
+
+        @media (max-width: 720px) {
+          .new-course-field-grid,
+          .new-course-visual-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
