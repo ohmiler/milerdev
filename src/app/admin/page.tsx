@@ -430,7 +430,7 @@ export default async function AdminDashboard() {
             </div>
 
             <div className="admin-focus-panel" style={{
-              background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 62%, #3b82f6 100%)',
+              background: 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 58%, #2563eb 100%)',
               color: 'white',
               borderRadius: '18px',
               padding: '22px 24px',

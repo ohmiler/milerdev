@@ -64,27 +64,6 @@ export default async function AdminCoursesPage() {
         note: 'คอร์สหลักในระบบดูพร้อมใช้งานแล้ว คุณสามารถเริ่มสร้างรายการใหม่ต่อได้',
       };
 
-  const actionQueue = [
-    {
-      label: 'คอร์สที่ยังไม่มีบทเรียน',
-      value: `${withoutLessonsCount} คอร์ส`,
-      detail: withoutLessonsCount > 0 ? 'ควรเริ่มจากเติมโครงสร้างบทเรียนก่อน publish' : 'ไม่มีคอร์สว่างเปล่าในตอนนี้',
-      tone: withoutLessonsCount > 0 ? '#dc2626' : '#16a34a',
-    },
-    {
-      label: 'แบบร่างที่รอทบทวน',
-      value: `${draftCount} คอร์ส`,
-      detail: draftCount > 0 ? 'ช่วยบอก backlog ของคอร์สที่ยังไม่ถูกเปิดขาย' : 'ไม่มีคอร์ส draft ที่ค้างอยู่',
-      tone: draftCount > 0 ? '#d97706' : '#16a34a',
-    },
-    {
-      label: 'คอร์สที่มีผู้เรียนแล้ว',
-      value: `${withEnrollmentsCount} คอร์ส`,
-      detail: 'ใช้ดูว่ามีรายการไหนเริ่มมี demand จริงและควรติดตามคุณภาพต่อ',
-      tone: '#0f766e',
-    },
-  ];
-
   const averageLessonsPerCourse = allCourses.length > 0
     ? (allCourses.reduce((sum, course) => sum + Number(course.lessonCount || 0), 0) / allCourses.length).toFixed(1)
     : '0.0';
@@ -93,103 +72,120 @@ export default async function AdminCoursesPage() {
     ? (allCourses.reduce((sum, course) => sum + Number(course.enrollmentCount || 0), 0) / allCourses.length).toFixed(1)
     : '0.0';
 
+  const focusSummaryItems = [
+    { label: 'พร้อมขายแล้ว', value: `${publishedCount} คอร์ส` },
+    { label: 'แบบร่าง', value: `${draftCount} รายการ` },
+    { label: 'เฉลี่ยบทเรียน', value: `${averageLessonsPerCourse} บท` },
+    { label: 'ต้องเติมบทเรียน', value: `${withoutLessonsCount} รายการ` },
+  ];
+
+  const catalogSnapshotItems = [
+    { label: 'Drafts', value: draftCount, detail: 'รายการที่ยังรอจัดการ', tone: '#64748b' },
+    { label: 'Published', value: publishedCount, detail: 'พร้อมขายหรือเปิดเรียน', tone: '#1d4ed8' },
+  ];
+
   const catalogSignals = [
-    { label: 'เฉลี่ยบทเรียน / คอร์ส', value: averageLessonsPerCourse, tone: '#2563eb' },
-    { label: 'เฉลี่ยผู้เรียน / คอร์ส', value: averageEnrollmentsPerCourse, tone: '#ea580c' },
+    { label: 'คอร์สมีผู้เรียนแล้ว', value: `${withEnrollmentsCount} คอร์ส`, detail: 'ดูรายการที่เริ่มมี demand จริง', tone: '#0f766e' },
+    { label: 'เฉลี่ยบทเรียน / คอร์ส', value: `${averageLessonsPerCourse} บท`, detail: 'วัดความหนาแน่นของเนื้อหา', tone: '#1d4ed8' },
+    { label: 'เฉลี่ยผู้เรียน / คอร์ส', value: `${averageEnrollmentsPerCourse} คน`, detail: 'ใช้ดูแรงตอบรับของ catalog', tone: '#c2410c' },
   ];
 
   return (
-    <div style={{ display: 'grid', gap: '24px' }}>
+    <div style={{ display: 'grid', gap: '18px' }}>
       <section style={{
-        background: 'linear-gradient(135deg, #f8fbff 0%, #eef6ff 36%, #fffaf4 100%)',
-        border: '1px solid rgba(148,163,184,0.18)',
-        borderRadius: '28px',
-        padding: '32px',
-        boxShadow: '0 24px 60px rgba(15, 23, 42, 0.08)',
+        background: '#ffffff',
+        border: '1px solid #dbe5f4',
+        borderRadius: '22px',
+        padding: '18px 20px',
+        boxShadow: '0 16px 36px rgba(15, 23, 42, 0.05)',
         overflow: 'hidden',
       }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '28px',
+          gap: '18px',
           alignItems: 'stretch',
         }}>
-          <div style={{ display: 'grid', gap: '24px' }}>
+          <div style={{ display: 'grid', gap: '14px' }}>
             <div>
-              <div style={{ color: '#0f172a', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              <div style={{ color: '#334155', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
                 Course Management
               </div>
-              <h1 style={{ fontSize: '2.3rem', fontWeight: 800, color: '#0f172a', marginBottom: '12px', lineHeight: 1.04, maxWidth: '760px' }}>
-                ดู catalog คอร์สแบบที่รู้เร็วขึ้นว่ารายการไหนพร้อมขาย รายการไหนยังติดคอขวด และควรเริ่มจัดการจากอะไร
+              <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px', lineHeight: 1.05, maxWidth: '680px' }}>
+                Course Management
               </h1>
-              <p style={{ color: '#334155', fontSize: '0.98rem', lineHeight: 1.85, maxWidth: '720px' }}>
-                รวมภาพรวมของคอนเทนต์ สถานะการเผยแพร่ และสัญญาณจากผู้เรียนไว้ใน flow เดียว เพื่อให้ตัดสินใจต่อจากหน้าเดียวได้โดยไม่ต้องไล่อ่านหลายกล่อง
+              <p style={{ color: '#64748b', fontSize: '0.86rem', lineHeight: 1.7, maxWidth: '720px' }}>
+                สรุปภาพรวม catalog การเผยแพร่ และคอร์สที่ควรจัดการก่อนใน flow เดียว เพื่อให้ตัดสินใจต่อได้จากหน้าเดียว
               </p>
             </div>
 
             <div style={{
               display: 'grid',
-              gap: '18px',
+              gap: '14px',
             }}>
               <div style={{
-                background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+                background: 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 58%, #2563eb 100%)',
                 color: 'white',
-                borderRadius: '24px',
-                padding: '24px',
+                borderRadius: '18px',
+                padding: '22px 24px',
                 display: 'grid',
-                gap: '16px',
+                gap: '14px',
+                position: 'relative',
+                overflow: 'hidden',
+                minHeight: '208px',
               }}>
-                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Catalog Focus</div>
-                <div style={{ fontSize: '2.2rem', fontWeight: 800, lineHeight: 1.04 }}>{allCourses.length} คอร์ส</div>
-                <div style={{ color: 'rgba(255,255,255,0.74)', fontSize: '0.88rem', lineHeight: 1.8, maxWidth: '620px' }}>
-                  ให้ hero นี้ทำหน้าที่เป็นจุดเริ่มต้นของการตัดสินใจ: เห็นขนาด catalog, action ที่ควรทำก่อน และความพร้อมโดยรวม โดยไม่ซ้ำกับ detail ในตารางด้านล่าง
-                </div>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <Link href={topPriorityAction.href} style={{ padding: '11px 14px', borderRadius: '999px', background: 'white', color: '#0f172a', textDecoration: 'none', fontSize: '0.82rem', fontWeight: 700 }}>
-                    {topPriorityAction.label} →
-                  </Link>
-                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.78rem' }}>{topPriorityAction.note}</span>
+                <div style={{ position: 'absolute', inset: 'auto -72px -84px auto', width: '210px', height: '210px', borderRadius: '999px', background: 'radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0))' }} />
+                <div style={{ position: 'relative', zIndex: 1, display: 'grid', gap: '10px' }}>
+                  <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Catalog Focus</div>
+                  <div style={{ fontSize: '2.1rem', fontWeight: 800, lineHeight: 1 }}>{allCourses.length} Courses</div>
+                  <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: '0.84rem', lineHeight: 1.7, maxWidth: '520px' }}>
+                    โฟกัสขนาดของ catalog และงานสำคัญที่ควรทำก่อน เพื่อให้เห็นภาพรวมและเริ่มจัดการได้ทันที
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <Link href={topPriorityAction.href} style={{ padding: '10px 14px', borderRadius: '999px', background: '#ffffff', color: '#0f172a', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 700 }}>
+                      {topPriorityAction.label} →
+                    </Link>
+                    <div style={{ color: 'rgba(255,255,255,0.74)', fontSize: '0.74rem', lineHeight: 1.6 }}>{topPriorityAction.note}</div>
+                  </div>
                 </div>
                 <div style={{
+                  position: 'relative',
+                  zIndex: 1,
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '14px',
+                  gap: '12px',
                   paddingTop: '14px',
-                  borderTop: '1px solid rgba(255,255,255,0.12)',
+                  borderTop: '1px solid rgba(255,255,255,0.2)',
                 }}>
-                  <div>
-                    <div style={{ color: 'rgba(255,255,255,0.64)', fontSize: '0.75rem', marginBottom: '6px' }}>พร้อมขายแล้ว</div>
-                    <div style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.15 }}>{publishedCount} คอร์ส</div>
-                  </div>
-                  <div>
-                    <div style={{ color: 'rgba(255,255,255,0.64)', fontSize: '0.75rem', marginBottom: '6px' }}>มีผู้เรียนแล้ว</div>
-                    <div style={{ color: 'white', fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.15 }}>{withEnrollmentsCount} คอร์ส</div>
-                  </div>
+                  {focusSummaryItems.map((item) => (
+                    <div key={item.label}>
+                      <div style={{ color: 'rgba(255,255,255,0.64)', fontSize: '0.72rem', marginBottom: '6px' }}>{item.label}</div>
+                      <div style={{ color: 'white', fontSize: '1.12rem', fontWeight: 700, lineHeight: 1.15 }}>{item.value}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                gap: '16px',
-                paddingTop: '4px',
-                borderTop: '1px solid rgba(148,163,184,0.24)',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: '12px',
               }}>
               {operationalStats.map((item) => (
-                <div key={item.label} style={{ padding: '12px 0' }}>
-                  <div style={{ color: '#64748b', fontSize: '0.76rem', marginBottom: '6px' }}>{item.label}</div>
-                  <div style={{ color: item.tone, fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.05 }}>{item.value}</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.72rem', marginTop: '6px', lineHeight: 1.5 }}>{item.description}</div>
+                <div key={item.label} style={{ padding: '14px 16px', borderRadius: '14px', background: '#f8fbff', border: '1px solid #dbe5f4', minWidth: 0 }}>
+                  <div style={{ color: '#64748b', fontSize: '0.72rem', marginBottom: '6px' }}>{item.label}</div>
+                  <div style={{ color: item.tone, fontSize: '1.32rem', fontWeight: 800, lineHeight: 1.05 }}>{item.value}</div>
+                  <div style={{ color: '#94a3b8', fontSize: '0.7rem', marginTop: '6px', lineHeight: 1.5 }}>{item.description}</div>
                 </div>
               ))}
             </div>
           </div>
           </div>
 
-          <div style={{ background: 'rgba(255,255,255,0.72)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '24px', padding: '22px', display: 'grid', gap: '12px', backdropFilter: 'blur(8px)' }}>
+          <div style={{ background: '#ffffff', border: '1px solid #dbe5f4', borderRadius: '18px', padding: '18px', display: 'grid', gap: '14px' }}>
             <div>
-              <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Catalog Snapshot</div>
-              <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>ใช้แผงนี้เช็ค backlog และสัญญาณหลักของ catalog ก่อนลงไปจัดการรายคอร์สในตาราง</div>
+              <div style={{ color: '#0f172a', fontSize: '0.96rem', fontWeight: 700, marginBottom: '6px' }}>Catalog Snapshot</div>
+              <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.65 }}>ใช้มุมนี้เช็คสถานะหลักของ catalog ก่อนลงไปจัดการรายคอร์สในตาราง</div>
             </div>
             <Link
               href="/admin/courses/new"
@@ -198,38 +194,37 @@ export default async function AdminCoursesPage() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 gap: '12px',
-                padding: '14px 16px',
+                padding: '15px 16px',
                 background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
                 color: 'white',
-                borderRadius: '14px',
+                borderRadius: '12px',
                 textDecoration: 'none',
                 fontWeight: 700,
-                fontSize: '0.92rem',
+                fontSize: '0.9rem',
               }}
             >
-              <span>+ สร้างคอร์สใหม่</span>
+              <span>Create New Course</span>
               <span style={{ opacity: 0.9 }}>→</span>
             </Link>
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {actionQueue.map((item, index) => (
-                <div key={item.label} style={{ padding: index === 0 ? '10px 0 14px' : '14px 0', borderTop: index === 0 ? 'none' : '1px solid rgba(226,232,240,0.9)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '14px', alignItems: 'flex-start' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ color: '#0f172a', fontSize: '0.9rem', fontWeight: 700, marginBottom: '6px' }}>{item.label}</div>
-                      <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.7 }}>{item.detail}</div>
-                    </div>
-                    <div style={{ color: item.tone, fontSize: '1rem', fontWeight: 800, lineHeight: 1.15, textAlign: 'right', flexShrink: 0 }}>{item.value}</div>
-                  </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px' }}>
+              {catalogSnapshotItems.map((item) => (
+                <div key={item.label} style={{ padding: '12px 14px', borderRadius: '12px', background: '#f8fbff', border: '1px solid #e6eefb' }}>
+                  <div style={{ color: '#64748b', fontSize: '0.7rem', marginBottom: '5px' }}>{item.label}</div>
+                  <div style={{ color: item.tone, fontSize: '1.28rem', fontWeight: 800, lineHeight: 1 }}>{item.value}</div>
+                  <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '5px', lineHeight: 1.5 }}>{item.detail}</div>
                 </div>
               ))}
             </div>
             <div style={{ paddingTop: '14px', borderTop: '1px solid rgba(226,232,240,0.9)' }}>
-              <div style={{ color: '#0f172a', fontSize: '0.86rem', fontWeight: 700, marginBottom: '10px' }}>Catalog Signals</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '14px' }}>
+              <div style={{ color: '#0f172a', fontSize: '0.82rem', fontWeight: 700, marginBottom: '10px' }}>Catalog Signals</div>
+              <div style={{ display: 'grid', gap: '10px' }}>
                 {catalogSignals.map((item) => (
-                  <div key={item.label} style={{ padding: '14px 16px', borderRadius: '16px', background: '#ffffff', border: '1px solid #e2e8f0' }}>
-                    <div style={{ color: '#64748b', fontSize: '0.74rem', marginBottom: '6px' }}>{item.label}</div>
-                    <div style={{ color: item.tone, fontSize: '1.3rem', fontWeight: 800, lineHeight: 1.1 }}>{item.value}</div>
+                  <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline', paddingBottom: '10px', borderBottom: '1px solid #eef2f7' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ color: '#0f172a', fontSize: '0.82rem', fontWeight: 700, marginBottom: '4px' }}>{item.label}</div>
+                      <div style={{ color: '#94a3b8', fontSize: '0.68rem', lineHeight: 1.55 }}>{item.detail}</div>
+                    </div>
+                    <div style={{ color: item.tone, fontSize: '0.94rem', fontWeight: 800, lineHeight: 1.1, flexShrink: 0 }}>{item.value}</div>
                   </div>
                 ))}
               </div>
