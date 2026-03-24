@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 // Allowed image hosts for proxy (prevent open proxy abuse / SSRF)
 const ALLOWED_HOSTS = [
@@ -10,6 +11,7 @@ const ALLOWED_HOSTS = [
 ];
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB max
+const IMAGE_PROXY_RATE_LIMIT = { maxRequests: 30, windowMs: 60 * 1000 };
 
 // GET /api/image-proxy?url=<encoded-url>
 // Proxies an image from an allowed host and returns it as base64 data URL
@@ -18,6 +20,11 @@ export async function GET(request: Request) {
     const session = await auth();
     if (!session?.user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(`image-proxy:${session.user.id}`, IMAGE_PROXY_RATE_LIMIT);
+    if (!rateLimit.success) {
+        return rateLimitResponse(rateLimit.resetTime);
     }
 
     const { searchParams } = new URL(request.url);

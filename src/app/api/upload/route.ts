@@ -5,9 +5,11 @@ import { createId } from "@paralleldrive/cuid2";
 import { uploadToBunny } from "@/lib/bunny-storage";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const UPLOAD_RATE_LIMIT = { maxRequests: 10, windowMs: 60 * 1000 };
 
 export async function POST(request: Request) {
     try {
@@ -17,6 +19,11 @@ export async function POST(request: Request) {
                 { error: "Unauthorized" },
                 { status: 401 }
             );
+        }
+
+        const rateLimit = checkRateLimit(`upload:${session.user.id}`, UPLOAD_RATE_LIMIT);
+        if (!rateLimit.success) {
+            return rateLimitResponse(rateLimit.resetTime);
         }
 
         const formData = await request.formData();

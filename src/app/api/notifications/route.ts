@@ -4,6 +4,10 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { desc, eq, sql, and, lt } from 'drizzle-orm';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+
+const NOTIFICATIONS_READ_RATE_LIMIT = { maxRequests: 60, windowMs: 60 * 1000 };
+const NOTIFICATIONS_WRITE_RATE_LIMIT = { maxRequests: 20, windowMs: 60 * 1000 };
 
 // GET /api/notifications - Get current user's notifications
 export async function GET(request: Request) {
@@ -11,6 +15,11 @@ export async function GET(request: Request) {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(`notifications:read:${session.user.id}`, NOTIFICATIONS_READ_RATE_LIMIT);
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
     }
 
     const { searchParams } = new URL(request.url);
@@ -69,6 +78,11 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const rateLimit = checkRateLimit(`notifications:write:${session.user.id}`, NOTIFICATIONS_WRITE_RATE_LIMIT);
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const body = await request.json();
     const { notificationIds, markAll } = body;
 
@@ -107,6 +121,11 @@ export async function DELETE(request: Request) {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(`notifications:write:${session.user.id}`, NOTIFICATIONS_WRITE_RATE_LIMIT);
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
     }
 
     const { searchParams } = new URL(request.url);
