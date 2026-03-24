@@ -11,38 +11,58 @@ type NotificationPayload = {
 };
 
 type Listener = (notification: NotificationPayload) => void;
+type ConnectionEntry = {
+    listener: Listener;
+    close: () => void;
+};
 
 class NotificationPubSub {
-    private listeners = new Map<string, Set<Listener>>();
+    private listeners = new Map<string, ConnectionEntry[]>();
     private static MAX_CONNECTIONS_PER_USER = 3;
     private static MAX_TOTAL_CONNECTIONS = 500;
 
-    subscribe(userId: string, listener: Listener): () => void {
+    subscribe(userId: string, listener: Listener, close: () => void): () => void {
         if (!this.listeners.has(userId)) {
-            this.listeners.set(userId, new Set());
+            this.listeners.set(userId, []);
         }
 
         const userListeners = this.listeners.get(userId)!;
 
         // Limit connections per user (evict oldest if exceeded)
-        if (userListeners.size >= NotificationPubSub.MAX_CONNECTIONS_PER_USER) {
-            const oldest = userListeners.values().next().value;
-            if (oldest) userListeners.delete(oldest);
-        }
+        const oldest = userListeners.length >= NotificationPubSub.MAX_CONNECTIONS_PER_USER
+            ? userListeners[0]
+            : null;
 
         // Global connection limit
-        if (this.getActiveConnections() >= NotificationPubSub.MAX_TOTAL_CONNECTIONS) {
+        if (!oldest && this.getActiveConnections() >= NotificationPubSub.MAX_TOTAL_CONNECTIONS) {
             throw new Error('Too many active connections');
         }
 
-        userListeners.add(listener);
+        if (oldest) {
+            oldest.close();
+        }
+
+        const nextUserListeners = this.listeners.get(userId) ?? [];
+        if (!this.listeners.has(userId)) {
+            this.listeners.set(userId, nextUserListeners);
+        }
+
+        const entry: ConnectionEntry = {
+            listener,
+            close,
+        };
+
+        nextUserListeners.push(entry);
 
         // Return unsubscribe function
         return () => {
             const ul = this.listeners.get(userId);
             if (ul) {
-                ul.delete(listener);
-                if (ul.size === 0) {
+                const index = ul.findIndex((e) => e.listener === listener);
+                if (index !== -1) {
+                    ul.splice(index, 1);
+                }
+                if (ul.length === 0) {
                     this.listeners.delete(userId);
                 }
             }
@@ -52,11 +72,11 @@ class NotificationPubSub {
     publish(userId: string, notification: NotificationPayload) {
         const userListeners = this.listeners.get(userId);
         if (userListeners) {
-            for (const listener of userListeners) {
+            for (const entry of [...userListeners]) {
                 try {
-                    listener(notification);
+                    entry.listener(notification);
                 } catch {
-                    // Ignore failed listeners (closed connections)
+                    entry.close();
                 }
             }
         }
@@ -72,7 +92,7 @@ class NotificationPubSub {
     getActiveConnections(): number {
         let count = 0;
         for (const listeners of this.listeners.values()) {
-            count += listeners.size;
+            count += listeners.length;
         }
         return count;
     }
