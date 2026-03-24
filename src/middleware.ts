@@ -1,6 +1,36 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+type MiddlewareGlobal = typeof globalThis & {
+    __milerdevMiddlewareCleanupStarted?: boolean;
+};
+
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+const middlewareGlobal = globalThis as MiddlewareGlobal;
+const baseSecurityHeaders: Record<string, string> = {
+    'X-XSS-Protection': '1; mode=block',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+const documentSecurityHeaders: Record<string, string> = {
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    'Content-Security-Policy': [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://player.bunnycdn.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "img-src 'self' data: blob: https: http:",
+        "font-src 'self' https://fonts.gstatic.com",
+        "connect-src 'self' https://api.stripe.com https://*.bunny.net https://*.bunnyinfra.net",
+        "frame-src 'self' https://js.stripe.com https://*.bunny.net https://iframe.mediadelivery.net https://www.youtube.com https://player.vimeo.com",
+        "frame-ancestors 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+    ].join('; '),
+};
+
 // Simple in-memory rate limiter for middleware (edge-compatible)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
@@ -99,75 +129,33 @@ function extractClientIP(request: NextRequest): string {
 }
 
 // Cleanup stale entries every 5 minutes
-if (typeof globalThis !== 'undefined') {
+if (!middlewareGlobal.__milerdevMiddlewareCleanupStarted) {
     const cleanup = () => {
         const now = Date.now();
         for (const [key, entry] of rateLimitStore.entries()) {
             if (entry.resetTime < now) rateLimitStore.delete(key);
         }
     };
-    setInterval(cleanup, 5 * 60 * 1000);
+    setInterval(cleanup, RATE_LIMIT_CLEANUP_INTERVAL_MS);
+    middlewareGlobal.__milerdevMiddlewareCleanupStarted = true;
 }
 
-export function middleware(request: NextRequest) {
-    const ip = extractClientIP(request);
-    const pathname = request.nextUrl.pathname;
+function isDocumentRequest(request: NextRequest): boolean {
+    const accept = request.headers.get('accept');
+    return request.method === 'GET' && !!accept && accept.includes('text/html');
+}
 
-    // Rate limit admin API: 60 requests per minute per IP
-    if (pathname.startsWith('/api/admin')) {
-        if (!middlewareRateLimit(`admin:${ip}`, 60, 60_000)) {
-            return NextResponse.json(
-                { error: 'Too many requests. Please try again later.' },
-                { status: 429, headers: { 'Retry-After': '60' } }
-            );
-        }
-    }
-
-    // Rate limit auth login: 10 requests per minute per IP
-    if (pathname === '/api/auth/callback/credentials') {
-        if (!middlewareRateLimit(`login:${ip}`, 10, 60_000)) {
-            return NextResponse.json(
-                { error: 'Too many login attempts. Please try again later.' },
-                { status: 429, headers: { 'Retry-After': '60' } }
-            );
-        }
-    }
-
-    const response = NextResponse.next();
-
-    // Security Headers
-    const securityHeaders = {
-        // Prevent XSS attacks
-        'X-XSS-Protection': '1; mode=block',
-        // Prevent clickjacking
-        'X-Frame-Options': 'SAMEORIGIN',
-        // Prevent MIME type sniffing
-        'X-Content-Type-Options': 'nosniff',
-        // Referrer policy
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        // Permissions policy
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-        // Content Security Policy
-        'Content-Security-Policy': [
-            "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://player.bunnycdn.com",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "img-src 'self' data: blob: https: http:",
-            "font-src 'self' https://fonts.gstatic.com",
-            "connect-src 'self' https://api.stripe.com https://*.bunny.net https://*.bunnyinfra.net",
-            "frame-src 'self' https://js.stripe.com https://*.bunny.net https://iframe.mediadelivery.net https://www.youtube.com https://player.vimeo.com",
-            "object-src 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-        ].join('; '),
-    };
-
-    // Apply security headers
-    Object.entries(securityHeaders).forEach(([key, value]) => {
+function applySecurityHeaders(request: NextRequest, response: NextResponse): NextResponse {
+    Object.entries(baseSecurityHeaders).forEach(([key, value]) => {
         response.headers.set(key, value);
     });
 
-    // HSTS header (only in production)
+    if (isDocumentRequest(request)) {
+        Object.entries(documentSecurityHeaders).forEach(([key, value]) => {
+            response.headers.set(key, value);
+        });
+    }
+
     if (process.env.NODE_ENV === 'production') {
         response.headers.set(
             'Strict-Transport-Security',
@@ -176,6 +164,43 @@ export function middleware(request: NextRequest) {
     }
 
     return response;
+}
+
+function createRateLimitResponse(request: NextRequest, message: string): NextResponse {
+    const response = NextResponse.json(
+        { error: message },
+        { status: 429 }
+    );
+
+    response.headers.set('Retry-After', String(RATE_LIMIT_WINDOW_MS / 1000));
+
+    return applySecurityHeaders(request, response);
+}
+
+export function middleware(request: NextRequest) {
+    const pathname = request.nextUrl.pathname;
+    const isAdminApiRoute = pathname.startsWith('/api/admin');
+    const isCredentialsCallbackRoute = pathname === '/api/auth/callback/credentials';
+
+    // Rate limit admin API: 60 requests per minute per IP
+    if (isAdminApiRoute) {
+        const ip = extractClientIP(request);
+        if (!middlewareRateLimit(`admin:${ip}`, 60, RATE_LIMIT_WINDOW_MS)) {
+            return createRateLimitResponse(request, 'Too many requests. Please try again later.');
+        }
+    }
+
+    // Rate limit auth login: 10 requests per minute per IP
+    if (isCredentialsCallbackRoute) {
+        const ip = extractClientIP(request);
+        if (!middlewareRateLimit(`login:${ip}`, 10, RATE_LIMIT_WINDOW_MS)) {
+            return createRateLimitResponse(request, 'Too many login attempts. Please try again later.');
+        }
+    }
+
+    const response = NextResponse.next();
+
+    return applySecurityHeaders(request, response);
 }
 
 // Configure which paths the middleware runs on
