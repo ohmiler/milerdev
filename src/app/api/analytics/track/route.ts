@@ -50,10 +50,9 @@ export async function POST(request: Request) {
       source: 'client',
       metadata: parseMetadata(body?.metadata),
       ipAddress,
-      userAgent: request.headers.get('user-agent') || 'unknown',
     });
 
-    return NextResponse.json({ success: true, tracked });
+    return new Response(null, { status: tracked ? 204 : 202 });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error tracking analytics event:' });
     return NextResponse.json({ error: 'Failed to track analytics event' }, { status: 500 });

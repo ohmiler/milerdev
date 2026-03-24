@@ -5,6 +5,24 @@ import { count, desc, eq, sql, gte } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
+type AdminDashboardData = {
+  stats: Awaited<ReturnType<typeof getStats>>;
+  revenueStats: Awaited<ReturnType<typeof getRevenueStats>>;
+  recentEnrollments: Awaited<ReturnType<typeof getRecentEnrollments>>;
+  recentPayments: Awaited<ReturnType<typeof getRecentPayments>>;
+  sevenDayRevenue: Awaited<ReturnType<typeof getSevenDayRevenue>>;
+  sevenDayEnrollments: Awaited<ReturnType<typeof getSevenDayEnrollmentTrend>>;
+  paymentHealth: Awaited<ReturnType<typeof getPaymentHealthStats>>;
+};
+
+type AdminDashboardCacheEntry = {
+  expiresAt: number;
+  value: AdminDashboardData;
+};
+
+const ADMIN_DASHBOARD_CACHE_TTL_MS = 60_000;
+let adminDashboardCache: AdminDashboardCacheEntry | null = null;
+
 async function getStats() {
   const [coursesCount] = await db.select({ count: count() }).from(courses);
   const [usersCount] = await db.select({ count: count() }).from(users);
@@ -213,7 +231,12 @@ function getLineChartGeometry(values: number[], width = 320, height = 148) {
   };
 }
 
-export default async function AdminDashboard() {
+async function getAdminDashboardData(): Promise<AdminDashboardData> {
+  const now = Date.now();
+  if (adminDashboardCache && adminDashboardCache.expiresAt > now) {
+    return adminDashboardCache.value;
+  }
+
   const [stats, revenueStats, recentEnrollments, recentPayments, sevenDayRevenue, sevenDayEnrollments, paymentHealth] = await Promise.all([
     getStats(),
     getRevenueStats(),
@@ -223,6 +246,35 @@ export default async function AdminDashboard() {
     getSevenDayEnrollmentTrend(),
     getPaymentHealthStats(),
   ]);
+
+  const value: AdminDashboardData = {
+    stats,
+    revenueStats,
+    recentEnrollments,
+    recentPayments,
+    sevenDayRevenue,
+    sevenDayEnrollments,
+    paymentHealth,
+  };
+
+  adminDashboardCache = {
+    value,
+    expiresAt: now + ADMIN_DASHBOARD_CACHE_TTL_MS,
+  };
+
+  return value;
+}
+
+export default async function AdminDashboard() {
+  const {
+    stats,
+    revenueStats,
+    recentEnrollments,
+    recentPayments,
+    sevenDayRevenue,
+    sevenDayEnrollments,
+    paymentHealth,
+  } = await getAdminDashboardData();
 
   const formatCurrency = (amount: number | string) => {
     return new Intl.NumberFormat('th-TH', {

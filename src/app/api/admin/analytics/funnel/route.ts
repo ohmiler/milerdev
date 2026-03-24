@@ -15,12 +15,119 @@ function toInt(value: unknown): number {
   return typeof value === 'number' ? value : Number(value || 0);
 }
 
+type AnalyticsFunnelPayload = {
+  enabled: boolean;
+  periodMonths: number;
+  totals: {
+    courseView: number;
+    checkoutStart: number;
+    paymentSuccess: number;
+    lessonCompleted: number;
+  };
+  uniqueActors: {
+    courseView: number;
+    checkoutStart: number;
+    paymentSuccess: number;
+    lessonCompleted: number;
+  };
+  conversion: {
+    viewToCheckout: number;
+    checkoutToPayment: number;
+    viewToPayment: number;
+  };
+  timeline: Array<{
+    date: string;
+    courseView: number;
+    checkoutStart: number;
+    paymentSuccess: number;
+    lessonCompleted: number;
+  }>;
+  topCourses: Array<{
+    courseId: string | null;
+    courseTitle: string;
+    views: number;
+    checkouts: number;
+    payments: number;
+    viewToCheckout: number;
+    checkoutToPayment: number;
+  }>;
+  topBundles: Array<{
+    bundleId: string | null;
+    bundleTitle: string;
+    views: number;
+    checkouts: number;
+    payments: number;
+    viewToCheckout: number;
+    checkoutToPayment: number;
+  }>;
+  checkoutMethods: Array<{
+    method: string;
+    count: number;
+  }>;
+};
+
+interface AnalyticsFunnelCacheEntry {
+  expiresAt: number;
+  value: AnalyticsFunnelPayload;
+}
+
+const ANALYTICS_FUNNEL_CACHE_TTL_MS = 120_000;
+const analyticsFunnelCache = new Map<number, AnalyticsFunnelCacheEntry>();
+
+function buildEmptyAnalyticsResponse(periodMonths: number): AnalyticsFunnelPayload {
+  return {
+    enabled: false,
+    periodMonths,
+    totals: {
+      courseView: 0,
+      checkoutStart: 0,
+      paymentSuccess: 0,
+      lessonCompleted: 0,
+    },
+    uniqueActors: {
+      courseView: 0,
+      checkoutStart: 0,
+      paymentSuccess: 0,
+      lessonCompleted: 0,
+    },
+    conversion: {
+      viewToCheckout: 0,
+      checkoutToPayment: 0,
+      viewToPayment: 0,
+    },
+    timeline: [],
+    topCourses: [],
+    topBundles: [],
+    checkoutMethods: [],
+  };
+}
+
+function getCachedAnalyticsResponse(periodMonths: number): AnalyticsFunnelPayload | null {
+  const cached = analyticsFunnelCache.get(periodMonths);
+  if (!cached) {
+    return null;
+  }
+
+  if (cached.expiresAt <= Date.now()) {
+    analyticsFunnelCache.delete(periodMonths);
+    return null;
+  }
+
+  return cached.value;
+}
+
+function setCachedAnalyticsResponse(periodMonths: number, value: AnalyticsFunnelPayload) {
+  analyticsFunnelCache.set(periodMonths, {
+    value,
+    expiresAt: Date.now() + ANALYTICS_FUNNEL_CACHE_TTL_MS,
+  });
+}
+
 // GET /api/admin/analytics/funnel - Product funnel analytics dashboard data
 export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const requestedMonths = parseInt(searchParams.get('period') || '6', 10);
@@ -28,104 +135,85 @@ export async function GET(request: Request) {
       ? 6
       : Math.min(24, Math.max(1, requestedMonths));
 
+    const cachedResponse = getCachedAnalyticsResponse(periodMonths);
+    if (cachedResponse) {
+      return NextResponse.json(cachedResponse);
+    }
+
     const enabled = await isAnalyticsEnabled();
     if (!enabled) {
-      return NextResponse.json({
-        enabled: false,
-        periodMonths,
-        totals: {
-          courseView: 0,
-          checkoutStart: 0,
-          paymentSuccess: 0,
-          lessonCompleted: 0,
-        },
-        uniqueActors: {
-          courseView: 0,
-          checkoutStart: 0,
-          paymentSuccess: 0,
-          lessonCompleted: 0,
-        },
-        conversion: {
-          viewToCheckout: 0,
-          checkoutToPayment: 0,
-          viewToPayment: 0,
-        },
-        timeline: [],
-        topCourses: [],
-        topBundles: [],
-        checkoutMethods: [],
-      });
+      const response = buildEmptyAnalyticsResponse(periodMonths);
+      setCachedAnalyticsResponse(periodMonths, response);
+      return NextResponse.json(response);
     }
 
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - periodMonths);
 
-    const [totalsRow] = await db
-      .select({
-        courseView: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
-        checkoutStart: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN 1 ELSE 0 END), 0)`,
-        paymentSuccess: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN 1 ELSE 0 END), 0)`,
-        lessonCompleted: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'lesson_completed' THEN 1 ELSE 0 END), 0)`,
-        uniqueCourseView: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
-        uniqueCheckoutStart: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
-        uniquePaymentSuccess: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
-        uniqueLessonCompleted: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'lesson_completed' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
-      })
-      .from(analyticsEvents)
-      .where(gte(analyticsEvents.createdAt, startDate));
-
-    const timeline = await db
-      .select({
-        date: sql<string>`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`,
-        courseView: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
-        checkoutStart: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN 1 ELSE 0 END), 0)`,
-        paymentSuccess: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN 1 ELSE 0 END), 0)`,
-        lessonCompleted: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'lesson_completed' THEN 1 ELSE 0 END), 0)`,
-      })
-      .from(analyticsEvents)
-      .where(gte(analyticsEvents.createdAt, startDate))
-      .groupBy(sql`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`)
-      .orderBy(sql`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`);
-
-    const topCoursesRaw = await db
-      .select({
-        courseId: analyticsEvents.courseId,
-        courseTitle: courses.title,
-        views: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
-        checkouts: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN 1 ELSE 0 END), 0)`,
-        payments: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN 1 ELSE 0 END), 0)`,
-      })
-      .from(analyticsEvents)
-      .leftJoin(courses, eq(analyticsEvents.courseId, courses.id))
-      .where(and(gte(analyticsEvents.createdAt, startDate), isNotNull(analyticsEvents.courseId)))
-      .groupBy(analyticsEvents.courseId, courses.title)
-      .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`))
-      .limit(10);
-
-    const topBundlesRaw = await db
-      .select({
-        bundleId: analyticsEvents.bundleId,
-        bundleTitle: bundles.title,
-        views: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
-        checkouts: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN 1 ELSE 0 END), 0)`,
-        payments: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN 1 ELSE 0 END), 0)`,
-      })
-      .from(analyticsEvents)
-      .leftJoin(bundles, eq(analyticsEvents.bundleId, bundles.id))
-      .where(and(gte(analyticsEvents.createdAt, startDate), isNotNull(analyticsEvents.bundleId)))
-      .groupBy(analyticsEvents.bundleId, bundles.title)
-      .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`))
-      .limit(10);
-
-    const checkoutMetadataRows = await db
-      .select({ metadata: analyticsEvents.metadata })
-      .from(analyticsEvents)
-      .where(
-        and(
-          gte(analyticsEvents.createdAt, startDate),
-          eq(analyticsEvents.eventName, 'checkout_start')
-        )
-      );
+    const [[totalsRow], timeline, topCoursesRaw, topBundlesRaw, checkoutMetadataRows] = await Promise.all([
+      db
+        .select({
+          courseView: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
+          checkoutStart: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN 1 ELSE 0 END), 0)`,
+          paymentSuccess: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN 1 ELSE 0 END), 0)`,
+          lessonCompleted: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'lesson_completed' THEN 1 ELSE 0 END), 0)`,
+          uniqueCourseView: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
+          uniqueCheckoutStart: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
+          uniquePaymentSuccess: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
+          uniqueLessonCompleted: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'lesson_completed' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
+        })
+        .from(analyticsEvents)
+        .where(gte(analyticsEvents.createdAt, startDate)),
+      db
+        .select({
+          date: sql<string>`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`,
+          courseView: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
+          checkoutStart: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN 1 ELSE 0 END), 0)`,
+          paymentSuccess: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN 1 ELSE 0 END), 0)`,
+          lessonCompleted: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'lesson_completed' THEN 1 ELSE 0 END), 0)`,
+        })
+        .from(analyticsEvents)
+        .where(gte(analyticsEvents.createdAt, startDate))
+        .groupBy(sql`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`)
+        .orderBy(sql`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`),
+      db
+        .select({
+          courseId: analyticsEvents.courseId,
+          courseTitle: courses.title,
+          views: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
+          checkouts: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN 1 ELSE 0 END), 0)`,
+          payments: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN 1 ELSE 0 END), 0)`,
+        })
+        .from(analyticsEvents)
+        .leftJoin(courses, eq(analyticsEvents.courseId, courses.id))
+        .where(and(gte(analyticsEvents.createdAt, startDate), isNotNull(analyticsEvents.courseId)))
+        .groupBy(analyticsEvents.courseId, courses.title)
+        .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`))
+        .limit(10),
+      db
+        .select({
+          bundleId: analyticsEvents.bundleId,
+          bundleTitle: bundles.title,
+          views: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
+          checkouts: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'checkout_start' THEN 1 ELSE 0 END), 0)`,
+          payments: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'payment_success' THEN 1 ELSE 0 END), 0)`,
+        })
+        .from(analyticsEvents)
+        .leftJoin(bundles, eq(analyticsEvents.bundleId, bundles.id))
+        .where(and(gte(analyticsEvents.createdAt, startDate), isNotNull(analyticsEvents.bundleId)))
+        .groupBy(analyticsEvents.bundleId, bundles.title)
+        .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`))
+        .limit(10),
+      db
+        .select({ metadata: analyticsEvents.metadata })
+        .from(analyticsEvents)
+        .where(
+          and(
+            gte(analyticsEvents.createdAt, startDate),
+            eq(analyticsEvents.eventName, 'checkout_start')
+          )
+        ),
+    ]);
 
     const checkoutMethodMap = new Map<string, number>();
     for (const row of checkoutMetadataRows) {
@@ -156,7 +244,7 @@ export async function GET(request: Request) {
       lessonCompleted: toInt(totalsRow?.uniqueLessonCompleted),
     };
 
-    return NextResponse.json({
+    const response: AnalyticsFunnelPayload = {
       enabled: true,
       periodMonths,
       totals,
@@ -202,7 +290,11 @@ export async function GET(request: Request) {
         };
       }),
       checkoutMethods,
-    });
+    };
+
+    setCachedAnalyticsResponse(periodMonths, response);
+
+    return NextResponse.json(response);
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching analytics funnel data:' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูล Analytics' }, { status: 500 });

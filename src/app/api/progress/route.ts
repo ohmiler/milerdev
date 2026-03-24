@@ -73,25 +73,37 @@ export async function POST(request: Request) {
         const nextCompleted = typeof completed === "boolean"
             ? completed
             : existingProgress?.completed ?? false;
+        const nextWatchTimeSeconds = typeof watchTimeSeconds === 'number' && Number.isFinite(watchTimeSeconds)
+            ? Math.max(0, Math.floor(watchTimeSeconds))
+            : null;
 
         if (existingProgress) {
-            await db
-                .update(lessonProgress)
-                .set({
-                    watchTimeSeconds: watchTimeSeconds || existingProgress.watchTimeSeconds,
-                    completed: nextCompleted,
-                    lastWatchedAt: new Date(),
-                })
-                .where(eq(lessonProgress.id, existingProgress.id));
+            const currentWatchTimeSeconds = Number(existingProgress.watchTimeSeconds || 0);
+            const resolvedWatchTimeSeconds = nextWatchTimeSeconds === null
+                ? currentWatchTimeSeconds
+                : Math.max(currentWatchTimeSeconds, nextWatchTimeSeconds);
+
+            if (resolvedWatchTimeSeconds !== currentWatchTimeSeconds || nextCompleted !== existingProgress.completed) {
+                await db
+                    .update(lessonProgress)
+                    .set({
+                        watchTimeSeconds: resolvedWatchTimeSeconds,
+                        completed: nextCompleted,
+                        lastWatchedAt: new Date(),
+                    })
+                    .where(eq(lessonProgress.id, existingProgress.id));
+            }
         } else {
             await db.insert(lessonProgress).values({
                 userId: session.user.id,
                 lessonId,
-                watchTimeSeconds: watchTimeSeconds || 0,
+                watchTimeSeconds: nextWatchTimeSeconds || 0,
                 completed: nextCompleted,
                 lastWatchedAt: new Date(),
             });
         }
+
+        const completionChanged = wasCompleted !== nextCompleted;
 
         if (!wasCompleted && nextCompleted) {
             await trackAnalyticsEvent({
@@ -108,7 +120,7 @@ export async function POST(request: Request) {
         }
 
         // Calculate and update course progress
-        if (enrollment) {
+        if (enrollment && completionChanged) {
             const [[{ totalLessons }], [{ completedLessons }]] = await Promise.all([
                 db.select({ totalLessons: count() })
                     .from(lessons)

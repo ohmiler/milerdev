@@ -45,6 +45,7 @@ export default function NotificationProvider({ children }: { children: React.Rea
     const [toasts, setToasts] = useState<Notification[]>([]);
     const eventSourceRef = useRef<EventSource | null>(null);
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const toastTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
     // Fetch notifications from API
@@ -122,11 +123,51 @@ export default function NotificationProvider({ children }: { children: React.Rea
     useEffect(() => {
         if (!isAuthenticated) return;
         let mounted = true;
+        const timers = toastTimersRef.current;
 
-        function connectSSE() {
+        function clearPolling() {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+            }
+        }
+
+        function clearReconnectTimeout() {
+            if (reconnectTimeoutRef.current) {
+                clearTimeout(reconnectTimeoutRef.current);
+                reconnectTimeoutRef.current = null;
+            }
+        }
+
+        function closeEventSource() {
             if (eventSourceRef.current) {
                 eventSourceRef.current.close();
+                eventSourceRef.current = null;
             }
+        }
+
+        function canUseLiveUpdates() {
+            if (!mounted) return false;
+            if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
+            if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
+            return true;
+        }
+
+        function startPollingFallback() {
+            if (!canUseLiveUpdates() || pollIntervalRef.current) return;
+            pollIntervalRef.current = setInterval(() => {
+                if (mounted && canUseLiveUpdates()) {
+                    void refreshNotifications();
+                }
+            }, 60_000);
+        }
+
+        function connectSSE() {
+            if (!canUseLiveUpdates()) return;
+
+            clearReconnectTimeout();
+            clearPolling();
+            closeEventSource();
 
             const es = new EventSource('/api/notifications/stream');
             eventSourceRef.current = es;
@@ -146,50 +187,74 @@ export default function NotificationProvider({ children }: { children: React.Rea
             });
 
             es.addEventListener('connected', () => {
-                // SSE connected, clear polling fallback
-                if (pollIntervalRef.current) {
-                    clearInterval(pollIntervalRef.current);
-                    pollIntervalRef.current = null;
-                }
+                clearPolling();
             });
 
             es.onerror = () => {
-                es.close();
-                eventSourceRef.current = null;
-                // Fallback to polling if SSE fails
-                if (mounted && !pollIntervalRef.current) {
-                    pollIntervalRef.current = setInterval(() => {
-                        if (mounted) refreshNotifications();
-                    }, 30_000);
-                }
-                // Try to reconnect SSE after 10 seconds
-                if (mounted) {
-                    setTimeout(() => {
-                        if (mounted) connectSSE();
-                    }, 10_000);
+                closeEventSource();
+                if (mounted && canUseLiveUpdates()) {
+                    startPollingFallback();
+                    reconnectTimeoutRef.current = setTimeout(() => {
+                        if (mounted && canUseLiveUpdates()) {
+                            connectSSE();
+                        }
+                    }, 20_000);
                 }
             };
         }
 
-        // Initial fetch (deferred to avoid synchronous setState in effect)
-        void Promise.resolve().then(() => {
-            if (mounted) refreshNotifications();
-        });
-        // Connect SSE
-        connectSSE();
+        function syncLiveUpdates() {
+            if (!mounted) return;
 
-        const timers = toastTimersRef.current;
+            if (!canUseLiveUpdates()) {
+                clearReconnectTimeout();
+                clearPolling();
+                closeEventSource();
+                return;
+            }
+
+            void refreshNotifications();
+
+            if (!eventSourceRef.current) {
+                connectSSE();
+            }
+        }
+
+        function handleVisibilityChange() {
+            syncLiveUpdates();
+        }
+
+        function handleOnline() {
+            syncLiveUpdates();
+        }
+
+        function handleOffline() {
+            clearReconnectTimeout();
+            clearPolling();
+            closeEventSource();
+        }
+
+        void Promise.resolve().then(() => {
+            if (mounted) {
+                void refreshNotifications();
+                if (canUseLiveUpdates()) {
+                    connectSSE();
+                }
+            }
+        });
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
 
         return () => {
             mounted = false;
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close();
-                eventSourceRef.current = null;
-            }
-            if (pollIntervalRef.current) {
-                clearInterval(pollIntervalRef.current);
-                pollIntervalRef.current = null;
-            }
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            clearReconnectTimeout();
+            clearPolling();
+            closeEventSource();
             for (const timer of timers.values()) {
                 clearTimeout(timer);
             }
