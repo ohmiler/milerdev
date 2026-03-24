@@ -664,8 +664,8 @@ export default async function AdminDashboard() {
 
                 <div className="admin-chart-canvas" style={{ display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr)', gap: '10px', alignItems: 'stretch', padding: '14px 12px 12px', borderRadius: '14px', background: 'linear-gradient(180deg, #fbfdff 0%, #ffffff 100%)', border: '1px solid #e6eefb' }}>
                   <div style={{ display: 'grid', alignItems: 'space-between', color: '#94a3b8', fontSize: '0.65rem' }}>
-                    {revenueChart.guideValues.map((value) => (
-                      <div key={`revenue-guide-${value}`} style={{ height: `${revenueChart.height / revenueChart.guideValues.length}px`, display: 'flex', alignItems: 'flex-start' }}>
+                    {revenueChart.guideValues.map((value, index) => (
+                      <div key={`revenue-guide-${index}-${value}`} style={{ height: `${revenueChart.height / revenueChart.guideValues.length}px`, display: 'flex', alignItems: 'flex-start' }}>
                         {formatCompactCurrency(value)}
                       </div>
                     ))}
@@ -734,8 +734,8 @@ export default async function AdminDashboard() {
 
                 <div className="admin-chart-canvas" style={{ display: 'grid', gridTemplateColumns: '34px minmax(0, 1fr)', gap: '10px', alignItems: 'stretch', padding: '14px 12px 12px', borderRadius: '14px', background: 'linear-gradient(180deg, #fbfdff 0%, #ffffff 100%)', border: '1px solid #e6eefb' }}>
                   <div style={{ display: 'grid', alignItems: 'space-between', color: '#94a3b8', fontSize: '0.65rem' }}>
-                    {enrollmentChart.guideValues.map((value) => (
-                      <div key={`enrollment-guide-${value}`} style={{ height: `${enrollmentChart.height / enrollmentChart.guideValues.length}px`, display: 'flex', alignItems: 'flex-start' }}>
+                    {enrollmentChart.guideValues.map((value, index) => (
+                      <div key={`enrollment-guide-${index}-${value}`} style={{ height: `${enrollmentChart.height / enrollmentChart.guideValues.length}px`, display: 'flex', alignItems: 'flex-start' }}>
                         {value}
                       </div>
                     ))}
