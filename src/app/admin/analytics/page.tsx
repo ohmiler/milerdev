@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AdminButton, AdminPageHero, AdminSurfaceCard } from '@/components/admin/ui/AdminPrimitives';
 
 interface FunnelTotals {
   courseView: number;
@@ -193,37 +195,30 @@ export default function AdminAnalyticsPage() {
   }, [data.uniqueActors.lessonCompleted, data.uniqueActors.paymentSuccess]);
 
   const header = (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-      <div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>Product Analytics</h1>
-        <p style={{ color: '#64748b', fontSize: '0.9rem' }}>ติดตามยอดการดูสินค้า ยอดเริ่มชำระเงิน ยอดจ่ายสำเร็จ และผลการเรียนแยกกันให้ตีความได้ชัดขึ้น</p>
-        <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: 6 }}>อัปเดตล่าสุด: {formatDateTime(lastUpdatedAt)}</div>
-      </div>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          style={{ padding: '9px 14px', border: '1px solid #e2e8f0', borderRadius: 8, background: 'white', fontSize: '0.875rem', color: '#334155', cursor: 'pointer' }}
-        >
-          <option value="1">1 เดือนล่าสุด</option>
-          <option value="3">3 เดือนล่าสุด</option>
-          <option value="6">6 เดือนล่าสุด</option>
-          <option value="12">12 เดือนล่าสุด</option>
-          <option value="24">24 เดือนล่าสุด</option>
-        </select>
-        <button
-          onClick={fetchData}
-          title="รีเฟรชข้อมูล"
-          style={{ padding: '9px 14px', border: '1px solid #e2e8f0', borderRadius: 8, background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.875rem', color: '#334155' }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M1 4v6h6"/><path d="M23 20v-6h-6"/>
-            <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
-          </svg>
-          รีเฟรช
-        </button>
-      </div>
-    </div>
+    <AdminPageHero
+      eyebrow="Analytics"
+      title="Product Analytics"
+      description="ติดตามยอดการดูสินค้า ยอดเริ่มชำระเงิน ยอดจ่ายสำเร็จ และผลการเรียนแยกกันให้ตีความได้ชัดขึ้น"
+      meta={<><strong>อัปเดตล่าสุด:</strong> {formatDateTime(lastUpdatedAt)}</>}
+      actions={
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            style={{ padding: '10px 14px', border: '1px solid #dbe5f4', borderRadius: 12, background: '#ffffff', fontSize: '0.875rem', color: '#334155', cursor: 'pointer', minHeight: '42px' }}
+          >
+            <option value="1">1 เดือนล่าสุด</option>
+            <option value="3">3 เดือนล่าสุด</option>
+            <option value="6">6 เดือนล่าสุด</option>
+            <option value="12">12 เดือนล่าสุด</option>
+            <option value="24">24 เดือนล่าสุด</option>
+          </select>
+          <AdminButton type="button" tone="default" onClick={fetchData}>
+            รีเฟรช
+          </AdminButton>
+        </div>
+      }
+    />
   );
 
   if (loading) return <div>{header}<LoadingSkeleton /></div>;
@@ -232,17 +227,12 @@ export default function AdminAnalyticsPage() {
     return (
       <div>
         {header}
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <AdminSurfaceCard style={{ textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>⚠️</div>
           <div style={{ color: '#dc2626', fontWeight: 600, marginBottom: 8 }}>เกิดข้อผิดพลาด</div>
           <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: 20 }}>{error}</div>
-          <button
-            onClick={fetchData}
-            style={{ padding: '10px 24px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}
-          >
-            ลองใหม่
-          </button>
-        </div>
+          <AdminButton type="button" tone="info" onClick={fetchData}>ลองใหม่</AdminButton>
+        </AdminSurfaceCard>
       </div>
     );
   }
@@ -260,7 +250,7 @@ export default function AdminAnalyticsPage() {
       {!data.enabled && (
         <div style={{ marginBottom: 24, padding: 16, borderRadius: 10, border: '1px solid #fcd34d', background: '#fffbeb', color: '#92400e', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          Analytics ยังไม่ได้เปิดใช้งาน กรุณาเปิดค่า <strong>analytics_enabled</strong> ที่หน้า <a href="/admin/settings" style={{ color: '#b45309', textDecoration: 'underline' }}>ตั้งค่า</a>
+          Analytics ยังไม่ได้เปิดใช้งาน กรุณาเปิดค่า <strong>analytics_enabled</strong> ที่หน้า <Link href="/admin/settings" style={{ color: '#b45309', textDecoration: 'underline' }}>ตั้งค่า</Link>
         </div>
       )}
 
@@ -276,7 +266,7 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Funnel Conversion */}
-      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 24 }}>
+      <AdminSurfaceCard style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: 16 }}>Funnel Conversion</h2>
         <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: 14 }}>ส่วนนี้ใช้วัด conversion เชิงยอดขายเท่านั้น โดยยังไม่รวมผลลัพธ์การเรียนเพื่อหลีกเลี่ยงการตีความ funnel ผิด</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -319,10 +309,10 @@ export default function AdminAnalyticsPage() {
           <span style={{ fontSize: '0.75rem', color: '#64748b' }}>&lt;3% ต่ำ</span>
           <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#94a3b8' }}>View→Payment รวม: <strong style={{ color: conversionColor(data.conversion.viewToPayment) }}>{formatPercent(data.conversion.viewToPayment)}</strong></span>
         </div>
-      </div>
+      </AdminSurfaceCard>
 
       {/* Learning Outcome */}
-      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 24 }}>
+      <AdminSurfaceCard style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
           <div>
             <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: 6 }}>Learning Outcome</h2>
@@ -347,10 +337,10 @@ export default function AdminAnalyticsPage() {
             <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: 6 }}>ช่วยดูภาพคร่าว ๆ ของคุณภาพหลังการขายจากผู้ใช้ไม่ซ้ำ</div>
           </div>
         </div>
-      </div>
+      </AdminSurfaceCard>
 
       {/* Daily Trend */}
-      <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 24 }}>
+      <AdminSurfaceCard style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: 4 }}>Daily Trend</h2>
@@ -430,7 +420,7 @@ export default function AdminAnalyticsPage() {
             </>
           );
         })()}
-      </div>
+      </AdminSurfaceCard>
 
       {/* Top Courses & Bundles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 24 }}>

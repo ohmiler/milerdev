@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
+import { AdminButton, AdminPageHero, AdminRailCard, AdminSurfaceCard } from '@/components/admin/ui/AdminPrimitives';
 
 interface MediaFile {
   id: string;
@@ -156,48 +157,27 @@ export default function AdminMediaPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        gap: '16px',
-      }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-            จัดการไฟล์สื่อ
-          </h1>
-          <p style={{ color: '#64748b' }}>อัพโหลดและจัดการรูปภาพสำหรับคอร์ส</p>
-        </div>
-        <div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleUpload}
-            accept="image/*"
-            multiple
-            style={{ display: 'none' }}
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            style={{
-              padding: '12px 24px',
-              background: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 500,
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              opacity: uploading ? 0.7 : 1,
-            }}
-          >
-            {uploading ? 'กำลังอัพโหลด...' : '+ อัพโหลดรูปภาพ'}
-          </button>
-        </div>
-      </div>
+      <AdminPageHero
+        eyebrow="Media Library"
+        title="จัดการไฟล์สื่อ"
+        description="อัปโหลด คัดแยก และตรวจไฟล์ภาพหรือสื่อที่ใช้กับคอร์สจากจุดเดียว เพื่อให้ asset workflow ชัดและหยิบใช้ต่อได้เร็วขึ้น"
+        meta={<><strong>โฟกัสตอนนี้:</strong> เลือกไฟล์ที่ต้องการใช้งานบ่อย ตรวจขนาด และลิงก์ให้พร้อมก่อนนำไปวางในคอร์ส</>}
+        actions={
+          <>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleUpload}
+              accept="image/*"
+              multiple
+              style={{ display: 'none' }}
+            />
+            <AdminButton type="button" tone="info" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              {uploading ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปภาพ'}
+            </AdminButton>
+          </>
+        }
+      />
 
       {/* Stats */}
       {stats && (
@@ -207,23 +187,23 @@ export default function AdminMediaPage() {
           gap: '16px',
           marginBottom: '24px',
         }}>
-          <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <AdminSurfaceCard style={{ padding: '16px' }}>
             <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ไฟล์ทั้งหมด</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.total}</div>
-          </div>
-          <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          </AdminSurfaceCard>
+          <AdminSurfaceCard style={{ padding: '16px' }}>
             <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>รูปภาพ</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2563eb' }}>{stats.images}</div>
-          </div>
-          <div style={{ background: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          </AdminSurfaceCard>
+          <AdminSurfaceCard style={{ padding: '16px' }}>
             <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>พื้นที่ใช้งาน</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{formatFileSize(stats.totalSize)}</div>
-          </div>
+          </AdminSurfaceCard>
         </div>
       )}
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
+      <AdminSurfaceCard style={{ marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
         <select
           value={typeFilter}
           onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
@@ -268,7 +248,7 @@ export default function AdminMediaPage() {
         >
           ค้นหา
         </button>
-      </div>
+      </AdminSurfaceCard>
 
       {/* Content */}
       <div style={{ display: 'flex', gap: '24px' }}>
@@ -279,17 +259,10 @@ export default function AdminMediaPage() {
               กำลังโหลด...
             </div>
           ) : mediaList.length === 0 ? (
-            <div style={{
-              background: 'white',
-              borderRadius: '12px',
-              padding: '60px',
-              textAlign: 'center',
-              color: '#64748b',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            }}>
+            <AdminSurfaceCard style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>
               <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📷</div>
-              <div>ยังไม่มีไฟล์ กดปุ่มด้านบนเพื่ออัพโหลด</div>
-            </div>
+              <div>ยังไม่มีไฟล์ กดปุ่มด้านบนเพื่ออัปโหลด</div>
+            </AdminSurfaceCard>
           ) : (
             <>
               <div style={{
@@ -399,14 +372,7 @@ export default function AdminMediaPage() {
 
         {/* Preview Panel */}
         {selectedMedia && (
-          <div style={{
-            width: '320px',
-            background: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-            flexShrink: 0,
-          }}>
+          <AdminRailCard style={{ width: '320px', overflow: 'hidden', flexShrink: 0 }}>
             <div style={{
               aspectRatio: '16/9',
               background: '#f1f5f9',
@@ -526,7 +492,7 @@ export default function AdminMediaPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </AdminRailCard>
         )}
       </div>
       <ConfirmDialog

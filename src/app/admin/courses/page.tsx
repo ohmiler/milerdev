@@ -114,7 +114,7 @@ export default async function AdminCoursesPage() {
                 Course Management
               </div>
               <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px', lineHeight: 1.05, maxWidth: '680px' }}>
-                Course Management
+                การจัดการคอร์ส
               </h1>
               <p style={{ color: '#64748b', fontSize: '0.86rem', lineHeight: 1.7, maxWidth: '720px' }}>
                 สรุปภาพรวม catalog การเผยแพร่ และคอร์สที่ควรจัดการก่อนใน flow เดียว เพื่อให้ตัดสินใจต่อได้จากหน้าเดียว
@@ -186,7 +186,7 @@ export default async function AdminCoursesPage() {
 
           <div className="admin-courses-snapshot-panel" style={{ background: '#ffffff', border: '1px solid #dbe5f4', borderRadius: '18px', padding: '18px', display: 'grid', gap: '14px' }}>
             <div>
-              <div style={{ color: '#0f172a', fontSize: '0.96rem', fontWeight: 700, marginBottom: '6px' }}>Catalog Snapshot</div>
+              <div style={{ color: '#0f172a', fontSize: '0.96rem', fontWeight: 700, marginBottom: '6px' }}>ภาพรวมแคตตาล็อก</div>
               <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.65 }}>ใช้มุมนี้เช็คสถานะหลักของ catalog ก่อนลงไปจัดการรายคอร์สในตาราง</div>
             </div>
             <Link
@@ -205,7 +205,7 @@ export default async function AdminCoursesPage() {
                 fontSize: '0.9rem',
               }}
             >
-              <span>Create New Course</span>
+              <span>สร้างคอร์สใหม่</span>
               <span style={{ opacity: 0.9 }}>→</span>
             </Link>
             <div className="admin-courses-snapshot-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px' }}>
@@ -218,7 +218,7 @@ export default async function AdminCoursesPage() {
               ))}
             </div>
             <div className="admin-courses-signals" style={{ paddingTop: '14px', borderTop: '1px solid rgba(226,232,240,0.9)' }}>
-              <div style={{ color: '#0f172a', fontSize: '0.82rem', fontWeight: 700, marginBottom: '10px' }}>Catalog Signals</div>
+              <div style={{ color: '#0f172a', fontSize: '0.82rem', fontWeight: 700, marginBottom: '10px' }}>สัญญาณของแคตตาล็อก</div>
               <div style={{ display: 'grid', gap: '10px' }}>
                 {catalogSignals.map((item) => (
                   <div className="admin-courses-signal-row" key={item.label} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline', paddingBottom: '10px', borderBottom: '1px solid #eef2f7' }}>

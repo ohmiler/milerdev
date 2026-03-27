@@ -74,15 +74,15 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
     }).length;
     const isFiltered = Boolean(search) || statusFilter !== 'all';
     const statusTabs = [
-        { value: 'all', label: 'All', count: courses.length },
-        { value: 'published', label: 'Published', count: publishedCount },
-        { value: 'draft', label: 'Draft', count: draftCount },
+        { value: 'all', label: 'ทั้งหมด', count: courses.length },
+        { value: 'published', label: 'เผยแพร่', count: publishedCount },
+        { value: 'draft', label: 'แบบร่าง', count: draftCount },
     ];
     const catalogHealthCards = [
         {
             label: 'Needs Attention',
             value: `${attentionCount} Courses`,
-            detail: 'คอร์สที่ควรเริ่มตรวจจากหน้า catalog นี้',
+            detail: 'คอร์สที่ควรเริ่มตรวจจากหน้าแคตตาล็อกนี้',
             background: attentionCount > 0 ? '#eefbf2' : '#f8fbff',
             border: attentionCount > 0 ? '#c6f0d4' : '#dbe5f4',
             labelColor: attentionCount > 0 ? '#15803d' : '#64748b',
@@ -135,14 +135,14 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                         <div>
                             <div style={{ color: '#334155', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>Course Catalog</div>
-                            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.65 }}>ค้นหา กรอง และจัดลำดับว่าคอร์สไหนควรเติมเนื้อหา เตรียม publish หรือดูผลลัพธ์จากผู้เรียนต่อ</div>
+                            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.65 }}>ค้นหา กรอง และจัดลำดับว่าคอร์สไหนควรเติมเนื้อหา เตรียมเผยแพร่ หรือดูผลลัพธ์จากผู้เรียนต่อ</div>
                         </div>
                         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                             <span style={{ padding: '7px 12px', borderRadius: '999px', background: '#eff6ff', color: '#1d4ed8', fontWeight: 700, fontSize: '0.76rem' }}>
-                                matched {filtered.length} course
+                                พบ {filtered.length} คอร์ส
                             </span>
                             <span style={{ padding: '7px 12px', borderRadius: '999px', background: '#0f172a', color: '#ffffff', fontWeight: 700, fontSize: '0.76rem' }}>
-                                {publishedCount} active course
+                                {publishedCount} คอร์สที่เปิดขาย
                             </span>
                             {isFiltered && (
                                 <button
@@ -263,8 +263,8 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                 overflow: 'hidden',
             }}>
                 <div className="admin-catalog-table-header" style={{ padding: '16px 18px', borderBottom: '1px solid #e6eefb', background: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)' }}>
-                    <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>Operational View</div>
-                    <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>สแกนสถานะ ราคา ความพร้อมของบทเรียน และ next action ต่อคอร์สได้จากตารางเดียว</div>
+                    <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>มุมมองการดำเนินงาน</div>
+                    <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>สแกนสถานะ ราคา ความพร้อมของบทเรียน และ action ถัดไปของแต่ละคอร์สได้จากตารางเดียว</div>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
                 <table className="admin-catalog-table" style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse' }}>
