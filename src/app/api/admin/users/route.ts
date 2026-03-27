@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
-import { users } from '@/lib/db/schema';
+import { enrollments, users } from '@/lib/db/schema';
 import { desc, sql, eq, like, and, or, gte, lte } from 'drizzle-orm';
 
 // GET /api/admin/users - Get all users with stats and advanced filtering
@@ -10,7 +10,6 @@ export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
@@ -47,17 +46,27 @@ export async function GET(request: Request) {
       conditions.push(lte(users.createdAt, new Date(dateTo)));
     }
 
+    const enrollmentCounts = db
+      .select({
+        userId: enrollments.userId,
+        enrollmentCount: sql<number>`COUNT(*)`.as('enrollment_count'),
+      })
+      .from(enrollments)
+      .groupBy(enrollments.userId)
+      .as('enrollment_counts');
+
     // Build order
+    const enrollmentCountExpression = sql<number>`COALESCE(${enrollmentCounts.enrollmentCount}, 0)`;
     const orderColumn = sortBy === 'name' ? users.name : 
                         sortBy === 'email' ? users.email :
                         sortBy === 'role' ? users.role :
-                        sortBy === 'enrollmentCount' ? sql`(SELECT COUNT(*) FROM enrollments WHERE enrollments.user_id = ${users.id})` :
+                        sortBy === 'enrollmentCount' ? enrollmentCountExpression :
                         users.createdAt;
 
     // Parallelize independent queries using Promise.all() (async-parallel rule)
     const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
     
-    const [userList, totalCountResult, statsResult, enrollmentCounts] = await Promise.all([
+    const [userList, totalCountResult, statsResult] = await Promise.all([
       // Get users
       db
         .select({
@@ -68,8 +77,10 @@ export async function GET(request: Request) {
           avatarUrl: users.avatarUrl,
           emailVerifiedAt: users.emailVerifiedAt,
           createdAt: users.createdAt,
+          enrollmentCount: enrollmentCountExpression,
         })
         .from(users)
+        .leftJoin(enrollmentCounts, eq(enrollmentCounts.userId, users.id))
         .where(whereCondition)
         .orderBy(sortOrder === 'asc' ? orderColumn : desc(orderColumn))
         .limit(limit)
@@ -88,37 +99,15 @@ export async function GET(request: Request) {
           students: sql<number>`sum(case when role = 'student' then 1 else 0 end)`,
         })
         .from(users),
-      // Get enrollment counts per user (separate query to avoid BigInt issues)
-      db.execute(sql`SELECT user_id, COUNT(*) as cnt FROM enrollments GROUP BY user_id`),
     ]);
-
-    // Build enrollment count map from raw query result
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enrollRows = (enrollmentCounts as any)[0] as { user_id: string; cnt: number | bigint }[];
-    const enrollMap = new Map<string, number>();
-    if (Array.isArray(enrollRows)) {
-      for (const row of enrollRows) {
-        enrollMap.set(row.user_id, Number(row.cnt));
-      }
-    }
 
     const totalCount = Number(totalCountResult[0]?.count ?? 0);
     const stats = statsResult[0];
 
-    // Merge enrollment counts into user list
-    const usersWithCounts = userList.map(u => ({
-      ...u,
-      enrollmentCount: enrollMap.get(u.id) || 0,
+    const usersWithCounts = userList.map((user) => ({
+      ...user,
+      enrollmentCount: Number(user.enrollmentCount || 0),
     }));
-
-    // Sort by enrollmentCount if needed (since DB sort won't have this)
-    if (sortBy === 'enrollmentCount') {
-      usersWithCounts.sort((a, b) => 
-        sortOrder === 'desc' 
-          ? b.enrollmentCount - a.enrollmentCount 
-          : a.enrollmentCount - b.enrollmentCount
-      );
-    }
 
     return NextResponse.json({
       users: usersWithCounts,

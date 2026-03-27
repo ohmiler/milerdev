@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
@@ -75,21 +75,6 @@ async function getFeaturedCourses() {
   });
 }
 
-async function getStats() {
-  // Use Promise.all() to parallelize independent queries (async-parallel rule)
-  const [userCountResult, lessonCountResult, courseCountResult] = await Promise.all([
-    db.select({ count: count() }).from(users),
-    db.select({ count: count() }).from(lessons),
-    db.select({ count: count() }).from(courses).where(eq(courses.status, 'published')),
-  ]);
-  
-  return {
-    users: userCountResult[0]?.count || 0,
-    lessons: lessonCountResult[0]?.count || 0,
-    courses: courseCountResult[0]?.count || 0,
-  };
-}
-
 async function getPublishedBundles() {
   const rows = await db
     .select({
@@ -158,10 +143,8 @@ async function getPublishedBundles() {
 
 export default async function HomePage() {
   // Parallelize independent data fetching (async-parallel rule)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [featuredCourses, _stats, publishedBundles] = await Promise.all([
+  const [featuredCourses, publishedBundles] = await Promise.all([
     getFeaturedCourses(),
-    getStats(),
     getPublishedBundles(),
   ]);
 

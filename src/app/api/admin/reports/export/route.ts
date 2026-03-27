@@ -17,134 +17,218 @@ function csvSafe(value: string | number | null | undefined): string {
   return str;
 }
 
+const EXPORT_MAX_PERIOD_MONTHS = 24;
+const EXPORT_BATCH_SIZE = 250;
+
+function buildBatchedCsvStream<T>(
+  header: string,
+  fetchBatch: (offset: number, limit: number) => Promise<T[]>,
+  mapRow: (row: T) => string
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      controller.enqueue(encoder.encode('\uFEFF'));
+      controller.enqueue(encoder.encode(header));
+
+      let offset = 0;
+
+      while (true) {
+        const rows = await fetchBatch(offset, EXPORT_BATCH_SIZE);
+        if (rows.length === 0) {
+          controller.close();
+          return;
+        }
+
+        for (const row of rows) {
+          controller.enqueue(encoder.encode(mapRow(row)));
+        }
+
+        offset += rows.length;
+        if (rows.length < EXPORT_BATCH_SIZE) {
+          controller.close();
+          return;
+        }
+      }
+    },
+  });
+}
+
 // GET /api/admin/reports/export - Export data as CSV
 export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin();
+
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'payments';
-    const period = searchParams.get('period') || '12';
+    const periodRaw = parseInt(searchParams.get('period') || '12', 10);
+    const period = Number.isFinite(periodRaw) && periodRaw > 0
+      ? Math.min(periodRaw, EXPORT_MAX_PERIOD_MONTHS)
+      : 12;
 
     const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - parseInt(period));
+    startDate.setMonth(startDate.getMonth() - period);
 
-    let csvContent = '';
+    let csvStream: ReadableStream<Uint8Array> | null = null;
     let filename = '';
 
     switch (type) {
       case 'payments': {
-        const data = await db
-          .select({
-            id: payments.id,
-            amount: payments.amount,
-            status: payments.status,
-            method: payments.method,
-            createdAt: payments.createdAt,
-            userName: users.name,
-            userEmail: users.email,
-            courseTitle: courses.title,
-          })
-          .from(payments)
-          .leftJoin(users, eq(payments.userId, users.id))
-          .leftJoin(courses, eq(payments.courseId, courses.id))
-          .where(gte(payments.createdAt, startDate))
-          .orderBy(desc(payments.createdAt));
-
-        csvContent = 'ID,จำนวนเงิน,สถานะ,วิธีชำระ,วันที่,ชื่อผู้ใช้,อีเมล,คอร์ส\n';
-        data.forEach(row => {
-          csvContent += `${csvSafe(row.id)},${csvSafe(row.amount)},${csvSafe(row.status)},${csvSafe(row.method)},${csvSafe(row.createdAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`;
-        });
+        csvStream = buildBatchedCsvStream(
+          'ID,จำนวนเงิน,สถานะ,วิธีชำระ,วันที่,ชื่อผู้ใช้,อีเมล,คอร์ส\n',
+          (offset, limit) =>
+            db
+              .select({
+                id: payments.id,
+                amount: payments.amount,
+                status: payments.status,
+                method: payments.method,
+                createdAt: payments.createdAt,
+                userName: users.name,
+                userEmail: users.email,
+                courseTitle: courses.title,
+              })
+              .from(payments)
+              .leftJoin(users, eq(payments.userId, users.id))
+              .leftJoin(courses, eq(payments.courseId, courses.id))
+              .where(gte(payments.createdAt, startDate))
+              .orderBy(desc(payments.createdAt))
+              .limit(limit)
+              .offset(offset),
+          (row) => `${csvSafe(row.id)},${csvSafe(row.amount)},${csvSafe(row.status)},${csvSafe(row.method)},${csvSafe(row.createdAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`
+        );
         filename = `payments-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
       }
 
       case 'enrollments': {
-        const data = await db
-          .select({
-            id: enrollments.id,
-            enrolledAt: enrollments.enrolledAt,
-            progressPercent: enrollments.progressPercent,
-            completedAt: enrollments.completedAt,
-            userName: users.name,
-            userEmail: users.email,
-            courseTitle: courses.title,
-          })
-          .from(enrollments)
-          .leftJoin(users, eq(enrollments.userId, users.id))
-          .leftJoin(courses, eq(enrollments.courseId, courses.id))
-          .where(gte(enrollments.enrolledAt, startDate))
-          .orderBy(desc(enrollments.enrolledAt));
-
-        csvContent = 'ID,วันที่ลงทะเบียน,ความคืบหน้า(%),วันที่เรียนจบ,ชื่อผู้ใช้,อีเมล,คอร์ส\n';
-        data.forEach(row => {
-          csvContent += `${csvSafe(row.id)},${csvSafe(row.enrolledAt?.toISOString())},${row.progressPercent || 0},${csvSafe(row.completedAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`;
-        });
+        csvStream = buildBatchedCsvStream(
+          'ID,วันที่ลงทะเบียน,ความคืบหน้า(%),วันที่เรียนจบ,ชื่อผู้ใช้,อีเมล,คอร์ส\n',
+          (offset, limit) =>
+            db
+              .select({
+                id: enrollments.id,
+                enrolledAt: enrollments.enrolledAt,
+                progressPercent: enrollments.progressPercent,
+                completedAt: enrollments.completedAt,
+                userName: users.name,
+                userEmail: users.email,
+                courseTitle: courses.title,
+              })
+              .from(enrollments)
+              .leftJoin(users, eq(enrollments.userId, users.id))
+              .leftJoin(courses, eq(enrollments.courseId, courses.id))
+              .where(gte(enrollments.enrolledAt, startDate))
+              .orderBy(desc(enrollments.enrolledAt))
+              .limit(limit)
+              .offset(offset),
+          (row) => `${csvSafe(row.id)},${csvSafe(row.enrolledAt?.toISOString())},${row.progressPercent || 0},${csvSafe(row.completedAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`
+        );
         filename = `enrollments-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
       }
 
       case 'users': {
-        const data = await db
+        const enrollmentCounts = await db
           .select({
-            id: users.id,
-            name: users.name,
-            email: users.email,
-            role: users.role,
-            createdAt: users.createdAt,
-            enrollmentCount: sql<number>`(SELECT COUNT(*) FROM enrollments WHERE user_id = ${users.id})`,
+            userId: enrollments.userId,
+            enrollmentCount: sql<number>`COUNT(*)`,
           })
-          .from(users)
-          .orderBy(desc(users.createdAt));
+          .from(enrollments)
+          .groupBy(enrollments.userId);
 
-        csvContent = 'ID,ชื่อ,อีเมล,บทบาท,วันที่สมัคร,จำนวนคอร์สที่ลงทะเบียน\n';
-        data.forEach(row => {
-          csvContent += `${csvSafe(row.id)},${csvSafe(row.name)},${csvSafe(row.email)},${csvSafe(row.role)},${csvSafe(row.createdAt?.toISOString())},${row.enrollmentCount}\n`;
-        });
+        const enrollmentCountMap = new Map(
+          enrollmentCounts.map((row) => [row.userId, Number(row.enrollmentCount || 0)])
+        );
+
+        csvStream = buildBatchedCsvStream(
+          'ID,ชื่อ,อีเมล,บทบาท,วันที่สมัคร,จำนวนคอร์สที่ลงทะเบียน\n',
+          (offset, limit) =>
+            db
+              .select({
+                id: users.id,
+                name: users.name,
+                email: users.email,
+                role: users.role,
+                createdAt: users.createdAt,
+              })
+              .from(users)
+              .orderBy(desc(users.createdAt))
+              .limit(limit)
+              .offset(offset),
+          (row) => `${csvSafe(row.id)},${csvSafe(row.name)},${csvSafe(row.email)},${csvSafe(row.role)},${csvSafe(row.createdAt?.toISOString())},${enrollmentCountMap.get(row.id) || 0}\n`
+        );
         filename = `users-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
       }
 
       case 'courses': {
-        const data = await db
-          .select({
-            id: courses.id,
-            title: courses.title,
-            price: courses.price,
-            status: courses.status,
-            createdAt: courses.createdAt,
-            enrollmentCount: sql<number>`(SELECT COUNT(*) FROM enrollments WHERE course_id = ${courses.id})`,
-            revenue: sql<number>`(SELECT COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) FROM payments WHERE course_id = ${courses.id})`,
-          })
-          .from(courses)
-          .orderBy(desc(courses.createdAt));
+        const [enrollmentCounts, revenueRows] = await Promise.all([
+          db
+            .select({
+              courseId: enrollments.courseId,
+              enrollmentCount: sql<number>`COUNT(*)`,
+            })
+            .from(enrollments)
+            .groupBy(enrollments.courseId),
+          db
+            .select({
+              courseId: payments.courseId,
+              revenue: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`,
+            })
+            .from(payments)
+            .groupBy(payments.courseId),
+        ]);
 
-        csvContent = 'ID,ชื่อคอร์ส,ราคา,สถานะ,วันที่สร้าง,จำนวนการลงทะเบียน,รายได้\n';
-        data.forEach(row => {
-          csvContent += `${csvSafe(row.id)},${csvSafe(row.title)},${csvSafe(row.price)},${csvSafe(row.status)},${csvSafe(row.createdAt?.toISOString())},${row.enrollmentCount},${row.revenue}\n`;
-        });
+        const enrollmentCountMap = new Map(
+          enrollmentCounts.map((row) => [row.courseId, Number(row.enrollmentCount || 0)])
+        );
+        const revenueMap = new Map(
+          revenueRows.map((row) => [row.courseId, Number(row.revenue || 0)])
+        );
+
+        csvStream = buildBatchedCsvStream(
+          'ID,ชื่อคอร์ส,ราคา,สถานะ,วันที่สร้าง,จำนวนการลงทะเบียน,รายได้\n',
+          (offset, limit) =>
+            db
+              .select({
+                id: courses.id,
+                title: courses.title,
+                price: courses.price,
+                status: courses.status,
+                createdAt: courses.createdAt,
+              })
+              .from(courses)
+              .orderBy(desc(courses.createdAt))
+              .limit(limit)
+              .offset(offset),
+          (row) => `${csvSafe(row.id)},${csvSafe(row.title)},${csvSafe(row.price)},${csvSafe(row.status)},${csvSafe(row.createdAt?.toISOString())},${enrollmentCountMap.get(row.id) || 0},${revenueMap.get(row.id) || 0}\n`
+        );
         filename = `courses-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
       }
 
       case 'revenue-monthly': {
-        const data = await db
-          .select({
-            month: sql<string>`DATE_FORMAT(created_at, '%Y-%m')`,
-            revenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
-            transactions: sql<number>`COUNT(CASE WHEN status = 'completed' THEN 1 END)`,
-          })
-          .from(payments)
-          .where(gte(payments.createdAt, startDate))
-          .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
-          .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m')`);
-
-        csvContent = 'เดือน,รายได้,จำนวนรายการ\n';
-        data.forEach(row => {
-          csvContent += `${row.month},${row.revenue},${row.transactions}\n`;
-        });
+        csvStream = buildBatchedCsvStream(
+          'เดือน,รายได้,จำนวนรายการ\n',
+          (offset, limit) =>
+            db
+              .select({
+                month: sql<string>`DATE_FORMAT(created_at, '%Y-%m')`,
+                revenue: sql<number>`COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)`,
+                transactions: sql<number>`COUNT(CASE WHEN status = 'completed' THEN 1 END)`,
+              })
+              .from(payments)
+              .where(gte(payments.createdAt, startDate))
+              .groupBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
+              .orderBy(sql`DATE_FORMAT(created_at, '%Y-%m')`)
+              .limit(limit)
+              .offset(offset),
+          (row) => `${row.month},${row.revenue},${row.transactions}\n`
+        );
         filename = `monthly-revenue-${new Date().toISOString().split('T')[0]}.csv`;
         break;
       }
@@ -153,11 +237,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Invalid export type' }, { status: 400 });
     }
 
-    // Add BOM for UTF-8 support in Excel
-    const bom = '\uFEFF';
-    const finalContent = bom + csvContent;
+    if (!csvStream) {
+      return NextResponse.json({ error: 'ไม่สามารถส่งออกข้อมูลได้' }, { status: 500 });
+    }
 
-    return new NextResponse(finalContent, {
+    return new Response(csvStream, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="${filename}"`,

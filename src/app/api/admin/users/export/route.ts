@@ -2,21 +2,56 @@ import { NextResponse } from 'next/server';
 import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
-import { users } from '@/lib/db/schema';
-import { desc, sql, eq } from 'drizzle-orm';
+import { enrollments, users } from '@/lib/db/schema';
+import { desc, eq, sql } from 'drizzle-orm';
 
 // Sanitize CSV field to prevent formula injection
 function csvSafe(value: string | number | null | undefined): string {
   const str = String(value ?? '');
-  // Prefix dangerous characters that Excel interprets as formulas
   if (/^[=+\-@\t\r]/.test(str)) {
     return `'${str}`;
   }
-  // Wrap in quotes if contains comma, newline, or quote
   if (/[,"\n\r]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
+}
+
+const EXPORT_BATCH_SIZE = 250;
+
+function buildBatchedCsvStream<T>(
+  header: string,
+  fetchBatch: (offset: number, limit: number) => Promise<T[]>,
+  mapRow: (row: T) => string
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      controller.enqueue(encoder.encode('\uFEFF'));
+      controller.enqueue(encoder.encode(header));
+
+      let offset = 0;
+
+      while (true) {
+        const rows = await fetchBatch(offset, EXPORT_BATCH_SIZE);
+        if (rows.length === 0) {
+          controller.close();
+          return;
+        }
+
+        for (const row of rows) {
+          controller.enqueue(encoder.encode(mapRow(row)));
+        }
+
+        offset += rows.length;
+        if (rows.length < EXPORT_BATCH_SIZE) {
+          controller.close();
+          return;
+        }
+      }
+    },
+  });
 }
 
 // GET /api/admin/users/export - Export users as CSV
@@ -24,48 +59,54 @@ export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
 
-    // Build query
     const conditions = [];
     if (role && role !== 'all') {
       conditions.push(eq(users.role, role as 'admin' | 'instructor' | 'student'));
     }
 
-    // Get all users
-    const userList = await db
+    const enrollmentCounts = db
       .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        emailVerifiedAt: users.emailVerifiedAt,
-        createdAt: users.createdAt,
-        enrollmentCount: sql<number>`(SELECT COUNT(*) FROM enrollments WHERE enrollments.user_id = ${users.id})`,
+        userId: enrollments.userId,
+        enrollmentCount: sql<number>`COUNT(*)`.as('enrollment_count'),
       })
-      .from(users)
-      .where(conditions.length > 0 ? conditions[0] : undefined)
-      .orderBy(desc(users.createdAt));
+      .from(enrollments)
+      .groupBy(enrollments.userId)
+      .as('enrollment_counts');
 
-    // Build CSV
-    let csvContent = 'ID,ชื่อ,อีเมล,บทบาท,ยืนยันอีเมล,วันที่สมัคร,จำนวนคอร์สที่ลงทะเบียน\n';
-    
-    userList.forEach(user => {
-      const verified = user.emailVerifiedAt ? 'ใช่' : 'ไม่';
-      const createdAt = user.createdAt ? new Date(user.createdAt).toISOString() : '';
-      csvContent += `${csvSafe(user.id)},${csvSafe(user.name)},${csvSafe(user.email)},${csvSafe(user.role)},${csvSafe(verified)},${csvSafe(createdAt)},${user.enrollmentCount}\n`;
-    });
-
-    // Add BOM for UTF-8 support in Excel
-    const bom = '\uFEFF';
-    const finalContent = bom + csvContent;
+    const whereCondition = conditions.length > 0 ? conditions[0] : undefined;
+    const csvStream = buildBatchedCsvStream(
+      'ID,ชื่อ,อีเมล,บทบาท,ยืนยันอีเมล,วันที่สมัคร,จำนวนคอร์สที่ลงทะเบียน\n',
+      (offset, limit) =>
+        db
+          .select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            role: users.role,
+            emailVerifiedAt: users.emailVerifiedAt,
+            createdAt: users.createdAt,
+            enrollmentCount: sql<number>`COALESCE(${enrollmentCounts.enrollmentCount}, 0)`,
+          })
+          .from(users)
+          .leftJoin(enrollmentCounts, eq(enrollmentCounts.userId, users.id))
+          .where(whereCondition)
+          .orderBy(desc(users.createdAt))
+          .limit(limit)
+          .offset(offset),
+      (user) => {
+        const verified = user.emailVerifiedAt ? 'ใช่' : 'ไม่';
+        const createdAt = user.createdAt ? new Date(user.createdAt).toISOString() : '';
+        return `${csvSafe(user.id)},${csvSafe(user.name)},${csvSafe(user.email)},${csvSafe(user.role)},${csvSafe(verified)},${csvSafe(createdAt)},${Number(user.enrollmentCount || 0)}\n`;
+      }
+    );
 
     const filename = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
 
-    return new NextResponse(finalContent, {
+    return new NextResponse(csvStream, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="${filename}"`,
