@@ -6,6 +6,14 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
+import {
+  AdminButton,
+  AdminPageHero,
+  AdminPill,
+  AdminRailCard,
+  AdminSectionHeading,
+  AdminSurfaceCard,
+} from '@/components/admin/ui/AdminPrimitives';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -158,49 +166,28 @@ export default function EditCoursePage() {
 
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
-      <section style={{
-        background: 'radial-gradient(circle at top left, rgba(37,99,235,0.14), rgba(255,255,255,0.98) 44%), linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        border: '1px solid rgba(148,163,184,0.18)',
-        borderRadius: '24px',
-        padding: '28px',
-        boxShadow: '0 24px 60px rgba(15, 23, 42, 0.08)',
-      }}>
+      <AdminPageHero
+        eyebrow="Edit Course"
+        title="ปรับรายละเอียดคอร์สให้ flow ชัดขึ้น ตั้งแต่ข้อมูลหลัก การขาย ไปจนถึงความพร้อมของหน้าเว็บ"
+        description="หน้านี้ถูกจัดใหม่ให้คุณแก้ไขข้อมูลสำคัญได้เป็นลำดับเดียว และใช้ sidebar ด้านข้างเป็นจุดสรุปสถานะ ความพร้อม และ action หลักของคอร์ส"
+        actions={
+          <>
+            <AdminButton href="#course-edit-form" tone="dark">แก้ไขรายละเอียดคอร์ส</AdminButton>
+            <AdminButton href={`/admin/courses/${courseId}/lessons`} tone="default">จัดการบทเรียน</AdminButton>
+            <AdminPill tone={isPublished ? 'success' : 'warning'}>{statusLabel}</AdminPill>
+            <AdminPill tone={isFreeCourse ? 'success' : 'info'}>{priceLabel}</AdminPill>
+          </>
+        }
+        meta={<><strong>โฟกัสตอนนี้:</strong> {topPriorityAction}</>}
+      >
         <div style={{ display: 'grid', gap: '18px', maxWidth: '940px' }}>
           <div>
             <Link href="/admin/courses" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
               ← กลับไปรายการคอร์ส
             </Link>
-            <div style={{ color: '#2563eb', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '14px', marginBottom: '10px' }}>
-              Edit Course
-            </div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px', lineHeight: 1.08, maxWidth: '820px' }}>
-              ปรับรายละเอียดคอร์สให้ flow ชัดขึ้น ตั้งแต่ข้อมูลหลัก การขาย ไปจนถึงความพร้อมของหน้าเว็บ
-            </h1>
-            <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: 1.8, maxWidth: '780px' }}>
-              หน้านี้ถูกจัดใหม่ให้คุณแก้ไขข้อมูลสำคัญได้เป็นลำดับเดียว และใช้ sidebar ด้านข้างเป็นจุดสรุปสถานะ ความพร้อม และ action หลักของคอร์ส
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <a href="#course-edit-form" style={{ padding: '11px 16px', borderRadius: '999px', background: '#0f172a', color: 'white', textDecoration: 'none', fontSize: '0.84rem', fontWeight: 700 }}>
-              แก้ไขรายละเอียดคอร์ส
-            </a>
-            <Link href={`/admin/courses/${courseId}/lessons`} style={{ padding: '11px 16px', borderRadius: '999px', background: 'white', color: '#0f172a', textDecoration: 'none', fontSize: '0.84rem', fontWeight: 700, border: '1px solid #e2e8f0' }}>
-              จัดการบทเรียน
-            </Link>
-                        <span style={{ padding: '8px 12px', borderRadius: '999px', background: isPublished ? '#eefbf3' : '#fff7ed', color: isPublished ? '#15803d' : '#b45309', fontSize: '0.8rem', fontWeight: 700 }}>
-              {statusLabel}
-            </span>
-            <span style={{ padding: '8px 12px', borderRadius: '999px', background: isFreeCourse ? '#eefbf3' : '#eff6ff', color: isFreeCourse ? '#15803d' : '#1d4ed8', fontSize: '0.8rem', fontWeight: 700 }}>
-              {priceLabel}
-            </span>
-          </div>
-
-          <div style={{ color: '#475569', fontSize: '0.84rem', lineHeight: 1.75, maxWidth: '860px' }}>
-            <span style={{ color: '#0f172a', fontWeight: 700 }}>โฟกัสตอนนี้:</span> {topPriorityAction}
           </div>
         </div>
-      </section>
+      </AdminPageHero>
 
       {/* Error */}
       {error && (
@@ -228,11 +215,11 @@ export default function EditCoursePage() {
           alignItems: 'start',
         }}>
           <div style={{ display: 'grid', gap: '20px' }}>
-            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ตัวตนและบริบทของคอร์ส</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>อัปเดตชื่อคอร์ส URL คำอธิบาย และแท็ก เพื่อให้ข้อมูลหลักของคอร์สสอดคล้องกับการขาย การค้นหา และการดูแลต่อในระบบ</div>
-              </div>
+            <AdminSurfaceCard>
+              <AdminSectionHeading
+                title="ตัวตนและบริบทของคอร์ส"
+                description="อัปเดตชื่อคอร์ส URL คำอธิบาย และแท็ก เพื่อให้ข้อมูลหลักของคอร์สสอดคล้องกับการขาย การค้นหา และการดูแลต่อในระบบ"
+              />
 
               <div className="edit-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '18px' }}>
                 <div>
@@ -301,13 +288,13 @@ export default function EditCoursePage() {
                   onChange={setSelectedTagIds}
                 />
               </div>
-            </section>
+            </AdminSurfaceCard>
 
-            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>การขาย สถานะ และโปรโมชัน</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>จัดการราคาหลัก สถานะการเผยแพร่ และราคาโปรโมชันจากส่วนเดียว เพื่อให้ commercial setup ของคอร์สชัดขึ้น</div>
-              </div>
+            <AdminSurfaceCard>
+              <AdminSectionHeading
+                title="การขาย สถานะ และโปรโมชัน"
+                description="จัดการราคาหลัก สถานะการเผยแพร่ และราคาโปรโมชันจากส่วนเดียว เพื่อให้ commercial setup ของคอร์สชัดขึ้น"
+              />
 
               <div className="edit-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '20px', marginBottom: '20px' }}>
                 <div>
@@ -448,13 +435,13 @@ export default function EditCoursePage() {
                   * ถ้าไม่กำหนดวันเริ่มต้น/สิ้นสุด โปรโมชันจะใช้ได้ตลอด
                 </div>
               </div>
-            </section>
+            </AdminSurfaceCard>
 
-            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ภาพลักษณ์ของคอร์ส</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>อัปเดตรูปภาพปก สี certificate และองค์ประกอบของใบรับรองให้สอดคล้องกับประสบการณ์ที่อยากให้ผู้เรียนเห็น</div>
-              </div>
+            <AdminSurfaceCard>
+              <AdminSectionHeading
+                title="ภาพลักษณ์ของคอร์ส"
+                description="อัปเดตรูปภาพปก สี certificate และองค์ประกอบของใบรับรองให้สอดคล้องกับประสบการณ์ที่อยากให้ผู้เรียนเห็น"
+              />
 
               <div className="edit-course-media-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.08fr) minmax(260px, 0.92fr)', gap: '20px', alignItems: 'start' }}>
                 <div>
@@ -478,13 +465,13 @@ export default function EditCoursePage() {
                   />
                 </div>
               </div>
-            </section>
+            </AdminSurfaceCard>
 
-            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>สื่อและองค์ประกอบเพิ่มเติม</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>เพิ่ม preview video และรูป header สำหรับใบรับรองเพื่อให้รายละเอียดของคอร์สและ certificate ครบขึ้น</div>
-              </div>
+            <AdminSurfaceCard>
+              <AdminSectionHeading
+                title="สื่อและองค์ประกอบเพิ่มเติม"
+                description="เพิ่ม preview video และรูป header สำหรับใบรับรองเพื่อให้รายละเอียดของคอร์สและ certificate ครบขึ้น"
+              />
 
               <div className="edit-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '20px', alignItems: 'start' }}>
                 <div>
@@ -523,14 +510,14 @@ export default function EditCoursePage() {
                   </p>
                 </div>
               </div>
-            </section>
+            </AdminSurfaceCard>
           </div>          <aside style={{ display: 'grid', gap: '16px' }}>
             <div className="edit-course-sticky" style={{ position: 'sticky', top: '96px', display: 'grid', gap: '16px' }}>
-              <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '20px', display: 'grid', gap: '16px' }}>
-                <div>
-                  <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>พร้อมอัปเดตคอร์ส</div>
-                  <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>สรุปค่าหลักและ action สำคัญไว้ด้านข้างแบบเดียวกับหน้าสร้างคอร์ส</div>
-                </div>
+              <AdminRailCard>
+                <AdminSectionHeading
+                  title="พร้อมอัปเดตคอร์ส"
+                  description="สรุปค่าหลักและ action สำคัญไว้ด้านข้างแบบเดียวกับหน้าสร้างคอร์ส"
+                />
 
                 <div style={{ borderRadius: '18px', border: '1px solid rgba(191, 219, 254, 0.94)', background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)', padding: '16px', display: 'grid', gap: '8px' }}>
                   <div style={{ color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Next Move</div>
@@ -617,7 +604,7 @@ export default function EditCoursePage() {
                     ลบคอร์ส
                   </button>
                 </div>
-              </section>
+              </AdminRailCard>
             </div>
           </aside>
         </div>

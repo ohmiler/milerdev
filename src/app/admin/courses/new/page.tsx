@@ -4,6 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import {
+  AdminButton,
+  AdminPageHero,
+  AdminPill,
+  AdminRailCard,
+  AdminSectionHeading,
+  AdminSurfaceCard,
+} from '@/components/admin/ui/AdminPrimitives';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -98,44 +106,40 @@ export default function NewCoursePage() {
 
   return (
     <div className="new-course-page-shell">
-      <section className="new-course-hero">
+      <AdminPageHero
+        eyebrow="Create New Course"
+        title="สร้างคอร์สใหม่"
+        description={
+          <>
+            สร้างคอร์สใหม่และกำหนดข้อมูลตั้งต้นที่สำคัญเพื่อให้หน้าขายและหน้าจัดการคอร์สมีบริบทครบขึ้นตั้งแต่เริ่มต้น
+            ไม่ต้องกังวลว่าต้องกรอกข้อมูลทุกอย่างให้สมบูรณ์ในครั้งแรก เพราะสามารถกลับมาแก้ไขและเพิ่มข้อมูลได้ตลอดเวลาหลังจากสร้างคอร์สแล้ว
+          </>
+        }
+        actions={
+          <>
+            <AdminButton href="#course-setup-form" tone="dark">เริ่มกรอกข้อมูล</AdminButton>
+            <AdminPill tone={isPublished ? 'success' : 'warning'}>{statusLabel}</AdminPill>
+            <AdminPill tone={isFreeCourse ? 'success' : 'info'}>{priceLabel}</AdminPill>
+          </>
+        }
+        meta={<><strong>โฟกัสตอนนี้:</strong> {topPriorityAction}</>}
+      >
         <div className="new-course-back-link-wrap">
           <Link href="/admin/courses" className="new-course-back-link">
             ← กลับไปรายการคอร์ส
           </Link>
         </div>
-
-        <div className="new-course-hero-kicker">Create New Course</div>
-        <h1 className="new-course-title">
-          สร้างคอร์สใหม่
-        </h1>
-        <p className="new-course-description">
-          สร้างคอร์สใหม่และกำหนดข้อมูลตั้งต้นที่สำคัญเพื่อให้หน้าขายและหน้าจัดการคอร์สมีบริบทครบขึ้นตั้งแต่เริ่มต้น
-          ไม่ต้องกังวลว่าต้องกรอกข้อมูลทุกอย่างให้สมบูรณ์ในครั้งแรก เพราะสามารถกลับมาแก้ไขและเพิ่มข้อมูลได้ตลอดเวลาหลังจากสร้างคอร์สแล้ว
-        </p>
-
-        <div className="new-course-hero-actions">
-          <a href="#course-setup-form" className="new-course-cta-primary">
-            เริ่มกรอกข้อมูล
-          </a>
-          <span className={`new-course-pill ${isPublished ? 'is-success' : 'is-warning'}`}>{statusLabel}</span>
-          <span className={`new-course-pill ${isFreeCourse ? 'is-success' : 'is-info'}`}>{priceLabel}</span>
-        </div>
-
-        <div className="new-course-hero-focus">
-          <span>โฟกัสตอนนี้:</span> {topPriorityAction}
-        </div>
-      </section>
+      </AdminPageHero>
 
       {error && <div className="new-course-error">{error}</div>}
 
       <form id="course-setup-form" onSubmit={handleSubmit} className="new-course-form-grid">
         <div className="new-course-main-column">
-          <section className="new-course-section-card">
-            <div className="new-course-section-head">
-              <h2>ตัวตนและบริบทของคอร์ส</h2>
-              <p>เริ่มจากข้อมูลพื้นฐานที่ใช้ทั้งในหน้าขาย การค้นหา และการจัดการต่อในระบบ</p>
-            </div>
+          <AdminSurfaceCard className="new-course-section-card">
+            <AdminSectionHeading
+              title="ตัวตนและบริบทของคอร์ส"
+              description="เริ่มจากข้อมูลพื้นฐานที่ใช้ทั้งในหน้าขาย การค้นหา และการจัดการต่อในระบบ"
+            />
 
             <div className="new-course-field-grid">
               <div>
@@ -205,13 +209,13 @@ export default function NewCoursePage() {
               <label className="new-course-label">แท็ก</label>
               <TagSelector selectedTagIds={selectedTagIds} onChange={setSelectedTagIds} />
             </div>
-          </section>
+          </AdminSurfaceCard>
 
-          <section className="new-course-section-card">
-            <div className="new-course-section-head">
-              <h2>รูปแบบการขายและการมองเห็น</h2>
-              <p>กำหนดว่าคอร์สนี้จะเริ่มเป็นแบบร่างหรือเผยแพร่ทันที และอยู่ในรูปแบบฟรีหรือเสียเงิน</p>
-            </div>
+          <AdminSurfaceCard className="new-course-section-card">
+            <AdminSectionHeading
+              title="รูปแบบการขายและการมองเห็น"
+              description="กำหนดว่าคอร์สนี้จะเริ่มเป็นแบบร่างหรือเผยแพร่ทันที และอยู่ในรูปแบบฟรีหรือเสียเงิน"
+            />
 
             <div className="new-course-field-grid">
               <div>
@@ -254,7 +258,7 @@ export default function NewCoursePage() {
                 </div>
               ))}
             </div>
-          </section>
+          </AdminSurfaceCard>
 
           <section className="new-course-section-card">
             <div className="new-course-section-head">
@@ -285,11 +289,11 @@ export default function NewCoursePage() {
 
         <aside className="new-course-aside">
           <div className="new-course-sticky">
-            <section className="new-course-side-card">
-              <div className="new-course-side-head">
-                <h2>พร้อมสร้างคอร์ส</h2>
-                <p>สรุปเฉพาะค่าที่ส่งผลกับ flow ตอนนี้ เพื่อให้เช็กและบันทึกได้จากจุดเดียว</p>
-              </div>
+            <AdminRailCard className="new-course-side-card">
+              <AdminSectionHeading
+                title="พร้อมสร้างคอร์ส"
+                description="สรุปเฉพาะค่าที่ส่งผลกับ flow ตอนนี้ เพื่อให้เช็กและบันทึกได้จากจุดเดียว"
+              />
 
               <div className="new-course-side-highlight">
                 <div className="new-course-side-highlight-kicker">Next Move</div>
@@ -324,7 +328,7 @@ export default function NewCoursePage() {
                   ยกเลิก
                 </Link>
               </div>
-            </section>
+            </AdminRailCard>
           </div>
         </aside>
       </form>

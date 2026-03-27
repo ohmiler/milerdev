@@ -3,58 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { adminAllLinks, adminPrimaryLinks, adminSecondaryLinkGroups } from '@/components/admin/adminNav';
 
 interface AdminHeaderProps {
   userName: string;
 }
-
-type AdminNavLink = {
-  href: string;
-  label: string;
-  icon: string;
-  exact?: boolean;
-};
-
-const primaryLinks: AdminNavLink[] = [
-  { href: '/admin', label: 'แดชบอร์ด', icon: 'dashboard', exact: true },
-  { href: '/admin/courses', label: 'คอร์ส', icon: 'courses' },
-  { href: '/admin/blog', label: 'บทความ', icon: 'blog' },
-  { href: '/admin/users', label: 'ผู้ใช้', icon: 'users' },
-  { href: '/admin/payments', label: 'การชำระเงิน', icon: 'payments' },
-  { href: '/admin/enrollments', label: 'การลงทะเบียน', icon: 'enrollments' },
-];
-
-const secondaryLinkGroups: Array<{ title: string; items: AdminNavLink[] }> = [
-  {
-    title: 'Growth & Commerce',
-    items: [
-      { href: '/admin/bundles', label: 'Bundle', icon: 'bundles' },
-      { href: '/admin/coupons', label: 'คูปอง', icon: 'coupons' },
-      { href: '/admin/analytics', label: 'Analytics', icon: 'analytics' },
-      { href: '/admin/reconciliation', label: 'Reconcile', icon: 'reconciliation' },
-      { href: '/admin/reviews', label: 'รีวิว', icon: 'reviews' },
-      { href: '/admin/reports', label: 'รายงาน', icon: 'reports' },
-    ],
-  },
-  {
-    title: 'Content & Assets',
-    items: [
-      { href: '/admin/docs', label: 'คลังความรู้', icon: 'docs' },
-      { href: '/admin/media', label: 'ไฟล์สื่อ', icon: 'media' },
-      { href: '/admin/tags', label: 'แท็ก', icon: 'tags' },
-      { href: '/admin/announcements', label: 'ประกาศ', icon: 'announcements' },
-      { href: '/admin/affiliate-banners', label: 'Affiliate Banners', icon: 'media' },
-      { href: '/admin/certificates', label: 'ใบรับรอง', icon: 'certificates' },
-    ],
-  },
-  {
-    title: 'System',
-    items: [
-      { href: '/admin/audit-logs', label: 'บันทึกระบบ', icon: 'logs' },
-      { href: '/admin/settings', label: 'ตั้งค่า', icon: 'settings' },
-    ],
-  },
-];
 
 function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
   const s = { width: size, height: size, flexShrink: 0 };
@@ -92,9 +45,8 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
     return pathname.startsWith(href);
   };
 
-  const allLinks = [...primaryLinks, ...secondaryLinkGroups.flatMap((group) => group.items)];
-  const exactMatch = allLinks.find((link) => pathname === link.href);
-  const activeTitle = exactMatch?.label || allLinks.find((link) => isActive(link.href, link.exact))?.label || 'Admin';
+  const exactMatch = adminAllLinks.find((link) => pathname === link.href);
+  const activeTitle = exactMatch?.label || adminAllLinks.find((link) => isActive(link.href, link.exact))?.label || 'Admin';
 
   return (
     <>
@@ -215,7 +167,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                   Core
                 </div>
                 <div style={{ display: 'grid', gap: '4px' }}>
-                  {primaryLinks.map((link) => {
+                  {adminPrimaryLinks.map((link) => {
                     const active = isActive(link.href, link.exact);
                     return (
                       <Link
@@ -245,7 +197,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                 </div>
               </div>
 
-              {secondaryLinkGroups.map((group) => (
+              {adminSecondaryLinkGroups.map((group) => (
                 <div key={group.title}>
                   <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 10px 8px' }}>
                     {group.title}
