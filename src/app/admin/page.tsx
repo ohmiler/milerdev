@@ -455,9 +455,15 @@ export default async function AdminDashboard() {
     hour: '2-digit',
     minute: '2-digit',
   });
+  const revenueTrendLabel = revenueDelta > 0 ? 'Uptrend' : revenueDelta < 0 ? 'Cooling' : 'Stable';
+  const enrollmentTrendLabel = enrollmentDelta > 0 ? 'Accelerating' : enrollmentDelta < 0 ? 'Slower' : 'Flat';
+  const queueStatusLabel = revenueStats.pendingPayments > 0 ? 'Needs Review' : 'All Clear';
 
   return (
     <div className="admin-dashboard-shell" style={{ display: 'grid', gap: '18px' }}>
+      <div className="admin-dashboard-ambient admin-dashboard-ambient-left" aria-hidden="true" />
+      <div className="admin-dashboard-ambient admin-dashboard-ambient-right" aria-hidden="true" />
+      <div className="admin-dashboard-grid">
       <section className="admin-dashboard-hero" style={{
         background: '#ffffff',
         border: '1px solid #dbe5f4',
@@ -494,10 +500,16 @@ export default async function AdminDashboard() {
             }}>
               <div style={{ position: 'absolute', inset: 'auto -72px -84px auto', width: '210px', height: '210px', borderRadius: '999px', background: 'radial-gradient(circle, rgba(255,255,255,0.22), rgba(255,255,255,0))' }} />
               <div style={{ position: 'relative', zIndex: 1, display: 'grid', gap: '10px' }}>
-                <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Today Focus
+                <div className="admin-focus-heading" style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    Today Focus
+                  </div>
+                  <div className="admin-signal-pill admin-signal-pill-light">Live signal</div>
                 </div>
-                <div style={{ fontSize: '2.1rem', fontWeight: 800, lineHeight: 1 }}>{formatCurrency(revenueStats.monthlyRevenue)}</div>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ fontSize: '2.1rem', fontWeight: 800, lineHeight: 1 }}>{formatCurrency(revenueStats.monthlyRevenue)}</div>
+                  <div className="admin-signal-pill admin-signal-pill-light">{revenueTrendLabel}</div>
+                </div>
                 <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: '0.84rem', lineHeight: 1.7, maxWidth: '520px' }}>
                   โฟกัสยอดรายได้ของเดือนปัจจุบัน พร้อมกระโดดไปจัดการคิวงานสำคัญที่กระทบการดำเนินงานได้ทันที
                 </div>
@@ -505,7 +517,7 @@ export default async function AdminDashboard() {
                   <Link className="admin-dashboard-action-link" href={topPriorityAction.href} style={{ padding: '10px 14px', borderRadius: '999px', background: '#ffffff', color: '#0f172a', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 700 }}>
                     {topPriorityAction.label} →
                   </Link>
-                  <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.74rem', lineHeight: 1.6 }}>
+                  <div className="admin-live-caption" style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.74rem', lineHeight: 1.6 }}>
                     อัปเดตล่าสุด {lastUpdatedLabel}
                   </div>
                 </div>
@@ -521,7 +533,7 @@ export default async function AdminDashboard() {
                 borderTop: '1px solid rgba(255,255,255,0.2)',
               }}>
                 {focusSummaryItems.map((item) => (
-                  <div key={item.label}>
+                  <div key={item.label} className="admin-focus-summary-card">
                     <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.72rem', marginBottom: '6px' }}>{item.label}</div>
                     <div style={{ color: '#ffffff', fontSize: '1.12rem', fontWeight: 700, lineHeight: 1.12 }}>{item.value}</div>
                   </div>
@@ -545,7 +557,7 @@ export default async function AdminDashboard() {
             <div className="admin-priority-block" style={{ display: 'grid', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline' }}>
                 <div style={{ color: '#334155', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Top Priority</div>
-                <div style={{ color: '#1d4ed8', fontSize: '0.78rem', fontWeight: 700 }}>{revenueStats.pendingPayments} items</div>
+                <div className="admin-signal-pill">{queueStatusLabel}</div>
               </div>
               <div style={{ color: '#0f172a', fontSize: '0.96rem', fontWeight: 700, lineHeight: 1.45 }}>{topPriorityAction.label}</div>
               <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.65 }}>{topPriorityAction.note}</div>
@@ -555,8 +567,9 @@ export default async function AdminDashboard() {
             </div>
 
             {queueMonitorItems.map((item) => (
-              <div key={item.label} style={{ display: 'grid', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
-                <div style={{ color: '#334155', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <div className="admin-monitor-card" key={item.label} style={{ display: 'grid', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid #e2e8f0' }}>
+                <div style={{ color: '#334155', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="admin-monitor-dot" />
                   Monitor
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline' }}>
@@ -592,8 +605,9 @@ export default async function AdminDashboard() {
         </div>
 
         <div className="admin-snapshot-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(12, minmax(0, 1fr))', gap: '12px' }}>
-          {snapshotKpis.map((item) => (
+          {snapshotKpis.map((item, index) => (
             <div key={item.label} className="admin-snapshot-kpi" style={{ gridColumn: 'span 2', padding: '14px 16px', borderRadius: '14px', background: '#f8fbff', border: '1px solid #dbe5f4', display: 'grid', gap: '6px', minWidth: 0 }}>
+              <div className="admin-kpi-index">0{index + 1}</div>
               <div style={{ color: '#64748b', fontSize: '0.72rem', lineHeight: 1.4 }}>{item.label}</div>
               <div style={{ color: item.tone, fontSize: '1.45rem', fontWeight: 800, lineHeight: 1 }}>{item.value}</div>
               <div style={{ color: '#94a3b8', fontSize: '0.72rem', lineHeight: 1.55 }}>{item.detail}</div>
@@ -607,7 +621,7 @@ export default async function AdminDashboard() {
             </div>
             <div className="admin-snapshot-health-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '10px' }}>
               {contentHealthItems.map((item) => (
-                <div key={item.label} style={{ minWidth: 0, padding: '10px 10px 11px', borderRadius: '12px', background: '#f8fbff', border: '1px solid #e6eefb' }}>
+                <div className="admin-health-card" key={item.label} style={{ minWidth: 0, padding: '10px 10px 11px', borderRadius: '12px', background: '#f8fbff', border: '1px solid #e6eefb' }}>
                   <div style={{ color: '#64748b', fontSize: '0.68rem', marginBottom: '7px' }}>{item.label}</div>
                   <div style={{ color: item.tone, fontSize: '1.42rem', fontWeight: 800, lineHeight: 1 }}>{item.value}</div>
                   <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '5px', lineHeight: 1.5 }}>{item.detail}</div>
@@ -705,7 +719,7 @@ export default async function AdminDashboard() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', color: '#64748b', fontSize: '0.72rem', lineHeight: 1.6 }}>
                   <div>เส้นแนวโน้มรายได้ 7 วันล่าสุดพร้อมจุดล่าสุดที่ถูกเน้นเป็นพิเศษ</div>
-                  <div style={{ color: revenueTrendTone, fontWeight: 700 }}>แนวโน้ม {formatSignedCompactValue(revenueDelta, '฿')}</div>
+                  <div className="admin-trend-pill" style={{ color: revenueTrendTone }}>แนวโน้ม {formatSignedCompactValue(revenueDelta, '฿')} · {revenueTrendLabel}</div>
                 </div>
               </div>
 
@@ -775,7 +789,7 @@ export default async function AdminDashboard() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', color: '#64748b', fontSize: '0.72rem', lineHeight: 1.6 }}>
                   <div>ใช้ดูแรงส่งของการสมัครเรียนในสัปดาห์ล่าสุดและจุดที่ volume สูงสุด</div>
-                  <div style={{ color: enrollmentTrendTone, fontWeight: 700 }}>แนวโน้ม {formatSignedCompactValue(enrollmentDelta)}</div>
+                  <div className="admin-trend-pill" style={{ color: enrollmentTrendTone }}>แนวโน้ม {formatSignedCompactValue(enrollmentDelta)} · {enrollmentTrendLabel}</div>
                 </div>
               </div>
             </div>
@@ -813,6 +827,7 @@ export default async function AdminDashboard() {
                   }}
                 >
                   <span style={{ minWidth: 0 }}>
+                    <span className="admin-action-kicker">{index === 0 ? 'Primary path' : 'Action'}</span>
                     <span style={{ display: 'block', fontSize: '0.84rem', fontWeight: 700, marginBottom: '3px' }}>{action.label}</span>
                     <span style={{ display: 'block', color: index === 0 ? 'rgba(255,255,255,0.78)' : '#64748b', fontSize: '0.74rem', lineHeight: 1.55 }}>{action.note}</span>
                   </span>
@@ -852,7 +867,7 @@ export default async function AdminDashboard() {
               recentEnrollments.map((enrollment) => (
                 <div className="admin-activity-row" key={enrollment.id} style={{ padding: '14px 18px', borderBottom: '1px solid #eef4fb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-                    <div style={{ width: '34px', height: '34px', borderRadius: '999px', background: '#e8f1ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>
+                    <div className="admin-avatar-chip" style={{ width: '34px', height: '34px', borderRadius: '999px', background: '#e8f1ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>
                       {getInitials(enrollment.userName || enrollment.userEmail || 'A')}
                     </div>
                     <div style={{ minWidth: 0 }}>
@@ -899,7 +914,7 @@ export default async function AdminDashboard() {
               recentPayments.map((payment) => (
                 <div className="admin-activity-row" key={payment.id} style={{ padding: '14px 18px', borderBottom: '1px solid #eef4fb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-                    <div style={{ width: '34px', height: '34px', borderRadius: '999px', background: '#e8f1ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>
+                    <div className="admin-avatar-chip" style={{ width: '34px', height: '34px', borderRadius: '999px', background: '#e8f1ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>
                       {getInitials(payment.userName || payment.userEmail || 'A')}
                     </div>
                     <div style={{ minWidth: 0 }}>
@@ -926,17 +941,156 @@ export default async function AdminDashboard() {
       </div>
 
       <style>{`
+        .admin-dashboard-shell {
+          position: relative;
+          isolation: isolate;
+          gap: 20px !important;
+          padding: 4px 4px 24px;
+        }
+
+        .admin-dashboard-grid {
+          position: relative;
+          display: grid;
+          gap: 22px;
+          z-index: 1;
+        }
+
+        .admin-signal-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 28px;
+          padding: 0 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(96, 165, 250, 0.26);
+          background: rgba(239, 246, 255, 0.92);
+          color: #1d4ed8;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .admin-signal-pill-light {
+          border-color: rgba(255, 255, 255, 0.18);
+          background: rgba(255, 255, 255, 0.12);
+          color: rgba(255, 255, 255, 0.92);
+        }
+
+        .admin-live-caption,
+        .admin-monitor-card,
+        .admin-health-card,
+        .admin-focus-summary-card,
+        .admin-avatar-chip {
+          position: relative;
+        }
+
+        .admin-live-caption::before {
+          content: '';
+          display: inline-block;
+          width: 7px;
+          height: 7px;
+          margin-right: 8px;
+          border-radius: 999px;
+          background: #93c5fd;
+          box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.16);
+          vertical-align: middle;
+        }
+
+        .admin-focus-summary-card {
+          padding: 10px 12px;
+          border-radius: 14px;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-monitor-card {
+          padding: 12px 12px 14px !important;
+          border-radius: 16px;
+          border-bottom: none !important;
+          background: #ffffff;
+          border: 1px solid rgba(203, 213, 225, 0.9);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .admin-monitor-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: #2563eb;
+          box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.12);
+          flex-shrink: 0;
+        }
+
+        .admin-kpi-index {
+          color: #93a7c2;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .admin-health-card {
+          overflow: hidden;
+        }
+
+        .admin-trend-pill {
+          display: inline-flex;
+          align-items: center;
+          min-height: 30px;
+          padding: 0 10px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(203, 213, 225, 0.8);
+          font-weight: 700;
+        }
+
+        .admin-action-kicker {
+          display: inline-flex;
+          margin-bottom: 8px;
+          padding: 4px 8px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.14);
+          color: inherit;
+          font-size: 0.64rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .admin-avatar-chip {
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 10px 18px rgba(37, 99, 235, 0.12);
+        }
+
+        .admin-dashboard-ambient {
+          position: absolute;
+          border-radius: 999px;
+          filter: blur(80px);
+          opacity: 0.22;
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .admin-dashboard-ambient-left {
+          width: 280px;
+          height: 280px;
+          top: -40px;
+          left: -30px;
+          background: radial-gradient(circle, rgba(37, 99, 235, 0.16), rgba(15, 23, 42, 0));
+        }
+
+        .admin-dashboard-ambient-right {
+          width: 300px;
+          height: 300px;
+          top: 240px;
+          right: -90px;
+          background: radial-gradient(circle, rgba(14, 165, 233, 0.14), rgba(15, 23, 42, 0));
+        }
+
         .admin-dashboard-hero,
         .admin-snapshot-section,
         .admin-signal-section,
-        .admin-activity-section,
-        .admin-focus-panel,
-        .admin-control-panel,
-        .admin-priority-block,
-        .admin-chart-panel,
-        .admin-snapshot-kpi,
-        .admin-snapshot-health,
-        .admin-quick-access-panel {
+        .admin-activity-section {
           animation: adminFadeUp 560ms ease both;
         }
 
@@ -953,15 +1107,195 @@ export default async function AdminDashboard() {
           transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
         }
 
+        .admin-dashboard-hero,
+        .admin-snapshot-section,
+        .admin-signal-section,
+        .admin-activity-section {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%) !important;
+          border: 1px solid rgba(203, 213, 225, 0.8) !important;
+          box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.82) !important;
+          backdrop-filter: blur(6px);
+        }
+
+        .admin-dashboard-hero::before,
+        .admin-snapshot-section::before,
+        .admin-signal-section::before,
+        .admin-activity-section::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)),
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.05), transparent 32%);
+          pointer-events: none;
+        }
+
+        .admin-focus-panel {
+          min-height: 240px !important;
+          border: 1px solid rgba(96, 165, 250, 0.3) !important;
+          box-shadow: 0 22px 40px rgba(29, 78, 216, 0.22);
+        }
+
+        .admin-control-panel,
+        .admin-quick-access-panel {
+          position: relative;
+          padding: 20px 0 0 20px !important;
+          border-left: 1px solid rgba(226, 232, 240, 0.95) !important;
+        }
+
+        .admin-control-panel::before,
+        .admin-quick-access-panel::before {
+          content: '';
+          position: absolute;
+          top: 20px;
+          bottom: 20px;
+          left: 0;
+          width: 1px;
+          background: linear-gradient(180deg, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.16), rgba(59, 130, 246, 0));
+          pointer-events: none;
+        }
+
+        .admin-priority-block,
+        .admin-chart-panel,
+        .admin-snapshot-kpi,
+        .admin-snapshot-health,
+        .admin-quick-access-panel .admin-rail-link,
+        .admin-activity-row {
+          backdrop-filter: blur(10px);
+        }
+
+        .admin-priority-block,
+        .admin-chart-panel,
+        .admin-snapshot-kpi,
+        .admin-snapshot-health {
+          background: #ffffff !important;
+          border: 1px solid rgba(203, 213, 225, 0.85) !important;
+          box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+        }
+
+        .admin-priority-block {
+          padding: 16px 16px 18px !important;
+          border-radius: 18px;
+          background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+        }
+
+        .admin-snapshot-grid {
+          gap: 14px !important;
+        }
+
+        .admin-snapshot-kpi {
+          position: relative;
+          padding: 18px 18px 20px !important;
+          min-height: 142px;
+          overflow: hidden;
+        }
+
+        .admin-snapshot-kpi::after {
+          content: '';
+          position: absolute;
+          inset: auto 16px 16px auto;
+          width: 64px;
+          height: 64px;
+          border-radius: 20px;
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0));
+          pointer-events: none;
+        }
+
+        .admin-snapshot-health {
+          padding: 18px 18px 20px !important;
+          background: linear-gradient(180deg, #ffffff, #f8fafc) !important;
+        }
+
+        .admin-snapshot-health-grid > div,
+        .admin-chart-meta > div,
+        .admin-chart-canvas {
+          background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+          border: 1px solid rgba(219, 234, 254, 0.92) !important;
+        }
+
+        .admin-chart-panel {
+          padding: 18px !important;
+          overflow: hidden;
+        }
+
+        .admin-chart-canvas {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .admin-chart-canvas::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(37, 99, 235, 0.03), rgba(255, 255, 255, 0));
+          pointer-events: none;
+        }
+
+        .admin-rail-link {
+          position: relative;
+          overflow: hidden;
+          border-radius: 16px !important;
+          border: 1px solid rgba(203, 213, 225, 0.84) !important;
+          background: linear-gradient(180deg, #ffffff, #f8fafc) !important;
+          box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+        }
+
+        .admin-rail-link::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), rgba(37, 99, 235, 0));
+          opacity: 0;
+          transition: opacity 180ms ease;
+          pointer-events: none;
+        }
+
+        .admin-rail-link:first-child,
+        .admin-rail-link:first-child:hover {
+          border-color: rgba(37, 99, 235, 0.5) !important;
+          background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+          box-shadow: 0 18px 30px rgba(29, 78, 216, 0.22);
+          color: #ffffff !important;
+        }
+
+        .admin-rail-link:first-child .admin-action-kicker {
+          background: rgba(255, 255, 255, 0.16);
+          color: rgba(255, 255, 255, 0.92);
+        }
+
+        .admin-activity-section {
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98)) !important;
+        }
+
+        .admin-activity-section > div:first-child {
+          position: relative;
+          z-index: 1;
+          padding: 18px 20px !important;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.92) !important;
+          background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.7));
+        }
+
+        .admin-activity-row {
+          position: relative;
+          z-index: 1;
+          border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+        }
+
         .admin-dashboard-action-link:hover,
         .admin-inline-link:hover {
           transform: translateY(-1px);
         }
 
         .admin-rail-link:hover {
-          transform: translateY(-1px);
-          background: #f8fafc;
-          border-color: #cbd5e1;
+          transform: translateY(-2px);
+          border-color: rgba(96, 165, 250, 0.6) !important;
+          box-shadow: 0 14px 28px rgba(37, 99, 235, 0.1);
+        }
+
+        .admin-rail-link:hover::before {
+          opacity: 1;
         }
 
         .admin-control-panel:hover,
@@ -970,11 +1304,25 @@ export default async function AdminDashboard() {
         .admin-snapshot-health:hover,
         .admin-quick-access-panel:hover {
           transform: translateY(-1px);
-          border-color: #cbd5e1;
+          border-color: rgba(148, 163, 184, 0.88) !important;
         }
 
         .admin-activity-row:hover {
-          background: #f8fbff;
+          background: linear-gradient(90deg, rgba(248, 250, 252, 0.98), rgba(255, 255, 255, 0.98)) !important;
+          transform: translateX(1px);
+        }
+
+        .admin-dashboard-hero,
+        .admin-snapshot-section,
+        .admin-signal-section,
+        .admin-activity-section,
+        .admin-chart-panel,
+        .admin-snapshot-kpi,
+        .admin-snapshot-health,
+        .admin-priority-block,
+        .admin-rail-link,
+        .admin-activity-row {
+          will-change: transform;
         }
 
         @keyframes adminFadeUp {
@@ -990,6 +1338,10 @@ export default async function AdminDashboard() {
         }
 
         @media (max-width: 980px) {
+          .admin-dashboard-shell {
+            padding-inline: 0;
+          }
+
           .admin-hero-grid,
           .admin-movement-grid,
           .admin-activity-grid {
@@ -998,14 +1350,19 @@ export default async function AdminDashboard() {
 
           .admin-control-panel {
             border-left: none !important;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid rgba(191, 219, 254, 0.72);
             padding-left: 0 !important;
             padding-top: 16px !important;
           }
 
+          .admin-control-panel::before,
+          .admin-quick-access-panel::before {
+            display: none;
+          }
+
           .admin-quick-access-panel {
             border-left: none !important;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid rgba(191, 219, 254, 0.72);
             padding-left: 0 !important;
             padding-top: 16px !important;
           }
@@ -1018,11 +1375,13 @@ export default async function AdminDashboard() {
         @media (max-width: 720px) {
           .admin-dashboard-shell {
             gap: 18px !important;
+            padding-bottom: 16px;
           }
 
           .admin-dashboard-hero,
           .admin-snapshot-section,
-          .admin-signal-section {
+          .admin-signal-section,
+          .admin-activity-section {
             padding: 18px !important;
           }
 
@@ -1045,6 +1404,10 @@ export default async function AdminDashboard() {
             grid-template-columns: 1fr !important;
           }
 
+          .admin-dashboard-shell {
+            padding-top: 0;
+          }
+
           .admin-chart-meta {
             grid-template-columns: 1fr !important;
           }
@@ -1063,6 +1426,7 @@ export default async function AdminDashboard() {
           }
         }
       `}</style>
+      </div>
     </div>
 
   );

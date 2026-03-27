@@ -89,16 +89,18 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
       style={{
         width: '272px',
         flexShrink: 0,
-        background: '#0f172a',
-        borderRight: '1px solid #1e293b',
+        background: 'linear-gradient(180deg, #081121 0%, #0f1b33 54%, #0b1220 100%)',
+        borderRight: '1px solid rgba(148,163,184,0.16)',
         position: 'sticky',
         top: 0,
         alignSelf: 'flex-start',
         height: '100vh',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: '100%' }}>
-        <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid rgba(148,163,184,0.16)' }}>
+      <div className="admin-sidebar-frame" style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: '100%', position: 'relative' }}>
+        <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid rgba(148,163,184,0.16)', position: 'relative' }}>
+          <div className="admin-sidebar-orb" aria-hidden="true" />
           <Link
             href="/admin"
             style={{
@@ -108,15 +110,19 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
               alignItems: 'center',
               gap: '10px',
               marginBottom: '14px',
+              position: 'relative',
+              zIndex: 1,
             }}
           >
-            <img src="/milerdev-logo-transparent.png" alt="MilerDev" style={{ width: 34, height: 34 }} />
+            <div className="admin-sidebar-logo-shell">
+              <img src="/milerdev-logo-transparent.png" alt="MilerDev" style={{ width: 34, height: 34 }} />
+            </div>
             <div>
               <div style={{ fontSize: '1rem', fontWeight: 700, lineHeight: 1.1 }}>MilerDev Admin</div>
               <div style={{ color: '#94a3b8', fontSize: '0.72rem', marginTop: '4px' }}>Control surface</div>
             </div>
           </Link>
-          <div style={{ color: '#94a3b8', fontSize: '0.76rem', lineHeight: 1.7 }}>
+          <div style={{ color: '#94a3b8', fontSize: '0.76rem', lineHeight: 1.7, position: 'relative', zIndex: 1 }}>
             สลับงานหลักของระบบได้เร็วขึ้นจาก navigation ที่มองเห็นตลอดเวลา
           </div>
         </div>
@@ -133,13 +139,14 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
                   <Link
                     key={link.href}
                     href={link.href}
+                    className={active ? 'admin-sidebar-link admin-sidebar-link-active' : 'admin-sidebar-link'}
                     style={{
                       color: active ? '#ffffff' : '#cbd5e1',
                       textDecoration: 'none',
                       fontSize: '0.84rem',
                       fontWeight: active ? 700 : 500,
                       padding: '11px 12px',
-                      borderRadius: '12px',
+                      borderRadius: '14px',
                       background: active ? 'linear-gradient(135deg, rgba(37,99,235,0.28), rgba(29,78,216,0.2))' : 'transparent',
                       border: active ? '1px solid rgba(96,165,250,0.28)' : '1px solid transparent',
                       display: 'flex',
@@ -167,13 +174,14 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
                     <Link
                       key={link.href}
                       href={link.href}
+                      className={active ? 'admin-sidebar-link admin-sidebar-link-active' : 'admin-sidebar-link'}
                       style={{
                         color: active ? '#ffffff' : '#94a3b8',
                         textDecoration: 'none',
                         fontSize: '0.8125rem',
                         fontWeight: active ? 600 : 500,
                         padding: '10px 12px',
-                        borderRadius: '12px',
+                        borderRadius: '14px',
                         background: active ? 'rgba(59,130,246,0.14)' : 'transparent',
                         border: active ? '1px solid rgba(96,165,250,0.24)' : '1px solid transparent',
                         display: 'flex',
@@ -192,12 +200,15 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
         </div>
 
         <div style={{ padding: '16px 18px 18px', borderTop: '1px solid rgba(148,163,184,0.16)' }}>
-          <div style={{ color: '#e2e8f0', fontSize: '0.82rem', fontWeight: 600, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {userName}
+          <div className="admin-sidebar-session-card">
+            <div style={{ color: '#e2e8f0', fontSize: '0.82rem', fontWeight: 600, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {userName}
+            </div>
+            <div style={{ color: '#64748b', fontSize: '0.74rem', marginBottom: '12px' }}>Admin session</div>
           </div>
-          <div style={{ color: '#64748b', fontSize: '0.74rem', marginBottom: '12px' }}>Admin session</div>
           <Link
             href="/"
+            className="admin-sidebar-home-link"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -206,7 +217,7 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
               textDecoration: 'none',
               fontSize: '0.78rem',
               padding: '9px 12px',
-              borderRadius: '10px',
+              borderRadius: '12px',
               border: '1px solid #334155',
               background: '#111827',
             }}
@@ -218,6 +229,79 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
 
       <style>{`
         .admin-sidebar-desktop { display: block; }
+        .admin-sidebar-frame::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 24%),
+            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+          pointer-events: none;
+        }
+        .admin-sidebar-orb {
+          position: absolute;
+          width: 160px;
+          height: 160px;
+          top: -48px;
+          right: -56px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(96, 165, 250, 0.34), rgba(96, 165, 250, 0));
+          filter: blur(18px);
+          pointer-events: none;
+        }
+        .admin-sidebar-logo-shell {
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+          border: 1px solid rgba(148,163,184,0.24);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 14px 24px rgba(2, 6, 23, 0.28);
+          flex-shrink: 0;
+        }
+        .admin-sidebar-link {
+          position: relative;
+          overflow: hidden;
+          transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+        }
+        .admin-sidebar-link::before {
+          content: '';
+          position: absolute;
+          inset: 0 auto 0 0;
+          width: 3px;
+          border-radius: 999px;
+          background: linear-gradient(180deg, #60a5fa, #2563eb);
+          opacity: 0;
+          transition: opacity 180ms ease;
+        }
+        .admin-sidebar-link:hover {
+          transform: translateX(2px);
+          background: rgba(255,255,255,0.05) !important;
+          border-color: rgba(96,165,250,0.18) !important;
+        }
+        .admin-sidebar-link-active {
+          box-shadow: 0 12px 24px rgba(15, 23, 42, 0.26);
+        }
+        .admin-sidebar-link-active::before {
+          opacity: 1;
+        }
+        .admin-sidebar-session-card {
+          padding: 12px 12px 10px;
+          margin-bottom: 10px;
+          border-radius: 16px;
+          background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+          border: 1px solid rgba(148,163,184,0.18);
+        }
+        .admin-sidebar-home-link {
+          transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+        }
+        .admin-sidebar-home-link:hover {
+          transform: translateY(-1px);
+          border-color: rgba(96,165,250,0.28) !important;
+          background: rgba(15, 23, 42, 0.88) !important;
+        }
         @media (max-width: 1024px) {
           .admin-sidebar-desktop { display: none !important; }
         }
