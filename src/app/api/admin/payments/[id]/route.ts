@@ -45,6 +45,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
 
@@ -77,6 +78,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     const body = await request.json();

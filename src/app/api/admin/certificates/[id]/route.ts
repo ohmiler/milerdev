@@ -33,6 +33,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     const { action, reason } = await request.json();
@@ -70,6 +71,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     await db.delete(certificates).where(eq(certificates.id, id));
