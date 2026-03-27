@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -27,15 +27,14 @@ export default function NewCoursePage() {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
-  const generateSlug = (title: string) => {
-    return title
+  const generateSlug = (title: string) =>
+    title
       .toLowerCase()
       .replace(/[^a-z0-9ก-๙\s-]+/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '')
       .substring(0, 100);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +45,11 @@ export default function NewCoursePage() {
       const res = await fetch('/api/admin/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, tagIds: selectedTagIds, certificateColor: formData.certificateColor }),
+        body: JSON.stringify({
+          ...formData,
+          tagIds: selectedTagIds,
+          certificateColor: formData.certificateColor,
+        }),
       });
 
       const data = await res.json();
@@ -66,437 +69,717 @@ export default function NewCoursePage() {
   const normalizedSlug = formData.slug || generateSlug(formData.title);
   const isFreeCourse = Number(formData.price || 0) <= 0;
   const isPublished = formData.status === 'published';
-  const topPriorityAction = formData.title.trim().length === 0
-    ? 'เริ่มจากตั้งชื่อคอร์สและให้ระบบช่วย generate URL ให้ก่อน'
-    : !formData.thumbnailUrl
-      ? 'เพิ่มภาพปกเพื่อให้หน้าคอร์สดูพร้อมใช้งานและน่าเชื่อถือขึ้น'
-      : !formData.description.trim().length
-        ? 'เติมคำอธิบายคอร์สเพื่อให้หน้าขายมีบริบทและ conversion ดีขึ้น'
-        : 'ข้อมูลตั้งต้นพร้อมแล้ว สร้างคอร์สและไปเพิ่มบทเรียนต่อได้ทันที';
-  const setupSignals = [
+  const statusLabel = isPublished ? 'เผยแพร่' : 'แบบร่าง';
+  const priceLabel = isFreeCourse ? 'ฟรี' : `฿${Number(formData.price || 0).toLocaleString()}`;
+  const coursePreviewUrl = `/courses/${normalizedSlug || 'your-course-slug'}`;
+  const topPriorityAction =
+    formData.title.trim().length === 0
+      ? 'เริ่มจากตั้งชื่อคอร์สเพื่อให้ระบบช่วยสร้าง URL และโครงข้อมูลตั้งต้นให้ก่อน'
+      : !formData.thumbnailUrl
+        ? 'เพิ่มภาพปกเพื่อให้หน้าคอร์สดูพร้อมใช้งานและนำไปจัดวางต่อได้ทันที'
+        : !formData.description.trim().length
+          ? 'เติมคำอธิบายคอร์สเพื่อให้หน้าขายมีบริบทครบขึ้นก่อนกดสร้าง'
+          : 'ข้อมูลตั้งต้นพร้อมแล้ว สามารถสร้างคอร์สและไปเพิ่มบทเรียนต่อได้ทันที';
+
+  const setupHighlights = [
     {
       label: 'สถานะเริ่มต้น',
-      value: isPublished ? 'เผยแพร่' : 'แบบร่าง',
-      detail: isPublished ? 'คอร์สจะมองเห็นได้ทันทีหลังสร้าง' : 'เหมาะสำหรับเตรียมข้อมูลก่อนค่อยเปิดขาย',
-      tone: isPublished ? '#16a34a' : '#d97706',
+      value: statusLabel,
+      tone: isPublished ? 'green' : 'amber',
+      detail: isPublished ? 'คอร์สจะพร้อมแสดงทันทีหลังสร้าง' : 'เหมาะกับการเตรียมข้อมูลและตรวจสอบก่อนเปิดขาย',
     },
     {
       label: 'รูปแบบราคา',
-      value: isFreeCourse ? 'ฟรี' : `฿${Number(formData.price || 0).toLocaleString()}`,
-      detail: isFreeCourse ? 'ใช้ราคา 0 เพื่อสร้างคอร์สฟรี' : 'สามารถตั้งโปรโมชั่นภายหลังในหน้าจัดการคอร์ส',
-      tone: isFreeCourse ? '#16a34a' : '#2563eb',
-    },
-    {
-      label: 'URL Preview',
-      value: `/courses/${normalizedSlug || 'your-course-slug'}`,
-      detail: slugManuallyEdited ? 'คุณกำลังกำหนด slug เอง' : 'ระบบจะ generate จากชื่อคอร์สให้อัตโนมัติ',
-      tone: '#0f172a',
+      value: priceLabel,
+      tone: isFreeCourse ? 'green' : 'blue',
+      detail: isFreeCourse ? 'ใช้ราคา 0 เพื่อเริ่มเป็นคอร์สฟรี' : 'สามารถตั้งโปรโมชันภายหลังในหน้าจัดการคอร์สได้',
     },
   ];
-  const readinessItems = [
-    {
-      label: 'ชื่อคอร์ส',
-      ready: formData.title.trim().length > 0,
-      hint: formData.title.trim().length > 0 ? 'พร้อม' : 'ยังไม่ได้ระบุ',
-    },
-    {
-      label: 'Slug URL',
-      ready: normalizedSlug.trim().length > 0,
-      hint: normalizedSlug.trim().length > 0 ? `/courses/${normalizedSlug}` : 'จะสร้างอัตโนมัติจากชื่อคอร์ส',
-    },
-    {
-      label: 'รูปภาพปก',
-      ready: Boolean(formData.thumbnailUrl),
-      hint: formData.thumbnailUrl ? 'เพิ่มแล้ว' : 'แนะนำให้ใส่ก่อนเผยแพร่',
-    },
-    {
-      label: 'รายละเอียดคอร์ส',
-      ready: formData.description.trim().length > 0,
-      hint: formData.description.trim().length > 0 ? 'มีข้อมูลแล้ว' : 'ช่วยให้หน้าขายครบขึ้น',
-    },
-  ];
-  const readinessCount = readinessItems.filter((item) => item.ready).length;
-  const completionPercent = Math.round((readinessCount / readinessItems.length) * 100);
 
   return (
-    <div style={{ display: 'grid', gap: '24px' }}>
-      <section style={{
-        background: 'linear-gradient(135deg, #f8fbff 0%, #eef6ff 36%, #fffaf4 100%)',
-        border: '1px solid rgba(148,163,184,0.18)',
-        borderRadius: '28px',
-        padding: '32px',
-        boxShadow: '0 24px 60px rgba(15, 23, 42, 0.08)',
-        overflow: 'hidden',
-      }}>
-        <div style={{ display: 'grid', gap: '18px', maxWidth: '920px' }}>
-          <div>
-            <Link href="/admin/courses" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
-              ← กลับไปรายการคอร์ส
-            </Link>
-            <div style={{ color: '#0f172a', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '14px', marginBottom: '12px' }}>
-              Create New Course
-            </div>
-            <h1 style={{ fontSize: '2.3rem', fontWeight: 800, color: '#0f172a', marginBottom: '12px', lineHeight: 1.04, maxWidth: '800px' }}>
-              สร้างคอร์สใหม่ให้ flow ชัดตั้งแต่ชื่อคอร์ส ไปจนถึงความพร้อมสำหรับส่งต่อไปจัดบทเรียน
-            </h1>
-            <p style={{ color: '#334155', fontSize: '0.98rem', lineHeight: 1.85, maxWidth: '780px' }}>
-              หน้านี้ถูกจัดใหม่ให้คุณโฟกัสกับการตั้งตัวตนของคอร์ส ราคา สถานะ ภาพปก และโทนของ certificate แบบเป็นลำดับเดียว ไม่ต้องสลับอ่านหลายกล่องใน viewport แรก
-            </p>
-          </div>
+    <div className="new-course-page-shell">
+      <section className="new-course-hero">
+        <div className="new-course-back-link-wrap">
+          <Link href="/admin/courses" className="new-course-back-link">
+            ← กลับไปรายการคอร์ส
+          </Link>
+        </div>
 
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <a href="#course-setup-form" style={{ padding: '11px 16px', borderRadius: '999px', background: '#0f172a', color: 'white', textDecoration: 'none', fontSize: '0.84rem', fontWeight: 700 }}>
-              เริ่มกรอกข้อมูล
-            </a>
-            <span style={{ padding: '8px 12px', borderRadius: '999px', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.8rem', fontWeight: 700 }}>
-              พร้อมแล้ว {readinessCount}/{readinessItems.length} จุด
-            </span>
-          </div>
+        <div className="new-course-hero-kicker">Create New Course</div>
+        <h1 className="new-course-title">
+          สร้างคอร์สใหม่
+        </h1>
+        <p className="new-course-description">
+          สร้างคอร์สใหม่และกำหนดข้อมูลตั้งต้นที่สำคัญเพื่อให้หน้าขายและหน้าจัดการคอร์สมีบริบทครบขึ้นตั้งแต่เริ่มต้น
+          ไม่ต้องกังวลว่าต้องกรอกข้อมูลทุกอย่างให้สมบูรณ์ในครั้งแรก เพราะสามารถกลับมาแก้ไขและเพิ่มข้อมูลได้ตลอดเวลาหลังจากสร้างคอร์สแล้ว
+        </p>
 
-          <div style={{ color: '#475569', fontSize: '0.84rem', lineHeight: 1.75, maxWidth: '860px' }}>
-            <span style={{ color: '#0f172a', fontWeight: 700 }}>โฟกัสตอนนี้:</span> {topPriorityAction}
-          </div>
+        <div className="new-course-hero-actions">
+          <a href="#course-setup-form" className="new-course-cta-primary">
+            เริ่มกรอกข้อมูล
+          </a>
+          <span className={`new-course-pill ${isPublished ? 'is-success' : 'is-warning'}`}>{statusLabel}</span>
+          <span className={`new-course-pill ${isFreeCourse ? 'is-success' : 'is-info'}`}>{priceLabel}</span>
+        </div>
+
+        <div className="new-course-hero-focus">
+          <span>โฟกัสตอนนี้:</span> {topPriorityAction}
         </div>
       </section>
 
-      {/* Error */}
-      {error && (
-        <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#dc2626',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          marginBottom: '24px',
-        }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="new-course-error">{error}</div>}
 
-      {/* Form */}
-      <form id="course-setup-form" onSubmit={handleSubmit} style={{
-        display: 'grid',
-        gap: '20px',
-      }}>
-        <div className="new-course-shell" style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.2fr) minmax(300px, 0.78fr)',
-          gap: '24px',
-          alignItems: 'start',
-        }}>
-          <div style={{ display: 'grid', gap: '20px' }}>
-            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ตัวตนและบริบทของคอร์ส</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>เริ่มจากข้อมูลที่นิยามคอร์สให้ชัดก่อน ได้แก่ ชื่อ URL คำอธิบาย และแท็ก เพื่อให้การจัดการต่อในหน้าถัดไปเป็นระบบมากขึ้น</div>
-              </div>
+      <form id="course-setup-form" onSubmit={handleSubmit} className="new-course-form-grid">
+        <div className="new-course-main-column">
+          <section className="new-course-section-card">
+            <div className="new-course-section-head">
+              <h2>ตัวตนและบริบทของคอร์ส</h2>
+              <p>เริ่มจากข้อมูลพื้นฐานที่ใช้ทั้งในหน้าขาย การค้นหา และการจัดการต่อในระบบ</p>
+            </div>
 
-              <div className="new-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '18px' }}>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                    ชื่อคอร์ส *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => {
-                      const newTitle = e.target.value;
-                      setFormData(prev => ({
-                        ...prev,
-                        title: newTitle,
-                        ...(!slugManuallyEdited ? { slug: generateSlug(newTitle) } : {}),
-                      }));
-                    }}
-                    required
-                    placeholder="เช่น JavaScript for Beginners"
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '10px',
-                      fontSize: '1rem',
-                    }}
-                  />
-                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-                    ตั้งชื่อให้ชัดพอที่จะใช้ทั้งในหน้าขาย การจัดการภายใน และการค้นหาในระบบ
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                    Slug (URL)
-                  </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ color: '#64748b', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>/courses/</span>
-                    <input
-                      type="text"
-                      value={formData.slug}
-                      onChange={(e) => {
-                        setSlugManuallyEdited(true);
-                        setFormData({ ...formData, slug: e.target.value });
-                      }}
-                      placeholder="auto-generated-from-title"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '10px',
-                        fontSize: '1rem',
-                      }}
-                    />
-                    {slugManuallyEdited && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSlugManuallyEdited(false);
-                          setFormData(prev => ({ ...prev, slug: generateSlug(prev.title) }));
-                        }}
-                        style={{
-                          padding: '8px 12px',
-                          background: '#f1f5f9',
-                          border: 'none',
-                          borderRadius: '6px',
-                          color: '#475569',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        รีเซ็ต
-                      </button>
-                    )}
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-                    URL นี้ใช้สำหรับหน้าคอร์สจริงบนเว็บ ควรสั้น อ่านง่าย และเปลี่ยนให้น้อยที่สุดเมื่อเริ่มมีการแชร์ลิงก์แล้ว
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: '20px' }}>
-                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                  คำอธิบาย
-                </label>
-                <RichTextEditor
-                  content={formData.description}
-                  onChange={(html) => setFormData(prev => ({ ...prev, description: html }))}
-                />
-              </div>
-
-              <div style={{ marginTop: '20px' }}>
-                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                  แท็ก
-                </label>
-                <TagSelector
-                  selectedTagIds={selectedTagIds}
-                  onChange={setSelectedTagIds}
-                />
-              </div>
-            </section>
-
-            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>รูปแบบการขายและการมองเห็น</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>กำหนดว่าคอร์สนี้จะเริ่มเป็นแบบร่างหรือเผยแพร่ทันที และอยู่ในรูปแบบฟรีหรือเสียเงิน</div>
-              </div>
-
-              <div className="new-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                    ราคา (บาท)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    min="0"
-                    placeholder="0 = ฟรี"
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '10px',
-                      fontSize: '1rem',
-                    }}
-                  />
-                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-                    ใส่ `0` หากต้องการทำเป็นคอร์สฟรี และสามารถตั้งโปรโมชั่นเพิ่มเติมในภายหลังได้
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                    สถานะ
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '10px',
-                      fontSize: '1rem',
-                      background: 'white',
-                    }}
-                  >
-                    <option value="draft">แบบร่าง</option>
-                    <option value="published">เผยแพร่</option>
-                  </select>
-                  <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-                    ถ้ายังไม่พร้อมเปิดขาย แนะนำให้สร้างเป็นแบบร่างก่อน แล้วค่อยเพิ่มบทเรียนและตรวจหน้าคอร์สให้ครบ
-                  </div>
-                </div>
-              </div>
-
-              <div className="new-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px', marginTop: '18px' }}>
-                {setupSignals.slice(0, 2).map((item) => (
-                  <div key={item.label} style={{ padding: '14px 16px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                    <div style={{ color: '#64748b', fontSize: '0.74rem', marginBottom: '6px' }}>{item.label}</div>
-                    <div style={{ color: item.tone, fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.15 }}>{item.value}</div>
-                    <div style={{ color: '#64748b', fontSize: '0.76rem', marginTop: '8px', lineHeight: 1.6 }}>{item.detail}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '24px' }}>
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 700, marginBottom: '6px' }}>ภาพลักษณ์และความพร้อมของหน้าเว็บ</div>
-                <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>เพิ่มภาพปกและเลือกสี certificate เพื่อให้หน้าคอร์สดูพร้อมใช้งานตั้งแต่การเปิดดูครั้งแรก</div>
-              </div>
-
-              <div className="new-course-visual-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.08fr) minmax(260px, 0.92fr)', gap: '20px', alignItems: 'start' }}>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                    รูปภาพปก
-                  </label>
-                  <ImageUpload
-                    value={formData.thumbnailUrl}
-                    onChange={(url) => setFormData(prev => ({ ...prev, thumbnailUrl: url }))}
-                    folder="courses"
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                    สีใบรับรอง (Certificate)
-                  </label>
-                  <CertificateColorPicker
-                    value={formData.certificateColor}
-                    onChange={(color) => setFormData(prev => ({ ...prev, certificateColor: color }))}
-                  />
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <aside style={{ display: 'grid', gap: '16px' }}>
-            <div className="new-course-sticky" style={{ position: 'sticky', top: '96px', display: 'grid', gap: '16px' }}>
-              <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '20px', display: 'grid', gap: '14px' }}>
-                <div style={{
-                  background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-                  color: 'white',
-                  borderRadius: '18px',
-                  padding: '18px',
-                  display: 'grid',
-                  gap: '10px',
-                }}>
-                  <div style={{ color: 'rgba(255,255,255,0.68)', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Setup Snapshot</div>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 800, lineHeight: 1.05 }}>{completionPercent}%</div>
-                  <div style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', lineHeight: 1.7 }}>
-                    พร้อมแล้ว {readinessCount}/{readinessItems.length} จุดสำหรับการสร้างคอร์สใหม่
-                  </div>
-                  <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.78rem', lineHeight: 1.7 }}>{topPriorityAction}</div>
-                </div>
-
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  {setupSignals.map((item, index) => (
-                    <div key={item.label} style={{ padding: index === 0 ? '4px 0 10px' : '12px 0 10px', borderTop: index === 0 ? 'none' : '1px solid #e2e8f0' }}>
-                      <div style={{ color: '#64748b', fontSize: '0.73rem', marginBottom: '6px' }}>{item.label}</div>
-                      <div style={{ color: item.tone, fontSize: item.label === 'URL Preview' ? '0.94rem' : '1.08rem', fontWeight: 800, lineHeight: 1.2, wordBreak: 'break-word' }}>{item.value}</div>
-                      <div style={{ color: '#64748b', fontSize: '0.76rem', marginTop: '6px', lineHeight: 1.6 }}>{item.detail}</div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '20px', display: 'grid', gap: '12px' }}>
-                <div>
-                  <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>Readiness Checklist</div>
-                  <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>ใช้เช็กอย่างรวดเร็วว่าข้อมูลตั้งต้นครบพอสำหรับสร้างคอร์สและไปทำงานต่อในหน้าถัดไปหรือยัง</div>
-                </div>
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  {readinessItems.map((item) => (
-                    <div key={item.label} style={{ borderRadius: '16px', background: 'white', border: '1px solid #e2e8f0', padding: '14px 16px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: item.ready ? '#16a34a' : '#f59e0b', marginTop: '6px', flexShrink: 0 }} />
-                      <div>
-                        <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>{item.label}</div>
-                        <div style={{ color: item.ready ? '#166534' : '#92400e', fontSize: '0.8rem', fontWeight: 600, marginBottom: '4px' }}>{item.hint}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px 16px' }}>
-                  <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>หลังจากสร้างแล้ว</div>
-                  <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.7 }}>แนะนำให้เข้าไปเพิ่มบทเรียน ตั้ง preview video และตรวจหน้าคอร์สจริงก่อนเปิดขายเต็มรูปแบบ</div>
-                </div>
-              </section>
-
-              <div style={{ display: 'grid', gap: '10px' }}>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    padding: '13px 18px',
-                    background: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '0.96rem',
-                    fontWeight: 700,
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    opacity: loading ? 0.7 : 1,
+            <div className="new-course-field-grid">
+              <div>
+                <label className="new-course-label">ชื่อคอร์ส *</label>
+                <input
+                  className="new-course-input"
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => {
+                    const newTitle = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      title: newTitle,
+                      ...(!slugManuallyEdited ? { slug: generateSlug(newTitle) } : {}),
+                    }));
                   }}
+                  required
+                  placeholder="เช่น JavaScript for Beginners"
+                />
+                <div className="new-course-help-text">
+                  ตั้งชื่อให้ชัดพอที่จะใช้ได้ทั้งในหน้าขาย การจัดการภายใน และการค้นหาในระบบ
+                </div>
+              </div>
+
+              <div>
+                <label className="new-course-label">Slug (URL)</label>
+                <div className="new-course-slug-row">
+                  <span className="new-course-slug-prefix">/courses/</span>
+                  <input
+                    className="new-course-input"
+                    type="text"
+                    value={formData.slug}
+                    onChange={(e) => {
+                      setSlugManuallyEdited(true);
+                      setFormData((prev) => ({ ...prev, slug: e.target.value }));
+                    }}
+                    placeholder="auto-generated-from-title"
+                  />
+                  {slugManuallyEdited && (
+                    <button
+                      type="button"
+                      className="new-course-reset-button"
+                      onClick={() => {
+                        setSlugManuallyEdited(false);
+                        setFormData((prev) => ({ ...prev, slug: generateSlug(prev.title) }));
+                      }}
+                    >
+                      รีเซ็ต
+                    </button>
+                  )}
+                </div>
+                <div className="new-course-help-text">
+                  URL นี้ใช้สำหรับหน้าคอร์สจริงบนเว็บ ควรสั้น อ่านง่าย และเปลี่ยนให้น้อยที่สุดเมื่อเริ่มมีการแชร์แล้ว
+                </div>
+              </div>
+            </div>
+
+            <div className="new-course-field-stack">
+              <label className="new-course-label">คำอธิบาย</label>
+              <RichTextEditor
+                content={formData.description}
+                onChange={(html) => setFormData((prev) => ({ ...prev, description: html }))}
+              />
+            </div>
+
+            <div className="new-course-field-stack">
+              <label className="new-course-label">แท็ก</label>
+              <TagSelector selectedTagIds={selectedTagIds} onChange={setSelectedTagIds} />
+            </div>
+          </section>
+
+          <section className="new-course-section-card">
+            <div className="new-course-section-head">
+              <h2>รูปแบบการขายและการมองเห็น</h2>
+              <p>กำหนดว่าคอร์สนี้จะเริ่มเป็นแบบร่างหรือเผยแพร่ทันที และอยู่ในรูปแบบฟรีหรือเสียเงิน</p>
+            </div>
+
+            <div className="new-course-field-grid">
+              <div>
+                <label className="new-course-label">ราคา (บาท)</label>
+                <input
+                  className="new-course-input"
+                  type="number"
+                  min="0"
+                  value={formData.price}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
+                  placeholder="0 = ฟรี"
+                />
+                <div className="new-course-help-text">
+                  ใส่ `0` หากต้องการทำเป็นคอร์สฟรี และสามารถตั้งโปรโมชันเพิ่มภายหลังได้
+                </div>
+              </div>
+
+              <div>
+                <label className="new-course-label">สถานะ</label>
+                <select
+                  className="new-course-input"
+                  value={formData.status}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
                 >
+                  <option value="draft">แบบร่าง</option>
+                  <option value="published">เผยแพร่</option>
+                </select>
+                <div className="new-course-help-text">
+                  ถ้ายังไม่พร้อมเปิดขาย แนะนำให้เริ่มเป็นแบบร่างก่อนแล้วค่อยกลับมาเผยแพร่ภายหลัง
+                </div>
+              </div>
+            </div>
+
+            <div className="new-course-field-grid">
+              {setupHighlights.map((item) => (
+                <div key={item.label} className="new-course-mini-card">
+                  <div className="new-course-mini-label">{item.label}</div>
+                  <div className={`new-course-mini-value tone-${item.tone}`}>{item.value}</div>
+                  <div className="new-course-mini-detail">{item.detail}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="new-course-section-card">
+            <div className="new-course-section-head">
+              <h2>ภาพลักษณ์และความพร้อมของหน้าเว็บ</h2>
+              <p>เพิ่มภาพปกและเลือกสี certificate เพื่อให้หน้าคอร์สดูพร้อมใช้งานตั้งแต่การเปิดดูครั้งแรก</p>
+            </div>
+
+            <div className="new-course-visual-grid">
+              <div>
+                <label className="new-course-label">รูปภาพปก</label>
+                <ImageUpload
+                  value={formData.thumbnailUrl}
+                  onChange={(url) => setFormData((prev) => ({ ...prev, thumbnailUrl: url }))}
+                  folder="courses"
+                />
+              </div>
+
+              <div>
+                <label className="new-course-label">สีใบรับรอง (Certificate)</label>
+                <CertificateColorPicker
+                  value={formData.certificateColor}
+                  onChange={(color) => setFormData((prev) => ({ ...prev, certificateColor: color }))}
+                />
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <aside className="new-course-aside">
+          <div className="new-course-sticky">
+            <section className="new-course-side-card">
+              <div className="new-course-side-head">
+                <h2>พร้อมสร้างคอร์ส</h2>
+                <p>สรุปเฉพาะค่าที่ส่งผลกับ flow ตอนนี้ เพื่อให้เช็กและบันทึกได้จากจุดเดียว</p>
+              </div>
+
+              <div className="new-course-side-highlight">
+                <div className="new-course-side-highlight-kicker">Next Move</div>
+                <div className="new-course-side-highlight-text">{topPriorityAction}</div>
+              </div>
+
+              <div className="new-course-side-meta">
+                <div className="new-course-side-meta-row">
+                  <span>สถานะเริ่มต้น</span>
+                  <strong className={isPublished ? 'tone-green' : 'tone-amber'}>{statusLabel}</strong>
+                </div>
+                <div className="new-course-side-meta-row">
+                  <span>รูปแบบราคา</span>
+                  <strong className={isFreeCourse ? 'tone-green' : 'tone-blue'}>{priceLabel}</strong>
+                </div>
+                <div className="new-course-side-meta-row is-column">
+                  <span>URL Preview</span>
+                  <strong>{coursePreviewUrl}</strong>
+                  <small>
+                    {slugManuallyEdited
+                      ? 'กำหนด slug เองอยู่ สามารถปรับได้ก่อนบันทึก'
+                      : 'ระบบจะ generate จากชื่อคอร์สให้อัตโนมัติ'}
+                  </small>
+                </div>
+              </div>
+
+              <div className="new-course-submit-wrap">
+                <button className="new-course-primary-submit" type="submit" disabled={loading}>
                   {loading ? 'กำลังสร้าง...' : 'สร้างคอร์ส'}
                 </button>
-                <Link
-                  href="/admin/courses"
-                  style={{
-                    padding: '12px 18px',
-                    background: '#f1f5f9',
-                    color: '#475569',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    fontSize: '0.94rem',
-                    textDecoration: 'none',
-                    textAlign: 'center',
-                    fontWeight: 600,
-                  }}
-                >
+                <Link className="new-course-secondary-link" href="/admin/courses">
                   ยกเลิก
                 </Link>
               </div>
-            </div>
-          </aside>
-        </div>
+            </section>
+          </div>
+        </aside>
       </form>
+
       <style>{`
+        .new-course-page-shell {
+          display: grid;
+          gap: 20px;
+          padding-bottom: 20px;
+        }
+
+        .new-course-hero,
+        .new-course-section-card,
+        .new-course-side-card {
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+          border: 1px solid rgba(203, 213, 225, 0.86);
+          border-radius: 24px;
+          box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+        }
+
+        .new-course-hero {
+          position: relative;
+          overflow: hidden;
+          padding: 30px 32px;
+        }
+
+        .new-course-hero::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background:
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 34%),
+            linear-gradient(135deg, rgba(239, 246, 255, 0.8), rgba(255, 255, 255, 0));
+        }
+
+        .new-course-back-link-wrap,
+        .new-course-hero-kicker,
+        .new-course-title,
+        .new-course-description,
+        .new-course-hero-actions,
+        .new-course-hero-focus {
+          position: relative;
+          z-index: 1;
+        }
+
+        .new-course-back-link {
+          color: #64748b;
+          text-decoration: none;
+          font-size: 0.875rem;
+        }
+
+        .new-course-hero-kicker {
+          margin-top: 14px;
+          margin-bottom: 12px;
+          color: #0f172a;
+          font-size: 0.78rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .new-course-title {
+          max-width: 840px;
+          margin: 0;
+          color: #0f172a;
+          font-size: 2.3rem;
+          line-height: 1.04;
+          font-weight: 800;
+        }
+
+        .new-course-description {
+          max-width: 860px;
+          margin: 14px 0 0;
+          color: #334155;
+          font-size: 0.98rem;
+          line-height: 1.85;
+        }
+
+        .new-course-hero-actions {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          align-items: center;
+          margin-top: 18px;
+        }
+
+        .new-course-cta-primary,
+        .new-course-primary-submit,
+        .new-course-secondary-link,
+        .new-course-reset-button {
+          transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+        }
+
+        .new-course-cta-primary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 11px 16px;
+          border-radius: 999px;
+          background: #0f172a;
+          color: #ffffff;
+          text-decoration: none;
+          font-size: 0.84rem;
+          font-weight: 700;
+        }
+
+        .new-course-pill {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 12px;
+          border-radius: 999px;
+          font-size: 0.8rem;
+          font-weight: 700;
+        }
+
+        .new-course-pill.is-warning {
+          background: #fff7ed;
+          color: #b45309;
+        }
+
+        .new-course-pill.is-success {
+          background: #eefbf3;
+          color: #15803d;
+        }
+
+        .new-course-pill.is-info {
+          background: #eff6ff;
+          color: #1d4ed8;
+        }
+
+        .new-course-hero-focus {
+          margin-top: 18px;
+          color: #475569;
+          font-size: 0.84rem;
+          line-height: 1.75;
+          max-width: 900px;
+        }
+
+        .new-course-hero-focus span {
+          color: #0f172a;
+          font-weight: 700;
+        }
+
+        .new-course-error {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #dc2626;
+          padding: 12px 16px;
+          border-radius: 12px;
+        }
+
+        .new-course-form-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.78fr);
+          gap: 24px;
+          align-items: start;
+        }
+
+        .new-course-main-column {
+          display: grid;
+          gap: 20px;
+        }
+
+        .new-course-section-card,
+        .new-course-side-card {
+          padding: 24px;
+        }
+
+        .new-course-section-card,
+        .new-course-side-card,
+        .new-course-mini-card {
+          transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .new-course-section-card:hover,
+        .new-course-side-card:hover,
+        .new-course-mini-card:hover,
+        .new-course-cta-primary:hover,
+        .new-course-primary-submit:hover,
+        .new-course-secondary-link:hover,
+        .new-course-reset-button:hover {
+          transform: translateY(-1px);
+        }
+
+        .new-course-section-head {
+          margin-bottom: 18px;
+        }
+
+        .new-course-section-head h2,
+        .new-course-side-head h2 {
+          margin: 0 0 6px;
+          color: #0f172a;
+          font-size: 1.05rem;
+          font-weight: 700;
+        }
+
+        .new-course-section-head p,
+        .new-course-side-head p {
+          margin: 0;
+          color: #64748b;
+          font-size: 0.82rem;
+          line-height: 1.7;
+        }
+
+        .new-course-field-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 18px;
+        }
+
+        .new-course-field-stack {
+          margin-top: 20px;
+        }
+
+        .new-course-label {
+          display: block;
+          margin-bottom: 8px;
+          color: #374151;
+          font-weight: 600;
+        }
+
+        .new-course-input {
+          width: 100%;
+          padding: 12px 16px;
+          border-radius: 12px;
+          border: 1px solid rgba(203, 213, 225, 0.88);
+          background: #ffffff;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+          font-size: 1rem;
+          transition: border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .new-course-input:focus {
+          outline: none;
+          border-color: #2563eb;
+          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+
+        .new-course-help-text {
+          margin-top: 8px;
+          color: #94a3b8;
+          font-size: 0.78rem;
+          line-height: 1.6;
+        }
+
+        .new-course-slug-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .new-course-slug-prefix {
+          color: #64748b;
+          font-size: 0.875rem;
+          white-space: nowrap;
+        }
+
+        .new-course-reset-button {
+          padding: 8px 12px;
+          border: 1px solid #dbe5f4;
+          border-radius: 10px;
+          background: linear-gradient(180deg, #ffffff, #f8fafc);
+          color: #475569;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .new-course-mini-card {
+          padding: 14px 16px;
+          border-radius: 18px;
+          background: linear-gradient(180deg, #ffffff, #f8fafc);
+          border: 1px solid rgba(226, 232, 240, 0.96);
+        }
+
+        .new-course-mini-label {
+          color: #64748b;
+          font-size: 0.74rem;
+          margin-bottom: 6px;
+        }
+
+        .new-course-mini-value {
+          font-size: 1.15rem;
+          font-weight: 800;
+          line-height: 1.15;
+        }
+
+        .new-course-mini-value.tone-blue,
+        .tone-blue {
+          color: #2563eb;
+        }
+
+        .new-course-mini-value.tone-green,
+        .tone-green {
+          color: #15803d;
+        }
+
+        .new-course-mini-value.tone-amber,
+        .tone-amber {
+          color: #d97706;
+        }
+
+        .new-course-mini-detail {
+          margin-top: 8px;
+          color: #64748b;
+          font-size: 0.76rem;
+          line-height: 1.6;
+        }
+
+        .new-course-visual-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.08fr) minmax(260px, 0.92fr);
+          gap: 20px;
+          align-items: start;
+        }
+
+        .new-course-aside {
+          display: grid;
+        }
+
+        .new-course-sticky {
+          position: sticky;
+          top: 96px;
+          display: grid;
+          gap: 16px;
+        }
+
+        .new-course-side-highlight {
+          border-radius: 18px;
+          border: 1px solid rgba(191, 219, 254, 0.94);
+          background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+          padding: 16px;
+          display: grid;
+          gap: 8px;
+        }
+
+        .new-course-side-highlight-kicker {
+          color: #64748b;
+          font-size: 0.72rem;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        .new-course-side-highlight-text {
+          color: #0f172a;
+          font-size: 0.92rem;
+          line-height: 1.65;
+          font-weight: 700;
+        }
+
+        .new-course-side-meta {
+          display: grid;
+          gap: 12px;
+          margin-top: 6px;
+        }
+
+        .new-course-side-meta-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(226, 232, 240, 0.96);
+          color: #64748b;
+          font-size: 0.82rem;
+        }
+
+        .new-course-side-meta-row strong {
+          color: #0f172a;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          text-align: right;
+        }
+
+        .new-course-side-meta-row.is-column {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .new-course-side-meta-row.is-column strong {
+          word-break: break-word;
+          text-align: left;
+        }
+
+        .new-course-side-meta-row.is-column small {
+          color: #64748b;
+          font-size: 0.76rem;
+          line-height: 1.6;
+        }
+
+        .new-course-submit-wrap {
+          display: grid;
+          gap: 10px;
+          margin-top: 4px;
+        }
+
+        .new-course-primary-submit {
+          padding: 13px 18px;
+          border: none;
+          border-radius: 14px;
+          background: #2563eb;
+          color: #ffffff;
+          font-size: 0.96rem;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 14px 24px rgba(37, 99, 235, 0.1);
+        }
+
+        .new-course-primary-submit:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        .new-course-secondary-link {
+          padding: 12px 18px;
+          border-radius: 14px;
+          border: 1px solid rgba(203, 213, 225, 0.88);
+          background: linear-gradient(180deg, #ffffff, #f8fafc);
+          color: #475569;
+          text-decoration: none;
+          text-align: center;
+          font-size: 0.94rem;
+          font-weight: 600;
+        }
+
         @media (max-width: 1120px) {
-          .new-course-shell {
-            grid-template-columns: 1fr !important;
+          .new-course-form-grid {
+            grid-template-columns: 1fr;
           }
 
           .new-course-sticky {
-            position: static !important;
-            top: auto !important;
+            position: static;
+            top: auto;
           }
         }
 
         @media (max-width: 720px) {
+          .new-course-hero {
+            padding: 24px 20px;
+          }
+
+          .new-course-title {
+            font-size: 1.85rem;
+          }
+
           .new-course-field-grid,
           .new-course-visual-grid {
-            grid-template-columns: 1fr !important;
+            grid-template-columns: 1fr;
+          }
+
+          .new-course-slug-row {
+            flex-wrap: wrap;
           }
         }
       `}</style>

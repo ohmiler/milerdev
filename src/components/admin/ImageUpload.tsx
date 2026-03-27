@@ -142,13 +142,14 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           style={{
-            border: `2px dashed ${dragOver ? '#2563eb' : '#e2e8f0'}`,
-            borderRadius: '12px',
-            padding: '32px 24px',
+            border: `2px dashed ${dragOver ? '#2563eb' : '#dbe5f4'}`,
+            borderRadius: '18px',
+            padding: '38px 24px',
             textAlign: 'center',
             cursor: uploading ? 'wait' : 'pointer',
-            background: dragOver ? '#eff6ff' : '#fafafa',
+            background: dragOver ? 'linear-gradient(180deg, #eff6ff, #ffffff)' : 'linear-gradient(180deg, #ffffff, #f8fafc)',
             transition: 'all 0.2s',
+            boxShadow: dragOver ? '0 14px 24px rgba(37,99,235,0.08)' : 'inset 0 1px 0 rgba(255,255,255,0.82)',
           }}
         >
           {uploading ? (

@@ -37,8 +37,8 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
               borderRadius: '12px',
               background: displayColor,
               cursor: 'pointer',
-              border: '3px solid #e2e8f0',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '3px solid #dbe5f4',
+              boxShadow: '0 10px 18px rgba(15, 23, 42, 0.08)',
             }}
           />
           {showPicker && (
@@ -47,11 +47,11 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
               top: '56px',
               left: 0,
               zIndex: 100,
-              background: 'white',
+              background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
               borderRadius: '12px',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+              boxShadow: '0 18px 32px rgba(15, 23, 42, 0.12)',
               padding: '16px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #dbe5f4',
             }}>
               <input
                 type="color"
@@ -97,7 +97,7 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
           style={{
             width: '100px',
             padding: '10px 12px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #dbe5f4',
             borderRadius: '8px',
             fontFamily: 'monospace',
             fontSize: '0.9375rem',

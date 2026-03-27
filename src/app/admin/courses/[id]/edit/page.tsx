@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -120,30 +120,6 @@ export default function EditCoursePage() {
   const promoDiscount = hasPromo && Number(formData.price || 0) > 0
     ? Math.round((1 - Number(formData.promoPrice || 0) / Number(formData.price || 0)) * 100)
     : 0;
-  const readinessItems = [
-    {
-      label: 'ชื่อคอร์ส',
-      ready: formData.title.trim().length > 0,
-      hint: formData.title.trim().length > 0 ? 'พร้อม' : 'ยังไม่ได้ระบุ',
-    },
-    {
-      label: 'รูปภาพปก',
-      ready: Boolean(formData.thumbnailUrl),
-      hint: formData.thumbnailUrl ? 'เพิ่มแล้ว' : 'ควรมีเพื่อให้หน้าคอร์สดูน่าเชื่อถือ',
-    },
-    {
-      label: 'รายละเอียดคอร์ส',
-      ready: formData.description.trim().length > 0,
-      hint: formData.description.trim().length > 0 ? 'มีข้อมูลแล้ว' : 'ช่วยเพิ่ม conversion บนหน้าคอร์ส',
-    },
-    {
-      label: 'วิดีโอแนะนำ',
-      ready: Boolean(formData.previewVideoUrl),
-      hint: formData.previewVideoUrl ? 'ตั้งค่าแล้ว' : 'ใส่เพิ่มได้เพื่อช่วยขายคอร์ส',
-    },
-  ];
-  const readinessCount = readinessItems.filter((item) => item.ready).length;
-  const completionPercent = Math.round((readinessCount / readinessItems.length) * 100);
   const topPriorityAction = !formData.thumbnailUrl
     ? 'เริ่มจากเพิ่มภาพปก เพื่อให้หน้าคอร์สและการแชร์ลิงก์ดูพร้อมใช้งานมากขึ้น'
     : !formData.description.trim().length
@@ -151,36 +127,24 @@ export default function EditCoursePage() {
       : !formData.previewVideoUrl
         ? 'เพิ่มวิดีโอแนะนำคอร์สเพื่อช่วยให้หน้าขายมีแรงดึงดูดมากขึ้น'
         : hasPromo && (!formData.promoStartsAt || !formData.promoEndsAt)
-          ? 'ตรวจช่วงเวลาโปรโมชันให้ครบ เพื่อคุม pricing workflow ได้แม่นขึ้น'
-          : 'ข้อมูลสำคัญดูครบดีแล้ว คุณสามารถบันทึกและไปตรวจบทเรียนหรือหน้าเว็บจริงต่อได้';
-  const setupSignals = [
+          ? 'ตรวจช่วงเวลาโปรโมชันให้ครบ เพื่อให้ pricing workflow ชัดเจนก่อนบันทึก'
+          : 'ข้อมูลหลักของคอร์สดูพร้อมแล้ว สามารถบันทึกและไปจัดการบทเรียนต่อได้เลย';
+  const statusLabel = isPublished ? 'เผยแพร่' : 'แบบร่าง';
+  const priceLabel = isFreeCourse ? 'ฟรี' : `฿${Number(formData.price || 0).toLocaleString()}`;
+  const promoLabel = hasPromo ? `ลด ${promoDiscount}%` : 'ยังไม่มีโปรโมชัน';
+  const coursePreviewUrl = `/courses/${normalizedSlug}`;
+  const setupHighlights = [
     {
       label: 'สถานะปัจจุบัน',
-      value: isPublished ? 'เผยแพร่' : 'แบบร่าง',
-      detail: isPublished ? 'หน้าเว็บมองเห็นคอร์สนี้ได้แล้ว' : 'คอร์สยังอยู่ในขั้นเตรียมข้อมูล',
-      tone: isPublished ? '#16a34a' : '#d97706',
+      value: statusLabel,
+      tone: isPublished ? 'green' : 'amber',
+      detail: isPublished ? 'หน้าคอร์สเปิดมองเห็นได้แล้ว' : 'ยังอยู่ในขั้นตอนเตรียมข้อมูลก่อนเผยแพร่',
     },
     {
       label: 'ราคา',
-      value: isFreeCourse ? 'ฟรี' : `฿${Number(formData.price || 0).toLocaleString()}`,
-      detail: hasPromo ? `มีโปรโมชันลด ${promoDiscount}%` : 'ยังไม่มีราคาโปรโมชั่น',
-      tone: isFreeCourse ? '#16a34a' : '#2563eb',
-    },
-    {
-      label: 'URL Preview',
-      value: `/courses/${normalizedSlug}`,
-      detail: 'ควรเปลี่ยนอย่างระมัดระวังถ้ามีการแชร์ลิงก์ไปแล้ว',
-      tone: '#0f172a',
-    },
-    {
-      label: 'โปรโมชั่น',
-      value: hasPromo ? `ลด ${promoDiscount}%` : 'ยังไม่มี',
-      detail: hasPromo
-        ? formData.promoStartsAt || formData.promoEndsAt
-          ? 'มีการกำหนดราคาโปรโมชันไว้แล้ว'
-          : 'ตั้งราคาโปรโมชันแล้ว แต่ยังไม่ได้กำหนดช่วงเวลา'
-        : 'คุณสามารถตั้งราคาโปรโมชันและช่วงเวลาได้จากส่วนการขาย',
-      tone: hasPromo ? '#d97706' : '#64748b',
+      value: priceLabel,
+      tone: isFreeCourse ? 'green' : 'blue',
+      detail: hasPromo ? `มีโปรโมชันลด ${promoDiscount}%` : 'ยังไม่มีราคาโปรโมชันเพิ่มเติม',
     },
   ];
 
@@ -224,8 +188,11 @@ export default function EditCoursePage() {
             <Link href={`/admin/courses/${courseId}/lessons`} style={{ padding: '11px 16px', borderRadius: '999px', background: 'white', color: '#0f172a', textDecoration: 'none', fontSize: '0.84rem', fontWeight: 700, border: '1px solid #e2e8f0' }}>
               จัดการบทเรียน
             </Link>
-            <span style={{ padding: '8px 12px', borderRadius: '999px', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.8rem', fontWeight: 700 }}>
-              พร้อมแล้ว {readinessCount}/{readinessItems.length} จุด
+                        <span style={{ padding: '8px 12px', borderRadius: '999px', background: isPublished ? '#eefbf3' : '#fff7ed', color: isPublished ? '#15803d' : '#b45309', fontSize: '0.8rem', fontWeight: 700 }}>
+              {statusLabel}
+            </span>
+            <span style={{ padding: '8px 12px', borderRadius: '999px', background: isFreeCourse ? '#eefbf3' : '#eff6ff', color: isFreeCourse ? '#15803d' : '#1d4ed8', fontSize: '0.8rem', fontWeight: 700 }}>
+              {priceLabel}
             </span>
           </div>
 
@@ -390,6 +357,16 @@ export default function EditCoursePage() {
                 </div>
               </div>
 
+              <div className="edit-course-field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px', marginTop: '18px', marginBottom: '18px' }}>
+                {setupHighlights.map((item) => (
+                  <div key={item.label} style={{ padding: '14px 16px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                    <div style={{ color: '#64748b', fontSize: '0.74rem', marginBottom: '6px' }}>{item.label}</div>
+                    <div style={{ color: item.tone === 'green' ? '#15803d' : item.tone === 'amber' ? '#d97706' : '#2563eb', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.15 }}>{item.value}</div>
+                    <div style={{ color: '#64748b', fontSize: '0.76rem', marginTop: '8px', lineHeight: 1.6 }}>{item.detail}</div>
+                  </div>
+                ))}
+              </div>
+
               <div style={{
                 padding: '20px',
                 background: '#fffbeb',
@@ -400,19 +377,19 @@ export default function EditCoursePage() {
                   <svg style={{ width: '20px', height: '20px', color: '#d97706' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span style={{ fontWeight: 600, color: '#92400e', fontSize: '1rem' }}>โปรโมชั่น</span>
+                  <span style={{ fontWeight: 600, color: '#92400e', fontSize: '1rem' }}>โปรโมชัน</span>
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151', fontSize: '0.875rem' }}>
-                    ราคาโปรโมชั่น (บาท)
+                    ราคาโปรโมชัน (บาท)
                   </label>
                   <input
                     type="number"
                     value={formData.promoPrice}
                     onChange={(e) => setFormData({ ...formData, promoPrice: e.target.value })}
                     min="0"
-                    placeholder="ว่างไว้ถ้าไม่มีโปรโมชั่น"
+                    placeholder="เว้นว่างไว้ถ้าไม่มีโปรโมชัน"
                     style={{
                       width: '100%',
                       padding: '10px 14px',
@@ -468,7 +445,7 @@ export default function EditCoursePage() {
                   </div>
                 </div>
                 <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#92400e' }}>
-                  * ถ้าไม่กำหนดวันเริ่มต้น/สิ้นสุด โปรโมชั่นจะใช้ได้ตลอด
+                  * ถ้าไม่กำหนดวันเริ่มต้น/สิ้นสุด โปรโมชันจะใช้ได้ตลอด
                 </div>
               </div>
             </section>
@@ -528,7 +505,7 @@ export default function EditCoursePage() {
                     }}
                   />
                   <p style={{ marginTop: '6px', fontSize: '0.8125rem', color: '#64748b' }}>
-                    วิดีโอสั้นๆ แนะนำคอร์ส จะแสดงปุ่ม play บน thumbnail หน้า course detail
+                    วิดีโอสั้น ๆ แนะนำคอร์ส จะแสดงปุ่ม play บน thumbnail หน้า course detail
                   </p>
                 </div>
 
@@ -542,40 +519,42 @@ export default function EditCoursePage() {
                     folder="certificates"
                   />
                   <p style={{ marginTop: '6px', fontSize: '0.8125rem', color: '#64748b' }}>
-                    แนะนำขนาด 1800 × 500 px — ถ้าอัปโหลดรูปนี้จะใช้แทนพื้นหลังสี gradient ในใบรับรอง
+                    แนะนำขนาด 1800 × 500 px ถ้าอัปโหลดรูปนี้จะใช้แทนพื้นหลังสี gradient ในใบรับรอง
                   </p>
                 </div>
               </div>
             </section>
-          </div>
-
-          <aside style={{ display: 'grid', gap: '16px' }}>
+          </div>          <aside style={{ display: 'grid', gap: '16px' }}>
             <div className="edit-course-sticky" style={{ position: 'sticky', top: '96px', display: 'grid', gap: '16px' }}>
-              <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '20px', display: 'grid', gap: '14px' }}>
-                <div style={{
-                  background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-                  color: 'white',
-                  borderRadius: '18px',
-                  padding: '18px',
-                  display: 'grid',
-                  gap: '10px',
-                }}>
-                  <div style={{ color: 'rgba(255,255,255,0.68)', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Course Snapshot</div>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 800, lineHeight: 1.05 }}>{completionPercent}%</div>
-                  <div style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.82rem', lineHeight: 1.7 }}>
-                    พร้อมแล้ว {readinessCount}/{readinessItems.length} จุดสำหรับการใช้งานเชิงขายและประสบการณ์ผู้เรียน
-                  </div>
-                  <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.78rem', lineHeight: 1.7 }}>{topPriorityAction}</div>
+              <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '20px', display: 'grid', gap: '16px' }}>
+                <div>
+                  <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>พร้อมอัปเดตคอร์ส</div>
+                  <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>สรุปค่าหลักและ action สำคัญไว้ด้านข้างแบบเดียวกับหน้าสร้างคอร์ส</div>
                 </div>
 
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  {setupSignals.map((item, index) => (
-                    <div key={item.label} style={{ padding: index === 0 ? '4px 0 10px' : '12px 0 10px', borderTop: index === 0 ? 'none' : '1px solid #e2e8f0' }}>
-                      <div style={{ color: '#64748b', fontSize: '0.73rem', marginBottom: '6px' }}>{item.label}</div>
-                      <div style={{ color: item.tone, fontSize: item.label === 'URL Preview' ? '0.94rem' : '1.08rem', fontWeight: 800, lineHeight: 1.2, wordBreak: 'break-word' }}>{item.value}</div>
-                      <div style={{ color: '#64748b', fontSize: '0.76rem', marginTop: '6px', lineHeight: 1.6 }}>{item.detail}</div>
-                    </div>
-                  ))}
+                <div style={{ borderRadius: '18px', border: '1px solid rgba(191, 219, 254, 0.94)', background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)', padding: '16px', display: 'grid', gap: '8px' }}>
+                  <div style={{ color: '#64748b', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Next Move</div>
+                  <div style={{ color: '#0f172a', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.65 }}>{topPriorityAction}</div>
+                </div>
+
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '12px', borderTop: '1px solid rgba(226, 232, 240, 0.96)', color: '#64748b', fontSize: '0.82rem' }}>
+                    <span>สถานะปัจจุบัน</span>
+                    <strong style={{ color: isPublished ? '#15803d' : '#d97706', fontSize: '0.95rem' }}>{statusLabel}</strong>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '12px', borderTop: '1px solid rgba(226, 232, 240, 0.96)', color: '#64748b', fontSize: '0.82rem' }}>
+                    <span>ราคา</span>
+                    <strong style={{ color: isFreeCourse ? '#15803d' : '#2563eb', fontSize: '0.95rem' }}>{priceLabel}</strong>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', paddingTop: '12px', borderTop: '1px solid rgba(226, 232, 240, 0.96)', color: '#64748b', fontSize: '0.82rem' }}>
+                    <span>โปรโมชัน</span>
+                    <strong style={{ color: hasPromo ? '#d97706' : '#0f172a', fontSize: '0.95rem' }}>{promoLabel}</strong>
+                  </div>
+                  <div style={{ display: 'grid', gap: '4px', paddingTop: '12px', borderTop: '1px solid rgba(226, 232, 240, 0.96)', color: '#64748b', fontSize: '0.82rem' }}>
+                    <span>URL Preview</span>
+                    <strong style={{ color: '#0f172a', fontSize: '0.95rem', wordBreak: 'break-word' }}>{coursePreviewUrl}</strong>
+                    <small style={{ color: '#64748b', fontSize: '0.76rem', lineHeight: 1.6 }}>ควรเปลี่ยนอย่างระมัดระวังถ้ามีการแชร์ลิงก์ไปแล้ว</small>
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -586,81 +565,59 @@ export default function EditCoursePage() {
                     ดูหน้าเว็บ
                   </Link>
                 </div>
-              </section>
 
-              <section style={{ background: 'white', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)', padding: '20px', display: 'grid', gap: '12px' }}>
-                <div>
-                  <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>Readiness Checklist</div>
-                  <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>เช็กอย่างรวดเร็วว่าคอร์สนี้มีองค์ประกอบสำคัญครบพอสำหรับใช้งานเชิงธุรกิจและเชิงประสบการณ์ผู้เรียนหรือยัง</div>
-                </div>
                 <div style={{ display: 'grid', gap: '10px' }}>
-                  {readinessItems.map((item) => (
-                    <div key={item.label} style={{ borderRadius: '14px', background: 'white', border: '1px solid #e2e8f0', padding: '14px 16px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '999px', background: item.ready ? '#16a34a' : '#f59e0b', marginTop: '6px', flexShrink: 0 }} />
-                      <div>
-                        <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>{item.label}</div>
-                        <div style={{ color: item.ready ? '#166534' : '#92400e', fontSize: '0.8rem', fontWeight: 600 }}>{item.hint}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ borderRadius: '14px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px 16px' }}>
-                  <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>คำแนะนำถัดไป</div>
-                  <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.7 }}>ถ้าคอร์สพร้อมแล้ว แนะนำให้ตรวจบทเรียน หน้าเว็บจริง และ preview video เพื่อให้ flow ของผู้ใช้สมบูรณ์ก่อนโปรโมต</div>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    style={{
+                      padding: '13px 18px',
+                      background: '#2563eb',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '0.96rem',
+                      fontWeight: 700,
+                      cursor: saving ? 'not-allowed' : 'pointer',
+                      opacity: saving ? 0.7 : 1,
+                    }}
+                  >
+                    {saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
+                  </button>
+                  <Link
+                    href="/admin/courses"
+                    style={{
+                      padding: '12px 18px',
+                      background: '#f1f5f9',
+                      color: '#475569',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      fontSize: '0.94rem',
+                      textDecoration: 'none',
+                      textAlign: 'center',
+                      fontWeight: 600,
+                    }}
+                  >
+                    ยกเลิก
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    style={{
+                      padding: '12px 18px',
+                      background: '#fef2f2',
+                      color: '#dc2626',
+                      border: '1px solid #fecaca',
+                      borderRadius: '12px',
+                      fontSize: '0.94rem',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                    }}
+                  >
+                    ลบคอร์ส
+                  </button>
                 </div>
               </section>
-
-              <div style={{ display: 'grid', gap: '10px' }}>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  style={{
-                    padding: '13px 18px',
-                    background: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontSize: '0.96rem',
-                    fontWeight: 700,
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    opacity: saving ? 0.7 : 1,
-                  }}
-                >
-                  {saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
-                </button>
-                <Link
-                  href="/admin/courses"
-                  style={{
-                    padding: '12px 18px',
-                    background: '#f1f5f9',
-                    color: '#475569',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '12px',
-                    fontSize: '0.94rem',
-                    textDecoration: 'none',
-                    textAlign: 'center',
-                    fontWeight: 600,
-                  }}
-                >
-                  ยกเลิก
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  style={{
-                    padding: '12px 18px',
-                    background: '#fef2f2',
-                    color: '#dc2626',
-                    border: '1px solid #fecaca',
-                    borderRadius: '12px',
-                    fontSize: '0.94rem',
-                    cursor: 'pointer',
-                    fontWeight: 700,
-                  }}
-                >
-                  ลบคอร์ส
-                </button>
-              </div>
             </div>
           </aside>
         </div>
@@ -697,3 +654,11 @@ export default function EditCoursePage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+

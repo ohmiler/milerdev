@@ -123,7 +123,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
 
     return (
         <>
-            <div style={{
+            <div className="admin-catalog-panel" style={{
                 background: 'white',
                 borderRadius: '22px',
                 border: '1px solid #dbe5f4',
@@ -131,7 +131,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                 overflow: 'hidden',
                 marginBottom: '18px',
             }}>
-                <div style={{ padding: '18px 20px 16px', borderBottom: '1px solid #e6eefb', background: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)' }}>
+                <div className="admin-catalog-header" style={{ padding: '18px 20px 16px', borderBottom: '1px solid #e6eefb', background: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                         <div>
                             <div style={{ color: '#334155', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>Course Catalog</div>
@@ -165,7 +165,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                 </div>
 
                 <div style={{ padding: '18px 20px 20px', display: 'grid', gap: '16px' }}>
-                    <div style={{
+                    <div className="admin-catalog-toolbar" style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
                         gap: '12px',
@@ -204,7 +204,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                             />
                         </div>
 
-                        <div style={{
+                        <div className="admin-catalog-status-tabs" style={{
                             display: 'flex',
                             gap: '4px',
                             background: '#f8fbff',
@@ -236,7 +236,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                         </div>
                     </div>
 
-                    <div style={{
+                    <div className="admin-catalog-health-grid" style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
                         gap: '10px',
@@ -244,7 +244,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                         fontSize: '0.8rem',
                     }}>
                         {catalogHealthCards.map((item) => (
-                            <div key={item.label} style={{ padding: '12px 14px', borderRadius: '14px', background: item.background, border: `1px solid ${item.border}` }}>
+                            <div className="admin-catalog-health-card" key={item.label} style={{ padding: '12px 14px', borderRadius: '14px', background: item.background, border: `1px solid ${item.border}` }}>
                                 <div style={{ color: item.labelColor, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>{item.label}</div>
                                 <div style={{ color: item.valueColor, fontSize: '1.2rem', fontWeight: 800, lineHeight: 1.1 }}>{item.value}</div>
                                 <div style={{ color: item.detailColor, fontSize: '0.74rem', marginTop: '4px' }}>{item.detail}</div>
@@ -255,19 +255,19 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
             </div>
 
             {/* Table */}
-            <div style={{
+            <div className="admin-catalog-table-panel" style={{
                 background: 'white',
                 borderRadius: '22px',
                 border: '1px solid #dbe5f4',
                 boxShadow: '0 14px 32px rgba(15, 23, 42, 0.04)',
                 overflow: 'hidden',
             }}>
-                <div style={{ padding: '16px 18px', borderBottom: '1px solid #e6eefb', background: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)' }}>
+                <div className="admin-catalog-table-header" style={{ padding: '16px 18px', borderBottom: '1px solid #e6eefb', background: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)' }}>
                     <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>Operational View</div>
                     <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>สแกนสถานะ ราคา ความพร้อมของบทเรียน และ next action ต่อคอร์สได้จากตารางเดียว</div>
                 </div>
                 <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse' }}>
+                <table className="admin-catalog-table" style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr style={{ background: '#fbfdff', borderBottom: '1px solid #e6eefb' }}>
                             <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
@@ -342,7 +342,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                             ].filter(Boolean);
 
                             return (
-                            <tr key={course.id} style={{ borderBottom: '1px solid #e6eefb', background: needsAttention ? 'linear-gradient(90deg, rgba(239,246,255,0.68), rgba(255,255,255,0))' : 'white' }}>
+                            <tr className="admin-catalog-row" key={course.id} style={{ borderBottom: '1px solid #e6eefb', background: needsAttention ? 'linear-gradient(90deg, rgba(239,246,255,0.68), rgba(255,255,255,0))' : 'white' }}>
                                 <td style={{ padding: '16px' }}>
                                     <div className="admin-course-main-cell" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div className="admin-course-thumb" style={{
@@ -447,9 +447,10 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                     </div>
                                 </td>
                                 <td style={{ padding: '16px', textAlign: 'right' }}>
-                                    <div style={{ display: 'grid', gap: '8px', justifyItems: 'end' }}>
+                                    <div className="admin-course-actions" style={{ display: 'grid', gap: '8px', justifyItems: 'end' }}>
                                         <Link
                                             href={primaryAction.href}
+                                            className="admin-course-primary-action"
                                             style={{
                                                 padding: '8px 12px',
                                                 background: primaryAction.background,
@@ -466,6 +467,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                                             <Link
                                                 href={`/admin/courses/${course.id}/edit`}
+                                                className="admin-course-secondary-action"
                                                 style={{
                                                     padding: '7px 11px',
                                                     background: '#fbfdff',
@@ -481,6 +483,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                             </Link>
                                             <Link
                                                 href={`/admin/courses/${course.id}/lessons`}
+                                                className="admin-course-secondary-action"
                                                 style={{
                                                     padding: '7px 11px',
                                                     background: '#fbfdff',
@@ -497,6 +500,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                                             <Link
                                                 href={`/courses/${course.slug}`}
                                                 target="_blank"
+                                                className="admin-course-secondary-action"
                                                 style={{
                                                     padding: '7px 11px',
                                                     background: '#ffffff',
@@ -521,7 +525,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
 
                 {/* Pagination */}
                 {filtered.length > 0 && (
-                    <div style={{
+                    <div className="admin-catalog-pagination" style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
@@ -698,7 +702,69 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
             </div>
 
             <style jsx>{`
+                .admin-catalog-panel,
+                .admin-catalog-table-panel {
+                    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98)) !important;
+                    border: 1px solid rgba(203, 213, 225, 0.86) !important;
+                    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255,255,255,0.82) !important;
+                }
+
+                .admin-catalog-header,
+                .admin-catalog-table-header {
+                    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.88)) !important;
+                    border-bottom: 1px solid rgba(226, 232, 240, 0.92) !important;
+                }
+
+                .admin-catalog-status-tabs {
+                    background: #ffffff !important;
+                    border-color: rgba(219, 234, 254, 0.92) !important;
+                }
+
+                .admin-catalog-health-card {
+                    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+                }
+
+                .admin-catalog-table thead tr {
+                    background: linear-gradient(180deg, #f8fafc, #ffffff) !important;
+                }
+
+                .admin-catalog-row {
+                    transition: background-color 180ms ease, transform 180ms ease;
+                }
+
+                .admin-catalog-row:hover {
+                    background: linear-gradient(90deg, rgba(248, 250, 252, 0.98), rgba(255,255,255,0.98)) !important;
+                }
+
+                .admin-course-thumb {
+                    box-shadow: 0 12px 20px rgba(15, 23, 42, 0.08);
+                }
+
+                .admin-course-title {
+                    letter-spacing: -0.01em;
+                }
+
+                .admin-course-primary-action,
+                .admin-course-secondary-action {
+                    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+                }
+
+                .admin-course-primary-action:hover,
+                .admin-course-secondary-action:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.08);
+                }
+
+                .admin-catalog-pagination {
+                    border-top: 1px solid rgba(226, 232, 240, 0.92) !important;
+                    background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(248,250,252,0.92));
+                }
+
                 @media (max-width: 760px) {
+                    .admin-catalog-toolbar {
+                        grid-template-columns: 1fr !important;
+                    }
+
                     .admin-course-main-cell {
                         gap: 10px !important;
                     }
@@ -724,6 +790,10 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                 }
 
                 @media (max-width: 640px) {
+                    .admin-catalog-health-grid {
+                        grid-template-columns: 1fr !important;
+                    }
+
                     .admin-course-main-cell {
                         gap: 8px !important;
                     }

@@ -32,10 +32,10 @@ const MenuButton = ({
     title={title}
     style={{
       padding: '6px 10px',
-      background: active ? '#3b82f6' : '#f1f5f9',
+      background: active ? 'linear-gradient(180deg, #2563eb, #1d4ed8)' : '#ffffff',
       color: active ? 'white' : '#475569',
-      border: '1px solid ' + (active ? '#3b82f6' : '#e2e8f0'),
-      borderRadius: '6px',
+      border: '1px solid ' + (active ? '#2563eb' : '#dbe5f4'),
+      borderRadius: '8px',
       cursor: 'pointer',
       fontSize: '0.8rem',
       fontWeight: 500,
@@ -209,19 +209,20 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
 
   return (
     <div style={{
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
+      border: '1px solid #dbe5f4',
+      borderRadius: '14px',
       overflow: 'hidden',
-      background: 'white',
+      background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.84)',
     }}>
       {/* Toolbar */}
       <div style={{
         display: 'flex',
         flexWrap: 'wrap',
         gap: '4px',
-        padding: '8px 12px',
+        padding: '10px 12px',
         borderBottom: '1px solid #e2e8f0',
-        background: '#f8fafc',
+        background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
       }}>
         <MenuButton
           onClick={() => editor.chain().focus().toggleBold().run()}
