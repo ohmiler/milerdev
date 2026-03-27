@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
-import { requireAdmin } from '@/lib/auth-helpers';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { affiliateBanners } from '@/lib/db/schema';
@@ -61,3 +59,4 @@ export async function DELETE(_request: Request, { params }: Props) {
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
+

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { logError } from '@/lib/error-handler';
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
@@ -246,3 +245,4 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true });
 }
+

@@ -12,7 +12,6 @@ export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
@@ -117,7 +116,6 @@ export async function POST(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const body = await request.json();
     const { userId, courseId } = body;
@@ -164,3 +162,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

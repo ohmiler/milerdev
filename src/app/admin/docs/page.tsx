@@ -102,6 +102,9 @@ export default function AdminDocsPage() {
         }
     };
 
+    const getErrorMessage = (error: unknown) =>
+        error instanceof Error ? error.message : 'เกิดข้อผิดพลาด';
+
     const handleGroupSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setGroupSaving(true);
@@ -118,8 +121,8 @@ export default function AdminDocsPage() {
             if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
             setGroupModalOpen(false);
             load();
-        } catch (err: any) {
-            setGroupError(err.message);
+        } catch (err: unknown) {
+            setGroupError(getErrorMessage(err));
         } finally {
             setGroupSaving(false);
         }

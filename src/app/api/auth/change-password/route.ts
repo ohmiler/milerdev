@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -109,3 +108,4 @@ export async function POST(request: Request) {
         );
     }
 }
+

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { createId } from "@paralleldrive/cuid2";
 import { uploadToBunny } from "@/lib/bunny-storage";
@@ -83,3 +82,4 @@ export async function POST(request: Request) {
         );
     }
 }
+

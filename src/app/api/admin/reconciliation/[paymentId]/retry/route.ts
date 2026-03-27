@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
 import { and, eq } from 'drizzle-orm';
-import { requireAdmin } from '@/lib/auth-helpers';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { payments, enrollments, courses, bundles, bundleCourses, users } from '@/lib/db/schema';
@@ -280,3 +278,4 @@ async function approveBundlePayment(
         enrolled,
     });
 }
+

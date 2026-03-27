@@ -10,7 +10,6 @@ export async function POST(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -230,3 +229,4 @@ function parseCSVLine(line: string): string[] {
   result.push(current.trim());
   return result;
 }
+

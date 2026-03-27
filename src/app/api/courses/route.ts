@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { courses, users, lessons, courseTags, tags } from "@/lib/db/schema";
@@ -235,3 +234,4 @@ export async function POST(request: Request) {
         );
     }
 }
+

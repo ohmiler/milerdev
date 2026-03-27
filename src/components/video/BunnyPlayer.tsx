@@ -26,8 +26,8 @@ export default function BunnyPlayer({
   onEnded,
 }: BunnyPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [showDebugOverlay, setShowDebugOverlay] = useState(false);
+  const [loadedUrl, setLoadedUrl] = useState('');
+  const [debugUrl, setDebugUrl] = useState('');
 
   // Listen for postMessage events from Bunny.net iframe player
   const handleMessage = useCallback((event: MessageEvent) => {
@@ -137,18 +137,15 @@ export default function BunnyPlayer({
   }, [handleMessage]);
 
   const finalUrl = embedUrl;
-
-  useEffect(() => {
-    setIframeLoaded(false);
-    setShowDebugOverlay(false);
-  }, [finalUrl]);
+  const iframeLoaded = loadedUrl === finalUrl;
+  const showDebugOverlay = debugUrl === finalUrl && !iframeLoaded;
 
   useEffect(() => {
     if (!finalUrl) return;
 
     const timer = window.setTimeout(() => {
       if (!iframeLoaded) {
-        setShowDebugOverlay(true);
+        setDebugUrl(finalUrl);
       }
     }, 8000);
 
@@ -191,10 +188,11 @@ export default function BunnyPlayer({
       }}
     >
       <iframe
+        key={finalUrl}
         ref={iframeRef}
         src={finalUrl}
         loading="lazy"
-        onLoad={() => setIframeLoaded(true)}
+        onLoad={() => setLoadedUrl(finalUrl)}
         style={{
           position: 'absolute',
           top: 0,

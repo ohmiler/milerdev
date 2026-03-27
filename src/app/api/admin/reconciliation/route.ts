@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
 import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
-import { requireAdmin } from '@/lib/auth-helpers';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { payments, users, courses, bundles } from '@/lib/db/schema';
@@ -128,3 +126,4 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
+

@@ -30,7 +30,6 @@ export async function GET() {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     // Get all settings from DB
     const settingsList = await db.select().from(settings);
@@ -81,7 +80,6 @@ export async function PUT(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const body = await request.json();
     const { key, value } = body;
@@ -157,3 +155,4 @@ export async function PUT(request: Request) {
     );
   }
 }
+

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments } from '@/lib/db/schema';
@@ -44,3 +43,4 @@ export async function GET(request: Request) {
     );
   }
 }
+

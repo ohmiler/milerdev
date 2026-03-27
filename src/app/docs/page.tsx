@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { docs, docGroups } from '@/lib/db/schema';
-import { eq, asc, and } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -101,3 +101,4 @@ export default async function DocsIndexPage() {
         </>
     );
 }
+

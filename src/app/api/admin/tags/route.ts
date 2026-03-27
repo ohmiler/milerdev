@@ -12,7 +12,6 @@ export async function GET() {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     // Get tags with course count
     const tagList = await db
@@ -41,7 +40,6 @@ export async function POST(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const body = await request.json();
     const { name } = body;
@@ -91,3 +89,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

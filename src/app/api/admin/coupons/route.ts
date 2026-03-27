@@ -12,7 +12,6 @@ export async function GET() {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const allCoupons = await db
       .select({
@@ -49,7 +48,6 @@ export async function POST(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const body = await request.json();
     const {
@@ -93,3 +91,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
+

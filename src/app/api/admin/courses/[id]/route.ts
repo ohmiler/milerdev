@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
-import { requireAdmin } from '@/lib/auth-helpers';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { courses, courseTags, tags } from '@/lib/db/schema';
@@ -173,3 +171,4 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     );
   }
 }
+

@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 const NOTIFICATION_STREAM_RATE_LIMIT = { maxRequests: 10, windowMs: 60 * 1000 };
 
 // GET /api/notifications/stream - SSE endpoint for real-time notifications
-export async function GET(request: Request) {
+export async function GET() {
     const session = await auth();
     if (!session?.user?.id) {
         return new Response('Unauthorized', { status: 401 });
@@ -105,3 +105,4 @@ export async function GET(request: Request) {
         },
     });
 }
+

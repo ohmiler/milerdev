@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -52,3 +51,4 @@ export async function GET() {
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
+

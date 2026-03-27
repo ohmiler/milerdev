@@ -42,6 +42,9 @@ export default function NewDocPage() {
     const generateSlug = (title: string) =>
         title.toLowerCase().replace(/[^a-z0-9\s-]+/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 200);
 
+    const getErrorMessage = (error: unknown) =>
+        error instanceof Error ? error.message : 'เกิดข้อผิดพลาด';
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -55,8 +58,8 @@ export default function NewDocPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
             router.push(`/admin/docs/${data.id}/edit`);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(getErrorMessage(err));
             setLoading(false);
         }
     };

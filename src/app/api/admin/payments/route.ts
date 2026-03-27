@@ -10,7 +10,6 @@ export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -120,3 +119,4 @@ export async function GET(request: Request) {
     );
   }
 }
+

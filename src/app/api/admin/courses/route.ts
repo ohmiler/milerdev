@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { courses, courseTags } from '@/lib/db/schema';
@@ -13,7 +12,6 @@ export async function GET() {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const allCourses = await db
       .select({ id: courses.id, title: courses.title, slug: courses.slug, status: courses.status, price: courses.price })
@@ -32,7 +30,6 @@ export async function POST(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const body = await request.json();
     const validation = validateBody(createCourseSchema, body);
@@ -99,3 +96,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

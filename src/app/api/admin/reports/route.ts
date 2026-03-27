@@ -10,7 +10,6 @@ export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const periodRaw = parseInt(searchParams.get('period') || '12', 10);
@@ -211,3 +210,4 @@ export async function GET(request: Request) {
     );
   }
 }
+

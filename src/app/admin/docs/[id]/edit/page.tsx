@@ -20,8 +20,6 @@ export default function EditDocPage({ params }: { params: Promise<{ id: string }
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const [slugManuallyEdited] = useState(true);
-
     const [form, setForm] = useState({
         title: '',
         slug: '',
@@ -52,6 +50,9 @@ export default function EditDocPage({ params }: { params: Promise<{ id: string }
             .finally(() => setLoading(false));
     }, [id]);
 
+    const getErrorMessage = (error: unknown) =>
+        error instanceof Error ? error.message : 'เกิดข้อผิดพลาด';
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -65,8 +66,8 @@ export default function EditDocPage({ params }: { params: Promise<{ id: string }
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
             router.push('/admin/docs');
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(getErrorMessage(err));
             setSaving(false);
         }
     };

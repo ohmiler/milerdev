@@ -11,7 +11,6 @@ export async function GET(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
@@ -62,7 +61,6 @@ export async function POST(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
     const { userId, courseId } = await request.json();
 
@@ -82,3 +80,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
+
