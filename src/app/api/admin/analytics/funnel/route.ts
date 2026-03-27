@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { logError } from '@/lib/error-handler';
-import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { analyticsEvents, bundles, courses } from '@/lib/db/schema';
-import { isAnalyticsEnabled, parseAnalyticsMetadata } from '@/lib/analytics';
+import { isAnalyticsEnabled } from '@/lib/analytics';
 
 function toPercent(numerator: number, denominator: number): number {
   if (denominator <= 0) return 0;
@@ -73,6 +73,8 @@ interface AnalyticsFunnelCacheEntry {
 
 const ANALYTICS_FUNNEL_CACHE_TTL_MS = 120_000;
 const analyticsFunnelCache = new Map<number, AnalyticsFunnelCacheEntry>();
+const FUNNEL_EVENT_NAMES = ['course_view', 'checkout_start', 'payment_success', 'lesson_completed'] as const;
+const FUNNEL_COMMERCE_EVENT_NAMES = ['course_view', 'checkout_start', 'payment_success'] as const;
 
 function buildEmptyAnalyticsResponse(periodMonths: number): AnalyticsFunnelPayload {
   return {
@@ -149,8 +151,25 @@ export async function GET(request: Request) {
 
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - periodMonths);
+    const checkoutMethodSql = sql<string>`COALESCE(
+      NULLIF(
+        TRIM(
+          JSON_UNQUOTE(
+            JSON_EXTRACT(
+              CASE
+                WHEN JSON_VALID(${analyticsEvents.metadata}) THEN ${analyticsEvents.metadata}
+                ELSE NULL
+              END,
+              '$.paymentMethod'
+            )
+          )
+        ),
+        ''
+      ),
+      'unknown'
+    )`;
 
-    const [[totalsRow], timeline, topCoursesRaw, topBundlesRaw, checkoutMetadataRows] = await Promise.all([
+    const [[totalsRow], timeline, topCoursesRaw, topBundlesRaw, checkoutMethodsRaw] = await Promise.all([
       db
         .select({
           courseView: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`,
@@ -163,7 +182,10 @@ export async function GET(request: Request) {
           uniqueLessonCompleted: sql<number>`COUNT(DISTINCT CASE WHEN ${analyticsEvents.eventName} = 'lesson_completed' THEN COALESCE(${analyticsEvents.userId}, ${analyticsEvents.ipAddress}) END)`,
         })
         .from(analyticsEvents)
-        .where(gte(analyticsEvents.createdAt, startDate)),
+        .where(and(
+          gte(analyticsEvents.createdAt, startDate),
+          inArray(analyticsEvents.eventName, FUNNEL_EVENT_NAMES)
+        )),
       db
         .select({
           date: sql<string>`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`,
@@ -173,7 +195,10 @@ export async function GET(request: Request) {
           lessonCompleted: sql<number>`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'lesson_completed' THEN 1 ELSE 0 END), 0)`,
         })
         .from(analyticsEvents)
-        .where(gte(analyticsEvents.createdAt, startDate))
+        .where(and(
+          gte(analyticsEvents.createdAt, startDate),
+          inArray(analyticsEvents.eventName, FUNNEL_EVENT_NAMES)
+        ))
         .groupBy(sql`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`)
         .orderBy(sql`DATE_FORMAT(${analyticsEvents.createdAt}, '%Y-%m-%d')`),
       db
@@ -186,7 +211,11 @@ export async function GET(request: Request) {
         })
         .from(analyticsEvents)
         .leftJoin(courses, eq(analyticsEvents.courseId, courses.id))
-        .where(and(gte(analyticsEvents.createdAt, startDate), isNotNull(analyticsEvents.courseId)))
+        .where(and(
+          gte(analyticsEvents.createdAt, startDate),
+          isNotNull(analyticsEvents.courseId),
+          inArray(analyticsEvents.eventName, FUNNEL_COMMERCE_EVENT_NAMES)
+        ))
         .groupBy(analyticsEvents.courseId, courses.title)
         .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`))
         .limit(10),
@@ -200,35 +229,33 @@ export async function GET(request: Request) {
         })
         .from(analyticsEvents)
         .leftJoin(bundles, eq(analyticsEvents.bundleId, bundles.id))
-        .where(and(gte(analyticsEvents.createdAt, startDate), isNotNull(analyticsEvents.bundleId)))
+        .where(and(
+          gte(analyticsEvents.createdAt, startDate),
+          isNotNull(analyticsEvents.bundleId),
+          inArray(analyticsEvents.eventName, FUNNEL_COMMERCE_EVENT_NAMES)
+        ))
         .groupBy(analyticsEvents.bundleId, bundles.title)
         .orderBy(desc(sql`COALESCE(SUM(CASE WHEN ${analyticsEvents.eventName} = 'course_view' THEN 1 ELSE 0 END), 0)`))
         .limit(10),
       db
-        .select({ metadata: analyticsEvents.metadata })
+        .select({
+          method: checkoutMethodSql.as('method'),
+          count: sql<number>`COUNT(*)`,
+        })
         .from(analyticsEvents)
         .where(
           and(
             gte(analyticsEvents.createdAt, startDate),
             eq(analyticsEvents.eventName, 'checkout_start')
           )
-        ),
+        )
+        .groupBy(checkoutMethodSql)
+        .orderBy(desc(sql<number>`COUNT(*)`)),
     ]);
-
-    const checkoutMethodMap = new Map<string, number>();
-    for (const row of checkoutMetadataRows) {
-      const metadata = parseAnalyticsMetadata(row.metadata);
-      const paymentMethod =
-        typeof metadata?.paymentMethod === 'string' && metadata.paymentMethod.trim()
-          ? metadata.paymentMethod.trim()
-          : 'unknown';
-
-      checkoutMethodMap.set(paymentMethod, (checkoutMethodMap.get(paymentMethod) || 0) + 1);
-    }
-
-    const checkoutMethods = [...checkoutMethodMap.entries()]
-      .map(([method, count]) => ({ method, count }))
-      .sort((a, b) => b.count - a.count);
+    const checkoutMethods = checkoutMethodsRaw.map((row) => ({
+      method: row.method || 'unknown',
+      count: toInt(row.count),
+    }));
 
     const totals = {
       courseView: toInt(totalsRow?.courseView),
