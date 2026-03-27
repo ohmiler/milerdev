@@ -1,6 +1,14 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { useState, useEffect, useRef } from 'react';
+import {
+  AdminButton,
+  AdminPageHero,
+  AdminPill,
+  AdminSectionHeading,
+  AdminSurfaceCard,
+} from '@/components/admin/ui/AdminPrimitives';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 
@@ -291,6 +299,73 @@ export default function AdminUsersPage() {
       setProcessingBulk(false);
     }
   };
+
+  const useRedesignedWorkspace = true as boolean;
+  if (useRedesignedWorkspace) {
+    if (loading && users.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          กำลังโหลด...
+        </div>
+      );
+    }
+
+    return (
+      <AdminUsersWorkspace
+        users={users}
+        stats={stats}
+        pagination={pagination}
+        search={search}
+        roleFilter={roleFilter}
+        sortBy={sortBy}
+        selectedUsers={selectedUsers}
+        bulkAction={bulkAction}
+        bulkRole={bulkRole}
+        processingBulk={processingBulk}
+        importing={importing}
+        importResult={importResult}
+        editingUser={editingUser}
+        editForm={editForm}
+        updating={updating}
+        passwordResetUser={passwordResetUser}
+        newPassword={newPassword}
+        showPassword={showPassword}
+        resettingPassword={resettingPassword}
+        deleteConfirm={deleteConfirm}
+        bulkDeleteConfirm={bulkDeleteConfirm}
+        getRoleStyle={getRoleStyle}
+        getRoleText={getRoleText}
+        onSearchChange={(value) => { setSearch(value); setCurrentPage(1); }}
+        onRoleFilterChange={(value) => { setRoleFilter(value); setCurrentPage(1); }}
+        onSortByChange={setSortBy}
+        onToggleSelectAll={toggleSelectAll}
+        onToggleSelectUser={toggleSelectUser}
+        onBulkActionChange={setBulkAction}
+        onBulkRoleChange={setBulkRole}
+        onHandleBulkAction={handleBulkAction}
+        onOpenImport={() => fileInputRef.current?.click()}
+        onExport={handleExport}
+        onClearImportResult={() => setImportResult(null)}
+        onHandleEdit={handleEdit}
+        onOpenPasswordReset={(user) => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}
+        onDeleteRequest={setDeleteConfirm}
+        onPrevPage={() => setCurrentPage((p) => Math.max(1, p - 1))}
+        onNextPage={() => setCurrentPage((p) => Math.min(pagination?.totalPages || 1, p + 1))}
+        onCloseEdit={() => setEditingUser(null)}
+        onEditFormChange={setEditForm}
+        onSave={handleSave}
+        onPasswordChange={setNewPassword}
+        onToggleShowPassword={() => setShowPassword((prev) => !prev)}
+        onClosePasswordReset={() => { setPasswordResetUser(null); setNewPassword(''); setShowPassword(false); }}
+        onResetPassword={handleResetPassword}
+        onConfirmDelete={confirmDeleteUser}
+        onCancelDelete={() => setDeleteConfirm(null)}
+        onConfirmBulkDelete={executeBulkAction}
+        onCancelBulkDelete={() => setBulkDeleteConfirm(false)}
+        onImport={handleImport}
+      />
+    );
+  }
 
   if (loading && users.length === 0) {
     return (
@@ -986,3 +1061,522 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
+interface AdminUsersWorkspaceProps {
+  users: User[];
+  stats: Stats | null;
+  pagination: Pagination | null;
+  search: string;
+  roleFilter: string;
+  sortBy: string;
+  selectedUsers: string[];
+  bulkAction: string;
+  bulkRole: string;
+  processingBulk: boolean;
+  importing: boolean;
+  importResult: { success?: number; skipped?: number; failed?: number; errors?: string[] } | null;
+  editingUser: User | null;
+  editForm: { name: string; role: string };
+  updating: string | null;
+  passwordResetUser: User | null;
+  newPassword: string;
+  showPassword: boolean;
+  resettingPassword: boolean;
+  deleteConfirm: string | null;
+  bulkDeleteConfirm: boolean;
+  getRoleStyle: (role: string) => { background: string; color: string };
+  getRoleText: (role: string) => string;
+  onSearchChange: (value: string) => void;
+  onRoleFilterChange: (value: string) => void;
+  onSortByChange: (value: string) => void;
+  onToggleSelectAll: () => void;
+  onToggleSelectUser: (userId: string) => void;
+  onBulkActionChange: (value: string) => void;
+  onBulkRoleChange: (value: string) => void;
+  onHandleBulkAction: () => void;
+  onOpenImport: () => void;
+  onExport: () => void;
+  onClearImportResult: () => void;
+  onHandleEdit: (user: User) => void;
+  onOpenPasswordReset: (user: User) => void;
+  onDeleteRequest: (userId: string) => void;
+  onPrevPage: () => void;
+  onNextPage: () => void;
+  onCloseEdit: () => void;
+  onEditFormChange: (value: { name: string; role: string }) => void;
+  onSave: () => void;
+  onPasswordChange: (value: string) => void;
+  onToggleShowPassword: () => void;
+  onClosePasswordReset: () => void;
+  onResetPassword: () => void;
+  onConfirmDelete: () => void;
+  onCancelDelete: () => void;
+  onConfirmBulkDelete: () => void;
+  onCancelBulkDelete: () => void;
+  onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function AdminUsersWorkspace({
+  users,
+  stats,
+  pagination,
+  search,
+  roleFilter,
+  sortBy,
+  selectedUsers,
+  bulkAction,
+  bulkRole,
+  processingBulk,
+  importing,
+  importResult,
+  editingUser,
+  editForm,
+  updating,
+  passwordResetUser,
+  newPassword,
+  showPassword,
+  resettingPassword,
+  deleteConfirm,
+  bulkDeleteConfirm,
+  getRoleStyle,
+  getRoleText,
+  onSearchChange,
+  onRoleFilterChange,
+  onSortByChange,
+  onToggleSelectAll,
+  onToggleSelectUser,
+  onBulkActionChange,
+  onBulkRoleChange,
+  onHandleBulkAction,
+  onOpenImport,
+  onExport,
+  onClearImportResult,
+  onHandleEdit,
+  onOpenPasswordReset,
+  onDeleteRequest,
+  onPrevPage,
+  onNextPage,
+  onCloseEdit,
+  onEditFormChange,
+  onSave,
+  onPasswordChange,
+  onToggleShowPassword,
+  onClosePasswordReset,
+  onResetPassword,
+  onConfirmDelete,
+  onCancelDelete,
+  onConfirmBulkDelete,
+  onCancelBulkDelete,
+  onImport,
+}: AdminUsersWorkspaceProps) {
+  const formatDate = (dateString: string) =>
+    dateString
+      ? new Date(dateString).toLocaleDateString('th-TH', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })
+      : '-';
+
+  return (
+    <div style={{ display: 'grid', gap: '24px' }}>
+      <AdminPageHero
+        eyebrow="User Directory"
+        title="ดูแลบัญชีผู้ใช้ สิทธิ์ และการดำเนินการแบบกลุ่ม"
+        description="รวมการค้นหา กรอง แก้ไขบทบาท นำเข้า-ส่งออก CSV และจัดการบัญชีสำคัญไว้ใน workspace เดียว เพื่อให้ทีมดูแลฐานผู้ใช้ได้เร็วขึ้นและสม่ำเสมอขึ้น"
+        actions={
+          <>
+            <AdminButton tone="default" onClick={onOpenImport} disabled={importing}>
+              {importing ? 'กำลังนำเข้า...' : 'นำเข้า CSV'}
+            </AdminButton>
+            <AdminButton tone="dark" onClick={onExport}>
+              ส่งออก CSV
+            </AdminButton>
+            <AdminPill tone={selectedUsers.length > 0 ? 'warning' : 'default'}>
+              เลือกแล้ว {selectedUsers.length} รายการ
+            </AdminPill>
+          </>
+        }
+        meta="ออกแบบให้รองรับงานที่ทำซ้ำบ่อย เช่นค้นหาบัญชี, เปลี่ยน role แบบกลุ่ม, reset password และดูสถานะฐานผู้ใช้จากหน้าเดียว"
+      />
+
+      {stats && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px' }}>
+          {[
+            ['บัญชีทั้งหมด', stats.total, '#2563eb', 'ผู้ใช้ที่มีอยู่ในระบบ'],
+            ['Admin', stats.admins, '#dc2626', 'สิทธิ์ระดับดูแลระบบ'],
+            ['Instructors', stats.instructors, '#b45309', 'ผู้สอนที่ดูแลคอร์ส'],
+            ['Students', stats.students, '#15803d', 'ผู้เรียนที่ใช้งานอยู่'],
+          ].map(([label, value, color, note]) => (
+            <AdminSurfaceCard key={String(label)} style={{ padding: '20px 22px' }}>
+              <div style={summaryLabelStyle}>{label}</div>
+              <div style={{ color: String(color), fontSize: '1.65rem', fontWeight: 800, lineHeight: 1.1, marginBottom: '6px' }}>{value}</div>
+              <div style={{ color: '#94a3b8', fontSize: '0.78rem', lineHeight: 1.6 }}>{note}</div>
+            </AdminSurfaceCard>
+          ))}
+        </div>
+      )}
+
+      <AdminSurfaceCard>
+        <AdminSectionHeading
+          title="Member Operations"
+          description="ค้นหา กรอง และจัดการบัญชีจากรายการเดียว พร้อมทางลัดสำหรับ bulk actions, import/export และงานดูแลบัญชีสำคัญ"
+        />
+
+        <div style={{ display: 'grid', gap: '14px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: '1 1 260px', minWidth: '220px' }}>
+              <svg
+                style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: '#94a3b8' }}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text" placeholder="ค้นหาจากชื่อหรืออีเมล" value={search} onChange={(e) => onSearchChange(e.target.value)} style={filterInputStyle} />
+            </div>
+            <select value={roleFilter} onChange={(e) => onRoleFilterChange(e.target.value)} style={filterSelectStyle}>
+              <option value="all">ทุก role</option>
+              <option value="admin">Admin</option>
+              <option value="instructor">ผู้สอน</option>
+              <option value="student">นักเรียน</option>
+            </select>
+            <select value={sortBy} onChange={(e) => onSortByChange(e.target.value)} style={filterSelectStyle}>
+              <option value="createdAt">เรียงตามวันที่</option>
+              <option value="name">เรียงตามชื่อ</option>
+              <option value="email">เรียงตามอีเมล</option>
+              <option value="enrollmentCount">เรียงตามคอร์สที่ลง</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '18px', background: '#f8fbff', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <AdminPill tone="default">ทั้งหมด {pagination?.total ?? users.length} บัญชี</AdminPill>
+              <AdminPill tone="success">นักเรียน {stats?.students ?? 0}</AdminPill>
+              <AdminPill tone="warning">ผู้สอน {stats?.instructors ?? 0}</AdminPill>
+            </div>
+            {selectedUsers.length > 0 ? (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', color: '#64748b' }}>เลือก {selectedUsers.length} รายการ</span>
+                <select value={bulkAction} onChange={(e) => onBulkActionChange(e.target.value)} style={bulkSelectStyle}>
+                  <option value="">เลือกการดำเนินการ</option>
+                  <option value="updateRole">เปลี่ยน role</option>
+                  <option value="delete">ลบ</option>
+                </select>
+                {bulkAction === 'updateRole' && (
+                  <select value={bulkRole} onChange={(e) => onBulkRoleChange(e.target.value)} style={bulkSelectStyle}>
+                    <option value="student">นักเรียน</option>
+                    <option value="instructor">ผู้สอน</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                )}
+                <button onClick={onHandleBulkAction} disabled={processingBulk || !bulkAction} style={{ padding: '10px 16px', background: bulkAction === 'delete' ? '#dc2626' : '#2563eb', color: 'white', border: 'none', borderRadius: '12px', cursor: processingBulk || !bulkAction ? 'not-allowed' : 'pointer', opacity: processingBulk || !bulkAction ? 0.7 : 1, fontSize: '0.875rem', fontWeight: 700 }}>
+                  {processingBulk ? 'กำลังดำเนินการ...' : 'ดำเนินการ'}
+                </button>
+              </div>
+            ) : (
+              <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>เลือกผู้ใช้จากตารางเพื่อใช้ bulk actions</div>
+            )}
+          </div>
+        </div>
+        {importResult && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '16px', padding: '16px', marginBottom: '20px' }}>
+            <div style={{ fontWeight: 700, color: '#16a34a', marginBottom: '8px' }}>Import result</div>
+            <div style={{ fontSize: '0.875rem', color: '#166534' }}>
+              Success: {importResult.success} | Skipped: {importResult.skipped} | Failed: {importResult.failed}
+            </div>
+            {(importResult.errors?.length ?? 0) > 0 && (
+              <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#dc2626' }}>
+                {importResult.errors?.slice(0, 5).map((err: string, i: number) => (
+                  <div key={i}>{err}</div>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={onClearImportResult}
+              style={{ marginTop: '8px', padding: '4px 12px', background: 'transparent', color: '#16a34a', border: '1px solid #16a34a', borderRadius: '999px', cursor: 'pointer', fontSize: '0.75rem' }}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '18px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '820px', background: 'white' }}>
+            <thead>
+              <tr style={{ background: '#f8fbff', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ ...headerCellStyle, textAlign: 'center', width: '52px' }}>
+                  <input type="checkbox" checked={selectedUsers.length === users.length && users.length > 0} onChange={onToggleSelectAll} style={{ cursor: 'pointer' }} />
+                </th>
+                <th style={headerCellStyle}>User</th>
+                <th style={{ ...headerCellStyle, textAlign: 'center' }}>Role</th>
+                <th style={{ ...headerCellStyle, textAlign: 'center' }}>Enrollments</th>
+                <th style={{ ...headerCellStyle, textAlign: 'center' }}>Joined</th>
+                <th style={{ ...headerCellStyle, textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} style={{ borderBottom: '1px solid #edf2f7', background: selectedUsers.includes(user.id) ? '#f8fbff' : 'transparent' }}>
+                  <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
+                    <input type="checkbox" checked={selectedUsers.includes(user.id)} onChange={() => onToggleSelectUser(user.id)} style={{ cursor: 'pointer' }} />
+                  </td>
+                  <td style={bodyCellStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, flexShrink: 0 }}>
+                        {(user.name?.charAt(0) || user.email.charAt(0)).toUpperCase()}
+                      </div>
+                      <div onClick={() => (window.location.href = `/admin/users/${user.id}`)} style={{ cursor: 'pointer' }}>
+                        <div style={{ fontWeight: 700, color: '#2563eb', marginBottom: '4px' }}>{user.name || 'No name'}</div>
+                        <div style={{ fontSize: '0.84rem', color: '#64748b' }}>{user.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
+                    <span style={{ padding: '6px 12px', borderRadius: '999px', fontSize: '0.76rem', fontWeight: 700, ...getRoleStyle(user.role) }}>
+                      {getRoleText(user.role)}
+                    </span>
+                  </td>
+                  <td style={{ ...bodyCellStyle, textAlign: 'center', color: '#64748b' }}>{user.enrollmentCount} courses</td>
+                  <td style={{ ...bodyCellStyle, textAlign: 'center', color: '#64748b', fontSize: '0.84rem' }}>{formatDate(user.createdAt)}</td>
+                  <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      <button onClick={() => onHandleEdit(user)} style={actionButtonStyle('#eff6ff', '#2563eb')}>Edit</button>
+                      <button onClick={() => onOpenPasswordReset(user)} style={actionButtonStyle('#fff7ed', '#b45309')}>Password</button>
+                      <button
+                        onClick={() => onDeleteRequest(user.id)}
+                        disabled={updating === user.id}
+                        style={{ ...actionButtonStyle('#fef2f2', '#dc2626'), cursor: updating === user.id ? 'not-allowed' : 'pointer', opacity: updating === user.id ? 0.7 : 1 }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {users.length === 0 && <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>No users found</div>}
+
+        {pagination && pagination.totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '18px', borderTop: '1px solid #e2e8f0' }}>
+            <button onClick={onPrevPage} disabled={pagination.page === 1} style={paginationButtonStyle(pagination.page === 1)}>Previous</button>
+            <span style={{ color: '#64748b', fontSize: '0.84rem' }}>
+              Page {pagination.page} of {pagination.totalPages} ({pagination.total} records)
+            </span>
+            <button onClick={onNextPage} disabled={pagination.page === pagination.totalPages} style={paginationButtonStyle(pagination.page === pagination.totalPages)}>Next</button>
+          </div>
+        )}
+      </AdminSurfaceCard>
+
+      {editingUser && (
+        <div style={modalBackdropStyle}>
+          <div style={modalPanelStyle(400)}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', color: '#1e293b' }}>Edit user</h2>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={modalLabelStyle}>Name</label>
+              <input type="text" value={editForm.name} onChange={(e) => onEditFormChange({ ...editForm, name: e.target.value })} style={modalInputStyle} />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={modalLabelStyle}>Role</label>
+              <select value={editForm.role} onChange={(e) => onEditFormChange({ ...editForm, role: e.target.value })} style={{ ...modalInputStyle, background: 'white' }}>
+                <option value="student">Student</option>
+                <option value="instructor">Instructor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={onCloseEdit} style={secondaryModalButtonStyle}>Cancel</button>
+              <button onClick={onSave} disabled={updating === editingUser.id} style={{ ...primaryModalButtonStyle, cursor: updating === editingUser.id ? 'not-allowed' : 'pointer', opacity: updating === editingUser.id ? 0.7 : 1 }}>
+                {updating === editingUser.id ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {passwordResetUser && (
+        <div style={modalBackdropStyle}>
+          <div style={modalPanelStyle(420)}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px', color: '#1e293b' }}>Reset password</h2>
+            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '20px' }}>
+              {passwordResetUser.name || 'No name'} ({passwordResetUser.email})
+            </p>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={modalLabelStyle}>New password</label>
+              <div style={{ position: 'relative' }}>
+                <input type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => onPasswordChange(e.target.value)} placeholder="At least 8 characters" style={{ ...modalInputStyle, paddingRight: '48px' }} />
+                <button type="button" onClick={onToggleShowPassword} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#64748b', padding: '4px 8px' }}>
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              {newPassword.length > 0 && newPassword.length < 8 && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '6px' }}>Password must be at least 8 characters</p>}
+            </div>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button onClick={onClosePasswordReset} style={secondaryModalButtonStyle}>Cancel</button>
+              <button onClick={onResetPassword} disabled={resettingPassword || newPassword.length < 8} style={{ ...warningModalButtonStyle, cursor: resettingPassword || newPassword.length < 8 ? 'not-allowed' : 'pointer', opacity: resettingPassword || newPassword.length < 8 ? 0.7 : 1 }}>
+                {resettingPassword ? 'Saving...' : 'Reset password'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        title="Delete user"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        confirmText="Delete user"
+        onConfirm={onConfirmDelete}
+        onCancel={onCancelDelete}
+      />
+      <ConfirmDialog
+        isOpen={bulkDeleteConfirm}
+        title="Delete selected users"
+        message={`Are you sure you want to delete ${selectedUsers.length} users?`}
+        confirmText="Delete all"
+        onConfirm={onConfirmBulkDelete}
+        onCancel={onCancelBulkDelete}
+      />
+
+      <input type="file" onChange={onImport} accept=".csv" style={{ display: 'none' }} />
+    </div>
+  );
+}
+
+const summaryLabelStyle: CSSProperties = {
+  color: '#64748b',
+  fontSize: '0.78rem',
+  marginBottom: '8px',
+  fontWeight: 700,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+};
+
+const filterInputStyle: CSSProperties = {
+  width: '100%',
+  padding: '12px 14px 12px 42px',
+  border: '1px solid #dbe5f0',
+  borderRadius: '14px',
+  fontSize: '0.9rem',
+  background: '#f8fbff',
+  color: '#0f172a',
+};
+
+const filterSelectStyle: CSSProperties = {
+  padding: '12px 14px',
+  border: '1px solid #dbe5f0',
+  borderRadius: '14px',
+  background: '#f8fbff',
+  fontSize: '0.875rem',
+  color: '#334155',
+};
+
+const bulkSelectStyle: CSSProperties = {
+  padding: '10px 12px',
+  border: '1px solid #dbe5f0',
+  borderRadius: '12px',
+  background: 'white',
+  fontSize: '0.875rem',
+};
+
+const headerCellStyle: CSSProperties = {
+  padding: '15px 18px',
+  textAlign: 'left',
+  fontWeight: 700,
+  color: '#64748b',
+  fontSize: '0.79rem',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+};
+
+const bodyCellStyle: CSSProperties = {
+  padding: '18px',
+  verticalAlign: 'middle',
+};
+
+const actionButtonStyle = (background: string, color: string): CSSProperties => ({
+  padding: '8px 12px',
+  background,
+  color,
+  border: '1px solid transparent',
+  borderRadius: '10px',
+  fontSize: '0.78rem',
+  fontWeight: 700,
+  cursor: 'pointer',
+});
+
+const paginationButtonStyle = (disabled: boolean): CSSProperties => ({
+  padding: '9px 16px',
+  border: '1px solid #dbe5f0',
+  borderRadius: '10px',
+  background: '#fff',
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  opacity: disabled ? 0.5 : 1,
+});
+
+const modalBackdropStyle: CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(15, 23, 42, 0.48)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1000,
+};
+
+const modalPanelStyle = (maxWidth: number): CSSProperties => ({
+  background: 'white',
+  borderRadius: '18px',
+  padding: '24px',
+  width: '100%',
+  maxWidth,
+  margin: '16px',
+  boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)',
+});
+
+const modalLabelStyle: CSSProperties = {
+  display: 'block',
+  fontWeight: 600,
+  marginBottom: '8px',
+  color: '#374151',
+};
+
+const modalInputStyle: CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  border: '1px solid #dbe5f0',
+  borderRadius: '12px',
+  fontSize: '1rem',
+};
+
+const secondaryModalButtonStyle: CSSProperties = {
+  padding: '10px 20px',
+  background: '#f1f5f9',
+  color: '#475569',
+  border: 'none',
+  borderRadius: '12px',
+  cursor: 'pointer',
+  fontWeight: 700,
+};
+
+const primaryModalButtonStyle: CSSProperties = {
+  padding: '10px 20px',
+  background: '#2563eb',
+  color: 'white',
+  border: 'none',
+  borderRadius: '12px',
+  fontWeight: 700,
+};
+
+const warningModalButtonStyle: CSSProperties = {
+  padding: '10px 20px',
+  background: '#d97706',
+  color: 'white',
+  border: 'none',
+  borderRadius: '12px',
+  fontWeight: 700,
+};
