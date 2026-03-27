@@ -21,6 +21,7 @@ interface NotificationContextType {
     deleteRead: () => Promise<void>;
     dismissToast: (id: string) => void;
     refreshNotifications: () => Promise<void>;
+    setNotificationsPanelOpen: (open: boolean) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -31,6 +32,7 @@ const NotificationContext = createContext<NotificationContextType>({
     deleteRead: async () => {},
     dismissToast: () => {},
     refreshNotifications: async () => {},
+    setNotificationsPanelOpen: () => {},
 });
 
 export function useNotifications() {
@@ -43,15 +45,33 @@ export default function NotificationProvider({ children }: { children: React.Rea
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [toasts, setToasts] = useState<Notification[]>([]);
+    const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
     const eventSourceRef = useRef<EventSource | null>(null);
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const toastTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+    const isPanelOpenRef = useRef(false);
+
+    const fetchNotificationSummary = useCallback(async () => {
+        try {
+            const res = await fetch('/api/notifications?summaryOnly=true', {
+                cache: 'no-store',
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUnreadCount(data.unreadCount || 0);
+            }
+        } catch {
+            // Silent fail
+        }
+    }, []);
 
     // Fetch notifications from API
     const refreshNotifications = useCallback(async () => {
         try {
-            const res = await fetch('/api/notifications?limit=20');
+            const res = await fetch('/api/notifications?limit=20', {
+                cache: 'no-store',
+            });
             if (res.ok) {
                 const data = await res.json();
                 setNotifications(data.notifications || []);
@@ -119,19 +139,81 @@ export default function NotificationProvider({ children }: { children: React.Rea
         }
     }, []);
 
-    // Setup SSE connection (only when authenticated)
+    useEffect(() => {
+        isPanelOpenRef.current = isNotificationsPanelOpen;
+    }, [isNotificationsPanelOpen]);
+
+    // Keep unread badge up to date without holding SSE connections open.
     useEffect(() => {
         if (!isAuthenticated) return;
         let mounted = true;
-        const timers = toastTimersRef.current;
 
-        function clearPolling() {
+        function clearSummaryPolling() {
             if (pollIntervalRef.current) {
                 clearInterval(pollIntervalRef.current);
                 pollIntervalRef.current = null;
             }
         }
 
+        function canPoll() {
+            if (!mounted) return false;
+            if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
+            if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
+            return true;
+        }
+
+        function startSummaryPolling() {
+            if (!canPoll() || pollIntervalRef.current) return;
+            pollIntervalRef.current = setInterval(() => {
+                if (mounted && canPoll()) {
+                    void fetchNotificationSummary();
+                }
+            }, 180_000);
+        }
+
+        function handleVisibilityChange() {
+            if (!canPoll()) {
+                clearSummaryPolling();
+                return;
+            }
+            void fetchNotificationSummary();
+            startSummaryPolling();
+        }
+
+        function handleOnline() {
+            if (!canPoll()) return;
+            void fetchNotificationSummary();
+            startSummaryPolling();
+        }
+
+        function handleOffline() {
+            clearSummaryPolling();
+        }
+
+        void Promise.resolve().then(() => {
+            if (mounted && canPoll()) {
+                void fetchNotificationSummary();
+                startSummaryPolling();
+            }
+        });
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            mounted = false;
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+            clearSummaryPolling();
+        };
+    }, [isAuthenticated, fetchNotificationSummary]);
+
+    // Enable SSE only while the notifications panel is open in a visible tab.
+    useEffect(() => {
+        if (!isAuthenticated || !isNotificationsPanelOpen) return;
+        let mounted = true;
         function clearReconnectTimeout() {
             if (reconnectTimeoutRef.current) {
                 clearTimeout(reconnectTimeoutRef.current);
@@ -147,26 +229,16 @@ export default function NotificationProvider({ children }: { children: React.Rea
         }
 
         function canUseLiveUpdates() {
-            if (!mounted) return false;
+            if (!mounted || !isPanelOpenRef.current) return false;
             if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
             if (typeof navigator !== 'undefined' && !navigator.onLine) return false;
             return true;
-        }
-
-        function startPollingFallback() {
-            if (!canUseLiveUpdates() || pollIntervalRef.current) return;
-            pollIntervalRef.current = setInterval(() => {
-                if (mounted && canUseLiveUpdates()) {
-                    void refreshNotifications();
-                }
-            }, 60_000);
         }
 
         function connectSSE() {
             if (!canUseLiveUpdates()) return;
 
             clearReconnectTimeout();
-            clearPolling();
             closeEventSource();
 
             const es = new EventSource('/api/notifications/stream');
@@ -176,24 +248,17 @@ export default function NotificationProvider({ children }: { children: React.Rea
                 if (!mounted) return;
                 try {
                     const notification = JSON.parse(event.data) as Notification;
-                    // Add to notifications list
                     setNotifications(prev => [notification, ...prev].slice(0, 50));
                     setUnreadCount(prev => prev + 1);
-                    // Show toast
                     addToast(notification);
                 } catch {
                     // Ignore parse errors
                 }
             });
 
-            es.addEventListener('connected', () => {
-                clearPolling();
-            });
-
             es.onerror = () => {
                 closeEventSource();
                 if (mounted && canUseLiveUpdates()) {
-                    startPollingFallback();
                     reconnectTimeoutRef.current = setTimeout(() => {
                         if (mounted && canUseLiveUpdates()) {
                             connectSSE();
@@ -208,7 +273,6 @@ export default function NotificationProvider({ children }: { children: React.Rea
 
             if (!canUseLiveUpdates()) {
                 clearReconnectTimeout();
-                clearPolling();
                 closeEventSource();
                 return;
             }
@@ -230,16 +294,13 @@ export default function NotificationProvider({ children }: { children: React.Rea
 
         function handleOffline() {
             clearReconnectTimeout();
-            clearPolling();
             closeEventSource();
         }
 
         void Promise.resolve().then(() => {
-            if (mounted) {
+            if (mounted && canUseLiveUpdates()) {
                 void refreshNotifications();
-                if (canUseLiveUpdates()) {
-                    connectSSE();
-                }
+                connectSSE();
             }
         });
 
@@ -253,28 +314,48 @@ export default function NotificationProvider({ children }: { children: React.Rea
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
             clearReconnectTimeout();
-            clearPolling();
             closeEventSource();
-            for (const timer of timers.values()) {
-                clearTimeout(timer);
-            }
-            timers.clear();
         };
-    }, [isAuthenticated, refreshNotifications, addToast]);
+    }, [isAuthenticated, isNotificationsPanelOpen, refreshNotifications, addToast]);
+
+    useEffect(() => {
+        if (isAuthenticated) return;
+        if (eventSourceRef.current) {
+            eventSourceRef.current.close();
+            eventSourceRef.current = null;
+        }
+        if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+        }
+        if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+        }
+        for (const timer of toastTimersRef.current.values()) {
+            clearTimeout(timer);
+        }
+        toastTimersRef.current.clear();
+    }, [isAuthenticated]);
+
+    const visibleNotifications = isAuthenticated ? notifications : [];
+    const visibleUnreadCount = isAuthenticated ? unreadCount : 0;
+    const visibleToasts = isAuthenticated ? toasts : [];
 
     return (
         <NotificationContext.Provider value={{
-            unreadCount,
-            notifications,
-            toasts,
+            unreadCount: visibleUnreadCount,
+            notifications: visibleNotifications,
+            toasts: visibleToasts,
             markAsRead,
             deleteRead,
             dismissToast,
             refreshNotifications,
+            setNotificationsPanelOpen: setIsNotificationsPanelOpen,
         }}>
             {children}
             {/* Toast Container */}
-            {toasts.length > 0 && (
+            {visibleToasts.length > 0 && (
                 <div style={{
                     position: 'fixed',
                     top: '80px',
@@ -286,7 +367,7 @@ export default function NotificationProvider({ children }: { children: React.Rea
                     maxWidth: '380px',
                     width: '100%',
                 }}>
-                    {toasts.map(toast => (
+                    {visibleToasts.map(toast => (
                         <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
                     ))}
                 </div>

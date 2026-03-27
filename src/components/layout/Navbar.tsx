@@ -109,7 +109,7 @@ export default function Navbar() {
     const pathname = usePathname();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const notiRef = useRef<HTMLDivElement>(null);
-    const { unreadCount, notifications: notiList, markAsRead, deleteRead } = useNotifications();
+    const { unreadCount, notifications: notiList, markAsRead, deleteRead, setNotificationsPanelOpen } = useNotifications();
 
     const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
     const isAdmin = session?.user?.role === 'admin';
@@ -160,6 +160,10 @@ export default function Navbar() {
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showUserDropdown, showNotiDropdown]);
+
+    useEffect(() => {
+        setNotificationsPanelOpen(showNotiDropdown);
+    }, [showNotiDropdown, setNotificationsPanelOpen]);
 
     return (
         <>

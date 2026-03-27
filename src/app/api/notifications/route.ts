@@ -25,6 +25,19 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20));
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
+    const summaryOnly = searchParams.get('summaryOnly') === 'true';
+
+    if (summaryOnly) {
+      const [{ count: unreadCount }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(notifications)
+        .where(and(
+          eq(notifications.userId, session.user.id),
+          eq(notifications.isRead, false)
+        ));
+
+      return NextResponse.json({ unreadCount });
+    }
 
     const conditions = [eq(notifications.userId, session.user.id)];
     if (unreadOnly) {
