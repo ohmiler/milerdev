@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { docs, docGroups } from '@/lib/db/schema';
-import { eq, asc, sql } from 'drizzle-orm';
+import { eq, asc, sql, and } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const [doc] = await db
         .select({ title: docs.title, content: docs.content, updatedAt: docs.updatedAt })
         .from(docs)
-        .where(eq(docs.slug, slug))
+        .where(and(eq(docs.slug, slug), eq(docs.status, 'published')))
         .limit(1);
     if (!doc) return { title: 'ไม่พบบทความ' };
 
@@ -114,10 +114,42 @@ export default async function DocDetailPage({ params }: Props) {
         publisher: { '@type': 'Organization', name: 'MilerDev' },
         mainEntityOfPage: { '@type': 'WebPage', '@id': `${process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com'}/docs/${slug}` },
     };
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
+    const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'หน้าแรก',
+                item: siteUrl,
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Docs',
+                item: `${siteUrl}/docs`,
+            },
+            {
+                '@type': 'ListItem',
+                position: 3,
+                name: doc.group.title,
+                item: `${siteUrl}/docs`,
+            },
+            {
+                '@type': 'ListItem',
+                position: 4,
+                name: doc.title,
+                item: `${siteUrl}/docs/${slug}`,
+            },
+        ],
+    };
 
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
             <Navbar />
             <main>
                 <style>{`

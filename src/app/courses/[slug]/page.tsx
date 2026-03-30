@@ -10,7 +10,7 @@ import CoursePreviewVideo from '@/components/course/CoursePreviewVideo';
 import ProductViewTracker from '@/components/analytics/ProductViewTracker';
 import { db } from '@/lib/db';
 import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny';
 import { getExcerpt, sanitizeRichContent } from '@/lib/sanitize';
 
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const [course] = await db
     .select({ title: courses.title, description: courses.description, thumbnailUrl: courses.thumbnailUrl })
     .from(courses)
-    .where(eq(courses.slug, slug))
+    .where(and(eq(courses.slug, slug), eq(courses.status, 'published')))
     .limit(1);
 
   if (!course) {
@@ -78,7 +78,7 @@ async function getCourse(slug: string) {
   const [course] = await db
     .select()
     .from(courses)
-    .where(eq(courses.slug, slug))
+    .where(and(eq(courses.slug, slug), eq(courses.status, 'published')))
     .limit(1);
 
   if (!course) return null;
@@ -178,10 +178,35 @@ export default async function CourseDetailPage({ params }: Props) {
       courseMode: 'online',
     },
   };
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'หน้าแรก',
+        item: siteUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'คอร์สทั้งหมด',
+        item: `${siteUrl}/courses`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: course.title,
+        item: `${siteUrl}/courses/${slug}`,
+      },
+    ],
+  };
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Navbar />
       <ProductViewTracker itemType="course" courseId={course.id} />
 

@@ -6,7 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
-import { eq, like, or, ne, and, sql } from 'drizzle-orm';
+import { eq, ne, and, sql } from 'drizzle-orm';
 import { sanitizeRichContent, enhanceBlogContent, highlightCodeBlocks } from '@/lib/sanitize';
 import ShareButtons from '@/components/blog/ShareButtons';
 import ReadingProgress from '@/components/blog/ReadingProgress';
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       authorId: blogPosts.authorId,
     })
     .from(blogPosts)
-    .where(eq(blogPosts.slug, slug))
+    .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, 'published')))
     .limit(1);
 
   if (!post) return { title: 'ไม่พบบทความ' };
@@ -117,24 +117,13 @@ async function getRelatedPosts(postId: string, postTags: { id: string }[], limit
 async function getPost(rawSlug: string) {
   const slug = decodeURIComponent(rawSlug);
 
-  let [post] = await db
+  const [post] = await db
     .select()
     .from(blogPosts)
-    .where(eq(blogPosts.slug, slug))
+    .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, 'published')))
     .limit(1);
 
-  // Fallback: try matching by slug prefix (in case URL was truncated)
-  if (!post) {
-    const [match] = await db
-      .select()
-      .from(blogPosts)
-      .where(or(like(blogPosts.slug, `${slug}%`), like(blogPosts.slug, `%${slug}`)))
-      .limit(1);
-    if (match) post = match;
-  }
-
   if (!post) return null;
-  if (post.status !== 'published') return null;
 
   const [authorResult, postTags] = await Promise.all([
     post.authorId
@@ -193,10 +182,35 @@ export default async function BlogPostPage({ params }: Props) {
       },
     },
   };
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'หน้าแรก',
+        item: siteUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'บทความ',
+        item: `${siteUrl}/blog`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: post.title,
+        item: `${siteUrl}/blog/${post.slug}`,
+      },
+    ],
+  };
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <BlogViewTracker slug={post.slug} />
       <ReadingProgress />
       <Navbar />
