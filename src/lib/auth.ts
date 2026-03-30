@@ -31,7 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
-                    throw new Error("Invalid credentials");
+                    return null;
                 }
 
                 const normalizedEmail = (credentials.email as string).toLowerCase().trim();
@@ -40,11 +40,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 });
 
                 if (!user) {
-                    throw new Error("Invalid credentials");
+                    return null;
                 }
 
                 if (!user.passwordHash) {
-                    throw new Error("Invalid credentials");
+                    return null;
                 }
 
                 const isValidPassword = await bcrypt.compare(
@@ -53,7 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 );
 
                 if (!isValidPassword) {
-                    throw new Error("Invalid credentials");
+                    return null;
                 }
 
                 return {
