@@ -73,8 +73,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.roleCheckedAt = Date.now();
             }
 
-            // Refresh role from DB every 5 minutes to prevent privilege persistence
-            const ROLE_REFRESH_MS = 5 * 60 * 1000;
+            // Refresh admin roles on every session check so demotions take effect immediately.
+            // Non-admin roles still use a short cache to avoid extra DB load on every request.
+            const ROLE_REFRESH_MS = token.role === "admin" ? 0 : 5 * 60 * 1000;
             const lastChecked = (token.roleCheckedAt as number) || 0;
             if (Date.now() - lastChecked > ROLE_REFRESH_MS && token.id) {
                 try {
@@ -84,10 +85,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     });
                     if (freshUser) {
                         token.role = freshUser.role;
+                    } else {
+                        delete token.role;
                     }
                     token.roleCheckedAt = Date.now();
                 } catch {
-                    // On DB error, keep existing role — will retry next request
+                    // On DB error, keep existing role; admin tokens will retry next request.
                 }
             }
 
