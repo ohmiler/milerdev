@@ -6,7 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import PageHeader from '@/components/layout/PageHeader';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function DocsIndexPage() {
     const [allGroups, publishedDocs] = await Promise.all([
