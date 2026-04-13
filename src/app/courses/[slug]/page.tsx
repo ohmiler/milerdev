@@ -12,7 +12,7 @@ import { db } from '@/lib/db';
 import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc, and } from 'drizzle-orm';
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny';
-import { getExcerpt, sanitizeRichContent } from '@/lib/sanitize';
+import { getExcerpt, getSanitizedRichContentCached } from '@/lib/sanitize';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
 
@@ -22,7 +22,7 @@ function normalizeUrl(url: string | null): string | null {
     return `https://${url}`;
 }
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -328,7 +328,7 @@ export default async function CourseDetailPage({ params }: Props) {
                     </h2>
                     <div
                       className="course-description-content"
-                      dangerouslySetInnerHTML={{ __html: sanitizeRichContent(course.description) }}
+                      dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }}
                     />
                   </div>
                 )}

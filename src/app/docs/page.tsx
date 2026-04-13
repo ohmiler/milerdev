@@ -6,7 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import PageHeader from '@/components/layout/PageHeader';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export default async function DocsIndexPage() {
     const [allGroups, publishedDocs] = await Promise.all([
@@ -17,9 +17,16 @@ export default async function DocsIndexPage() {
             .orderBy(asc(docs.orderIndex)),
     ]);
 
+    const docsByGroup = new Map<string, typeof publishedDocs>();
+    for (const doc of publishedDocs) {
+        const groupDocs = docsByGroup.get(doc.groupId) ?? [];
+        groupDocs.push(doc);
+        docsByGroup.set(doc.groupId, groupDocs);
+    }
+
     const groups = allGroups.map(g => ({
         ...g,
-        docs: publishedDocs.filter(d => d.groupId === g.id),
+        docs: docsByGroup.get(g.id) ?? [],
     }));
 
     const totalDocs = publishedDocs.length;

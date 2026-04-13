@@ -8,7 +8,7 @@ import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
 import { and, asc, count, desc, eq, gt, like, sql } from 'drizzle-orm';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 type SearchParamsInput = {
   search?: string | string[];
@@ -96,44 +96,60 @@ async function getAllTags(): Promise<Tag[]> {
 }
 
 async function getPublishedBundles(): Promise<BundleItem[]> {
-  const allBundles = await db
-    .select()
-    .from(bundles)
-    .where(eq(bundles.status, 'published'))
-    .orderBy(asc(bundles.createdAt));
-
-  return Promise.all(
-    allBundles.map(async (bundle) => {
-      const bundleCourseRows = await db
-        .select({
-          courseTitle: courses.title,
-          coursePrice: courses.price,
-        })
-        .from(bundleCourses)
-        .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
-        .where(eq(bundleCourses.bundleId, bundle.id))
-        .orderBy(asc(bundleCourses.orderIndex));
-
-      const totalOriginalPrice = bundleCourseRows.reduce(
-        (sum, course) => sum + parseFloat(course.coursePrice || '0'),
-        0
-      );
-
-      return {
-        id: bundle.id,
-        title: bundle.title,
-        slug: bundle.slug,
-        description: bundle.description,
-        price: bundle.price,
-        courseCount: bundleCourseRows.length,
-        totalOriginalPrice,
-        discount: totalOriginalPrice > 0
-          ? Math.round((1 - parseFloat(bundle.price) / totalOriginalPrice) * 100)
-          : 0,
-        courses: bundleCourseRows.map((course) => ({ courseTitle: course.courseTitle })),
-      };
+  const rows = await db
+    .select({
+      id: bundles.id,
+      title: bundles.title,
+      slug: bundles.slug,
+      description: bundles.description,
+      price: bundles.price,
+      createdAt: bundles.createdAt,
+      courseTitle: courses.title,
+      coursePrice: courses.price,
+      orderIndex: bundleCourses.orderIndex,
     })
-  );
+    .from(bundles)
+    .leftJoin(bundleCourses, eq(bundles.id, bundleCourses.bundleId))
+    .leftJoin(courses, eq(bundleCourses.courseId, courses.id))
+    .where(eq(bundles.status, 'published'))
+    .orderBy(asc(bundles.createdAt), asc(bundleCourses.orderIndex));
+
+  const bundleMap = new Map<string, {
+    id: string;
+    title: string;
+    slug: string;
+    description: string | null;
+    price: string;
+    courses: { courseTitle: string }[];
+    totalOriginalPrice: number;
+  }>();
+
+  for (const row of rows) {
+    const existing = bundleMap.get(row.id) ?? {
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      description: row.description,
+      price: row.price,
+      courses: [],
+      totalOriginalPrice: 0,
+    };
+
+    if (row.courseTitle) {
+      existing.courses.push({ courseTitle: row.courseTitle });
+      existing.totalOriginalPrice += parseFloat(row.coursePrice || '0');
+    }
+
+    bundleMap.set(row.id, existing);
+  }
+
+  return Array.from(bundleMap.values()).map((bundle) => ({
+    ...bundle,
+    courseCount: bundle.courses.length,
+    discount: bundle.totalOriginalPrice > 0
+      ? Math.round((1 - parseFloat(bundle.price) / bundle.totalOriginalPrice) * 100)
+      : 0,
+  }));
 }
 
 async function getCoursesData(input: {

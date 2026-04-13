@@ -7,7 +7,7 @@ import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 type SearchParamsInput = {
   search?: string | string[];

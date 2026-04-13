@@ -2,6 +2,8 @@ import sanitizeHtml from 'sanitize-html';
 import { common, createLowlight } from 'lowlight';
 
 const lowlight = createLowlight(common);
+const MAX_PROCESSED_HTML_CACHE_ENTRIES = 100;
+const processedHtmlCache = new Map<string, string>();
 
 type HastNode = {
   type: string;
@@ -127,4 +129,41 @@ export function sanitizeRichContent(html: string): string {
         },
         allowedSchemes: ['http', 'https', 'mailto'],
     });
+}
+
+function getCachedProcessedHtml(cacheKey: string, compute: () => string): string {
+    const existing = processedHtmlCache.get(cacheKey);
+    if (existing !== undefined) {
+        processedHtmlCache.delete(cacheKey);
+        processedHtmlCache.set(cacheKey, existing);
+        return existing;
+    }
+
+    const value = compute();
+    processedHtmlCache.set(cacheKey, value);
+
+    if (processedHtmlCache.size > MAX_PROCESSED_HTML_CACHE_ENTRIES) {
+        const oldestKey = processedHtmlCache.keys().next().value;
+        if (oldestKey) {
+            processedHtmlCache.delete(oldestKey);
+        }
+    }
+
+    return value;
+}
+
+export function getProcessedBlogContent(html: string): string {
+    return getCachedProcessedHtml(`blog:${html}`, () =>
+        sanitizeRichContent(highlightCodeBlocks(enhanceBlogContent(html)))
+    );
+}
+
+export function getProcessedDocContent(html: string): string {
+    return getCachedProcessedHtml(`doc:${html}`, () =>
+        sanitizeRichContent(highlightCodeBlocks(html))
+    );
+}
+
+export function getSanitizedRichContentCached(html: string): string {
+    return getCachedProcessedHtml(`rich:${html}`, () => sanitizeRichContent(html));
 }

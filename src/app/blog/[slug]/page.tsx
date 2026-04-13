@@ -2,12 +2,13 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { eq, ne, and, sql } from 'drizzle-orm';
-import { sanitizeRichContent, enhanceBlogContent, highlightCodeBlocks } from '@/lib/sanitize';
+import { getProcessedBlogContent } from '@/lib/sanitize';
 import ShareButtons from '@/components/blog/ShareButtons';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 import CodeCopyButton from '@/components/blog/CodeCopyButton';
@@ -29,7 +30,27 @@ function normalizeUrl(url: string | null): string | null {
   return `https://${url}`;
 }
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
+const getPublishedPostMetadata = unstable_cache(
+  async (slug: string) => {
+    const [post] = await db
+      .select({
+        title: blogPosts.title,
+        excerpt: blogPosts.excerpt,
+        thumbnailUrl: blogPosts.thumbnailUrl,
+        publishedAt: blogPosts.publishedAt,
+        authorId: blogPosts.authorId,
+      })
+      .from(blogPosts)
+      .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, 'published')))
+      .limit(1);
+
+    return post ?? null;
+  },
+  ['blog-post-metadata'],
+  { revalidate }
+);
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -38,17 +59,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
-  const [post] = await db
-    .select({
-      title: blogPosts.title,
-      excerpt: blogPosts.excerpt,
-      thumbnailUrl: blogPosts.thumbnailUrl,
-      publishedAt: blogPosts.publishedAt,
-      authorId: blogPosts.authorId,
-    })
-    .from(blogPosts)
-    .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, 'published')))
-    .limit(1);
+  const post = await getPublishedPostMetadata(slug);
 
   if (!post) return { title: 'ไม่พบบทความ' };
 
@@ -93,7 +104,7 @@ async function getRelatedPosts(postId: string, postTags: { id: string }[], limit
       .select({ id: blogPosts.id, title: blogPosts.title, slug: blogPosts.slug, excerpt: blogPosts.excerpt, thumbnailUrl: blogPosts.thumbnailUrl, publishedAt: blogPosts.publishedAt })
       .from(blogPosts)
       .where(and(eq(blogPosts.status, 'published'), ne(blogPosts.id, postId)))
-      .orderBy(sql`RAND()`)
+      .orderBy(sql`${blogPosts.publishedAt} DESC`)
       .limit(limit);
   }
   const tagIds = postTags.map(t => t.id);
@@ -109,47 +120,49 @@ async function getRelatedPosts(postId: string, postTags: { id: string }[], limit
         )`
       )
     )
-    .orderBy(sql`RAND()`)
+    .orderBy(sql`${blogPosts.publishedAt} DESC`)
     .limit(limit);
   return related;
 }
 
-async function getPost(rawSlug: string) {
-  const slug = decodeURIComponent(rawSlug);
+const getPost = unstable_cache(
+  async (slug: string) => {
+    const [post] = await db
+      .select()
+      .from(blogPosts)
+      .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, 'published')))
+      .limit(1);
 
-  const [post] = await db
-    .select()
-    .from(blogPosts)
-    .where(and(eq(blogPosts.slug, slug), eq(blogPosts.status, 'published')))
-    .limit(1);
+    if (!post) return null;
 
-  if (!post) return null;
+    const [authorResult, postTags] = await Promise.all([
+      post.authorId
+        ? db
+            .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+            .from(users)
+            .where(eq(users.id, post.authorId))
+            .limit(1)
+        : Promise.resolve([]),
+      db
+        .select({ id: tags.id, name: tags.name, slug: tags.slug })
+        .from(blogPostTags)
+        .innerJoin(tags, eq(blogPostTags.tagId, tags.id))
+        .where(eq(blogPostTags.postId, post.id)),
+    ]);
 
-  const [authorResult, postTags] = await Promise.all([
-    post.authorId
-      ? db
-          .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
-          .from(users)
-          .where(eq(users.id, post.authorId))
-          .limit(1)
-      : Promise.resolve([]),
-    db
-      .select({ id: tags.id, name: tags.name, slug: tags.slug })
-      .from(blogPostTags)
-      .innerJoin(tags, eq(blogPostTags.tagId, tags.id))
-      .where(eq(blogPostTags.postId, post.id)),
-  ]);
-
-  return {
-    ...post,
-    author: authorResult[0] || null,
-    tags: postTags,
-  };
-}
+    return {
+      ...post,
+      author: authorResult[0] || null,
+      tags: postTags,
+    };
+  },
+  ['blog-post'],
+  { revalidate }
+);
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const post = await getPost(decodeURIComponent(slug));
 
   if (!post) {
     notFound();
@@ -157,7 +170,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   const relatedPosts = await getRelatedPosts(post.id, post.tags);
   const readingTime = getReadingTime(post.content ?? '');
-  const processedContent = sanitizeRichContent(highlightCodeBlocks(enhanceBlogContent(post.content ?? '')));
+  const processedContent = getProcessedBlogContent(post.content ?? '');
 
   const articleJsonLd = {
     '@context': 'https://schema.org',

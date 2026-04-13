@@ -1,13 +1,71 @@
 import { db } from '@/lib/db';
 import { docs, docGroups } from '@/lib/db/schema';
-import { eq, asc, sql, and } from 'drizzle-orm';
+import { eq, asc, and } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { unstable_cache } from 'next/cache';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { sanitizeRichContent, highlightCodeBlocks } from '@/lib/sanitize';
+import { getProcessedDocContent } from '@/lib/sanitize';
 import CodeCopyButton from '@/components/blog/CodeCopyButton';
+import DocsViewTracker from '@/components/docs/DocsViewTracker';
+
+export const revalidate = 3600;
+
+const getPublishedDocMetadata = unstable_cache(
+    async (slug: string) => {
+        const [doc] = await db
+            .select({ title: docs.title, content: docs.content, updatedAt: docs.updatedAt })
+            .from(docs)
+            .where(and(eq(docs.slug, slug), eq(docs.status, 'published')))
+            .limit(1);
+
+        return doc ?? null;
+    },
+    ['docs-metadata'],
+    { revalidate }
+);
+
+const getDocPageData = unstable_cache(
+    async (slug: string) => {
+        const [docRow] = await db
+            .select({
+                id: docs.id,
+                groupId: docs.groupId,
+                title: docs.title,
+                slug: docs.slug,
+                content: docs.content,
+                orderIndex: docs.orderIndex,
+                status: docs.status,
+                viewCount: docs.viewCount,
+                createdAt: docs.createdAt,
+                updatedAt: docs.updatedAt,
+                groupTitle: docGroups.title,
+                groupSlug: docGroups.slug,
+            })
+            .from(docs)
+            .leftJoin(docGroups, eq(docs.groupId, docGroups.id))
+            .where(eq(docs.slug, slug))
+            .limit(1);
+
+        if (!docRow || docRow.status !== 'published') {
+            return null;
+        }
+
+        const [allGroups, sidebarDocs] = await Promise.all([
+            db.select().from(docGroups).orderBy(asc(docGroups.orderIndex)),
+            db.select({ id: docs.id, title: docs.title, slug: docs.slug, groupId: docs.groupId })
+                .from(docs)
+                .where(eq(docs.status, 'published'))
+                .orderBy(asc(docs.orderIndex)),
+        ]);
+
+        return { docRow, allGroups, sidebarDocs };
+    },
+    ['docs-page'],
+    { revalidate }
+);
 
 interface Props {
     params: Promise<{ slug: string }>;
@@ -15,11 +73,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug } = await params;
-    const [doc] = await db
-        .select({ title: docs.title, content: docs.content, updatedAt: docs.updatedAt })
-        .from(docs)
-        .where(and(eq(docs.slug, slug), eq(docs.status, 'published')))
-        .limit(1);
+    const doc = await getPublishedDocMetadata(slug);
     if (!doc) return { title: 'ไม่พบบทความ' };
 
     const excerpt = doc.content
@@ -49,52 +103,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DocDetailPage({ params }: Props) {
     const { slug } = await params;
+    const pageData = await getDocPageData(slug);
 
-    const [docRow] = await db
-        .select({
-            id: docs.id,
-            groupId: docs.groupId,
-            title: docs.title,
-            slug: docs.slug,
-            content: docs.content,
-            orderIndex: docs.orderIndex,
-            status: docs.status,
-            viewCount: docs.viewCount,
-            createdAt: docs.createdAt,
-            updatedAt: docs.updatedAt,
-            groupTitle: docGroups.title,
-            groupSlug: docGroups.slug,
-        })
-        .from(docs)
-        .leftJoin(docGroups, eq(docs.groupId, docGroups.id))
-        .where(eq(docs.slug, slug))
-        .limit(1);
+    if (!pageData) notFound();
 
-    if (!docRow || docRow.status !== 'published') notFound();
+    const { docRow, allGroups, sidebarDocs } = pageData;
 
     const doc = {
         ...docRow,
         group: { id: docRow.groupId, title: docRow.groupTitle ?? '', slug: docRow.groupSlug ?? '' },
     };
 
-    // Fire-and-forget view count increment (SQL increment avoids race condition)
-    db.update(docs).set({ viewCount: sql`view_count + 1` }).where(eq(docs.id, doc.id)).execute().catch(() => {});
+    const docsByGroup = new Map<string, typeof sidebarDocs>();
+    for (const sidebarDoc of sidebarDocs) {
+        const groupDocs = docsByGroup.get(sidebarDoc.groupId) ?? [];
+        groupDocs.push(sidebarDoc);
+        docsByGroup.set(sidebarDoc.groupId, groupDocs);
+    }
 
-    // Fetch sidebar navigation (two separate queries — no lateral join)
-    const [allGroups, sidebarDocs] = await Promise.all([
-        db.select().from(docGroups).orderBy(asc(docGroups.orderIndex)),
-        db.select({ id: docs.id, title: docs.title, slug: docs.slug, groupId: docs.groupId })
-            .from(docs)
-            .where(eq(docs.status, 'published'))
-            .orderBy(asc(docs.orderIndex)),
-    ]);
-
-    const groups = allGroups.map(g => ({
-        ...g,
-        docs: sidebarDocs.filter(d => d.groupId === g.id),
+    const groups = allGroups.map((group) => ({
+        ...group,
+        docs: docsByGroup.get(group.id) ?? [],
     }));
 
-    const processedContent = sanitizeRichContent(highlightCodeBlocks(doc.content ?? ''));
+    const processedContent = getProcessedDocContent(doc.content ?? '');
 
     const updatedDate = new Date(doc.updatedAt).toLocaleDateString('th-TH', {
         year: 'numeric',
@@ -103,6 +135,7 @@ export default async function DocDetailPage({ params }: Props) {
     });
 
     const plainText = (doc.content ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'Article',
@@ -110,11 +143,10 @@ export default async function DocDetailPage({ params }: Props) {
         description: plainText.slice(0, 155),
         dateModified: new Date(doc.updatedAt).toISOString(),
         datePublished: new Date(doc.createdAt).toISOString(),
-        author: { '@type': 'Organization', name: 'MilerDev', url: process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com' },
+        author: { '@type': 'Organization', name: 'MilerDev', url: siteUrl },
         publisher: { '@type': 'Organization', name: 'MilerDev' },
-        mainEntityOfPage: { '@type': 'WebPage', '@id': `${process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com'}/docs/${slug}` },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': `${siteUrl}/docs/${slug}` },
     };
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
     const breadcrumbJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -148,6 +180,7 @@ export default async function DocDetailPage({ params }: Props) {
 
     return (
         <>
+            <DocsViewTracker slug={slug} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
             <Navbar />
@@ -212,8 +245,6 @@ export default async function DocDetailPage({ params }: Props) {
                 `}</style>
 
                 <div style={{ display: 'flex', minHeight: '100vh', maxWidth: '1170px', margin: '0 auto' }}>
-
-                    {/* Sidebar — sticky, fixed width */}
                     <aside
                         className="docs-sidebar"
                         style={{
@@ -226,26 +257,25 @@ export default async function DocDetailPage({ params }: Props) {
                             borderRight: '1px solid #e2e8f0',
                         }}
                     >
-                        {/* Inner scrollable — maxHeight not height, preserves travel distance */}
                         <div style={{ maxHeight: 'calc(100vh - 64px)', overflowY: 'auto', padding: '24px 12px' }}>
                             <Link href="/docs" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', textDecoration: 'none', marginBottom: '20px', fontSize: '0.8125rem', fontWeight: 500, padding: '0 4px' }}>
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                                 Docs หน้าแรก
                             </Link>
                             <nav style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {groups.map(group => (
+                                {groups.map((group) => (
                                     <div key={group.id}>
                                         <p style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#94a3b8', marginBottom: '4px', padding: '0 12px' }}>
                                             {group.title}
                                         </p>
                                         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                                            {group.docs.map(d => (
-                                                <li key={d.id}>
+                                            {group.docs.map((sidebarDoc) => (
+                                                <li key={sidebarDoc.id}>
                                                     <Link
-                                                        href={`/docs/${d.slug}`}
-                                                        className={`docs-nav-link${d.slug === slug ? ' active' : ''}`}
+                                                        href={`/docs/${sidebarDoc.slug}`}
+                                                        className={`docs-nav-link${sidebarDoc.slug === slug ? ' active' : ''}`}
                                                     >
-                                                        {d.title}
+                                                        {sidebarDoc.title}
                                                     </Link>
                                                 </li>
                                             ))}
@@ -256,13 +286,8 @@ export default async function DocDetailPage({ params }: Props) {
                         </div>
                     </aside>
 
-                    {/* Content column — fills remaining width, white bg */}
                     <div style={{ flex: 1, minWidth: 0, background: 'white', borderLeft: '1px solid #e2e8f0' }}>
-
-                        {/* Article container — left-aligned, constrained width */}
                         <div style={{ maxWidth: '960px', padding: '48px 48px 80px' }}>
-
-                            {/* Mobile breadcrumb */}
                             <div className="docs-breadcrumb" style={{ alignItems: 'center', gap: '6px', fontSize: '0.8125rem', color: '#64748b', marginBottom: '28px', flexWrap: 'wrap' }}>
                                 <Link href="/docs" style={{ color: '#3b82f6', textDecoration: 'none' }}>Docs</Link>
                                 <span>/</span>
@@ -293,13 +318,13 @@ export default async function DocDetailPage({ params }: Props) {
                                 />
                                 <CodeCopyButton selector=".prose pre" />
 
-                                {/* Next/Prev navigation */}
                                 {(() => {
-                                    const allDocs = groups.flatMap(g => g.docs);
-                                    const idx = allDocs.findIndex(d => d.slug === slug);
+                                    const allDocs = groups.flatMap((group) => group.docs);
+                                    const idx = allDocs.findIndex((sidebarDoc) => sidebarDoc.slug === slug);
                                     const prev = idx > 0 ? allDocs[idx - 1] : null;
                                     const next = idx < allDocs.length - 1 ? allDocs[idx + 1] : null;
                                     if (!prev && !next) return null;
+
                                     return (
                                         <div style={{ display: 'flex', gap: '12px', marginTop: '48px', paddingTop: '28px', borderTop: '1px solid #e2e8f0', justifyContent: prev && next ? 'space-between' : prev ? 'flex-start' : 'flex-end' }}>
                                             {prev && (
