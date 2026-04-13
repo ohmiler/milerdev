@@ -1,4 +1,4 @@
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
