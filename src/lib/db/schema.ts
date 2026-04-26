@@ -633,54 +633,6 @@ export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
 
 // =====================
-// DOC GROUPS TABLE (Knowledge Base Categories)
-// =====================
-export const docGroups = mysqlTable('doc_groups', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    title: varchar('title', { length: 255 }).notNull(),
-    slug: varchar('slug', { length: 255 }).notNull().unique(),
-    description: text('description'),
-    orderIndex: int('order_index').default(0).notNull(),
-    createdAt: datetime('created_at').notNull().$defaultFn(() => new Date()),
-    updatedAt: datetime('updated_at').notNull().$defaultFn(() => new Date()),
-});
-
-export const docGroupsRelations = relations(docGroups, ({ many }) => ({
-    docs: many(docs),
-}));
-
-// =====================
-// DOCS TABLE (Knowledge Base Articles)
-// =====================
-export const docs = mysqlTable('docs', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    groupId: varchar('group_id', { length: 36 }).notNull().references(() => docGroups.id, { onDelete: 'cascade' }),
-    title: varchar('title', { length: 255 }).notNull(),
-    slug: varchar('slug', { length: 255 }).notNull().unique(),
-    content: text('content'),
-    orderIndex: int('order_index').default(0).notNull(),
-    status: varchar('status', { length: 20, enum: ['draft', 'published'] }).default('draft').notNull(),
-    viewCount: int('view_count').default(0).notNull(),
-    createdAt: datetime('created_at').notNull().$defaultFn(() => new Date()),
-    updatedAt: datetime('updated_at').notNull().$defaultFn(() => new Date()),
-}, (table) => [
-    index('idx_docs_group_id').on(table.groupId),
-    index('idx_docs_status').on(table.status),
-]);
-
-export const docsRelations = relations(docs, ({ one }) => ({
-    group: one(docGroups, {
-        fields: [docs.groupId],
-        references: [docGroups.id],
-    }),
-}));
-
-export type DocGroup = typeof docGroups.$inferSelect;
-export type NewDocGroup = typeof docGroups.$inferInsert;
-export type Doc = typeof docs.$inferSelect;
-export type NewDoc = typeof docs.$inferInsert;
-
-// =====================
 // AFFILIATE BANNERS TABLE
 // =====================
 export const affiliateBanners = mysqlTable('affiliate_banners', {

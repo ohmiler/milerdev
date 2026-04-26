@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
-import { courses, bundles, blogPosts, docs } from '@/lib/db/schema';
+import { courses, bundles, blogPosts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
@@ -12,7 +12,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${siteUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${siteUrl}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${siteUrl}/docs`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${siteUrl}/faq`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
     { url: `${siteUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { url: `${siteUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
@@ -21,7 +20,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let coursePages: MetadataRoute.Sitemap = [];
   let bundlePages: MetadataRoute.Sitemap = [];
   let blogPostPages: MetadataRoute.Sitemap = [];
-  let docPages: MetadataRoute.Sitemap = [];
 
   try {
     const publishedCourses = await db.select({ slug: courses.slug, updatedAt: courses.updatedAt }).from(courses).where(eq(courses.status, 'published'));
@@ -59,17 +57,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] Failed to fetch published blog posts', error);
   }
 
-  try {
-    const publishedDocs = await db.select({ slug: docs.slug, updatedAt: docs.updatedAt }).from(docs).where(eq(docs.status, 'published'));
-    docPages = publishedDocs.map((doc) => ({
-      url: `${siteUrl}/docs/${doc.slug}`,
-      lastModified: doc.updatedAt || new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    }));
-  } catch (error) {
-    console.error('[sitemap] Failed to fetch published docs', error);
-  }
-
-  return [...staticPages, ...coursePages, ...bundlePages, ...blogPostPages, ...docPages];
+  return [...staticPages, ...coursePages, ...bundlePages, ...blogPostPages];
 }

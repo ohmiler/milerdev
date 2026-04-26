@@ -28,7 +28,6 @@ export const adminSecondaryLinkGroups: Array<{ title: string; items: AdminNavLin
   {
     title: 'Content & Assets',
     items: [
-      { href: '/admin/docs', label: 'คลังความรู้', icon: 'docs' },
       { href: '/admin/media', label: 'ไฟล์สื่อ', icon: 'media' },
       { href: '/admin/tags', label: 'แท็ก', icon: 'tags' },
       { href: '/admin/announcements', label: 'ประกาศ', icon: 'announcements' },

@@ -180,24 +180,6 @@ async function main() {
     console.log('✅ 1 blog post created');
 
     // =====================
-    // 11. DOC GROUP + DOC
-    // =====================
-    const docGroupId = createId();
-    await connection.execute(
-        `INSERT IGNORE INTO doc_groups (id, title, slug, description, order_index, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [docGroupId, 'เริ่มต้นใช้งาน', 'getting-started', 'คู่มือเริ่มต้นใช้งานแพลตฟอร์ม', 0, now, now]
-    );
-    await connection.execute(
-        `INSERT IGNORE INTO docs (id, group_id, title, slug, content, order_index, status, view_count, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [createId(), docGroupId, 'วิธีสมัครสมาชิก', 'how-to-register',
-         '<p>ขั้นตอนการสมัครสมาชิกบนแพลตฟอร์ม MilerDev</p>',
-         0, 'published', 0, now, now]
-    );
-    console.log('✅ 1 doc group + 1 doc created');
-
-    // =====================
     // DONE
     // =====================
     console.log('\n🎉 Seed complete! You can now login with:');
