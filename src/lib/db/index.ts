@@ -8,7 +8,7 @@ const globalForDb = globalThis as unknown as {
 
 const connection = globalForDb.mysqlPool ?? mysql.createPool({
     uri: process.env.DATABASE_URL!,
-    connectionLimit: 10,
+    connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 5),
     waitForConnections: true,
     queueLimit: 0,
     enableKeepAlive: true,

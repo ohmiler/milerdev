@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Modal from '@/components/ui/Modal';
-import { trackClientAnalyticsEvent } from '@/lib/analytics-client';
 
 interface BundleEnrollButtonProps {
     bundleId: string;
@@ -29,17 +28,6 @@ export default function BundleEnrollButton({ bundleId, price, bundleSlug, allEnr
     const [modal, setModal] = useState<{ isOpen: boolean; type: 'success' | 'error'; title: string; message: string }>({
         isOpen: false, type: 'success', title: '', message: '',
     });
-
-    const trackCheckoutStart = (paymentMethod: 'stripe' | 'promptpay') => {
-        void trackClientAnalyticsEvent({
-            eventName: 'checkout_start',
-            bundleId,
-            metadata: {
-                itemType: 'bundle',
-                paymentMethod,
-            },
-        });
-    };
 
     const handleEnroll = async () => {
         if (!session) {
@@ -77,7 +65,6 @@ export default function BundleEnrollButton({ bundleId, price, bundleSlug, allEnr
 
     const handleStripePayment = async () => {
         setLoading(true);
-        trackCheckoutStart('stripe');
         try {
             const res = await fetch('/api/stripe/bundle-checkout', {
                 method: 'POST',
@@ -218,7 +205,6 @@ export default function BundleEnrollButton({ bundleId, price, bundleSlug, allEnr
                             {/* PromptPay */}
                             <button
                                 onClick={() => {
-                                    trackCheckoutStart('promptpay');
                                     setPaymentStep('transfer');
                                 }}
                                 style={{

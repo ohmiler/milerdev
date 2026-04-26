@@ -6,7 +6,6 @@ import { eq, and, desc, asc } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';
 import { stripe } from '@/lib/stripe';
-import { trackAnalyticsEvent } from '@/lib/analytics';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,22 +123,6 @@ async function verifyAndFulfillBundle(
       }
     }
 
-    const trackedPaymentId = paymentId || stripeSession.metadata?.paymentId;
-    await trackAnalyticsEvent({
-      eventName: 'payment_success',
-      userId,
-      bundleId,
-      paymentId: trackedPaymentId || null,
-      source: 'server',
-      metadata: {
-        itemType: 'bundle',
-        paymentMethod: 'stripe',
-        amount: stripeSession.amount_total ? stripeSession.amount_total / 100 : null,
-        source: 'payment_success_fallback',
-      },
-      ipAddress: 'unknown',
-      userAgent: 'server-render',
-    });
   } catch (error) {
     console.error('Stripe session verification fallback failed:', error);
   }

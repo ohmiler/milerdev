@@ -7,7 +7,6 @@ import Footer from '@/components/layout/Footer';
 import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
 import CourseReviewsWrapper from '@/components/course/CourseReviewsWrapper';
 import CoursePreviewVideo from '@/components/course/CoursePreviewVideo';
-import ProductViewTracker from '@/components/analytics/ProductViewTracker';
 import { db } from '@/lib/db';
 import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc, and } from 'drizzle-orm';
@@ -208,7 +207,6 @@ export default async function CourseDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Navbar />
-      <ProductViewTracker itemType="course" courseId={course.id} />
 
       <main style={{ paddingTop: '0' }}>
         {/* Course Header */}

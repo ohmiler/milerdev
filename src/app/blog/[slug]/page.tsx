@@ -14,7 +14,6 @@ import ReadingProgress from '@/components/blog/ReadingProgress';
 import CodeCopyButton from '@/components/blog/CodeCopyButton';
 import TableOfContents from '@/components/blog/TableOfContents';
 import ScrollToTop from '@/components/blog/ScrollToTop';
-import BlogViewTracker from '@/components/blog/BlogViewTracker';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
 
@@ -224,7 +223,6 @@ export default async function BlogPostPage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <BlogViewTracker slug={post.slug} />
       <ReadingProgress />
       <Navbar />
       <main style={{ paddingTop: '0' }}>

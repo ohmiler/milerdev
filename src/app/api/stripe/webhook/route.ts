@@ -6,7 +6,6 @@ import { payments, courses, bundles, bundleCourses, coupons, couponUsages } from
 import { eq, sql } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import Stripe from "stripe";
-import { trackAnalyticsEvent } from "@/lib/analytics";
 import { safeInsertEnrollment, isDuplicateKeyError } from "@/lib/db/safe-insert";
 
 export async function POST(request: Request) {
@@ -149,21 +148,6 @@ export async function POST(request: Request) {
                     }
                 }
 
-                await trackAnalyticsEvent({
-                    eventName: "payment_success",
-                    userId,
-                    bundleId,
-                    paymentId: payment.id,
-                    source: "server",
-                    metadata: {
-                        itemType: "bundle",
-                        paymentMethod: "stripe",
-                        amount: parseFloat(payment.amount.toString()),
-                    },
-                    ipAddress: "unknown",
-                    userAgent: headersList.get("user-agent") || "unknown",
-                });
-
                 console.log(`[Webhook] Bundle payment ${paymentId} completed, enrolled in ${bCourses.length} courses`);
             } else if (type === "course" && courseId) {
                 // ===== SINGLE COURSE PAYMENT =====
@@ -192,21 +176,6 @@ export async function POST(request: Request) {
                         console.error("Failed to send course emails:", emailError);
                     }
                 }
-
-                await trackAnalyticsEvent({
-                    eventName: "payment_success",
-                    userId,
-                    courseId,
-                    paymentId: payment.id,
-                    source: "server",
-                    metadata: {
-                        itemType: "course",
-                        paymentMethod: "stripe",
-                        amount: parseFloat(payment.amount.toString()),
-                    },
-                    ipAddress: "unknown",
-                    userAgent: headersList.get("user-agent") || "unknown",
-                });
 
                 console.log(`[Webhook] Payment ${paymentId} completed and enrollment created`);
             }

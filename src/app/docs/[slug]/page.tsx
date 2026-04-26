@@ -9,7 +9,6 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { getProcessedDocContent } from '@/lib/sanitize';
 import CodeCopyButton from '@/components/blog/CodeCopyButton';
-import DocsViewTracker from '@/components/docs/DocsViewTracker';
 
 export const revalidate = 3600;
 
@@ -180,7 +179,6 @@ export default async function DocDetailPage({ params }: Props) {
 
     return (
         <>
-            <DocsViewTracker slug={slug} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
             <Navbar />

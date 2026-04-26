@@ -5,8 +5,7 @@ import { db } from "@/lib/db";
 import { lessonProgress, lessons, enrollments } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
 import { issueCertificate } from "@/lib/certificate";
-import { trackAnalyticsEvent } from "@/lib/analytics";
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 
 // POST /api/progress - Update lesson progress
 export async function POST(request: Request) {
@@ -104,20 +103,6 @@ export async function POST(request: Request) {
         }
 
         const completionChanged = wasCompleted !== nextCompleted;
-
-        if (!wasCompleted && nextCompleted) {
-            await trackAnalyticsEvent({
-                eventName: "lesson_completed",
-                userId: session.user.id,
-                courseId: lesson.courseId,
-                source: "server",
-                metadata: {
-                    lessonId,
-                },
-                ipAddress: getClientIP(request),
-                userAgent: request.headers.get("user-agent") || "unknown",
-            });
-        }
 
         // Calculate and update course progress
         if (enrollment && completionChanged) {

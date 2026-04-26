@@ -20,7 +20,6 @@ export const adminSecondaryLinkGroups: Array<{ title: string; items: AdminNavLin
     items: [
       { href: '/admin/bundles', label: 'Bundle', icon: 'bundles' },
       { href: '/admin/coupons', label: 'คูปอง', icon: 'coupons' },
-      { href: '/admin/analytics', label: 'Analytics', icon: 'analytics' },
       { href: '/admin/reconciliation', label: 'Reconcile', icon: 'reconciliation' },
       { href: '/admin/reviews', label: 'รีวิว', icon: 'reviews' },
       { href: '/admin/reports', label: 'รายงาน', icon: 'reports' },

@@ -5,7 +5,6 @@ import { db } from '@/lib/db';
 import { payments, enrollments, courses, bundles, bundleCourses, users } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { sendPaymentConfirmation, sendEnrollmentEmail } from '@/lib/email';
-import { trackAnalyticsEvent } from '@/lib/analytics';
 import { notify } from '@/lib/notify';
 
 const MAX_RETRIES = 5;
@@ -143,21 +142,6 @@ async function approveCoursePayment(
         });
     });
 
-    // Track analytics
-    await trackAnalyticsEvent({
-        eventName: 'payment_success',
-        userId: payment.userId,
-        courseId: payment.courseId,
-        paymentId: payment.id,
-        source: 'server',
-        metadata: {
-            itemType: 'course',
-            paymentMethod: 'promptpay',
-            amount: parseFloat(payment.amount),
-            reconciledBy: adminUser.id,
-        },
-    });
-
     // Send emails (non-blocking, best-effort)
     const [course] = await db.select().from(courses).where(eq(courses.id, payment.courseId!)).limit(1);
     const [user] = await db.select().from(users).where(eq(users.id, payment.userId!)).limit(1);
@@ -241,21 +225,6 @@ async function approveBundlePayment(
                 enrolled.push(bc.courseId);
             }
         }
-    });
-
-    // Track analytics
-    await trackAnalyticsEvent({
-        eventName: 'payment_success',
-        userId: payment.userId,
-        bundleId: payment.bundleId,
-        paymentId: payment.id,
-        source: 'server',
-        metadata: {
-            itemType: 'bundle',
-            paymentMethod: 'promptpay',
-            amount: parseFloat(payment.amount),
-            reconciledBy: adminUser.id,
-        },
     });
 
     // Send in-app notification (non-blocking)

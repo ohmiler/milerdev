@@ -6,7 +6,6 @@ import { settings, auditLogs } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { getClientIP } from '@/lib/rate-limit';
-import { invalidateAnalyticsSettingsCache } from '@/lib/analytics';
 
 // Default settings
 const defaultSettings = [
@@ -60,7 +59,7 @@ export async function GET() {
     // Group settings by category
     const grouped = {
       general: mergedSettings.filter(s => ['site_name', 'site_description', 'contact_email', 'currency'].includes(s.key)),
-      features: mergedSettings.filter(s => ['enable_registration', 'enable_payment', 'maintenance_mode', 'analytics_enabled'].includes(s.key)),
+      features: mergedSettings.filter(s => ['enable_registration', 'enable_payment', 'maintenance_mode'].includes(s.key)),
       upload: mergedSettings.filter(s => ['max_upload_size'].includes(s.key)),
       email: mergedSettings.filter(s => ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_from'].includes(s.key)),
     };
@@ -144,8 +143,6 @@ export async function PUT(request: Request) {
       ipAddress,
       userAgent,
     });
-
-    invalidateAnalyticsSettingsCache();
 
     return NextResponse.json({ message: 'บันทึกการตั้งค่าสำเร็จ' });
   } catch (error) {
