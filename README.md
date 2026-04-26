@@ -5,7 +5,7 @@ Online course platform built with Next.js, Drizzle ORM, and MySQL.
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
-- **Database**: MySQL (Railway)
+- **Database**: MySQL
 - **ORM**: Drizzle ORM
 - **Auth**: NextAuth v5
 - **Payment**: Stripe + SlipOK
@@ -14,11 +14,11 @@ Online course platform built with Next.js, Drizzle ORM, and MySQL.
 
 ## Environment Variables
 
-Create a `.env.local` file:
+Create a `.env.local` file for local development only:
 
 ```env
-# Database (Railway MySQL)
-DATABASE_URL="mysql://user:password@host:port/database"
+# Local MySQL only
+DATABASE_URL="mysql://root:root@localhost:3306/milerdev"
 
 # NextAuth
 AUTH_SECRET="your-auth-secret"
@@ -31,17 +31,24 @@ STRIPE_WEBHOOK_SECRET="whsec_..."
 BUNNY_API_KEY="..."
 BUNNY_LIBRARY_ID="..."
 
-# Resend
-RESEND_API_KEY="re_..."
+# Email
+SMTP_HOST="..."
+SMTP_PORT="587"
+SMTP_USER="..."
+SMTP_PASS="..."
+SMTP_FROM="noreply@example.com"
 ```
+
+Production or Railway credentials should live in the deployment platform environment variables, not in `.env.local`.
 
 ## Getting Started
 
-First, install dependencies and push database schema:
+First, start local MySQL, install dependencies, and push the schema to your local database:
 
 ```bash
+npm run docker:up
 npm install
-npm run db:push
+npm run db:push:local
 ```
 
 Then, run the development server:
@@ -54,6 +61,12 @@ yarn dev
 pnpm dev
 # or
 bun dev
+```
+
+If you intentionally want to run with remote secrets from Infisical instead of local `.env.local`, use:
+
+```bash
+npm run dev:remote
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -76,7 +89,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 1. Create a new project on [Railway](https://railway.app)
 2. Add a **MySQL** database service
 3. Add a **Next.js** service from your GitHub repo
-4. Set environment variables in Railway dashboard
+4. Set production environment variables in Railway dashboard
 5. Select **Singapore (asia-southeast1)** region for best performance in Thailand
 6. Deploy!
 

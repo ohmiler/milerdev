@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:remote": "infisical run --env=dev -- next dev",
     "dev:local": "infisical run --env=dev -- next dev",
     "build": "next build",
     "start": "npx tsx src/lib/db/migrate.ts && next start",
@@ -15,7 +16,9 @@
     "check:admin-text": "node scripts/check-admin-mojibake.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:local": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
+    "db:push:local": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx scripts/seed.ts",
     "docker:up": "docker compose up -d",

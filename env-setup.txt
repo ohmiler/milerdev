@@ -1,9 +1,10 @@
-# คัดลอกข้อมูลนี้ไปสร้างไฟล์ .env.local ในโปรเจค
+# Copy these values into .env.local for local development only.
+# Keep production and Railway credentials in the deployment platform, not here.
 
 # ======================
 # Database
 # ======================
-DATABASE_URL="mysql://root:@localhost:3306/course_platform"
+DATABASE_URL="mysql://root:root@localhost:3306/milerdev"
 
 # ======================
 # NextAuth
@@ -18,10 +19,13 @@ AUTH_GOOGLE_SECRET="your-google-client-secret"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 # ======================
-# Email (Resend)
+# Email
 # ======================
-RESEND_API_KEY="re_xxxxxxxxxxxx"
-EMAIL_FROM="MilerDev <noreply@yourdomain.com>"
+SMTP_HOST="smtp.example.com"
+SMTP_PORT="587"
+SMTP_USER="smtp-user"
+SMTP_PASS="smtp-password"
+SMTP_FROM="MilerDev <noreply@yourdomain.com>"
 
 # ======================
 # Payment - Stripe
@@ -43,24 +47,23 @@ BUNNY_API_KEY="your-bunny-api-key"
 BUNNY_CDN_HOSTNAME="your-cdn-hostname.b-cdn.net"
 
 # ======================
-# หมายเหตุ
+# Notes
 # ======================
-# 1. DATABASE_URL: ใช้ Railway หรือ local MySQL
-# 2. AUTH_SECRET: สร้างด้วย `openssl rand -base64 32`
-# 3. RESEND_API_KEY: สมัครที่ resend.com
-# 4. EMAIL_FROM: ต้องใช้ domain ที่ verify แล้วใน Resend
-# 5. STRIPE: ใช้ test keys สำหรับ development
+# 1. DATABASE_URL in .env.local should always point to local MySQL.
+# 2. Production DATABASE_URL should be configured on Railway or Infisical.
+# 3. Generate AUTH_SECRET with: openssl rand -base64 32
+# 4. Use Stripe test keys during development.
 
 # ======================
-# Setup เครื่องใหม่
+# New machine setup
 # ======================
-# 1. git clone → npm install
-# 2. สร้าง .env.local ตามไฟล์นี้
-# 3. สร้าง database: mysql -u root -e "CREATE DATABASE course_platform;"
-# 4. รัน migration: npx tsx src/lib/db/migrate.ts
-# 5. Seed ข้อมูลทดสอบ: npm run db:seed
+# 1. git clone -> npm install
+# 2. Create .env.local from this file
+# 3. Start MySQL: npm run docker:up
+# 4. Push schema to local DB: npm run db:push:local
+# 5. Seed test data: npm run db:seed
 #
-# Login ทดสอบ:
+# Test logins:
 #   Admin:      admin@milerdev.com / admin1234
 #   Instructor: instructor@milerdev.com / instructor1234
 #   Student:    student@milerdev.com / student1234
