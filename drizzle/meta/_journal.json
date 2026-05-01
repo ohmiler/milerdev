@@ -50,6 +50,13 @@
       "when": 1771754029999,
       "tag": "0006_quiet_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1777633200000,
+      "tag": "0007_payment_idempotency",
+      "breakpoints": true
     }
   ]
 }

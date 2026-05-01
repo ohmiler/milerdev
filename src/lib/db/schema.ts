@@ -174,6 +174,7 @@ export const payments = mysqlTable('payments', {
     method: varchar('method', { length: 20, enum: ['stripe', 'promptpay', 'bank_transfer'] }).notNull(),
     stripePaymentId: varchar('stripe_payment_id', { length: 255 }),
     slipUrl: text('slip_url'),
+    promptpayTransRef: varchar('promptpay_trans_ref', { length: 255 }),
     itemTitle: varchar('item_title', { length: 255 }),
     status: varchar('status', { length: 20, enum: ['pending', 'completed', 'failed', 'refunded', 'verifying'] }).default('pending').notNull(),
     retryCount: int('retry_count').default(0),
@@ -183,6 +184,7 @@ export const payments = mysqlTable('payments', {
     index('idx_payments_user_id').on(table.userId),
     index('idx_payments_created_at').on(table.createdAt),
     index('idx_payments_status').on(table.status),
+    uniqueIndex('uq_payments_promptpay_trans_ref').on(table.promptpayTransRef),
 ]);
 
 export const paymentsRelations = relations(payments, ({ one, many }) => ({
@@ -199,6 +201,28 @@ export const paymentsRelations = relations(payments, ({ one, many }) => ({
         references: [bundles.id],
     }),
     analyticsEvents: many(analyticsEvents),
+    stripeEvents: many(stripeEvents),
+}));
+
+// =====================
+// STRIPE EVENTS TABLE
+// =====================
+export const stripeEvents = mysqlTable('stripe_events', {
+    id: varchar('id', { length: 255 }).primaryKey(),
+    type: varchar('type', { length: 100 }).notNull(),
+    paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id, { onDelete: 'set null' }),
+    processedAt: datetime('processed_at'),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+}, (table) => [
+    index('idx_stripe_events_payment_id').on(table.paymentId),
+    index('idx_stripe_events_type').on(table.type),
+]);
+
+export const stripeEventsRelations = relations(stripeEvents, ({ one }) => ({
+    payment: one(payments, {
+        fields: [stripeEvents.paymentId],
+        references: [payments.id],
+    }),
 }));
 
 // =====================
@@ -603,6 +627,8 @@ export type LessonProgress = typeof lessonProgress.$inferSelect;
 export type NewLessonProgress = typeof lessonProgress.$inferInsert;
 export type Payment = typeof payments.$inferSelect;
 export type NewPayment = typeof payments.$inferInsert;
+export type StripeEvent = typeof stripeEvents.$inferSelect;
+export type NewStripeEvent = typeof stripeEvents.$inferInsert;
 export type Media = typeof media.$inferSelect;
 export type NewMedia = typeof media.$inferInsert;
 export type Tag = typeof tags.$inferSelect;

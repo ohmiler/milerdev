@@ -6,6 +6,7 @@ import { eq, and, asc } from "drizzle-orm";
 import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { isDuplicateKeyError } from "@/lib/db/safe-insert";
 
 // POST /api/bundles/slip/verify - Verify slip payment for bundle
 export async function POST(request: Request) {
@@ -193,17 +194,22 @@ export async function POST(request: Request) {
             );
         }
 
-        // Check amount matches
-        if (slipResult.data?.amount < amount) {
+        // Check amount matches; reject if SlipOK omits the verified amount.
+        const slipAmount = slipResult.data?.amount;
+        if (typeof slipAmount !== 'number' || slipAmount < amount) {
             await db
                 .update(payments)
                 .set({ status: "failed" })
                 .where(eq(payments.id, paymentId));
 
+            const slipAmountDisplay = typeof slipAmount === 'number'
+                ? `฿${slipAmount.toLocaleString()}`
+                : 'ไม่พบข้อมูล';
+
             return NextResponse.json(
                 {
                     success: false,
-                    error: `ยอดเงินในสลิปไม่ตรง (สลิป: ฿${slipResult.data.amount.toLocaleString()} / ต้องชำระ: ฿${amount.toLocaleString()})`,
+                    error: `ยอดเงินในสลิปไม่ตรง (สลิป: ${slipAmountDisplay} / ต้องชำระ: ฿${amount.toLocaleString()})`,
                 },
                 { status: 400 }
             );
@@ -211,12 +217,14 @@ export async function POST(request: Request) {
 
         // Success — update payment + enroll in a single transaction
         const enrolled: string[] = [];
+        const promptpayTransRef = slipResult.data?.transRef || null;
         await db.transaction(async (tx) => {
             await tx
                 .update(payments)
                 .set({
                     status: "completed",
-                    slipUrl: slipResult.data?.transRef || null,
+                    slipUrl: promptpayTransRef,
+                    promptpayTransRef,
                 })
                 .where(eq(payments.id, paymentId));
 
@@ -265,6 +273,12 @@ export async function POST(request: Request) {
             enrolled,
         });
     } catch (error) {
+        if (isDuplicateKeyError(error)) {
+            return NextResponse.json(
+                { success: false, error: "Duplicate slip reference" },
+                { status: 400 }
+            );
+        }
         console.error("Error verifying bundle slip:", error);
         return NextResponse.json(
             { error: "Failed to verify slip" },

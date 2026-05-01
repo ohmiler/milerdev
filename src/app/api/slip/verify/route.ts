@@ -8,6 +8,7 @@ import { sendPaymentConfirmation, sendEnrollmentEmail } from "@/lib/email";
 import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
+import { isDuplicateKeyError } from "@/lib/db/safe-insert";
 
 // POST /api/slip/verify - Verify slip payment (PromptPay)
 export async function POST(request: Request) {
@@ -232,12 +233,14 @@ export async function POST(request: Request) {
         }
 
         // Success — update payment, create enrollment, and record coupon in a single transaction
+        const promptpayTransRef = slipResult.data?.transRef || null;
         await db.transaction(async (tx) => {
             await tx
                 .update(payments)
                 .set({
                     status: "completed",
-                    slipUrl: slipResult.data?.transRef || null,
+                    slipUrl: promptpayTransRef,
+                    promptpayTransRef,
                 })
                 .where(eq(payments.id, payment.id));
 
@@ -296,6 +299,12 @@ export async function POST(request: Request) {
     } catch (error) {
         if (error instanceof Error && error.message === 'COUPON_LIMIT_EXCEEDED') {
             return NextResponse.json({ error: 'คูปองนี้ถูกใช้ครบจำนวนแล้ว' }, { status: 400 });
+        }
+        if (isDuplicateKeyError(error)) {
+            return NextResponse.json(
+                { success: false, error: "Duplicate slip reference" },
+                { status: 400 }
+            );
         }
         logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error verifying slip' });
         return NextResponse.json(

@@ -117,8 +117,26 @@ vi.mock('@/lib/db', () => ({
             return fn({
                 insert: vi.fn().mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) }),
                 update: vi.fn().mockReturnValue({
-                    set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
+                    set: vi.fn().mockImplementation((data: Record<string, unknown>) => {
+                        mockDb.updateSetData = data;
+                        return { where: vi.fn().mockResolvedValue(undefined) };
+                    }),
                 }),
+                query: {
+                    courses: {
+                        findFirst: vi.fn().mockImplementation(() => Promise.resolve(mockDb.queryFindFirstResult)),
+                    },
+                },
+                select: vi.fn().mockImplementation(() => ({
+                    from: vi.fn().mockImplementation(() => ({
+                        where: vi.fn().mockImplementation(() => ({
+                            limit: vi.fn().mockResolvedValue(mockDb.selectResults),
+                        })),
+                        innerJoin: vi.fn().mockReturnValue({
+                            where: vi.fn().mockResolvedValue([]),
+                        }),
+                    })),
+                })),
             });
         }),
     },
@@ -280,6 +298,7 @@ describe('POST /api/stripe/webhook', () => {
                 object: {
                     metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
                     payment_intent: 'pi_test',
+                    payment_status: 'paid',
                     amount_total: 99000,
                     currency: 'thb',
                     customer_details: { email: 'test@example.com', name: 'Test' },
@@ -303,6 +322,7 @@ describe('POST /api/stripe/webhook', () => {
                 object: {
                     metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
                     payment_intent: 'pi_test',
+                    payment_status: 'paid',
                     amount_total: 99000,
                     currency: 'thb',
                     customer_details: { email: 'test@example.com', name: 'Test' },
@@ -316,6 +336,78 @@ describe('POST /api/stripe/webhook', () => {
         const res = await callWebhook('valid-body');
         expect(res.status).toBe(200);
         // insert should not be called for enrollment (already exists)
+    });
+
+    it('should not fulfill checkout session unless Stripe marks it paid', async () => {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'unpaid',
+                    amount_total: 99000,
+                    currency: 'thb',
+                },
+            },
+        });
+
+        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', status: 'pending' }];
+
+        const res = await callWebhook('valid-body');
+        expect(res.status).toBe(200);
+        expect(mockDb.transactionCalled).toBe(false);
+        expect(mockDb.updateSetData).toBeNull();
+    });
+
+    it('should return 500 and not mark completed when fulfillment transaction fails', async () => {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'paid',
+                    amount_total: 99000,
+                    currency: 'thb',
+                    customer_details: { email: 'test@example.com', name: 'Test' },
+                },
+            },
+        });
+
+        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', status: 'pending' }];
+        vi.mocked(db.transaction).mockImplementationOnce(async () => {
+            throw new Error('enrollment insert failed');
+        });
+
+        const res = await callWebhook('valid-body');
+        expect(res.status).toBe(500);
+        expect(mockDb.updateSetData?.status).not.toBe('completed');
+    });
+
+    it('should skip duplicate Stripe events without fulfilling again', async () => {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_123',
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'paid',
+                    amount_total: 99000,
+                    currency: 'thb',
+                },
+            },
+        });
+
+        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', status: 'pending' }];
+        vi.mocked(db.transaction).mockImplementationOnce(async () => {
+            throw new Error("Duplicate entry 'evt_123' for key 'stripe_events_id'");
+        });
+
+        const res = await callWebhook('valid-body');
+        expect(res.status).toBe(200);
+        expect(mockDb.updateSetData?.status).not.toBe('completed');
     });
 
     it('should handle missing metadata gracefully', async () => {
