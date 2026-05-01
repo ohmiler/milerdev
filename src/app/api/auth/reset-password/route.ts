@@ -7,12 +7,17 @@ import { sendPasswordResetEmail } from '@/lib/email';
 import { randomBytes, createHash } from 'crypto';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const DUPLICATE_RESET_SUPPRESSION_MS = 5 * 60 * 1000;
+
 const resetSchema = z.object({
     email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
 });
 
 export async function POST(request: Request) {
     try {
+        const genericMessage = 'หากอีเมลนี้มีในระบบ คุณจะได้รับลิงก์รีเซ็ตรหัสผ่าน';
+
         // Rate limiting
         const clientIP = getClientIP(request);
         const rateLimit = checkRateLimit(`reset:${clientIP}`, rateLimits.auth);
@@ -43,14 +48,27 @@ export async function POST(request: Request) {
         // Always return success to prevent email enumeration
         if (!user) {
             return NextResponse.json({
-                message: 'หากอีเมลนี้มีในระบบ คุณจะได้รับลิงก์รีเซ็ตรหัสผ่าน'
+                message: genericMessage
             });
+        }
+
+        const now = Date.now();
+        const resetExpiresAt = user.resetExpires?.getTime();
+        const hasFreshResetToken =
+            !!user.resetToken &&
+            typeof resetExpiresAt === 'number' &&
+            resetExpiresAt - now > RESET_TOKEN_TTL_MS - DUPLICATE_RESET_SUPPRESSION_MS;
+
+        // Avoid invalidating the email that was just sent if the user taps submit twice
+        // or requests another reset before the first message arrives.
+        if (hasFreshResetToken) {
+            return NextResponse.json({ message: genericMessage });
         }
 
         // Generate cryptographically secure reset token
         const resetToken = randomBytes(32).toString('hex');
         const resetTokenHash = createHash('sha256').update(resetToken).digest('hex');
-        const resetExpires = new Date(Date.now() + 3600000); // 1 hour
+        const resetExpires = new Date(now + RESET_TOKEN_TTL_MS);
 
         // Store hashed token in DB (plaintext sent to user via email)
         await db
@@ -71,7 +89,7 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({
-            message: 'หากอีเมลนี้มีในระบบ คุณจะได้รับลิงก์รีเซ็ตรหัสผ่าน'
+            message: genericMessage
         });
     } catch (error) {
         console.error('Password reset error:', error);

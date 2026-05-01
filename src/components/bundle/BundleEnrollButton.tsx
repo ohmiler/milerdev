@@ -17,7 +17,7 @@ type PaymentStep = 'idle' | 'method' | 'transfer' | 'verifying';
 
 export default function BundleEnrollButton({ bundleId, price, bundleSlug, allEnrolled = false }: BundleEnrollButtonProps) {
     const router = useRouter();
-    const { data: session } = useSession();
+    const session = useSession()?.data;
     const [loading, setLoading] = useState(false);
     const [enrolled, setEnrolled] = useState(false);
     const [paymentStep, setPaymentStep] = useState<PaymentStep>('idle');

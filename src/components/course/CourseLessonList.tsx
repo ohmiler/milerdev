@@ -22,7 +22,7 @@ interface CourseLessonListProps {
 const INITIAL_SHOW = 10;
 
 export default function CourseLessonList({ lessons, courseSlug, isEnrolled = false }: CourseLessonListProps) {
-  const { data: session } = useSession();
+  const session = useSession()?.data;
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [showAll, setShowAll] = useState(false);

@@ -40,7 +40,9 @@ export function useNotifications() {
 }
 
 export default function NotificationProvider({ children }: { children: React.ReactNode }) {
-    const { data: session, status } = useSession();
+    const sessionResult = useSession();
+    const session = sessionResult?.data;
+    const status = sessionResult?.status ?? 'unauthenticated';
     const isAuthenticated = status === 'authenticated' && !!session?.user;
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);

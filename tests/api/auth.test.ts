@@ -75,10 +75,12 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { auth } from '@/lib/auth';
+import { sendPasswordResetEmail } from '@/lib/email';
 import bcrypt from 'bcryptjs';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 const mockedAuth = vi.mocked(auth);
+const mockedSendPasswordResetEmail = vi.mocked(sendPasswordResetEmail);
 const mockedBcrypt = vi.mocked(bcrypt);
 const mockedRateLimit = vi.mocked(checkRateLimit);
 
@@ -221,6 +223,22 @@ describe('POST /api/auth/reset-password', () => {
         expect(mockDbState.updateSet).toBeTruthy();
         expect(mockDbState.updateSet).toHaveProperty('resetToken');
         expect(mockDbState.updateSet).toHaveProperty('resetExpires');
+    });
+
+    it('should not invalidate a fresh reset token on duplicate requests', async () => {
+        mockDbState.selectResult = [{
+            id: 'user-1',
+            email: 'user@example.com',
+            name: 'User',
+            resetToken: 'existing-token-hash',
+            resetExpires: new Date(Date.now() + 58 * 60 * 1000),
+        }];
+
+        const res = await callReset({ email: 'user@example.com' });
+
+        expect(res.status).toBe(200);
+        expect(mockDbState.updateSet).toBeNull();
+        expect(mockedSendPasswordResetEmail).not.toHaveBeenCalled();
     });
 
     it('should reject invalid email format', async () => {

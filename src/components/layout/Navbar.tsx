@@ -104,7 +104,9 @@ export default function Navbar() {
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const [showNotiDropdown, setShowNotiDropdown] = useState(false);
-    const { data: session, status } = useSession();
+    const sessionResult = useSession();
+    const session = sessionResult?.data;
+    const status = sessionResult?.status ?? 'unauthenticated';
     const pathname = usePathname();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const notiRef = useRef<HTMLDivElement>(null);

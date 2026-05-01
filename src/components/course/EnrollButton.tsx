@@ -16,7 +16,9 @@ type PaymentStep = 'idle' | 'method' | 'transfer' | 'verifying';
 
 export default function EnrollButton({ courseId, courseSlug, price, onEnrollmentChange }: EnrollButtonProps) {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const sessionResult = useSession();
+  const session = sessionResult?.data;
+  const status = sessionResult?.status ?? 'unauthenticated';
   const [loading, setLoading] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
   const [checking, setChecking] = useState(true);
