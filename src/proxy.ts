@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-type MiddlewareGlobal = typeof globalThis & {
-    __milerdevMiddlewareCleanupStarted?: boolean;
+type ProxyGlobal = typeof globalThis & {
+    __milerdevProxyCleanupStarted?: boolean;
 };
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
-const middlewareGlobal = globalThis as MiddlewareGlobal;
+const proxyGlobal = globalThis as ProxyGlobal;
 const baseSecurityHeaders: Record<string, string> = {
     'X-XSS-Protection': '1; mode=block',
     'X-Content-Type-Options': 'nosniff',
@@ -31,7 +31,7 @@ const documentSecurityHeaders: Record<string, string> = {
     ].join('; '),
 };
 
-// Simple in-memory rate limiter for middleware (edge-compatible)
+// Simple in-memory rate limiter for proxy
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 function middlewareRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
@@ -129,7 +129,7 @@ function extractClientIP(request: NextRequest): string {
 }
 
 // Cleanup stale entries every 5 minutes
-if (!middlewareGlobal.__milerdevMiddlewareCleanupStarted) {
+if (!proxyGlobal.__milerdevProxyCleanupStarted) {
     const cleanup = () => {
         const now = Date.now();
         for (const [key, entry] of rateLimitStore.entries()) {
@@ -137,7 +137,7 @@ if (!middlewareGlobal.__milerdevMiddlewareCleanupStarted) {
         }
     };
     setInterval(cleanup, RATE_LIMIT_CLEANUP_INTERVAL_MS);
-    middlewareGlobal.__milerdevMiddlewareCleanupStarted = true;
+    proxyGlobal.__milerdevProxyCleanupStarted = true;
 }
 
 function isDocumentRequest(request: NextRequest): boolean {
@@ -177,7 +177,7 @@ function createRateLimitResponse(request: NextRequest, message: string): NextRes
     return applySecurityHeaders(request, response);
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
     const isAdminApiRoute = pathname.startsWith('/api/admin');
     const isCredentialsCallbackRoute = pathname === '/api/auth/callback/credentials';
@@ -203,7 +203,7 @@ export function middleware(request: NextRequest) {
     return applySecurityHeaders(request, response);
 }
 
-// Configure which paths the middleware runs on
+// Configure which paths the proxy runs on
 export const config = {
     matcher: [
         // Skip internal paths and static files
