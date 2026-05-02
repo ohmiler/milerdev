@@ -37,7 +37,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
             <path d="M21 21l-4.3-4.3" />
           </svg>
           <input type="search" placeholder="Search courses, students, payments..." />
-          <span>⌘ K</span>
+          <span>Ctrl K</span>
         </label>
 
         <div className="admin-topbar-actions">
@@ -61,9 +61,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
 
       <header className="admin-mobile-header">
         <Link href="/admin" className="admin-mobile-brand">
-          <span>
-            <img src="/milerdev-logo-transparent.png" alt="MilerDev" />
-          </span>
+          <span>MD</span>
           <div>
             <strong>MilerDev</strong>
             <small>{activeTitle}</small>
@@ -71,7 +69,12 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
         </Link>
 
         <div className="admin-mobile-actions">
-          <Link href="/admin/courses/new" className="admin-mobile-new">+</Link>
+          <Link href="/" className="admin-mobile-site" aria-label="ไปหน้าเว็บ">
+            &#8599;
+          </Link>
+          <Link href="/admin/courses/new" className="admin-mobile-new" aria-label="เพิ่มคอร์ส">
+            +
+          </Link>
           <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 6h16M4 12h16M4 18h16" />
@@ -86,9 +89,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
           <nav className="admin-mobile-drawer" aria-label="Mobile admin navigation">
             <div className="admin-mobile-drawer-head">
               <Link href="/admin" onClick={() => setMenuOpen(false)} className="admin-mobile-brand">
-                <span>
-                  <img src="/milerdev-logo-transparent.png" alt="MilerDev" />
-                </span>
+                <span>MD</span>
                 <div>
                   <strong>MilerDev</strong>
                   <small>Admin LMS</small>
@@ -106,9 +107,14 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                 {adminPrimaryLinks.map((link) => {
                   const active = isActive(link.href, link.exact);
                   return (
-                    <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className={active ? 'active' : ''}>
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={active ? 'admin-mobile-nav-link active' : 'admin-mobile-nav-link'}
+                    >
                       <AdminNavIcon name={link.icon} />
-                      {link.label}
+                      <span>{link.label}</span>
                     </Link>
                   );
                 })}
@@ -120,9 +126,14 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                   {group.items.map((link) => {
                     const active = isActive(link.href);
                     return (
-                      <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)} className={active ? 'active' : ''}>
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setMenuOpen(false)}
+                        className={active ? 'admin-mobile-nav-link active' : 'admin-mobile-nav-link'}
+                      >
                         <AdminNavIcon name={link.icon} />
-                        {link.label}
+                        <span>{link.label}</span>
                       </Link>
                     );
                   })}
@@ -130,18 +141,25 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
               ))}
             </div>
 
-            <div className="admin-mobile-user">
-              <span>{initial}</span>
-              <div>
-                <strong>{userName}</strong>
-                <small>Admin</small>
+            <div className="admin-mobile-drawer-footer">
+              <Link href="/" onClick={() => setMenuOpen(false)} className="admin-mobile-site-link">
+                <span>&#8599;</span>
+                ไปหน้าเว็บ
+              </Link>
+
+              <div className="admin-mobile-user">
+                <span>{initial}</span>
+                <div>
+                  <strong>{userName}</strong>
+                  <small>Admin</small>
+                </div>
               </div>
             </div>
           </nav>
         </>
       ) : null}
 
-      <style jsx>{`
+      <style jsx global>{`
         .admin-topbar {
           position: sticky;
           top: 0;
@@ -316,11 +334,16 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
           flex: 0 0 auto;
           border-radius: 10px;
           background: linear-gradient(135deg, #02abff, #0089d6);
+          color: #ffffff;
+          font-size: 0.78rem;
+          font-weight: 950;
+          letter-spacing: 0;
+          box-shadow: 0 12px 22px rgba(2, 171, 255, 0.2);
         }
 
-        .admin-mobile-brand img {
-          width: 28px;
-          height: 28px;
+        .admin-mobile-brand div,
+        .admin-mobile-user div {
+          min-width: 0;
         }
 
         .admin-mobile-brand strong,
@@ -329,12 +352,19 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
           color: #102033;
           font-size: 0.9rem;
           line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .admin-mobile-brand small,
         .admin-mobile-user small {
+          display: block;
           color: #64758b;
           font-size: 0.72rem;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .admin-mobile-actions {
@@ -344,6 +374,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
         }
 
         .admin-mobile-new,
+        .admin-mobile-site,
         .admin-mobile-actions button,
         .admin-mobile-drawer-head button {
           width: 40px;
@@ -357,6 +388,10 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
           text-decoration: none;
           cursor: pointer;
           font-weight: 900;
+        }
+
+        .admin-mobile-site {
+          color: #0089d6;
         }
 
         .admin-mobile-new {
@@ -375,12 +410,12 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
             position: sticky;
             top: 0;
             z-index: 40;
-            min-height: 72px;
+            min-height: 64px;
             display: flex;
             justify-content: space-between;
             gap: 12px;
             align-items: center;
-            padding: 0 16px;
+            padding: 0 14px;
             border-bottom: 1px solid #dbe8f2;
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(18px);
@@ -401,7 +436,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
             left: 0;
             bottom: 0;
             z-index: 50;
-            width: min(88vw, 330px);
+            width: min(88vw, 320px);
             display: grid;
             grid-template-rows: auto 1fr auto;
             border-right: 1px solid #dbe8f2;
@@ -410,7 +445,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
           }
 
           .admin-mobile-drawer-head {
-            min-height: 72px;
+            min-height: 64px;
             display: flex;
             justify-content: space-between;
             gap: 12px;
@@ -441,9 +476,9 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
             text-transform: uppercase;
           }
 
-          .admin-mobile-nav-group a {
+          .admin-mobile-nav-link {
             min-height: 42px;
-            display: flex;
+            display: flex !important;
             gap: 12px;
             align-items: center;
             border-radius: 8px;
@@ -454,18 +489,57 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
             font-weight: 750;
           }
 
-          .admin-mobile-nav-group a.active {
+          .admin-mobile-nav-link svg {
+            width: 18px !important;
+            height: 18px !important;
+            flex: 0 0 auto;
+          }
+
+          .admin-mobile-nav-link span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          .admin-mobile-nav-link.active {
             background: linear-gradient(135deg, #02abff, #0089d6);
             color: #ffffff;
             box-shadow: 0 12px 24px rgba(2, 171, 255, 0.2);
+          }
+
+          .admin-mobile-drawer-footer {
+            display: grid;
+            gap: 10px;
+            padding: 12px 16px 14px;
+            border-top: 1px solid #e8f1f8;
+            background: #ffffff;
+          }
+
+          .admin-mobile-site-link {
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid #dbe8f2;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #102033;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 850;
+          }
+
+          .admin-mobile-site-link span {
+            color: #0089d6;
+            font-weight: 900;
           }
 
           .admin-mobile-user {
             display: flex;
             gap: 10px;
             align-items: center;
-            padding: 16px;
-            border-top: 1px solid #e8f1f8;
           }
 
           .admin-mobile-user > span {
@@ -473,6 +547,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
             height: 36px;
             display: grid;
             place-items: center;
+            flex: 0 0 auto;
             border-radius: 999px;
             background: #eefaff;
             color: #0089d6;
