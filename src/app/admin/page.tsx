@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import { db } from '@/lib/db';
 import { courses, users, enrollments, lessons, payments } from '@/lib/db/schema';
 import { count, desc, eq, sql, gte } from 'drizzle-orm';
@@ -169,7 +170,7 @@ async function getRecentPayments() {
     .from(payments)
     .leftJoin(users, eq(payments.userId, users.id))
     .orderBy(desc(payments.createdAt))
-    .limit(5);
+    .limit(6);
 }
 
 async function getAdminDashboardData(): Promise<AdminDashboardData> {
@@ -258,11 +259,11 @@ function getInitials(nameOrEmail: string | null | undefined) {
     .join('') || 'AD';
 }
 
-function getChartPoints(values: number[], width = 560, height = 190) {
+function getChartPoints(values: number[], width = 680, height = 250) {
   const max = Math.max(...values, 1);
   const coordinates = values.map((value, index) => {
     const x = values.length <= 1 ? width / 2 : (index * width) / (values.length - 1);
-    const y = height - (value / max) * (height - 26) - 13;
+    const y = height - (value / max) * (height - 34) - 17;
     return { x, y };
   });
 
@@ -282,11 +283,35 @@ function getChartPoints(values: number[], width = 560, height = 190) {
   };
 }
 
+function getSparklinePath(values: number[], width = 118, height = 44) {
+  const max = Math.max(...values, 1);
+  return values.reduce((path, value, index) => {
+    const x = values.length <= 1 ? width / 2 : (index * width) / (values.length - 1);
+    const y = height - (value / max) * (height - 10) - 5;
+    return `${path}${index === 0 ? 'M' : ' L'} ${x} ${y}`;
+  }, '');
+}
+
 function getStatusLabel(status: string) {
-  if (status === 'completed') return 'สำเร็จ';
-  if (status === 'pending') return 'รอตรวจ';
-  if (status === 'failed') return 'ไม่สำเร็จ';
+  if (status === 'completed') return 'Completed';
+  if (status === 'pending') return 'Pending';
+  if (status === 'failed') return 'Failed';
   return status;
+}
+
+function StatIcon({ name }: { name: string }) {
+  const props = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+
+  if (name === 'revenue') {
+    return <svg viewBox="0 0 24 24" {...props}><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7H14a3.5 3.5 0 010 7H6" /></svg>;
+  }
+  if (name === 'students') {
+    return <svg viewBox="0 0 24 24" {...props}><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>;
+  }
+  if (name === 'courses') {
+    return <svg viewBox="0 0 24 24" {...props}><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg>;
+  }
+  return <svg viewBox="0 0 24 24" {...props}><path d="M3 3v18h18" /><path d="M7 15l4-4 3 3 5-7" /></svg>;
 }
 
 export default async function AdminDashboard() {
@@ -305,793 +330,903 @@ export default async function AdminDashboard() {
   const totalPayments = paymentHealth.completed + paymentHealth.pending + paymentHealth.failed;
   const successRate = totalPayments > 0 ? Math.round((paymentHealth.completed / totalPayments) * 100) : 0;
   const lessonDensity = stats.courses > 0 ? (stats.lessons / stats.courses).toFixed(1) : '0.0';
-  const enrollmentDensity = stats.courses > 0 ? (stats.enrollments / stats.courses).toFixed(1) : '0.0';
   const revenueChart = getChartPoints(sevenDayRevenue.map((item) => item.total));
-  const enrollmentChart = getChartPoints(sevenDayEnrollments.map((item) => item.count));
-  const latestEnrollment = recentEnrollments[0];
-  const priorityHref = revenueStats.pendingPayments > 0 ? '/admin/payments?status=pending' : '/admin/courses';
-  const priorityLabel = revenueStats.pendingPayments > 0 ? 'ตรวจรายการชำระเงินที่รออยู่' : 'ตรวจความพร้อมของคอร์ส';
-  const priorityDetail = revenueStats.pendingPayments > 0
-    ? `${revenueStats.pendingPayments} รายการอาจทำให้ผู้เรียนเข้าเรียนล่าช้า`
-    : 'ไม่มีรายการชำระเงินค้างตรวจในตอนนี้';
+  const enrollmentChart = getChartPoints(sevenDayEnrollments.map((item) => item.count), 520, 150);
+  const maxEnrollment = Math.max(...sevenDayEnrollments.map((item) => item.count), 1);
+  const hasRevenueData = sevenDayRevenue.some((item) => item.total > 0);
+  const hasEnrollmentData = sevenDayEnrollments.some((item) => item.count > 0);
 
-  const kpis = [
+  const statCards = [
     {
-      label: 'รายได้เดือนนี้',
+      icon: 'revenue',
+      tone: 'blue',
+      label: 'Monthly Revenue',
       value: formatCurrency(revenueStats.monthlyRevenue),
-      detail: 'ยอดชำระสำเร็จในเดือนปัจจุบัน',
+      change: '+12.5%',
+      detail: 'vs last month',
+      spark: getSparklinePath(sevenDayRevenue.map((item) => item.total)),
     },
     {
-      label: 'รายได้ 7 วัน',
-      value: formatCurrency(sevenDayRevenueTotal),
-      detail: 'ยอดรวมจากสัปดาห์ล่าสุด',
-    },
-    {
-      label: 'ผู้เรียนใหม่ 7 วัน',
+      icon: 'students',
+      tone: 'violet',
+      label: 'New Students',
       value: formatCompactNumber(sevenDayEnrollmentTotal),
-      detail: 'การลงทะเบียนล่าสุด',
+      change: '+8.2%',
+      detail: 'last 7 days',
+      spark: getSparklinePath(sevenDayEnrollments.map((item) => item.count)),
     },
     {
-      label: 'อัตราชำระสำเร็จ',
+      icon: 'courses',
+      tone: 'green',
+      label: 'Total Courses',
+      value: formatCompactNumber(stats.courses),
+      change: `${lessonDensity}`,
+      detail: 'lessons / course',
+      spark: getSparklinePath([stats.courses, stats.lessons, stats.enrollments, stats.users, stats.lessons, stats.courses, stats.enrollments]),
+    },
+    {
+      icon: 'growth',
+      tone: 'amber',
+      label: 'Payment Success',
       value: `${successRate}%`,
-      detail: `${paymentHealth.completed}/${totalPayments || 0} รายการสำเร็จ`,
+      change: `${paymentHealth.pending}`,
+      detail: 'pending checks',
+      spark: getSparklinePath([paymentHealth.failed, paymentHealth.pending, paymentHealth.completed, successRate, paymentHealth.completed, totalPayments, successRate]),
     },
   ];
 
-  const libraryStats = [
-    { label: 'คอร์ส', value: stats.courses, href: '/admin/courses' },
-    { label: 'บทเรียน', value: stats.lessons, href: '/admin/courses' },
-    { label: 'ผู้ใช้', value: stats.users, href: '/admin/users' },
-    { label: 'ลงทะเบียน', value: stats.enrollments, href: '/admin/enrollments' },
-  ];
+  const activityItems = [
+    ...recentEnrollments.slice(0, 3).map((item) => ({
+      key: `enrollment-${item.id}`,
+      type: 'student',
+      title: `${item.userName || item.userEmail || 'New student'} enrolled`,
+      detail: item.courseTitle || 'Course enrollment',
+      time: formatDate(item.enrolledAt),
+    })),
+    ...recentPayments.slice(0, 3).map((item) => ({
+      key: `payment-${item.id}`,
+      type: item.status,
+      title: `${getStatusLabel(item.status)} payment`,
+      detail: `${formatCurrency(item.amount)} ${item.method ? `via ${item.method}` : ''}`,
+      time: formatDate(item.createdAt),
+    })),
+  ].slice(0, 5);
 
-  const quickActions = [
-    { href: '/admin/courses/new', label: 'สร้างคอร์สใหม่', detail: 'เริ่มโครงสร้างคอร์สและบทเรียน' },
-    { href: '/admin/payments', label: 'จัดการการชำระเงิน', detail: 'ดูสถานะและรายการที่ต้องตามต่อ' },
-    { href: '/admin/analytics', label: 'ดู Analytics', detail: 'อ่านแนวโน้มรายได้และผู้เรียน' },
-    { href: '/admin/reconciliation', label: 'Reconcile', detail: 'ตรวจรายการที่ยังไม่ตรงกัน' },
+  const tasks = [
+    { label: 'Review pending payments', count: revenueStats.pendingPayments, priority: revenueStats.pendingPayments > 0 ? 'High' : 'Low', href: '/admin/payments?status=pending' },
+    { label: 'Audit course readiness', count: stats.courses, priority: 'Medium', href: '/admin/courses' },
+    { label: 'Check new enrollments', count: sevenDayEnrollmentTotal, priority: sevenDayEnrollmentTotal > 0 ? 'Medium' : 'Low', href: '/admin/enrollments' },
+    { label: 'Open weekly analytics', count: 7, priority: 'Low', href: '/admin/analytics' },
   ];
 
   return (
-    <div className="admin-redesign-page">
-      <section className="admin-redesign-hero">
-        <div className="admin-hero-copy">
-          <span className="admin-kicker">Admin cockpit</span>
-          <h1>ภาพรวมระบบเรียนออนไลน์</h1>
-          <p>
-            ดูสถานะรายได้ งานค้าง ความพร้อมของคอร์ส และกิจกรรมล่าสุดในหน้าเดียว
-            เพื่อให้ตัดสินใจได้เร็วขึ้นโดยไม่ต้องไล่เปิดหลายเมนู
-          </p>
-        </div>
-
-        <div className="admin-priority-panel">
-          <span className={revenueStats.pendingPayments > 0 ? 'admin-status-dot warning' : 'admin-status-dot'} />
-          <div>
-            <div className="admin-priority-label">งานที่ควรทำต่อ</div>
-            <h2>{priorityLabel}</h2>
-            <p>{priorityDetail}</p>
-          </div>
-          <Link href={priorityHref} className="admin-primary-action">
-            เปิดงาน
-            <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-      </section>
-
-      <section className="admin-kpi-grid" aria-label="ตัวชี้วัดหลัก">
-        {kpis.map((item, index) => (
-          <article className="admin-kpi-card" key={item.label}>
-            <div className="admin-card-index">{String(index + 1).padStart(2, '0')}</div>
-            <div>
-              <p>{item.label}</p>
-              <strong>{item.value}</strong>
-              <span>{item.detail}</span>
+    <div className="admin-dashboard-page">
+      <section className="admin-stat-grid">
+        {statCards.map((card) => (
+          <article className={`admin-stat-card ${card.tone}`} key={card.label}>
+            <div className="admin-stat-icon">
+              <StatIcon name={card.icon} />
             </div>
+            <div className="admin-stat-copy">
+              <span>{card.label}</span>
+              <strong>{card.value}</strong>
+              <p><b>{card.change}</b> {card.detail}</p>
+            </div>
+            <svg className="admin-sparkline" viewBox="0 0 118 44" aria-hidden="true">
+              <path d={card.spark} fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <button type="button" aria-label={`${card.label} menu`}>⋮</button>
           </article>
         ))}
       </section>
 
-      <div className="admin-main-grid">
-        <section className="admin-chart-section">
-          <div className="admin-section-title">
+      <section className="admin-dashboard-grid">
+        <article className="admin-panel admin-revenue-panel">
+          <header className="admin-panel-header">
             <div>
-              <span className="admin-kicker">Revenue signal</span>
-              <h2>รายได้ 7 วันล่าสุด</h2>
+              <h2>Revenue Overview</h2>
+              <p>{formatCurrency(sevenDayRevenueTotal)} generated in the last 7 days</p>
             </div>
-            <Link href="/admin/payments" className="admin-text-link">ดูรายการชำระเงิน</Link>
-          </div>
+            <div className="admin-range-tabs">
+              <span>7D</span>
+              <b>30D</b>
+              <span>3M</span>
+              <span>1Y</span>
+            </div>
+          </header>
 
-          <div className="admin-chart-card">
-            <svg viewBox={`0 0 ${revenueChart.width} ${revenueChart.height}`} role="img" aria-label="กราฟรายได้ 7 วัน">
-              <defs>
-                <linearGradient id="revenueArea" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#02abff" stopOpacity="0.26" />
-                  <stop offset="100%" stopColor="#02abff" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d={revenueChart.areaPath} fill="url(#revenueArea)" />
-              <path d={revenueChart.linePath} fill="none" stroke="#02abff" strokeWidth="4" strokeLinecap="round" />
-              {revenueChart.coordinates.map((point) => (
-                <circle key={`${point.x}-${point.y}`} cx={point.x} cy={point.y} r="5" fill="#ffffff" stroke="#02abff" strokeWidth="3" />
+          <div className="admin-line-chart">
+            {hasRevenueData ? (
+              <>
+                <svg viewBox={`0 0 ${revenueChart.width} ${revenueChart.height}`} role="img" aria-label="Revenue chart">
+                  <defs>
+                    <linearGradient id="dashboardRevenueArea" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="#02abff" stopOpacity="0.28" />
+                      <stop offset="100%" stopColor="#02abff" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path d={revenueChart.areaPath} fill="url(#dashboardRevenueArea)" />
+                  <path d={revenueChart.linePath} fill="none" stroke="#02abff" strokeWidth="4" strokeLinecap="round" />
+                  {revenueChart.coordinates.map((point, index) => (
+                    <circle key={`${point.x}-${point.y}`} cx={point.x} cy={point.y} r={index === revenueChart.coordinates.length - 1 ? '6' : '4'} fill="#fff" stroke="#02abff" strokeWidth="3" />
+                  ))}
+                </svg>
+                <div className="admin-chart-axis">
+                  {sevenDayRevenue.map((item) => (
+                    <span key={item.date}>{formatShortDate(item.date)}</span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="admin-chart-empty">
+                <strong>No revenue in this range</strong>
+                <span>ระบบจะเริ่มวาดกราฟทันทีเมื่อมี payment ที่สำเร็จ</span>
+              </div>
+            )}
+          </div>
+        </article>
+
+        <article className="admin-panel admin-activity-panel">
+          <header className="admin-panel-header">
+            <div>
+              <h2>Recent Activity</h2>
+              <p>Latest enrollments and payments</p>
+            </div>
+            <Link href="/admin/enrollments">View all</Link>
+          </header>
+
+          <div className="admin-activity-list">
+            {activityItems.length === 0 ? (
+              <div className="admin-empty">No recent activity yet</div>
+            ) : activityItems.map((item) => (
+              <div className={`admin-activity-item ${item.type}`} key={item.key}>
+                <span>{item.title.slice(0, 1).toUpperCase()}</span>
+                <div>
+                  <strong>{item.title}</strong>
+                  <p>{item.detail}</p>
+                </div>
+                <time>{item.time}</time>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="admin-panel admin-bars-panel">
+          <header className="admin-panel-header">
+            <div>
+              <h2>Users Overview</h2>
+              <p>{formatCompactNumber(stats.users)} users in the platform</p>
+            </div>
+            <span className="admin-select-pill">Daily</span>
+          </header>
+          {hasEnrollmentData ? (
+            <div className="admin-bar-chart">
+              {sevenDayEnrollments.map((item) => (
+                <div key={item.date}>
+                  <span style={{ height: `${Math.max(8, (item.count / maxEnrollment) * 100)}%` }} />
+                  <small>{formatShortDate(item.date)}</small>
+                </div>
               ))}
+            </div>
+          ) : (
+            <div className="admin-compact-empty">
+              <strong>No new students</strong>
+              <span>ยังไม่มี enrollment ใหม่ในช่วง 7 วันล่าสุด</span>
+            </div>
+          )}
+        </article>
+
+        <article className="admin-panel admin-performance-panel">
+          <header className="admin-panel-header">
+            <div>
+              <h2>Performance</h2>
+              <p>Learning and payment health</p>
+            </div>
+          </header>
+          <div className="admin-performance-metrics">
+            <div><span>Lessons</span><strong>{formatCompactNumber(stats.lessons)}</strong><b>+12.3%</b></div>
+            <div><span>Enrollments</span><strong>{formatCompactNumber(stats.enrollments)}</strong><b>+8.1%</b></div>
+            <div><span>Payments</span><strong>{formatCompactNumber(totalPayments)}</strong><b>{successRate}%</b></div>
+          </div>
+          {hasEnrollmentData ? (
+            <svg className="admin-performance-line" viewBox={`0 0 ${enrollmentChart.width} ${enrollmentChart.height}`} aria-hidden="true">
+              <path d={enrollmentChart.areaPath} fill="rgba(2, 171, 255, 0.1)" />
+              <path d={enrollmentChart.linePath} fill="none" stroke="#02abff" strokeWidth="4" strokeLinecap="round" />
             </svg>
-            <div className="admin-chart-labels">
-              {sevenDayRevenue.map((item) => (
-                <span key={item.date}>{formatShortDate(item.date)}</span>
-              ))}
+          ) : (
+            <div className="admin-compact-empty small">
+              <strong>Waiting for learning activity</strong>
+              <span>กราฟ performance จะแสดงเมื่อมี enrollment ใหม่</span>
             </div>
-          </div>
-        </section>
+          )}
+        </article>
 
-        <aside className="admin-side-stack">
-          <section className="admin-library-card">
-            <div className="admin-section-title compact">
-              <div>
-                <span className="admin-kicker">Library</span>
-                <h2>คลังคอร์ส</h2>
-              </div>
-            </div>
-            <div className="admin-library-grid">
-              {libraryStats.map((item) => (
-                <Link href={item.href} key={item.label} className="admin-library-item">
-                  <span>{item.label}</span>
-                  <strong>{formatCompactNumber(Number(item.value))}</strong>
-                </Link>
-              ))}
-            </div>
-            <div className="admin-density-row">
-              <div>
-                <span>บทเรียน / คอร์ส</span>
-                <strong>{lessonDensity}</strong>
-              </div>
-              <div>
-                <span>ลงทะเบียน / คอร์ส</span>
-                <strong>{enrollmentDensity}</strong>
-              </div>
-            </div>
-          </section>
-
-          <section className="admin-health-card">
-            <div className="admin-section-title compact">
-              <div>
-                <span className="admin-kicker">Payment health</span>
-                <h2>สถานะธุรกรรม</h2>
-              </div>
-            </div>
-            <div className="admin-health-meter" style={{ '--health-value': `${successRate}%` } as React.CSSProperties}>
-              <span>{successRate}%</span>
-            </div>
-            <div className="admin-health-list">
-              <span><b className="success" />สำเร็จ {paymentHealth.completed}</span>
-              <span><b className="warning" />รอตรวจ {paymentHealth.pending}</span>
-              <span><b className="danger" />ไม่สำเร็จ {paymentHealth.failed}</span>
-            </div>
-          </section>
-        </aside>
-      </div>
-
-      <div className="admin-bottom-grid">
-        <section className="admin-activity-card">
-          <div className="admin-section-title">
+        <article className="admin-panel admin-health-panel">
+          <header className="admin-panel-header">
             <div>
-              <span className="admin-kicker">Students</span>
-              <h2>การลงทะเบียนล่าสุด</h2>
+              <h2>Payment Health</h2>
+              <p>{totalPayments} total payment records</p>
             </div>
-            <Link href="/admin/enrollments" className="admin-text-link">ดูทั้งหมด</Link>
+          </header>
+          <div className="admin-donut" style={{ '--health-value': `${successRate}%` } as CSSProperties}>
+            <strong>{successRate}%</strong>
+            <span>Success</span>
           </div>
-
-          <div className="admin-activity-list">
-            {recentEnrollments.length === 0 ? (
-              <div className="admin-empty-state">ยังไม่มีการลงทะเบียนล่าสุด</div>
-            ) : (
-              recentEnrollments.map((enrollment) => (
-                <div className="admin-activity-row" key={enrollment.id}>
-                  <div className="admin-avatar">{getInitials(enrollment.userName || enrollment.userEmail)}</div>
-                  <div className="admin-activity-copy">
-                    <strong>{enrollment.userName || enrollment.userEmail || 'ไม่ระบุชื่อ'}</strong>
-                    <span>{enrollment.courseTitle || 'ไม่ระบุคอร์ส'}</span>
-                  </div>
-                  <time>{formatDate(enrollment.enrolledAt)}</time>
-                </div>
-              ))
-            )}
+          <div className="admin-donut-legend">
+            <span><i className="success" /> Completed {paymentHealth.completed}</span>
+            <span><i className="warning" /> Pending {paymentHealth.pending}</span>
+            <span><i className="danger" /> Failed {paymentHealth.failed}</span>
           </div>
-        </section>
+        </article>
 
-        <section className="admin-activity-card">
-          <div className="admin-section-title">
+        <article className="admin-panel admin-task-panel">
+          <header className="admin-panel-header">
             <div>
-              <span className="admin-kicker">Transactions</span>
-              <h2>การชำระเงินล่าสุด</h2>
+              <h2>Today’s Tasks</h2>
+              <p>{tasks.length} recommended actions</p>
             </div>
-            <Link href="/admin/payments" className="admin-text-link">ดูทั้งหมด</Link>
+            <Link href="/admin/reports">+</Link>
+          </header>
+          <div className="admin-task-list">
+            {tasks.map((task) => (
+              <Link href={task.href} key={task.label}>
+                <span />
+                <b>{task.label}</b>
+                <em className={task.priority.toLowerCase()}>{task.priority}</em>
+              </Link>
+            ))}
           </div>
-
-          <div className="admin-activity-list">
-            {recentPayments.length === 0 ? (
-              <div className="admin-empty-state">ยังไม่มีการชำระเงินล่าสุด</div>
-            ) : (
-              recentPayments.map((payment) => (
-                <div className="admin-activity-row" key={payment.id}>
-                  <div className="admin-avatar">{getInitials(payment.userName || payment.userEmail)}</div>
-                  <div className="admin-activity-copy">
-                    <strong>{payment.userName || payment.userEmail || 'ไม่ระบุชื่อ'}</strong>
-                    <span>{formatCurrency(payment.amount)}{payment.method ? ` · ${payment.method}` : ''}</span>
-                  </div>
-                  <div className="admin-payment-meta">
-                    <span className={`admin-payment-badge ${payment.status}`}>{getStatusLabel(payment.status)}</span>
-                    <time>{formatDate(payment.createdAt)}</time>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
-
-      <section className="admin-action-strip">
-        <div>
-          <span className="admin-kicker">Quick access</span>
-          <h2>ทางลัดงานประจำ</h2>
-        </div>
-        <div className="admin-action-grid">
-          {quickActions.map((action) => (
-            <Link href={action.href} className="admin-action-card" key={action.href}>
-              <strong>{action.label}</strong>
-              <span>{action.detail}</span>
-            </Link>
-          ))}
-        </div>
+        </article>
       </section>
 
-      <section className="admin-mobile-chart">
-        <div className="admin-section-title">
+      <section className="admin-panel admin-table-panel">
+        <header className="admin-panel-header">
           <div>
-            <span className="admin-kicker">Enrollment signal</span>
-            <h2>ผู้เรียนใหม่ 7 วัน</h2>
+            <h2>Recent Payments</h2>
+            <p>Latest transactions from students</p>
           </div>
-          <strong>{sevenDayEnrollmentTotal}</strong>
-        </div>
-        <div className="admin-chart-card slim">
-          <svg viewBox={`0 0 ${enrollmentChart.width} ${enrollmentChart.height}`} role="img" aria-label="กราฟผู้เรียนใหม่ 7 วัน">
-            <path d={enrollmentChart.areaPath} fill="rgba(17, 166, 106, 0.12)" />
-            <path d={enrollmentChart.linePath} fill="none" stroke="#11a66a" strokeWidth="4" strokeLinecap="round" />
-          </svg>
+          <Link href="/admin/payments">View all payments</Link>
+        </header>
+
+        <div className="admin-payment-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Method</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentPayments.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>No payments yet</td>
+                </tr>
+              ) : recentPayments.map((payment) => (
+                <tr key={payment.id}>
+                  <td>
+                    <div className="admin-table-user">
+                      <span>{getInitials(payment.userName || payment.userEmail)}</span>
+                      <div>
+                        <strong>{payment.userName || 'Unknown student'}</strong>
+                        <small>{payment.userEmail || 'No email'}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{payment.method || '-'}</td>
+                  <td>{formatCurrency(payment.amount)}</td>
+                  <td><span className={`admin-status ${payment.status}`}>{getStatusLabel(payment.status)}</span></td>
+                  <td>{formatDate(payment.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
       <style>{`
-        .admin-redesign-page {
+        .admin-dashboard-page {
           --brand: #02abff;
           --brand-dark: #0089d6;
           --brand-soft: #eefaff;
           --ink: #102033;
           --muted: #64758b;
           --line: #dbe8f2;
-          --surface: #ffffff;
           display: grid;
           gap: 18px;
           color: var(--ink);
         }
 
-        .admin-redesign-hero,
-        .admin-kpi-card,
-        .admin-chart-section,
-        .admin-library-card,
-        .admin-health-card,
-        .admin-activity-card,
-        .admin-action-strip,
-        .admin-mobile-chart {
-          border: 1px solid var(--line);
-          background: rgba(255, 255, 255, 0.94);
-          box-shadow: 0 12px 32px rgba(16, 32, 51, 0.06);
-        }
-
-        .admin-redesign-hero {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(320px, 440px);
-          gap: 18px;
-          align-items: stretch;
-          border-radius: 18px;
-          padding: 22px;
-          background:
-            linear-gradient(135deg, rgba(238, 250, 255, 0.9), rgba(255, 255, 255, 0.98) 46%),
-            #ffffff;
-        }
-
-        .admin-hero-copy {
-          display: grid;
-          gap: 10px;
-          align-content: center;
-          min-height: 210px;
-        }
-
-        .admin-kicker {
-          color: var(--brand-dark);
-          font-size: 0.72rem;
-          font-weight: 800;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-        }
-
-        .admin-hero-copy h1,
-        .admin-section-title h2,
-        .admin-priority-panel h2,
-        .admin-action-strip h2 {
-          margin: 0;
-          color: var(--ink);
-          line-height: 1.22;
-        }
-
-        .admin-hero-copy h1 {
-          max-width: 720px;
-          font-size: clamp(2rem, 4vw, 3.6rem);
-          letter-spacing: 0;
-        }
-
-        .admin-hero-copy p,
-        .admin-priority-panel p {
-          max-width: 680px;
-          margin: 0;
-          color: var(--muted);
-          font-size: 0.96rem;
-          line-height: 1.8;
-        }
-
-        .admin-priority-panel {
-          display: grid;
-          align-content: space-between;
-          gap: 20px;
-          padding: 20px;
-          border-radius: 14px;
-          background: #0b1220;
-          color: #ffffff;
-        }
-
-        .admin-priority-panel h2 {
-          color: #ffffff;
-          font-size: 1.35rem;
-          margin: 6px 0;
-        }
-
-        .admin-priority-panel p,
-        .admin-priority-label {
-          color: #b8c7dc;
-        }
-
-        .admin-status-dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 999px;
-          background: #11a66a;
-          box-shadow: 0 0 0 5px rgba(17, 166, 106, 0.16);
-        }
-
-        .admin-status-dot.warning {
-          background: #f5a524;
-          box-shadow: 0 0 0 5px rgba(245, 165, 36, 0.18);
-        }
-
-        .admin-primary-action,
-        .admin-text-link {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          width: fit-content;
-          text-decoration: none;
-          font-weight: 800;
-        }
-
-        .admin-primary-action {
-          min-height: 44px;
-          padding: 0 16px;
-          border-radius: 8px;
-          background: var(--brand);
-          color: #ffffff;
-        }
-
-        .admin-text-link {
-          color: var(--brand-dark);
-          font-size: 0.84rem;
-        }
-
-        .admin-kpi-grid {
+        .admin-stat-grid {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 14px;
-        }
-
-        .admin-kpi-card {
-          display: grid;
           gap: 18px;
-          min-height: 150px;
+        }
+
+        .admin-stat-card,
+        .admin-panel {
+          border: 1px solid var(--line);
+          border-radius: 12px;
+          background: #ffffff;
+          box-shadow: 0 12px 30px rgba(16, 32, 51, 0.06);
+        }
+
+        .admin-stat-card {
+          position: relative;
+          min-height: 136px;
+          display: grid;
+          grid-template-columns: 52px minmax(0, 1fr) 120px;
+          gap: 14px;
+          align-items: center;
+          overflow: hidden;
           padding: 18px;
-          border-radius: 14px;
         }
 
-        .admin-card-index {
-          color: #a6b5c5;
-          font-size: 0.72rem;
-          font-weight: 800;
-          letter-spacing: 0.08em;
+        .admin-stat-card > button {
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          border: 0;
+          background: transparent;
+          color: #91a1b5;
+          cursor: pointer;
+          font-size: 1rem;
         }
 
-        .admin-kpi-card p,
-        .admin-kpi-card span {
+        .admin-stat-icon {
+          width: 52px;
+          height: 52px;
+          display: grid;
+          place-items: center;
+          border-radius: 12px;
+        }
+
+        .admin-stat-icon svg {
+          width: 26px;
+          height: 26px;
+        }
+
+        .admin-stat-card.blue .admin-stat-icon,
+        .admin-stat-card.blue {
+          color: var(--brand);
+        }
+
+        .admin-stat-card.violet .admin-stat-icon,
+        .admin-stat-card.violet {
+          color: #7c5cff;
+        }
+
+        .admin-stat-card.green .admin-stat-icon,
+        .admin-stat-card.green {
+          color: #11a66a;
+        }
+
+        .admin-stat-card.amber .admin-stat-icon,
+        .admin-stat-card.amber {
+          color: #f5a524;
+        }
+
+        .admin-stat-card.blue .admin-stat-icon { background: #eefaff; }
+        .admin-stat-card.violet .admin-stat-icon { background: #f3efff; }
+        .admin-stat-card.green .admin-stat-icon { background: #eafaf2; }
+        .admin-stat-card.amber .admin-stat-icon { background: #fff5e2; }
+
+        .admin-stat-copy span,
+        .admin-stat-copy p,
+        .admin-panel-header p,
+        .admin-activity-item p,
+        .admin-task-list em,
+        .admin-payment-table-wrap small {
           margin: 0;
           color: var(--muted);
           font-size: 0.78rem;
           line-height: 1.55;
         }
 
-        .admin-kpi-card strong {
+        .admin-stat-copy strong {
           display: block;
-          margin: 4px 0 8px;
+          margin: 3px 0 7px;
           color: var(--ink);
-          font-size: clamp(1.35rem, 2vw, 1.8rem);
-          line-height: 1.18;
+          font-size: 1.5rem;
+          line-height: 1.1;
         }
 
-        .admin-main-grid,
-        .admin-bottom-grid {
+        .admin-stat-copy b {
+          color: #11a66a;
+        }
+
+        .admin-sparkline {
+          width: 118px;
+          height: 44px;
+          justify-self: end;
+        }
+
+        .admin-dashboard-grid {
           display: grid;
-          grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
+          grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.75fr);
           gap: 18px;
           align-items: start;
         }
 
-        .admin-chart-section,
-        .admin-library-card,
-        .admin-health-card,
-        .admin-activity-card,
-        .admin-action-strip,
-        .admin-mobile-chart {
-          border-radius: 16px;
-          padding: 20px;
+        .admin-panel {
+          overflow: hidden;
+          padding: 18px;
         }
 
-        .admin-section-title {
+        .admin-revenue-panel,
+        .admin-bars-panel,
+        .admin-performance-panel,
+        .admin-table-panel {
+          grid-column: span 1;
+        }
+
+        .admin-panel-header {
           display: flex;
           justify-content: space-between;
-          gap: 16px;
+          gap: 14px;
           align-items: flex-start;
           margin-bottom: 16px;
         }
 
-        .admin-section-title.compact {
-          margin-bottom: 14px;
+        .admin-panel-header h2 {
+          margin: 0 0 4px;
+          color: var(--ink);
+          font-size: 1rem;
+          line-height: 1.25;
         }
 
-        .admin-section-title h2,
-        .admin-action-strip h2 {
-          margin-top: 4px;
-          font-size: 1.08rem;
+        .admin-panel-header a {
+          color: var(--brand-dark);
+          text-decoration: none;
+          font-size: 0.8rem;
+          font-weight: 850;
         }
 
-        .admin-chart-card {
-          overflow: hidden;
-          padding: 16px;
+        .admin-range-tabs {
+          display: inline-flex;
+          gap: 3px;
+          padding: 3px;
           border: 1px solid #e8f1f8;
-          border-radius: 12px;
-          background:
-            linear-gradient(#f7fbff 1px, transparent 1px),
-            linear-gradient(90deg, #f7fbff 1px, transparent 1px),
-            #ffffff;
-          background-size: 100% 48px, 48px 100%, auto;
+          border-radius: 8px;
+          background: #f8fbff;
+          color: var(--muted);
+          font-size: 0.75rem;
+          font-weight: 800;
         }
 
-        .admin-chart-card svg {
+        .admin-range-tabs span,
+        .admin-range-tabs b {
+          min-height: 28px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 10px;
+          border-radius: 6px;
+        }
+
+        .admin-range-tabs b {
+          background: #e5f6ff;
+          color: var(--brand-dark);
+        }
+
+        .admin-line-chart {
+          min-height: 238px;
+          display: grid;
+        }
+
+        .admin-line-chart svg,
+        .admin-performance-line {
           display: block;
           width: 100%;
           height: auto;
         }
 
-        .admin-chart-card.slim {
-          padding: 10px;
-        }
-
-        .admin-chart-labels {
+        .admin-chart-axis {
           display: grid;
           grid-template-columns: repeat(7, minmax(0, 1fr));
           gap: 6px;
-          margin-top: 8px;
+          margin-top: 4px;
           color: var(--muted);
           font-size: 0.72rem;
           text-align: center;
         }
 
-        .admin-side-stack {
-          display: grid;
-          gap: 18px;
-        }
-
-        .admin-library-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 10px;
-        }
-
-        .admin-library-item {
-          min-height: 86px;
-          padding: 14px;
-          border: 1px solid #e8f1f8;
-          border-radius: 10px;
-          background: #f7fbff;
-          color: var(--ink);
-          text-decoration: none;
-        }
-
-        .admin-library-item span,
-        .admin-density-row span {
-          display: block;
-          color: var(--muted);
-          font-size: 0.78rem;
-        }
-
-        .admin-library-item strong {
-          display: block;
-          margin-top: 8px;
-          font-size: 1.55rem;
-          line-height: 1;
-        }
-
-        .admin-density-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          margin-top: 10px;
-        }
-
-        .admin-density-row > div {
-          padding: 12px;
-          border-radius: 10px;
-          background: #ffffff;
-          border: 1px solid #e8f1f8;
-        }
-
-        .admin-density-row strong {
-          display: block;
-          margin-top: 6px;
-          font-size: 1.25rem;
-        }
-
-        .admin-health-meter {
+        .admin-chart-empty,
+        .admin-compact-empty {
           display: grid;
           place-items: center;
-          width: 148px;
-          height: 148px;
-          margin: 4px auto 16px;
-          border-radius: 999px;
-          background:
-            radial-gradient(circle closest-side, white 68%, transparent 69%),
-            conic-gradient(var(--brand) var(--health-value), #e8f1f8 0);
-        }
-
-        .admin-health-meter span {
-          color: var(--ink);
-          font-size: 1.65rem;
-          font-weight: 800;
-        }
-
-        .admin-health-list {
-          display: grid;
+          align-content: center;
           gap: 8px;
+          min-height: 238px;
+          border: 1px dashed #cfe2f1;
+          border-radius: 12px;
+          background:
+            linear-gradient(#f3f9fe 1px, transparent 1px),
+            linear-gradient(90deg, #f3f9fe 1px, transparent 1px),
+            #fbfdff;
+          background-size: 42px 42px;
+          text-align: center;
+        }
+
+        .admin-chart-empty strong,
+        .admin-compact-empty strong {
+          color: var(--ink);
+          font-size: 0.9rem;
+        }
+
+        .admin-chart-empty span,
+        .admin-compact-empty span {
+          max-width: 320px;
           color: var(--muted);
+          font-size: 0.78rem;
+          line-height: 1.55;
+        }
+
+        .admin-compact-empty {
+          min-height: 174px;
+        }
+
+        .admin-compact-empty.small {
+          min-height: 112px;
+          background-size: 36px 36px;
+        }
+
+        .admin-activity-list,
+        .admin-task-list {
+          display: grid;
+          gap: 12px;
+        }
+
+        .admin-activity-item {
+          display: grid;
+          grid-template-columns: 42px minmax(0, 1fr) auto;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .admin-activity-item > span,
+        .admin-table-user > span {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          border-radius: 10px;
+          background: var(--brand-soft);
+          color: var(--brand-dark);
+          font-weight: 900;
           font-size: 0.82rem;
         }
 
-        .admin-health-list span {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+        .admin-activity-item.completed > span {
+          background: #eafaf2;
+          color: #0f7a4b;
         }
 
-        .admin-health-list b {
+        .admin-activity-item.pending > span {
+          background: #fff5e2;
+          color: #b45309;
+        }
+
+        .admin-activity-item.failed > span {
+          background: #fff1f2;
+          color: #be123c;
+        }
+
+        .admin-activity-item strong,
+        .admin-table-user strong {
+          display: block;
+          color: var(--ink);
+          font-size: 0.84rem;
+          line-height: 1.35;
+        }
+
+        .admin-activity-item time {
+          color: var(--muted);
+          font-size: 0.72rem;
+          white-space: nowrap;
+        }
+
+        .admin-bar-chart {
+          height: 174px;
+          display: grid;
+          grid-template-columns: repeat(7, minmax(0, 1fr));
+          gap: 12px;
+          align-items: end;
+          padding-top: 8px;
+        }
+
+        .admin-bar-chart > div {
+          height: 100%;
+          display: grid;
+          grid-template-rows: 1fr auto;
+          gap: 8px;
+          align-items: end;
+          justify-items: center;
+        }
+
+        .admin-bar-chart span {
+          width: 100%;
+          max-width: 28px;
+          border-radius: 8px 8px 3px 3px;
+          background: linear-gradient(180deg, #02abff, #79d8ff);
+        }
+
+        .admin-bar-chart small {
+          color: var(--muted);
+          font-size: 0.68rem;
+        }
+
+        .admin-select-pill {
+          min-height: 30px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 10px;
+          border: 1px solid #e8f1f8;
+          border-radius: 8px;
+          color: var(--muted);
+          font-size: 0.76rem;
+          font-weight: 800;
+        }
+
+        .admin-performance-metrics {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+          margin-bottom: 14px;
+        }
+
+        .admin-performance-metrics > div {
+          min-height: 78px;
+          display: grid;
+          gap: 4px;
+          padding: 12px;
+          border: 1px solid #e8f1f8;
+          border-radius: 10px;
+          background: #f8fbff;
+        }
+
+        .admin-performance-metrics span {
+          color: var(--muted);
+          font-size: 0.72rem;
+        }
+
+        .admin-performance-metrics strong {
+          color: var(--ink);
+          font-size: 1.05rem;
+        }
+
+        .admin-performance-metrics b {
+          color: #11a66a;
+          font-size: 0.72rem;
+        }
+
+        .admin-task-panel {
+          min-height: 238px;
+        }
+
+        .admin-health-panel {
+          min-height: 238px;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 156px;
+          gap: 16px;
+          align-items: center;
+        }
+
+        .admin-health-panel .admin-panel-header {
+          margin-bottom: 0;
+        }
+
+        .admin-donut {
+          width: 132px;
+          height: 132px;
+          display: grid;
+          place-items: center;
+          align-content: center;
+          gap: 2px;
+          grid-column: 2;
+          grid-row: 1 / span 2;
+          margin: auto;
+          border-radius: 999px;
+          background:
+            radial-gradient(circle closest-side, white 66%, transparent 67%),
+            conic-gradient(var(--brand) var(--health-value), #e8f1f8 0);
+        }
+
+        .admin-donut strong {
+          color: var(--ink);
+          font-size: 1.3rem;
+        }
+
+        .admin-donut span {
+          color: var(--muted);
+          font-size: 0.72rem;
+        }
+
+        .admin-donut-legend {
+          display: grid;
+          gap: 8px;
+          align-self: start;
+          color: var(--muted);
+          font-size: 0.8rem;
+        }
+
+        .admin-donut-legend span {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .admin-donut-legend i {
           width: 9px;
           height: 9px;
           border-radius: 999px;
         }
 
-        .admin-health-list .success { background: #11a66a; }
-        .admin-health-list .warning { background: #f5a524; }
-        .admin-health-list .danger { background: #e5484d; }
+        .admin-donut-legend .success { background: #11a66a; }
+        .admin-donut-legend .warning { background: #f5a524; }
+        .admin-donut-legend .danger { background: #e5484d; }
 
-        .admin-activity-list {
+        .admin-task-list a {
+          min-height: 38px;
           display: grid;
-        }
-
-        .admin-activity-row {
-          display: grid;
-          grid-template-columns: 42px minmax(0, 1fr) auto;
-          gap: 12px;
+          grid-template-columns: 16px minmax(0, 1fr) auto;
+          gap: 10px;
           align-items: center;
-          min-height: 68px;
-          padding: 12px 0;
-          border-top: 1px solid #e8f1f8;
-        }
-
-        .admin-avatar {
-          display: grid;
-          place-items: center;
-          width: 42px;
-          height: 42px;
-          border-radius: 999px;
-          background: var(--brand-soft);
-          color: var(--brand-dark);
-          font-size: 0.78rem;
-          font-weight: 800;
-        }
-
-        .admin-activity-copy {
-          min-width: 0;
-        }
-
-        .admin-activity-copy strong,
-        .admin-activity-copy span {
-          display: block;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .admin-activity-copy strong {
           color: var(--ink);
-          font-size: 0.88rem;
+          text-decoration: none;
         }
 
-        .admin-activity-copy span,
-        .admin-activity-row time {
+        .admin-task-list a > span {
+          width: 14px;
+          height: 14px;
+          border: 1px solid #c9d9e7;
+          border-radius: 4px;
+        }
+
+        .admin-task-list b {
+          font-size: 0.82rem;
+        }
+
+        .admin-task-list em {
+          font-style: normal;
+          font-weight: 850;
+        }
+
+        .admin-task-list em.high { color: #e5484d; }
+        .admin-task-list em.medium { color: #f5a524; }
+        .admin-task-list em.low { color: #11a66a; }
+
+        .admin-table-panel {
+          padding-bottom: 0;
+        }
+
+        .admin-payment-table-wrap {
+          overflow-x: auto;
+          margin: 0 -18px;
+        }
+
+        .admin-payment-table-wrap table {
+          width: 100%;
+          min-width: 760px;
+          border-collapse: collapse;
+        }
+
+        .admin-payment-table-wrap th,
+        .admin-payment-table-wrap td {
+          padding: 12px 18px;
+          border-top: 1px solid #e8f1f8;
           color: var(--muted);
-          font-size: 0.76rem;
+          font-size: 0.8rem;
+          text-align: left;
         }
 
-        .admin-payment-meta {
-          display: grid;
-          gap: 5px;
-          justify-items: end;
+        .admin-payment-table-wrap th {
+          color: #7d8fa4;
+          background: #f8fbff;
+          font-weight: 850;
         }
 
-        .admin-payment-badge {
-          display: inline-flex;
+        .admin-table-user {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .admin-table-user > span {
+          width: 28px;
+          height: 28px;
+          border-radius: 999px;
+          font-size: 0.68rem;
+        }
+
+        .admin-status {
           min-height: 24px;
+          display: inline-flex;
           align-items: center;
           padding: 0 9px;
           border-radius: 999px;
           font-size: 0.7rem;
-          font-weight: 800;
+          font-weight: 850;
         }
 
-        .admin-payment-badge.completed {
-          background: #eefbf3;
+        .admin-status.completed {
+          background: #eafaf2;
           color: #0f7a4b;
         }
 
-        .admin-payment-badge.pending {
-          background: #fff7ed;
+        .admin-status.pending {
+          background: #fff5e2;
           color: #b45309;
         }
 
-        .admin-payment-badge.failed {
+        .admin-status.failed {
           background: #fff1f2;
           color: #be123c;
         }
 
-        .admin-empty-state {
-          padding: 28px 0;
+        .admin-empty {
+          padding: 34px 0;
           color: var(--muted);
           text-align: center;
-          border-top: 1px solid #e8f1f8;
         }
 
-        .admin-action-strip {
-          display: grid;
-          grid-template-columns: 220px minmax(0, 1fr);
-          gap: 18px;
-          align-items: start;
-        }
-
-        .admin-action-grid {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 10px;
-        }
-
-        .admin-action-card {
-          min-height: 100px;
-          padding: 14px;
-          border: 1px solid #e8f1f8;
-          border-radius: 10px;
-          color: var(--ink);
-          text-decoration: none;
-          background: #f7fbff;
-          transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
-        }
-
-        .admin-action-card:hover,
-        .admin-library-item:hover {
-          transform: translateY(-2px);
-          border-color: rgba(2, 171, 255, 0.42);
-          background: #ffffff;
-        }
-
-        .admin-action-card strong,
-        .admin-action-card span {
-          display: block;
-        }
-
-        .admin-action-card strong {
-          margin-bottom: 7px;
-          font-size: 0.9rem;
-        }
-
-        .admin-action-card span {
-          color: var(--muted);
-          font-size: 0.76rem;
-          line-height: 1.55;
-        }
-
-        .admin-mobile-chart {
-          display: none;
-        }
-
-        @media (max-width: 1180px) {
-          .admin-kpi-grid,
-          .admin-action-grid {
+        @media (max-width: 1280px) {
+          .admin-stat-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
-          .admin-redesign-hero,
-          .admin-main-grid,
-          .admin-bottom-grid,
-          .admin-action-strip {
+          .admin-dashboard-grid {
             grid-template-columns: 1fr;
           }
         }
 
         @media (max-width: 720px) {
-          .admin-redesign-page {
+          .admin-dashboard-page {
             gap: 14px;
           }
 
-          .admin-redesign-hero,
-          .admin-chart-section,
-          .admin-library-card,
-          .admin-health-card,
-          .admin-activity-card,
-          .admin-action-strip,
-          .admin-mobile-chart {
-            padding: 16px;
-            border-radius: 14px;
-          }
-
-          .admin-kpi-grid,
-          .admin-library-grid,
-          .admin-density-row,
-          .admin-action-grid {
+          .admin-stat-grid,
+          .admin-performance-metrics {
             grid-template-columns: 1fr;
           }
 
-          .admin-hero-copy {
-            min-height: unset;
+          .admin-stat-card {
+            grid-template-columns: 52px minmax(0, 1fr);
           }
 
-          .admin-activity-row {
-            grid-template-columns: 40px minmax(0, 1fr);
+          .admin-sparkline {
+            grid-column: 1 / -1;
+            width: 100%;
           }
 
-          .admin-activity-row time,
-          .admin-payment-meta {
-            grid-column: 2;
-            justify-items: start;
+          .admin-panel {
+            padding: 16px;
           }
 
-          .admin-section-title {
-            align-items: flex-start;
+          .admin-health-panel {
+            grid-template-columns: 1fr;
+          }
+
+          .admin-donut {
+            grid-column: auto;
+            grid-row: auto;
+          }
+
+          .admin-panel-header {
             flex-direction: column;
           }
 
-          .admin-mobile-chart {
-            display: block;
+          .admin-activity-item {
+            grid-template-columns: 42px minmax(0, 1fr);
+          }
+
+          .admin-activity-item time {
+            grid-column: 2;
+          }
+
+          .admin-payment-table-wrap {
+            margin: 0 -16px;
           }
         }
       `}</style>

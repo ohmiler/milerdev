@@ -1,818 +1,900 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 
 interface Course {
-    id: string;
-    title: string;
-    slug: string;
-    description: string | null;
-    price: string | null;
-    promoPrice: string | null;
-    promoStartsAt: Date | null;
-    promoEndsAt: Date | null;
-    status: string;
-    thumbnailUrl: string | null;
-    createdAt: Date | null;
-    lessonCount: number;
-    enrollmentCount: number;
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  price: string | number | null;
+  promoPrice: string | number | null;
+  promoStartsAt: Date | string | null;
+  promoEndsAt: Date | string | null;
+  status: string;
+  thumbnailUrl: string | null;
+  createdAt: Date | null;
+  lessonCount: number;
+  enrollmentCount: number;
 }
 
 interface AdminCoursesTableProps {
-    courses: Course[];
+  courses: Course[];
 }
 
 const PER_PAGE_OPTIONS = [10, 25, 50];
 
 function normalizeUrl(url: string | null): string | null {
-    if (!url || url.trim() === '') return null;
-    if (url.startsWith('http')) return url;
-    return `https://${url}`;
+  if (!url || url.trim() === '') return null;
+  if (url.startsWith('http')) return url;
+  return `https://${url}`;
 }
 
 function formatDate(value: Date | null) {
-    if (!value) return '-';
-    return new Date(value).toLocaleDateString('th-TH', {
-        month: 'short',
-        day: 'numeric',
-    });
+  if (!value) return '-';
+  return new Date(value).toLocaleDateString('th-TH', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function formatPrice(value: string | number | null) {
+  const amount = Number(value || 0);
+  if (amount === 0) return 'ฟรี';
+  return new Intl.NumberFormat('th-TH', {
+    style: 'currency',
+    currency: 'THB',
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function isPromoActive(course: Course) {
+  const now = new Date();
+  const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
+  const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
+  const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
+  return hasPromo && promoStartOk && promoEndOk;
+}
+
+function getCourseHealth(course: Course) {
+  const lessonCount = Number(course.lessonCount || 0);
+  const thumbnail = normalizeUrl(course.thumbnailUrl);
+
+  if (lessonCount === 0) {
+    return { label: 'เติมบทเรียน', className: 'danger' };
+  }
+
+  if (course.status === 'draft') {
+    return { label: 'รอเผยแพร่', className: 'warning' };
+  }
+
+  if (!thumbnail) {
+    return { label: 'เติมภาพปก', className: 'warning' };
+  }
+
+  return { label: 'พร้อมใช้งาน', className: 'success' };
+}
+
+function getPrimaryAction(course: Course) {
+  const lessonCount = Number(course.lessonCount || 0);
+  const thumbnail = normalizeUrl(course.thumbnailUrl);
+
+  if (lessonCount === 0) {
+    return { href: `/admin/courses/${course.id}/lessons`, label: 'เพิ่มบทเรียน' };
+  }
+
+  if (course.status === 'draft' || !thumbnail) {
+    return { href: `/admin/courses/${course.id}/edit`, label: 'แก้ไขคอร์ส' };
+  }
+
+  return { href: `/admin/courses/${course.id}/lessons`, label: 'จัดบทเรียน' };
 }
 
 export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
-    const filtered = courses.filter((course) => {
-        const matchesSearch = !search ||
-            course.title.toLowerCase().includes(search.toLowerCase()) ||
-            course.slug.toLowerCase().includes(search.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
-        return matchesSearch && matchesStatus;
+  const publishedCount = courses.filter((course) => course.status === 'published').length;
+  const draftCount = courses.filter((course) => course.status === 'draft').length;
+
+  const filtered = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    return courses.filter((course) => {
+      const matchesSearch = !normalizedSearch ||
+        course.title.toLowerCase().includes(normalizedSearch) ||
+        course.slug.toLowerCase().includes(normalizedSearch);
+      const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
+      return matchesSearch && matchesStatus;
     });
+  }, [courses, search, statusFilter]);
 
-    const totalPages = Math.ceil(filtered.length / perPage);
-    const paginatedCourses = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedCourses = filtered.slice((safeCurrentPage - 1) * perPage, safeCurrentPage * perPage);
+  const isFiltered = Boolean(search.trim()) || statusFilter !== 'all';
+  const activePromoCount = filtered.filter(isPromoActive).length;
+  const missingCoverCount = filtered.filter((course) => !normalizeUrl(course.thumbnailUrl)).length;
+  const needsAttentionCount = filtered.filter((course) => {
+    const lessonCount = Number(course.lessonCount || 0);
+    return lessonCount === 0 || (course.status === 'published' && !normalizeUrl(course.thumbnailUrl));
+  }).length;
+  const hasStudentsCount = filtered.filter((course) => Number(course.enrollmentCount || 0) > 0).length;
+  const statusTabs = [
+    { value: 'all', label: 'ทั้งหมด', count: courses.length },
+    { value: 'published', label: 'เผยแพร่', count: publishedCount },
+    { value: 'draft', label: 'แบบร่าง', count: draftCount },
+  ];
+  const healthCards = [
+    { label: 'ต้องตรวจ', value: needsAttentionCount, detail: 'ไม่มีบทเรียนหรือภาพปก', tone: 'danger' },
+    { label: 'ไม่มีภาพปก', value: missingCoverCount, detail: 'ควรเติมก่อนโปรโมต', tone: 'neutral' },
+    { label: 'มีผู้เรียนแล้ว', value: hasStudentsCount, detail: 'เริ่มมี traction', tone: 'success' },
+    { label: 'มีโปรโมชัน', value: activePromoCount, detail: 'กำลังลดราคาอยู่', tone: 'warning' },
+  ];
 
-    const publishedCount = courses.filter(c => c.status === 'published').length;
-    const draftCount = courses.filter(c => c.status === 'draft').length;
-    const withStudentsCount = filtered.filter(c => Number(c.enrollmentCount || 0) > 0).length;
-    const missingThumbnailCount = filtered.filter(c => !normalizeUrl(c.thumbnailUrl)).length;
-    const activePromoCount = filtered.filter((course) => {
-        const now = new Date();
-        const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
-        const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
-        const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
-        return hasPromo && promoStartOk && promoEndOk;
-    }).length;
-    const attentionCount = filtered.filter((course) => {
-        const lessonCount = Number(course.lessonCount || 0);
-        const thumbnail = normalizeUrl(course.thumbnailUrl);
-        return lessonCount === 0 || (course.status === 'published' && !thumbnail);
-    }).length;
-    const isFiltered = Boolean(search) || statusFilter !== 'all';
-    const statusTabs = [
-        { value: 'all', label: 'ทั้งหมด', count: courses.length },
-        { value: 'published', label: 'เผยแพร่', count: publishedCount },
-        { value: 'draft', label: 'แบบร่าง', count: draftCount },
-    ];
-    const catalogHealthCards = [
-        {
-            label: 'Needs Attention',
-            value: `${attentionCount} Courses`,
-            detail: 'คอร์สที่ควรเริ่มตรวจจากหน้าแคตตาล็อกนี้',
-            background: attentionCount > 0 ? '#eefbf2' : '#f8fbff',
-            border: attentionCount > 0 ? '#c6f0d4' : '#dbe5f4',
-            labelColor: attentionCount > 0 ? '#15803d' : '#64748b',
-            valueColor: attentionCount > 0 ? '#166534' : '#0f172a',
-            detailColor: '#64748b',
-        },
-        {
-            label: 'Cover Check',
-            value: `${missingThumbnailCount} Courses`,
-            detail: 'คอร์สที่ยังไม่มีภาพปกพร้อมใช้งาน',
-            background: '#fbfdff',
-            border: '#dbe5f4',
-            labelColor: '#64748b',
-            valueColor: '#0f172a',
-            detailColor: '#64748b',
-        },
-        {
-            label: 'Live Traction',
-            value: `${withStudentsCount} Courses`,
-            detail: 'รายการที่เริ่มมีผู้เรียนจริงแล้ว',
-            background: '#eff6ff',
-            border: '#bfdbfe',
-            labelColor: '#1d4ed8',
-            valueColor: '#1d4ed8',
-            detailColor: '#1e40af',
-        },
-        {
-            label: 'Promo Active',
-            value: `${activePromoCount} Courses`,
-            detail: 'คอร์สที่กำลังมีโปรโมชันในตอนนี้',
-            background: '#fff7ed',
-            border: '#fed7aa',
-            labelColor: '#c2410c',
-            valueColor: '#c2410c',
-            detailColor: '#9a3412',
-        },
-    ];
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setCurrentPage(1);
+  };
 
-    return (
+  return (
+    <section className="admin-catalog" aria-label="ตารางจัดการคอร์ส">
+      <header className="admin-catalog-header">
+        <div>
+          <span className="admin-catalog-kicker">Course catalog</span>
+          <h2>รายการคอร์ส</h2>
+          <p>ค้นหา กรอง และเลือก action ถัดไปของแต่ละคอร์สจากมุมมองเดียว</p>
+        </div>
+        <div className="admin-catalog-header-actions">
+          <span>{filtered.length} คอร์ส</span>
+          <Link href="/admin/courses/new">สร้างคอร์สใหม่</Link>
+        </div>
+      </header>
+
+      <div className="admin-catalog-toolbar">
+        <label className="admin-catalog-search">
+          <span>ค้นหาคอร์ส</span>
+          <div>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="ชื่อคอร์สหรือ slug"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+        </label>
+
+        <div className="admin-catalog-tabs" role="tablist" aria-label="กรองสถานะคอร์ส">
+          {statusTabs.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              aria-pressed={statusFilter === tab.value}
+              onClick={() => {
+                setStatusFilter(tab.value);
+                setCurrentPage(1);
+              }}
+            >
+              {tab.label}
+              <span>{tab.count}</span>
+            </button>
+          ))}
+        </div>
+
+        {isFiltered ? (
+          <button type="button" className="admin-catalog-clear" onClick={clearFilters}>
+            ล้างตัวกรอง
+          </button>
+        ) : null}
+      </div>
+
+      <div className="admin-catalog-health">
+        {healthCards.map((item) => (
+          <article className={`admin-catalog-health-card ${item.tone}`} key={item.label}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+            <p>{item.detail}</p>
+          </article>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="admin-catalog-empty">
+          <h3>{isFiltered ? 'ไม่พบคอร์สที่ตรงกับตัวกรอง' : 'ยังไม่มีคอร์ส'}</h3>
+          <p>{isFiltered ? 'ลองล้างตัวกรองหรือค้นหาด้วยคำอื่น' : 'เริ่มสร้างคอร์สแรกเพื่อเปิด catalog ของระบบ'}</p>
+          {isFiltered ? (
+            <button type="button" onClick={clearFilters}>ล้างตัวกรอง</button>
+          ) : (
+            <Link href="/admin/courses/new">สร้างคอร์สแรก</Link>
+          )}
+        </div>
+      ) : (
         <>
-            <div className="admin-catalog-panel" style={{
-                background: 'white',
-                borderRadius: '22px',
-                border: '1px solid #dbe5f4',
-                boxShadow: '0 14px 32px rgba(15, 23, 42, 0.04)',
-                overflow: 'hidden',
-                marginBottom: '18px',
-            }}>
-                <div className="admin-catalog-header" style={{ padding: '18px 20px 16px', borderBottom: '1px solid #e6eefb', background: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                        <div>
-                            <div style={{ color: '#334155', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>Course Catalog</div>
-                            <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.65 }}>ค้นหา กรอง และจัดลำดับว่าคอร์สไหนควรเติมเนื้อหา เตรียมเผยแพร่ หรือดูผลลัพธ์จากผู้เรียนต่อ</div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                            <span style={{ padding: '7px 12px', borderRadius: '999px', background: '#eff6ff', color: '#1d4ed8', fontWeight: 700, fontSize: '0.76rem' }}>
-                                พบ {filtered.length} คอร์ส
-                            </span>
-                            <span style={{ padding: '7px 12px', borderRadius: '999px', background: '#0f172a', color: '#ffffff', fontWeight: 700, fontSize: '0.76rem' }}>
-                                {publishedCount} คอร์สที่เปิดขาย
-                            </span>
-                            {isFiltered && (
-                                <button
-                                    onClick={() => { setSearch(''); setStatusFilter('all'); setCurrentPage(1); }}
-                                    style={{
-                                        border: 'none',
-                                        background: 'transparent',
-                                        color: '#2563eb',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        padding: 0,
-                                        fontSize: '0.82rem',
-                                    }}
-                                >
-                                    ล้างตัวกรอง
-                                </button>
+          <div className="admin-catalog-table-wrap">
+            <table className="admin-catalog-table">
+              <thead>
+                <tr>
+                  <th>คอร์ส</th>
+                  <th>สถานะ</th>
+                  <th>ราคา</th>
+                  <th>บทเรียน</th>
+                  <th>ผู้เรียน</th>
+                  <th>สร้างเมื่อ</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedCourses.map((course) => {
+                  const thumbnail = normalizeUrl(course.thumbnailUrl);
+                  const health = getCourseHealth(course);
+                  const primaryAction = getPrimaryAction(course);
+                  const promoActive = isPromoActive(course);
+
+                  return (
+                    <tr key={course.id}>
+                      <td>
+                        <div className="admin-course-cell">
+                          <div className="admin-course-cover">
+                            {thumbnail ? (
+                              <img src={thumbnail} alt="" />
+                            ) : (
+                              <span>MD</span>
                             )}
-                        </div>
-                    </div>
-                </div>
-
-                <div style={{ padding: '18px 20px 20px', display: 'grid', gap: '16px' }}>
-                    <div className="admin-catalog-toolbar" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                        gap: '12px',
-                        alignItems: 'center',
-                    }}>
-                        <div style={{ position: 'relative', minWidth: 0 }}>
-                            <svg
-                                style={{
-                                    position: 'absolute',
-                                    left: '12px',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    width: '18px',
-                                    height: '18px',
-                                    color: '#94a3b8',
-                                }}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                            <input
-                                type="text"
-                                placeholder="ค้นหาจากชื่อคอร์สหรือ slug"
-                                value={search}
-                                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 14px 12px 42px',
-                                    border: '1px solid #dbe5f4',
-                                    borderRadius: '12px',
-                                    fontSize: '0.875rem',
-                                    background: '#fbfdff',
-                                }}
-                            />
-                        </div>
-
-                        <div className="admin-catalog-status-tabs" style={{
-                            display: 'flex',
-                            gap: '4px',
-                            background: '#f8fbff',
-                            borderRadius: '12px',
-                            padding: '4px',
-                            flexWrap: 'wrap',
-                            border: '1px solid #dbe5f4',
-                        }}>
-                            {statusTabs.map((tab) => (
-                                <button
-                                    key={tab.value}
-                                    onClick={() => { setStatusFilter(tab.value); setCurrentPage(1); }}
-                                    style={{
-                                        padding: '8px 14px',
-                                        borderRadius: '10px',
-                                        border: 'none',
-                                        fontSize: '0.8125rem',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        background: statusFilter === tab.value ? '#1d4ed8' : 'transparent',
-                                        color: statusFilter === tab.value ? 'white' : '#64748b',
-                                        boxShadow: statusFilter === tab.value ? '0 10px 20px rgba(37,99,235,0.18)' : 'none',
-                                        transition: 'all 0.15s',
-                                    }}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="admin-catalog-health-grid" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-                        gap: '10px',
-                        color: '#64748b',
-                        fontSize: '0.8rem',
-                    }}>
-                        {catalogHealthCards.map((item) => (
-                            <div className="admin-catalog-health-card" key={item.label} style={{ padding: '12px 14px', borderRadius: '14px', background: item.background, border: `1px solid ${item.border}` }}>
-                                <div style={{ color: item.labelColor, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>{item.label}</div>
-                                <div style={{ color: item.valueColor, fontSize: '1.2rem', fontWeight: 800, lineHeight: 1.1 }}>{item.value}</div>
-                                <div style={{ color: item.detailColor, fontSize: '0.74rem', marginTop: '4px' }}>{item.detail}</div>
+                          </div>
+                          <div className="admin-course-copy">
+                            <div>
+                              <strong>{course.title}</strong>
+                              <span className={`admin-course-health ${health.className}`}>{health.label}</span>
                             </div>
-                        ))}
+                            <p>{course.slug}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`admin-course-status ${course.status}`}>
+                          {course.status === 'published' ? 'เผยแพร่' : 'แบบร่าง'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="admin-price-cell">
+                          <strong>{promoActive ? formatPrice(course.promoPrice) : formatPrice(course.price)}</strong>
+                          {promoActive ? <span>โปรโมชัน</span> : null}
+                        </div>
+                      </td>
+                      <td>{Number(course.lessonCount || 0)}</td>
+                      <td>{Number(course.enrollmentCount || 0)}</td>
+                      <td>{formatDate(course.createdAt)}</td>
+                      <td>
+                        <div className="admin-course-actions">
+                          <Link className="primary" href={primaryAction.href}>{primaryAction.label}</Link>
+                          <Link href={`/admin/courses/${course.id}/edit`}>แก้ไข</Link>
+                          <Link href={`/courses/${course.slug}`} target="_blank">ดูหน้าเว็บ</Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="admin-catalog-cards">
+            {paginatedCourses.map((course) => {
+              const thumbnail = normalizeUrl(course.thumbnailUrl);
+              const health = getCourseHealth(course);
+              const primaryAction = getPrimaryAction(course);
+              const promoActive = isPromoActive(course);
+
+              return (
+                <article className="admin-course-mobile-card" key={course.id}>
+                  <div className="admin-course-card-top">
+                    <div className="admin-course-cover">
+                      {thumbnail ? <img src={thumbnail} alt="" /> : <span>MD</span>}
                     </div>
-                </div>
+                    <div>
+                      <strong>{course.title}</strong>
+                      <p>{course.slug}</p>
+                    </div>
+                  </div>
+                  <div className="admin-course-card-meta">
+                    <span className={`admin-course-status ${course.status}`}>{course.status === 'published' ? 'เผยแพร่' : 'แบบร่าง'}</span>
+                    <span className={`admin-course-health ${health.className}`}>{health.label}</span>
+                    <span>{promoActive ? formatPrice(course.promoPrice) : formatPrice(course.price)}</span>
+                    <span>{Number(course.lessonCount || 0)} บทเรียน</span>
+                    <span>{Number(course.enrollmentCount || 0)} ผู้เรียน</span>
+                  </div>
+                  <div className="admin-course-card-actions">
+                    <Link className="primary" href={primaryAction.href}>{primaryAction.label}</Link>
+                    <Link href={`/admin/courses/${course.id}/edit`}>แก้ไข</Link>
+                    <Link href={`/courses/${course.slug}`} target="_blank">ดูหน้าเว็บ</Link>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <footer className="admin-catalog-pagination">
+            <div>
+              <span>แสดง</span>
+              <select
+                value={perPage}
+                onChange={(event) => {
+                  setPerPage(Number(event.target.value));
+                  setCurrentPage(1);
+                }}
+              >
+                {PER_PAGE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+              <span>
+                {(safeCurrentPage - 1) * perPage + 1}-{Math.min(safeCurrentPage * perPage, filtered.length)} จาก {filtered.length}
+              </span>
             </div>
 
-            {/* Table */}
-            <div className="admin-catalog-table-panel" style={{
-                background: 'white',
-                borderRadius: '22px',
-                border: '1px solid #dbe5f4',
-                boxShadow: '0 14px 32px rgba(15, 23, 42, 0.04)',
-                overflow: 'hidden',
-            }}>
-                <div className="admin-catalog-table-header" style={{ padding: '16px 18px', borderBottom: '1px solid #e6eefb', background: 'linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)' }}>
-                    <div style={{ color: '#0f172a', fontSize: '0.98rem', fontWeight: 700, marginBottom: '6px' }}>มุมมองการดำเนินงาน</div>
-                    <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.7 }}>สแกนสถานะ ราคา ความพร้อมของบทเรียน และ action ถัดไปของแต่ละคอร์สได้จากตารางเดียว</div>
-                </div>
-                <div style={{ overflowX: 'auto' }}>
-                <table className="admin-catalog-table" style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#fbfdff', borderBottom: '1px solid #e6eefb' }}>
-                            <th style={{ padding: '16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                                คอร์ส
-                            </th>
-                            <th style={{ padding: '16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                                สถานะ
-                            </th>
-                            <th style={{ padding: '16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                                ราคา
-                            </th>
-                            <th style={{ padding: '16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                                บทเรียน
-                            </th>
-                            <th style={{ padding: '16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                                ผู้เรียน
-                            </th>
-                            <th style={{ padding: '16px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                                การดำเนินการ
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedCourses.map((course) => {
-                            const price = parseFloat(course.price || '0');
-                            const now = new Date();
-                            const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
-                            const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
-                            const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
-                            const isPromoActive = hasPromo && promoStartOk && promoEndOk;
-                            const lessonCount = Number(course.lessonCount || 0);
-                            const enrollmentCount = Number(course.enrollmentCount || 0);
-                            const thumbnail = normalizeUrl(course.thumbnailUrl);
-                            const needsAttention = lessonCount === 0 || (course.status === 'published' && !thumbnail);
-                            const courseHealth = lessonCount === 0
-                                ? { label: 'ต้องเติมบทเรียน', color: '#dc2626', background: '#fef2f2' }
-                                : course.status === 'draft'
-                                    ? { label: 'รอ publish', color: '#d97706', background: '#fffbeb' }
-                                    : !thumbnail
-                                        ? { label: 'เติมภาพปก', color: '#c2410c', background: '#fff7ed' }
-                                        : { label: 'พร้อมจัดการต่อ', color: '#16a34a', background: '#f0fdf4' };
-                            const primaryAction = lessonCount === 0
-                                ? {
-                                    href: `/admin/courses/${course.id}/lessons`,
-                                    label: 'เพิ่มบทเรียน',
-                                    background: '#eff6ff',
-                                    color: '#2563eb',
-                                    border: '1px solid #bfdbfe',
-                                  }
-                                : course.status === 'draft' || !thumbnail
-                                    ? {
-                                        href: `/admin/courses/${course.id}/edit`,
-                                        label: 'เตรียมคอร์ส',
-                                        background: '#fff7ed',
-                                        color: '#c2410c',
-                                        border: '1px solid #fed7aa',
-                                      }
-                                    : {
-                                        href: `/admin/courses/${course.id}/lessons`,
-                                        label: 'จัดการบทเรียน',
-                                        background: '#eff6ff',
-                                        color: '#2563eb',
-                                        border: '1px solid #bfdbfe',
-                                      };
-                            const compactMetaItems = [
-                                `/${course.slug}`,
-                                `สร้างเมื่อ ${formatDate(course.createdAt)}`,
-                                enrollmentCount > 0 ? 'มีผู้เรียนแล้ว' : 'ยังไม่มีผู้เรียน',
-                                isPromoActive ? 'โปรโมชันใช้งาน' : null,
-                                lessonCount === 0 ? 'ยังไม่มีบทเรียน' : null,
-                                !thumbnail ? 'ไม่มีภาพปก' : null,
-                            ].filter(Boolean);
-
-                            return (
-                            <tr className="admin-catalog-row" key={course.id} style={{ borderBottom: '1px solid #e6eefb', background: needsAttention ? 'linear-gradient(90deg, rgba(239,246,255,0.68), rgba(255,255,255,0))' : 'white' }}>
-                                <td style={{ padding: '16px' }}>
-                                    <div className="admin-course-main-cell" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div className="admin-course-thumb" style={{
-                                            width: '84px',
-                                            height: '50px',
-                                            borderRadius: '10px',
-                                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                                            flexShrink: 0,
-                                            overflow: 'hidden',
-                                            position: 'relative',
-                                            border: '1px solid rgba(255,255,255,0.4)',
-                                        }}>
-                                            {thumbnail && (
-                                                <img
-                                                    src={thumbnail}
-                                                    alt={course.title}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                    }}
-                                                />
-                                            )}
-                                        </div>
-                                        <div style={{ minWidth: 0 }}>
-                                            <div className="admin-course-title-row" style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', alignItems: 'center', marginBottom: '6px', minWidth: 0 }}>
-                                                <div className="admin-course-title" style={{ fontWeight: 700, color: '#1e293b', minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                    {course.title}
-                                                </div>
-                                                <span className="admin-course-health-badge" style={{ padding: '4px 8px', borderRadius: '999px', background: courseHealth.background, color: courseHealth.color, fontSize: '0.68rem', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                                    {courseHealth.label}
-                                                </span>
-                                            </div>
-                                            <div style={{ fontSize: '0.74rem', color: '#64748b', lineHeight: 1.6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                {compactMetaItems.join(' · ')}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px', textAlign: 'center' }}>
-                                    <span style={{
-                                        padding: '5px 12px',
-                                        borderRadius: '50px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 700,
-                                        background: course.status === 'published' ? '#dcfce7' : '#fef3c7',
-                                        color: course.status === 'published' ? '#16a34a' : '#d97706',
-                                    }}>
-                                        {course.status === 'published' ? 'เผยแพร่' : 'แบบร่าง'}
-                                    </span>
-                                    <div style={{ color: needsAttention ? '#dc2626' : '#94a3b8', fontSize: '0.7rem', fontWeight: 600, marginTop: '8px' }}>
-                                        {needsAttention ? 'ควรตรวจ' : 'สถานะปกติ'}
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
-                                    {price === 0 ? <span style={{ color: '#16a34a', fontWeight: 700 }}>ฟรี</span> : isPromoActive ? (
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                                                <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.8125rem' }}>฿{price.toLocaleString()}</span>
-                                                <span style={{ color: '#dc2626', fontWeight: 700 }}>฿{parseFloat(course.promoPrice || '0').toLocaleString()}</span>
-                                            </div>
-                                            <span style={{
-                                                display: 'inline-block',
-                                                marginTop: '4px',
-                                                padding: '2px 8px',
-                                                background: '#fef2f2',
-                                                color: '#dc2626',
-                                                borderRadius: '50px',
-                                                fontSize: '0.6875rem',
-                                                fontWeight: 600,
-                                            }}>
-                                                ลด {Math.round((1 - parseFloat(course.promoPrice || '0') / price) * 100)}%
-                                            </span>
-                                        </div>
-                                    ) : `฿${price.toLocaleString()}`}
-                                </td>
-                                <td style={{ padding: '16px', textAlign: 'center', color: '#1e293b' }}>
-                                    <div style={{ fontWeight: 700, color: lessonCount === 0 ? '#dc2626' : '#1e293b' }}>
-                                        {lessonCount} บท
-                                    </div>
-                                    <div style={{ fontSize: '0.72rem', color: lessonCount === 0 ? '#dc2626' : '#94a3b8', marginTop: '4px' }}>
-                                        {lessonCount === 0 ? 'ยังไม่พร้อมขาย' : 'พร้อมจัดการเนื้อหา'}
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px', textAlign: 'center' }}>
-                                    <Link
-                                        href={`/admin/courses/${course.id}/enrollments`}
-                                        style={{
-                                            color: '#2563eb',
-                                            textDecoration: 'none',
-                                            fontWeight: 700,
-                                            padding: '5px 10px',
-                                            borderRadius: '999px',
-                                            background: '#eff6ff',
-                                            fontSize: '0.875rem',
-                                        }}
-                                    >
-                                        {enrollmentCount} คน
-                                    </Link>
-                                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '6px' }}>
-                                        {enrollmentCount > 0 ? 'เปิดดูรายชื่อผู้เรียน' : 'ยังไม่มีผู้เรียน'}
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px', textAlign: 'right' }}>
-                                    <div className="admin-course-actions" style={{ display: 'grid', gap: '8px', justifyItems: 'end' }}>
-                                        <Link
-                                            href={primaryAction.href}
-                                            className="admin-course-primary-action"
-                                            style={{
-                                                padding: '8px 12px',
-                                                background: primaryAction.background,
-                                                color: primaryAction.color,
-                                                borderRadius: '999px',
-                                                textDecoration: 'none',
-                                                fontSize: '0.8125rem',
-                                                fontWeight: 700,
-                                                border: primaryAction.border,
-                                            }}
-                                        >
-                                            {primaryAction.label}
-                                        </Link>
-                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                                            <Link
-                                                href={`/admin/courses/${course.id}/edit`}
-                                                className="admin-course-secondary-action"
-                                                style={{
-                                                    padding: '7px 11px',
-                                                    background: '#fbfdff',
-                                                    color: '#475569',
-                                                    borderRadius: '999px',
-                                                    textDecoration: 'none',
-                                                    fontSize: '0.78rem',
-                                                    border: '1px solid #dbe5f4',
-                                                    fontWeight: 600,
-                                                }}
-                                            >
-                                                แก้ไขคอร์ส
-                                            </Link>
-                                            <Link
-                                                href={`/admin/courses/${course.id}/lessons`}
-                                                className="admin-course-secondary-action"
-                                                style={{
-                                                    padding: '7px 11px',
-                                                    background: '#fbfdff',
-                                                    color: '#475569',
-                                                    borderRadius: '999px',
-                                                    textDecoration: 'none',
-                                                    fontSize: '0.78rem',
-                                                    border: '1px solid #dbe5f4',
-                                                    fontWeight: 600,
-                                                }}
-                                            >
-                                                บทเรียน
-                                            </Link>
-                                            <Link
-                                                href={`/courses/${course.slug}`}
-                                                target="_blank"
-                                                className="admin-course-secondary-action"
-                                                style={{
-                                                    padding: '7px 11px',
-                                                    background: '#ffffff',
-                                                    color: '#475569',
-                                                    borderRadius: '999px',
-                                                    textDecoration: 'none',
-                                                    fontSize: '0.78rem',
-                                                    border: '1px solid #dbe5f4',
-                                                    fontWeight: 600,
-                                                }}
-                                            >
-                                                ดูหน้าเว็บ
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        )})}
-                    </tbody>
-                </table>
-                </div>
-
-                {/* Pagination */}
-                {filtered.length > 0 && (
-                    <div className="admin-catalog-pagination" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 16px',
-                        borderTop: '1px solid #e6eefb',
-                        fontSize: '0.875rem',
-                        color: '#64748b',
-                        flexWrap: 'wrap',
-                        gap: '12px',
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>แสดง</span>
-                            <select
-                                value={perPage}
-                                onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                                style={{
-                                    padding: '4px 8px',
-                                    border: '1px solid #dbe5f4',
-                                    borderRadius: '8px',
-                                    fontSize: '0.875rem',
-                                    background: '#fbfdff',
-                                }}
-                            >
-                                {PER_PAGE_OPTIONS.map(n => (
-                                    <option key={n} value={n}>{n}</option>
-                                ))}
-                            </select>
-                            <span>รายการ · {(currentPage - 1) * perPage + 1}-{Math.min(currentPage * perPage, filtered.length)} จาก {filtered.length}</span>
-                        </div>
-
-                        {totalPages > 1 && (
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                                <button
-                                    onClick={() => setCurrentPage(1)}
-                                    disabled={currentPage === 1}
-                                    style={{
-                                        padding: '6px 10px',
-                                        border: '1px solid #dbe5f4',
-                                        borderRadius: '8px',
-                                        background: '#fbfdff',
-                                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                                        opacity: currentPage === 1 ? 0.4 : 1,
-                                        fontSize: '0.8125rem',
-                                    }}
-                                >
-                                    «
-                                </button>
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                    style={{
-                                        padding: '6px 10px',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '6px',
-                                        background: 'white',
-                                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                                        opacity: currentPage === 1 ? 0.4 : 1,
-                                        fontSize: '0.8125rem',
-                                    }}
-                                >
-                                    ‹
-                                </button>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                                    .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
-                                    .reduce<(number | string)[]>((acc, page, idx, arr) => {
-                                        if (idx > 0 && page - (arr[idx - 1] as number) > 1) acc.push('...');
-                                        acc.push(page);
-                                        return acc;
-                                    }, [])
-                                    .map((page, idx) => (
-                                        typeof page === 'string' ? (
-                                            <span key={`ellipsis-${idx}`} style={{ padding: '6px 4px', color: '#94a3b8' }}>…</span>
-                                        ) : (
-                                            <button
-                                                key={page}
-                                                onClick={() => setCurrentPage(page)}
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    border: '1px solid',
-                                                    borderColor: currentPage === page ? '#2563eb' : '#dbe5f4',
-                                                    borderRadius: '8px',
-                                                    background: currentPage === page ? '#2563eb' : 'white',
-                                                    color: currentPage === page ? 'white' : '#475569',
-                                                    cursor: 'pointer',
-                                                    fontSize: '0.8125rem',
-                                                    fontWeight: currentPage === page ? 600 : 400,
-                                                }}
-                                            >
-                                                {page}
-                                            </button>
-                                        )
-                                    ))}
-                                <button
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage === totalPages}
-                                    style={{
-                                        padding: '6px 10px',
-                                        border: '1px solid #dbe5f4',
-                                        borderRadius: '8px',
-                                        background: '#fbfdff',
-                                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                                        opacity: currentPage === totalPages ? 0.4 : 1,
-                                        fontSize: '0.8125rem',
-                                    }}
-                                >
-                                    ›
-                                </button>
-                                <button
-                                    onClick={() => setCurrentPage(totalPages)}
-                                    disabled={currentPage === totalPages}
-                                    style={{
-                                        padding: '6px 10px',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '6px',
-                                        background: 'white',
-                                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                                        opacity: currentPage === totalPages ? 0.4 : 1,
-                                        fontSize: '0.8125rem',
-                                    }}
-                                >
-                                    »
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {filtered.length === 0 && (
-                    <div style={{
-                        padding: '60px 20px',
-                        textAlign: 'center',
-                        color: '#64748b',
-                    }}>
-                        {search || statusFilter !== 'all' ? (
-                            <div>
-                                <p>ไม่พบคอร์สที่ตรงกับตัวกรอง</p>
-                                <button
-                                    onClick={() => { setSearch(''); setStatusFilter('all'); }}
-                                    style={{
-                                        marginTop: '12px',
-                                        padding: '8px 16px',
-                                        background: '#eff6ff',
-                                        border: '1px solid #bfdbfe',
-                                        borderRadius: '8px',
-                                        color: '#475569',
-                                        cursor: 'pointer',
-                                        fontSize: '0.875rem',
-                                    }}
-                                >
-                                    ล้างตัวกรอง
-                                </button>
-                            </div>
-                        ) : (
-                            <div>
-                                <p>ยังไม่มีคอร์ส</p>
-                                <Link
-                                    href="/admin/courses/new"
-                                    style={{
-                                        display: 'inline-block',
-                                        marginTop: '16px',
-                                        padding: '12px 20px',
-                                        background: '#2563eb',
-                                        color: 'white',
-                                        borderRadius: '10px',
-                                        textDecoration: 'none',
-                                    }}
-                                >
-                                    สร้างคอร์สแรก
-                                </Link>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            <style jsx>{`
-                .admin-catalog-panel,
-                .admin-catalog-table-panel {
-                    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98)) !important;
-                    border: 1px solid rgba(203, 213, 225, 0.86) !important;
-                    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255,255,255,0.82) !important;
-                }
-
-                .admin-catalog-header,
-                .admin-catalog-table-header {
-                    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.88)) !important;
-                    border-bottom: 1px solid rgba(226, 232, 240, 0.92) !important;
-                }
-
-                .admin-catalog-status-tabs {
-                    background: #ffffff !important;
-                    border-color: rgba(219, 234, 254, 0.92) !important;
-                }
-
-                .admin-catalog-health-card {
-                    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
-                }
-
-                .admin-catalog-table thead tr {
-                    background: linear-gradient(180deg, #f8fafc, #ffffff) !important;
-                }
-
-                .admin-catalog-row {
-                    transition: background-color 180ms ease, transform 180ms ease;
-                }
-
-                .admin-catalog-row:hover {
-                    background: linear-gradient(90deg, rgba(248, 250, 252, 0.98), rgba(255,255,255,0.98)) !important;
-                }
-
-                .admin-course-thumb {
-                    box-shadow: 0 12px 20px rgba(15, 23, 42, 0.08);
-                }
-
-                .admin-course-title {
-                    letter-spacing: -0.01em;
-                }
-
-                .admin-course-primary-action,
-                .admin-course-secondary-action {
-                    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
-                }
-
-                .admin-course-primary-action:hover,
-                .admin-course-secondary-action:hover {
-                    transform: translateY(-1px);
-                    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.08);
-                }
-
-                .admin-catalog-pagination {
-                    border-top: 1px solid rgba(226, 232, 240, 0.92) !important;
-                    background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(248,250,252,0.92));
-                }
-
-                @media (max-width: 760px) {
-                    .admin-catalog-toolbar {
-                        grid-template-columns: 1fr !important;
-                    }
-
-                    .admin-course-main-cell {
-                        gap: 10px !important;
-                    }
-
-                    .admin-course-thumb {
-                        width: 72px !important;
-                        height: 44px !important;
-                    }
-
-                    .admin-course-title-row {
-                        gap: 6px !important;
-                        margin-bottom: 4px !important;
-                    }
-
-                    .admin-course-title {
-                        font-size: 0.94rem !important;
-                    }
-
-                    .admin-course-health-badge {
-                        padding: 3px 7px !important;
-                        font-size: 0.64rem !important;
-                    }
-                }
-
-                @media (max-width: 640px) {
-                    .admin-catalog-health-grid {
-                        grid-template-columns: 1fr !important;
-                    }
-
-                    .admin-course-main-cell {
-                        gap: 8px !important;
-                    }
-
-                    .admin-course-thumb {
-                        width: 64px !important;
-                        height: 40px !important;
-                    }
-
-                    .admin-course-title {
-                        font-size: 0.9rem !important;
-                    }
-
-                    .admin-course-health-badge {
-                        padding: 2px 6px !important;
-                        font-size: 0.62rem !important;
-                    }
-                }
-            `}</style>
+            {totalPages > 1 ? (
+              <div className="admin-page-buttons">
+                <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={safeCurrentPage === 1}>
+                  ก่อนหน้า
+                </button>
+                <span>{safeCurrentPage} / {totalPages}</span>
+                <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={safeCurrentPage === totalPages}>
+                  ถัดไป
+                </button>
+              </div>
+            ) : null}
+          </footer>
         </>
-    );
+      )}
+
+      <style jsx>{`
+        .admin-catalog {
+          --brand: #02abff;
+          --brand-dark: #0089d6;
+          --brand-soft: #eefaff;
+          --ink: #102033;
+          --muted: #64758b;
+          --line: #dbe8f2;
+          overflow: hidden;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: 0 12px 32px rgba(16, 32, 51, 0.06);
+        }
+
+        .admin-catalog-header {
+          display: flex;
+          justify-content: space-between;
+          gap: 18px;
+          align-items: flex-start;
+          padding: 20px;
+          border-bottom: 1px solid var(--line);
+          background: linear-gradient(180deg, #ffffff, #f7fbff);
+        }
+
+        .admin-catalog-kicker {
+          color: var(--brand-dark);
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .admin-catalog-header h2 {
+          margin: 4px 0 6px;
+          color: var(--ink);
+          font-size: 1.18rem;
+        }
+
+        .admin-catalog-header p {
+          margin: 0;
+          color: var(--muted);
+          font-size: 0.84rem;
+          line-height: 1.7;
+        }
+
+        .admin-catalog-header-actions {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .admin-catalog-header-actions span,
+        .admin-catalog-header-actions a,
+        .admin-catalog-clear,
+        .admin-catalog-empty button,
+        .admin-catalog-empty a {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 40px;
+          padding: 0 14px;
+          border-radius: 8px;
+          font-size: 0.82rem;
+          font-weight: 800;
+          text-decoration: none;
+        }
+
+        .admin-catalog-header-actions span {
+          background: var(--brand-soft);
+          color: var(--brand-dark);
+        }
+
+        .admin-catalog-header-actions a,
+        .admin-catalog-empty a {
+          background: var(--brand);
+          color: #ffffff;
+        }
+
+        .admin-catalog-toolbar {
+          display: grid;
+          grid-template-columns: minmax(260px, 1fr) auto auto;
+          gap: 12px;
+          align-items: end;
+          padding: 18px 20px;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .admin-catalog-search {
+          display: grid;
+          gap: 7px;
+          min-width: 0;
+        }
+
+        .admin-catalog-search > span {
+          color: var(--muted);
+          font-size: 0.76rem;
+          font-weight: 700;
+        }
+
+        .admin-catalog-search > div {
+          position: relative;
+        }
+
+        .admin-catalog-search svg {
+          position: absolute;
+          left: 13px;
+          top: 50%;
+          width: 18px;
+          height: 18px;
+          color: #91a1b5;
+          transform: translateY(-50%);
+        }
+
+        .admin-catalog-search input {
+          width: 100%;
+          min-height: 44px;
+          padding: 0 14px 0 42px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #f7fbff;
+          color: var(--ink);
+          font-size: 0.88rem;
+        }
+
+        .admin-catalog-search input:focus {
+          outline: none;
+          border-color: var(--brand);
+          box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.2);
+        }
+
+        .admin-catalog-tabs {
+          display: inline-flex;
+          gap: 4px;
+          padding: 4px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #f7fbff;
+        }
+
+        .admin-catalog-tabs button {
+          display: inline-flex;
+          gap: 8px;
+          align-items: center;
+          min-height: 36px;
+          padding: 0 12px;
+          border: 0;
+          border-radius: 8px;
+          background: transparent;
+          color: var(--muted);
+          cursor: pointer;
+          font-weight: 800;
+        }
+
+        .admin-catalog-tabs button[aria-pressed="true"] {
+          background: var(--brand);
+          color: #ffffff;
+        }
+
+        .admin-catalog-tabs span {
+          opacity: 0.75;
+          font-size: 0.72rem;
+        }
+
+        .admin-catalog-clear,
+        .admin-catalog-empty button {
+          border: 1px solid var(--line);
+          background: #ffffff;
+          color: var(--brand-dark);
+          cursor: pointer;
+        }
+
+        .admin-catalog-health {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
+          padding: 0 20px 18px;
+        }
+
+        .admin-catalog-health-card {
+          min-height: 104px;
+          padding: 14px;
+          border: 1px solid #e8f1f8;
+          border-radius: 8px;
+          background: #f7fbff;
+        }
+
+        .admin-catalog-health-card span {
+          color: var(--muted);
+          font-size: 0.72rem;
+          font-weight: 800;
+          text-transform: uppercase;
+        }
+
+        .admin-catalog-health-card strong {
+          display: block;
+          margin: 8px 0 5px;
+          color: var(--ink);
+          font-size: 1.35rem;
+        }
+
+        .admin-catalog-health-card p {
+          margin: 0;
+          color: var(--muted);
+          font-size: 0.75rem;
+          line-height: 1.55;
+        }
+
+        .admin-catalog-health-card.danger {
+          background: #fff7f7;
+          border-color: #ffd5d8;
+        }
+
+        .admin-catalog-health-card.success {
+          background: #f1fbf6;
+          border-color: #ccefdc;
+        }
+
+        .admin-catalog-health-card.warning {
+          background: #fff9ed;
+          border-color: #ffe0a8;
+        }
+
+        .admin-catalog-table-wrap {
+          overflow-x: auto;
+          border-top: 1px solid var(--line);
+        }
+
+        .admin-catalog-table {
+          width: 100%;
+          min-width: 1040px;
+          border-collapse: collapse;
+        }
+
+        .admin-catalog-table th {
+          padding: 14px 16px;
+          color: var(--muted);
+          background: #f7fbff;
+          border-bottom: 1px solid var(--line);
+          font-size: 0.78rem;
+          font-weight: 800;
+          text-align: left;
+        }
+
+        .admin-catalog-table th:not(:first-child),
+        .admin-catalog-table td:not(:first-child) {
+          text-align: center;
+        }
+
+        .admin-catalog-table th:last-child,
+        .admin-catalog-table td:last-child {
+          text-align: right;
+        }
+
+        .admin-catalog-table td {
+          padding: 14px 16px;
+          border-bottom: 1px solid #e8f1f8;
+          color: var(--ink);
+          font-size: 0.84rem;
+          vertical-align: middle;
+        }
+
+        .admin-catalog-table tr:hover td {
+          background: #fbfdff;
+        }
+
+        .admin-course-cell,
+        .admin-course-card-top {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          min-width: 0;
+        }
+
+        .admin-course-cover {
+          display: grid;
+          place-items: center;
+          width: 92px;
+          height: 56px;
+          overflow: hidden;
+          flex-shrink: 0;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: linear-gradient(135deg, var(--brand), #73d7ff);
+          color: #ffffff;
+          font-weight: 900;
+        }
+
+        .admin-course-cover img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .admin-course-copy {
+          min-width: 0;
+        }
+
+        .admin-course-copy > div {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+          margin-bottom: 4px;
+        }
+
+        .admin-course-copy strong,
+        .admin-course-card-top strong {
+          color: var(--ink);
+          font-size: 0.92rem;
+          line-height: 1.35;
+        }
+
+        .admin-course-copy p,
+        .admin-course-card-top p {
+          margin: 0;
+          color: var(--muted);
+          font-size: 0.75rem;
+        }
+
+        .admin-course-health,
+        .admin-course-status,
+        .admin-payment-badge {
+          display: inline-flex;
+          align-items: center;
+          min-height: 24px;
+          padding: 0 9px;
+          border-radius: 999px;
+          font-size: 0.68rem;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .admin-course-health.success,
+        .admin-course-status.published {
+          background: #eefbf3;
+          color: #0f7a4b;
+        }
+
+        .admin-course-health.warning,
+        .admin-course-status.draft {
+          background: #fff7ed;
+          color: #b45309;
+        }
+
+        .admin-course-health.danger {
+          background: #fff1f2;
+          color: #be123c;
+        }
+
+        .admin-price-cell {
+          display: grid;
+          gap: 4px;
+          justify-items: center;
+        }
+
+        .admin-price-cell strong {
+          color: var(--ink);
+        }
+
+        .admin-price-cell span {
+          color: #b45309;
+          font-size: 0.7rem;
+          font-weight: 800;
+        }
+
+        .admin-course-actions {
+          display: flex;
+          gap: 6px;
+          justify-content: flex-end;
+          flex-wrap: wrap;
+        }
+
+        .admin-course-actions a,
+        .admin-course-card-actions a {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 32px;
+          padding: 0 10px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #ffffff;
+          color: var(--ink);
+          font-size: 0.74rem;
+          font-weight: 800;
+          text-decoration: none;
+        }
+
+        .admin-course-actions a.primary,
+        .admin-course-card-actions a.primary {
+          border-color: var(--brand);
+          background: var(--brand);
+          color: #ffffff;
+        }
+
+        .admin-catalog-cards {
+          display: none;
+          gap: 12px;
+          padding: 0 16px 16px;
+        }
+
+        .admin-course-mobile-card {
+          display: grid;
+          gap: 12px;
+          padding: 14px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #ffffff;
+        }
+
+        .admin-course-card-meta,
+        .admin-course-card-actions {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .admin-course-card-meta > span:not(.admin-course-status):not(.admin-course-health) {
+          display: inline-flex;
+          align-items: center;
+          min-height: 24px;
+          padding: 0 8px;
+          border-radius: 999px;
+          background: #f7fbff;
+          color: var(--muted);
+          font-size: 0.72rem;
+          font-weight: 700;
+        }
+
+        .admin-catalog-empty {
+          display: grid;
+          place-items: center;
+          gap: 10px;
+          padding: 54px 18px;
+          text-align: center;
+          border-top: 1px solid var(--line);
+        }
+
+        .admin-catalog-empty h3 {
+          margin: 0;
+          color: var(--ink);
+        }
+
+        .admin-catalog-empty p {
+          margin: 0;
+          color: var(--muted);
+        }
+
+        .admin-catalog-pagination {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          align-items: center;
+          flex-wrap: wrap;
+          padding: 14px 16px;
+          border-top: 1px solid var(--line);
+          background: #fbfdff;
+          color: var(--muted);
+          font-size: 0.82rem;
+        }
+
+        .admin-catalog-pagination > div {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .admin-catalog-pagination select,
+        .admin-page-buttons button {
+          min-height: 34px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #ffffff;
+          color: var(--ink);
+        }
+
+        .admin-page-buttons span {
+          color: var(--ink);
+          font-weight: 800;
+        }
+
+        .admin-page-buttons button {
+          padding: 0 10px;
+          cursor: pointer;
+          font-weight: 800;
+        }
+
+        .admin-page-buttons button:disabled {
+          cursor: not-allowed;
+          opacity: 0.45;
+        }
+
+        @media (max-width: 1180px) {
+          .admin-catalog-toolbar {
+            grid-template-columns: 1fr;
+            align-items: stretch;
+          }
+
+          .admin-catalog-tabs {
+            width: fit-content;
+            flex-wrap: wrap;
+          }
+
+          .admin-catalog-health {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 760px) {
+          .admin-catalog-header {
+            flex-direction: column;
+          }
+
+          .admin-catalog-header-actions {
+            justify-content: flex-start;
+          }
+
+          .admin-catalog-health {
+            grid-template-columns: 1fr;
+          }
+
+          .admin-catalog-table-wrap {
+            display: none;
+          }
+
+          .admin-catalog-cards {
+            display: grid;
+          }
+
+          .admin-course-cover {
+            width: 78px;
+            height: 48px;
+          }
+        }
+      `}</style>
+    </section>
+  );
 }

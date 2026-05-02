@@ -3,36 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { adminPrimaryLinks, adminSecondaryLinkGroups } from '@/components/admin/adminNav';
+import AdminNavIcon from '@/components/admin/AdminNavIcon';
 
 interface AdminSidebarProps {
   userName: string;
-}
-
-function NavIcon({ name, size = 16 }: { name: string; size?: number }) {
-  const s = { width: size, height: size, flexShrink: 0 };
-  const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  switch (name) {
-    case 'dashboard': return <svg style={s} viewBox="0 0 24 24" {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
-    case 'courses': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg>;
-    case 'blog': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>;
-    case 'docs': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>;
-    case 'users': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>;
-    case 'payments': return <svg style={s} viewBox="0 0 24 24" {...p}><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>;
-    case 'enrollments': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>;
-    case 'reports': return <svg style={s} viewBox="0 0 24 24" {...p}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>;
-    case 'media': return <svg style={s} viewBox="0 0 24 24" {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>;
-    case 'tags': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>;
-    case 'announcements': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>;
-    case 'bundles': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>;
-    case 'coupons': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M2 9a3 3 0 003 3v0a3 3 0 003-3V5H2v4z"/><path d="M22 9a3 3 0 01-3 3v0a3 3 0 01-3-3V5h6v4z"/><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="6" y2="10"/><line x1="18" y1="10" x2="22" y2="10"/><line x1="12" y1="5" x2="12" y2="19"/></svg>;
-    case 'certificates': return <svg style={s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>;
-    case 'analytics': return <svg style={s} viewBox="0 0 24 24" {...p}><line x1="4" y1="19" x2="20" y2="19"/><rect x="5" y="10" width="3" height="7" rx="1"/><rect x="10" y="7" width="3" height="10" rx="1"/><rect x="15" y="4" width="3" height="13" rx="1"/></svg>;
-    case 'reviews': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>;
-    case 'reconciliation': return <svg style={s} viewBox="0 0 24 24" {...p}><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/></svg>;
-    case 'logs': return <svg style={s} viewBox="0 0 24 24" {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
-    case 'settings': return <svg style={s} viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>;
-    default: return null;
-  }
 }
 
 export default function AdminSidebar({ userName }: AdminSidebarProps) {
@@ -44,226 +18,307 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
   };
 
   return (
-    <aside
-      className="admin-sidebar-desktop"
-      style={{
-        width: '272px',
-        flexShrink: 0,
-        background: 'linear-gradient(180deg, #081121 0%, #0f1b33 54%, #0b1220 100%)',
-        borderRight: '1px solid rgba(148,163,184,0.16)',
-        position: 'sticky',
-        top: 0,
-        alignSelf: 'flex-start',
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
-      <div className="admin-sidebar-frame" style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: '100%', position: 'relative' }}>
-        <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid rgba(148,163,184,0.16)', position: 'relative' }}>
-          <div className="admin-sidebar-orb" aria-hidden="true" />
-          <Link
-            href="/admin"
-            style={{
-              color: 'white',
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              marginBottom: '14px',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            <div className="admin-sidebar-logo-shell">
-              <img src="/milerdev-logo-transparent.png" alt="MilerDev" style={{ width: 34, height: 34 }} />
-            </div>
-            <div>
-              <div style={{ fontSize: '1rem', fontWeight: 700, lineHeight: 1.1 }}>MilerDev Admin</div>
-              <div style={{ color: '#94a3b8', fontSize: '0.72rem', marginTop: '4px' }}>Control surface</div>
-            </div>
-          </Link>
-          <div style={{ color: '#94a3b8', fontSize: '0.76rem', lineHeight: 1.7, position: 'relative', zIndex: 1 }}>
-            สลับงานหลักของระบบได้เร็วขึ้นจาก navigation ที่มองเห็นตลอดเวลา
-          </div>
-        </div>
-
-        <div style={{ overflowY: 'auto', padding: '18px 14px', display: 'grid', gap: '18px' }}>
+    <aside className="admin-sidebar">
+      <div className="admin-sidebar-brand">
+        <Link href="/admin" className="admin-sidebar-logo">
+          <span>MD</span>
           <div>
-            <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 10px 8px' }}>
-              Core
-            </div>
-            <div style={{ display: 'grid', gap: '4px' }}>
-              {adminPrimaryLinks.map((link) => {
-                const active = isActive(link.href, link.exact);
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={active ? 'admin-sidebar-link admin-sidebar-link-active' : 'admin-sidebar-link'}
-                    style={{
-                      color: active ? '#ffffff' : '#cbd5e1',
-                      textDecoration: 'none',
-                      fontSize: '0.84rem',
-                      fontWeight: active ? 700 : 500,
-                      padding: '11px 12px',
-                      borderRadius: '14px',
-                      background: active ? 'linear-gradient(135deg, rgba(37,99,235,0.28), rgba(29,78,216,0.2))' : 'transparent',
-                      border: active ? '1px solid rgba(96,165,250,0.28)' : '1px solid transparent',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                    }}
-                  >
-                    <NavIcon name={link.icon} size={16} />
-                    {link.label}
-                  </Link>
-                );
-              })}
-            </div>
+            <strong>MilerDev</strong>
+            <small>Admin LMS</small>
           </div>
+        </Link>
+      </div>
 
-          {adminSecondaryLinkGroups.map((group) => (
-            <div key={group.title}>
-              <div style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 10px 8px' }}>
-                {group.title}
-              </div>
-              <div style={{ display: 'grid', gap: '4px' }}>
-                {group.items.map((link) => {
-                  const active = isActive(link.href);
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={active ? 'admin-sidebar-link admin-sidebar-link-active' : 'admin-sidebar-link'}
-                      style={{
-                        color: active ? '#ffffff' : '#94a3b8',
-                        textDecoration: 'none',
-                        fontSize: '0.8125rem',
-                        fontWeight: active ? 600 : 500,
-                        padding: '10px 12px',
-                        borderRadius: '14px',
-                        background: active ? 'rgba(59,130,246,0.14)' : 'transparent',
-                        border: active ? '1px solid rgba(96,165,250,0.24)' : '1px solid transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                      }}
-                    >
-                      <NavIcon name={link.icon} size={15} />
-                      {link.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+      <nav className="admin-sidebar-nav" aria-label="Admin navigation">
+        <div className="admin-sidebar-nav-group">
+          {adminPrimaryLinks.map((link) => {
+            const active = isActive(link.href, link.exact);
+            return (
+              <Link key={link.href} href={link.href} className={active ? 'admin-sidebar-nav-link active' : 'admin-sidebar-nav-link'}>
+                <AdminNavIcon name={link.icon} />
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
         </div>
 
-        <div style={{ padding: '16px 18px 18px', borderTop: '1px solid rgba(148,163,184,0.16)' }}>
-          <div className="admin-sidebar-session-card">
-            <div style={{ color: '#e2e8f0', fontSize: '0.82rem', fontWeight: 600, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {userName}
-            </div>
-            <div style={{ color: '#64748b', fontSize: '0.74rem', marginBottom: '12px' }}>Admin session</div>
+        {adminSecondaryLinkGroups.map((group) => (
+          <div className="admin-sidebar-nav-group" key={group.title}>
+            <h2>{group.title}</h2>
+            {group.items.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link key={link.href} href={link.href} className={active ? 'admin-sidebar-nav-link active' : 'admin-sidebar-nav-link'}>
+                  <AdminNavIcon name={link.icon} />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
           </div>
-          <Link
-            href="/"
-            className="admin-sidebar-home-link"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: '#cbd5e1',
-              textDecoration: 'none',
-              fontSize: '0.78rem',
-              padding: '9px 12px',
-              borderRadius: '12px',
-              border: '1px solid #334155',
-              background: '#111827',
-            }}
-          >
-            กลับหน้าเว็บ
-          </Link>
+        ))}
+      </nav>
+
+      <div className="admin-sidebar-footer">
+        <div className="admin-sidebar-upgrade">
+          <div className="admin-sidebar-crown">+</div>
+          <strong>Course ops ready</strong>
+          <p>จัดการคอร์ส ผู้เรียน และยอดชำระเงินจากที่เดียว</p>
+          <Link href="/admin/courses/new">New Course</Link>
+        </div>
+
+        <Link href="/" className="admin-sidebar-site-link">
+          <span>↗</span>
+          ไปหน้าเว็บ
+        </Link>
+
+        <div className="admin-sidebar-user">
+          <span>{userName.slice(0, 1).toUpperCase()}</span>
+          <div>
+            <strong>{userName}</strong>
+            <small>Admin</small>
+          </div>
         </div>
       </div>
 
-      <style>{`
-        .admin-sidebar-desktop { display: block; }
-        .admin-sidebar-frame::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background:
-            radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 24%),
-            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
-          pointer-events: none;
+      <style jsx global>{`
+        .admin-sidebar {
+          width: 250px;
+          height: 100vh;
+          flex: 0 0 250px;
+          position: sticky;
+          top: 0;
+          align-self: flex-start;
+          display: grid;
+          grid-template-rows: auto 1fr auto;
+          border-right: 1px solid #dbe8f2;
+          background: rgba(255, 255, 255, 0.98);
+          box-shadow: 8px 0 28px rgba(16, 32, 51, 0.04);
+          overflow: hidden;
         }
-        .admin-sidebar-orb {
-          position: absolute;
-          width: 160px;
-          height: 160px;
-          top: -48px;
-          right: -56px;
+
+        .admin-sidebar-brand {
+          padding: 16px 16px 12px;
+        }
+
+        .admin-sidebar-logo {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          color: #102033;
+          text-decoration: none;
+        }
+
+        .admin-sidebar-logo > span {
+          width: 40px;
+          height: 40px;
+          display: grid;
+          place-items: center;
+          flex: 0 0 auto;
+          border-radius: 9px;
+          background: linear-gradient(135deg, #02abff, #0089d6);
+          color: #ffffff;
+          font-size: 0.78rem;
+          font-weight: 950;
+          letter-spacing: 0;
+          box-shadow: 0 14px 24px rgba(2, 171, 255, 0.22);
+        }
+
+        .admin-sidebar-logo strong,
+        .admin-sidebar-user strong,
+        .admin-sidebar-upgrade strong {
+          display: block;
+          color: #102033;
+          font-size: 0.92rem;
+          line-height: 1.2;
+          white-space: nowrap;
+        }
+
+        .admin-sidebar-logo small,
+        .admin-sidebar-user small {
+          color: #64758b;
+          font-size: 0.74rem;
+        }
+
+        .admin-sidebar-nav {
+          display: grid;
+          align-content: start;
+          gap: 14px;
+          overflow-y: auto;
+          padding: 4px 12px 14px;
+          scrollbar-width: thin;
+          scrollbar-color: #c9d9e7 transparent;
+        }
+
+        .admin-sidebar-nav::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .admin-sidebar-nav::-webkit-scrollbar-thumb {
           border-radius: 999px;
-          background: radial-gradient(circle, rgba(96, 165, 250, 0.34), rgba(96, 165, 250, 0));
-          filter: blur(18px);
-          pointer-events: none;
+          background: #c9d9e7;
         }
-        .admin-sidebar-logo-shell {
-          width: 42px;
-          height: 42px;
-          border-radius: 14px;
+
+        .admin-sidebar-nav-group {
+          display: grid;
+          gap: 3px;
+        }
+
+        .admin-sidebar-nav-group h2 {
+          margin: 12px 10px 6px;
+          color: #91a1b5;
+          font-size: 0.68rem;
+          font-weight: 900;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .admin-sidebar-nav-link {
+          min-height: 38px;
+          display: flex !important;
+          gap: 10px;
+          align-items: center;
+          border-radius: 8px;
+          padding: 0 10px;
+          color: #526981;
+          text-decoration: none;
+          font-size: 0.84rem;
+          font-weight: 750;
+          line-height: 1;
+          transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+
+        .admin-sidebar-nav-link svg {
+          width: 18px !important;
+          height: 18px !important;
+          flex: 0 0 auto;
+        }
+
+        .admin-sidebar-nav-link span {
+          display: block;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .admin-sidebar-nav-link:hover {
+          background: #f2f9ff;
+          color: #0089d6;
+          transform: translateX(1px);
+        }
+
+        .admin-sidebar-nav-link.active {
+          background: linear-gradient(135deg, #02abff, #0089d6);
+          color: #ffffff;
+          box-shadow: 0 12px 24px rgba(2, 171, 255, 0.22);
+        }
+
+        .admin-sidebar-footer {
+          display: grid;
+          gap: 10px;
+          padding: 12px 16px 14px;
+          border-top: 1px solid #e8f1f8;
+          background: rgba(255, 255, 255, 0.96);
+        }
+
+        .admin-sidebar-upgrade {
+          display: grid;
+          gap: 7px;
+          padding: 12px;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #02abff, #0089d6);
+          color: #ffffff;
+          box-shadow: 0 18px 32px rgba(2, 171, 255, 0.2);
+        }
+
+        .admin-sidebar-upgrade strong,
+        .admin-sidebar-upgrade p {
+          color: #ffffff;
+        }
+
+        .admin-sidebar-upgrade p {
+          margin: 0;
+          font-size: 0.72rem;
+          line-height: 1.45;
+          opacity: 0.9;
+        }
+
+        .admin-sidebar-upgrade a {
+          min-height: 34px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #0089d6;
+          text-decoration: none;
+          font-size: 0.78rem;
+          font-weight: 900;
+        }
+
+        .admin-sidebar-crown {
+          width: 26px;
+          height: 26px;
+          display: grid;
+          place-items: center;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.18);
+          font-weight: 900;
+        }
+
+        .admin-sidebar-site-link {
+          min-height: 38px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
-          border: 1px solid rgba(148,163,184,0.24);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 14px 24px rgba(2, 6, 23, 0.28);
-          flex-shrink: 0;
+          gap: 8px;
+          border: 1px solid #dbe8f2;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #102033;
+          text-decoration: none;
+          font-size: 0.82rem;
+          font-weight: 850;
         }
-        .admin-sidebar-link {
-          position: relative;
-          overflow: hidden;
-          transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+
+        .admin-sidebar-site-link span {
+          color: #0089d6;
+          font-weight: 900;
         }
-        .admin-sidebar-link::before {
-          content: '';
-          position: absolute;
-          inset: 0 auto 0 0;
-          width: 3px;
+
+        .admin-sidebar-user {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          min-width: 0;
+        }
+
+        .admin-sidebar-user > span {
+          width: 36px;
+          height: 36px;
+          display: grid;
+          place-items: center;
+          flex: 0 0 auto;
           border-radius: 999px;
-          background: linear-gradient(180deg, #60a5fa, #2563eb);
-          opacity: 0;
-          transition: opacity 180ms ease;
+          background: #eefaff;
+          color: #0089d6;
+          font-weight: 900;
         }
-        .admin-sidebar-link:hover {
-          transform: translateX(2px);
-          background: rgba(255,255,255,0.05) !important;
-          border-color: rgba(96,165,250,0.18) !important;
+
+        .admin-sidebar-user div {
+          min-width: 0;
         }
-        .admin-sidebar-link-active {
-          box-shadow: 0 12px 24px rgba(15, 23, 42, 0.26);
+
+        .admin-sidebar-user strong {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
-        .admin-sidebar-link-active::before {
-          opacity: 1;
-        }
-        .admin-sidebar-session-card {
-          padding: 12px 12px 10px;
-          margin-bottom: 10px;
-          border-radius: 16px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-          border: 1px solid rgba(148,163,184,0.18);
-        }
-        .admin-sidebar-home-link {
-          transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
-        }
-        .admin-sidebar-home-link:hover {
-          transform: translateY(-1px);
-          border-color: rgba(96,165,250,0.28) !important;
-          background: rgba(15, 23, 42, 0.88) !important;
-        }
+
         @media (max-width: 1024px) {
-          .admin-sidebar-desktop { display: none !important; }
+          .admin-sidebar {
+            display: none;
+          }
         }
       `}</style>
     </aside>

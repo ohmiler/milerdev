@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import DraggableLessonList from '@/components/admin/DraggableLessonList';
 import dynamic from 'next/dynamic';
+import DraggableLessonList from '@/components/admin/DraggableLessonList';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 
@@ -20,13 +21,29 @@ interface Lesson {
   isFreePreview: boolean | null;
 }
 
+function toDurationSeconds(value: string) {
+  if (value.includes(':')) {
+    const [minutes, seconds] = value.split(':');
+    return (parseInt(minutes) || 0) * 60 + (parseInt(seconds) || 0);
+  }
+
+  return Math.round(parseFloat(value) * 60) || 0;
+}
+
+function formatCompactNumber(value: number) {
+  return new Intl.NumberFormat('th-TH', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
 export default function ManageLessonsPage() {
   const { id: courseId } = useParams<{ id: string }>();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-
+  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -34,7 +51,6 @@ export default function ManageLessonsPage() {
     videoDuration: '0:00',
     isFreePreview: false,
   });
-  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
 
   const fetchLessons = async (id: string) => {
     try {
@@ -43,6 +59,7 @@ export default function ManageLessonsPage() {
       setLessons(data.lessons || []);
     } catch (error) {
       console.error('Error fetching lessons:', error);
+      showToast('โหลดบทเรียนไม่สำเร็จ', 'error');
     }
   };
 
@@ -61,28 +78,19 @@ export default function ManageLessonsPage() {
     setShowForm(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!courseId) return;
 
     setSaving(true);
 
     try {
-      // Convert MM:SS to seconds before sending
-      let durationInSeconds = 0;
-      if (formData.videoDuration.includes(':')) {
-        const [m, s] = formData.videoDuration.split(':');
-        durationInSeconds = (parseInt(m) || 0) * 60 + (parseInt(s) || 0);
-      } else {
-        durationInSeconds = Math.round(parseFloat(formData.videoDuration) * 60) || 0;
-      }
-
       const res = await fetch(`/api/admin/courses/${courseId}/lessons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          videoDuration: durationInSeconds,
+          videoDuration: toDurationSeconds(formData.videoDuration),
         }),
       });
 
@@ -92,7 +100,7 @@ export default function ManageLessonsPage() {
         showToast('เพิ่มบทเรียนสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+        showToast(data.error || 'เพิ่มบทเรียนไม่สำเร็จ', 'error');
       }
     } catch {
       showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
@@ -116,7 +124,7 @@ export default function ManageLessonsPage() {
         showToast('ลบบทเรียนสำเร็จ', 'success');
       } else {
         const data = await res.json();
-        showToast(data.error || 'ไม่สามารถลบบทเรียนได้', 'error');
+        showToast(data.error || 'ลบบทเรียนไม่สำเร็จ', 'error');
       }
     } catch {
       showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
@@ -125,328 +133,203 @@ export default function ManageLessonsPage() {
 
   const totalLessons = lessons.length;
   const lessonsWithVideo = lessons.filter((lesson) => Boolean(lesson.videoUrl)).length;
-  const lessonsWithoutVideo = totalLessons - lessonsWithVideo;
-  const freePreviewCount = lessons.filter((lesson) => Boolean(lesson.isFreePreview)).length;
   const lessonsWithContent = lessons.filter((lesson) => lesson.content && lesson.content.trim().length > 0).length;
-  const readinessPercent = totalLessons > 0 ? Math.round((lessonsWithVideo / totalLessons) * 100) : 0;
+  const freePreviewCount = lessons.filter((lesson) => Boolean(lesson.isFreePreview)).length;
+  const needsContentCount = totalLessons - lessonsWithContent;
+  const needsVideoCount = totalLessons - lessonsWithVideo;
+  const readinessPercent = totalLessons > 0
+    ? Math.round(((lessonsWithVideo + lessonsWithContent) / (totalLessons * 2)) * 100)
+    : 0;
+  const nextAction = needsVideoCount > 0
+    ? { label: 'เติมวิดีโอที่ยังขาด', detail: `${needsVideoCount} บทยังไม่มีวิดีโอ`, href: '#lesson-workbench', tone: 'warning' }
+    : needsContentCount > 0
+      ? { label: 'เติมเนื้อหาบทเรียน', detail: `${needsContentCount} บทยังไม่มีเนื้อหา`, href: '#lesson-workbench', tone: 'warning' }
+      : { label: 'เพิ่มบทเรียนใหม่', detail: 'โครงสร้างบทเรียนพร้อมใช้งานแล้ว', href: '#new-lesson', tone: 'success' };
   const createReadinessItems = [
-    {
-      label: 'ชื่อบทเรียน',
-      ready: formData.title.trim().length > 0,
-      hint: formData.title.trim().length > 0 ? 'พร้อม' : 'ยังไม่ได้ระบุ',
-    },
-    {
-      label: 'เนื้อหาบทเรียน',
-      ready: formData.content.trim().length > 0,
-      hint: formData.content.trim().length > 0 ? 'มีข้อมูลแล้ว' : 'ช่วยให้บทเรียนใช้งานได้ครบขึ้น',
-    },
-    {
-      label: 'วิดีโอ',
-      ready: formData.videoUrl.trim().length > 0,
-      hint: formData.videoUrl.trim().length > 0 ? 'กำหนดแล้ว' : 'ใส่ภายหลังได้ แต่แนะนำให้เตรียมไว้',
-    },
-    {
-      label: 'Preview ฟรี',
-      ready: formData.isFreePreview,
-      hint: formData.isFreePreview ? 'เปิดให้ดูฟรีแล้ว' : 'ยังไม่ได้เปิด preview',
-    },
+    { label: 'ชื่อบทเรียน', ready: formData.title.trim().length > 0 },
+    { label: 'เนื้อหา', ready: formData.content.trim().length > 0 },
+    { label: 'วิดีโอ', ready: formData.videoUrl.trim().length > 0 },
+    { label: 'Preview', ready: formData.isFreePreview },
   ];
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-        กำลังโหลด...
+      <div className="admin-lesson-loading">
+        กำลังโหลดบทเรียน...
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'grid', gap: '24px' }}>
-      <section style={{
-        background: 'radial-gradient(circle at top left, rgba(37,99,235,0.14), rgba(255,255,255,0.98) 44%), linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-        border: '1px solid rgba(148,163,184,0.18)',
-        borderRadius: '24px',
-        padding: '28px',
-        boxShadow: '0 24px 60px rgba(15, 23, 42, 0.08)',
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.8fr) minmax(280px, 0.9fr)',
-          gap: '20px',
-          alignItems: 'stretch',
-        }}>
-          <div style={{ display: 'grid', gap: '18px' }}>
-            <div>
-              <Link href="/admin/courses" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
-                ← กลับไปรายการคอร์ส
-              </Link>
-              <div style={{ color: '#2563eb', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '14px', marginBottom: '10px' }}>
-                Lesson Management
-              </div>
-              <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px', lineHeight: 1.1 }}>
-                จัดการบทเรียนให้เห็นทั้งโครงสร้าง ความพร้อมของวิดีโอ และบทที่ควรเติมก่อน
-              </h1>
-              <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: 1.8, maxWidth: '760px' }}>
-                ใช้หน้านี้เพื่อจัดลำดับบทเรียน เพิ่มวิดีโอ ตั้งค่า preview ฟรี และตรวจว่าบทเรียนไหนยังไม่พร้อมสำหรับประสบการณ์การเรียนที่สมบูรณ์
-              </p>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-              gap: '14px',
-            }}>
-              {[
-                { label: 'บทเรียนทั้งหมด', value: totalLessons, tone: '#2563eb', description: 'จำนวนบทเรียนที่มีในคอร์สนี้ทั้งหมด' },
-                { label: 'มีวิดีโอแล้ว', value: lessonsWithVideo, tone: '#16a34a', description: 'พร้อมเรียนในส่วนของวิดีโอ' },
-                { label: 'ยังไม่มีวิดีโอ', value: lessonsWithoutVideo, tone: '#dc2626', description: 'ควรเติมเพื่อให้คอร์สสมบูรณ์ขึ้น' },
-                { label: 'Preview ฟรี', value: freePreviewCount, tone: '#7c3aed', description: 'บทเรียนที่ผู้ใช้ยังไม่ซื้อสามารถดูได้' },
-                { label: 'มีเนื้อหาแล้ว', value: lessonsWithContent, tone: '#d97706', description: 'บทเรียนที่มีข้อความประกอบหรือรายละเอียดแล้ว' },
-              ].map((item) => (
-                <div key={item.label} style={{ background: 'white', borderRadius: '18px', padding: '18px', border: '1px solid #e2e8f0', boxShadow: '0 8px 24px rgba(15,23,42,0.05)' }}>
-                  <div style={{ color: '#64748b', fontSize: '0.78rem', marginBottom: '8px' }}>{item.label}</div>
-                  <div style={{ color: item.tone, fontSize: '1.8rem', fontWeight: 800, lineHeight: 1.1 }}>{item.value}</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '8px', lineHeight: 1.6 }}>{item.description}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '20px', padding: '20px', display: 'grid', gap: '14px' }}>
-            <div>
-              <div style={{ color: '#0f172a', fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>Course Readiness</div>
-              <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7 }}>สรุปคร่าว ๆ ว่าคอร์สนี้ไปได้ไกลแค่ไหนในมุมของการเตรียมบทเรียนและวิดีโอ</div>
-            </div>
-            <div style={{ borderRadius: '14px', background: 'white', border: '1px solid #e2e8f0', padding: '14px 16px' }}>
-              <div style={{ color: '#64748b', fontSize: '0.78rem', marginBottom: '6px' }}>Video Coverage</div>
-              <div style={{ color: readinessPercent >= 100 ? '#16a34a' : readinessPercent >= 60 ? '#d97706' : '#dc2626', fontSize: '1.9rem', fontWeight: 800, lineHeight: 1.1 }}>
-                {readinessPercent}%
-              </div>
-              <div style={{ color: '#94a3b8', fontSize: '0.76rem', marginTop: '6px' }}>คิดจากจำนวนบทที่มีวิดีโอ เทียบกับบทเรียนทั้งหมด</div>
-              <div style={{ marginTop: '12px', height: '8px', background: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
-                <div style={{ width: `${readinessPercent}%`, height: '100%', background: readinessPercent >= 100 ? '#16a34a' : '#2563eb', borderRadius: '999px' }} />
-              </div>
-            </div>
-            <button
-              onClick={() => { resetForm(); setShowForm(true); }}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '14px 16px',
-                background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '14px',
-                fontWeight: 700,
-                fontSize: '0.92rem',
-                cursor: 'pointer',
-              }}
-            >
-              <span>+ เพิ่มบทเรียนใหม่</span>
-              <span style={{ opacity: 0.9 }}>→</span>
-            </button>
-            <div style={{ borderRadius: '14px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px 16px' }}>
-              <div style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>เคล็ดลัด</div>
-              <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.7 }}>ลากเพื่อจัดลำดับบทเรียน และใช้ inline action สำหรับเติมวิดีโอได้เร็วขึ้นโดยไม่ต้องออกจากหน้า</div>
-            </div>
-          </div>
+    <div className="admin-lesson-page">
+      <section className="admin-lesson-hero">
+        <div className="admin-lesson-copy">
+          <Link href="/admin/courses" className="admin-lesson-back">← กลับไปคอร์สทั้งหมด</Link>
+          <span className="admin-lesson-kicker">Lesson operations</span>
+          <h1>จัดการบทเรียน</h1>
+          <p>
+            จัดลำดับบทเรียน เติมวิดีโอ ตรวจเนื้อหา และตั้งค่า preview จากหน้าเดียว
+            เพื่อให้คอร์สพร้อมเรียนจริงก่อนเผยแพร่หรือโปรโมต
+          </p>
         </div>
+
+        <aside className={`admin-lesson-priority ${nextAction.tone}`}>
+          <div>
+            <span className="admin-lesson-kicker">Next action</span>
+            <h2>{nextAction.label}</h2>
+            <p>{nextAction.detail}</p>
+          </div>
+          <a href={nextAction.href}>เปิดงาน <span aria-hidden="true">→</span></a>
+        </aside>
       </section>
 
-      {/* Add/Edit Form */}
-      {showForm && (
-        <div style={{
-          background: 'white',
-          borderRadius: '20px',
-          padding: '24px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)',
-        }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(260px, 0.85fr)', gap: '20px' }}>
+      <section className="admin-lesson-metrics" aria-label="สรุปสถานะบทเรียน">
+        {[
+          { label: 'บทเรียนทั้งหมด', value: totalLessons, detail: 'โครงสร้างในคอร์สนี้' },
+          { label: 'มีวิดีโอแล้ว', value: lessonsWithVideo, detail: 'พร้อมสำหรับ player' },
+          { label: 'มีเนื้อหาแล้ว', value: lessonsWithContent, detail: 'มีรายละเอียดประกอบ' },
+          { label: 'Preview ฟรี', value: freePreviewCount, detail: 'เปิดให้ลองเรียน' },
+        ].map((item, index) => (
+          <article className="admin-lesson-metric" key={item.label}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <strong>{formatCompactNumber(item.value)}</strong>
             <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '6px', color: '#1e293b' }}>
-                เพิ่มบทเรียนใหม่
-              </h2>
-              <div style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.7, marginBottom: '20px' }}>
-                ตั้งชื่อบทเรียน เนื้อหา วิดีโอ และสิทธิ์ preview ให้พร้อมตั้งแต่ต้น เพื่อให้ workflow ของการสร้างเนื้อหาลื่นไหลขึ้น
-              </div>
-
-              <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                ชื่อบทเรียน *
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                required
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                }}
-              />
+              <b>{item.label}</b>
+              <p>{item.detail}</p>
             </div>
+          </article>
+        ))}
+      </section>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                เนื้อหาบทเรียน (รายละเอียด, โค้ด, ลิงก์)
-              </label>
-              <RichTextEditor
-                content={formData.content}
-                onChange={(html) => setFormData({ ...formData, content: html })}
-              />
+      <section className="admin-lesson-readiness">
+        <div className="admin-lesson-readiness-main">
+          <div className="admin-lesson-meter" style={{ '--lesson-ready': `${readinessPercent}%` } as CSSProperties}>
+            <strong>{readinessPercent}%</strong>
+          </div>
+          <div>
+            <span className="admin-lesson-kicker">Course readiness</span>
+            <h2>ความพร้อมของบทเรียน</h2>
+            <p>คำนวณจากบทเรียนที่มีทั้งวิดีโอและเนื้อหา ซึ่งเป็นสองจุดหลักของประสบการณ์เรียน</p>
+          </div>
+        </div>
+
+        <button type="button" onClick={() => { resetForm(); setShowForm(true); }}>
+          เพิ่มบทเรียนใหม่
+        </button>
+      </section>
+
+      {showForm ? (
+        <section className="admin-lesson-form-card" id="new-lesson">
+          <div className="admin-lesson-form-header">
+            <div>
+              <span className="admin-lesson-kicker">New lesson</span>
+              <h2>เพิ่มบทเรียนใหม่</h2>
+              <p>เริ่มจากชื่อบทเรียน แล้วค่อยเติมเนื้อหา วิดีโอ และสิทธิ์ preview ให้ครบใน flow เดียว</p>
             </div>
+            <button type="button" onClick={resetForm}>ปิดฟอร์ม</button>
+          </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                URL วิดีโอ
-              </label>
-              <input
-                type="text"
-                value={formData.videoUrl}
-                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                placeholder="Bunny Video GUID หรือ Embed URL"
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                }}
-              />
-              <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-                รองรับ Bunny Video GUID หรือ Embed URL เพื่อให้ระบบใช้กับ player ของคอร์สได้ต่อเนื่อง
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
-                  ระยะเวลา (นาที:วินาที)
-                </label>
+          <div className="admin-lesson-form-grid">
+            <form onSubmit={handleSubmit}>
+              <label>
+                <span>ชื่อบทเรียน *</span>
                 <input
                   type="text"
-                  value={formData.videoDuration}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    // Allow digits and colon only
-                    if (/^[0-9:]*$/.test(val)) {
-                      setFormData({ ...formData, videoDuration: val });
-                    }
-                  }}
-                  placeholder="เช่น 10:30 = 10 นาที 30 วินาที"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                  }}
+                  value={formData.title}
+                  onChange={(event) => setFormData({ ...formData, title: event.target.value })}
+                  required
+                  placeholder="เช่น สร้างหน้าแรกด้วย Next.js"
                 />
-                <div style={{ color: '#94a3b8', fontSize: '0.78rem', marginTop: '8px', lineHeight: 1.6 }}>
-                  ตัวอย่าง `10:30` หมายถึง 10 นาที 30 วินาที
-                </div>
-              </div>
+              </label>
 
-              <div style={{ display: 'flex', alignItems: 'center', paddingTop: '28px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '12px 14px', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', width: '100%' }}>
+              <label>
+                <span>เนื้อหาบทเรียน</span>
+                <RichTextEditor
+                  content={formData.content}
+                  onChange={(html) => setFormData({ ...formData, content: html })}
+                />
+              </label>
+
+              <label>
+                <span>URL วิดีโอ</span>
+                <input
+                  type="text"
+                  value={formData.videoUrl}
+                  onChange={(event) => setFormData({ ...formData, videoUrl: event.target.value })}
+                  placeholder="Bunny Video GUID หรือ Embed URL"
+                />
+              </label>
+
+              <div className="admin-lesson-inline-fields">
+                <label>
+                  <span>ระยะเวลา</span>
+                  <input
+                    type="text"
+                    value={formData.videoDuration}
+                    onChange={(event) => {
+                      if (/^[0-9:]*$/.test(event.target.value)) {
+                        setFormData({ ...formData, videoDuration: event.target.value });
+                      }
+                    }}
+                    placeholder="10:30"
+                  />
+                </label>
+                <label className="admin-lesson-checkbox">
                   <input
                     type="checkbox"
                     checked={formData.isFreePreview}
-                    onChange={(e) => setFormData({ ...formData, isFreePreview: e.target.checked })}
-                    style={{ width: '18px', height: '18px' }}
+                    onChange={(event) => setFormData({ ...formData, isFreePreview: event.target.checked })}
                   />
-                  <span style={{ color: '#374151' }}>ดูได้ฟรี (Preview)</span>
+                  <span>ดูได้ฟรี (Preview)</span>
                 </label>
               </div>
-            </div>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                type="submit"
-                disabled={saving}
-                style={{
-                  padding: '12px 24px',
-                  background: '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 500,
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  opacity: saving ? 0.7 : 1,
-                }}
-              >
-                {saving ? 'กำลังบันทึก...' : 'เพิ่มบทเรียน'}
-              </button>
-              <button
-                type="button"
-                onClick={resetForm}
-                style={{
-                  padding: '12px 24px',
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                }}
-              >
-                ยกเลิก
-              </button>
-            </div>
-          </form>
-            </div>
+              <div className="admin-lesson-form-actions">
+                <button type="submit" disabled={saving}>{saving ? 'กำลังบันทึก...' : 'เพิ่มบทเรียน'}</button>
+                <button type="button" onClick={resetForm}>ยกเลิก</button>
+              </div>
+            </form>
 
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <div style={{ borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '16px' }}>
-                <div style={{ color: '#0f172a', fontSize: '0.92rem', fontWeight: 700, marginBottom: '8px' }}>New Lesson Checklist</div>
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  {createReadinessItems.map((item) => (
-                    <div key={item.label} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                      <div style={{ width: '9px', height: '9px', borderRadius: '999px', background: item.ready ? '#16a34a' : '#f59e0b', marginTop: '6px', flexShrink: 0 }} />
-                      <div>
-                        <div style={{ color: '#0f172a', fontSize: '0.82rem', fontWeight: 700 }}>{item.label}</div>
-                        <div style={{ color: item.ready ? '#166534' : '#92400e', fontSize: '0.76rem', lineHeight: 1.6 }}>{item.hint}</div>
-                      </div>
-                    </div>
-                  ))}
+            <aside className="admin-lesson-checklist">
+              <h3>Checklist</h3>
+              {createReadinessItems.map((item) => (
+                <div key={item.label}>
+                  <span className={item.ready ? 'ready' : ''} />
+                  <p>
+                    <strong>{item.label}</strong>
+                    <small>{item.ready ? 'พร้อมแล้ว' : 'ยังไม่ครบ'}</small>
+                  </p>
                 </div>
+              ))}
+              <div className="admin-lesson-note">
+                ถ้าเป็น sample lesson แนะนำให้เปิด preview และใส่วิดีโอให้พร้อม เพื่อช่วยให้ผู้เรียนตัดสินใจก่อนสมัครคอร์ส
               </div>
-              <div style={{ borderRadius: '16px', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '16px' }}>
-                <div style={{ color: '#1d4ed8', fontSize: '0.88rem', fontWeight: 700, marginBottom: '6px' }}>Best Practice</div>
-                <div style={{ color: '#1e40af', fontSize: '0.78rem', lineHeight: 1.7 }}>
-                  ถ้าบทนี้เป็นตัวอย่างสำหรับคนที่ยังไม่ซื้อคอร์ส ให้เปิด `Preview` และใส่วิดีโอให้พร้อม เพื่อช่วย conversion ของหน้าคอร์ส
-                </div>
-              </div>
-            </div>
+            </aside>
           </div>
-        </div>
-      )}
+        </section>
+      ) : null}
 
-      {/* Lessons List with Drag & Drop */}
-      <div style={{
-        background: 'white',
-        borderRadius: '18px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 12px 34px rgba(15, 23, 42, 0.06)',
-        overflow: 'hidden',
-      }}>
+      <section className="admin-lesson-workbench" id="lesson-workbench">
+        <header>
+          <div>
+            <span className="admin-lesson-kicker">Lesson workbench</span>
+            <h2>โครงสร้างบทเรียน</h2>
+            <p>ลากเพื่อจัดลำดับ ใช้ตัวกรองเพื่อหาบทที่ยังไม่พร้อม และแก้วิดีโอแบบ inline ได้ทันที</p>
+          </div>
+          <button type="button" onClick={() => { resetForm(); setShowForm(true); }}>
+            เพิ่มบทเรียน
+          </button>
+        </header>
         <DraggableLessonList
           lessons={lessons}
           courseId={courseId || ''}
           onDelete={(id) => setDeletingLessonId(id)}
           onReorder={(newIds) => {
-            // Update local state to match new order
-            const reordered = newIds.map(id => lessons.find(l => l.id === id)!).filter(Boolean);
+            const reordered = newIds.map((id) => lessons.find((lesson) => lesson.id === id)!).filter(Boolean);
             setLessons(reordered);
           }}
         />
-      </div>
+      </section>
 
       <ConfirmDialog
         isOpen={!!deletingLessonId}
@@ -456,6 +339,396 @@ export default function ManageLessonsPage() {
         onConfirm={confirmDeleteLesson}
         onCancel={() => setDeletingLessonId(null)}
       />
+
+      <style>{`
+        .admin-lesson-page {
+          --brand: #02abff;
+          --brand-dark: #0089d6;
+          --brand-soft: #eefaff;
+          --ink: #102033;
+          --muted: #64758b;
+          --line: #dbe8f2;
+          display: grid;
+          gap: 18px;
+          color: var(--ink);
+        }
+
+        .admin-lesson-loading {
+          padding: 60px;
+          color: #64758b;
+          text-align: center;
+        }
+
+        .admin-lesson-hero,
+        .admin-lesson-metric,
+        .admin-lesson-readiness,
+        .admin-lesson-form-card,
+        .admin-lesson-workbench {
+          border: 1px solid var(--line);
+          background: rgba(255, 255, 255, 0.94);
+          box-shadow: 0 12px 32px rgba(16, 32, 51, 0.06);
+        }
+
+        .admin-lesson-hero {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+          gap: 18px;
+          padding: 22px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, rgba(238, 250, 255, 0.92), rgba(255, 255, 255, 0.98) 48%), #fff;
+        }
+
+        .admin-lesson-copy {
+          display: grid;
+          gap: 10px;
+          align-content: center;
+          min-height: 190px;
+        }
+
+        .admin-lesson-back {
+          width: fit-content;
+          color: var(--muted);
+          text-decoration: none;
+          font-size: 0.84rem;
+          font-weight: 700;
+        }
+
+        .admin-lesson-kicker {
+          color: var(--brand-dark);
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .admin-lesson-hero h1,
+        .admin-lesson-priority h2,
+        .admin-lesson-readiness h2,
+        .admin-lesson-form-card h2,
+        .admin-lesson-workbench h2 {
+          margin: 0;
+          color: var(--ink);
+          line-height: 1.22;
+        }
+
+        .admin-lesson-hero h1 {
+          font-size: clamp(2rem, 4vw, 3.45rem);
+        }
+
+        .admin-lesson-hero p,
+        .admin-lesson-priority p,
+        .admin-lesson-readiness p,
+        .admin-lesson-form-card p,
+        .admin-lesson-workbench p {
+          margin: 0;
+          color: var(--muted);
+          font-size: 0.96rem;
+          line-height: 1.8;
+        }
+
+        .admin-lesson-priority {
+          display: grid;
+          align-content: space-between;
+          gap: 20px;
+          padding: 20px;
+          border-radius: 8px;
+          background: #0b1220;
+          color: #fff;
+        }
+
+        .admin-lesson-priority.warning {
+          background: linear-gradient(135deg, #102033, #5a3b08);
+        }
+
+        .admin-lesson-priority.success {
+          background: linear-gradient(135deg, #0b1220, #0f5132);
+        }
+
+        .admin-lesson-priority h2 {
+          margin-top: 8px;
+          color: #fff;
+          font-size: 1.35rem;
+        }
+
+        .admin-lesson-priority p {
+          color: #b8c7dc;
+        }
+
+        .admin-lesson-priority a,
+        .admin-lesson-readiness button,
+        .admin-lesson-workbench header button,
+        .admin-lesson-form-actions button:first-child {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: fit-content;
+          min-height: 44px;
+          padding: 0 16px;
+          border: 0;
+          border-radius: 8px;
+          background: var(--brand);
+          color: #fff;
+          cursor: pointer;
+          text-decoration: none;
+          font-weight: 800;
+        }
+
+        .admin-lesson-metrics {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .admin-lesson-metric {
+          display: grid;
+          gap: 12px;
+          min-height: 138px;
+          padding: 18px;
+          border-radius: 8px;
+        }
+
+        .admin-lesson-metric > span {
+          color: #a6b5c5;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .admin-lesson-metric > strong {
+          color: var(--ink);
+          font-size: clamp(1.5rem, 2vw, 2rem);
+          line-height: 1;
+        }
+
+        .admin-lesson-metric p {
+          margin: 4px 0 0;
+          color: var(--muted);
+          font-size: 0.78rem;
+          line-height: 1.55;
+        }
+
+        .admin-lesson-readiness {
+          display: flex;
+          justify-content: space-between;
+          gap: 18px;
+          align-items: center;
+          padding: 20px;
+          border-radius: 8px;
+        }
+
+        .admin-lesson-readiness-main {
+          display: grid;
+          grid-template-columns: 118px minmax(0, 1fr);
+          gap: 18px;
+          align-items: center;
+        }
+
+        .admin-lesson-meter {
+          display: grid;
+          place-items: center;
+          width: 118px;
+          height: 118px;
+          border-radius: 999px;
+          background: radial-gradient(circle closest-side, white 68%, transparent 69%), conic-gradient(var(--brand) var(--lesson-ready), #e8f1f8 0);
+        }
+
+        .admin-lesson-meter strong {
+          font-size: 1.35rem;
+        }
+
+        .admin-lesson-form-card,
+        .admin-lesson-workbench {
+          overflow: hidden;
+          border-radius: 8px;
+        }
+
+        .admin-lesson-form-header,
+        .admin-lesson-workbench > header {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+          padding: 20px;
+          border-bottom: 1px solid var(--line);
+          background: linear-gradient(180deg, #fff, #f7fbff);
+        }
+
+        .admin-lesson-form-header button,
+        .admin-lesson-form-actions button:last-child {
+          min-height: 40px;
+          padding: 0 14px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #fff;
+          color: var(--ink);
+          cursor: pointer;
+          font-weight: 800;
+        }
+
+        .admin-lesson-form-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+          gap: 18px;
+          padding: 20px;
+        }
+
+        .admin-lesson-form-grid form {
+          display: grid;
+          gap: 16px;
+        }
+
+        .admin-lesson-form-grid label {
+          display: grid;
+          gap: 8px;
+          color: var(--ink);
+          font-weight: 700;
+        }
+
+        .admin-lesson-form-grid input[type="text"] {
+          width: 100%;
+          min-height: 44px;
+          padding: 0 14px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #f7fbff;
+          color: var(--ink);
+          font-size: 0.95rem;
+        }
+
+        .admin-lesson-form-grid input:focus {
+          outline: none;
+          border-color: var(--brand);
+          box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.2);
+        }
+
+        .admin-lesson-inline-fields {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
+          gap: 14px;
+          align-items: end;
+        }
+
+        .admin-lesson-checkbox {
+          display: flex !important;
+          min-height: 44px;
+          align-items: center;
+          gap: 10px !important;
+          padding: 0 14px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #f7fbff;
+          cursor: pointer;
+        }
+
+        .admin-lesson-checkbox input {
+          width: 18px;
+          height: 18px;
+        }
+
+        .admin-lesson-form-actions {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .admin-lesson-form-actions button:disabled {
+          cursor: not-allowed;
+          opacity: 0.7;
+        }
+
+        .admin-lesson-checklist {
+          display: grid;
+          gap: 10px;
+          align-content: start;
+          padding: 16px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #f7fbff;
+        }
+
+        .admin-lesson-checklist h3 {
+          margin: 0 0 4px;
+          color: var(--ink);
+        }
+
+        .admin-lesson-checklist > div:not(.admin-lesson-note) {
+          display: flex;
+          gap: 10px;
+          align-items: flex-start;
+          padding: 10px;
+          border-radius: 8px;
+          background: #fff;
+        }
+
+        .admin-lesson-checklist span {
+          width: 9px;
+          height: 9px;
+          margin-top: 6px;
+          border-radius: 999px;
+          background: #f5a524;
+          flex-shrink: 0;
+        }
+
+        .admin-lesson-checklist span.ready {
+          background: #11a66a;
+        }
+
+        .admin-lesson-checklist p {
+          display: grid;
+          gap: 2px;
+          margin: 0;
+        }
+
+        .admin-lesson-checklist small,
+        .admin-lesson-note {
+          color: var(--muted);
+          font-size: 0.78rem;
+          line-height: 1.6;
+        }
+
+        .admin-lesson-note {
+          padding: 12px;
+          border-radius: 8px;
+          background: var(--brand-soft);
+          color: #075b8d;
+        }
+
+        @media (max-width: 1180px) {
+          .admin-lesson-hero,
+          .admin-lesson-form-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .admin-lesson-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 760px) {
+          .admin-lesson-hero,
+          .admin-lesson-readiness {
+            padding: 16px;
+            border-radius: 8px;
+          }
+
+          .admin-lesson-copy {
+            min-height: unset;
+          }
+
+          .admin-lesson-metrics,
+          .admin-lesson-readiness-main,
+          .admin-lesson-inline-fields {
+            grid-template-columns: 1fr;
+          }
+
+          .admin-lesson-readiness,
+          .admin-lesson-form-header,
+          .admin-lesson-workbench > header {
+            align-items: stretch;
+            flex-direction: column;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import { db } from '@/lib/db';
 import { courses, lessons, enrollments } from '@/lib/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
@@ -7,7 +8,7 @@ import AdminCoursesTable from '@/components/admin/AdminCoursesTable';
 export const dynamic = 'force-dynamic';
 
 async function getCourses() {
-  const allCourses = await db
+  return db
     .select({
       id: courses.id,
       title: courses.title,
@@ -28,209 +29,122 @@ async function getCourses() {
     .leftJoin(enrollments, eq(enrollments.courseId, courses.id))
     .groupBy(courses.id)
     .orderBy(desc(courses.createdAt));
+}
 
-  return allCourses;
+function formatCompactNumber(value: number) {
+  return new Intl.NumberFormat('th-TH', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
 }
 
 export default async function AdminCoursesPage() {
   const allCourses = await getCourses();
+  const totalLessons = allCourses.reduce((sum, course) => sum + Number(course.lessonCount || 0), 0);
+  const totalEnrollments = allCourses.reduce((sum, course) => sum + Number(course.enrollmentCount || 0), 0);
   const publishedCount = allCourses.filter((course) => course.status === 'published').length;
   const draftCount = allCourses.filter((course) => course.status === 'draft').length;
   const withoutLessonsCount = allCourses.filter((course) => Number(course.lessonCount || 0) === 0).length;
-  const withEnrollmentsCount = allCourses.filter((course) => Number(course.enrollmentCount || 0) > 0).length;
+  const withoutThumbnailCount = allCourses.filter((course) => !course.thumbnailUrl).length;
+  const averageLessonsPerCourse = allCourses.length > 0 ? (totalLessons / allCourses.length).toFixed(1) : '0.0';
+  const readinessScore = allCourses.length > 0
+    ? Math.round(((allCourses.length - withoutLessonsCount) / allCourses.length) * 100)
+    : 0;
 
-  const operationalStats = [
-    { label: 'คอร์สทั้งหมด', value: allCourses.length, tone: '#2563eb', description: 'inventory ทั้งหมดในระบบ' },
-    { label: 'เผยแพร่แล้ว', value: publishedCount, tone: '#16a34a', description: 'พร้อมขายหรือเปิดเรียน' },
-    { label: 'แบบร่าง', value: draftCount, tone: '#d97706', description: 'ยังรอการจัดการก่อนเผยแพร่' },
-    { label: 'ต้องเติมบทเรียน', value: withoutLessonsCount, tone: '#dc2626', description: 'คอร์สที่ยังไม่พร้อมผลักต่อ' },
-  ];
-
-  const topPriorityAction = withoutLessonsCount > 0
+  const priorityAction = withoutLessonsCount > 0
     ? {
       href: '#course-catalog',
-      label: 'ไล่ตรวจคอร์สที่ยังไม่มีบทเรียน',
-      note: `ตอนนี้มี ${withoutLessonsCount} คอร์สที่ยังไม่พร้อมสำหรับ workflow ขายหรือเปิดเรียน`,
+      label: 'ตรวจคอร์สที่ยังไม่มีบทเรียน',
+      detail: `มี ${withoutLessonsCount} คอร์สที่ยังไม่พร้อมเปิดเรียน`,
+      tone: 'warning',
     }
     : draftCount > 0
       ? {
         href: '#course-catalog',
-        label: 'ทบทวนคอร์สแบบร่างที่รอเผยแพร่',
-        note: `มี ${draftCount} คอร์สที่ยังอยู่ใน backlog การเปิดขาย`,
+        label: 'ทบทวนคอร์สร่าง',
+        detail: `มี ${draftCount} คอร์สที่รอจัดการก่อนเผยแพร่`,
+        tone: 'info',
       }
       : {
         href: '/admin/courses/new',
         label: 'สร้างคอร์สใหม่',
-        note: 'คอร์สหลักในระบบดูพร้อมใช้งานแล้ว คุณสามารถเริ่มสร้างรายการใหม่ต่อได้',
+        detail: 'คลังคอร์สหลักพร้อมใช้งานแล้ว เริ่มเพิ่มรายการใหม่ได้เลย',
+        tone: 'success',
       };
 
-  const averageLessonsPerCourse = allCourses.length > 0
-    ? (allCourses.reduce((sum, course) => sum + Number(course.lessonCount || 0), 0) / allCourses.length).toFixed(1)
-    : '0.0';
-
-  const averageEnrollmentsPerCourse = allCourses.length > 0
-    ? (allCourses.reduce((sum, course) => sum + Number(course.enrollmentCount || 0), 0) / allCourses.length).toFixed(1)
-    : '0.0';
-
-  const focusSummaryItems = [
-    { label: 'พร้อมขายแล้ว', value: `${publishedCount} คอร์ส` },
-    { label: 'แบบร่าง', value: `${draftCount} รายการ` },
-    { label: 'เฉลี่ยบทเรียน', value: `${averageLessonsPerCourse} บท` },
-    { label: 'ต้องเติมบทเรียน', value: `${withoutLessonsCount} รายการ` },
-  ];
-
-  const catalogSnapshotItems = [
-    { label: 'Drafts', value: draftCount, detail: 'รายการที่ยังรอจัดการ', tone: '#64748b' },
-    { label: 'Published', value: publishedCount, detail: 'พร้อมขายหรือเปิดเรียน', tone: '#1d4ed8' },
-  ];
-
-  const catalogSignals = [
-    { label: 'คอร์สมีผู้เรียนแล้ว', value: `${withEnrollmentsCount} คอร์ส`, detail: 'ดูรายการที่เริ่มมี demand จริง', tone: '#0f766e' },
-    { label: 'เฉลี่ยบทเรียน / คอร์ส', value: `${averageLessonsPerCourse} บท`, detail: 'วัดความหนาแน่นของเนื้อหา', tone: '#1d4ed8' },
-    { label: 'เฉลี่ยผู้เรียน / คอร์ส', value: `${averageEnrollmentsPerCourse} คน`, detail: 'ใช้ดูแรงตอบรับของ catalog', tone: '#c2410c' },
+  const metrics = [
+    { label: 'คอร์สทั้งหมด', value: allCourses.length, detail: 'รายการใน catalog' },
+    { label: 'เผยแพร่แล้ว', value: publishedCount, detail: 'พร้อมขายหรือเปิดเรียน' },
+    { label: 'แบบร่าง', value: draftCount, detail: 'ยังต้องตรวจต่อ' },
+    { label: 'ไม่มีบทเรียน', value: withoutLessonsCount, detail: 'ควรแก้ก่อนเปิดขาย' },
   ];
 
   return (
-    <div className="admin-courses-shell" style={{ display: 'grid', gap: '18px' }}>
-      <div className="admin-courses-ambient admin-courses-ambient-left" aria-hidden="true" />
-      <div className="admin-courses-ambient admin-courses-ambient-right" aria-hidden="true" />
-      <section className="admin-courses-hero" style={{
-        background: '#ffffff',
-        border: '1px solid #dbe5f4',
-        borderRadius: '22px',
-        padding: '18px 20px',
-        boxShadow: '0 16px 36px rgba(15, 23, 42, 0.05)',
-        overflow: 'hidden',
-      }}>
-        <div className="admin-courses-hero-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '18px',
-          alignItems: 'stretch',
-        }}>
-          <div style={{ display: 'grid', gap: '14px' }}>
-            <div>
-              <div style={{ color: '#334155', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                Course Management
-              </div>
-              <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: '10px', lineHeight: 1.05, maxWidth: '680px' }}>
-                การจัดการคอร์ส
-              </h1>
-              <p style={{ color: '#64748b', fontSize: '0.86rem', lineHeight: 1.7, maxWidth: '720px' }}>
-                สรุปภาพรวม catalog การเผยแพร่ และคอร์สที่ควรจัดการก่อนใน flow เดียว เพื่อให้ตัดสินใจต่อได้จากหน้าเดียว
-              </p>
-            </div>
+    <div className="admin-course-page">
+      <section className="admin-course-hero">
+        <div className="admin-course-hero-copy">
+          <span className="admin-course-kicker">Course operations</span>
+          <h1>จัดการคอร์ส</h1>
+          <p>
+            ควบคุม catalog คอร์สจากมุมมองเดียว เห็นสถานะเผยแพร่ ความพร้อมของบทเรียน
+            และรายการที่ควรจัดการต่อทันที
+          </p>
+        </div>
 
-            <div className="admin-courses-focus-stack" style={{
-              display: 'grid',
-              gap: '14px',
-            }}>
-              <div className="admin-courses-focus-panel" style={{
-                background: 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 58%, #2563eb 100%)',
-                color: 'white',
-                borderRadius: '18px',
-                padding: '22px 24px',
-                display: 'grid',
-                gap: '14px',
-                position: 'relative',
-                overflow: 'hidden',
-                minHeight: '208px',
-              }}>
-                <div style={{ position: 'absolute', inset: 'auto -72px -84px auto', width: '210px', height: '210px', borderRadius: '999px', background: 'radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0))' }} />
-                <div style={{ position: 'relative', zIndex: 1, display: 'grid', gap: '10px' }}>
-                  <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Catalog Focus</div>
-                  <div style={{ fontSize: '2.1rem', fontWeight: 800, lineHeight: 1 }}>{allCourses.length} Courses</div>
-                  <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: '0.84rem', lineHeight: 1.7, maxWidth: '520px' }}>
-                    โฟกัสขนาดของ catalog และงานสำคัญที่ควรทำก่อน เพื่อให้เห็นภาพรวมและเริ่มจัดการได้ทันที
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Link href={topPriorityAction.href} style={{ padding: '10px 14px', borderRadius: '999px', background: '#ffffff', color: '#0f172a', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 700 }}>
-                      {topPriorityAction.label} →
-                    </Link>
-                    <div style={{ color: 'rgba(255,255,255,0.74)', fontSize: '0.74rem', lineHeight: 1.6 }}>{topPriorityAction.note}</div>
-                  </div>
-                </div>
-                <div className="admin-courses-focus-summary" style={{
-                  position: 'relative',
-                  zIndex: 1,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '12px',
-                  paddingTop: '14px',
-                  borderTop: '1px solid rgba(255,255,255,0.2)',
-                }}>
-                  {focusSummaryItems.map((item) => (
-                    <div className="admin-courses-focus-metric" key={item.label}>
-                      <div style={{ color: 'rgba(255,255,255,0.64)', fontSize: '0.72rem', marginBottom: '6px' }}>{item.label}</div>
-                      <div style={{ color: 'white', fontSize: '1.12rem', fontWeight: 700, lineHeight: 1.15 }}>{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="admin-courses-stat-grid" style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                gap: '12px',
-              }}>
-              {operationalStats.map((item) => (
-                <div className="admin-courses-stat-card" key={item.label} style={{ padding: '14px 16px', borderRadius: '14px', background: '#f8fbff', border: '1px solid #dbe5f4', minWidth: 0 }}>
-                  <div style={{ color: '#64748b', fontSize: '0.72rem', marginBottom: '6px' }}>{item.label}</div>
-                  <div style={{ color: item.tone, fontSize: '1.32rem', fontWeight: 800, lineHeight: 1.05 }}>{item.value}</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.7rem', marginTop: '6px', lineHeight: 1.5 }}>{item.description}</div>
-                </div>
-              ))}
-            </div>
+        <aside className={`admin-course-priority ${priorityAction.tone}`}>
+          <div>
+            <span className="admin-course-kicker">Next action</span>
+            <h2>{priorityAction.label}</h2>
+            <p>{priorityAction.detail}</p>
           </div>
-          </div>
+          <Link href={priorityAction.href}>
+            เปิดงาน
+            <span aria-hidden="true">→</span>
+          </Link>
+        </aside>
+      </section>
 
-          <div className="admin-courses-snapshot-panel" style={{ background: '#ffffff', border: '1px solid #dbe5f4', borderRadius: '18px', padding: '18px', display: 'grid', gap: '14px' }}>
+      <section className="admin-course-metrics" aria-label="สรุปสถานะคอร์ส">
+        {metrics.map((metric, index) => (
+          <article className="admin-course-metric" key={metric.label}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <strong>{formatCompactNumber(metric.value)}</strong>
             <div>
-              <div style={{ color: '#0f172a', fontSize: '0.96rem', fontWeight: 700, marginBottom: '6px' }}>ภาพรวมแคตตาล็อก</div>
-              <div style={{ color: '#64748b', fontSize: '0.78rem', lineHeight: 1.65 }}>ใช้มุมนี้เช็คสถานะหลักของ catalog ก่อนลงไปจัดการรายคอร์สในตาราง</div>
+              <b>{metric.label}</b>
+              <p>{metric.detail}</p>
             </div>
-            <Link
-              href="/admin/courses/new"
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '15px 16px',
-                background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                color: 'white',
-                borderRadius: '12px',
-                textDecoration: 'none',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-              }}
-            >
-              <span>สร้างคอร์สใหม่</span>
-              <span style={{ opacity: 0.9 }}>→</span>
-            </Link>
-            <div className="admin-courses-snapshot-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px' }}>
-              {catalogSnapshotItems.map((item) => (
-                <div className="admin-courses-snapshot-card" key={item.label} style={{ padding: '12px 14px', borderRadius: '12px', background: '#f8fbff', border: '1px solid #e6eefb' }}>
-                  <div style={{ color: '#64748b', fontSize: '0.7rem', marginBottom: '5px' }}>{item.label}</div>
-                  <div style={{ color: item.tone, fontSize: '1.28rem', fontWeight: 800, lineHeight: 1 }}>{item.value}</div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.68rem', marginTop: '5px', lineHeight: 1.5 }}>{item.detail}</div>
-                </div>
-              ))}
-            </div>
-            <div className="admin-courses-signals" style={{ paddingTop: '14px', borderTop: '1px solid rgba(226,232,240,0.9)' }}>
-              <div style={{ color: '#0f172a', fontSize: '0.82rem', fontWeight: 700, marginBottom: '10px' }}>สัญญาณของแคตตาล็อก</div>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {catalogSignals.map((item) => (
-                  <div className="admin-courses-signal-row" key={item.label} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline', paddingBottom: '10px', borderBottom: '1px solid #eef2f7' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ color: '#0f172a', fontSize: '0.82rem', fontWeight: 700, marginBottom: '4px' }}>{item.label}</div>
-                      <div style={{ color: '#94a3b8', fontSize: '0.68rem', lineHeight: 1.55 }}>{item.detail}</div>
-                    </div>
-                    <div style={{ color: item.tone, fontSize: '0.94rem', fontWeight: 800, lineHeight: 1.1, flexShrink: 0 }}>{item.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="admin-course-readiness">
+        <div className="admin-course-readiness-score">
+          <div className="admin-course-meter" style={{ '--course-ready': `${readinessScore}%` } as CSSProperties}>
+            <strong>{readinessScore}%</strong>
+          </div>
+          <div>
+            <span className="admin-course-kicker">Catalog readiness</span>
+            <h2>ความพร้อมของคอร์ส</h2>
+            <p>คำนวณจากคอร์สที่มีบทเรียนแล้วเทียบกับ catalog ทั้งหมด</p>
+          </div>
+        </div>
+
+        <div className="admin-course-readiness-grid">
+          <div>
+            <span>บทเรียนทั้งหมด</span>
+            <strong>{formatCompactNumber(totalLessons)}</strong>
+          </div>
+          <div>
+            <span>ผู้เรียนทั้งหมด</span>
+            <strong>{formatCompactNumber(totalEnrollments)}</strong>
+          </div>
+          <div>
+            <span>เฉลี่ยบทเรียน / คอร์ส</span>
+            <strong>{averageLessonsPerCourse}</strong>
+          </div>
+          <div>
+            <span>ยังไม่มีภาพปก</span>
+            <strong>{formatCompactNumber(withoutThumbnailCount)}</strong>
           </div>
         </div>
       </section>
@@ -240,104 +154,245 @@ export default async function AdminCoursesPage() {
       </div>
 
       <style>{`
-        .admin-courses-shell {
-          position: relative;
-          isolation: isolate;
-          gap: 20px !important;
-          padding-bottom: 20px;
+        .admin-course-page {
+          --brand: #02abff;
+          --brand-dark: #0089d6;
+          --brand-soft: #eefaff;
+          --ink: #102033;
+          --muted: #64758b;
+          --line: #dbe8f2;
+          display: grid;
+          gap: 18px;
+          color: var(--ink);
         }
 
-        .admin-courses-ambient {
-          position: absolute;
-          border-radius: 999px;
-          filter: blur(82px);
-          opacity: 0.18;
-          pointer-events: none;
-          z-index: 0;
+        .admin-course-hero,
+        .admin-course-metric,
+        .admin-course-readiness {
+          border: 1px solid var(--line);
+          background: rgba(255, 255, 255, 0.94);
+          box-shadow: 0 12px 32px rgba(16, 32, 51, 0.06);
         }
 
-        .admin-courses-ambient-left {
-          width: 280px;
-          height: 280px;
-          top: -10px;
-          left: -20px;
-          background: radial-gradient(circle, rgba(37, 99, 235, 0.18), rgba(37, 99, 235, 0));
-        }
-
-        .admin-courses-ambient-right {
-          width: 320px;
-          height: 320px;
-          top: 220px;
-          right: -60px;
-          background: radial-gradient(circle, rgba(14, 165, 233, 0.14), rgba(14, 165, 233, 0));
-        }
-
-        .admin-courses-hero {
-          position: relative;
-          z-index: 1;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98)) !important;
-          border: 1px solid rgba(203, 213, 225, 0.86) !important;
-          box-shadow: 0 18px 42px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255,255,255,0.82) !important;
-        }
-
-        .admin-courses-hero::before {
-          content: '';
-          position: absolute;
-          inset: 0;
+        .admin-course-hero {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+          gap: 18px;
+          align-items: stretch;
+          padding: 22px;
+          border-radius: 8px;
           background:
-            linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0)),
-            radial-gradient(circle at top right, rgba(59,130,246,0.05), transparent 30%);
-          pointer-events: none;
+            linear-gradient(135deg, rgba(238, 250, 255, 0.92), rgba(255, 255, 255, 0.98) 48%),
+            #ffffff;
         }
 
-        .admin-courses-focus-panel,
-        .admin-courses-snapshot-panel,
-        .admin-courses-stat-card,
-        .admin-courses-snapshot-card {
-          transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+        .admin-course-hero-copy {
+          display: grid;
+          gap: 10px;
+          align-content: center;
+          min-height: 190px;
         }
 
-        .admin-courses-focus-panel {
-          min-height: 214px !important;
-          box-shadow: 0 22px 40px rgba(29, 78, 216, 0.2);
+        .admin-course-kicker {
+          color: var(--brand-dark);
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
         }
 
-        .admin-courses-focus-metric {
-          padding: 10px 12px;
-          border-radius: 14px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
-          border: 1px solid rgba(255,255,255,0.08);
+        .admin-course-hero h1,
+        .admin-course-priority h2,
+        .admin-course-readiness h2 {
+          margin: 0;
+          color: var(--ink);
+          line-height: 1.22;
         }
 
-        .admin-courses-stat-card,
-        .admin-courses-snapshot-card {
-          background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
-          border: 1px solid rgba(219, 234, 254, 0.95) !important;
-          box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+        .admin-course-hero h1 {
+          font-size: clamp(2rem, 4vw, 3.45rem);
+          letter-spacing: 0;
         }
 
-        .admin-courses-snapshot-panel {
-          background: linear-gradient(180deg, #ffffff, #f8fafc) !important;
-          border: 1px solid rgba(203, 213, 225, 0.86) !important;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 12px 28px rgba(15, 23, 42, 0.04);
+        .admin-course-hero p,
+        .admin-course-priority p,
+        .admin-course-readiness p {
+          margin: 0;
+          max-width: 690px;
+          color: var(--muted);
+          font-size: 0.96rem;
+          line-height: 1.8;
         }
 
-        .admin-courses-signal-row:last-child {
-          border-bottom: none !important;
-          padding-bottom: 0 !important;
+        .admin-course-priority {
+          display: grid;
+          align-content: space-between;
+          gap: 20px;
+          padding: 20px;
+          border-radius: 8px;
+          background: #0b1220;
+          color: #ffffff;
         }
 
-        .admin-courses-focus-panel:hover,
-        .admin-courses-snapshot-panel:hover,
-        .admin-courses-stat-card:hover,
-        .admin-courses-snapshot-card:hover {
-          transform: translateY(-1px);
-          border-color: rgba(148, 163, 184, 0.88) !important;
+        .admin-course-priority h2 {
+          margin: 8px 0 6px;
+          color: #ffffff;
+          font-size: 1.35rem;
         }
 
-        @media (max-width: 900px) {
-          .admin-courses-hero-grid {
-            grid-template-columns: 1fr !important;
+        .admin-course-priority p {
+          color: #b8c7dc;
+        }
+
+        .admin-course-priority.warning {
+          background: linear-gradient(135deg, #102033, #5a3b08);
+        }
+
+        .admin-course-priority.success {
+          background: linear-gradient(135deg, #0b1220, #0f5132);
+        }
+
+        .admin-course-priority a {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          width: fit-content;
+          min-height: 44px;
+          padding: 0 16px;
+          border-radius: 8px;
+          background: var(--brand);
+          color: #ffffff;
+          text-decoration: none;
+          font-weight: 800;
+        }
+
+        .admin-course-metrics {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .admin-course-metric {
+          display: grid;
+          gap: 12px;
+          min-height: 138px;
+          padding: 18px;
+          border-radius: 8px;
+        }
+
+        .admin-course-metric > span {
+          color: #a6b5c5;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .admin-course-metric > strong {
+          color: var(--ink);
+          font-size: clamp(1.5rem, 2vw, 2rem);
+          line-height: 1;
+        }
+
+        .admin-course-metric b,
+        .admin-course-readiness-grid strong {
+          color: var(--ink);
+        }
+
+        .admin-course-metric p {
+          margin: 4px 0 0;
+          color: var(--muted);
+          font-size: 0.78rem;
+          line-height: 1.55;
+        }
+
+        .admin-course-readiness {
+          display: grid;
+          grid-template-columns: minmax(300px, 0.9fr) minmax(0, 1.1fr);
+          gap: 18px;
+          align-items: center;
+          padding: 20px;
+          border-radius: 8px;
+        }
+
+        .admin-course-readiness-score {
+          display: grid;
+          grid-template-columns: 118px minmax(0, 1fr);
+          gap: 18px;
+          align-items: center;
+        }
+
+        .admin-course-meter {
+          display: grid;
+          place-items: center;
+          width: 118px;
+          height: 118px;
+          border-radius: 999px;
+          background:
+            radial-gradient(circle closest-side, white 68%, transparent 69%),
+            conic-gradient(var(--brand) var(--course-ready), #e8f1f8 0);
+        }
+
+        .admin-course-meter strong {
+          color: var(--ink);
+          font-size: 1.35rem;
+        }
+
+        .admin-course-readiness-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .admin-course-readiness-grid > div {
+          min-height: 84px;
+          padding: 14px;
+          border: 1px solid #e8f1f8;
+          border-radius: 8px;
+          background: #f7fbff;
+        }
+
+        .admin-course-readiness-grid span {
+          display: block;
+          margin-bottom: 8px;
+          color: var(--muted);
+          font-size: 0.76rem;
+        }
+
+        .admin-course-readiness-grid strong {
+          font-size: 1.25rem;
+        }
+
+        @media (max-width: 1180px) {
+          .admin-course-hero,
+          .admin-course-readiness {
+            grid-template-columns: 1fr;
+          }
+
+          .admin-course-metrics,
+          .admin-course-readiness-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 720px) {
+          .admin-course-page {
+            gap: 14px;
+          }
+
+          .admin-course-hero,
+          .admin-course-readiness {
+            padding: 16px;
+            border-radius: 8px;
+          }
+
+          .admin-course-hero-copy {
+            min-height: unset;
+          }
+
+          .admin-course-metrics,
+          .admin-course-readiness-grid,
+          .admin-course-readiness-score {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>

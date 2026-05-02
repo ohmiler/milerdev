@@ -73,21 +73,31 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
         <div ref={dropdownRef} style={{ position: 'relative' }}>
             {/* Selected tags + trigger */}
             <div
+                role="button"
+                tabIndex={0}
                 onClick={() => setIsOpen(!isOpen)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setIsOpen(!isOpen);
+                    }
+                }}
                 style={{
+                    width: '100%',
                     minHeight: '48px',
                     padding: '8px 12px',
                     border: '1px solid',
-                    borderColor: isOpen ? '#2563eb' : '#dbe5f4',
-                    borderRadius: '12px',
+                    borderColor: isOpen ? '#02abff' : '#dbe8f2',
+                    borderRadius: '8px',
                     cursor: 'pointer',
                     display: 'flex',
                     flexWrap: 'wrap',
                     gap: '6px',
                     alignItems: 'center',
-                    background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
+                    textAlign: 'left',
+                    background: 'linear-gradient(180deg, #ffffff, #f7fbff)',
                     transition: 'border-color 0.15s, box-shadow 0.15s',
-                    boxShadow: isOpen ? '0 0 0 4px rgba(37, 99, 235, 0.12)' : 'inset 0 1px 0 rgba(255,255,255,0.82)',
+                    boxShadow: isOpen ? '0 0 0 4px rgba(2, 171, 255, 0.18)' : 'inset 0 1px 0 rgba(255,255,255,0.82)',
                 }}
             >
                 {selectedTags.length > 0 ? (
@@ -99,9 +109,9 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                 alignItems: 'center',
                                 gap: '4px',
                                 padding: '4px 10px',
-                                background: '#eff6ff',
-                                color: '#2563eb',
-                                borderRadius: '50px',
+                                background: '#eefaff',
+                                color: '#0089d6',
+                                borderRadius: '8px',
                                 fontSize: '0.8125rem',
                                 fontWeight: 500,
                             }}
@@ -113,7 +123,7 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                 style={{
                                     background: 'none',
                                     border: 'none',
-                                    color: '#2563eb',
+                                    color: '#0089d6',
                                     cursor: 'pointer',
                                     padding: '0 2px',
                                     fontSize: '1rem',
@@ -141,9 +151,9 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                     marginTop: '4px',
                     background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
                     border: '1px solid #dbe5f4',
-                    borderRadius: '12px',
+                    borderRadius: '8px',
                     boxShadow: '0 18px 30px rgba(15, 23, 42, 0.08)',
-                    zIndex: 50,
+                    zIndex: 1000,
                     maxHeight: '240px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -183,23 +193,27 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                             filteredTags.map(tag => {
                                 const isSelected = selectedTagIds.includes(tag.id);
                                 return (
-                                    <div
+                                    <button
+                                        type="button"
                                         key={tag.id}
                                         onClick={(e) => { e.stopPropagation(); toggleTag(tag.id); }}
                                         style={{
+                                            width: '100%',
                                             padding: '10px 16px',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '10px',
-                                            background: isSelected ? '#eff6ff' : 'transparent',
+                                            background: isSelected ? '#eefaff' : 'transparent',
+                                            border: 'none',
+                                            textAlign: 'left',
                                             transition: 'background 0.1s',
                                         }}
                                         onMouseEnter={(e) => {
-                                            if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = '#f8fafc';
+                                            if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = '#f7fbff';
                                         }}
                                         onMouseLeave={(e) => {
-                                            (e.currentTarget as HTMLDivElement).style.background = isSelected ? '#eff6ff' : 'transparent';
+                                            (e.currentTarget as HTMLButtonElement).style.background = isSelected ? '#eefaff' : 'transparent';
                                         }}
                                     >
                                         <div style={{
@@ -207,8 +221,8 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                             height: '18px',
                                             borderRadius: '4px',
                                             border: '2px solid',
-                                            borderColor: isSelected ? '#2563eb' : '#cbd5e1',
-                                            background: isSelected ? '#2563eb' : 'white',
+                                            borderColor: isSelected ? '#02abff' : '#cbd5e1',
+                                            background: isSelected ? '#02abff' : 'white',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -222,12 +236,12 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                         </div>
                                         <span style={{
                                             fontSize: '0.875rem',
-                                            color: isSelected ? '#2563eb' : '#374151',
+                                            color: isSelected ? '#0089d6' : '#374151',
                                             fontWeight: isSelected ? 500 : 400,
                                         }}>
                                             {tag.name}
                                         </span>
-                                    </div>
+                                    </button>
                                 );
                             })
                         )}

@@ -30,7 +30,7 @@ export default function NewCoursePage() {
     price: '0',
     status: 'draft',
     thumbnailUrl: '',
-    certificateColor: '#2563eb',
+    certificateColor: '#02abff',
   });
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
@@ -345,7 +345,7 @@ export default function NewCoursePage() {
         .new-course-side-card {
           background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
           border: 1px solid rgba(203, 213, 225, 0.86);
-          border-radius: 24px;
+          border-radius: 8px;
           box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.84);
         }
 
@@ -361,8 +361,8 @@ export default function NewCoursePage() {
           inset: 0;
           pointer-events: none;
           background:
-            radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 34%),
-            linear-gradient(135deg, rgba(239, 246, 255, 0.8), rgba(255, 255, 255, 0));
+            radial-gradient(circle at top right, rgba(2, 171, 255, 0.08), transparent 34%),
+            linear-gradient(135deg, rgba(238, 250, 255, 0.8), rgba(255, 255, 255, 0));
         }
 
         .new-course-back-link-wrap,
@@ -457,8 +457,8 @@ export default function NewCoursePage() {
         }
 
         .new-course-pill.is-info {
-          background: #eff6ff;
-          color: #1d4ed8;
+          background: #eefaff;
+          color: #0089d6;
         }
 
         .new-course-hero-focus {
@@ -479,7 +479,7 @@ export default function NewCoursePage() {
           border: 1px solid #fecaca;
           color: #dc2626;
           padding: 12px 16px;
-          border-radius: 12px;
+          border-radius: 8px;
         }
 
         .new-course-form-grid {
@@ -555,7 +555,7 @@ export default function NewCoursePage() {
         .new-course-input {
           width: 100%;
           padding: 12px 16px;
-          border-radius: 12px;
+          border-radius: 8px;
           border: 1px solid rgba(203, 213, 225, 0.88);
           background: #ffffff;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
@@ -565,8 +565,8 @@ export default function NewCoursePage() {
 
         .new-course-input:focus {
           outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+          border-color: #02abff;
+          box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.22);
         }
 
         .new-course-help-text {
@@ -591,7 +591,7 @@ export default function NewCoursePage() {
         .new-course-reset-button {
           padding: 8px 12px;
           border: 1px solid #dbe5f4;
-          border-radius: 10px;
+          border-radius: 8px;
           background: linear-gradient(180deg, #ffffff, #f8fafc);
           color: #475569;
           font-size: 0.75rem;
@@ -602,7 +602,7 @@ export default function NewCoursePage() {
 
         .new-course-mini-card {
           padding: 14px 16px;
-          border-radius: 18px;
+          border-radius: 8px;
           background: linear-gradient(180deg, #ffffff, #f8fafc);
           border: 1px solid rgba(226, 232, 240, 0.96);
         }
@@ -621,7 +621,7 @@ export default function NewCoursePage() {
 
         .new-course-mini-value.tone-blue,
         .tone-blue {
-          color: #2563eb;
+          color: #0089d6;
         }
 
         .new-course-mini-value.tone-green,
@@ -660,9 +660,9 @@ export default function NewCoursePage() {
         }
 
         .new-course-side-highlight {
-          border-radius: 18px;
+          border-radius: 8px;
           border: 1px solid rgba(191, 219, 254, 0.94);
-          background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+          background: linear-gradient(135deg, #eefaff 0%, #ffffff 100%);
           padding: 16px;
           display: grid;
           gap: 8px;
@@ -731,13 +731,13 @@ export default function NewCoursePage() {
         .new-course-primary-submit {
           padding: 13px 18px;
           border: none;
-          border-radius: 14px;
-          background: #2563eb;
+          border-radius: 8px;
+          background: #02abff;
           color: #ffffff;
           font-size: 0.96rem;
           font-weight: 700;
           cursor: pointer;
-          box-shadow: 0 14px 24px rgba(37, 99, 235, 0.1);
+          box-shadow: 0 14px 24px rgba(2, 171, 255, 0.18);
         }
 
         .new-course-primary-submit:disabled {
@@ -747,7 +747,7 @@ export default function NewCoursePage() {
 
         .new-course-secondary-link {
           padding: 12px 18px;
-          border-radius: 14px;
+          border-radius: 8px;
           border: 1px solid rgba(203, 213, 225, 0.88);
           background: linear-gradient(180deg, #ffffff, #f8fafc);
           color: #475569;

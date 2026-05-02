@@ -6,40 +6,41 @@ export type AdminNavLink = {
 };
 
 export const adminPrimaryLinks: AdminNavLink[] = [
-  { href: '/admin', label: 'แดชบอร์ด', icon: 'dashboard', exact: true },
-  { href: '/admin/courses', label: 'คอร์ส', icon: 'courses' },
-  { href: '/admin/blog', label: 'บทความ', icon: 'blog' },
-  { href: '/admin/users', label: 'ผู้ใช้', icon: 'users' },
-  { href: '/admin/payments', label: 'การชำระเงิน', icon: 'payments' },
-  { href: '/admin/enrollments', label: 'การลงทะเบียน', icon: 'enrollments' },
+  { href: '/admin', label: 'Dashboard', icon: 'dashboard', exact: true },
+  { href: '/admin/courses', label: 'Courses', icon: 'courses' },
+  { href: '/admin/users', label: 'Students', icon: 'users' },
+  { href: '/admin/enrollments', label: 'Enrollments', icon: 'enrollments' },
+  { href: '/admin/payments', label: 'Payments', icon: 'payments' },
+  { href: '/admin/analytics', label: 'Analytics', icon: 'analytics' },
 ];
 
 export const adminSecondaryLinkGroups: Array<{ title: string; items: AdminNavLink[] }> = [
   {
-    title: 'Growth & Commerce',
+    title: 'Content',
     items: [
-      { href: '/admin/bundles', label: 'Bundle', icon: 'bundles' },
-      { href: '/admin/coupons', label: 'คูปอง', icon: 'coupons' },
-      { href: '/admin/reconciliation', label: 'Reconcile', icon: 'reconciliation' },
-      { href: '/admin/reviews', label: 'รีวิว', icon: 'reviews' },
-      { href: '/admin/reports', label: 'รายงาน', icon: 'reports' },
+      { href: '/admin/blog', label: 'Blog', icon: 'blog' },
+      { href: '/admin/media', label: 'Media', icon: 'media' },
+      { href: '/admin/tags', label: 'Tags', icon: 'tags' },
+      { href: '/admin/announcements', label: 'Announcements', icon: 'announcements' },
+      { href: '/admin/certificates', label: 'Certificates', icon: 'certificates' },
     ],
   },
   {
-    title: 'Content & Assets',
+    title: 'Commerce',
     items: [
-      { href: '/admin/media', label: 'ไฟล์สื่อ', icon: 'media' },
-      { href: '/admin/tags', label: 'แท็ก', icon: 'tags' },
-      { href: '/admin/announcements', label: 'ประกาศ', icon: 'announcements' },
-      { href: '/admin/affiliate-banners', label: 'Affiliate Banners', icon: 'media' },
-      { href: '/admin/certificates', label: 'ใบรับรอง', icon: 'certificates' },
+      { href: '/admin/bundles', label: 'Bundles', icon: 'bundles' },
+      { href: '/admin/coupons', label: 'Coupons', icon: 'coupons' },
+      { href: '/admin/reconciliation', label: 'Reconciliation', icon: 'reconciliation' },
+      { href: '/admin/reviews', label: 'Reviews', icon: 'reviews' },
+      { href: '/admin/reports', label: 'Reports', icon: 'reports' },
     ],
   },
   {
     title: 'System',
     items: [
-      { href: '/admin/audit-logs', label: 'บันทึกระบบ', icon: 'logs' },
-      { href: '/admin/settings', label: 'ตั้งค่า', icon: 'settings' },
+      { href: '/admin/affiliate-banners', label: 'Banners', icon: 'media' },
+      { href: '/admin/audit-logs', label: 'Audit Logs', icon: 'logs' },
+      { href: '/admin/settings', label: 'Settings', icon: 'settings' },
     ],
   },
 ];

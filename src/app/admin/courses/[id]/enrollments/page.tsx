@@ -8,331 +8,604 @@ import { notFound } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-    params: Promise<{ id: string }>;
-    searchParams: Promise<{ page?: string }>;
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
 async function getCourseWithEnrollments(courseId: string, page: number) {
-    const perPage = 25;
-    const offset = (page - 1) * perPage;
+  const perPage = 25;
+  const offset = (page - 1) * perPage;
 
-    // Get course info
-    const [course] = await db
-        .select({
-            id: courses.id,
-            title: courses.title,
-            slug: courses.slug,
-        })
-        .from(courses)
-        .where(eq(courses.id, courseId))
-        .limit(1);
+  const [course] = await db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      slug: courses.slug,
+    })
+    .from(courses)
+    .where(eq(courses.id, courseId))
+    .limit(1);
 
-    if (!course) return null;
+  if (!course) return null;
 
-    // Total lesson count for this course
-    const [lessonCountResult] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(lessons)
-        .where(eq(lessons.courseId, courseId));
-    const totalLessons = lessonCountResult?.count || 0;
+  const [lessonCountResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(lessons)
+    .where(eq(lessons.courseId, courseId));
+  const totalLessons = lessonCountResult?.count || 0;
 
-    // Total enrollment count
-    const [countResult] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(enrollments)
-        .where(eq(enrollments.courseId, courseId));
-    const totalEnrollments = countResult?.count || 0;
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(enrollments)
+    .where(eq(enrollments.courseId, courseId));
+  const totalEnrollments = countResult?.count || 0;
 
-    // Get enrolled users with progress
-    const enrolledUsers = await db
-        .select({
-            enrollmentId: enrollments.id,
-            enrolledAt: enrollments.enrolledAt,
-            progressPercent: enrollments.progressPercent,
-            completedAt: enrollments.completedAt,
-            userId: users.id,
-            userName: users.name,
-            userEmail: users.email,
-            userAvatar: users.avatarUrl,
-            completedLessons: sql<number>`count(distinct ${lessonProgress.lessonId})`.as('completed_lessons'),
-        })
-        .from(enrollments)
-        .innerJoin(users, eq(enrollments.userId, users.id))
-        .leftJoin(
-            lessonProgress,
-            and(
-                eq(lessonProgress.userId, users.id),
-                eq(lessonProgress.completed, true),
-                sql`${lessonProgress.lessonId} IN (SELECT id FROM lessons WHERE course_id = ${courseId})`
-            )
-        )
-        .where(eq(enrollments.courseId, courseId))
-        .groupBy(enrollments.id, users.id)
-        .orderBy(desc(enrollments.enrolledAt))
-        .limit(perPage)
-        .offset(offset);
+  const enrolledUsers = await db
+    .select({
+      enrollmentId: enrollments.id,
+      enrolledAt: enrollments.enrolledAt,
+      progressPercent: enrollments.progressPercent,
+      completedAt: enrollments.completedAt,
+      userId: users.id,
+      userName: users.name,
+      userEmail: users.email,
+      userAvatar: users.avatarUrl,
+      completedLessons: sql<number>`count(distinct ${lessonProgress.lessonId})`.as('completed_lessons'),
+    })
+    .from(enrollments)
+    .innerJoin(users, eq(enrollments.userId, users.id))
+    .leftJoin(
+      lessonProgress,
+      and(
+        eq(lessonProgress.userId, users.id),
+        eq(lessonProgress.completed, true),
+        sql`${lessonProgress.lessonId} IN (SELECT id FROM lessons WHERE course_id = ${courseId})`
+      )
+    )
+    .where(eq(enrollments.courseId, courseId))
+    .groupBy(enrollments.id, users.id)
+    .orderBy(desc(enrollments.enrolledAt))
+    .limit(perPage)
+    .offset(offset);
 
-    return {
-        course,
-        totalLessons,
-        totalEnrollments,
-        enrolledUsers,
-        page,
-        totalPages: Math.ceil(totalEnrollments / perPage),
-    };
+  return {
+    course,
+    totalLessons,
+    totalEnrollments,
+    enrolledUsers,
+    page,
+    totalPages: Math.ceil(totalEnrollments / perPage),
+  };
+}
+
+function formatDate(value: Date | null) {
+  if (!value) return '-';
+  return new Date(value).toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 export default async function CourseEnrollmentsPage({ params, searchParams }: PageProps) {
-    const { id } = await params;
-    const { page: pageStr } = await searchParams;
-    const page = Math.max(1, parseInt(pageStr || '1'));
+  const { id } = await params;
+  const { page: pageStr } = await searchParams;
+  const page = Math.max(1, parseInt(pageStr || '1'));
 
-    const data = await getCourseWithEnrollments(id, page);
-    if (!data) notFound();
+  const data = await getCourseWithEnrollments(id, page);
+  if (!data) notFound();
 
-    const { course, totalLessons, totalEnrollments, enrolledUsers, totalPages } = data;
+  const { course, totalLessons, totalEnrollments, enrolledUsers, totalPages } = data;
+  const completedCount = enrolledUsers.filter((user) => user.completedAt).length;
+  const inProgressCount = enrolledUsers.filter((user) => !user.completedAt && (user.progressPercent || 0) > 0).length;
+  const notStartedCount = enrolledUsers.filter((user) => !user.completedAt && (user.progressPercent || 0) === 0).length;
+  const averageProgress = enrolledUsers.length > 0
+    ? Math.round(enrolledUsers.reduce((sum, user) => sum + Number(user.progressPercent || 0), 0) / enrolledUsers.length)
+    : 0;
 
-    return (
-        <div>
-            {/* Header */}
-            <div style={{ marginBottom: '24px' }}>
-                <Link
-                    href="/admin/courses"
-                    style={{
-                        color: '#64748b',
-                        textDecoration: 'none',
-                        fontSize: '0.875rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        marginBottom: '12px',
-                    }}
-                >
-                    &larr; กลับไปจัดการคอร์ส
-                </Link>
-                <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', margin: '0 0 8px' }}>
-                    ผู้เรียน: {course.title}
-                </h1>
-                <div style={{ display: 'flex', gap: '16px', color: '#64748b', fontSize: '0.875rem' }}>
-                    <span>ผู้ลงทะเบียนทั้งหมด: <strong style={{ color: '#1e293b' }}>{totalEnrollments} คน</strong></span>
-                    <span>บทเรียนทั้งหมด: <strong style={{ color: '#1e293b' }}>{totalLessons} บท</strong></span>
-                </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '12px',
-                marginBottom: '24px',
-            }}>
-                {[
-                    {
-                        label: 'ลงทะเบียนทั้งหมด',
-                        value: totalEnrollments,
-                        color: '#2563eb',
-                        bg: '#eff6ff',
-                    },
-                    {
-                        label: 'เรียนจบแล้ว',
-                        value: enrolledUsers.filter(u => u.completedAt).length,
-                        color: '#16a34a',
-                        bg: '#f0fdf4',
-                    },
-                    {
-                        label: 'กำลังเรียน',
-                        value: enrolledUsers.filter(u => !u.completedAt && (u.progressPercent || 0) > 0).length,
-                        color: '#d97706',
-                        bg: '#fffbeb',
-                    },
-                    {
-                        label: 'ยังไม่เริ่มเรียน',
-                        value: enrolledUsers.filter(u => !u.completedAt && (u.progressPercent || 0) === 0).length,
-                        color: '#64748b',
-                        bg: '#f8fafc',
-                    },
-                ].map((stat) => (
-                    <div key={stat.label} style={{
-                        background: stat.bg,
-                        borderRadius: '12px',
-                        padding: '16px 20px',
-                    }}>
-                        <div style={{ fontSize: '0.8125rem', color: stat.color, marginBottom: '4px' }}>{stat.label}</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Table */}
-            <div style={{
-                background: 'white',
-                borderRadius: '12px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                overflow: 'hidden',
-            }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                            <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.8125rem' }}>
-                                ผู้เรียน
-                            </th>
-                            <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.8125rem' }}>
-                                ความคืบหน้า
-                            </th>
-                            <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.8125rem' }}>
-                                บทเรียนที่เรียนจบ
-                            </th>
-                            <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.8125rem' }}>
-                                สถานะ
-                            </th>
-                            <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.8125rem' }}>
-                                วันที่ลงทะเบียน
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {enrolledUsers.length === 0 ? (
-                            <tr>
-                                <td colSpan={5} style={{ padding: '60px 20px', textAlign: 'center', color: '#94a3b8' }}>
-                                    ยังไม่มีผู้ลงทะเบียนในคอร์สนี้
-                                </td>
-                            </tr>
-                        ) : (
-                            enrolledUsers.map((user) => {
-                                const progress = user.progressPercent || 0;
-                                const isCompleted = !!user.completedAt;
-                                const isInProgress = !isCompleted && progress > 0;
-
-                                return (
-                                    <tr key={user.enrollmentId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                        <td style={{ padding: '14px 16px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <div style={{
-                                                    width: '36px',
-                                                    height: '36px',
-                                                    borderRadius: '50%',
-                                                    background: '#e2e8f0',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '0.875rem',
-                                                    fontWeight: 600,
-                                                    color: '#64748b',
-                                                    flexShrink: 0,
-                                                    overflow: 'hidden',
-                                                }}>
-                                                    {user.userAvatar ? (
-                                                        <Image src={user.userAvatar} alt="" width={36} height={36} style={{ objectFit: 'cover' }} />
-                                                    ) : (
-                                                        (user.userName || user.userEmail)?.[0]?.toUpperCase() || '?'
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem' }}>
-                                                        {user.userName || 'ไม่ระบุชื่อ'}
-                                                    </div>
-                                                    <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-                                                        {user.userEmail}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '14px 16px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                                                <div style={{
-                                                    width: '80px',
-                                                    height: '6px',
-                                                    background: '#e2e8f0',
-                                                    borderRadius: '3px',
-                                                    overflow: 'hidden',
-                                                }}>
-                                                    <div style={{
-                                                        width: `${progress}%`,
-                                                        height: '100%',
-                                                        background: isCompleted ? '#16a34a' : '#2563eb',
-                                                        borderRadius: '3px',
-                                                        transition: 'width 0.3s',
-                                                    }} />
-                                                </div>
-                                                <span style={{ fontSize: '0.8125rem', color: '#475569', fontWeight: 500, minWidth: '36px' }}>
-                                                    {progress}%
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '14px 16px', textAlign: 'center', fontSize: '0.875rem', color: '#475569' }}>
-                                            {user.completedLessons}/{totalLessons}
-                                        </td>
-                                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
-                                            <span style={{
-                                                padding: '4px 10px',
-                                                borderRadius: '50px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 500,
-                                                background: isCompleted ? '#dcfce7' : isInProgress ? '#fef3c7' : '#f1f5f9',
-                                                color: isCompleted ? '#16a34a' : isInProgress ? '#d97706' : '#94a3b8',
-                                            }}>
-                                                {isCompleted ? 'เรียนจบ' : isInProgress ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '14px 16px', textAlign: 'right', fontSize: '0.8125rem', color: '#64748b' }}>
-                                            {user.enrolledAt ? new Date(user.enrolledAt).toLocaleDateString('th-TH', {
-                                                year: 'numeric',
-                                                month: 'short',
-                                                day: 'numeric',
-                                            }) : '-'}
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        gap: '4px',
-                        padding: '16px',
-                        borderTop: '1px solid #e2e8f0',
-                    }}>
-                        {page > 1 && (
-                            <Link
-                                href={`/admin/courses/${id}/enrollments?page=${page - 1}`}
-                                style={{
-                                    padding: '6px 12px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    textDecoration: 'none',
-                                    color: '#475569',
-                                    fontSize: '0.875rem',
-                                }}
-                            >
-                                &larr; ก่อนหน้า
-                            </Link>
-                        )}
-                        <span style={{ padding: '6px 12px', fontSize: '0.875rem', color: '#64748b' }}>
-                            หน้า {page} / {totalPages}
-                        </span>
-                        {page < totalPages && (
-                            <Link
-                                href={`/admin/courses/${id}/enrollments?page=${page + 1}`}
-                                style={{
-                                    padding: '6px 12px',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    textDecoration: 'none',
-                                    color: '#475569',
-                                    fontSize: '0.875rem',
-                                }}
-                            >
-                                ถัดไป &rarr;
-                            </Link>
-                        )}
-                    </div>
-                )}
-            </div>
+  return (
+    <div className="admin-course-enrollments-page">
+      <section className="admin-course-enrollments-hero">
+        <div className="admin-course-enrollments-copy">
+          <Link href="/admin/courses" className="admin-course-enrollments-back">
+            ← กลับไปจัดการคอร์ส
+          </Link>
+          <span className="admin-course-enrollments-kicker">Course enrollments</span>
+          <h1>ผู้เรียนในคอร์ส</h1>
+          <p>
+            ติดตามผู้เรียนของคอร์ส {course.title} ดูความคืบหน้า สถานะการเรียน และสัญญาณว่าผู้เรียนกำลังไปต่อหรือหยุดอยู่ตรงไหน
+          </p>
         </div>
-    );
+
+        <aside className="admin-course-enrollments-priority">
+          <span className="admin-course-enrollments-kicker">Course context</span>
+          <h2>{course.title}</h2>
+          <p>/courses/{course.slug}</p>
+          <div>
+            <Link href={`/admin/courses/${course.id}/lessons`}>จัดการบทเรียน</Link>
+            <Link href={`/admin/courses/${course.id}/edit`}>แก้ไขคอร์ส</Link>
+          </div>
+        </aside>
+      </section>
+
+      <section className="admin-course-enrollments-metrics">
+        {[
+          { label: 'ผู้เรียนทั้งหมด', value: totalEnrollments, detail: 'ลงทะเบียนในคอร์สนี้' },
+          { label: 'เรียนจบแล้ว', value: completedCount, detail: 'นับจากหน้าปัจจุบัน' },
+          { label: 'กำลังเรียน', value: inProgressCount, detail: 'มี progress มากกว่า 0%' },
+          { label: 'Progress เฉลี่ย', value: `${averageProgress}%`, detail: 'ค่าเฉลี่ยของรายการที่แสดง' },
+        ].map((metric, index) => (
+          <article className="admin-course-enrollments-metric" key={metric.label}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <strong>{metric.value}</strong>
+            <div>
+              <b>{metric.label}</b>
+              <p>{metric.detail}</p>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="admin-course-enrollments-panel">
+        <header>
+          <div>
+            <span className="admin-course-enrollments-kicker">Learner roster</span>
+            <h2>รายการผู้เรียน</h2>
+            <p>{totalLessons} บทเรียนในคอร์สนี้ · {notStartedCount} คนยังไม่เริ่มจากรายการที่แสดง</p>
+          </div>
+          <span>{enrolledUsers.length} รายการ</span>
+        </header>
+
+        {enrolledUsers.length === 0 ? (
+          <div className="admin-course-enrollments-empty">
+            <h3>ยังไม่มีผู้ลงทะเบียนในคอร์สนี้</h3>
+            <p>เมื่อมีผู้เรียนสมัครหรือได้รับสิทธิ์คอร์ส รายการจะมาแสดงที่นี่พร้อม progress ล่าสุด</p>
+          </div>
+        ) : (
+          <div className="admin-course-enrollments-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ผู้เรียน</th>
+                  <th>ความคืบหน้า</th>
+                  <th>บทเรียนที่จบ</th>
+                  <th>สถานะ</th>
+                  <th>วันที่ลงทะเบียน</th>
+                </tr>
+              </thead>
+              <tbody>
+                {enrolledUsers.map((user) => {
+                  const progress = user.progressPercent || 0;
+                  const isCompleted = Boolean(user.completedAt);
+                  const isInProgress = !isCompleted && progress > 0;
+
+                  return (
+                    <tr key={user.enrollmentId}>
+                      <td>
+                        <div className="admin-course-enrollments-user">
+                          <div className="admin-course-enrollments-avatar">
+                            {user.userAvatar ? (
+                              <Image src={user.userAvatar} alt="" width={40} height={40} />
+                            ) : (
+                              (user.userName || user.userEmail)?.[0]?.toUpperCase() || '?'
+                            )}
+                          </div>
+                          <div>
+                            <strong>{user.userName || 'ไม่ระบุชื่อ'}</strong>
+                            <p>{user.userEmail}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="admin-course-enrollments-progress">
+                          <div>
+                            <span style={{ width: `${progress}%` }} className={isCompleted ? 'complete' : ''} />
+                          </div>
+                          <b>{progress}%</b>
+                        </div>
+                      </td>
+                      <td>{user.completedLessons}/{totalLessons}</td>
+                      <td>
+                        <span className={isCompleted ? 'status complete' : isInProgress ? 'status active' : 'status idle'}>
+                          {isCompleted ? 'เรียนจบ' : isInProgress ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}
+                        </span>
+                      </td>
+                      <td>{formatDate(user.enrolledAt)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {totalPages > 1 ? (
+          <footer className="admin-course-enrollments-pagination">
+            {page > 1 ? <Link href={`/admin/courses/${id}/enrollments?page=${page - 1}`}>← ก่อนหน้า</Link> : <span />}
+            <b>หน้า {page} / {totalPages}</b>
+            {page < totalPages ? <Link href={`/admin/courses/${id}/enrollments?page=${page + 1}`}>ถัดไป →</Link> : <span />}
+          </footer>
+        ) : null}
+      </section>
+
+      <style>{`
+        .admin-course-enrollments-page {
+          --brand: #02abff;
+          --brand-dark: #0089d6;
+          --brand-soft: #eefaff;
+          --ink: #102033;
+          --muted: #64758b;
+          --line: #dbe8f2;
+          display: grid;
+          gap: 18px;
+          color: var(--ink);
+        }
+
+        .admin-course-enrollments-hero,
+        .admin-course-enrollments-metric,
+        .admin-course-enrollments-panel {
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.94);
+          box-shadow: 0 12px 32px rgba(16, 32, 51, 0.06);
+        }
+
+        .admin-course-enrollments-hero {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+          gap: 18px;
+          padding: 22px;
+          background:
+            linear-gradient(135deg, rgba(238, 250, 255, 0.92), rgba(255, 255, 255, 0.98) 48%),
+            #ffffff;
+        }
+
+        .admin-course-enrollments-copy {
+          display: grid;
+          gap: 10px;
+          align-content: center;
+          min-height: 190px;
+        }
+
+        .admin-course-enrollments-back {
+          width: fit-content;
+          color: var(--muted);
+          text-decoration: none;
+          font-size: 0.84rem;
+          font-weight: 700;
+        }
+
+        .admin-course-enrollments-kicker {
+          color: var(--brand-dark);
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .admin-course-enrollments-hero h1,
+        .admin-course-enrollments-priority h2,
+        .admin-course-enrollments-panel h2 {
+          margin: 0;
+          color: var(--ink);
+          line-height: 1.22;
+        }
+
+        .admin-course-enrollments-hero h1 {
+          font-size: clamp(2rem, 4vw, 3.45rem);
+        }
+
+        .admin-course-enrollments-hero p,
+        .admin-course-enrollments-priority p,
+        .admin-course-enrollments-panel p {
+          margin: 0;
+          color: var(--muted);
+          font-size: 0.96rem;
+          line-height: 1.8;
+        }
+
+        .admin-course-enrollments-priority {
+          display: grid;
+          align-content: space-between;
+          gap: 18px;
+          padding: 20px;
+          border-radius: 8px;
+          background: linear-gradient(135deg, #102033, #075b8d);
+          color: #ffffff;
+        }
+
+        .admin-course-enrollments-priority .admin-course-enrollments-kicker,
+        .admin-course-enrollments-priority p,
+        .admin-course-enrollments-priority h2 {
+          color: #ffffff;
+        }
+
+        .admin-course-enrollments-priority div {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .admin-course-enrollments-priority a {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 40px;
+          padding: 0 12px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.14);
+          color: #ffffff;
+          text-decoration: none;
+          font-size: 0.8rem;
+          font-weight: 800;
+        }
+
+        .admin-course-enrollments-priority a:first-child {
+          background: var(--brand);
+        }
+
+        .admin-course-enrollments-metrics {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 14px;
+        }
+
+        .admin-course-enrollments-metric {
+          display: grid;
+          gap: 12px;
+          min-height: 138px;
+          padding: 18px;
+        }
+
+        .admin-course-enrollments-metric > span {
+          color: #a6b5c5;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .admin-course-enrollments-metric > strong {
+          color: var(--ink);
+          font-size: clamp(1.5rem, 2vw, 2rem);
+          line-height: 1;
+        }
+
+        .admin-course-enrollments-metric p {
+          margin: 4px 0 0;
+          color: var(--muted);
+          font-size: 0.78rem;
+          line-height: 1.55;
+        }
+
+        .admin-course-enrollments-panel {
+          overflow: hidden;
+        }
+
+        .admin-course-enrollments-panel header {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          align-items: flex-start;
+          padding: 20px;
+          border-bottom: 1px solid var(--line);
+          background: linear-gradient(180deg, #ffffff, #f7fbff);
+        }
+
+        .admin-course-enrollments-panel header > span {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 36px;
+          padding: 0 12px;
+          border-radius: 8px;
+          background: var(--brand-soft);
+          color: var(--brand-dark);
+          font-size: 0.8rem;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .admin-course-enrollments-table-wrap {
+          overflow-x: auto;
+        }
+
+        .admin-course-enrollments-panel table {
+          width: 100%;
+          min-width: 920px;
+          border-collapse: collapse;
+        }
+
+        .admin-course-enrollments-panel th,
+        .admin-course-enrollments-panel td {
+          padding: 14px 16px;
+          border-bottom: 1px solid #e8f1f8;
+          font-size: 0.84rem;
+          vertical-align: middle;
+        }
+
+        .admin-course-enrollments-panel th {
+          color: var(--muted);
+          background: #f7fbff;
+          font-weight: 800;
+          text-align: left;
+        }
+
+        .admin-course-enrollments-panel th:not(:first-child),
+        .admin-course-enrollments-panel td:not(:first-child) {
+          text-align: center;
+        }
+
+        .admin-course-enrollments-user {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .admin-course-enrollments-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          overflow: hidden;
+          display: grid;
+          place-items: center;
+          flex: 0 0 auto;
+          background: linear-gradient(135deg, var(--brand), #73d7ff);
+          color: #ffffff;
+          font-weight: 900;
+        }
+
+        .admin-course-enrollments-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .admin-course-enrollments-user strong {
+          color: var(--ink);
+          font-size: 0.9rem;
+        }
+
+        .admin-course-enrollments-user p {
+          color: var(--muted);
+          font-size: 0.76rem;
+          line-height: 1.5;
+        }
+
+        .admin-course-enrollments-progress {
+          display: inline-flex;
+          gap: 8px;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .admin-course-enrollments-progress > div {
+          width: 92px;
+          height: 8px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: #e8f1f8;
+        }
+
+        .admin-course-enrollments-progress span {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: var(--brand);
+        }
+
+        .admin-course-enrollments-progress span.complete {
+          background: #11a66a;
+        }
+
+        .admin-course-enrollments-progress b {
+          min-width: 40px;
+          color: var(--ink);
+          font-size: 0.78rem;
+        }
+
+        .status {
+          display: inline-flex;
+          align-items: center;
+          min-height: 26px;
+          padding: 0 10px;
+          border-radius: 999px;
+          font-size: 0.72rem;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .status.complete {
+          background: #eefbf3;
+          color: #0f7a4b;
+        }
+
+        .status.active {
+          background: #fff7ed;
+          color: #b45309;
+        }
+
+        .status.idle {
+          background: #f1f5f9;
+          color: var(--muted);
+        }
+
+        .admin-course-enrollments-empty {
+          display: grid;
+          place-items: center;
+          gap: 8px;
+          padding: 56px 20px;
+          text-align: center;
+        }
+
+        .admin-course-enrollments-empty h3 {
+          margin: 0;
+          color: var(--ink);
+        }
+
+        .admin-course-enrollments-pagination {
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
+          gap: 10px;
+          align-items: center;
+          padding: 14px 16px;
+          border-top: 1px solid var(--line);
+          background: #fbfdff;
+        }
+
+        .admin-course-enrollments-pagination a {
+          justify-self: start;
+          min-height: 36px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 12px;
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          background: #ffffff;
+          color: var(--ink);
+          text-decoration: none;
+          font-weight: 800;
+          font-size: 0.82rem;
+        }
+
+        .admin-course-enrollments-pagination a:last-child {
+          justify-self: end;
+        }
+
+        .admin-course-enrollments-pagination b {
+          color: var(--ink);
+          font-size: 0.84rem;
+        }
+
+        @media (max-width: 1180px) {
+          .admin-course-enrollments-hero {
+            grid-template-columns: 1fr;
+          }
+
+          .admin-course-enrollments-metrics {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 760px) {
+          .admin-course-enrollments-hero,
+          .admin-course-enrollments-panel header {
+            padding: 16px;
+          }
+
+          .admin-course-enrollments-copy {
+            min-height: unset;
+          }
+
+          .admin-course-enrollments-metrics {
+            grid-template-columns: 1fr;
+          }
+
+          .admin-course-enrollments-panel header {
+            flex-direction: column;
+          }
+        }
+      `}</style>
+    </div>
+  );
 }
