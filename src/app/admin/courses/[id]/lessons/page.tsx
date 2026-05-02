@@ -328,6 +328,11 @@ export default function ManageLessonsPage() {
             const reordered = newIds.map((id) => lessons.find((lesson) => lesson.id === id)!).filter(Boolean);
             setLessons(reordered);
           }}
+          onLessonUpdate={(lessonId, data) => {
+            setLessons((currentLessons) => currentLessons.map((lesson) => (
+              lesson.id === lessonId ? { ...lesson, ...data } : lesson
+            )));
+          }}
         />
       </section>
 

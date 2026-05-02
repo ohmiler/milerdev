@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   DndContext,
@@ -104,11 +104,6 @@ function SortableItem({
   const hasContent = Boolean(lesson.content && lesson.content.trim().length > 0);
   const hasVideo = Boolean(lesson.videoUrl);
 
-  useEffect(() => {
-    setVideoUrl(lesson.videoUrl || '');
-    setVideoDuration(formatDuration(lesson.videoDuration));
-  }, [lesson.videoDuration, lesson.videoUrl]);
-
   const {
     attributes,
     listeners,
@@ -206,22 +201,17 @@ function SortableItem({
 }
 
 export default function DraggableLessonList({
-  lessons: initialLessons,
+  lessons,
   courseId,
   onDelete,
   onReorder,
   onLessonUpdate,
 }: DraggableLessonListProps) {
-  const [lessons, setLessons] = useState(initialLessons);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [savingVideoId, setSavingVideoId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLessons(initialLessons);
-  }, [initialLessons]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -264,9 +254,6 @@ export default function DraggableLessonList({
       });
 
       if (res.ok) {
-        setLessons((prev) => prev.map((lesson) => (
-          lesson.id === lessonId ? { ...lesson, videoUrl: videoUrl || null, videoDuration } : lesson
-        )));
         onLessonUpdate?.(lessonId, { videoUrl: videoUrl || null, videoDuration });
         setEditingVideoId(null);
       } else {
@@ -285,26 +272,28 @@ export default function DraggableLessonList({
 
     const oldIndex = lessons.findIndex((lesson) => lesson.id === active.id);
     const newIndex = lessons.findIndex((lesson) => lesson.id === over.id);
-    const previousLessons = lessons;
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const previousLessonIds = lessons.map((lesson) => lesson.id);
     const newLessons = arrayMove(lessons, oldIndex, newIndex);
-    setLessons(newLessons);
+    const newLessonIds = newLessons.map((lesson) => lesson.id);
+
+    onReorder(newLessonIds);
     setSaving(true);
 
     try {
       const res = await fetch(`/api/admin/courses/${courseId}/lessons/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonIds: newLessons.map((lesson) => lesson.id) }),
+        body: JSON.stringify({ lessonIds: newLessonIds }),
       });
 
       if (!res.ok) {
-        setLessons(previousLessons);
+        onReorder(previousLessonIds);
         alert('ไม่สามารถจัดลำดับได้ กรุณาลองใหม่');
-      } else {
-        onReorder(newLessons.map((lesson) => lesson.id));
       }
     } catch {
-      setLessons(previousLessons);
+      onReorder(previousLessonIds);
       alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
     } finally {
       setSaving(false);
@@ -413,7 +402,7 @@ export default function DraggableLessonList({
             const originalIndex = lessons.findIndex((item) => item.id === lesson.id);
             return (
               <SortableItem
-                key={lesson.id}
+                key={`${lesson.id}:${lesson.videoUrl ?? ''}:${lesson.videoDuration ?? ''}`}
                 lesson={lesson}
                 index={originalIndex}
                 onDelete={onDelete}
@@ -432,7 +421,7 @@ export default function DraggableLessonList({
             <div className="admin-lesson-list">
               {lessons.map((lesson, index) => (
                 <SortableItem
-                  key={lesson.id}
+                  key={`${lesson.id}:${lesson.videoUrl ?? ''}:${lesson.videoDuration ?? ''}`}
                   lesson={lesson}
                   index={index}
                   onDelete={onDelete}

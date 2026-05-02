@@ -60,7 +60,7 @@ export async function POST(
 
         if (action === 'approve') {
             // Admin manually approves the payment
-            return await handleManualApproval(payment, session.user);
+            return await handleManualApproval(payment);
         } else if (action === 'reject') {
             // Admin manually rejects the payment
             await db.update(payments).set({
@@ -83,23 +83,17 @@ export async function POST(
     }
 }
 
-async function handleManualApproval(
-    payment: typeof payments.$inferSelect,
-    adminUser: { id: string; email?: string | null; name?: string | null }
-) {
+async function handleManualApproval(payment: typeof payments.$inferSelect) {
     const isBundlePayment = !!payment.bundleId;
 
     if (isBundlePayment) {
-        return await approveBundlePayment(payment, adminUser);
+        return await approveBundlePayment(payment);
     } else {
-        return await approveCoursePayment(payment, adminUser);
+        return await approveCoursePayment(payment);
     }
 }
 
-async function approveCoursePayment(
-    payment: typeof payments.$inferSelect,
-    adminUser: { id: string }
-) {
+async function approveCoursePayment(payment: typeof payments.$inferSelect) {
     if (!payment.courseId || !payment.userId) {
         return NextResponse.json({ error: 'Missing courseId or userId' }, { status: 400 });
     }
@@ -182,10 +176,7 @@ async function approveCoursePayment(
     });
 }
 
-async function approveBundlePayment(
-    payment: typeof payments.$inferSelect,
-    adminUser: { id: string }
-) {
+async function approveBundlePayment(payment: typeof payments.$inferSelect) {
     if (!payment.bundleId || !payment.userId) {
         return NextResponse.json({ error: 'Missing bundleId or userId' }, { status: 400 });
     }
