@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 export default function HomeAnimations() {
   useEffect(() => {
+    document.body.classList.add('reveal-enabled');
     const targets = document.querySelectorAll<HTMLElement>('[data-reveal]');
 
     const observer = new IntersectionObserver(
@@ -22,7 +23,10 @@ export default function HomeAnimations() {
     );
 
     targets.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      document.body.classList.remove('reveal-enabled');
+    };
   }, []);
 
   return null;

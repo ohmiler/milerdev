@@ -45,7 +45,7 @@ export default function CourseCard({
     const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
     return (
         <Link href={`/courses/${slug}`} className="card block group" style={{
-            ...(showOriginalPrice ? { border: '1px solid #7000FF' } : {}),
+            ...(showOriginalPrice ? { border: '1px solid #f5a524' } : {}),
         }}>
             {/* Thumbnail */}
             <div className="course-thumbnail">
@@ -87,7 +87,7 @@ export default function CourseCard({
                         left: '12px',
                         padding: '4px 10px',
                         borderRadius: '6px',
-                        background: '#7000FF',
+                        background: '#f5a524',
                         color: 'white',
                         fontSize: '0.75rem',
                         fontWeight: 700,
@@ -105,7 +105,7 @@ export default function CourseCard({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
-                        background: '#7000FF',
+                        background: 'linear-gradient(135deg, #f5a524, #d97706)',
                         color: 'white',
                     }}>
                         <span style={{ textDecoration: 'line-through', opacity: 0.7, fontSize: '0.75rem' }}>฿{price.toLocaleString()}</span>

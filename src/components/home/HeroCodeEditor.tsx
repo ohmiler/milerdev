@@ -9,63 +9,56 @@ interface CodeLine {
 
 const codeSnippets: { fileName: string; lang: string; lines: CodeLine[] }[] = [
   {
-    fileName: 'App.tsx',
+    fileName: 'course-card.tsx',
     lang: 'tsx',
     lines: [
-      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' React ', color: '#e5c07b' }, { text: 'from', color: '#c678dd' }, { text: " 'react'", color: '#98c379' }] },
-      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { motion }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " 'framer-motion'", color: '#98c379' }] },
+      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' Link ', color: '#e5c07b' }, { text: 'from', color: '#c678dd' }, { text: " 'next/link'", color: '#98c379' }] },
       { indent: 0, tokens: [] },
-      { indent: 0, tokens: [{ text: 'export default', color: '#c678dd' }, { text: ' function ', color: '#61afef' }, { text: 'App', color: '#e5c07b' }, { text: '() {', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'const', color: '#c678dd' }, { text: ' [count, setCount]', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'useState', color: '#61afef' }, { text: '(', color: '#abb2bf' }, { text: '0', color: '#d19a66' }, { text: ')', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: 'export', color: '#c678dd' }, { text: ' function ', color: '#61afef' }, { text: 'CourseCard', color: '#e5c07b' }, { text: '({ course }) {', color: '#abb2bf' }] },
+      { indent: 1, tokens: [{ text: 'const', color: '#c678dd' }, { text: ' outcome', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'course', color: '#e5c07b' }, { text: '.projectGoal', color: '#abb2bf' }] },
       { indent: 0, tokens: [] },
       { indent: 1, tokens: [{ text: 'return', color: '#c678dd' }, { text: ' (', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'motion.div', color: '#e06c75' }, { text: ' animate', color: '#d19a66' }, { text: '={{ ', color: '#abb2bf' }, { text: 'scale:', color: '#e06c75' }, { text: ' 1.1', color: '#d19a66' }, { text: ' }}', color: '#abb2bf' }, { text: '>', color: '#abb2bf' }] },
-      { indent: 3, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'h1', color: '#e06c75' }, { text: '>', color: '#abb2bf' }, { text: 'Hello MilerDev! 🚀', color: '#abb2bf' }, { text: '</', color: '#abb2bf' }, { text: 'h1', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
-      { indent: 3, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'button', color: '#e06c75' }, { text: ' onClick', color: '#d19a66' }, { text: '={', color: '#abb2bf' }, { text: '() =>', color: '#c678dd' }, { text: ' setCount', color: '#61afef' }, { text: '(c => c + ', color: '#abb2bf' }, { text: '1', color: '#d19a66' }, { text: ')}', color: '#abb2bf' }, { text: '>', color: '#abb2bf' }] },
-      { indent: 4, tokens: [{ text: 'Clicked: ', color: '#abb2bf' }, { text: '{count}', color: '#e06c75' }, { text: ' times', color: '#abb2bf' }] },
-      { indent: 3, tokens: [{ text: '</', color: '#abb2bf' }, { text: 'button', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '</', color: '#abb2bf' }, { text: 'motion.div', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
+      { indent: 2, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'Link', color: '#e06c75' }, { text: ' href', color: '#d19a66' }, { text: '={`', color: '#abb2bf' }, { text: '/courses/', color: '#98c379' }, { text: '${course.slug}', color: '#e5c07b' }, { text: '`}>', color: '#abb2bf' }] },
+      { indent: 3, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'h3', color: '#e06c75' }, { text: '>', color: '#abb2bf' }, { text: '{course.title}', color: '#e5c07b' }, { text: '</', color: '#abb2bf' }, { text: 'h3', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
+      { indent: 3, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'p', color: '#e06c75' }, { text: '>', color: '#abb2bf' }, { text: '{outcome}', color: '#e5c07b' }, { text: '</', color: '#abb2bf' }, { text: 'p', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
+      { indent: 3, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'span', color: '#e06c75' }, { text: '>', color: '#abb2bf' }, { text: 'Start building', color: '#98c379' }, { text: '</', color: '#abb2bf' }, { text: 'span', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
+      { indent: 2, tokens: [{ text: '</', color: '#abb2bf' }, { text: 'Link', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
       { indent: 1, tokens: [{ text: ')', color: '#abb2bf' }] },
       { indent: 0, tokens: [{ text: '}', color: '#abb2bf' }] },
     ],
   },
   {
-    fileName: 'api/route.ts',
+    fileName: 'checkout/route.ts',
     lang: 'ts',
     lines: [
       { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { NextResponse }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " 'next/server'", color: '#98c379' }] },
-      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { db }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " '@/lib/db'", color: '#98c379' }] },
+      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { createCheckout }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " '@/lib/payment'", color: '#98c379' }] },
       { indent: 0, tokens: [] },
-      { indent: 0, tokens: [{ text: 'export async function', color: '#c678dd' }, { text: ' GET', color: '#61afef' }, { text: '() {', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'const', color: '#c678dd' }, { text: ' courses', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'await', color: '#c678dd' }, { text: ' db', color: '#e5c07b' }, { text: '.query', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '.courses', color: '#abb2bf' }, { text: '.findMany', color: '#61afef' }, { text: '({', color: '#abb2bf' }] },
-      { indent: 3, tokens: [{ text: 'where:', color: '#e06c75' }, { text: " { status: ", color: '#abb2bf' }, { text: "'published'", color: '#98c379' }, { text: ' }', color: '#abb2bf' }, { text: ',', color: '#abb2bf' }] },
-      { indent: 3, tokens: [{ text: 'orderBy:', color: '#e06c75' }, { text: " { createdAt: ", color: '#abb2bf' }, { text: "'desc'", color: '#98c379' }, { text: ' }', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '})', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: 'export async function', color: '#c678dd' }, { text: ' POST', color: '#61afef' }, { text: '(', color: '#abb2bf' }, { text: 'request', color: '#e5c07b' }, { text: ') {', color: '#abb2bf' }] },
+      { indent: 1, tokens: [{ text: 'const', color: '#c678dd' }, { text: ' body', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'await', color: '#c678dd' }, { text: ' request', color: '#e5c07b' }, { text: '.json', color: '#61afef' }, { text: '()', color: '#abb2bf' }] },
+      { indent: 1, tokens: [{ text: 'const', color: '#c678dd' }, { text: ' session', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'await', color: '#c678dd' }, { text: ' createCheckout', color: '#61afef' }, { text: '(body.courseId)', color: '#abb2bf' }] },
       { indent: 0, tokens: [] },
       { indent: 1, tokens: [{ text: 'return', color: '#c678dd' }, { text: ' NextResponse', color: '#e5c07b' }, { text: '.json', color: '#61afef' }, { text: '({', color: '#abb2bf' }] },
       { indent: 2, tokens: [{ text: 'success:', color: '#e06c75' }, { text: ' true', color: '#d19a66' }, { text: ',', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: 'data:', color: '#e06c75' }, { text: ' courses', color: '#e5c07b' }] },
+      { indent: 2, tokens: [{ text: 'checkoutUrl:', color: '#e06c75' }, { text: ' session.url', color: '#e5c07b' }] },
       { indent: 1, tokens: [{ text: '})', color: '#abb2bf' }] },
       { indent: 0, tokens: [{ text: '}', color: '#abb2bf' }] },
     ],
   },
   {
-    fileName: 'schema.ts',
+    fileName: 'progress.ts',
     lang: 'ts',
     lines: [
-      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { mysqlTable, varchar }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " 'drizzle-orm'", color: '#98c379' }] },
+      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { db }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " '@/lib/db'", color: '#98c379' }] },
       { indent: 0, tokens: [] },
-      { indent: 0, tokens: [{ text: 'export const', color: '#c678dd' }, { text: ' users', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'mysqlTable', color: '#61afef' }, { text: "(", color: '#abb2bf' }, { text: "'users'", color: '#98c379' }, { text: ', {', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'id:', color: '#e06c75' }, { text: ' varchar', color: '#61afef' }, { text: "(", color: '#abb2bf' }, { text: "'id'", color: '#98c379' }, { text: ', { length: ', color: '#abb2bf' }, { text: '36', color: '#d19a66' }, { text: ' })', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '.primaryKey', color: '#61afef' }, { text: '()', color: '#abb2bf' }, { text: ',', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'name:', color: '#e06c75' }, { text: ' varchar', color: '#61afef' }, { text: "(", color: '#abb2bf' }, { text: "'name'", color: '#98c379' }, { text: ', { length: ', color: '#abb2bf' }, { text: '100', color: '#d19a66' }, { text: ' })', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '.notNull', color: '#61afef' }, { text: '()', color: '#abb2bf' }, { text: ',', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'email:', color: '#e06c75' }, { text: ' varchar', color: '#61afef' }, { text: "(", color: '#abb2bf' }, { text: "'email'", color: '#98c379' }, { text: ', { length: ', color: '#abb2bf' }, { text: '255', color: '#d19a66' }, { text: ' })', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '.notNull', color: '#61afef' }, { text: '().', color: '#abb2bf' }, { text: 'unique', color: '#61afef' }, { text: '()', color: '#abb2bf' }, { text: ',', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'role:', color: '#e06c75' }, { text: ' varchar', color: '#61afef' }, { text: "(", color: '#abb2bf' }, { text: "'role'", color: '#98c379' }, { text: ', { length: ', color: '#abb2bf' }, { text: '20', color: '#d19a66' }, { text: ' })', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: ".default", color: '#61afef' }, { text: "(", color: '#abb2bf' }, { text: "'student'", color: '#98c379' }, { text: ")", color: '#abb2bf' }] },
-      { indent: 0, tokens: [{ text: '})', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: 'export async function', color: '#c678dd' }, { text: ' completeLesson', color: '#61afef' }, { text: '({ userId, lessonId }) {', color: '#abb2bf' }] },
+      { indent: 1, tokens: [{ text: 'await', color: '#c678dd' }, { text: ' db', color: '#e5c07b' }, { text: '.progress', color: '#abb2bf' }, { text: '.upsert', color: '#61afef' }, { text: '({', color: '#abb2bf' }] },
+      { indent: 2, tokens: [{ text: 'userId,', color: '#e06c75' }, { text: ' lessonId,', color: '#e5c07b' }, { text: ' completed:', color: '#e06c75' }, { text: ' true', color: '#d19a66' }, { text: ',', color: '#abb2bf' }] },
+      { indent: 2, tokens: [{ text: 'completedAt:', color: '#e06c75' }, { text: ' new', color: '#c678dd' }, { text: ' Date', color: '#61afef' }, { text: '()', color: '#abb2bf' }] },
+      { indent: 1, tokens: [{ text: '})', color: '#abb2bf' }] },
+      { indent: 0, tokens: [] },
+      { indent: 1, tokens: [{ text: 'return', color: '#c678dd' }, { text: ' { nextAction:', color: '#abb2bf' }, { text: " 'continue-learning'", color: '#98c379' }, { text: ' }', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: '}', color: '#abb2bf' }] },
     ],
   },
 ];
@@ -186,6 +179,7 @@ export default function HeroCodeEditor() {
         lineHeight: 1.7,
         width: '100%',
         maxWidth: '560px',
+        minWidth: 0,
         transform: 'perspective(1200px) rotateY(-2deg) rotateX(1deg)',
         transition: 'transform 0.4s ease',
       }}
@@ -227,7 +221,7 @@ export default function HeroCodeEditor() {
             }}
           />
         </div>
-        <div style={{ display: 'flex', gap: '0', flex: 1 }}>
+        <div style={{ display: 'flex', gap: '0', flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {codeSnippets.map((s, i) => (
             <div
               key={i}
@@ -238,7 +232,10 @@ export default function HeroCodeEditor() {
                 background: i === snippetIndex ? '#1e1e2e' : 'transparent',
                 borderRadius: i === snippetIndex ? '6px 6px 0 0' : '0',
                 cursor: 'pointer',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
                 transition: 'all 0.2s',
+                whiteSpace: 'nowrap',
                 fontWeight: i === snippetIndex ? 500 : 400,
               }}
               onClick={() => {
@@ -294,7 +291,7 @@ export default function HeroCodeEditor() {
                 {lineNum}
               </div>
               {/* Code content */}
-              <div style={{ flex: 1, whiteSpace: 'pre', color: '#cdd6f4' }}>
+              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', whiteSpace: 'pre', color: '#cdd6f4' }}>
                 {isVisible && renderLine(line, idx, isCurrentLine)}
                 {isCurrentLine && (
                   <span

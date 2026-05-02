@@ -237,6 +237,45 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Course Preview Strip */}
+        {featuredCourses.length > 0 && (
+          <section className="home-course-strip" aria-label="คอร์สแนะนำ">
+            <div className="container">
+              <div className="home-course-strip__inner">
+                <div className="home-course-strip__copy">
+                  <span className="home-course-strip__eyebrow">คอร์สที่เริ่มได้ทันที</span>
+                  <h2>เลือกเส้นทางแรก แล้วลงมือทำโปรเจกต์จริง</h2>
+                </div>
+
+                <div className="home-course-strip__grid">
+                  {featuredCourses.slice(0, 3).map((course) => {
+                    const coursePrice = parseFloat(course.price || '0');
+                    const activePrice = course.isPromoActive && course.promoPrice
+                      ? parseFloat(course.promoPrice)
+                      : coursePrice;
+
+                    return (
+                      <Link key={course.id} href={`/courses/${course.slug}`} className="home-course-strip__card">
+                        <span>{course.lessonCount} บทเรียน</span>
+                        <strong>{course.title}</strong>
+                        <small>{activePrice === 0 ? 'ฟรี' : `฿${activePrice.toLocaleString()}`}</small>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                <Link href="/courses" className="home-course-strip__link">
+                  ดูคอร์สทั้งหมด
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Features Section */}
         <section className="section" style={{ background: 'white' }} data-reveal>
           <div className="container">
@@ -480,7 +519,7 @@ export default async function HomePage() {
             <style>{`
               .bundle-gift-section {
                 padding: 100px 0;
-                background: linear-gradient(135deg, #0f0a2e 0%, #1a1145 30%, #2d1b69 60%, #1a1145 100%);
+                background: linear-gradient(135deg, #071827 0%, #0b2438 48%, #0d314c 100%);
                 position: relative;
                 overflow: hidden;
               }
@@ -491,12 +530,13 @@ export default async function HomePage() {
                 inset: 0;
                 pointer-events: none;
                 z-index: 1;
+                opacity: 0.45;
               }
               .particle {
                 position: absolute;
                 border-radius: 50%;
-                background: radial-gradient(circle, rgba(251,191,36,0.8), transparent 70%);
-                animation: particleFloat 6s ease-in-out infinite;
+                background: radial-gradient(circle, rgba(115,215,255,0.75), transparent 70%);
+                animation: particleFloat 8s ease-in-out infinite;
               }
               .p1 { width: 4px; height: 4px; top: 15%; left: 10%; animation-delay: 0s; animation-duration: 7s; }
               .p2 { width: 3px; height: 3px; top: 25%; left: 85%; animation-delay: 1s; animation-duration: 5s; }
@@ -545,16 +585,16 @@ export default async function HomePage() {
                 background: linear-gradient(
                   120deg,
                   #ffffff 0%,
-                  #fbbf24 25%,
+                  #73d7ff 25%,
                   #ffffff 50%,
-                  #fbbf24 75%,
+                  #f5a524 75%,
                   #ffffff 100%
                 );
                 background-size: 200% 100%;
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
-                animation: shimmer 4s linear infinite;
+                animation: shimmer 7s linear infinite;
               }
               @keyframes shimmer {
                 0% { background-position: 200% center; }
@@ -564,17 +604,18 @@ export default async function HomePage() {
               /* Bundle Card */
               .bundle-gift-card {
                 position: relative;
-                border-radius: 20px;
+                border-radius: 14px;
                 overflow: hidden;
                 height: 100%;
                 cursor: pointer;
-                transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.35s ease;
-                background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-                border: 1px solid rgba(251,191,36,0.15);
+                transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+                background: linear-gradient(145deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03));
+                border: 1px solid rgba(115,215,255,0.18);
               }
               .bundle-gift-card:hover {
-                transform: translateY(-8px);
-                box-shadow: 0 20px 60px rgba(251,191,36,0.15), 0 0 40px rgba(124,58,237,0.2);
+                transform: translateY(-4px);
+                border-color: rgba(115,215,255,0.35);
+                box-shadow: 0 18px 48px rgba(2,171,255,0.12);
               }
               .bundle-gift-card:hover .bundle-cta-arrow {
                 transform: translateX(4px);
@@ -584,7 +625,7 @@ export default async function HomePage() {
                 opacity: 1;
               }
               .bundle-gift-card:hover .bundle-ribbon {
-                background: rgba(251,191,36,0.25);
+                background: rgba(115,215,255,0.14);
               }
 
               /* Ribbon tag */
@@ -594,10 +635,10 @@ export default async function HomePage() {
                 gap: 6px;
                 padding: 6px 14px;
                 margin: 20px 0 0 20px;
-                background: rgba(251,191,36,0.12);
-                border: 1px solid rgba(251,191,36,0.2);
+                background: rgba(115,215,255,0.1);
+                border: 1px solid rgba(115,215,255,0.2);
                 border-radius: 50px;
-                color: #fbbf24;
+                color: #73d7ff;
                 font-size: 0.8125rem;
                 font-weight: 600;
                 transition: background 0.3s;
@@ -631,8 +672,8 @@ export default async function HomePage() {
 
               /* Course pills */
               .bundle-course-pill {
-                background: rgba(251,191,36,0.08);
-                border: 1px solid rgba(251,191,36,0.15);
+                background: rgba(115,215,255,0.08);
+                border: 1px solid rgba(115,215,255,0.14);
                 padding: 4px 12px;
                 border-radius: 50px;
                 font-size: 0.75rem;
@@ -640,12 +681,12 @@ export default async function HomePage() {
                 transition: background 0.2s;
               }
               .bundle-gift-card:hover .bundle-course-pill {
-                background: rgba(251,191,36,0.15);
+                background: rgba(115,215,255,0.13);
               }
 
               /* Price row */
               .bundle-price-row {
-                border-top: 1px solid rgba(251,191,36,0.12);
+                border-top: 1px solid rgba(115,215,255,0.14);
                 padding-top: 16px;
                 display: flex;
                 align-items: center;
@@ -657,7 +698,7 @@ export default async function HomePage() {
                 width: 36px;
                 height: 36px;
                 border-radius: 50%;
-                background: linear-gradient(135deg, #fbbf24, #f59e0b);
+                background: linear-gradient(135deg, #73d7ff, #02abff);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -674,7 +715,7 @@ export default async function HomePage() {
                 left: 0;
                 right: 0;
                 height: 2px;
-                background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+                background: linear-gradient(90deg, transparent, #73d7ff, transparent);
                 opacity: 0;
                 transition: opacity 0.4s;
                 animation: shimmerSlide 2s linear infinite;
