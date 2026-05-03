@@ -82,7 +82,7 @@ function infoBox(rows: { label: string; value: string }[]): string {
 // =====================
 // SEND EMAIL HELPER
 // =====================
-async function sendEmail(to: string, subject: string, html: string, options?: { replyTo?: string; priority?: 'high' | 'normal' }) {
+async function sendEmail(to: string, subject: string, html: string, options?: { replyTo?: string; priority?: 'high' | 'normal' }): Promise<boolean> {
     try {
         // Try Resend first (HTTP API — works on Railway)
         const resend = getResend();
@@ -102,14 +102,14 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
                 }),
             });
             console.log('[Email/Resend] Sent to:', to, '| Subject:', subject);
-            return;
+            return true;
         }
 
         // Fallback to nodemailer (local dev)
         const transporter = getTransporter();
         if (!transporter) {
             console.warn('[Email] No email provider configured, skipping email to:', to);
-            return;
+            return false;
         }
         await transporter.sendMail({
             from: EMAIL_FROM,
@@ -127,8 +127,10 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
             }),
         });
         console.log('[Email/SMTP] Sent to:', to, '| Subject:', subject);
+        return true;
     } catch (error) {
         console.error('[Email] Failed to send to:', to, error);
+        return false;
     }
 }
 
@@ -174,7 +176,7 @@ export async function sendContactNotification({
       </div>
     `);
 
-    await sendEmail(adminEmail, `[Contact] ${subject}`, html, { replyTo: email });
+    return sendEmail(adminEmail, `[Contact] ${subject}`, html, { replyTo: email });
 }
 
 // =====================
@@ -236,7 +238,7 @@ export async function sendWelcomeEmail({ email, name }: SendWelcomeEmailParams) 
         <p style="color:#94a3b8;font-size:0.8125rem;margin:0;">หากมีคำถามหรือข้อสงสัยใดๆ สามารถติดต่อเราได้ตลอดเวลา</p>
       </div>
     `);
-    await sendEmail(email, 'ยินดีต้อนรับสู่ MilerDev!', html);
+    return sendEmail(email, 'ยินดีต้อนรับสู่ MilerDev!', html);
 }
 
 /**
@@ -264,7 +266,7 @@ export async function sendEnrollmentEmail({
         คุณสามารถเข้าเรียนได้ตลอดเวลาจากหน้า Dashboard ของคุณ
       </p>
     `);
-    await sendEmail(email, `ลงทะเบียนคอร์ส: ${courseName}`, html);
+    return sendEmail(email, `ลงทะเบียนคอร์ส: ${courseName}`, html);
 }
 
 /**
@@ -293,7 +295,7 @@ export async function sendPasswordResetEmail({
         </p>
       </div>
     `);
-    await sendEmail(email, 'รีเซ็ตรหัสผ่าน - MilerDev', html);
+    return sendEmail(email, 'รีเซ็ตรหัสผ่าน - MilerDev', html);
 }
 
 /**
@@ -324,7 +326,7 @@ export async function sendPaymentConfirmation({
         อีเมลนี้เป็นหลักฐานการชำระเงิน กรุณาเก็บไว้เป็นหลักฐาน
       </p>
     `);
-    await sendEmail(email, `ยืนยันการชำระเงิน - ${courseName}`, html);
+    return sendEmail(email, `ยืนยันการชำระเงิน - ${courseName}`, html);
 }
 
 /**
@@ -354,5 +356,5 @@ export async function sendCertificateEmail({
         คุณสามารถดาวน์โหลดใบรับรองเป็นรูปภาพ หรือแชร์ลิงก์ให้ผู้อื่นตรวจสอบได้
       </p>
     `);
-    await sendEmail(email, `ใบรับรองสำเร็จหลักสูตร: ${courseName}`, html, { priority: 'high' });
+    return sendEmail(email, `ใบรับรองสำเร็จหลักสูตร: ${courseName}`, html, { priority: 'high' });
 }

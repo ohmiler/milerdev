@@ -16,7 +16,7 @@ vi.mock('@/lib/auth', () => ({
 // Mock email
 vi.mock('@/lib/email', () => ({
     sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
-    sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+    sendPasswordResetEmail: vi.fn().mockResolvedValue(true),
 }));
 
 // Mock cuid2
@@ -102,6 +102,7 @@ describe('POST /api/auth/register', () => {
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
         mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
+        mockedSendPasswordResetEmail.mockResolvedValue(true);
     });
 
     async function callRegister(body: Record<string, unknown>) {
@@ -223,6 +224,19 @@ describe('POST /api/auth/reset-password', () => {
         expect(mockDbState.updateSet).toBeTruthy();
         expect(mockDbState.updateSet).toHaveProperty('resetToken');
         expect(mockDbState.updateSet).toHaveProperty('resetExpires');
+    });
+
+    it('should clear reset token if email delivery fails', async () => {
+        mockedSendPasswordResetEmail.mockResolvedValueOnce(false);
+        mockDbState.selectResult = [{ id: 'user-1', email: 'user@example.com', name: 'User' }];
+
+        const res = await callReset({ email: 'user@example.com' });
+
+        expect(res.status).toBe(200);
+        expect(mockDbState.updateSet).toEqual({
+            resetToken: null,
+            resetExpires: null,
+        });
     });
 
     it('should not invalidate a fresh reset token on duplicate requests', async () => {

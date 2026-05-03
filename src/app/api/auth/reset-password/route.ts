@@ -79,13 +79,25 @@ export async function POST(request: Request) {
             })
             .where(eq(users.id, user.id));
 
-        // Send reset email (fire-and-forget to avoid blocking response)
+        // Wait for delivery so serverless runtimes do not end the request first.
         if (user.email) {
-            sendPasswordResetEmail({
+            const emailSent = await sendPasswordResetEmail({
                 email: user.email,
                 name: user.name,
                 resetToken,
-            }).catch(err => console.error('[Reset] Email send failed:', err));
+            });
+
+            if (!emailSent) {
+                await db
+                    .update(users)
+                    .set({
+                        resetToken: null,
+                        resetExpires: null,
+                    })
+                    .where(eq(users.id, user.id));
+
+                console.error('[Reset] Password reset email was not sent for user:', user.id);
+            }
         }
 
         return NextResponse.json({
