@@ -1,18 +1,16 @@
 import type { NextRequest } from "next/server";
 import { handlers } from "@/lib/auth";
+import { normalizeGoogleCallbackIssuer } from "@/lib/auth-google";
 
 function normalizeGoogleIssuer(request: NextRequest): NextRequest {
     const url = new URL(request.url);
-    const isGoogleCallback = url.pathname.endsWith("/api/auth/callback/google");
-    const issuer = url.searchParams.get("iss");
 
-    if (!isGoogleCallback || issuer !== "accounts.google.com") {
+    if (!normalizeGoogleCallbackIssuer(url)) {
         return request;
     }
 
-    url.searchParams.set("iss", "https://accounts.google.com");
     const nextUrl = request.nextUrl.clone();
-    nextUrl.searchParams.set("iss", "https://accounts.google.com");
+    nextUrl.searchParams.set("iss", url.searchParams.get("iss")!);
 
     return new Proxy(request, {
         get(target, prop, receiver) {

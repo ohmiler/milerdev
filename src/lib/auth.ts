@@ -1,11 +1,11 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db";
 import * as schema from "./db/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import { createGoogleProvider, isTrustedGoogleProfile } from "./auth-google";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     trustHost: true,
@@ -19,7 +19,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         maxAge: 7 * 24 * 60 * 60, // 7 days
     },
     providers: [
-        ...(process.env.AUTH_GOOGLE_ID ? [Google({
+        ...(process.env.AUTH_GOOGLE_ID ? [createGoogleProvider({
             clientId: process.env.AUTH_GOOGLE_ID,
             clientSecret: process.env.AUTH_GOOGLE_SECRET!,
         })] : []),
@@ -66,6 +66,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }),
     ],
     callbacks: {
+        async signIn({ account, profile }) {
+            if (account?.provider === "google") {
+                return isTrustedGoogleProfile(profile);
+            }
+
+            return true;
+        },
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
