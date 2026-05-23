@@ -7,6 +7,8 @@ type ProxyGlobal = typeof globalThis & {
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+const SERVER_ACTION_HEADER = 'next-action';
+const MIN_SERVER_ACTION_ID_LENGTH = 16;
 const proxyGlobal = globalThis as ProxyGlobal;
 const baseSecurityHeaders: Record<string, string> = {
     'X-XSS-Protection': '1; mode=block',
@@ -177,10 +179,37 @@ function createRateLimitResponse(request: NextRequest, message: string): NextRes
     return applySecurityHeaders(request, response);
 }
 
+function isMalformedServerActionProbe(request: NextRequest): boolean {
+    if (request.method !== 'POST') return false;
+
+    const actionId = request.headers.get(SERVER_ACTION_HEADER);
+    if (actionId === null) return false;
+
+    // Scanner probes often send values like "x". Real Next action IDs are opaque,
+    // build-generated values and are much longer than this.
+    return actionId.trim().length < MIN_SERVER_ACTION_ID_LENGTH;
+}
+
+function createInvalidServerActionResponse(request: NextRequest): NextResponse {
+    const response = new NextResponse('Server action not found.', {
+        status: 404,
+        headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'X-MilerDev-Blocked': 'invalid-server-action',
+        },
+    });
+
+    return applySecurityHeaders(request, response);
+}
+
 export function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
     const isAdminApiRoute = pathname.startsWith('/api/admin');
     const isCredentialsCallbackRoute = pathname === '/api/auth/callback/credentials';
+
+    if (isMalformedServerActionProbe(request)) {
+        return createInvalidServerActionResponse(request);
+    }
 
     // Rate limit admin API: 60 requests per minute per IP
     if (isAdminApiRoute) {

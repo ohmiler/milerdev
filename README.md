@@ -23,6 +23,9 @@ DATABASE_URL="mysql://root:root@localhost:3306/milerdev"
 # NextAuth
 AUTH_SECRET="your-auth-secret"
 
+# Server Actions (keep stable across production builds/instances)
+NEXT_SERVER_ACTIONS_ENCRYPTION_KEY="base64-32-byte-key"
+
 # Stripe
 STRIPE_SECRET_KEY="sk_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
@@ -40,6 +43,12 @@ SMTP_FROM="noreply@example.com"
 ```
 
 Production or Railway credentials should live in the deployment platform environment variables, not in `.env.local`.
+
+For self-hosted or Railway deployments, set `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` in the production environment before building/deploying. Generate it with:
+
+```bash
+openssl rand -base64 32
+```
 
 ## Getting Started
 
