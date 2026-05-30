@@ -36,6 +36,9 @@ MilerDev ควรรู้สึกเหมือน "coding studio ที่�
   --color-brand-700: #006dab;
   --color-brand-800: #075b8d;
   --color-brand-900: #0b4c75;
+  --color-brand-gradient: linear-gradient(135deg, #02abff 0%, #0089d6 34%, #006dab 100%);
+  --color-brand-gradient-hover: linear-gradient(135deg, #0089d6 0%, #006dab 54%, #075b8d 100%);
+  --color-brand-gradient-deep: linear-gradient(135deg, #0089d6 0%, #006dab 50%, #0b4c75 100%);
 
   --color-ink: #102033;
   --color-ink-soft: #34465c;
@@ -63,7 +66,11 @@ MilerDev ควรรู้สึกเหมือน "coding studio ที่�
 ### Usage Rules
 
 - `#02abff` ใช้กับ primary button, active navigation, progress, selected tab, focus ring และ link สำคัญ
+- ใน implementation ปัจจุบัน token จริงใน `src/app/globals.css` ใช้ชื่อ `--primary-*`; ให้ถือว่า `--primary-500` คือ `#02abff` และ `--primary-gradient` คือ gradient หลักของ brand
+- ใช้ `--primary-gradient` เฉพาะ primary action, marker ที่บอกลำดับ/สถานะสำคัญ, CTA arrow และ hover state ที่ต้องดึงสายตา
+- ใช้ `--primary-gradient-deep` สำหรับ CTA band ขนาดใหญ่ที่เป็นจุดปิด flow เท่านั้น ไม่ใช้เป็นพื้นหลังทั้งหน้า
 - หลีกเลี่ยงการใช้ฟ้าเต็มพื้นใหญ่ทั้งหน้า ให้ใช้เป็น accent บนพื้นขาว/ฟ้าอ่อน
+- ห้ามใช้ gradient text; emphasis ใน headline ให้ใช้สี solid `--primary-600` พร้อมน้ำหนักตัวอักษร
 - ใช้ `--color-ink` สำหรับ heading และข้อความสำคัญ ไม่ใช้ดำสนิท
 - ใช้ dark code surface เฉพาะส่วนที่เกี่ยวกับ coding เช่น editor mockup, code block, terminal, lesson examples
 - สี promo/discount ใช้ amber หรือ magenta อย่างจำกัด ไม่ใช้ม่วงเป็นสีรองหลักของเว็บ
@@ -77,11 +84,11 @@ MilerDev ควรรู้สึกเหมือน "coding studio ที่�
 
 ## Typography
 
-ระบบปัจจุบันใช้ `Noto Sans Thai` และ `Inter` อยู่แล้ว สามารถใช้ต่อได้เพื่อความเข้ากันกับ Next font setup
+ระบบปัจจุบันใช้ `IBM Plex Sans Thai` เป็น display/body font หลัก และใช้ `Inter` เป็น fallback สำหรับตัวอักษรละติน
 
 ```css
---font-display: var(--font-inter), var(--font-noto-thai), sans-serif;
---font-body: var(--font-noto-thai), var(--font-inter), sans-serif;
+--font-display: var(--font-ibm-plex-sans-thai), var(--font-inter), sans-serif;
+--font-body: var(--font-ibm-plex-sans-thai), var(--font-inter), sans-serif;
 --font-code: "Fira Code", "JetBrains Mono", "Cascadia Code", monospace;
 ```
 
@@ -89,8 +96,8 @@ MilerDev ควรรู้สึกเหมือน "coding studio ที่�
 
 | Token | Size | Line height | Usage |
 | --- | ---: | ---: | --- |
-| Display XL | 56 | 1.12 | Home hero only |
-| Display L | 44 | 1.16 | Page hero |
+| Display XL | 56 | 1.22 | Home hero only |
+| Display L | 44 | 1.28 | Page hero / final CTA |
 | H1 | 36 | 1.22 | Page title |
 | H2 | 28 | 1.28 | Section title |
 | H3 | 22 | 1.35 | Card group / course title |
@@ -166,11 +173,13 @@ MilerDev ควรรู้สึกเหมือน "coding studio ที่�
 
 Primary button:
 
-- Background `#02abff`, hover `#0089d6`
+- Background `--primary-gradient`, hover `--primary-gradient-hover`
 - Text white, weight `600`
 - Height `40px` small, `48px` default, `56px` large
 - Radius `8px`
 - Focus ring ต้องชัด
+- ใช้กับ action หลักของ flow เท่านั้น เช่น เริ่มเรียน, สมัครเรียน, ดำเนินการต่อ
+- ไม่ใช้ gradient กับ secondary/ghost button เพื่อให้ hierarchy ชัด
 
 Secondary button:
 
@@ -224,6 +233,7 @@ Course card เป็น component สำคัญที่สุดใน catal
 - Free course ใช้ success badge
 - Promo ใช้ warning/magenta accent แบบจำกัด
 - Hover ยกขึ้นเล็กน้อย `translateY(-2px)` และ border ฟ้าอ่อน
+- CTA ภายใน card ใช้พื้น `--primary-50` เป็น default และเปลี่ยนเป็น `--primary-gradient` เฉพาะตอน hover/focus ของ card
 
 Recommended structure:
 
@@ -233,6 +243,20 @@ Recommended structure:
 4. Short outcome
 5. Meta row
 6. Price + CTA affordance
+
+### Public Homepage Extract
+
+ใช้ pattern นี้เป็นฐานเวลา polish public pages อื่น เช่น `/courses`, `/about`, `/faq`, `/blog`
+
+- Section heading ใช้ `.section-title`: `var(--text-h2)`, weight `700`, line-height `1.28`, สี `var(--gray-900)`
+- Supporting copy ใช้ `.section-copy` หรือ `.home-lede`: `var(--text-body-lg)`, line-height `var(--leading-thai)`, max-width `var(--measure-prose)`
+- Section rhythm ใช้พื้นขาวสลับ `var(--primary-50)` หรือ gradient อ่อนจากขาวไปฟ้าอ่อน ไม่ใช้ section card ลอยทั้งก้อน
+- Cards ใช้ radius `12px`, border `var(--gray-200)`, hover `translateY(-2px)` และ shadow เบา ไม่ใช้ border + shadow หนักพร้อมกัน
+- Kicker/pill ใช้ icon + text, border `var(--primary-200)`, text `var(--primary-700)`, background ขาวหรือ `var(--primary-50)`
+- Number/action markers ใช้ `--primary-gradient` ได้เมื่อเป็นลำดับหรือ action สำคัญ เช่น learning path step
+- Dark code/editor surface ใช้เฉพาะบริบท coding และควรมี fixed height + scrollbar เมื่อ content เปลี่ยน
+- Final CTA ใช้ `--primary-gradient-deep` เป็น band เดียวท้าย flow พร้อมปุ่มขาว primary และปุ่ม outline/translucent secondary
+- หลีกเลี่ยง decorative blobs/orbs ใหม่ ถ้าต้องแยก section ให้ใช้ spacing, band background, border และ content hierarchy
 
 ### Lesson Player
 
@@ -288,10 +312,26 @@ Blog/course content:
 
 First viewport ต้องสื่อว่า MilerDev คือเว็บเรียน coding ทันที
 
-- Hero: headline + outcome + primary CTA + secondary CTA
-- ด้านขวาใช้ code editor/course preview ที่เป็น product-specific visual
+- Hero: headline 2 บรรทัดที่ตั้งใจจัด, outcome copy, primary CTA, secondary CTA
+- Desktop ใช้ layout text + product visual; mobile จัด text/CTA/stat ให้อยู่กลางและให้ visual ตามหลัง
+- ด้านขวาใช้ code editor/course preview ที่เป็น product-specific visual และสอดคล้องกับ theme coding
 - แสดง course/recommendation section โผล่ให้เห็นใน first viewport
 - ไม่ทำ hero เป็น marketing card ซ้ายขวาทั่วไป
+- Hero stats ต้อง compact และไม่แข่งกับ CTA หลัก
+- Learning path ใช้ ordered product cards เมื่อ order มีความหมายจริงเท่านั้น
+
+### Public Page Consistency Checklist
+
+ใช้ checklist นี้ก่อนเริ่ม polish หน้า public ถัดไป
+
+- ใช้ IBM Plex Sans Thai ผ่าน `--font-display` และ `--font-body`
+- ใช้สีจาก `--primary-*`, `--gray-*`, semantic tokens เท่านั้น เว้นแต่เป็น asset/promo เฉพาะ
+- Primary action ใช้ `.btn.btn-primary`; secondary action ใช้ `.btn.btn-secondary`
+- Gradient ใช้เฉพาะ action/marker/CTA band ตาม usage rules ไม่ใช้ตกแต่งทุกจุด
+- Heading ใช้ `text-wrap: balance`; body/supporting copy ใช้ `text-wrap: pretty` และ line-height ไทย
+- Container หลักไม่เกิน `1200px`; long prose ไม่เกิน `var(--measure-prose)`
+- Mobile ต้องไม่มี text overflow, button กว้างพอดี, tap target อย่างน้อย `40x40px`
+- Focus state ต้องเห็นชัดทุก interactive element
 
 ### Courses Catalog
 
