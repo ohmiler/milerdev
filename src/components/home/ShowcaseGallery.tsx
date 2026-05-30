@@ -59,21 +59,10 @@ export default function ShowcaseGallery() {
             <span style={{ fontSize: '1rem' }}>📸</span>
             <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--primary-700)' }}>กิจกรรมและงานบรรยาย</span>
           </div>
-          <h2 style={{
-            fontSize: 'clamp(1.5rem, 3.5vw, 2rem)',
-            fontWeight: 700,
-            color: '#1e293b',
-            marginBottom: '12px',
-            lineHeight: 1.3,
-          }}>
+          <h2 className="section-title" style={{ marginBottom: '12px' }}>
             ภาพบรรยากาศจากงานต่างๆ
           </h2>
-          <p style={{
-            color: '#64748b',
-            fontSize: '1rem',
-            maxWidth: '560px',
-            margin: '0 auto',
-          }}>
+          <p className="section-copy" style={{ margin: '0 auto', maxWidth: '56ch' }}>
             บรรยายด้าน Web Development, AI และเส้นทางสายอาชีพ Developer ให้กับนักศึกษาและองค์กรต่าง ๆ
           </p>
         </div>

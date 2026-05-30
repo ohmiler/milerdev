@@ -78,15 +78,10 @@ export default function AffiliateBannerCarousel() {
     return (
         <section style={{ padding: '80px 0', background: 'white' }}>
             <div className="container" style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <h2 style={{
-                    fontSize: 'clamp(1.5rem, 3.5vw, 2rem)',
-                    fontWeight: 700,
-                    color: '#1e293b',
-                    marginBottom: '12px',
-                }}>
+                <h2 className="section-title" style={{ marginBottom: '12px' }}>
                     บริการและสินค้าแนะนำ
                 </h2>
-                <p style={{ color: '#64748b', fontSize: '1rem', maxWidth: '500px', margin: '0 auto' }}>
+                <p className="section-copy" style={{ margin: '0 auto', maxWidth: '50ch' }}>
                     สนใจสมัครใช้บริการหรือสั่งซื้อ คลิกที่รูปภาพได้เลย
                 </p>
             </div>
@@ -203,11 +198,13 @@ export default function AffiliateBannerCarousel() {
                             <span
                                 aria-hidden="true"
                                 style={{
-                                    width: current === i ? '24px' : '8px',
+                                    width: '24px',
                                     height: '8px',
                                     borderRadius: '50px',
-                                    background: current === i ? '#2563eb' : '#cbd5e1',
-                                    transition: 'width 0.2s ease, background-color 0.2s ease',
+                                    background: current === i ? 'var(--primary-600)' : 'var(--gray-300)',
+                                    transform: current === i ? 'scaleX(1)' : 'scaleX(0.35)',
+                                    transformOrigin: 'center',
+                                    transition: 'transform 0.2s ease, background-color 0.2s ease',
                                 }}
                             />
                         </button>

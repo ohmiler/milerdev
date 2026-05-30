@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Thai } from "next/font/google";
+import { IBM_Plex_Sans_Thai, Inter } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
@@ -10,9 +10,9 @@ const inter = Inter({
   display: "swap",
 });
 
-const notoSansThai = Noto_Sans_Thai({
-  variable: "--font-noto-thai",
-  subsets: ["thai"],
+const ibmPlexSansThai = IBM_Plex_Sans_Thai({
+  variable: "--font-ibm-plex-sans-thai",
+  subsets: ["thai", "latin"],
   display: "swap",
   weight: ["300", "400", "500", "600", "700"],
 });
@@ -72,10 +72,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${notoSansThai.variable} antialiased`}
-      >
+    <html
+      lang="th"
+      className={`${inter.variable} ${ibmPlexSansThai.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
