@@ -29,7 +29,13 @@ describe('homepage polish', () => {
         const page = readProjectFile('src/app/page.tsx');
 
         expect(page).toContain('bundle-program-section');
+        expect(page).toContain('className="container bundle-program-layout"');
+        expect(page).toContain('className="bundle-program-copy"');
         expect(page).toContain('bundle-program-card');
+        expect(page).not.toContain('padding: 100px 0');
+        expect(page).not.toContain('background: linear-gradient(135deg, #071827');
+        expect(cssBlock(page, '.bundle-program-section {')).toContain('padding: 56px 0');
+        expect(cssBlock(page, '.bundle-card-content {')).toContain('grid-template-columns: minmax(0, 1fr) 220px');
         expect(page).not.toContain('bundle-particles');
         expect(page).not.toContain('particleFloat');
         expect(page).not.toContain('giftBounce');

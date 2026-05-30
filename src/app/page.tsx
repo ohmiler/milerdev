@@ -514,30 +514,24 @@ export default async function HomePage() {
 
         {/* Bundle Section */}
         {publishedBundles.length > 0 && (
-          <section className="bundle-program-section">
-            <div className="container" style={{ position: 'relative', zIndex: 2 }}>
-              <div style={{ textAlign: 'center', marginBottom: '48px', color: 'white' }}>
-                <div className="bundle-program-icon">
-                  <svg className="bundle-program-icon__glyph" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <section className="bundle-program-section" aria-labelledby="bundle-program-title">
+            <div className="container bundle-program-layout">
+              <div className="bundle-program-copy">
+                <div className="bundle-program-kicker">
+                  <svg className="bundle-program-icon__glyph" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="20 12 20 22 4 22 4 12"/>
                     <rect x="2" y="7" width="20" height="5"/>
                     <line x1="12" y1="22" x2="12" y2="7"/>
                     <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/>
                     <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
                   </svg>
+                  <span>ชุดคอร์สประหยัด</span>
                 </div>
 
-                <h2 style={{
-                  fontSize: 'var(--text-display-lg)',
-                  fontWeight: 800,
-                  marginBottom: '8px',
-                  letterSpacing: 0,
-                  lineHeight: 1.28,
-                  textWrap: 'balance',
-                }}>
+                <h2 id="bundle-program-title" className="bundle-program-title">
                   <span className="bundle-heading-accent">ของขวัญสุดพิเศษ</span>
                 </h2>
-                <p style={{ opacity: 0.9, fontSize: 'var(--text-body-lg)', maxWidth: '48ch', margin: '0 auto 20px', lineHeight: 'var(--leading-thai)', textWrap: 'pretty' }}>
+                <p className="bundle-program-description">
                   รวมคอร์สชุดพิเศษในราคาที่คุ้มค่ากว่าซื้อแยก
                 </p>
                 <div className="bundle-fit">
@@ -549,17 +543,11 @@ export default async function HomePage() {
               </div>
 
               {/* Bundle Cards */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '24px',
-                maxWidth: '960px',
-                margin: '0 auto',
-              }}>
+              <div className="bundle-list">
                 {publishedBundles.map((bundle) => {
                   const bundlePrice = parseFloat(bundle.price);
                   return (
-                    <Link key={bundle.id} href={`/bundles/${bundle.slug}`} style={{ textDecoration: 'none' }}>
+                    <Link key={bundle.id} href={`/bundles/${bundle.slug}`} className="bundle-program-link">
                       <div className="bundle-program-card">
                         {/* Ribbon */}
                         <div className="bundle-ribbon">
@@ -581,32 +569,26 @@ export default async function HomePage() {
                         )}
 
                         {/* Card content */}
-                        <div style={{ padding: '32px 24px 24px' }}>
-                          <h3 style={{
-                            fontSize: '1.25rem',
-                            fontWeight: 700,
-                            margin: '0 0 10px',
-                            lineHeight: 1.3,
-                            color: 'white',
-                          }}>
+                        <div className="bundle-card-content">
+                          <h3 className="bundle-card-title">
                             {bundle.title}
                           </h3>
 
                           {bundle.description && (
-                            <p style={{ fontSize: '0.875rem', opacity: 0.75, margin: '0 0 16px', lineHeight: 1.5, color: 'white' }}>
+                            <p className="bundle-card-description">
                               {bundle.description.slice(0, 80)}{bundle.description.length > 80 ? '...' : ''}
                             </p>
                           )}
 
                           {/* Course pills */}
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
+                          <div className="bundle-course-list">
                             {bundle.courses.slice(0, 3).map((c, i) => (
                               <span key={i} className="bundle-course-pill">
                                 {c.courseTitle}
                               </span>
                             ))}
                             {bundle.courses.length > 3 && (
-                              <span style={{ fontSize: '0.75rem', opacity: 0.55, color: 'white', alignSelf: 'center' }}>
+                              <span className="bundle-more-pill">
                                 +{bundle.courses.length - 3} อีก
                               </span>
                             )}
@@ -614,8 +596,8 @@ export default async function HomePage() {
 
                           {/* Value comparison */}
                           {bundle.totalOriginalPrice > bundlePrice && (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
-                              <span style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.6)' }}>
+                            <div className="bundle-value-row">
+                              <span className="bundle-original-price">
                                 ซื้อแยกมูลค่า{' '}
                                 <span style={{ textDecoration: 'line-through' }}>฿{bundle.totalOriginalPrice.toLocaleString()}</span>
                               </span>
@@ -627,9 +609,9 @@ export default async function HomePage() {
 
                           {/* Price row */}
                           <div className="bundle-price-row">
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>ราคา Bundle วันนี้</span>
-                              <span style={{ fontSize: '1.625rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>
+                            <div className="bundle-price-stack">
+                              <span className="bundle-price-label">ราคา Bundle วันนี้</span>
+                              <span className="bundle-price">
                                 ฿{bundlePrice.toLocaleString()}
                               </span>
                             </div>
@@ -651,29 +633,84 @@ export default async function HomePage() {
 
             <style>{`
               .bundle-program-section {
-                padding: 100px 0;
-                background: linear-gradient(135deg, #071827 0%, #0b2438 48%, #0d314c 100%);
+                padding: 56px 0;
+                background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
                 position: relative;
                 overflow: hidden;
               }
 
-              .bundle-program-icon {
+              .bundle-program-layout {
+                display: grid;
+                grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+                gap: 32px;
+                align-items: center;
+              }
+
+              .bundle-program-copy {
+                color: var(--gray-900);
+              }
+
+              .bundle-program-kicker {
                 display: inline-flex;
                 align-items: center;
-                justify-content: center;
-                width: 72px;
-                height: 72px;
-                border-radius: 16px;
-                background: rgba(115,215,255,0.1);
-                border: 1px solid rgba(115,215,255,0.22);
-                margin-bottom: 20px;
+                gap: 8px;
+                width: fit-content;
+                padding: 8px 12px;
+                border-radius: 999px;
+                background: var(--primary-50);
+                border: 1px solid var(--primary-200);
+                color: var(--primary-700);
+                font-size: 0.875rem;
+                font-weight: 700;
+                margin-bottom: 14px;
               }
               .bundle-program-icon__glyph {
-                color: #73d7ff;
+                color: var(--primary-600);
               }
 
               .bundle-heading-accent {
-                color: #73d7ff;
+                color: var(--gray-900);
+              }
+
+              .bundle-program-title {
+                margin: 0 0 10px;
+                font-size: 2rem;
+                font-weight: 800;
+                line-height: 1.28;
+                letter-spacing: 0;
+                text-wrap: balance;
+              }
+
+              .bundle-program-description {
+                max-width: 44ch;
+                margin: 0;
+                color: var(--gray-600);
+                font-size: 1.0625rem;
+                line-height: var(--leading-thai);
+                text-wrap: pretty;
+              }
+
+              .bundle-fit {
+                margin: 18px 0 0;
+                max-width: 480px;
+                color: var(--gray-700);
+                background: #ffffff;
+                border: 1px solid var(--primary-100);
+                box-shadow: none;
+              }
+
+              .bundle-fit svg {
+                color: var(--primary-500);
+              }
+
+              .bundle-list {
+                display: grid;
+                gap: 14px;
+              }
+
+              .bundle-program-link {
+                color: inherit;
+                text-decoration: none;
               }
 
               .bundle-program-card {
@@ -683,20 +720,21 @@ export default async function HomePage() {
                 height: 100%;
                 cursor: pointer;
                 transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
-                background: rgba(255,255,255,0.06);
-                border: 1px solid rgba(115,215,255,0.18);
+                background: #ffffff;
+                border: 1px solid var(--gray-200);
+                padding: 20px;
               }
               .bundle-program-card:hover {
                 transform: translateY(-2px);
-                border-color: rgba(115,215,255,0.35);
-                background: rgba(255,255,255,0.08);
+                border-color: var(--primary-300);
+                background: #ffffff;
               }
               .bundle-program-card:hover .bundle-cta-arrow {
                 transform: translateX(4px);
                 opacity: 1;
               }
               .bundle-program-card:hover .bundle-ribbon {
-                background: rgba(115,215,255,0.14);
+                background: var(--primary-100);
               }
 
               /* Ribbon tag */
@@ -704,14 +742,14 @@ export default async function HomePage() {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                padding: 6px 14px;
-                margin: 20px 0 0 20px;
-                background: rgba(115,215,255,0.1);
-                border: 1px solid rgba(115,215,255,0.2);
+                padding: 6px 10px;
+                margin: 0;
+                background: var(--primary-50);
+                border: 1px solid var(--primary-200);
                 border-radius: 50px;
-                color: #73d7ff;
+                color: var(--primary-700);
                 font-size: 0.8125rem;
-                font-weight: 600;
+                font-weight: 700;
                 transition: background 0.2s ease;
               }
               .bundle-ribbon svg { width: 14px; height: 14px; }
@@ -719,58 +757,173 @@ export default async function HomePage() {
               /* Discount badge */
               .bundle-discount-badge {
                 position: absolute;
-                top: 16px;
-                right: 16px;
-                width: 52px;
-                height: 52px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, #ef4444, #dc2626);
+                top: 20px;
+                right: 20px;
+                width: auto;
+                height: auto;
+                padding: 6px 10px;
+                border-radius: 999px;
+                background: #fff4d8;
+                border: 1px solid #ffd58a;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                box-shadow: 0 4px 10px rgba(239,68,68,0.28);
+                box-shadow: none;
               }
               .bundle-discount-value {
-                color: white;
+                color: #9a5a00;
                 font-size: 0.8125rem;
                 font-weight: 800;
               }
+              .bundle-card-content {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) 220px;
+                gap: 8px 20px;
+                margin-top: 18px;
+                align-items: start;
+              }
+              .bundle-card-title {
+                margin: 0;
+                color: var(--gray-900);
+                font-size: 1.125rem;
+                font-weight: 700;
+                line-height: 1.38;
+              }
+              .bundle-card-description {
+                margin: 0;
+                color: var(--gray-600);
+                font-size: 0.9375rem;
+                line-height: 1.65;
+                text-wrap: pretty;
+              }
+              .bundle-course-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 6px;
+              }
               /* Course pills */
               .bundle-course-pill {
-                background: rgba(115,215,255,0.08);
-                border: 1px solid rgba(115,215,255,0.14);
+                background: var(--gray-50);
+                border: 1px solid var(--gray-200);
                 padding: 4px 12px;
                 border-radius: 50px;
                 font-size: 0.75rem;
-                color: rgba(255,255,255,0.8);
+                color: var(--gray-700);
                 transition: background-color 0.2s ease;
               }
               .bundle-program-card:hover .bundle-course-pill {
-                background: rgba(115,215,255,0.13);
+                background: var(--primary-50);
+              }
+              .bundle-more-pill {
+                align-self: center;
+                color: var(--gray-500);
+                font-size: 0.75rem;
+                font-weight: 600;
+              }
+
+              .bundle-value-row {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+                margin-top: 10px;
+              }
+              .bundle-original-price {
+                color: var(--gray-500);
+                font-size: 0.8125rem;
+              }
+              .bundle-savings {
+                background: #fff4d8;
+                border: 1px solid #ffd58a;
+                color: #9a5a00;
               }
 
               /* Price row */
               .bundle-price-row {
-                border-top: 1px solid rgba(115,215,255,0.14);
-                padding-top: 16px;
+                grid-column: 2;
+                grid-row: 1 / span 4;
+                align-self: stretch;
                 display: flex;
+                flex-direction: column;
                 align-items: center;
-                justify-content: space-between;
+                justify-content: center;
+                gap: 12px;
+                padding-left: 20px;
+                border-left: 1px solid var(--gray-100);
+                text-align: center;
+              }
+              .bundle-price-stack {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+              }
+              .bundle-price-label {
+                color: var(--gray-500);
+                font-size: 0.75rem;
+                font-weight: 700;
+              }
+              .bundle-price {
+                color: var(--gray-900);
+                font-size: 1.625rem;
+                font-weight: 800;
+                line-height: 1.15;
               }
 
               /* CTA arrow */
               .bundle-cta-arrow {
-                width: 36px;
-                height: 36px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, #73d7ff, #02abff);
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                background: var(--primary-500);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                color: #1e1b4b;
-                opacity: 0.7;
+                color: #ffffff;
+                opacity: 0.9;
                 transition: transform 0.2s ease, opacity 0.2s ease;
                 flex-shrink: 0;
+              }
+
+              @media (max-width: 900px) {
+                .bundle-program-layout {
+                  grid-template-columns: 1fr;
+                  gap: 24px;
+                }
+                .bundle-program-description,
+                .bundle-fit {
+                  max-width: 680px;
+                }
+              }
+
+              @media (max-width: 640px) {
+                .bundle-program-section {
+                  padding: 44px 0;
+                }
+                .bundle-program-title {
+                  font-size: 1.625rem;
+                }
+                .bundle-program-card {
+                  padding: 18px;
+                }
+                .bundle-discount-badge {
+                  position: static;
+                  width: fit-content;
+                  margin-top: 10px;
+                  border-radius: 999px;
+                }
+                .bundle-card-content {
+                  grid-template-columns: 1fr;
+                }
+                .bundle-price-row {
+                  grid-column: auto;
+                  grid-row: auto;
+                  align-items: flex-start;
+                  padding: 14px 0 0;
+                  border-left: 0;
+                  border-top: 1px solid var(--gray-100);
+                  text-align: left;
+                }
               }
             `}</style>
           </section>
