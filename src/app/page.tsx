@@ -182,6 +182,17 @@ function getCourseOutcomes(title: string): string[] | null {
   return null;
 }
 
+const CLIENT_LOGOS = [
+  { src: '/clients/01-clients.png', alt: 'The Programmer Association' },
+  { src: '/clients/02-clients.png', alt: 'GetLinks' },
+  { src: '/clients/03-clients.png', alt: 'FutureSkill' },
+  { src: '/clients/04-clients.png', alt: 'E Plus' },
+  { src: '/clients/05-clients.png', alt: 'มหาวิทยาลัยขอนแก่น' },
+  { src: '/clients/06-clients.png', alt: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ' },
+  { src: '/clients/07-clients.png', alt: 'SkillLane' },
+  { src: '/clients/08-clients.png', alt: 'มหาวิทยาลัยเทคโนโลยีราชมงคลรัตนโกสินทร์' },
+] as const;
+
 export default async function HomePage() {
   // Parallelize independent data fetching (async-parallel rule)
   const [featuredCourses, publishedBundles, courseLookup] = await Promise.all([
@@ -930,30 +941,28 @@ export default async function HomePage() {
         )}
 
         {/* Client Showcase Section */}
-        <section style={{
-          padding: '80px 0',
-          background: '#f8fafc',
-          overflow: 'hidden',
-        }}>
-          <div className="container" style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <h2 className="section-title" style={{ marginBottom: '12px' }}>
+        <section className="client-showcase-section" aria-labelledby="client-showcase-title">
+          <div className="container client-showcase-head">
+            <h2 id="client-showcase-title" className="section-title client-showcase-title">
               องค์กรและมหาวิทยาลัยที่เคยเชิญ MilerDev ไปแบ่งปันความรู้
             </h2>
-            <p className="section-copy" style={{ margin: '0 auto' }}>
+            <p className="section-copy client-showcase-copy">
               องค์กรชั้นนำและสถาบันการศึกษาที่เชิญ MilerDev ไปเป็นวิทยากรอบรมและแบ่งปันความรู้ด้านการเขียนโปรแกรม
             </p>
           </div>
 
-          <div className="marquee-wrapper">
+          <div className="marquee-wrapper" aria-label="องค์กรและสถาบันที่เคยร่วมงานกับ MilerDev">
             <div className="marquee-inner">
               {[0, 1].map((copy) => (
                 <div key={copy} className="marquee-track" aria-hidden={copy === 1}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8].map((num, i) => (
-                    <div key={i} className="marquee-item">
+                  {[...CLIENT_LOGOS, ...CLIENT_LOGOS].map((logo, i) => (
+                    <div key={`${copy}-${logo.src}-${i}`} className="marquee-item">
                       <img
-                        src={`/clients/0${num}-clients.png`}
-                        alt={`Client ${num}`}
+                        src={logo.src}
+                        alt={copy === 0 && i < CLIENT_LOGOS.length ? logo.alt : ''}
                         className="marquee-logo"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   ))}
@@ -963,16 +972,36 @@ export default async function HomePage() {
           </div>
 
           <style>{`
+            .client-showcase-section {
+              padding: 72px 0 64px;
+              background: #f8fafc;
+              overflow: hidden;
+            }
+            .client-showcase-head {
+              text-align: center;
+              margin-bottom: 38px;
+            }
+            .client-showcase-title {
+              max-width: 820px;
+              margin: 0 auto 12px;
+              text-wrap: balance;
+            }
+            .client-showcase-copy {
+              max-width: 720px;
+              margin: 0 auto;
+              text-wrap: pretty;
+            }
             .marquee-wrapper {
               width: 100%;
               overflow: hidden;
-              mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-              -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+              mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+              -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
             }
             .marquee-inner {
               display: flex;
               width: max-content;
-              animation: marquee 100s linear infinite;
+              animation: marquee 92s linear infinite;
+              will-change: transform;
             }
             .marquee-track {
               display: flex;
@@ -984,19 +1013,24 @@ export default async function HomePage() {
               display: flex;
               align-items: center;
               justify-content: center;
-              padding: 0 30px;
+              flex: 0 0 168px;
+              height: 84px;
+              padding: 0 18px;
             }
             .marquee-logo {
-              max-height: 64px;
-              max-width: 160px;
+              max-height: 56px;
+              max-width: 132px;
+              width: auto;
+              height: auto;
               object-fit: contain;
-              filter: grayscale(30%);
-              opacity: 0.85;
-              transition: all 0.3s;
+              filter: grayscale(16%) saturate(0.92);
+              opacity: 0.84;
+              transition: filter 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
             }
             .marquee-logo:hover {
-              filter: grayscale(0%);
+              filter: grayscale(0%) saturate(1);
               opacity: 1;
+              transform: translateY(-1px);
             }
             @keyframes marquee {
               0% { transform: translateX(0); }
@@ -1004,6 +1038,36 @@ export default async function HomePage() {
             }
             .marquee-wrapper:hover .marquee-inner {
               animation-play-state: paused;
+            }
+            @media (max-width: 640px) {
+              .client-showcase-section {
+                padding: 56px 0 52px;
+              }
+              .client-showcase-head {
+                margin-bottom: 30px;
+              }
+              .marquee-item {
+                flex-basis: 142px;
+                height: 74px;
+                padding: 0 14px;
+              }
+              .marquee-logo {
+                max-height: 48px;
+                max-width: 116px;
+              }
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .marquee-wrapper {
+                overflow-x: auto;
+                mask-image: none;
+                -webkit-mask-image: none;
+              }
+              .marquee-inner {
+                animation: none;
+              }
+              .marquee-track[aria-hidden="true"] {
+                display: none;
+              }
             }
           `}</style>
         </section>

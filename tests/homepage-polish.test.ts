@@ -46,6 +46,20 @@ describe('homepage polish', () => {
         expect(page).not.toMatch(/cubic-bezier\([^)]*-/);
     });
 
+    test('client showcase marquee is restrained, accessible, and motion-safe', () => {
+        const page = readProjectFile('src/app/page.tsx');
+
+        expect(page).toContain('const CLIENT_LOGOS');
+        expect(page).toContain('className="client-showcase-section"');
+        expect(page).toContain('aria-labelledby="client-showcase-title"');
+        expect(page).not.toContain('alt={`Client ${num}`}');
+        expect(page).not.toContain('transition: all 0.3s');
+        expect(page).toContain('alt={copy === 0 && i < CLIENT_LOGOS.length ? logo.alt : \'\'}');
+        expect(cssBlock(page, '.marquee-item {')).toContain('flex: 0 0 168px');
+        expect(cssBlock(page, '.marquee-logo {')).toContain('max-height: 56px');
+        expect(page).toContain('@media (prefers-reduced-motion: reduce)');
+    });
+
     test('carousel pagination uses transform transitions instead of layout width animation', () => {
         const carousel = readProjectFile('src/components/home/AffiliateBannerCarousel.tsx');
 
