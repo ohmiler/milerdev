@@ -8,7 +8,7 @@ type ProxyGlobal = typeof globalThis & {
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 const SERVER_ACTION_HEADER = 'next-action';
-const MIN_SERVER_ACTION_ID_LENGTH = 16;
+const GENERIC_AUTH_SIGNIN_PATH = '/api/auth/signin';
 const proxyGlobal = globalThis as ProxyGlobal;
 const baseSecurityHeaders: Record<string, string> = {
     'X-XSS-Protection': '1; mode=block',
@@ -179,15 +179,13 @@ function createRateLimitResponse(request: NextRequest, message: string): NextRes
     return applySecurityHeaders(request, response);
 }
 
-function isMalformedServerActionProbe(request: NextRequest): boolean {
+function isUnsupportedServerActionRequest(request: NextRequest): boolean {
     if (request.method !== 'POST') return false;
 
-    const actionId = request.headers.get(SERVER_ACTION_HEADER);
-    if (actionId === null) return false;
-
-    // Scanner probes often send values like "x". Real Next action IDs are opaque,
-    // build-generated values and are much longer than this.
-    return actionId.trim().length < MIN_SERVER_ACTION_ID_LENGTH;
+    // MilerDev does not define Server Actions. Mutations go through route
+    // handlers/client fetch, so any next-action POST is either a scanner probe or
+    // a stale browser tab from another deployment.
+    return request.headers.has(SERVER_ACTION_HEADER);
 }
 
 function createInvalidServerActionResponse(request: NextRequest): NextResponse {
@@ -202,13 +200,33 @@ function createInvalidServerActionResponse(request: NextRequest): NextResponse {
     return applySecurityHeaders(request, response);
 }
 
+function isUnsupportedAuthSigninPost(request: NextRequest, pathname: string): boolean {
+    return request.method === 'POST' && pathname === GENERIC_AUTH_SIGNIN_PATH;
+}
+
+function createInvalidAuthSigninResponse(request: NextRequest): NextResponse {
+    const response = new NextResponse('Invalid auth request.', {
+        status: 400,
+        headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'X-MilerDev-Blocked': 'invalid-auth-signin',
+        },
+    });
+
+    return applySecurityHeaders(request, response);
+}
+
 export function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
     const isAdminApiRoute = pathname.startsWith('/api/admin');
     const isCredentialsCallbackRoute = pathname === '/api/auth/callback/credentials';
 
-    if (isMalformedServerActionProbe(request)) {
+    if (isUnsupportedServerActionRequest(request)) {
         return createInvalidServerActionResponse(request);
+    }
+
+    if (isUnsupportedAuthSigninPost(request, pathname)) {
+        return createInvalidAuthSigninResponse(request);
     }
 
     // Rate limit admin API: 60 requests per minute per IP

@@ -7,8 +7,34 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { createGoogleProvider, isTrustedGoogleProfile } from "./auth-google";
 
+const EXPECTED_AUTH_ERROR_TYPES = new Set(["CredentialsSignin", "MissingCSRF"]);
+
+function getAuthErrorType(error: Error): string {
+    const maybeTypedError = error as Error & { type?: unknown };
+    return typeof maybeTypedError.type === "string" ? maybeTypedError.type : error.name;
+}
+
+function logAuthError(error: Error): void {
+    const type = getAuthErrorType(error);
+
+    if (EXPECTED_AUTH_ERROR_TYPES.has(type)) {
+        if (process.env.NODE_ENV !== "production") {
+            console.warn(`[auth][expected] ${type}: ${error.message}`);
+        }
+        return;
+    }
+
+    console.error(`[auth][error] ${type}: ${error.message}`);
+    if (error.stack) {
+        console.error(error.stack);
+    }
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
     trustHost: true,
+    logger: {
+        error: logAuthError,
+    },
     adapter: DrizzleAdapter(db, {
         usersTable: schema.users,
         accountsTable: schema.accounts,
