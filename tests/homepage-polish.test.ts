@@ -127,4 +127,21 @@ describe('homepage polish', () => {
         expect(cssBlock(globals, '.course-card--featured .course-discount-badge')).toContain('background: #fff4d8');
         expect(cssBlock(globals, '.course-card--featured .course-discount-badge')).toContain('color: #9a5a00');
     });
+
+    test('audience fit section works as a decision aid, not matching cards', () => {
+        const globals = readProjectFile('src/app/globals.css');
+        const page = readProjectFile('src/app/page.tsx');
+
+        expect(page).toContain('id="audience-fit"');
+        expect(page).toContain('className="section audience-section"');
+        expect(page).toContain('className="audience-head"');
+        expect(page).toContain('className="section-copy audience-note"');
+
+        expect(cssBlock(globals, '.audience-grid {')).toContain('grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr)');
+        expect(cssBlock(globals, '.audience-col {')).toContain('border-radius: 14px');
+        expect(cssBlock(globals, '.audience-col--yes {')).toContain('background: linear-gradient(180deg, #ffffff 0%, var(--primary-50) 100%)');
+        expect(cssBlock(globals, '.audience-col--no {')).toContain('background: #ffffff');
+        expect(cssBlock(globals, '.audience-col--no {')).toContain('border-style: dashed');
+        expect(cssBlock(globals, '.audience-item {')).toContain('grid-template-columns: 22px 1fr');
+    });
 });

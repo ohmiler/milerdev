@@ -1649,6 +1649,10 @@ h1, h2, h3, h4, h5, h6 {
   scroll-margin-top: 96px;
 }
 
+#audience-fit {
+  scroll-margin-top: 96px;
+}
+
 .trust-section__head {
   max-width: 720px;
   margin: 0 auto 48px;
@@ -1891,17 +1895,36 @@ h1, h2, h3, h4, h5, h6 {
   padding: 10px 14px;
 }
 
+.audience-section {
+  background: #ffffff;
+}
+
+.audience-head {
+  max-width: 760px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.audience-head .section-title {
+  margin-bottom: 12px;
+}
+
+.audience-note {
+  margin: 0 auto;
+}
+
 /* Audience fit (เหมาะกับใคร / ไม่เหมาะกับใคร) */
 .audience-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
   gap: 24px;
-  max-width: 960px;
+  max-width: 1040px;
   margin: 0 auto;
+  align-items: stretch;
 }
 .audience-col {
-  border-radius: 18px;
-  padding: 32px;
+  border-radius: 14px;
+  padding: 30px 32px;
   border: 1px solid var(--gray-200);
   background: #ffffff;
 }
@@ -1909,11 +1932,18 @@ h1, h2, h3, h4, h5, h6 {
   border-color: rgba(2, 171, 255, 0.3);
   background: linear-gradient(180deg, #ffffff 0%, var(--primary-50) 100%);
 }
+.audience-col--no {
+  background: #ffffff;
+  border-color: var(--gray-200);
+  border-style: dashed;
+}
 .audience-col__head {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--gray-100);
 }
 .audience-col__icon {
   width: 40px;
@@ -1936,14 +1966,16 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 1.1875rem;
   font-weight: 700;
   color: var(--gray-900);
+  line-height: 1.35;
 }
 .audience-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 22px 1fr;
   align-items: flex-start;
-  gap: 12px;
-  padding: 10px 0;
+  gap: 10px;
+  padding: 12px 0;
   font-size: 0.9875rem;
-  line-height: 1.6;
+  line-height: var(--leading-body);
   color: var(--gray-700);
   border-top: 1px solid var(--gray-100);
 }

@@ -450,13 +450,13 @@ export default async function HomePage() {
         </section>
 
         {/* Audience Fit — เหมาะกับใคร / ไม่เหมาะกับใคร */}
-        <section className="section" data-reveal style={{ background: 'white' }}>
+        <section id="audience-fit" className="section audience-section" data-reveal>
           <div className="container">
-            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <h2 className="section-title" style={{ marginBottom: '16px' }}>
+            <div className="audience-head">
+              <h2 className="section-title">
                 คอร์สของเราเหมาะกับใคร?
               </h2>
-              <p className="section-copy" style={{ margin: '0 auto' }}>
+              <p className="section-copy audience-note">
                 เราอยากให้คุณได้ผลลัพธ์จริง จึงบอกตรง ๆ ว่าคอร์สนี้เหมาะ และยังไม่เหมาะกับใคร
               </p>
             </div>
