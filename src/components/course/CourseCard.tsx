@@ -19,6 +19,7 @@ interface CourseCardProps {
     instructorName: string | null;
     lessonCount: number;
     tags?: Tag[];
+    outcomes?: string[];
 }
 
 function normalizeUrl(url: string | null): string | null {
@@ -38,6 +39,7 @@ export default function CourseCard({
     instructorName,
     lessonCount,
     tags,
+    outcomes,
 }: CourseCardProps) {
     const displayPrice = isPromoActive && promoPrice != null ? promoPrice : price;
     const showOriginalPrice = isPromoActive && promoPrice != null && promoPrice < price;
@@ -154,7 +156,18 @@ export default function CourseCard({
                     {title}
                 </h3>
 
-                {description && (
+                {outcomes && outcomes.length > 0 ? (
+                    <ul className="cc-outcomes">
+                        {outcomes.map((outcome, i) => (
+                            <li key={i}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                {outcome}
+                            </li>
+                        ))}
+                    </ul>
+                ) : description ? (
                     <p style={{
                         color: '#64748b',
                         fontSize: '0.9375rem',
@@ -167,7 +180,7 @@ export default function CourseCard({
                     }}>
                         {getExcerpt(description, 120)}
                     </p>
-                )}
+                ) : null}
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.875rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8' }}>
@@ -182,6 +195,14 @@ export default function CourseCard({
                         <span style={{ color: '#94a3b8' }}>โดย {instructorName}</span>
                     )}
                 </div>
+
+                <span className="cc-cta">
+                    ดูรายละเอียดคอร์ส
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                </span>
             </div>
         </Link>
     );

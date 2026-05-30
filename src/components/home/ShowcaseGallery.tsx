@@ -50,14 +50,14 @@ export default function ShowcaseGallery() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            background: '#faf5ff',
-            border: '1px solid #e9d5ff',
+            background: 'var(--primary-50)',
+            border: '1px solid var(--primary-200)',
             borderRadius: '999px',
             padding: '6px 16px',
             marginBottom: '16px',
           }}>
             <span style={{ fontSize: '1rem' }}>📸</span>
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#7c3aed' }}>กิจกรรมและงานอีเวนต์</span>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--primary-700)' }}>กิจกรรมและงานบรรยาย</span>
           </div>
           <h2 style={{
             fontSize: 'clamp(1.5rem, 3.5vw, 2rem)',
@@ -74,7 +74,7 @@ export default function ShowcaseGallery() {
             maxWidth: '560px',
             margin: '0 auto',
           }}>
-            บรรยากาศการเป็นวิทยากร Workshop และกิจกรรมด้านเทคโนโลยีที่ได้เข้าร่วม
+            บรรยายด้าน Web Development, AI และเส้นทางสายอาชีพ Developer ให้กับนักศึกษาและองค์กรต่าง ๆ
           </p>
         </div>
 

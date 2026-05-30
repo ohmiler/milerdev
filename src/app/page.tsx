@@ -141,12 +141,56 @@ async function getPublishedBundles() {
     });
 }
 
+async function getCourseLookup() {
+  return db
+    .select({ title: courses.title, slug: courses.slug })
+    .from(courses)
+    .where(eq(courses.status, 'published'));
+}
+
+type CourseLookupRow = { title: string; slug: string };
+
+// Guided beginner journey. Each step maps to a real published course by title keyword.
+const LEARNING_PATH_STEPS = [
+  { match: ['html', 'css'], stage: 'พื้นฐานการเขียนเว็บ', title: 'HTML & CSS', outcome: 'เขียนโครงสร้างเว็บและจัดหน้าตาให้สวย รองรับทุกหน้าจอได้' },
+  { match: ['javascript'], stage: 'ตรรกะการเขียนโปรแกรม', title: 'JavaScript', outcome: 'ทำให้เว็บโต้ตอบกับผู้ใช้ และเข้าใจการเขียนโปรแกรมจริง' },
+  { match: ['react'], stage: 'ต่อยอดด้วย Framework', title: 'ReactJS Front-End', outcome: 'สร้างเว็บแอปสมัยใหม่ด้วย React ได้ด้วยตัวเอง' },
+  { match: ['figma'], stage: 'สู่ระดับมืออาชีพ', title: 'Figma to Code', outcome: 'แปลงดีไซน์จาก Figma ให้กลายเป็นโค้ดแบบมืออาชีพ' },
+];
+
+function buildLearningPath(lookup: CourseLookupRow[]) {
+  return LEARNING_PATH_STEPS.map((step) => {
+    const course = lookup.find((c) =>
+      step.match.some((kw) => c.title.toLowerCase().includes(kw))
+    );
+    return {
+      stage: step.stage,
+      outcome: step.outcome,
+      title: course?.title ?? step.title,
+      href: course ? `/courses/${course.slug}` : '/courses',
+    };
+  });
+}
+
+// Short, outcome-focused bullets per course (matched by title keyword).
+function getCourseOutcomes(title: string): string[] | null {
+  const t = title.toLowerCase();
+  if (t.includes('react')) return ['สร้างเว็บแอปด้วย React ได้จริง', 'ฝึกทำโปรเจกต์ Front-end', 'เหมาะกับคนมีพื้นฐาน JavaScript'];
+  if (t.includes('javascript')) return ['เข้าใจ JavaScript ตั้งแต่พื้นฐาน', 'เขียนโค้ดโต้ตอบกับผู้ใช้ได้', 'ปูทางสู่ ReactJS และเฟรมเวิร์กอื่น'];
+  if (t.includes('html') || t.includes('css')) return ['เขียนโครงสร้างเว็บด้วย HTML', 'จัดสไตล์ด้วย CSS อย่างมืออาชีพ', 'ทำเว็บ Responsive ทุกหน้าจอ'];
+  if (t.includes('figma')) return ['แปลงดีไซน์ Figma เป็นโค้ด', 'ทำงานร่วมกับดีไซเนอร์ได้', 'สร้างหน้าเว็บตามแบบจริง'];
+  return null;
+}
+
 export default async function HomePage() {
   // Parallelize independent data fetching (async-parallel rule)
-  const [featuredCourses, publishedBundles] = await Promise.all([
+  const [featuredCourses, publishedBundles, courseLookup] = await Promise.all([
     getFeaturedCourses(),
     getPublishedBundles(),
+    getCourseLookup(),
   ]);
+
+  const learningPath = buildLearningPath(courseLookup);
 
   return (
     <>
@@ -175,56 +219,71 @@ export default async function HomePage() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '8px',
-                  background: 'linear-gradient(135deg, #dbeafe, #eff6ff)',
-                  color: '#2563eb',
+                  background: 'var(--primary-50)',
+                  color: 'var(--primary-700)',
                   padding: '10px 20px',
                   borderRadius: '50px',
                   fontSize: '14px',
                   fontWeight: 600,
                   marginBottom: '28px',
-                  border: '1px solid #bfdbfe'
+                  border: '1px solid var(--primary-200)'
                 }}>
                   <span style={{
                     width: '8px',
                     height: '8px',
-                    background: '#3b82f6',
+                    background: 'var(--primary-500)',
                     borderRadius: '50%',
                     animation: 'pulse 2s infinite'
                   }} />
-                  เริ่มเรียนได้ทันที
+                  คอร์สเขียนเว็บสำหรับมือใหม่ ถึงระดับทำงานได้จริง
                 </div>
 
                 {/* Title */}
-                <h1 className="hero-title hero-title-anim" style={{ marginBottom: '24px', textAlign: 'left' }}>
-                  เรียน{' '}
-                  <span className="highlight">Coding</span>
-                  <br />
-                  ออนไลน์กับ MilerDev
+                <h1 className="hero-title hero-title-anim">
+                  เรียน Coding ตั้งแต่<span className="highlight" style={{ whiteSpace: 'nowrap' }}>พื้นฐาน</span>
+                  {" "} จนสร้างโปรเจกต์จริงได้
                 </h1>
 
                 <p className="hero-desc-anim" style={{
                   fontSize: '1.15rem',
-                  color: '#64748b',
-                  marginBottom: '36px',
+                  color: '#475569',
+                  marginBottom: '32px',
                   lineHeight: 1.8,
-                  maxWidth: '480px',
+                  maxWidth: '520px',
                 }}>
-                  พัฒนาทักษะการเขียนโปรแกรมของคุณด้วยคอร์สคุณภาพสูง
-                  เรียนรู้จากโปรเจกต์จริง และก้าวสู่การเป็น Developer มืออาชีพ
+                  คอร์สเขียนโปรแกรมสำหรับผู้เริ่มต้น นักศึกษา และคนที่อยากต่อยอดรับงานหรือสร้างผลงานของตัวเอง
+                  เรียนเป็นขั้นตอน ลงมือทำจริงทุกบทเรียน
                 </p>
 
                 {/* CTA Buttons */}
-                <div className="hero-cta-anim" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '48px' }}>
-                  <Link href="/courses" className="btn btn-primary" style={{ fontSize: '1.05rem', padding: '14px 28px' }}>
+                <div className="hero-cta-anim" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
+                  <Link href="#learning-path" className="btn btn-primary" style={{ fontSize: '1.05rem', padding: '14px 28px' }}>
                     <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                     </svg>
-                    เริ่มเรียนเลย
+                    เลือกเส้นทางการเรียนของคุณ
                   </Link>
                   <Link href="/courses" className="btn btn-secondary" style={{ fontSize: '1.05rem', padding: '14px 28px' }}>
                     ดูคอร์สทั้งหมด
                   </Link>
+                </div>
+
+                {/* Inline trust mini-stats */}
+                <div className="hero-stats hero-cta-anim">
+                  <div className="hero-stat">
+                    <strong>180,000+</strong>
+                    <span>ผู้ติดตาม</span>
+                  </div>
+                  <div className="hero-stat__divider" />
+                  <div className="hero-stat">
+                    <strong>1,000+</strong>
+                    <span>นักเรียน</span>
+                  </div>
+                  <div className="hero-stat__divider" />
+                  <div className="hero-stat">
+                    <strong>3,500+</strong>
+                    <span>วิดีโอสอนฟรี</span>
+                  </div>
                 </div>
 
               </div>
@@ -237,40 +296,37 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Course Preview Strip */}
-        {featuredCourses.length > 0 && (
-          <section className="home-course-strip" aria-label="คอร์สแนะนำ">
+        {/* Learning Path — guided beginner journey */}
+        {learningPath.length > 0 && (
+          <section id="learning-path" className="learning-path" data-reveal aria-label="เส้นทางการเรียนสำหรับมือใหม่">
             <div className="container">
-              <div className="home-course-strip__inner">
-                <div className="home-course-strip__copy">
-                  <span className="home-course-strip__eyebrow">คอร์สที่เริ่มได้ทันที</span>
-                  <h2>เลือกเส้นทางแรก แล้วลงมือทำโปรเจกต์จริง</h2>
-                </div>
-
-                <div className="home-course-strip__grid">
-                  {featuredCourses.slice(0, 3).map((course) => {
-                    const coursePrice = parseFloat(course.price || '0');
-                    const activePrice = course.isPromoActive && course.promoPrice
-                      ? parseFloat(course.promoPrice)
-                      : coursePrice;
-
-                    return (
-                      <Link key={course.id} href={`/courses/${course.slug}`} className="home-course-strip__card">
-                        <span>{course.lessonCount} บทเรียน</span>
-                        <strong>{course.title}</strong>
-                        <small>{activePrice === 0 ? 'ฟรี' : `฿${activePrice.toLocaleString()}`}</small>
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                <Link href="/courses" className="home-course-strip__link">
-                  ดูคอร์สทั้งหมด
+              <div className="lp-head">
+                <span className="lp-eyebrow">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                    <polyline points="12 5 19 12 12 19" />
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
                   </svg>
-                </Link>
+                  เริ่มจากศูนย์? แนะนำเส้นทางนี้
+                </span>
+                <h2>เส้นทางการเรียนสำหรับมือใหม่</h2>
+                <p>เรียนตามลำดับนี้ทีละขั้น จากพื้นฐานการเขียนเว็บ จนต่อยอดเป็น Front-end Developer ได้</p>
+              </div>
+
+              <div className="lp-track">
+                {learningPath.map((step, i) => (
+                  <Link key={i} href={step.href} className="lp-step">
+                    <span className="lp-step__num">{i + 1}</span>
+                    <span className="lp-step__stage">{step.stage}</span>
+                    <span className="lp-step__title">{step.title}</span>
+                    <span className="lp-step__outcome">{step.outcome}</span>
+                    <span className="lp-step__cta">
+                      เริ่มเรียนคอร์สนี้
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </span>
+                  </Link>
+                ))}
               </div>
             </div>
           </section>
@@ -283,9 +339,29 @@ export default async function HomePage() {
               <h2 className="section-title" style={{ marginBottom: '16px' }}>
                 ทำไมต้องเรียนกับเรา?
               </h2>
-              <p style={{ color: '#64748b', fontSize: '1.125rem', maxWidth: '600px', margin: '0 auto' }}>
-                เราออกแบบคอร์สเรียนให้เข้าใจง่าย เน้นปฏิบัติจริง และสามารถนำไปใช้งานได้ทันที
+              <p style={{ color: '#64748b', fontSize: '1.125rem', maxWidth: '640px', margin: '0 auto' }}>
+                เราออกแบบคอร์สให้เข้าใจง่าย เน้นลงมือทำจริง และมีประสบการณ์สอนที่ได้รับความไว้วางใจจากผู้เรียนจำนวนมาก
               </p>
+            </div>
+
+            {/* Credibility stats band */}
+            <div className="trust-stats" data-reveal>
+              <div className="trust-stat">
+                <div className="trust-stat__value">180,000+</div>
+                <div className="trust-stat__label">ผู้ติดตามบนโซเชียลมีเดีย</div>
+              </div>
+              <div className="trust-stat">
+                <div className="trust-stat__value">1,000+</div>
+                <div className="trust-stat__label">นักเรียนที่ลงทะเบียนเรียน</div>
+              </div>
+              <div className="trust-stat">
+                <div className="trust-stat__value">3,500+</div>
+                <div className="trust-stat__label">วิดีโอสอนฟรีบน YouTube</div>
+              </div>
+              <div className="trust-stat">
+                <div className="trust-stat__value" style={{ fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)' }}>เข้าใจง่าย</div>
+                <div className="trust-stat__label">สอนเป็นขั้นตอนสำหรับมือใหม่</div>
+              </div>
             </div>
 
             <div style={{
@@ -377,8 +453,72 @@ export default async function HomePage() {
                   isPromoActive={course.isPromoActive}
                   instructorName={course.instructor?.name || null}
                   lessonCount={course.lessonCount}
+                  outcomes={getCourseOutcomes(course.title) || undefined}
                 />
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Audience Fit — เหมาะกับใคร / ไม่เหมาะกับใคร */}
+        <section className="section" data-reveal style={{ background: 'white' }}>
+          <div className="container">
+            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+              <h2 className="section-title" style={{ marginBottom: '16px' }}>
+                คอร์สของเราเหมาะกับใคร?
+              </h2>
+              <p style={{ color: '#64748b', fontSize: '1.125rem', maxWidth: '620px', margin: '0 auto' }}>
+                เราอยากให้คุณได้ผลลัพธ์จริง จึงบอกตรง ๆ ว่าคอร์สนี้เหมาะ และยังไม่เหมาะกับใคร
+              </p>
+            </div>
+
+            <div className="audience-grid">
+              <div className="audience-col audience-col--yes">
+                <div className="audience-col__head">
+                  <span className="audience-col__icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </span>
+                  <h3>เหมาะกับคุณ ถ้า...</h3>
+                </div>
+                {[
+                  'เพิ่งเริ่มต้นเขียนเว็บ และอยากมีพื้นฐานที่แน่น',
+                  'เป็นนักศึกษาที่อยากได้ทักษะไว้ใช้ทำงานจริง',
+                  'อยากสร้าง Portfolio ด้วยโปรเจกต์ของตัวเอง',
+                  'อยากต่อยอดไปรับงาน Freelance หรือสมัครงานสาย Developer',
+                ].map((item, i) => (
+                  <div key={i} className="audience-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              <div className="audience-col audience-col--no">
+                <div className="audience-col__head">
+                  <span className="audience-col__icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </span>
+                  <h3>อาจยังไม่เหมาะ ถ้า...</h3>
+                </div>
+                {[
+                  'อยากได้ทางลัดแบบไม่ต้องฝึกเขียนโค้ดเอง',
+                  'ยังไม่พร้อมลงมือทำตามทีละขั้นตอน',
+                  'มองหาคอร์สขั้นสูงเฉพาะทางที่ข้ามพื้นฐานไปแล้ว',
+                ].map((item, i) => (
+                  <div key={i} className="audience-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -419,9 +559,15 @@ export default async function HomePage() {
                 }}>
                   <span className="shimmer-text">ของขวัญสุดพิเศษ</span>
                 </h2>
-                <p style={{ opacity: 0.85, fontSize: '1.0625rem', maxWidth: '480px', margin: '0 auto', lineHeight: 1.6 }}>
+                <p style={{ opacity: 0.85, fontSize: '1.0625rem', maxWidth: '480px', margin: '0 auto 20px', lineHeight: 1.6 }}>
                   รวมคอร์สชุดพิเศษในราคาที่คุ้มค่ากว่าซื้อแยก
                 </p>
+                <div className="bundle-fit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>เหมาะสำหรับคนที่อยากเริ่มจากพื้นฐานเว็บ จนต่อยอดเป็น Front-end Developer แบบครบเส้นทาง</span>
+                </div>
               </div>
 
               {/* Bundle Cards */}
@@ -488,14 +634,25 @@ export default async function HomePage() {
                             )}
                           </div>
 
+                          {/* Value comparison */}
+                          {bundle.totalOriginalPrice > bundlePrice && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
+                              <span style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.6)' }}>
+                                ซื้อแยกมูลค่า{' '}
+                                <span style={{ textDecoration: 'line-through' }}>฿{bundle.totalOriginalPrice.toLocaleString()}</span>
+                              </span>
+                              <span className="bundle-savings">
+                                ประหยัด ฿{(bundle.totalOriginalPrice - bundlePrice).toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+
                           {/* Price row */}
                           <div className="bundle-price-row">
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                              <span style={{ fontSize: '1.625rem', fontWeight: 800, color: 'white' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>ราคา Bundle วันนี้</span>
+                              <span style={{ fontSize: '1.625rem', fontWeight: 800, color: 'white', lineHeight: 1.2 }}>
                                 ฿{bundlePrice.toLocaleString()}
-                              </span>
-                              <span style={{ textDecoration: 'line-through', opacity: 0.45, fontSize: '0.9375rem', color: 'white' }}>
-                                ฿{bundle.totalOriginalPrice.toLocaleString()}
                               </span>
                             </div>
                             <span className="bundle-cta-arrow">
@@ -751,7 +908,7 @@ export default async function HomePage() {
               marginBottom: '12px',
               lineHeight: 1.3,
             }}>
-              ส่วนหนึ่งขององค์กรที่ไว้วางใจ MilerDev และเคยร่วมงาน
+              องค์กรและมหาวิทยาลัยที่เคยเชิญ MilerDev ไปแบ่งปันความรู้
             </h2>
             <p style={{
               color: '#64748b',
@@ -759,7 +916,7 @@ export default async function HomePage() {
               maxWidth: '640px',
               margin: '0 auto',
             }}>
-              องค์กรที่ MilerDev ได้รับความไว้วางใจให้ทำหน้าที่เป็น วิทยากรอบรมและให้ความรู้การเขียนโปรแกรม
+              องค์กรชั้นนำและสถาบันการศึกษาที่เชิญ MilerDev ไปเป็นวิทยากรอบรมและแบ่งปันความรู้ด้านการเขียนโปรแกรม
             </p>
           </div>
 
@@ -843,39 +1000,59 @@ export default async function HomePage() {
               marginBottom: '16px',
               lineHeight: 1.3
             }}>
-              พร้อมที่จะเริ่มต้นเรียนหรือยัง?
+              เริ่มสร้างทักษะ Coding ที่ใช้ได้จริงตั้งแต่วันนี้
             </h2>
             <p style={{
-              color: 'rgba(255,255,255,0.8)',
+              color: 'rgba(255,255,255,0.85)',
               fontSize: '1.125rem',
-              marginBottom: '32px',
               maxWidth: '600px',
               margin: '0 auto 32px'
             }}>
-              สมัครสมาชิกฟรีวันนี้ และเริ่มต้นเส้นทางสู่การเป็น Developer มืออาชีพ
+              เลือกคอร์สที่เหมาะกับคุณ แล้วลงมือสร้างผลงานชิ้นแรกของคุณ
             </p>
-            <Link
-              href="/register"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '12px',
-                background: 'white',
-                color: '#2563eb',
-                fontWeight: 600,
-                fontSize: '1.125rem',
-                padding: '18px 36px',
-                borderRadius: '12px',
-                textDecoration: 'none',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              สมัครสมาชิกฟรี
-              <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center' }}>
+              <Link
+                href="/courses"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  background: 'white',
+                  color: 'var(--primary-700)',
+                  fontWeight: 700,
+                  fontSize: '1.125rem',
+                  padding: '18px 36px',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                ดูคอร์สทั้งหมด
+                <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+              <Link
+                href="/register"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: 'rgba(255,255,255,0.12)',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '1.125rem',
+                  padding: '18px 32px',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                สมัครสมาชิกฟรี
+              </Link>
+            </div>
           </div>
         </section>
       </main>
