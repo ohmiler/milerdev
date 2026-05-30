@@ -1,73 +1,108 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface CodeLine {
   indent: number;
   tokens: { text: string; color: string }[];
 }
 
+const syntax = {
+  keyword: '#7dd3fc',
+  symbol: '#d8e6f7',
+  function: '#38bdf8',
+  identifier: '#facc15',
+  property: '#f0abfc',
+  string: '#a7f3d0',
+  value: '#fbbf24',
+  muted: '#64758b',
+};
+
 const codeSnippets: { fileName: string; lang: string; lines: CodeLine[] }[] = [
   {
-    fileName: 'course-card.tsx',
-    lang: 'tsx',
+    fileName: 'index.html',
+    lang: 'html',
     lines: [
-      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' Link ', color: '#e5c07b' }, { text: 'from', color: '#c678dd' }, { text: " 'next/link'", color: '#98c379' }] },
-      { indent: 0, tokens: [] },
-      { indent: 0, tokens: [{ text: 'export', color: '#c678dd' }, { text: ' function ', color: '#61afef' }, { text: 'CourseCard', color: '#e5c07b' }, { text: '({ course }) {', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'const', color: '#c678dd' }, { text: ' outcome', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'course', color: '#e5c07b' }, { text: '.projectGoal', color: '#abb2bf' }] },
-      { indent: 0, tokens: [] },
-      { indent: 1, tokens: [{ text: 'return', color: '#c678dd' }, { text: ' (', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'Link', color: '#e06c75' }, { text: ' href', color: '#d19a66' }, { text: '={`', color: '#abb2bf' }, { text: '/courses/', color: '#98c379' }, { text: '${course.slug}', color: '#e5c07b' }, { text: '`}>', color: '#abb2bf' }] },
-      { indent: 3, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'h3', color: '#e06c75' }, { text: '>', color: '#abb2bf' }, { text: '{course.title}', color: '#e5c07b' }, { text: '</', color: '#abb2bf' }, { text: 'h3', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
-      { indent: 3, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'p', color: '#e06c75' }, { text: '>', color: '#abb2bf' }, { text: '{outcome}', color: '#e5c07b' }, { text: '</', color: '#abb2bf' }, { text: 'p', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
-      { indent: 3, tokens: [{ text: '<', color: '#abb2bf' }, { text: 'span', color: '#e06c75' }, { text: '>', color: '#abb2bf' }, { text: 'Start building', color: '#98c379' }, { text: '</', color: '#abb2bf' }, { text: 'span', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: '</', color: '#abb2bf' }, { text: 'Link', color: '#e06c75' }, { text: '>', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: ')', color: '#abb2bf' }] },
-      { indent: 0, tokens: [{ text: '}', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: '<!doctype html>', color: syntax.muted }] },
+      { indent: 0, tokens: [{ text: '<', color: syntax.symbol }, { text: 'html', color: syntax.property }, { text: ' lang', color: syntax.value }, { text: '="th"', color: syntax.string }, { text: '>', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: '<', color: syntax.symbol }, { text: 'head', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'meta', color: syntax.property }, { text: ' charset', color: syntax.value }, { text: '="utf-8"', color: syntax.string }, { text: ' />', color: syntax.symbol }] },
+      { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'title', color: syntax.property }, { text: '>', color: syntax.symbol }, { text: 'MilerDev Course', color: syntax.string }, { text: '</', color: syntax.symbol }, { text: 'title', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'link', color: syntax.property }, { text: ' rel', color: syntax.value }, { text: '="stylesheet"', color: syntax.string }, { text: ' href', color: syntax.value }, { text: '="./styles.css"', color: syntax.string }, { text: ' />', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: '</', color: syntax.symbol }, { text: 'head', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: '<', color: syntax.symbol }, { text: 'body', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'main', color: syntax.property }, { text: ' class', color: syntax.value }, { text: '="course-card"', color: syntax.string }, { text: '>', color: syntax.symbol }] },
+      { indent: 3, tokens: [{ text: '<', color: syntax.symbol }, { text: 'span', color: syntax.property }, { text: ' class', color: syntax.value }, { text: '="badge"', color: syntax.string }, { text: '>', color: syntax.symbol }, { text: 'Beginner path', color: syntax.string }, { text: '</', color: syntax.symbol }, { text: 'span', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 3, tokens: [{ text: '<', color: syntax.symbol }, { text: 'h1', color: syntax.property }, { text: '>', color: syntax.symbol }, { text: 'เรียน Coding จนสร้างโปรเจกต์ได้', color: syntax.string }, { text: '</', color: syntax.symbol }, { text: 'h1', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 3, tokens: [{ text: '<', color: syntax.symbol }, { text: 'button', color: syntax.property }, { text: ' id', color: syntax.value }, { text: '="start"', color: syntax.string }, { text: '>', color: syntax.symbol }, { text: 'เริ่มเรียน', color: syntax.string }, { text: '</', color: syntax.symbol }, { text: 'button', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 2, tokens: [{ text: '</', color: syntax.symbol }, { text: 'main', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'script', color: syntax.property }, { text: ' src', color: syntax.value }, { text: '="./app.js"', color: syntax.string }, { text: '></', color: syntax.symbol }, { text: 'script', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: '</', color: syntax.symbol }, { text: 'body', color: syntax.property }, { text: '>', color: syntax.symbol }] },
+      { indent: 0, tokens: [{ text: '</', color: syntax.symbol }, { text: 'html', color: syntax.property }, { text: '>', color: syntax.symbol }] },
     ],
   },
   {
-    fileName: 'checkout/route.ts',
-    lang: 'ts',
+    fileName: 'styles.css',
+    lang: 'css',
     lines: [
-      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { NextResponse }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " 'next/server'", color: '#98c379' }] },
-      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { createCheckout }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " '@/lib/payment'", color: '#98c379' }] },
+      { indent: 0, tokens: [{ text: ':root', color: syntax.property }, { text: ' {', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: '--brand:', color: syntax.property }, { text: ' #02abff', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: '--ink:', color: syntax.property }, { text: ' #102033', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
       { indent: 0, tokens: [] },
-      { indent: 0, tokens: [{ text: 'export async function', color: '#c678dd' }, { text: ' POST', color: '#61afef' }, { text: '(', color: '#abb2bf' }, { text: 'request', color: '#e5c07b' }, { text: ') {', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'const', color: '#c678dd' }, { text: ' body', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'await', color: '#c678dd' }, { text: ' request', color: '#e5c07b' }, { text: '.json', color: '#61afef' }, { text: '()', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'const', color: '#c678dd' }, { text: ' session', color: '#e06c75' }, { text: ' = ', color: '#abb2bf' }, { text: 'await', color: '#c678dd' }, { text: ' createCheckout', color: '#61afef' }, { text: '(body.courseId)', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: 'body', color: syntax.property }, { text: ' {', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'margin:', color: syntax.property }, { text: ' 0', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'font-family:', color: syntax.property }, { text: ' "IBM Plex Sans Thai", sans-serif', color: syntax.string }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'background:', color: syntax.property }, { text: ' #f7fbff', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'color:', color: syntax.property }, { text: ' var(--ink)', color: syntax.function }, { text: ';', color: syntax.symbol }] },
+      { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
       { indent: 0, tokens: [] },
-      { indent: 1, tokens: [{ text: 'return', color: '#c678dd' }, { text: ' NextResponse', color: '#e5c07b' }, { text: '.json', color: '#61afef' }, { text: '({', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: 'success:', color: '#e06c75' }, { text: ' true', color: '#d19a66' }, { text: ',', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: 'checkoutUrl:', color: '#e06c75' }, { text: ' session.url', color: '#e5c07b' }] },
-      { indent: 1, tokens: [{ text: '})', color: '#abb2bf' }] },
-      { indent: 0, tokens: [{ text: '}', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: '.course-card', color: syntax.property }, { text: ' {', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'max-width:', color: syntax.property }, { text: ' 720px', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'margin:', color: syntax.property }, { text: ' 48px auto', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'padding:', color: syntax.property }, { text: ' 32px', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'border:', color: syntax.property }, { text: ' 1px solid #dbe8f2', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'border-radius:', color: syntax.property }, { text: ' 12px', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'background:', color: syntax.property }, { text: ' white', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
+      { indent: 0, tokens: [{ text: 'button', color: syntax.property }, { text: ' { ', color: syntax.symbol }, { text: 'background:', color: syntax.property }, { text: ' var(--brand)', color: syntax.function }, { text: '; ', color: syntax.symbol }, { text: 'color:', color: syntax.property }, { text: ' white', color: syntax.value }, { text: '; ', color: syntax.symbol }, { text: '}', color: syntax.symbol }] },
     ],
   },
   {
-    fileName: 'progress.ts',
-    lang: 'ts',
+    fileName: 'app.js',
+    lang: 'js',
     lines: [
-      { indent: 0, tokens: [{ text: 'import', color: '#c678dd' }, { text: ' { db }', color: '#e5c07b' }, { text: ' from', color: '#c678dd' }, { text: " '@/lib/db'", color: '#98c379' }] },
+      { indent: 0, tokens: [{ text: 'const', color: syntax.keyword }, { text: ' startButton', color: syntax.identifier }, { text: ' = ', color: syntax.symbol }, { text: 'document', color: syntax.identifier }, { text: '.querySelector', color: syntax.function }, { text: "('#start')", color: syntax.string }, { text: ';', color: syntax.symbol }] },
       { indent: 0, tokens: [] },
-      { indent: 0, tokens: [{ text: 'export async function', color: '#c678dd' }, { text: ' completeLesson', color: '#61afef' }, { text: '({ userId, lessonId }) {', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: 'await', color: '#c678dd' }, { text: ' db', color: '#e5c07b' }, { text: '.progress', color: '#abb2bf' }, { text: '.upsert', color: '#61afef' }, { text: '({', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: 'userId,', color: '#e06c75' }, { text: ' lessonId,', color: '#e5c07b' }, { text: ' completed:', color: '#e06c75' }, { text: ' true', color: '#d19a66' }, { text: ',', color: '#abb2bf' }] },
-      { indent: 2, tokens: [{ text: 'completedAt:', color: '#e06c75' }, { text: ' new', color: '#c678dd' }, { text: ' Date', color: '#61afef' }, { text: '()', color: '#abb2bf' }] },
-      { indent: 1, tokens: [{ text: '})', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: 'const', color: syntax.keyword }, { text: ' progress', color: syntax.identifier }, { text: ' = ', color: syntax.symbol }, { text: '{', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'lesson:', color: syntax.property }, { text: ' 1', color: syntax.value }, { text: ',', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'completed:', color: syntax.property }, { text: ' false', color: syntax.value }, { text: ',', color: syntax.symbol }] },
+      { indent: 0, tokens: [{ text: '};', color: syntax.symbol }] },
       { indent: 0, tokens: [] },
-      { indent: 1, tokens: [{ text: 'return', color: '#c678dd' }, { text: ' { nextAction:', color: '#abb2bf' }, { text: " 'continue-learning'", color: '#98c379' }, { text: ' }', color: '#abb2bf' }] },
-      { indent: 0, tokens: [{ text: '}', color: '#abb2bf' }] },
+      { indent: 0, tokens: [{ text: 'function', color: syntax.keyword }, { text: ' startCourse', color: syntax.function }, { text: '() {', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'progress', color: syntax.identifier }, { text: '.completed', color: syntax.property }, { text: ' = ', color: syntax.symbol }, { text: 'true', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'startButton', color: syntax.identifier }, { text: '.textContent', color: syntax.property }, { text: ' = ', color: syntax.symbol }, { text: "'กำลังเริ่มบทเรียนแรก'", color: syntax.string }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'document', color: syntax.identifier }, { text: '.body', color: syntax.property }, { text: '.dataset', color: syntax.property }, { text: '.learning', color: syntax.property }, { text: ' = ', color: syntax.symbol }, { text: "'active'", color: syntax.string }, { text: ';', color: syntax.symbol }] },
+      { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
+      { indent: 0, tokens: [] },
+      { indent: 0, tokens: [{ text: 'startButton', color: syntax.identifier }, { text: '?.', color: syntax.symbol }, { text: 'addEventListener', color: syntax.function }, { text: "('click', ", color: syntax.string }, { text: 'startCourse', color: syntax.identifier }, { text: ');', color: syntax.symbol }] },
     ],
   },
 ];
+
+const languageLabels: Record<string, string> = {
+  html: 'HTML',
+  css: 'CSS',
+  js: 'JavaScript',
+};
 
 export default function HeroCodeEditor() {
   const [snippetIndex, setSnippetIndex] = useState(0);
   const [visibleLines, setVisibleLines] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const codeBodyRef = useRef<HTMLDivElement>(null);
 
   const snippet = codeSnippets[snippetIndex];
   const totalLines = snippet.lines.length;
@@ -76,12 +111,46 @@ export default function HeroCodeEditor() {
     return line.tokens.map((t) => t.text).join('');
   }, []);
 
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncPreference = () => setPrefersReducedMotion(media.matches);
+
+    syncPreference();
+    media.addEventListener('change', syncPreference);
+
+    return () => media.removeEventListener('change', syncPreference);
+  }, []);
+
+  const activateSnippet = useCallback((nextIndex: number) => {
+    setSnippetIndex(nextIndex);
+
+    if (prefersReducedMotion) {
+      setVisibleLines(codeSnippets[nextIndex].lines.length);
+      setCharIndex(0);
+      setIsTyping(false);
+      return;
+    }
+
+    setVisibleLines(0);
+    setCharIndex(0);
+    setIsTyping(true);
+  }, [prefersReducedMotion]);
+
+  const renderedVisibleLines = prefersReducedMotion ? totalLines : visibleLines;
+  const renderedCharIndex = prefersReducedMotion ? 0 : charIndex;
+  const renderedIsTyping = !prefersReducedMotion && isTyping;
+
+  useEffect(() => {
+    codeBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [snippetIndex]);
+
   // Typing animation
   useEffect(() => {
+    if (prefersReducedMotion) return;
     if (!isTyping) return;
 
     if (visibleLines >= totalLines) {
-      // All lines typed — pause then switch snippet
+      // All lines typed, pause before switching snippets.
       const timeout = setTimeout(() => {
         setSnippetIndex((prev) => (prev + 1) % codeSnippets.length);
         setVisibleLines(0);
@@ -95,7 +164,7 @@ export default function HeroCodeEditor() {
     const lineText = getLineText(currentLine);
 
     if (lineText.length === 0) {
-      // Empty line — skip quickly
+      // Empty line, skip quickly.
       const timeout = setTimeout(() => {
         setVisibleLines((prev) => prev + 1);
         setCharIndex(0);
@@ -104,7 +173,7 @@ export default function HeroCodeEditor() {
     }
 
     if (charIndex >= lineText.length) {
-      // Line complete — move to next
+      // Line complete, move to next.
       const timeout = setTimeout(() => {
         setVisibleLines((prev) => prev + 1);
         setCharIndex(0);
@@ -118,7 +187,7 @@ export default function HeroCodeEditor() {
       setCharIndex((prev) => prev + 1);
     }, speed);
     return () => clearTimeout(timeout);
-  }, [visibleLines, charIndex, isTyping, totalLines, snippet, getLineText]);
+  }, [visibleLines, charIndex, isTyping, totalLines, snippet, getLineText, prefersReducedMotion]);
 
   const renderLine = (line: CodeLine, lineIdx: number, isCurrentLine: boolean) => {
     const indent = '  '.repeat(line.indent);
@@ -131,7 +200,7 @@ export default function HeroCodeEditor() {
       // Fully visible line
       return (
         <>
-          <span style={{ color: '#636d83' }}>{indent}</span>
+          <span style={{ color: syntax.muted }}>{indent}</span>
           {line.tokens.map((token, i) => (
             <span key={i} style={{ color: token.color }}>
               {token.text}
@@ -141,14 +210,14 @@ export default function HeroCodeEditor() {
       );
     }
 
-    // Currently typing line — show partial
+    // Currently typing line, show partial.
     const fullText = indent + line.tokens.map((t) => t.text).join('');
     const visibleText = fullText.substring(0, indent.length + charIndex);
 
     // Render with syntax highlighting
     let remaining = visibleText.substring(indent.length);
     const rendered: React.ReactNode[] = [
-      <span key="indent" style={{ color: '#636d83' }}>
+      <span key="indent" style={{ color: syntax.muted }}>
         {indent}
       </span>,
     ];
@@ -169,142 +238,70 @@ export default function HeroCodeEditor() {
 
   return (
     <div
-      style={{
-        background: '#1e1e2e',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        boxShadow: '0 25px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)',
-        fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace",
-        fontSize: '13px',
-        lineHeight: 1.7,
-        width: '100%',
-        maxWidth: '560px',
-        minWidth: 0,
-        transform: 'perspective(1200px) rotateY(-2deg) rotateX(1deg)',
-        transition: 'transform 0.4s ease',
-      }}
+      className="hero-code-editor"
+      aria-label="ตัวอย่างโค้ดจากเส้นทางเรียนของ MilerDev"
     >
       {/* Title Bar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '12px 16px',
-          background: '#181825',
-          borderBottom: '1px solid #313244',
-        }}
-      >
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#f38ba8',
-            }}
-          />
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#f9e2af',
-            }}
-          />
-          <div
-            style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              background: '#a6e3a1',
-            }}
-          />
+      <div className="hero-code-editor__titlebar">
+        <div className="hero-code-editor__traffic" aria-hidden="true">
+          <span className="hero-code-editor__dot hero-code-editor__dot--danger" />
+          <span className="hero-code-editor__dot hero-code-editor__dot--warning" />
+          <span className="hero-code-editor__dot hero-code-editor__dot--success" />
         </div>
-        <div style={{ display: 'flex', gap: '0', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        <div className="hero-code-editor__tabs" role="tablist" aria-label="ตัวอย่างไฟล์โค้ด">
           {codeSnippets.map((s, i) => (
-            <div
+            <button
+              type="button"
               key={i}
-              style={{
-                padding: '4px 14px',
-                fontSize: '11.5px',
-                color: i === snippetIndex ? '#cdd6f4' : '#6c7086',
-                background: i === snippetIndex ? '#1e1e2e' : 'transparent',
-                borderRadius: i === snippetIndex ? '6px 6px 0 0' : '0',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                transition: 'all 0.2s',
-                whiteSpace: 'nowrap',
-                fontWeight: i === snippetIndex ? 500 : 400,
-              }}
-              onClick={() => {
-                setSnippetIndex(i);
-                setVisibleLines(0);
-                setCharIndex(0);
-                setIsTyping(true);
-              }}
+              className="hero-code-editor__tab"
+              data-active={i === snippetIndex}
+              role="tab"
+              aria-selected={i === snippetIndex}
+              onClick={() => activateSnippet(i)}
             >
               {s.fileName}
-            </div>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Code Area */}
       <div
-        style={{
-          padding: '20px 0',
-          minHeight: '320px',
-          overflow: 'hidden',
-        }}
+        ref={codeBodyRef}
+        className="hero-code-editor__body"
+        role="tabpanel"
+        aria-label={snippet.fileName}
       >
         {snippet.lines.map((line, idx) => {
-          const isVisible = idx < visibleLines || (idx === visibleLines && isTyping);
-          const isCurrentLine = idx === visibleLines && isTyping;
+          const isVisible = idx < renderedVisibleLines || (idx === renderedVisibleLines && renderedIsTyping);
+          const isCurrentLine = idx === renderedVisibleLines && renderedIsTyping;
           const lineNum = idx + 1;
 
           return (
             <div
               key={`${snippetIndex}-${idx}`}
+              className="hero-code-editor__line"
+              data-visible={isVisible}
+              data-current={isCurrentLine}
               style={{
-                display: 'flex',
-                padding: '0 20px 0 0',
                 opacity: isVisible ? 1 : 0.06,
                 transform: isVisible ? 'translateX(0)' : 'translateX(8px)',
-                transition: 'opacity 0.3s ease, transform 0.3s ease',
-                background: isCurrentLine ? 'rgba(137, 180, 250, 0.06)' : 'transparent',
               }}
             >
               {/* Line number */}
               <div
+                className="hero-code-editor__line-number"
                 style={{
-                  width: '50px',
-                  textAlign: 'right',
-                  color: isCurrentLine ? '#89b4fa' : '#45475a',
-                  paddingRight: '16px',
-                  userSelect: 'none',
-                  flexShrink: 0,
-                  fontSize: '12px',
+                  color: isCurrentLine ? 'var(--primary-300)' : '#4f5f78',
                 }}
               >
                 {lineNum}
               </div>
               {/* Code content */}
-              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', whiteSpace: 'pre', color: '#cdd6f4' }}>
+              <div className="hero-code-editor__code">
                 {isVisible && renderLine(line, idx, isCurrentLine)}
                 {isCurrentLine && (
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      width: '2px',
-                      height: '16px',
-                      background: '#89b4fa',
-                      marginLeft: '1px',
-                      verticalAlign: 'text-bottom',
-                      animation: 'cursorBlink 1s step-end infinite',
-                    }}
-                  />
+                  <span className="hero-code-editor__cursor" />
                 )}
               </div>
             </div>
@@ -313,31 +310,225 @@ export default function HeroCodeEditor() {
       </div>
 
       {/* Status Bar */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '6px 16px',
-          background: '#181825',
-          borderTop: '1px solid #313244',
-          fontSize: '11px',
-          color: '#6c7086',
-        }}
-      >
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+      <div className="hero-code-editor__status">
+        <div className="hero-code-editor__status-group">
+          <span className="hero-code-editor__ready-dot" aria-hidden="true" />
           <span style={{ color: '#a6e3a1' }}>●</span>
           <span>
-            Ln {visibleLines + 1}, Col {charIndex + 1}
+            Ln {Math.min(renderedVisibleLines + 1, totalLines)}, Col {renderedCharIndex + 1}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <span>TypeScript React</span>
+        <div className="hero-code-editor__status-group">
+          <span>{languageLabels[snippet.lang] ?? snippet.lang}</span>
           <span>UTF-8</span>
         </div>
       </div>
 
       <style jsx>{`
+        .hero-code-editor {
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 34%),
+            #0b1220;
+          border: 1px solid rgba(115, 215, 255, 0.16);
+          border-radius: 12px;
+          box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+          color: #d8e6f7;
+          font-family: var(--font-code);
+          font-size: 13px;
+          line-height: 1.65;
+          max-width: 560px;
+          min-width: 0;
+          overflow: hidden;
+          position: relative;
+          width: 100%;
+        }
+
+        .hero-code-editor::before {
+          background: linear-gradient(90deg, var(--primary-500), rgba(125, 211, 252, 0.18), transparent);
+          content: "";
+          height: 2px;
+          inset: 0 0 auto;
+          position: absolute;
+          z-index: 2;
+        }
+
+        .hero-code-editor__titlebar,
+        .hero-code-editor__status {
+          align-items: center;
+          background: #101827;
+          border-color: rgba(216, 230, 247, 0.1);
+          color: #91a1b5;
+          display: flex;
+        }
+
+        .hero-code-editor__titlebar {
+          border-bottom-style: solid;
+          border-bottom-width: 1px;
+          gap: 14px;
+          min-height: 52px;
+          padding: 0 16px;
+        }
+
+        .hero-code-editor__traffic {
+          display: flex;
+          flex: 0 0 auto;
+          gap: 8px;
+        }
+
+        .hero-code-editor__dot {
+          border-radius: 999px;
+          display: block;
+          height: 12px;
+          width: 12px;
+        }
+
+        .hero-code-editor__dot--danger {
+          background: #fb7185;
+        }
+
+        .hero-code-editor__dot--warning {
+          background: #fde68a;
+        }
+
+        .hero-code-editor__dot--success {
+          background: #86efac;
+        }
+
+        .hero-code-editor__tabs {
+          display: flex;
+          flex: 1;
+          gap: 4px;
+          min-width: 0;
+          overflow: hidden;
+        }
+
+        .hero-code-editor__tab {
+          align-items: center;
+          background: transparent;
+          border: 1px solid transparent;
+          border-radius: 8px;
+          color: #91a1b5;
+          cursor: pointer;
+          display: inline-flex;
+          flex: 0 1 auto;
+          font: inherit;
+          font-weight: 700;
+          min-height: 32px;
+          min-width: 0;
+          padding: 0 12px;
+          text-align: left;
+          text-overflow: ellipsis;
+          transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .hero-code-editor__tab:hover {
+          background: rgba(2, 171, 255, 0.1);
+          color: #d8e6f7;
+        }
+
+        .hero-code-editor__tab:focus-visible {
+          box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.28);
+          outline: none;
+        }
+
+        .hero-code-editor__tab[data-active="true"] {
+          background: rgba(2, 171, 255, 0.14);
+          border-color: rgba(115, 215, 255, 0.2);
+          color: #eefaff;
+        }
+
+        .hero-code-editor__body {
+          background:
+            linear-gradient(90deg, rgba(16, 24, 39, 0.72), transparent 24%),
+            #111a2e;
+          height: 320px;
+          overflow-x: hidden;
+          overflow-y: auto;
+          padding: 18px 0;
+          scrollbar-color: rgba(115, 215, 255, 0.42) rgba(216, 230, 247, 0.08);
+          scrollbar-gutter: stable;
+          scrollbar-width: thin;
+        }
+
+        .hero-code-editor__body::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .hero-code-editor__body::-webkit-scrollbar-track {
+          background: rgba(216, 230, 247, 0.08);
+        }
+
+        .hero-code-editor__body::-webkit-scrollbar-thumb {
+          background: rgba(115, 215, 255, 0.42);
+          border-radius: 999px;
+        }
+
+        .hero-code-editor__line {
+          display: flex;
+          padding: 0 20px 0 0;
+          transition: opacity 0.24s ease, transform 0.24s ease, background-color 0.24s ease;
+        }
+
+        .hero-code-editor__line[data-current="true"] {
+          background: rgba(2, 171, 255, 0.08);
+        }
+
+        .hero-code-editor__line-number {
+          flex-shrink: 0;
+          padding-right: 16px;
+          text-align: right;
+          user-select: none;
+          width: 50px;
+        }
+
+        .hero-code-editor__code {
+          color: #d8e6f7;
+          flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          white-space: pre;
+        }
+
+        .hero-code-editor__cursor {
+          animation: cursorBlink 1s step-end infinite;
+          background: var(--primary-300);
+          display: inline-block;
+          height: 16px;
+          margin-left: 1px;
+          vertical-align: text-bottom;
+          width: 2px;
+        }
+
+        .hero-code-editor__status {
+          border-top-style: solid;
+          border-top-width: 1px;
+          justify-content: space-between;
+          min-height: 32px;
+          padding: 0 16px;
+        }
+
+        .hero-code-editor__status-group {
+          align-items: center;
+          display: flex;
+          gap: 14px;
+          min-width: 0;
+        }
+
+        .hero-code-editor__ready-dot {
+          background: #86efac;
+          border-radius: 999px;
+          box-shadow: 0 0 0 3px rgba(134, 239, 172, 0.12);
+          display: inline-block;
+          height: 7px;
+          width: 7px;
+        }
+
+        .hero-code-editor__status-group > span[style] {
+          display: none;
+        }
+
         @keyframes cursorBlink {
           0%,
           100% {
@@ -345,6 +536,66 @@ export default function HeroCodeEditor() {
           }
           50% {
             opacity: 0;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .hero-code-editor {
+            max-width: 100%;
+          }
+
+          .hero-code-editor__titlebar {
+            gap: 10px;
+            min-height: 48px;
+            padding: 0 12px;
+          }
+
+          .hero-code-editor__traffic {
+            gap: 6px;
+          }
+
+          .hero-code-editor__dot {
+            height: 10px;
+            width: 10px;
+          }
+
+          .hero-code-editor__tab {
+            min-height: 30px;
+            padding: 0 9px;
+          }
+
+          .hero-code-editor__body {
+            height: 286px;
+            padding: 16px 0;
+          }
+
+          .hero-code-editor__line {
+            padding-right: 14px;
+          }
+
+          .hero-code-editor__line-number {
+            padding-right: 12px;
+            width: 38px;
+          }
+
+          .hero-code-editor__status {
+            gap: 8px;
+            padding: 0 12px;
+          }
+
+          .hero-code-editor__status-group {
+            gap: 8px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-code-editor__tab,
+          .hero-code-editor__line {
+            transition: none;
+          }
+
+          .hero-code-editor__cursor {
+            animation: none;
           }
         }
       `}</style>

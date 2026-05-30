@@ -25,6 +25,39 @@ function cssBlock(source: string, selector: string) {
 }
 
 describe('homepage polish', () => {
+    test('hero code editor reads as a branded product surface', () => {
+        const editor = readProjectFile('src/components/home/HeroCodeEditor.tsx');
+
+        expect(editor).toContain('const syntax = {');
+        const htmlIndex = editor.indexOf("fileName: 'index.html'");
+        const cssIndex = editor.indexOf("fileName: 'styles.css'");
+        const jsIndex = editor.indexOf("fileName: 'app.js'");
+
+        expect(htmlIndex).toBeGreaterThanOrEqual(0);
+        expect(cssIndex).toBeGreaterThan(htmlIndex);
+        expect(jsIndex).toBeGreaterThan(cssIndex);
+        expect(editor).toContain("html: 'HTML'");
+        expect(editor).toContain("css: 'CSS'");
+        expect(editor).toContain("js: 'JavaScript'");
+        expect(editor).toContain('className="hero-code-editor"');
+        expect(editor).toContain('role="tablist"');
+        expect(editor).toContain('type="button"');
+        expect(editor).toContain('aria-selected={i === snippetIndex}');
+        expect(editor).toContain('window.matchMedia(\'(prefers-reduced-motion: reduce)\')');
+        expect(editor).not.toContain("transition: 'all 0.2s'");
+        expect(editor).not.toContain('rotateY');
+        expect(editor).not.toContain("boxShadow: '0 25px 60px");
+        expect(cssBlock(editor, '.hero-code-editor {')).toContain('border-radius: 12px');
+        expect(cssBlock(editor, '.hero-code-editor {')).toContain('font-family: var(--font-code)');
+        expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('height: 320px');
+        expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('overflow-y: auto');
+        expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('scrollbar-gutter: stable');
+        expect(cssBlock(editor, '.hero-code-editor__tab:focus-visible')).toContain('box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.28)');
+        expect(cssBlock(editor, '.hero-code-editor__line[data-current="true"]')).toContain('background: rgba(2, 171, 255, 0.08)');
+        expect(editor).toContain("codeBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' })");
+        expect(editor).toContain('@media (prefers-reduced-motion: reduce)');
+    });
+
     test('bundle section avoids decorative gift motion and reads as product UI', () => {
         const page = readProjectFile('src/app/page.tsx');
 
