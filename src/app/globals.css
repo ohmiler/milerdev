@@ -16,9 +16,9 @@
   --primary-700: #006dab;
   --primary-800: #075b8d;
   --primary-900: #0b4c75;
-  --primary-gradient: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 34%, var(--primary-700) 100%);
-  --primary-gradient-hover: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 54%, var(--primary-800) 100%);
-  --primary-gradient-deep: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 50%, var(--primary-900) 100%);
+  --primary-gradient: linear-gradient(135deg, #00abff 0%, var(--primary-600) 100%);
+  --primary-gradient-hover: linear-gradient(135deg, #00abff 0%, var(--primary-600) 48%, var(--primary-700) 100%);
+  --primary-gradient-deep: linear-gradient(135deg, #00abff 0%, var(--primary-600) 48%, var(--primary-800) 100%);
 
   /* Neutral Colors */
   --gray-50: #f8fafc;
@@ -1710,7 +1710,7 @@ h1, h2, h3, h4, h5, h6 {
 .trust-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
+  background: var(--primary-gradient-deep);
   border-radius: 14px;
   padding: 28px 20px;
   margin: 0 auto 36px;

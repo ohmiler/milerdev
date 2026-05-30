@@ -143,7 +143,7 @@ describe('homepage polish', () => {
         const page = readProjectFile('src/app/page.tsx');
 
         expect(cssBlock(globals, '.btn:focus-visible')).toContain('box-shadow: var(--focus-ring)');
-        expect(globals).toContain('--primary-gradient: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 34%, var(--primary-700) 100%)');
+        expect(globals).toContain('--primary-gradient: linear-gradient(135deg, #00abff 0%, var(--primary-600) 100%)');
         expect(cssBlock(globals, '.btn-primary {')).toContain('background: var(--primary-gradient)');
         expect(cssBlock(globals, '.btn-primary:hover')).toContain('background: var(--primary-gradient-hover)');
         expect(cssBlock(globals, '.cta-section {')).toContain('background: var(--primary-gradient-deep)');
@@ -204,6 +204,7 @@ describe('homepage polish', () => {
         expect(page).not.toContain("textAlign: 'center', padding: '32px 24px'");
 
         const stats = cssBlock(globals, '.trust-stats {');
+        expect(stats).toContain('background: var(--primary-gradient-deep)');
         expect(stats).toContain('border-radius: 14px');
         expect(stats).toContain('box-shadow: 0 10px 24px');
         expect(stats).not.toContain('0 24px 60px');

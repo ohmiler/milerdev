@@ -36,9 +36,9 @@ MilerDev ควรรู้สึกเหมือน "coding studio ที่�
   --color-brand-700: #006dab;
   --color-brand-800: #075b8d;
   --color-brand-900: #0b4c75;
-  --color-brand-gradient: linear-gradient(135deg, #02abff 0%, #0089d6 34%, #006dab 100%);
-  --color-brand-gradient-hover: linear-gradient(135deg, #0089d6 0%, #006dab 54%, #075b8d 100%);
-  --color-brand-gradient-deep: linear-gradient(135deg, #0089d6 0%, #006dab 50%, #0b4c75 100%);
+  --color-brand-gradient: linear-gradient(135deg, #00abff 0%, #0089d6 100%);
+  --color-brand-gradient-hover: linear-gradient(135deg, #00abff 0%, #0089d6 48%, #006dab 100%);
+  --color-brand-gradient-deep: linear-gradient(135deg, #00abff 0%, #0089d6 48%, #075b8d 100%);
 
   --color-ink: #102033;
   --color-ink-soft: #34465c;
@@ -66,9 +66,9 @@ MilerDev ควรรู้สึกเหมือน "coding studio ที่�
 ### Usage Rules
 
 - `#02abff` ใช้กับ primary button, active navigation, progress, selected tab, focus ring และ link สำคัญ
-- ใน implementation ปัจจุบัน token จริงใน `src/app/globals.css` ใช้ชื่อ `--primary-*`; ให้ถือว่า `--primary-500` คือ `#02abff` และ `--primary-gradient` คือ gradient หลักของ brand
+- ใน implementation ปัจจุบัน token จริงใน `src/app/globals.css` ใช้ชื่อ `--primary-*`; ให้ถือว่า `--primary-500` คือ `#02abff` และ `--primary-gradient` คือ gradient หลักของ brand ที่เริ่มด้วย `#00abff` แล้วไล่เข้มขึ้น
 - ใช้ `--primary-gradient` เฉพาะ primary action, marker ที่บอกลำดับ/สถานะสำคัญ, CTA arrow และ hover state ที่ต้องดึงสายตา
-- ใช้ `--primary-gradient-deep` สำหรับ CTA band ขนาดใหญ่ที่เป็นจุดปิด flow เท่านั้น ไม่ใช้เป็นพื้นหลังทั้งหน้า
+- ใช้ `--primary-gradient-deep` สำหรับ filled band ที่ต้องใช้ตัวอักษรขาว เช่น proof stats band หรือ CTA band ขนาดใหญ่ ไม่ใช้เป็นพื้นหลังทั้งหน้า
 - หลีกเลี่ยงการใช้ฟ้าเต็มพื้นใหญ่ทั้งหน้า ให้ใช้เป็น accent บนพื้นขาว/ฟ้าอ่อน
 - ห้ามใช้ gradient text; emphasis ใน headline ให้ใช้สี solid `--primary-600` พร้อมน้ำหนักตัวอักษร
 - ใช้ `--color-ink` สำหรับ heading และข้อความสำคัญ ไม่ใช้ดำสนิท
@@ -255,7 +255,7 @@ Recommended structure:
 - Kicker/pill ใช้ icon + text, border `var(--primary-200)`, text `var(--primary-700)`, background ขาวหรือ `var(--primary-50)`
 - Number/action markers ใช้ `--primary-gradient` ได้เมื่อเป็นลำดับหรือ action สำคัญ เช่น learning path step
 - Dark code/editor surface ใช้เฉพาะบริบท coding และควรมี fixed height + scrollbar เมื่อ content เปลี่ยน
-- Final CTA ใช้ `--primary-gradient-deep` เป็น band เดียวท้าย flow พร้อมปุ่มขาว primary และปุ่ม outline/translucent secondary
+- Trust stats และ final CTA ใช้ `--primary-gradient-deep` เป็น filled band พร้อมตัวอักษรขาว โดยต้องคุม contrast ให้ชัด
 - หลีกเลี่ยง decorative blobs/orbs ใหม่ ถ้าต้องแยก section ให้ใช้ spacing, band background, border และ content hierarchy
 
 ### Lesson Player
