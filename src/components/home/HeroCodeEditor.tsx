@@ -327,11 +327,15 @@ export default function HeroCodeEditor() {
       <style jsx>{`
         .hero-code-editor {
           background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 34%),
+            linear-gradient(135deg, rgba(0, 171, 255, 0.18), rgba(238, 250, 255, 0.08) 36%, rgba(11, 18, 32, 0.94) 72%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 34%),
             #0b1220;
-          border: 1px solid rgba(115, 215, 255, 0.16);
+          border: 1px solid rgba(0, 171, 255, 0.32);
           border-radius: 12px;
-          box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+          box-shadow:
+            0 18px 34px rgba(16, 32, 51, 0.16),
+            0 0 0 1px rgba(238, 250, 255, 0.06) inset,
+            0 22px 56px rgba(0, 171, 255, 0.12);
           color: #d8e6f7;
           font-family: var(--font-code);
           font-size: 13px;
@@ -344,7 +348,7 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor::before {
-          background: linear-gradient(90deg, var(--primary-500), rgba(125, 211, 252, 0.18), transparent);
+          background: linear-gradient(90deg, #00abff, rgba(115, 215, 255, 0.62), rgba(238, 250, 255, 0.18), transparent);
           content: "";
           height: 2px;
           inset: 0 0 auto;
@@ -352,13 +356,28 @@ export default function HeroCodeEditor() {
           z-index: 2;
         }
 
+        .hero-code-editor::after {
+          border: 1px solid rgba(238, 250, 255, 0.08);
+          border-radius: 11px;
+          content: "";
+          inset: 1px;
+          pointer-events: none;
+          position: absolute;
+          z-index: 1;
+        }
+
         .hero-code-editor__titlebar,
         .hero-code-editor__status {
           align-items: center;
-          background: #101827;
-          border-color: rgba(216, 230, 247, 0.1);
-          color: #91a1b5;
+          backdrop-filter: blur(10px);
+          background:
+            linear-gradient(180deg, rgba(238, 250, 255, 0.14), rgba(0, 171, 255, 0.07)),
+            rgba(12, 27, 44, 0.86);
+          border-color: rgba(115, 215, 255, 0.18);
+          color: #b7c7d9;
           display: flex;
+          position: relative;
+          z-index: 2;
         }
 
         .hero-code-editor__titlebar {
@@ -424,8 +443,9 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__tab:hover {
-          background: rgba(2, 171, 255, 0.1);
-          color: #d8e6f7;
+          background: rgba(0, 171, 255, 0.13);
+          border-color: rgba(115, 215, 255, 0.16);
+          color: #eefaff;
         }
 
         .hero-code-editor__tab:focus-visible {
@@ -434,14 +454,18 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__tab[data-active="true"] {
-          background: rgba(2, 171, 255, 0.14);
-          border-color: rgba(115, 215, 255, 0.2);
-          color: #eefaff;
+          background:
+            linear-gradient(135deg, rgba(0, 171, 255, 0.26), rgba(115, 215, 255, 0.14)),
+            rgba(238, 250, 255, 0.04);
+          border-color: rgba(115, 215, 255, 0.3);
+          box-shadow: 0 1px 0 rgba(238, 250, 255, 0.08) inset;
+          color: #ffffff;
         }
 
         .hero-code-editor__body {
           background:
-            linear-gradient(90deg, rgba(16, 24, 39, 0.72), transparent 24%),
+            linear-gradient(90deg, rgba(0, 171, 255, 0.08), transparent 24%),
+            linear-gradient(180deg, rgba(17, 26, 46, 0.98), rgba(11, 18, 32, 0.98)),
             #111a2e;
           height: 320px;
           overflow-x: hidden;
@@ -450,6 +474,8 @@ export default function HeroCodeEditor() {
           scrollbar-color: rgba(115, 215, 255, 0.42) rgba(216, 230, 247, 0.08);
           scrollbar-gutter: stable;
           scrollbar-width: thin;
+          position: relative;
+          z-index: 2;
         }
 
         .hero-code-editor__body::-webkit-scrollbar {

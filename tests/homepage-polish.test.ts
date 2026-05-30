@@ -48,8 +48,13 @@ describe('homepage polish', () => {
         expect(editor).not.toContain('rotateY');
         expect(editor).not.toContain("boxShadow: '0 25px 60px");
         expect(cssBlock(editor, '.hero-code-editor {')).toContain('border-radius: 12px');
+        expect(cssBlock(editor, '.hero-code-editor {')).toContain('rgba(0, 171, 255, 0.18)');
+        expect(cssBlock(editor, '.hero-code-editor {')).toContain('border: 1px solid rgba(0, 171, 255, 0.32)');
         expect(cssBlock(editor, '.hero-code-editor {')).toContain('font-family: var(--font-code)');
+        expect(cssBlock(editor, '.hero-code-editor__titlebar,')).toContain('backdrop-filter: blur(10px)');
+        expect(cssBlock(editor, '.hero-code-editor__tab[data-active="true"]')).toContain('linear-gradient(135deg, rgba(0, 171, 255, 0.26)');
         expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('height: 320px');
+        expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('#111a2e');
         expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('overflow-y: auto');
         expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('scrollbar-gutter: stable');
         expect(cssBlock(editor, '.hero-code-editor__tab:focus-visible')).toContain('box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.28)');
