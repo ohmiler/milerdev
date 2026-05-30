@@ -1109,8 +1109,8 @@ h1, h2, h3, h4, h5, h6 {
    Scroll Reveal
    ============================================= */
 .reveal-enabled [data-reveal] {
-  opacity: 0;
-  transform: translateY(28px);
+  opacity: 1;
+  transform: translateY(0);
   transition: opacity 0.55s ease, transform 0.55s ease;
 }
 .reveal-enabled [data-reveal].revealed,

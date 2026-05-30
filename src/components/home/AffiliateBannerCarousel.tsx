@@ -17,10 +17,29 @@ export default function AffiliateBannerCarousel() {
     const draggingRef = useRef(false);
 
     useEffect(() => {
-        fetch('/api/affiliate-banners')
-            .then(res => res.json())
-            .then(data => setBanners(data.banners || []))
-            .catch(() => {});
+        const controller = new AbortController();
+
+        fetch('/api/affiliate-banners', { signal: controller.signal })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Failed to load affiliate banners');
+                }
+                return res.json();
+            })
+            .then(data => {
+                setBanners(Array.isArray(data.banners) ? data.banners : []);
+            })
+            .catch((error: unknown) => {
+                const isAbortError = typeof error === 'object'
+                    && error !== null
+                    && 'name' in error
+                    && error.name === 'AbortError';
+
+                if (isAbortError) return;
+                setBanners([]);
+            });
+
+        return () => controller.abort();
     }, []);
 
     const total = banners.length;
@@ -110,6 +129,8 @@ export default function AffiliateBannerCarousel() {
                                     src={banner.imageUrl}
                                     alt={banner.title}
                                     draggable={false}
+                                    loading="lazy"
+                                    decoding="async"
                                     style={{
                                         width: '100%',
                                         display: 'block',
@@ -166,17 +187,30 @@ export default function AffiliateBannerCarousel() {
                             key={i}
                             onClick={() => goTo(i)}
                             style={{
-                                width: current === i ? '24px' : '8px',
-                                height: '8px',
-                                borderRadius: '50px',
-                                background: current === i ? '#2563eb' : '#cbd5e1',
+                                minWidth: '44px',
+                                minHeight: '44px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                                 border: 'none',
+                                background: 'transparent',
                                 cursor: 'pointer',
-                                transition: 'all 0.3s',
                                 padding: 0,
                             }}
                             aria-label={`Slide ${i + 1}`}
-                        />
+                            aria-current={current === i ? 'true' : undefined}
+                        >
+                            <span
+                                aria-hidden="true"
+                                style={{
+                                    width: current === i ? '24px' : '8px',
+                                    height: '8px',
+                                    borderRadius: '50px',
+                                    background: current === i ? '#2563eb' : '#cbd5e1',
+                                    transition: 'width 0.2s ease, background-color 0.2s ease',
+                                }}
+                            />
+                        </button>
                     ))}
                 </div>
             )}

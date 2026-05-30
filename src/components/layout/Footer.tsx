@@ -2,6 +2,28 @@
 
 import Link from 'next/link';
 
+const footerLinkStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    minHeight: '44px',
+    color: '#94a3b8',
+    textDecoration: 'none',
+    fontSize: '0.9375rem',
+    transition: 'color 0.2s',
+} as const;
+
+const socialLinkStyle = {
+    width: '44px',
+    height: '44px',
+    background: '#334155',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#94a3b8',
+    transition: 'all 0.2s',
+} as const;
+
 export default function Footer() {
     return (
         <footer style={{
@@ -53,17 +75,8 @@ export default function Footer() {
                             <a 
                                 href="https://www.facebook.com/milerdevpro"
                                 target="_blank" 
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    background: '#334155',
-                                    borderRadius: '10px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#94a3b8',
-                                    transition: 'all 0.2s',
-                                }}
+                                rel="noopener noreferrer"
+                                style={socialLinkStyle}
                                 onMouseOver={(e) => {
                                     e.currentTarget.style.background = '#3b82f6';
                                     e.currentTarget.style.color = 'white';
@@ -81,17 +94,8 @@ export default function Footer() {
                             <a 
                                 href="https://www.youtube.com/channel/UCeKE6wQHTt5JpS9_RsH4hrg" 
                                 target="_blank"
-                                style={{
-                                    width: '40px',
-                                    height: '40px',
-                                    background: '#334155',
-                                    borderRadius: '10px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: '#94a3b8',
-                                    transition: 'all 0.2s',
-                                }}
+                                rel="noopener noreferrer"
+                                style={socialLinkStyle}
                                 onMouseOver={(e) => {
                                     e.currentTarget.style.background = '#ef4444';
                                     e.currentTarget.style.color = 'white';
@@ -120,12 +124,7 @@ export default function Footer() {
                         }}>ลิงก์ด่วน</h3>
                         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <li>
-                                <Link href="/courses" style={{
-                                    color: '#94a3b8',
-                                    textDecoration: 'none',
-                                    fontSize: '0.9375rem',
-                                    transition: 'color 0.2s',
-                                }}
+                                <Link href="/courses" style={footerLinkStyle}
                                 onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
                                 onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
                                 >
@@ -133,12 +132,7 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/about" style={{
-                                    color: '#94a3b8',
-                                    textDecoration: 'none',
-                                    fontSize: '0.9375rem',
-                                    transition: 'color 0.2s',
-                                }}
+                                <Link href="/about" style={footerLinkStyle}
                                 onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
                                 onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
                                 >
@@ -146,12 +140,7 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/contact" style={{
-                                    color: '#94a3b8',
-                                    textDecoration: 'none',
-                                    fontSize: '0.9375rem',
-                                    transition: 'color 0.2s',
-                                }}
+                                <Link href="/contact" style={footerLinkStyle}
                                 onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
                                 onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
                                 >
@@ -172,12 +161,7 @@ export default function Footer() {
                         }}>ช่วยเหลือ</h3>
                         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <li>
-                                <Link href="/faq" style={{
-                                    color: '#94a3b8',
-                                    textDecoration: 'none',
-                                    fontSize: '0.9375rem',
-                                    transition: 'color 0.2s',
-                                }}
+                                <Link href="/faq" style={footerLinkStyle}
                                 onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
                                 onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
                                 >
@@ -185,12 +169,7 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/terms" style={{
-                                    color: '#94a3b8',
-                                    textDecoration: 'none',
-                                    fontSize: '0.9375rem',
-                                    transition: 'color 0.2s',
-                                }}
+                                <Link href="/terms" style={footerLinkStyle}
                                 onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
                                 onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
                                 >
@@ -198,12 +177,7 @@ export default function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/privacy" style={{
-                                    color: '#94a3b8',
-                                    textDecoration: 'none',
-                                    fontSize: '0.9375rem',
-                                    transition: 'color 0.2s',
-                                }}
+                                <Link href="/privacy" style={footerLinkStyle}
                                 onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
                                 onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
                                 >

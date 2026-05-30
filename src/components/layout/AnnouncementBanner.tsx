@@ -22,6 +22,8 @@ export default function AnnouncementBanner() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    const controller = new AbortController();
+
     // Load dismissed IDs from sessionStorage
     const loadDismissed = () => {
       try {
@@ -31,10 +33,27 @@ export default function AnnouncementBanner() {
     };
     loadDismissed();
 
-    fetch('/api/announcements')
-      .then(res => res.json())
-      .then(data => setAnnouncements(data.announcements || []))
-      .catch(() => {});
+    fetch('/api/announcements', { signal: controller.signal })
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to load announcements');
+        }
+        return res.json();
+      })
+      .then(data => {
+        setAnnouncements(Array.isArray(data.announcements) ? data.announcements : []);
+      })
+      .catch((error: unknown) => {
+        const isAbortError = typeof error === 'object'
+          && error !== null
+          && 'name' in error
+          && error.name === 'AbortError';
+
+        if (isAbortError) return;
+        setAnnouncements([]);
+      });
+
+    return () => controller.abort();
   }, []);
 
   const dismiss = (id: string) => {
@@ -76,6 +95,7 @@ export default function AnnouncementBanner() {
           color: style.color,
           fontSize: '0.875rem',
           textDecoration: 'none',
+          overflowWrap: 'anywhere',
         }}
       >
         {announcement.title}
@@ -90,6 +110,11 @@ export default function AnnouncementBanner() {
           color: style.color,
           opacity: 0.6,
           padding: '4px',
+          minWidth: '44px',
+          minHeight: '44px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           fontSize: '1.125rem',
           lineHeight: 1,
           flexShrink: 0,
