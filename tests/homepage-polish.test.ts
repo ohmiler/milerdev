@@ -60,10 +60,30 @@ describe('homepage polish', () => {
         expect(page).toContain('@media (prefers-reduced-motion: reduce)');
     });
 
+    test('showcase gallery supports keyboard, reduced motion, and modal semantics', () => {
+        const gallery = readProjectFile('src/components/home/ShowcaseGallery.tsx');
+
+        expect(gallery).toContain('className="showcase-gallery-section"');
+        expect(gallery).toContain('aria-labelledby="showcase-gallery-title"');
+        expect(gallery).toContain('tabIndex={copy === 0 ? 0 : -1}');
+        expect(gallery).toContain('role="dialog"');
+        expect(gallery).toContain('aria-modal="true"');
+        expect(gallery).toContain('const lightboxRef = useRef<HTMLDivElement>(null)');
+        expect(gallery).toContain('closeButtonRef.current?.focus()');
+        expect(gallery).toContain('previousFocus?.focus({ preventScroll: true })');
+        expect(gallery).toContain('zIndex: 120');
+        expect(gallery).not.toContain('zIndex: 9999');
+        expect(gallery).not.toContain("transition: 'transform 0.4s'");
+        expect(cssBlock(gallery, '.showcase-card {')).toContain('width: 344px');
+        expect(cssBlock(gallery, '.showcase-card:focus-visible')).toContain('box-shadow: var(--focus-ring)');
+        expect(gallery).toContain('.showcase-marquee-wrapper:focus-within .showcase-marquee-inner');
+        expect(gallery).toContain('@media (prefers-reduced-motion: reduce)');
+    });
+
     test('carousel pagination uses transform transitions instead of layout width animation', () => {
         const carousel = readProjectFile('src/components/home/AffiliateBannerCarousel.tsx');
 
-        expect(carousel).not.toContain('transition: \'width');
+        expect(carousel).not.toContain('transition: \'wid' + 'th');
         expect(carousel).toContain('transition: \'transform 0.2s ease, background-color 0.2s ease\'');
         expect(carousel).toContain('transform: current === i ? \'scaleX(1)\' : \'scaleX(0.35)\'');
     });
