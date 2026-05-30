@@ -410,14 +410,14 @@ export default async function HomePage() {
         </section>
 
         {/* Featured Courses Section */}
-        <section className="section" data-reveal style={{ background: '#f8fafc' }}>
+        <section id="featured-courses" className="section featured-courses-section" data-reveal>
           <div className="container">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '48px', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="featured-courses-head">
               <div>
-                <h2 className="section-title" style={{ marginBottom: '8px' }}>
+                <h2 className="section-title">
                   คอร์สยอดนิยม
                 </h2>
-                <p className="section-copy" style={{ margin: 0 }}>คอร์สที่ได้รับความนิยมสูงสุดจากนักเรียน</p>
+                <p className="section-copy">คอร์สที่ได้รับความนิยมสูงสุดจากนักเรียน</p>
               </div>
               <Link href="/courses" className="btn btn-secondary">
                 ดูทั้งหมด
@@ -427,11 +427,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '24px'
-            }}>
+            <div className="featured-courses-grid">
               {featuredCourses.map((course) => (
                 <CourseCard
                   key={course.id}
@@ -446,6 +442,7 @@ export default async function HomePage() {
                   instructorName={course.instructor?.name || null}
                   lessonCount={course.lessonCount}
                   outcomes={getCourseOutcomes(course.title) || undefined}
+                  variant="featured"
                 />
               ))}
             </div>

@@ -101,4 +101,30 @@ describe('homepage polish', () => {
         expect(reason).not.toContain('box-shadow');
         expect(cssBlock(globals, '.trust-reason__copy')).toContain('line-height: var(--leading-body)');
     });
+
+    test('featured courses section uses a compact homepage card system', () => {
+        const globals = readProjectFile('src/app/globals.css');
+        const page = readProjectFile('src/app/page.tsx');
+        const courseCard = readProjectFile('src/components/course/CourseCard.tsx');
+
+        expect(page).toContain('id="featured-courses"');
+        expect(page).toContain('className="featured-courses-head"');
+        expect(page).toContain('className="featured-courses-grid"');
+        expect(page).toContain('variant="featured"');
+        expect(page).not.toContain("gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'");
+
+        expect(courseCard).toContain("variant?: 'default' | 'featured'");
+        expect(courseCard).toContain("variant = 'default'");
+        expect(courseCard).toContain('course-card--${variant}');
+        expect(courseCard).toContain('course-card__content');
+        expect(courseCard).not.toContain("border: '1px solid #f5a524'");
+
+        expect(cssBlock(globals, '.featured-courses-grid {')).toContain('grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))');
+        expect(cssBlock(globals, '.course-card {')).toContain('display: flex');
+        expect(cssBlock(globals, '.course-card--featured .cc-outcomes')).toContain('min-height');
+        expect(cssBlock(globals, '.course-card:focus-visible')).toContain('box-shadow: var(--focus-ring)');
+        expect(cssBlock(globals, '.course-card--featured .price-badge.promo')).toContain('background: var(--primary-800)');
+        expect(cssBlock(globals, '.course-card--featured .course-discount-badge')).toContain('background: #fff4d8');
+        expect(cssBlock(globals, '.course-card--featured .course-discount-badge')).toContain('color: #9a5a00');
+    });
 });

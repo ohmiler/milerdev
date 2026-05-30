@@ -20,6 +20,7 @@ interface CourseCardProps {
     lessonCount: number;
     tags?: Tag[];
     outcomes?: string[];
+    variant?: 'default' | 'featured';
 }
 
 function normalizeUrl(url: string | null): string | null {
@@ -40,41 +41,28 @@ export default function CourseCard({
     lessonCount,
     tags,
     outcomes,
+    variant = 'default',
 }: CourseCardProps) {
     const displayPrice = isPromoActive && promoPrice != null ? promoPrice : price;
     const showOriginalPrice = isPromoActive && promoPrice != null && promoPrice < price;
     const discountPercent = showOriginalPrice ? Math.round((1 - displayPrice / price) * 100) : 0;
     const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
     return (
-        <Link href={`/courses/${slug}`} className="card block group" style={{
-            ...(showOriginalPrice ? { border: '1px solid #f5a524' } : {}),
-        }}>
+        <Link
+            href={`/courses/${slug}`}
+            className={`card course-card course-card--${variant} block group${showOriginalPrice ? ' course-card--promo' : ''}`}
+        >
             {/* Thumbnail */}
             <div className="course-thumbnail">
-                <div style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative'
-                }}>
+                <div className="course-thumbnail__inner">
                     {thumbnailUrl ? (
                         <img
                             src={thumbnailUrl}
                             alt={title}
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                transition: 'transform 0.3s',
-                            }}
-                            className="group-hover:scale-105"
+                            className="course-card__image"
                         />
                     ) : (
-                        <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="course-thumbnail__placeholder" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -83,18 +71,7 @@ export default function CourseCard({
 
                 {/* Discount Badge - Top Left */}
                 {showOriginalPrice && (
-                    <span style={{
-                        position: 'absolute',
-                        top: '12px',
-                        left: '12px',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        background: '#f5a524',
-                        color: 'white',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        zIndex: 2,
-                    }}>
+                    <span className="course-discount-badge">
                         ลด {discountPercent}%
                     </span>
                 )}
@@ -103,14 +80,8 @@ export default function CourseCard({
                 {displayPrice === 0 ? (
                     <span className="price-badge free">ฟรี</span>
                 ) : showOriginalPrice ? (
-                    <span className="price-badge promo" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        background: 'linear-gradient(135deg, #f5a524, #d97706)',
-                        color: 'white',
-                    }}>
-                        <span style={{ textDecoration: 'line-through', opacity: 0.7, fontSize: '0.75rem' }}>฿{price.toLocaleString()}</span>
+                    <span className="price-badge promo">
+                        <span className="price-badge__was">฿{price.toLocaleString()}</span>
                         <span style={{ fontWeight: 700 }}>฿{displayPrice.toLocaleString()}</span>
                     </span>
                 ) : (
@@ -119,40 +90,23 @@ export default function CourseCard({
             </div>
 
             {/* Content */}
-            <div style={{ padding: '24px' }}>
+            <div className="course-card__content">
                 {tags && tags.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+                    <div className="course-card__tags">
                         {tags.slice(0, 3).map(tag => (
                             <span
                                 key={tag.id}
-                                style={{
-                                    padding: '2px 10px',
-                                    background: '#eff6ff',
-                                    color: '#2563eb',
-                                    borderRadius: '50px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 500,
-                                }}
+                                className="course-tag-badge"
                             >
                                 {tag.name}
                             </span>
                         ))}
                         {tags.length > 3 && (
-                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>+{tags.length - 3}</span>
+                            <span className="course-card__tag-more">+{tags.length - 3}</span>
                         )}
                     </div>
                 )}
-                <h3 style={{
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    color: '#1e293b',
-                    marginBottom: '8px',
-                    lineHeight: 1.5,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                }} className="group-hover:text-blue-600 transition-colors">
+                <h3 className="course-card__title">
                     {title}
                 </h3>
 
@@ -168,23 +122,14 @@ export default function CourseCard({
                         ))}
                     </ul>
                 ) : description ? (
-                    <p style={{
-                        color: '#64748b',
-                        fontSize: '0.9375rem',
-                        marginBottom: '16px',
-                        lineHeight: 1.6,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                    }}>
+                    <p className="course-card__description">
                         {getExcerpt(description, 120)}
                     </p>
                 ) : null}
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.875rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8' }}>
-                        <svg style={{ width: '18px', height: '18px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="course-card__meta">
+                    <div className="course-card__lessons">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -192,7 +137,7 @@ export default function CourseCard({
                     </div>
 
                     {instructorName && (
-                        <span style={{ color: '#94a3b8' }}>โดย {instructorName}</span>
+                        <span className="course-card__instructor">โดย {instructorName}</span>
                     )}
                 </div>
 
