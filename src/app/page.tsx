@@ -742,6 +742,7 @@ export default async function HomePage() {
               }
               .bundle-program-card:hover .bundle-cta-arrow {
                 transform: translateX(4px);
+                background-position: 100% 50%;
                 opacity: 1;
               }
               .bundle-program-card:hover .bundle-ribbon {
@@ -886,13 +887,16 @@ export default async function HomePage() {
                 width: 40px;
                 height: 40px;
                 border-radius: 10px;
-                background: var(--primary-500);
+                background: var(--primary-gradient);
+                background-size: 150% 150%;
+                background-position: 0% 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 color: #ffffff;
                 opacity: 0.9;
-                transition: transform 0.2s ease, opacity 0.2s ease;
+                box-shadow: 0 6px 12px rgba(2, 137, 214, 0.18);
+                transition: background-position 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
                 flex-shrink: 0;
               }
 

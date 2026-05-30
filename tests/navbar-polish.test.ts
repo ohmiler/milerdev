@@ -31,6 +31,8 @@ describe('navbar polish', () => {
         expect(navbar).toContain("className={`nav-link${isActive(href) ? ' nav-link--active' : ''}`}");
         expect(navbar).toContain('className="nav-auth-link"');
         expect(navbar).toContain('className="btn btn-primary nav-auth-register"');
+        expect(navbar).toContain("background: 'var(--primary-gradient)'");
+        expect(cssBlock(navbar, '.nav-mobile-auth--primary:hover')).toContain('background: var(--primary-gradient-hover) !important');
         expect(navbar).not.toContain('#2563eb');
         expect(navbar).not.toContain('#eff6ff');
         expect(navbar).not.toContain("transition: 'all 0.15s'");

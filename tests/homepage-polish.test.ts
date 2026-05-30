@@ -69,6 +69,8 @@ describe('homepage polish', () => {
         expect(page).not.toContain('background: linear-gradient(135deg, #071827');
         expect(cssBlock(page, '.bundle-program-section {')).toContain('padding: 56px 0');
         expect(cssBlock(page, '.bundle-card-content {')).toContain('grid-template-columns: minmax(0, 1fr) 220px');
+        expect(cssBlock(page, '\n              .bundle-cta-arrow {')).toContain('background: var(--primary-gradient)');
+        expect(cssBlock(page, '.bundle-program-card:hover .bundle-cta-arrow')).toContain('background-position: 100% 50%');
         expect(page).not.toContain('bundle-particles');
         expect(page).not.toContain('particleFloat');
         expect(page).not.toContain('giftBounce');
@@ -141,6 +143,12 @@ describe('homepage polish', () => {
         const page = readProjectFile('src/app/page.tsx');
 
         expect(cssBlock(globals, '.btn:focus-visible')).toContain('box-shadow: var(--focus-ring)');
+        expect(globals).toContain('--primary-gradient: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 34%, var(--primary-700) 100%)');
+        expect(cssBlock(globals, '.btn-primary {')).toContain('background: var(--primary-gradient)');
+        expect(cssBlock(globals, '.btn-primary:hover')).toContain('background: var(--primary-gradient-hover)');
+        expect(cssBlock(globals, '.cta-section {')).toContain('background: var(--primary-gradient-deep)');
+        expect(cssBlock(globals, '.lp-step__num {')).toContain('background: var(--primary-gradient)');
+        expect(cssBlock(globals, '.card:hover .cc-cta')).toContain('background: var(--primary-gradient)');
         expect(cssBlock(globals, '.home-final-action:focus-visible')).toContain('box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.36)');
         expect(cssBlock(globals, '.home-final-cta {')).toContain('padding: 88px 0 92px');
         expect(cssBlock(globals, '.home-final-cta::before')).toContain('background: linear-gradient(90deg');

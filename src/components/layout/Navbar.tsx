@@ -756,12 +756,15 @@ export default function Navbar() {
                                         gap: '8px',
                                         padding: '14px',
                                         color: 'white',
-                                        background: 'var(--primary-500)',
+                                        background: 'var(--primary-gradient)',
+                                        backgroundSize: '150% 150%',
+                                        backgroundPosition: '0% 50%',
                                         borderRadius: '8px',
+                                        boxShadow: '0 6px 14px rgba(2, 137, 214, 0.2)',
                                         fontWeight: 600,
                                         fontSize: '0.9375rem',
                                         textDecoration: 'none',
-                                        transition: 'background-color 0.18s ease, color 0.18s ease, transform 0.18s ease',
+                                        transition: 'background-position 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease',
                                     }}
                                 >
                                     <RegisterIcon className="w-5 h-5" />
@@ -851,7 +854,9 @@ export default function Navbar() {
                     border-color: var(--primary-200) !important;
                 }
                 .nav-mobile-auth--primary:hover {
-                    background: var(--primary-600) !important;
+                    background: var(--primary-gradient-hover) !important;
+                    background-position: 100% 50% !important;
+                    box-shadow: 0 8px 18px rgba(2, 137, 214, 0.24) !important;
                     transform: translateY(-1px);
                 }
                 .nav-logo:focus-visible,
