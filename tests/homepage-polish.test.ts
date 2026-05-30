@@ -78,4 +78,27 @@ describe('homepage polish', () => {
         expect(globals).toContain('.lp-step-item:not(:last-child) .lp-step::after');
         expect(globals).toContain('height: calc(100% + 20px)');
     });
+
+    test('trust section reads as one compact proof system', () => {
+        const globals = readProjectFile('src/app/globals.css');
+        const page = readProjectFile('src/app/page.tsx');
+
+        expect(page).toContain('className="trust-section__head"');
+        expect(page).toContain('className="trust-reasons"');
+        expect(page).toContain('className="trust-reason"');
+        expect(page).not.toContain('className="feature-card-hover" data-reveal');
+        expect(page).not.toContain("textAlign: 'center', padding: '32px 24px'");
+
+        const stats = cssBlock(globals, '.trust-stats {');
+        expect(stats).toContain('border-radius: 14px');
+        expect(stats).toContain('box-shadow: 0 10px 24px');
+        expect(stats).not.toContain('0 24px 60px');
+
+        const reason = cssBlock(globals, '.trust-reason {');
+        expect(reason).toContain('grid-template-columns: auto 1fr');
+        expect(reason).toContain('border: 1px solid var(--gray-200)');
+        expect(reason).toContain('border-radius: 12px');
+        expect(reason).not.toContain('box-shadow');
+        expect(cssBlock(globals, '.trust-reason__copy')).toContain('line-height: var(--leading-body)');
+    });
 });
