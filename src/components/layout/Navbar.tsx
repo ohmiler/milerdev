@@ -52,7 +52,7 @@ function Avatar({ image, name, size = 'md' }: { image?: string | null; name?: st
                 alt={name || 'Avatar'}
                 width={px}
                 height={px}
-                style={{ width: px, height: px, borderRadius: '50%', objectFit: 'cover', border: '2px solid #dbeafe' }}
+                style={{ width: px, height: px, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary-100)' }}
             />
         );
     }
@@ -62,7 +62,7 @@ function Avatar({ image, name, size = 'md' }: { image?: string | null; name?: st
             width: px,
             height: px,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+            background: 'linear-gradient(135deg, var(--primary-500), var(--primary-700))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -78,13 +78,13 @@ function Avatar({ image, name, size = 'md' }: { image?: string | null; name?: st
 // Logo component
 function Logo() {
     return (
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+        <Link href="/" className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
             <img
                 src="/milerdev-logo-transparent.png"
                 alt="MilerDev"
                 style={{ width: 32, height: 32 }}
             />
-            <span style={{ fontWeight: 700, fontSize: '1.25rem', color: '#1e293b' }}>MilerDev</span>
+            <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--gray-800)' }}>MilerDev</span>
         </Link>
     );
 }
@@ -173,9 +173,9 @@ export default function Navbar() {
                 position: 'sticky',
                 top: 0,
                 zIndex: 50,
-                background: 'rgba(255,255,255,0.95)',
-                backdropFilter: 'blur(8px)',
-                borderBottom: '1px solid #e2e8f0',
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                borderBottom: '1px solid var(--gray-200)',
             }}>
                 {/* Announcement Banner */}
                 <AnnouncementBanner />
@@ -190,15 +190,13 @@ export default function Navbar() {
                             <Link
                                 key={href}
                                 href={href}
+                                className={`nav-link${isActive(href) ? ' nav-link--active' : ''}`}
                                 style={{
-                                    color: isActive(href) ? '#2563eb' : '#64748b',
                                     textDecoration: 'none',
-                                    fontWeight: isActive(href) ? 600 : 500,
                                     fontSize: '0.9375rem',
-                                    padding: '6px 14px',
+                                    padding: '0 14px',
                                     borderRadius: '8px',
-                                    background: isActive(href) ? '#eff6ff' : 'transparent',
-                                    transition: 'all 0.15s',
+                                    minHeight: '40px',
                                 }}
                             >
                                 {label}
@@ -209,23 +207,22 @@ export default function Navbar() {
                     {/* Desktop Auth */}
                     <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {status === 'loading' ? (
-                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#e2e8f0' }} />
+                            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--gray-200)' }} />
                         ) : session ? (
                             <>
                             {/* Notification Bell */}
                             <div style={{ position: 'relative' }} ref={notiRef}>
                                 <button
                                     onClick={() => { setShowNotiDropdown(!showNotiDropdown); setShowUserDropdown(false); }}
+                                    className={`nav-icon-button${showNotiDropdown ? ' nav-icon-button--active' : ''}`}
                                     style={{
                                         position: 'relative',
-                                        background: 'none',
                                         border: 'none',
-                                        cursor: 'pointer',
-                                        padding: '8px',
-                                        borderRadius: '8px',
-                                        color: '#64748b',
                                     }}
-                                    aria-label="Notifications"
+                                    aria-label="การแจ้งเตือน"
+                                    aria-haspopup="dialog"
+                                    aria-expanded={showNotiDropdown}
+                                    aria-controls="navbar-notifications-panel"
                                 >
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -239,7 +236,7 @@ export default function Navbar() {
                                             width: '18px',
                                             height: '18px',
                                             borderRadius: '50%',
-                                            background: '#ef4444',
+                                            background: 'var(--error)',
                                             color: 'white',
                                             fontSize: '0.6875rem',
                                             fontWeight: 700,
@@ -254,27 +251,27 @@ export default function Navbar() {
                                 </button>
 
                                 {showNotiDropdown && (
-                                    <div style={{
+                                    <div id="navbar-notifications-panel" style={{
                                         position: 'absolute',
                                         right: 0,
                                         top: '100%',
                                         marginTop: '8px',
                                         width: '360px',
                                         background: 'white',
-                                        borderRadius: '16px',
-                                        border: '1px solid #e2e8f0',
-                                        boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+                                        borderRadius: '12px',
+                                        border: '1px solid var(--gray-200)',
+                                        boxShadow: '0 8px 8px rgba(16, 32, 51, 0.08)',
                                         zIndex: 100,
                                         overflow: 'hidden',
                                     }}>
                                         <div style={{
                                             padding: '14px 16px',
-                                            borderBottom: '1px solid #f1f5f9',
+                                            borderBottom: '1px solid var(--gray-100)',
                                             display: 'flex',
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
                                         }}>
-                                            <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.9375rem' }}>
+                                            <span style={{ fontWeight: 600, color: 'var(--gray-800)', fontSize: '0.9375rem' }}>
                                                 การแจ้งเตือน {unreadCount > 0 && `(${unreadCount})`}
                                             </span>
                                             {unreadCount > 0 && (
@@ -283,7 +280,7 @@ export default function Navbar() {
                                                     style={{
                                                         background: 'none',
                                                         border: 'none',
-                                                        color: '#2563eb',
+                                                        color: 'var(--primary-600)',
                                                         fontSize: '0.8125rem',
                                                         cursor: 'pointer',
                                                         fontWeight: 500,
@@ -295,7 +292,7 @@ export default function Navbar() {
                                         </div>
                                         <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
                                             {notiList.length === 0 ? (
-                                                <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.875rem' }}>
+                                                <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--gray-400)', fontSize: '0.875rem' }}>
                                                     ไม่มีการแจ้งเตือน
                                                 </div>
                                             ) : (
@@ -315,28 +312,28 @@ export default function Navbar() {
                                                             padding: '12px 16px',
                                                             textDecoration: 'none',
                                                             borderBottom: '1px solid #f8fafc',
-                                                            background: n.isRead ? 'transparent' : '#f0f9ff',
-                                                            transition: 'background 0.15s',
+                                                            background: n.isRead ? 'transparent' : 'var(--primary-50)',
+                                                            transition: 'background-color 0.18s ease',
                                                         }}
                                                     >
                                                         <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: '2px' }}>
                                                             {n.type === 'success' ? '✅' : n.type === 'warning' ? '⚠️' : n.type === 'error' ? '❌' : 'ℹ️'}
                                                         </span>
                                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                                            <div style={{ fontWeight: n.isRead ? 400 : 600, color: '#1e293b', fontSize: '0.8125rem', marginBottom: '2px' }}>
+                                                            <div style={{ fontWeight: n.isRead ? 400 : 600, color: 'var(--gray-800)', fontSize: '0.8125rem', marginBottom: '2px' }}>
                                                                 {n.title}
                                                             </div>
                                                             {n.message && (
-                                                                <div style={{ color: '#64748b', fontSize: '0.75rem', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                <div style={{ color: 'var(--gray-500)', fontSize: '0.75rem', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                                     {n.message}
                                                                 </div>
                                                             )}
-                                                            <div style={{ color: '#94a3b8', fontSize: '0.6875rem', marginTop: '4px' }}>
+                                                            <div style={{ color: 'var(--gray-400)', fontSize: '0.6875rem', marginTop: '4px' }}>
                                                                 {new Date(n.createdAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                                             </div>
                                                         </div>
                                                         {!n.isRead && (
-                                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb', flexShrink: 0, marginTop: '6px' }} />
+                                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary-500)', flexShrink: 0, marginTop: '6px' }} />
                                                         )}
                                                     </a>
                                                 ))
@@ -344,7 +341,7 @@ export default function Navbar() {
                                         </div>
                                         {/* Delete read notifications button */}
                                         {notiList.some(n => n.isRead) && (
-                                            <div style={{ padding: '8px 16px', borderTop: '1px solid #f1f5f9' }}>
+                                            <div style={{ padding: '8px 16px', borderTop: '1px solid var(--gray-100)' }}>
                                                 <button
                                                     onClick={() => { deleteRead(); }}
                                                     style={{
@@ -369,22 +366,21 @@ export default function Navbar() {
                             <div style={{ position: 'relative' }} ref={dropdownRef}>
                                 <button
                                     onClick={() => setShowUserDropdown(!showUserDropdown)}
+                                    className={`nav-user-button${showUserDropdown ? ' nav-user-button--active' : ''}`}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        background: 'none',
                                         border: 'none',
-                                        cursor: 'pointer',
-                                        padding: '4px 8px',
-                                        borderRadius: '8px',
-                                        transition: 'background 0.15s',
                                     }}
+                                    aria-haspopup="menu"
+                                    aria-expanded={showUserDropdown}
+                                    aria-controls="navbar-user-menu"
                                 >
                                     <Avatar image={session.user?.image} name={session.user?.name} />
                                     <span style={{
                                         fontWeight: 500,
-                                        color: '#374151',
+                                        color: 'var(--gray-700)',
                                         maxWidth: '120px',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
@@ -397,23 +393,23 @@ export default function Navbar() {
                                 </button>
 
                                 {showUserDropdown && (
-                                    <div style={{
+                                    <div id="navbar-user-menu" style={{
                                         position: 'absolute',
                                         right: 0,
                                         top: '100%',
                                         marginTop: '8px',
                                         width: '280px',
                                         background: 'white',
-                                        borderRadius: '16px',
-                                        border: '1px solid #e2e8f0',
-                                        boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+                                        borderRadius: '12px',
+                                        border: '1px solid var(--gray-200)',
+                                        boxShadow: '0 8px 8px rgba(16, 32, 51, 0.08)',
                                         zIndex: 100,
                                         overflow: 'hidden',
                                     }}>
                                         {/* User Info Header */}
                                         <div style={{
                                             padding: '16px 20px',
-                                            borderBottom: '1px solid #f1f5f9',
+                                            borderBottom: '1px solid var(--gray-100)',
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '12px',
@@ -422,7 +418,7 @@ export default function Navbar() {
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{
                                                     fontWeight: 600,
-                                                    color: '#1e293b',
+                                                    color: 'var(--gray-800)',
                                                     fontSize: '0.9375rem',
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
@@ -431,7 +427,7 @@ export default function Navbar() {
                                                     {session.user?.name || 'ผู้ใช้'}
                                                 </div>
                                                 <div style={{
-                                                    color: '#94a3b8',
+                                                    color: 'var(--gray-400)',
                                                     fontSize: '0.8125rem',
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
@@ -449,18 +445,19 @@ export default function Navbar() {
                                                     key={href}
                                                     href={href}
                                                     onClick={() => setShowUserDropdown(false)}
+                                                    className={`nav-menu-link${isActive(href) ? ' nav-menu-link--active' : ''}`}
                                                     style={{
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '12px',
                                                         padding: '10px 12px',
-                                                        color: isActive(href) ? '#2563eb' : '#374151',
+                                                        color: isActive(href) ? 'var(--primary-700)' : 'var(--gray-700)',
                                                         textDecoration: 'none',
                                                         borderRadius: '10px',
                                                         fontSize: '0.9375rem',
                                                         fontWeight: isActive(href) ? 600 : 400,
-                                                        background: isActive(href) ? '#eff6ff' : 'transparent',
-                                                        transition: 'background 0.15s',
+                                                        background: isActive(href) ? 'var(--primary-50)' : 'transparent',
+                                                        transition: 'background-color 0.18s ease, color 0.18s ease',
                                                     }}
                                                 >
                                                     <Icon className="w-5 h-5" />
@@ -473,17 +470,18 @@ export default function Navbar() {
                                                 <Link
                                                     href="/admin"
                                                     onClick={() => setShowUserDropdown(false)}
+                                                    className="nav-menu-link"
                                                     style={{
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         gap: '12px',
                                                         padding: '10px 12px',
-                                                        color: '#7c3aed',
+                                                        color: 'var(--primary-800)',
                                                         textDecoration: 'none',
                                                         borderRadius: '10px',
                                                         fontSize: '0.9375rem',
                                                         fontWeight: 500,
-                                                        transition: 'background 0.15s',
+                                                        transition: 'background-color 0.18s ease, color 0.18s ease',
                                                     }}
                                                 >
                                                     <ShieldIcon className="w-5 h-5" />
@@ -493,22 +491,23 @@ export default function Navbar() {
                                         </div>
 
                                         {/* Logout */}
-                                        <div style={{ borderTop: '1px solid #f1f5f9', padding: '8px' }}>
+                                        <div style={{ borderTop: '1px solid var(--gray-100)', padding: '8px' }}>
                                             <button
                                                 onClick={handleLogoutClick}
+                                                className="nav-menu-link nav-menu-action nav-menu-action--danger"
                                                 style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     gap: '12px',
                                                     width: '100%',
                                                     padding: '10px 12px',
-                                                    color: '#dc2626',
+                                                    color: 'var(--error)',
                                                     border: 'none',
                                                     background: 'none',
                                                     borderRadius: '10px',
                                                     fontSize: '0.9375rem',
                                                     cursor: 'pointer',
-                                                    transition: 'background 0.15s',
+                                                    transition: 'background-color 0.18s ease, color 0.18s ease',
                                                 }}
                                             >
                                                 <LogoutIcon className="w-5 h-5" />
@@ -521,18 +520,17 @@ export default function Navbar() {
                             </>
                         ) : (
                             <>
-                                <Link href="/login" style={{
-                                    color: '#64748b',
+                                <Link href="/login" className="nav-auth-link" style={{
                                     textDecoration: 'none',
                                     fontWeight: 500,
                                     fontSize: '0.9375rem',
-                                    padding: '8px 16px',
+                                    padding: '0 16px',
                                     borderRadius: '8px',
-                                    transition: 'color 0.15s',
+                                    minHeight: '40px',
                                 }}>
                                     เข้าสู่ระบบ
                                 </Link>
-                                <Link href="/register" className="btn btn-primary" style={{ padding: '8px 20px', fontSize: '0.9375rem' }}>
+                                <Link href="/register" className="btn btn-primary nav-auth-register" style={{ padding: '0 20px', fontSize: '0.9375rem', minHeight: '40px' }}>
                                     สมัครเรียน
                                 </Link>
                             </>
@@ -543,13 +541,12 @@ export default function Navbar() {
                     <button
                         className="nav-mobile-btn"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        aria-label="Toggle menu"
+                        aria-label={isMenuOpen ? 'ปิดเมนูหลัก' : 'เปิดเมนูหลัก'}
+                        aria-expanded={isMenuOpen}
+                        aria-controls="mobile-navigation"
                         style={{
                             display: 'none',
-                            padding: '8px',
-                            background: 'none',
                             border: 'none',
-                            cursor: 'pointer',
                         }}
                     >
                         {isMenuOpen ? (
@@ -563,6 +560,7 @@ export default function Navbar() {
                 {/* Mobile Menu */}
                 {isMenuOpen && (
                     <div
+                        id="mobile-navigation"
                         className="nav-mobile-only"
                         style={{
                             position: 'absolute',
@@ -571,8 +569,8 @@ export default function Navbar() {
                             right: 0,
                             background: 'white',
                             zIndex: 50,
-                            borderBottom: '1px solid #e2e8f0',
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                            borderBottom: '1px solid var(--gray-200)',
+                            boxShadow: '0 8px 8px rgba(16, 32, 51, 0.08)',
                             maxHeight: 'calc(100vh - 64px)',
                             overflowY: 'auto',
                         }}
@@ -593,7 +591,7 @@ export default function Navbar() {
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{
                                         fontWeight: 600,
-                                        color: '#1e293b',
+                                        color: 'var(--gray-800)',
                                         fontSize: '0.9375rem',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
@@ -602,7 +600,7 @@ export default function Navbar() {
                                         {session.user?.name || 'ผู้ใช้'}
                                     </div>
                                     <div style={{
-                                        color: '#94a3b8',
+                                        color: 'var(--gray-400)',
                                         fontSize: '0.8125rem',
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
@@ -621,18 +619,19 @@ export default function Navbar() {
                                     key={href}
                                     href={href}
                                     onClick={() => setIsMenuOpen(false)}
+                                    className={`nav-mobile-link${isActive(href) ? ' nav-mobile-link--active' : ''}`}
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '12px',
                                         padding: '12px 16px',
                                         fontSize: '0.9375rem',
-                                        color: isActive(href) ? '#2563eb' : '#374151',
+                                        color: isActive(href) ? 'var(--primary-700)' : 'var(--gray-700)',
                                         fontWeight: isActive(href) ? 600 : 500,
                                         borderRadius: '10px',
-                                        background: isActive(href) ? '#eff6ff' : 'transparent',
+                                        background: isActive(href) ? 'var(--primary-50)' : 'transparent',
                                         textDecoration: 'none',
-                                        transition: 'all 0.15s',
+                                        transition: 'background-color 0.18s ease, color 0.18s ease',
                                     }}
                                 >
                                     <Icon className="w-5 h-5" />
@@ -641,7 +640,7 @@ export default function Navbar() {
                             ))}
                         </div>
 
-                        <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '12px 0' }} />
+                        <hr style={{ border: 'none', borderTop: '1px solid var(--gray-100)', margin: '12px 0' }} />
 
                         {session ? (
                             <>
@@ -652,18 +651,19 @@ export default function Navbar() {
                                             key={href}
                                             href={href}
                                             onClick={() => setIsMenuOpen(false)}
+                                            className={`nav-mobile-link${isActive(href) ? ' nav-mobile-link--active' : ''}`}
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '12px',
                                                 padding: '12px 16px',
                                                 fontSize: '0.9375rem',
-                                                color: isActive(href) ? '#2563eb' : '#374151',
+                                                color: isActive(href) ? 'var(--primary-700)' : 'var(--gray-700)',
                                                 fontWeight: isActive(href) ? 600 : 500,
                                                 borderRadius: '10px',
-                                                background: isActive(href) ? '#eff6ff' : 'transparent',
+                                                background: isActive(href) ? 'var(--primary-50)' : 'transparent',
                                                 textDecoration: 'none',
-                                                transition: 'all 0.15s',
+                                                transition: 'background-color 0.18s ease, color 0.18s ease',
                                             }}
                                         >
                                             <Icon className="w-5 h-5" />
@@ -676,17 +676,18 @@ export default function Navbar() {
                                         <Link
                                             href="/admin"
                                             onClick={() => setIsMenuOpen(false)}
+                                            className="nav-mobile-link"
                                             style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '12px',
                                                 padding: '12px 16px',
                                                 fontSize: '0.9375rem',
-                                                color: '#7c3aed',
+                                                color: 'var(--primary-800)',
                                                 fontWeight: 500,
                                                 borderRadius: '10px',
                                                 textDecoration: 'none',
-                                                transition: 'all 0.15s',
+                                                transition: 'background-color 0.18s ease, color 0.18s ease',
                                             }}
                                         >
                                             <ShieldIcon className="w-5 h-5" />
@@ -695,10 +696,11 @@ export default function Navbar() {
                                     )}
                                 </div>
 
-                                <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '12px 0' }} />
+                                <hr style={{ border: 'none', borderTop: '1px solid var(--gray-100)', margin: '12px 0' }} />
 
                                 <button
                                     onClick={handleLogoutClick}
+                                    className="nav-mobile-link nav-mobile-action nav-mobile-action--danger"
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
@@ -706,13 +708,13 @@ export default function Navbar() {
                                         width: '100%',
                                         padding: '12px 16px',
                                         fontSize: '0.9375rem',
-                                        color: '#dc2626',
+                                        color: 'var(--error)',
                                         fontWeight: 500,
                                         borderRadius: '10px',
                                         border: 'none',
                                         background: 'none',
                                         cursor: 'pointer',
-                                        transition: 'background 0.15s',
+                                        transition: 'background-color 0.18s ease, color 0.18s ease',
                                     }}
                                 >
                                     <LogoutIcon className="w-5 h-5" />
@@ -724,19 +726,20 @@ export default function Navbar() {
                                 <Link
                                     href="/login"
                                     onClick={() => setIsMenuOpen(false)}
+                                    className="nav-mobile-auth nav-mobile-auth--secondary"
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         gap: '8px',
                                         padding: '14px',
-                                        color: '#374151',
-                                        border: '2px solid #e2e8f0',
-                                        borderRadius: '12px',
+                                        color: 'var(--gray-700)',
+                                        border: '1px solid var(--gray-200)',
+                                        borderRadius: '8px',
                                         fontWeight: 600,
                                         fontSize: '0.9375rem',
                                         textDecoration: 'none',
-                                        transition: 'all 0.15s',
+                                        transition: 'background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease',
                                     }}
                                 >
                                     <LoginIcon className="w-5 h-5" />
@@ -745,6 +748,7 @@ export default function Navbar() {
                                 <Link
                                     href="/register"
                                     onClick={() => setIsMenuOpen(false)}
+                                    className="nav-mobile-auth nav-mobile-auth--primary"
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
@@ -752,12 +756,12 @@ export default function Navbar() {
                                         gap: '8px',
                                         padding: '14px',
                                         color: 'white',
-                                        background: '#2563eb',
-                                        borderRadius: '12px',
+                                        background: 'var(--primary-500)',
+                                        borderRadius: '8px',
                                         fontWeight: 600,
                                         fontSize: '0.9375rem',
                                         textDecoration: 'none',
-                                        transition: 'all 0.15s',
+                                        transition: 'background-color 0.18s ease, color 0.18s ease, transform 0.18s ease',
                                     }}
                                 >
                                     <RegisterIcon className="w-5 h-5" />
@@ -773,8 +777,95 @@ export default function Navbar() {
             {/* Responsive Styles */}
             <style>{`
                 .nav-desktop { display: flex; }
-                .nav-mobile-btn { display: none !important; }
                 .nav-mobile-only { display: block; }
+                .nav-logo {
+                    min-height: 44px;
+                    padding: 4px 0;
+                    border-radius: 8px;
+                    transition: color 0.18s ease, box-shadow 0.18s ease;
+                }
+                .nav-link,
+                .nav-auth-link {
+                    display: inline-flex;
+                    align-items: center;
+                    color: var(--gray-600);
+                    font-weight: 600;
+                    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+                }
+                .nav-link:hover,
+                .nav-auth-link:hover,
+                .nav-link--active {
+                    color: var(--primary-700);
+                    background: var(--primary-50);
+                }
+                .nav-auth-register {
+                    box-shadow: none;
+                }
+                .nav-icon-button,
+                .nav-user-button,
+                .nav-mobile-btn {
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 40px;
+                    border-radius: 8px;
+                    background: transparent;
+                    color: var(--gray-600);
+                    cursor: pointer;
+                    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+                }
+                .nav-icon-button {
+                    display: inline-flex;
+                    width: 40px;
+                    padding: 0;
+                }
+                .nav-user-button {
+                    padding: 4px 8px;
+                }
+                .nav-mobile-btn {
+                    display: none !important;
+                    width: 44px;
+                    min-height: 44px;
+                    padding: 0;
+                }
+                .nav-icon-button:hover,
+                .nav-icon-button--active,
+                .nav-user-button:hover,
+                .nav-user-button--active,
+                .nav-mobile-btn:hover {
+                    color: var(--primary-700);
+                    background: var(--primary-50);
+                }
+                .nav-menu-link:hover,
+                .nav-mobile-link:hover {
+                    color: var(--primary-700) !important;
+                    background: var(--primary-50) !important;
+                }
+                .nav-menu-action--danger:hover,
+                .nav-mobile-action--danger:hover {
+                    color: var(--error) !important;
+                    background: rgba(239, 68, 68, 0.08) !important;
+                }
+                .nav-mobile-auth--secondary:hover {
+                    color: var(--primary-700) !important;
+                    background: var(--primary-50) !important;
+                    border-color: var(--primary-200) !important;
+                }
+                .nav-mobile-auth--primary:hover {
+                    background: var(--primary-600) !important;
+                    transform: translateY(-1px);
+                }
+                .nav-logo:focus-visible,
+                .nav-link:focus-visible,
+                .nav-auth-link:focus-visible,
+                .nav-icon-button:focus-visible,
+                .nav-user-button:focus-visible,
+                .nav-mobile-btn:focus-visible,
+                .nav-menu-link:focus-visible,
+                .nav-mobile-link:focus-visible,
+                .nav-mobile-auth:focus-visible {
+                    outline: none;
+                    box-shadow: var(--focus-ring);
+                }
 
                 @media (max-width: 768px) {
                     .nav-desktop { display: none !important; }
@@ -783,6 +874,23 @@ export default function Navbar() {
 
                 @media (min-width: 769px) {
                     .nav-mobile-only { display: none !important; }
+                }
+
+                @media (prefers-reduced-motion: reduce) {
+                    .nav-logo,
+                    .nav-link,
+                    .nav-auth-link,
+                    .nav-icon-button,
+                    .nav-user-button,
+                    .nav-mobile-btn,
+                    .nav-menu-link,
+                    .nav-mobile-link,
+                    .nav-mobile-auth {
+                        transition: none !important;
+                    }
+                    .nav-mobile-auth--primary:hover {
+                        transform: none;
+                    }
                 }
             `}</style>
 
