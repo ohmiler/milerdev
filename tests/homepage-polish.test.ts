@@ -66,4 +66,16 @@ describe('homepage polish', () => {
         expect(globals).toContain('border: 1px solid #dbe8f2 !important');
         expect(globals).toContain('border: 1px solid #334155');
     });
+
+    test('learning path reads as a connected route without heavy card shadows', () => {
+        const globals = readProjectFile('src/app/globals.css');
+
+        expect(cssBlock(globals, '.lp-track::before')).toContain('background: var(--primary-200)');
+        expect(cssBlock(globals, '.lp-step {')).toContain('border-radius: 12px');
+        expect(cssBlock(globals, '.lp-step:hover')).toContain('transform: translateY(-2px)');
+        expect(cssBlock(globals, '.lp-step:hover')).not.toContain('0 18px 40px');
+        expect(cssBlock(globals, '.lp-step:focus-visible')).toContain('box-shadow: var(--focus-ring)');
+        expect(globals).toContain('.lp-step-item:not(:last-child) .lp-step::after');
+        expect(globals).toContain('height: calc(100% + 20px)');
+    });
 });

@@ -240,8 +240,8 @@ export default async function HomePage() {
 
                 {/* Title */}
                 <h1 className="hero-title hero-title-anim">
-                  เรียน Coding ตั้งแต่<span className="highlight" style={{ whiteSpace: 'nowrap' }}>พื้นฐาน</span>
-                  {" "} จนสร้าง<span className="hero-title__nowrap">โปรเจกต์จริงได้</span>
+                  <span className="hero-title__line">เรียน Coding ตั้งแต่พื้นฐาน</span>
+                  <span className="hero-title__line highlight">จนสร้างโปรเจกต์จริงได้</span>
                 </h1>
 
                 <p className="hero-desc-anim home-lede" style={{ marginBottom: '32px' }}>
@@ -255,7 +255,7 @@ export default async function HomePage() {
                     <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                     </svg>
-                    เลือกเส้นทางการเรียนของคุณ
+                    เริ่มตามเส้นทางการเรียน
                   </Link>
                   <Link href="/courses" className="btn btn-secondary" style={{ padding: '14px 28px' }}>
                     ดูคอร์สทั้งหมด
@@ -305,23 +305,25 @@ export default async function HomePage() {
                 <p>เรียนตามลำดับนี้ทีละขั้น จากพื้นฐานการเขียนเว็บ จนต่อยอดเป็น Front-end Developer ได้</p>
               </div>
 
-              <div className="lp-track">
+              <ol className="lp-track">
                 {learningPath.map((step, i) => (
-                  <Link key={i} href={step.href} className="lp-step">
-                    <span className="lp-step__num">{i + 1}</span>
-                    <span className="lp-step__stage">{step.stage}</span>
-                    <span className="lp-step__title">{step.title}</span>
-                    <span className="lp-step__outcome">{step.outcome}</span>
-                    <span className="lp-step__cta">
-                      เริ่มเรียนคอร์สนี้
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                        <polyline points="12 5 19 12 12 19" />
-                      </svg>
-                    </span>
-                  </Link>
+                  <li key={i} className="lp-step-item">
+                    <Link href={step.href} className="lp-step">
+                      <span className="lp-step__num">{i + 1}</span>
+                      <span className="lp-step__stage">{step.stage}</span>
+                      <span className="lp-step__title">{step.title}</span>
+                      <span className="lp-step__outcome">{step.outcome}</span>
+                      <span className="lp-step__cta">
+                        เริ่มเรียนคอร์สนี้
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                      </span>
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ol>
             </div>
           </section>
         )}

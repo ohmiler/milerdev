@@ -196,7 +196,8 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.22;
   letter-spacing: 0;
   color: var(--gray-900);
-  max-width: 13ch;
+  width: max-content;
+  max-width: 100%;
   margin: 0 0 1.25rem;
   text-wrap: balance;
 }
@@ -207,7 +208,8 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: inherit;
 }
 
-.hero-title__nowrap {
+.hero-title .hero-title__line {
+  display: block;
   white-space: nowrap;
 }
 
@@ -787,6 +789,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .hero-text .hero-title {
+    margin-left: auto;
+    margin-right: auto;
     text-align: center !important;
   }
 
@@ -1206,17 +1210,27 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .hero-title {
+    font-size: 1.9375rem;
     line-height: 1.28;
-    max-width: 13.5ch;
+  }
+
+  @media (max-width: 374px) {
+    .hero-title {
+      font-size: 1.75rem;
+    }
   }
 
   .hero-cta-anim {
     width: 100%;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .hero-cta-anim .btn {
-    flex: 1 1 150px;
-    max-width: 180px;
+    flex: 1 1 100%;
+    max-width: none;
+    width: 100%;
   }
 
   .hero-ide {
@@ -1369,50 +1383,77 @@ h1, h2, h3, h4, h5, h6 {
 .lp-track {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+.lp-track::before {
+  content: '';
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 44px;
+  height: 2px;
+  background: var(--primary-200);
+}
+.lp-step-item {
+  display: flex;
+  min-width: 0;
   position: relative;
 }
 .lp-step {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
+  width: 100%;
   background: #ffffff;
   border: 1px solid var(--gray-200);
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 24px 20px 20px;
+  min-height: 246px;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 .lp-step:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: var(--primary-300);
-  box-shadow: 0 18px 40px rgba(2, 171, 255, 0.14);
+  box-shadow: 0 8px 14px rgba(2, 171, 255, 0.1);
+}
+.lp-step:focus-visible {
+  outline: none;
+  border-color: var(--primary-400);
+  box-shadow: var(--focus-ring);
 }
 .lp-step__num {
+  position: relative;
+  z-index: 2;
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
   font-size: 1.0625rem;
   color: #ffffff;
-  background: linear-gradient(135deg, var(--primary-400), var(--primary-600));
-  box-shadow: 0 6px 16px rgba(2, 171, 255, 0.3);
+  background: var(--primary-500);
+  box-shadow: 0 4px 8px rgba(2, 171, 255, 0.24);
   margin-bottom: 16px;
 }
-/* connector line between steps */
-.lp-step:not(:last-child)::after {
+.lp-step-item:not(:last-child) .lp-step::after {
   content: '';
   position: absolute;
-  top: 44px;
-  right: -8px;
-  width: 16px;
-  height: 2px;
+  display: none;
+  top: 64px;
+  left: 39px;
+  width: 2px;
+  height: calc(100% + 20px);
   background: var(--primary-200);
-  z-index: 1;
+  z-index: 0;
 }
 .lp-step__stage {
   font-size: var(--text-caption);
@@ -1636,14 +1677,28 @@ h1, h2, h3, h4, h5, h6 {
 /* Responsive */
 @media (max-width: 900px) {
   .lp-track { grid-template-columns: repeat(2, 1fr); }
-  .lp-step:nth-child(2n)::after { display: none; }
+  .lp-track::before { display: none; }
   .trust-stats { grid-template-columns: repeat(2, 1fr); gap: 24px 16px; }
   .trust-stat:nth-child(2n)::after { display: none; }
   .trust-stat:nth-child(-n+2) { padding-bottom: 18px; }
 }
 @media (max-width: 640px) {
-  .lp-track { grid-template-columns: 1fr; }
-  .lp-step::after { display: none !important; }
+  .lp-track {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .lp-step {
+    min-height: 0;
+    padding: 22px 20px 22px 76px;
+  }
+  .lp-step__num {
+    position: absolute;
+    left: 20px;
+    top: 22px;
+  }
+  .lp-step-item:not(:last-child) .lp-step::after {
+    display: block;
+  }
   .audience-grid { grid-template-columns: 1fr; }
   .hero-stats { gap: 12px 18px; }
   .hero-stat strong { font-size: 1.2rem; }

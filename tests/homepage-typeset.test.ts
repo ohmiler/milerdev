@@ -73,8 +73,18 @@ describe('homepage typesetting', () => {
         expect(lede).toContain('text-wrap: pretty');
         expect(heroTitle).not.toContain('clamp(');
         expect(sectionTitle).not.toContain('clamp(');
-        expect(page).toContain('hero-title__nowrap');
-        expect(cssBlock(globals, '.hero-title__nowrap')).toContain('white-space: nowrap');
+        expect(heroTitle).toContain('width: max-content');
+        expect(cssBlock(globals, '.hero-title .hero-title__line')).toContain('display: block');
+        expect(cssBlock(globals, '.hero-title .hero-title__line')).toContain('white-space: nowrap');
+        expect(cssBlock(globals, '.hero-text .hero-title')).toContain('margin-left: auto');
+        expect(cssBlock(globals, '.hero-text .hero-title')).toContain('margin-right: auto');
+        expect(globals).toContain('font-size: 1.9375rem');
+        expect(globals).toContain('font-size: 1.75rem');
+        expect(page).toContain('<span className="hero-title__line">เรียน Coding ตั้งแต่พื้นฐาน</span>');
+        expect(page).toContain('<span className="hero-title__line highlight">จนสร้างโปรเจกต์จริงได้</span>');
+        expect(page).not.toContain('<span className="highlight">จนสร้างโปรเจกต์จริงได้</span>');
+        expect(page).toContain('เริ่มตามเส้นทางการเรียน');
+        expect(page).not.toContain('เลือกเส้นทางการเรียนของคุณ');
     });
 
     test('homepage typography does not rely on gradient-clipped text', () => {
