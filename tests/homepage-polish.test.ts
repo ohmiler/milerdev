@@ -109,9 +109,27 @@ describe('homepage polish', () => {
 
         expect(cssBlock(globals, '.btn:focus-visible')).toContain('box-shadow: var(--focus-ring)');
         expect(cssBlock(globals, '.home-final-action:focus-visible')).toContain('box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.36)');
+        expect(cssBlock(globals, '.home-final-cta {')).toContain('padding: 88px 0 92px');
+        expect(cssBlock(globals, '.home-final-cta::before')).toContain('background: linear-gradient(90deg');
+        expect(cssBlock(globals, '.home-final-action--primary:hover svg')).toContain('transform: translateX(3px)');
         expect(page).toContain('className="home-final-action home-final-action--primary"');
         expect(page).toContain('className="home-final-action home-final-action--secondary"');
         expect(page).not.toContain("transition: 'all 0.3s ease'");
+    });
+
+    test('footer interactions use explicit states instead of inline hover mutation', () => {
+        const footer = readProjectFile('src/components/layout/Footer.tsx');
+
+        expect(footer).toContain('className="footer-brand-link"');
+        expect(footer).toContain('className="footer-link"');
+        expect(footer).toContain('className="footer-social footer-social--facebook"');
+        expect(footer).toContain('className="footer-social footer-social--youtube"');
+        expect(footer).not.toContain("transition: 'all 0.2s'");
+        expect(footer).not.toContain('onMouseOver');
+        expect(footer).not.toContain('onMouseOut');
+        expect(cssBlock(footer, '.footer-link:hover')).toContain('color: #7dd3fc !important');
+        expect(cssBlock(footer, '.footer-social:hover')).toContain('transform: translateY(-1px)');
+        expect(cssBlock(footer, '.footer-social:focus-visible')).toContain('box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.32)');
     });
 
     test('global rich content blockquotes avoid thick side-tab accents', () => {

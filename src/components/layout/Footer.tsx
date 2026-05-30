@@ -9,19 +9,20 @@ const footerLinkStyle = {
     color: '#94a3b8',
     textDecoration: 'none',
     fontSize: '0.9375rem',
-    transition: 'color 0.2s',
+    transition: 'color 0.2s ease',
 } as const;
 
 const socialLinkStyle = {
     width: '44px',
     height: '44px',
     background: '#334155',
+    border: '1px solid #475569',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     color: '#94a3b8',
-    transition: 'all 0.2s',
+    transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
 } as const;
 
 export default function Footer() {
@@ -29,15 +30,16 @@ export default function Footer() {
         <footer style={{
             background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
             color: 'white',
-            paddingTop: '80px',
+            paddingTop: '72px',
             paddingBottom: '40px',
+            borderTop: '1px solid rgba(148, 163, 184, 0.12)',
         }}>
             <div className="container">
                 {/* Main Footer Content */}
                 <div className="footer-grid">
                     {/* Brand */}
                     <div>
-                        <Link href="/" style={{
+                        <Link href="/" className="footer-brand-link" style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '12px',
@@ -76,15 +78,8 @@ export default function Footer() {
                                 href="https://www.facebook.com/milerdevpro"
                                 target="_blank" 
                                 rel="noopener noreferrer"
+                                className="footer-social footer-social--facebook"
                                 style={socialLinkStyle}
-                                onMouseOver={(e) => {
-                                    e.currentTarget.style.background = '#3b82f6';
-                                    e.currentTarget.style.color = 'white';
-                                }}
-                                onMouseOut={(e) => {
-                                    e.currentTarget.style.background = '#334155';
-                                    e.currentTarget.style.color = '#94a3b8';
-                                }}
                                 aria-label="Facebook"
                             >
                                 <svg style={{ width: '20px', height: '20px' }} fill="currentColor" viewBox="0 0 24 24">
@@ -95,15 +90,8 @@ export default function Footer() {
                                 href="https://www.youtube.com/channel/UCeKE6wQHTt5JpS9_RsH4hrg" 
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                className="footer-social footer-social--youtube"
                                 style={socialLinkStyle}
-                                onMouseOver={(e) => {
-                                    e.currentTarget.style.background = '#ef4444';
-                                    e.currentTarget.style.color = 'white';
-                                }}
-                                onMouseOut={(e) => {
-                                    e.currentTarget.style.background = '#334155';
-                                    e.currentTarget.style.color = '#94a3b8';
-                                }}
                                 aria-label="YouTube"
                             >
                                 <svg style={{ width: '20px', height: '20px' }} fill="currentColor" viewBox="0 0 24 24">
@@ -124,26 +112,17 @@ export default function Footer() {
                         }}>ลิงก์ด่วน</h3>
                         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <li>
-                                <Link href="/courses" style={footerLinkStyle}
-                                onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
-                                onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                                >
+                                <Link href="/courses" className="footer-link" style={footerLinkStyle}>
                                     คอร์สทั้งหมด
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/about" style={footerLinkStyle}
-                                onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
-                                onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                                >
+                                <Link href="/about" className="footer-link" style={footerLinkStyle}>
                                     เกี่ยวกับเรา
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/contact" style={footerLinkStyle}
-                                onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
-                                onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                                >
+                                <Link href="/contact" className="footer-link" style={footerLinkStyle}>
                                     ติดต่อ
                                 </Link>
                             </li>
@@ -161,26 +140,17 @@ export default function Footer() {
                         }}>ช่วยเหลือ</h3>
                         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <li>
-                                <Link href="/faq" style={footerLinkStyle}
-                                onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
-                                onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                                >
+                                <Link href="/faq" className="footer-link" style={footerLinkStyle}>
                                     คำถามที่พบบ่อย
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/terms" style={footerLinkStyle}
-                                onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
-                                onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                                >
+                                <Link href="/terms" className="footer-link" style={footerLinkStyle}>
                                     เงื่อนไขการใช้งาน
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/privacy" style={footerLinkStyle}
-                                onMouseOver={(e) => e.currentTarget.style.color = '#60a5fa'}
-                                onMouseOut={(e) => e.currentTarget.style.color = '#94a3b8'}
-                                >
+                                <Link href="/privacy" className="footer-link" style={footerLinkStyle}>
                                     นโยบายความเป็นส่วนตัว
                                 </Link>
                             </li>
@@ -239,6 +209,31 @@ export default function Footer() {
                 </div>
             </div>
             <style>{`
+                .footer-brand-link {
+                    border-radius: 10px;
+                }
+                .footer-brand-link:focus-visible,
+                .footer-link:focus-visible,
+                .footer-social:focus-visible {
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.32);
+                }
+                .footer-link:hover,
+                .footer-link:focus-visible {
+                    color: #7dd3fc !important;
+                }
+                .footer-social:hover {
+                    color: #ffffff !important;
+                    transform: translateY(-1px);
+                }
+                .footer-social--facebook:hover {
+                    background: #2563eb !important;
+                    border-color: #60a5fa !important;
+                }
+                .footer-social--youtube:hover {
+                    background: #dc2626 !important;
+                    border-color: #f87171 !important;
+                }
                 .footer-grid {
                     display: grid;
                     grid-template-columns: 1fr;
