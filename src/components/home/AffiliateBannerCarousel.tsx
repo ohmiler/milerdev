@@ -12,7 +12,7 @@ interface Banner {
 export default function AffiliateBannerCarousel() {
     const [banners, setBanners] = useState<Banner[]>([]);
     const [current, setCurrent] = useState(0);
-    const [isHovered, setIsHovered] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
     const startXRef = useRef(0);
     const draggingRef = useRef(false);
 
@@ -54,16 +54,16 @@ export default function AffiliateBannerCarousel() {
 
     // Auto-play
     useEffect(() => {
-        if (isHovered || total <= 1) return;
+        if (isPaused || total <= 1) return;
         const timer = setInterval(next, 4000);
         return () => clearInterval(timer);
-    }, [isHovered, next, total]);
+    }, [isPaused, next, total]);
 
     // Swipe handlers
     const onPointerDown = (e: React.PointerEvent) => {
         draggingRef.current = true;
         startXRef.current = e.clientX;
-        (e.target as HTMLElement).setPointerCapture(e.pointerId);
+        e.currentTarget.setPointerCapture(e.pointerId);
     };
     const onPointerUp = (e: React.PointerEvent) => {
         if (!draggingRef.current) return;
@@ -76,30 +76,31 @@ export default function AffiliateBannerCarousel() {
     if (total === 0) return null;
 
     return (
-        <section style={{ padding: '80px 0', background: 'white' }}>
-            <div className="container" style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <h2 className="section-title" style={{ marginBottom: '12px' }}>
+        <section className="affiliate-section" aria-labelledby="affiliate-carousel-title">
+            <div className="container affiliate-head">
+                <h2 id="affiliate-carousel-title" className="section-title affiliate-title">
                     บริการและสินค้าแนะนำ
                 </h2>
-                <p className="section-copy" style={{ margin: '0 auto', maxWidth: '50ch' }}>
+                <p className="section-copy affiliate-copy">
                     สนใจสมัครใช้บริการหรือสั่งซื้อ คลิกที่รูปภาพได้เลย
                 </p>
             </div>
 
             {/* Slider */}
             <div
-                style={{
-                    position: 'relative',
-                    maxWidth: '900px',
-                    margin: '0 auto',
-                    padding: '0 16px',
+                className="affiliate-shell"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+                onFocus={() => setIsPaused(true)}
+                onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget)) {
+                        setIsPaused(false);
+                    }
                 }}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
             >
                 {/* Track */}
                 <div
-                    style={{ overflow: 'hidden', borderRadius: '16px' }}
+                    className="affiliate-viewport"
                     onPointerDown={onPointerDown}
                     onPointerUp={onPointerUp}
                     onDragStart={(e) => e.preventDefault()}
@@ -115,10 +116,8 @@ export default function AffiliateBannerCarousel() {
                                 href={banner.linkUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                style={{
-                                    flex: '0 0 100%',
-                                    display: 'block',
-                                }}
+                                className="affiliate-slide"
+                                aria-label={`${banner.title} เปิดในแท็บใหม่`}
                             >
                                 <img
                                     src={banner.imageUrl}
@@ -126,11 +125,7 @@ export default function AffiliateBannerCarousel() {
                                     draggable={false}
                                     loading="lazy"
                                     decoding="async"
-                                    style={{
-                                        width: '100%',
-                                        display: 'block',
-                                        borderRadius: '16px',
-                                    }}
+                                    className="affiliate-image"
                                 />
                             </a>
                         ))}
@@ -141,30 +136,20 @@ export default function AffiliateBannerCarousel() {
                 {total > 1 && (
                     <>
                         <button
+                            type="button"
                             onClick={prev}
-                            style={{
-                                position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)',
-                                width: '44px', height: '44px', borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.9)', border: '1px solid #e2e8f0',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                zIndex: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                            }}
-                            aria-label="Previous"
+                            className="affiliate-nav affiliate-nav--prev"
+                            aria-label="ดูรายการก่อนหน้า"
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="15 18 9 12 15 6" />
                             </svg>
                         </button>
                         <button
+                            type="button"
                             onClick={next}
-                            style={{
-                                position: 'absolute', right: '24px', top: '50%', transform: 'translateY(-50%)',
-                                width: '44px', height: '44px', borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.9)', border: '1px solid #e2e8f0',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                zIndex: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                            }}
-                            aria-label="Next"
+                            className="affiliate-nav affiliate-nav--next"
+                            aria-label="ดูรายการถัดไป"
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="9 18 15 12 9 6" />
@@ -176,41 +161,169 @@ export default function AffiliateBannerCarousel() {
 
             {/* Dots */}
             {total > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+                <div className="affiliate-dots" aria-label="เลือกรายการแนะนำ">
                     {banners.map((_, i) => (
                         <button
                             key={i}
                             onClick={() => goTo(i)}
-                            style={{
-                                minWidth: '44px',
-                                minHeight: '44px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: 'none',
-                                background: 'transparent',
-                                cursor: 'pointer',
-                                padding: 0,
-                            }}
-                            aria-label={`Slide ${i + 1}`}
+                            type="button"
+                            className="affiliate-dot"
+                            aria-label={`ดูรายการที่ ${i + 1}`}
                             aria-current={current === i ? 'true' : undefined}
                         >
                             <span
                                 aria-hidden="true"
-                                style={{
-                                    width: '24px',
-                                    height: '8px',
-                                    borderRadius: '50px',
-                                    background: current === i ? 'var(--primary-600)' : 'var(--gray-300)',
-                                    transform: current === i ? 'scaleX(1)' : 'scaleX(0.35)',
-                                    transformOrigin: 'center',
-                                    transition: 'transform 0.2s ease, background-color 0.2s ease',
-                                }}
+                                className="affiliate-dot__mark"
+                                data-active={current === i ? 'true' : undefined}
                             />
                         </button>
                     ))}
                 </div>
             )}
+            <style>{`
+                .affiliate-section {
+                    padding: 72px 0 76px;
+                    background: #ffffff;
+                }
+                .affiliate-head {
+                    text-align: center;
+                    margin-bottom: 34px;
+                }
+                .affiliate-title {
+                    margin-bottom: 10px;
+                    text-wrap: balance;
+                }
+                .affiliate-copy {
+                    margin: 0 auto;
+                    max-width: 50ch;
+                    text-wrap: pretty;
+                }
+                .affiliate-shell {
+                    position: relative;
+                    max-width: 900px;
+                    margin: 0 auto;
+                    padding: 0 16px;
+                }
+                .affiliate-viewport {
+                    overflow: hidden;
+                    border-radius: 12px;
+                    border: 1px solid var(--gray-200);
+                    background: var(--gray-50);
+                }
+                .affiliate-slide {
+                    flex: 0 0 100%;
+                    display: block;
+                    outline: none;
+                }
+                .affiliate-slide:focus-visible .affiliate-image {
+                    box-shadow: inset 0 0 0 3px rgba(2, 171, 255, 0.5);
+                }
+                .affiliate-image {
+                    width: 100%;
+                    display: block;
+                    border-radius: 12px;
+                }
+                .affiliate-nav {
+                    position: absolute;
+                    top: 50%;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 999px;
+                    background: rgba(255,255,255,0.94);
+                    border: 1px solid var(--gray-200);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2;
+                    box-shadow: 0 4px 10px rgba(16, 32, 51, 0.12);
+                    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+                }
+                .affiliate-nav--prev {
+                    left: 24px;
+                    transform: translateY(-50%);
+                }
+                .affiliate-nav--next {
+                    right: 24px;
+                    transform: translateY(-50%);
+                }
+                .affiliate-nav:hover {
+                    background: #ffffff;
+                    border-color: var(--primary-300);
+                }
+                .affiliate-nav:focus-visible {
+                    outline: none;
+                    box-shadow: var(--focus-ring);
+                }
+                .affiliate-nav--prev:hover {
+                    transform: translate(-2px, -50%);
+                }
+                .affiliate-nav--next:hover {
+                    transform: translate(2px, -50%);
+                }
+                .affiliate-dots {
+                    display: flex;
+                    justify-content: center;
+                    gap: 8px;
+                    margin-top: 18px;
+                }
+                .affiliate-dot {
+                    min-width: 44px;
+                    min-height: 44px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: none;
+                    background: transparent;
+                    cursor: pointer;
+                    padding: 0;
+                    border-radius: 999px;
+                }
+                .affiliate-dot:focus-visible {
+                    outline: none;
+                    box-shadow: var(--focus-ring);
+                }
+                .affiliate-dot__mark {
+                    width: 24px;
+                    height: 8px;
+                    border-radius: 999px;
+                    background: var(--gray-300);
+                    transform: scaleX(0.35);
+                    transform-origin: center;
+                    transition: transform 0.2s ease, background-color 0.2s ease;
+                }
+                .affiliate-dot__mark[data-active="true"] {
+                    background: var(--primary-600);
+                    transform: scaleX(1);
+                }
+                @media (max-width: 640px) {
+                    .affiliate-section {
+                        padding: 56px 0 60px;
+                    }
+                    .affiliate-head {
+                        margin-bottom: 28px;
+                    }
+                    .affiliate-shell {
+                        padding: 0 16px;
+                    }
+                    .affiliate-nav {
+                        width: 40px;
+                        height: 40px;
+                    }
+                    .affiliate-nav--prev {
+                        left: 20px;
+                    }
+                    .affiliate-nav--next {
+                        right: 20px;
+                    }
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .affiliate-nav,
+                    .affiliate-dot__mark {
+                        transition: none;
+                    }
+                }
+            `}</style>
         </section>
     );
 }

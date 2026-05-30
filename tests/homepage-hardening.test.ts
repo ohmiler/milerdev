@@ -46,8 +46,8 @@ describe('homepage hardening', () => {
     test('homepage carousel dots have accessible hit area and current state', () => {
         const carousel = readProjectFile('src/components/home/AffiliateBannerCarousel.tsx');
 
-        expect(carousel).toContain("minWidth: '44px'");
-        expect(carousel).toContain("minHeight: '44px'");
+        expect(cssBlock(carousel, '.affiliate-dot {')).toContain('min-width: 44px');
+        expect(cssBlock(carousel, '.affiliate-dot {')).toContain('min-height: 44px');
         expect(carousel).toContain('aria-current');
     });
 

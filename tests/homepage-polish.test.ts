@@ -84,8 +84,23 @@ describe('homepage polish', () => {
         const carousel = readProjectFile('src/components/home/AffiliateBannerCarousel.tsx');
 
         expect(carousel).not.toContain('transition: \'wid' + 'th');
-        expect(carousel).toContain('transition: \'transform 0.2s ease, background-color 0.2s ease\'');
-        expect(carousel).toContain('transform: current === i ? \'scaleX(1)\' : \'scaleX(0.35)\'');
+        expect(cssBlock(carousel, '.affiliate-dot__mark {')).toContain('transition: transform 0.2s ease, background-color 0.2s ease');
+        expect(cssBlock(carousel, '.affiliate-dot__mark {')).toContain('transform: scaleX(0.35)');
+        expect(cssBlock(carousel, '.affiliate-dot__mark[data-active="true"]')).toContain('transform: scaleX(1)');
+    });
+
+    test('affiliate carousel is keyboard-friendly and motion-safe', () => {
+        const carousel = readProjectFile('src/components/home/AffiliateBannerCarousel.tsx');
+
+        expect(carousel).toContain('className="affiliate-section"');
+        expect(carousel).toContain('aria-labelledby="affiliate-carousel-title"');
+        expect(carousel).toContain('onFocus={() => setIsPaused(true)}');
+        expect(carousel).toContain('aria-label={`${banner.title} เปิดในแท็บใหม่`}');
+        expect(carousel).toContain('aria-label="ดูรายการก่อนหน้า"');
+        expect(carousel).toContain('aria-label="ดูรายการถัดไป"');
+        expect(cssBlock(carousel, '.affiliate-viewport {')).toContain('border-radius: 12px');
+        expect(cssBlock(carousel, '.affiliate-slide:focus-visible .affiliate-image')).toContain('box-shadow: inset 0 0 0 3px rgba(2, 171, 255, 0.5)');
+        expect(carousel).toContain('@media (prefers-reduced-motion: reduce)');
     });
 
     test('homepage shared buttons and final CTA expose focus-visible polish', () => {
