@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/run-local-dev.cjs",
     "dev:remote": "infisical run --env=dev -- next dev",
     "dev:local": "infisical run --env=dev -- next dev",
     "build": "next build",
