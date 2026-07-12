@@ -68,7 +68,7 @@ Verification:
 
 ### Public discovery
 
-- [ ] Courses catalog.
+- [x] Courses catalog. Redesigned as a Swiss editorial search surface with bundle comparison rail, labeled filter toolbar, responsive course grid, empty state, and pagination.
 - [ ] Course detail.
 - [ ] Bundle detail.
 - [ ] Blog index and article pages.
