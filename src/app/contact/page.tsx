@@ -1,42 +1,31 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import PageHeader from '@/components/layout/PageHeader';
 
 export default function ContactPage() {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        subject: '',
-        message: '',
-    });
+    const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [honey, setHoney] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
     const formLoadTime = useRef(Date.now());
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
         setIsSubmitting(true);
         setErrorMessage('');
 
         try {
-            const res = await fetch('/api/contact', {
+            const response = await fetch('/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...formData,
-                    _honey: honey,
-                    _timestamp: formLoadTime.current,
-                }),
+                body: JSON.stringify({ ...formData, _honey: honey, _timestamp: formLoadTime.current }),
             });
+            const data = await response.json();
 
-            const data = await res.json();
-
-            if (!res.ok) {
+            if (!response.ok) {
                 setErrorMessage(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
                 setSubmitStatus('error');
             } else {
@@ -55,271 +44,91 @@ export default function ContactPage() {
     return (
         <>
             <Navbar />
-            
-            <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
-                <PageHeader
-                    badge="ติดต่อเรา"
-                    title="ยินดีต้อนรับทุกคำถาม"
-                    description="มีคำถามหรือข้อเสนอแนะ? เราพร้อมรับฟังและช่วยเหลือคุณ"
-                    align="center"
-                />
-                <div className="container" style={{ paddingTop: '48px', paddingBottom: '80px' }}>
+            <main className="contact-desk">
+                <header className="contact-desk__hero">
+                    <div className="container">
+                        <p className="contact-desk__meta">Contact / MilerDev</p>
+                        <h1>บอกเราได้ว่า<br />คุณกำลังติดเรื่องไหน</h1>
+                        <p>สอบถามเรื่องคอร์ส การเรียน การชำระเงิน หรือเสนอความร่วมมือ ส่งรายละเอียดมาให้ครบเพื่อให้ทีมตอบกลับได้ตรงประเด็น</p>
+                    </div>
+                </header>
 
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: '40px',
-                        maxWidth: '1000px',
-                        margin: '0 auto',
-                    }}>
-                        {/* Contact Info */}
-                        <div>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', marginBottom: '24px' }}>
-                                ข้อมูลการติดต่อ
-                            </h2>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                                    <div style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        background: '#eff6ff',
-                                        borderRadius: '12px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0,
-                                    }}>
-                                        <svg style={{ width: '24px', height: '24px', color: '#2563eb' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>อีเมล</div>
-                                        <div style={{ color: '#64748b' }}>milerdev.official@gmail.com</div>
-                                    </div>
+                <section className="contact-desk__body" aria-labelledby="contact-form-title">
+                    <div className="container contact-desk__grid">
+                        <aside className="contact-desk__info" aria-label="ข้อมูลการติดต่อ">
+                            <p className="contact-desk__section-label">Contact desk</p>
+                            <h2>ช่องทางติดต่อ</h2>
+                            <dl>
+                                <div>
+                                    <dt>อีเมล</dt>
+                                    <dd><a href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a></dd>
                                 </div>
-
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                                    <div style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        background: '#eff6ff',
-                                        borderRadius: '12px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0,
-                                    }}>
-                                        <svg style={{ width: '24px', height: '24px', color: '#2563eb' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>เวลาทำการ</div>
-                                        <div style={{ color: '#64748b' }}>จันทร์ - ศุกร์: 9:00 - 18:00 น.</div>
-                                    </div>
+                                <div>
+                                    <dt>เวลาทำการ</dt>
+                                    <dd>จันทร์ถึงศุกร์<br />09:00 ถึง 18:00 น.</dd>
                                 </div>
+                                <div>
+                                    <dt>เรื่องที่ติดต่อได้</dt>
+                                    <dd>คอร์สและการเรียน<br />การชำระเงิน<br />งานวิทยากรและความร่วมมือ</dd>
+                                </div>
+                            </dl>
+                            <p className="contact-desk__note">หลีกเลี่ยงการส่งรหัสผ่าน ข้อมูลบัตร หรือข้อมูลส่วนตัวที่ไม่จำเป็นผ่านแบบฟอร์มนี้</p>
+                        </aside>
 
-                                {/* <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                                    <div style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        background: '#eff6ff',
-                                        borderRadius: '12px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0,
-                                    }}>
-                                        <svg style={{ width: '24px', height: '24px', color: '#2563eb' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>Discord Community</div>
-                                        <div style={{ color: '#64748b' }}>เข้าร่วมกลุ่มเพื่อพูดคุยและแลกเปลี่ยน</div>
-                                    </div>
-                                </div> */}
+                        <div className="contact-form-panel">
+                            <div className="contact-form-panel__head">
+                                <p className="contact-desk__section-label">Send a message</p>
+                                <h2 id="contact-form-title">ส่งรายละเอียดให้ทีม MilerDev</h2>
+                                <p>กรอกข้อมูลที่จำเป็น ทีมจะใช้ข้อมูลนี้เพื่อตอบกลับคำถามของคุณเท่านั้น</p>
                             </div>
-                        </div>
-
-                        {/* Contact Form */}
-                        <div style={{
-                            background: 'white',
-                            padding: '32px',
-                            borderRadius: '16px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-                        }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', marginBottom: '24px' }}>
-                                ส่งข้อความถึงเรา
-                            </h2>
 
                             {submitStatus === 'success' ? (
-                                <div style={{
-                                    textAlign: 'center',
-                                    padding: '40px 20px',
-                                }}>
-                                    <div style={{
-                                        width: '64px',
-                                        height: '64px',
-                                        background: '#dcfce7',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        margin: '0 auto 16px',
-                                    }}>
-                                        <svg style={{ width: '32px', height: '32px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                    <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>
-                                        ส่งข้อความสำเร็จ!
-                                    </h3>
-                                    <p style={{ color: '#64748b', marginBottom: '16px' }}>
-                                        เราจะติดต่อกลับโดยเร็วที่สุด
-                                    </p>
-                                    <button
-                                        onClick={() => setSubmitStatus('idle')}
-                                        style={{
-                                            color: '#2563eb',
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        ส่งข้อความอีกครั้ง
-                                    </button>
+                                <div className="contact-success" role="status" aria-live="polite">
+                                    <span aria-hidden="true">✓</span>
+                                    <h3>ส่งข้อความเรียบร้อย</h3>
+                                    <p>ทีมได้รับรายละเอียดแล้ว และจะตอบกลับผ่านอีเมลที่คุณระบุ</p>
+                                    <button type="button" onClick={() => setSubmitStatus('idle')}>ส่งข้อความใหม่</button>
                                 </div>
                             ) : (
-                                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                    {/* Honeypot — hidden from humans, bots will fill it */}
-                                    <div style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
-                                        <input
-                                            type="text"
-                                            name="website"
-                                            tabIndex={-1}
-                                            autoComplete="off"
-                                            value={honey}
-                                            onChange={(e) => setHoney(e.target.value)}
-                                        />
+                                <form onSubmit={handleSubmit} className="contact-form">
+                                    <div className="contact-honeypot" aria-hidden="true">
+                                        <label htmlFor="contact-website">เว็บไซต์</label>
+                                        <input id="contact-website" type="text" name="website" tabIndex={-1} autoComplete="off" value={honey} onChange={(event) => setHoney(event.target.value)} />
                                     </div>
 
-                                    {submitStatus === 'error' && errorMessage && (
-                                        <div style={{
-                                            background: '#fef2f2',
-                                            border: '1px solid #fecaca',
-                                            color: '#dc2626',
-                                            padding: '12px 16px',
-                                            borderRadius: '8px',
-                                            fontSize: '0.875rem',
-                                        }}>
-                                            {errorMessage}
+                                    {submitStatus === 'error' && errorMessage && <div className="contact-form__error" role="alert">{errorMessage}</div>}
+
+                                    <div className="contact-form__row">
+                                        <div className="contact-field">
+                                            <label htmlFor="contact-name">ชื่อ</label>
+                                            <input id="contact-name" name="name" type="text" required minLength={2} maxLength={100} autoComplete="name" value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} placeholder="ชื่อที่ใช้ติดต่อ" />
                                         </div>
-                                    )}
-
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#374151' }}>
-                                            ชื่อ
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px 16px',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '8px',
-                                                fontSize: '1rem',
-                                                outline: 'none',
-                                            }}
-                                            placeholder="ชื่อของคุณ"
-                                        />
+                                        <div className="contact-field">
+                                            <label htmlFor="contact-email">อีเมล</label>
+                                            <input id="contact-email" name="email" type="email" required maxLength={255} autoComplete="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} placeholder="name@example.com" />
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#374151' }}>
-                                            อีเมล
-                                        </label>
-                                        <input
-                                            type="email"
-                                            required
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px 16px',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '8px',
-                                                fontSize: '1rem',
-                                                outline: 'none',
-                                            }}
-                                            placeholder="your@email.com"
-                                        />
+                                    <div className="contact-field">
+                                        <label htmlFor="contact-subject">หัวข้อที่ต้องการติดต่อ</label>
+                                        <input id="contact-subject" name="subject" type="text" required minLength={2} maxLength={200} value={formData.subject} onChange={(event) => setFormData({ ...formData, subject: event.target.value })} placeholder="เช่น สอบถามการเข้าเรียนคอร์ส" />
                                     </div>
 
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#374151' }}>
-                                            หัวข้อ
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.subject}
-                                            onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px 16px',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '8px',
-                                                fontSize: '1rem',
-                                                outline: 'none',
-                                            }}
-                                            placeholder="หัวข้อที่ต้องการสอบถาม"
-                                        />
+                                    <div className="contact-field">
+                                        <div className="contact-field__label"><label htmlFor="contact-message">รายละเอียด</label><span>10 ถึง 5,000 ตัวอักษร</span></div>
+                                        <textarea id="contact-message" name="message" required minLength={10} maxLength={5000} rows={7} value={formData.message} onChange={(event) => setFormData({ ...formData, message: event.target.value })} placeholder="อธิบายสิ่งที่ต้องการให้ทีมช่วย พร้อมข้อมูลที่เกี่ยวข้อง" />
                                     </div>
 
-                                    <div>
-                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#374151' }}>
-                                            ข้อความ
-                                        </label>
-                                        <textarea
-                                            required
-                                            value={formData.message}
-                                            onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                                            rows={5}
-                                            style={{
-                                                width: '100%',
-                                                padding: '12px 16px',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '8px',
-                                                fontSize: '1rem',
-                                                outline: 'none',
-                                                resize: 'vertical',
-                                            }}
-                                            placeholder="รายละเอียดที่ต้องการติดต่อ..."
-                                        />
+                                    <div className="contact-form__submit">
+                                        <p>เมื่อส่งข้อความ คุณยืนยันว่าข้อมูลที่ระบุสามารถใช้เพื่อติดต่อกลับได้</p>
+                                        <button type="submit" disabled={isSubmitting}>{isSubmitting ? 'กำลังส่งข้อความ…' : 'ส่งข้อความถึงทีม'}</button>
                                     </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmitting}
-                                        className="btn btn-primary"
-                                        style={{ width: '100%', opacity: isSubmitting ? 0.7 : 1 }}
-                                    >
-                                        {isSubmitting ? 'กำลังส่ง...' : 'ส่งข้อความ'}
-                                    </button>
                                 </form>
                             )}
                         </div>
                     </div>
-                </div>
+                </section>
             </main>
-
             <Footer />
         </>
     );

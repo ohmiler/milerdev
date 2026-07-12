@@ -74,7 +74,8 @@ Verification:
 - [x] Blog index. Redesigned as a Swiss developer journal with a lead article, editorial rows, topic navigation, search, empty state, and pagination.
 - [ ] Blog article detail.
 - [x] About page. Redesigned as a Swiss studio profile with manifesto, learning method, principles, real event imagery, and focused CTA.
-- [ ] Contact, FAQ, and legal pages.
+- [x] Contact page. Redesigned as a Swiss service desk with contact rail, accessible form, safe-data note, and complete submission states.
+- [ ] FAQ and legal pages.
 
 ### Learner product
 
