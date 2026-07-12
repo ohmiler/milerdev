@@ -2419,3 +2419,134 @@ h1, h2, h3, h4, h5, h6 {
     transform: none;
   }
 }
+
+/* Homepage featured courses: Swiss discovery grid */
+.featured-courses-section {
+  background: var(--canvas);
+  border-bottom: 1px solid var(--line);
+}
+
+.featured-courses-section .container {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(24px, 4vw, 64px);
+  align-items: start;
+}
+
+.featured-courses-section .featured-courses-head {
+  grid-column: span 4;
+  display: block;
+  margin: 0;
+  padding-top: 4px;
+}
+
+.featured-courses-section .featured-courses-head .section-title {
+  margin-bottom: 12px;
+  text-wrap: balance;
+}
+
+.featured-courses-section .featured-courses-head .section-copy {
+  margin: 0 0 24px;
+  max-width: 28ch;
+}
+
+.featured-courses-section .featured-courses-head .btn {
+  width: fit-content;
+}
+
+.featured-courses-section .featured-courses-grid {
+  grid-column: 5 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  align-items: stretch;
+  border-top: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line);
+}
+
+.featured-courses-section .course-card--featured {
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: none;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.featured-courses-section .course-card--featured:hover {
+  transform: none;
+  border-color: var(--line);
+  background: var(--accent-soft);
+  box-shadow: none;
+}
+
+.featured-courses-section .course-card--featured:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.featured-courses-section .course-card--featured .course-thumbnail {
+  border-radius: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.featured-courses-section .course-card--featured .course-card__content {
+  min-width: 0;
+  padding: 18px;
+}
+
+.featured-courses-section .course-card--featured .cc-cta {
+  justify-content: flex-start;
+  margin-top: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  box-shadow: none;
+}
+
+.featured-courses-section .course-card--featured:hover .cc-cta {
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .featured-courses-section .container {
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+  }
+
+  .featured-courses-section .featured-courses-head,
+  .featured-courses-section .featured-courses-grid {
+    grid-column: 1 / -1;
+  }
+
+  .featured-courses-section .featured-courses-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .featured-courses-section .container {
+    row-gap: 24px;
+  }
+
+  .featured-courses-section .featured-courses-head .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .featured-courses-section .featured-courses-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-courses-section .course-card--featured {
+    transition: none;
+  }
+}
