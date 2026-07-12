@@ -73,7 +73,8 @@ Verification:
 - [ ] Bundle detail.
 - [x] Blog index. Redesigned as a Swiss developer journal with a lead article, editorial rows, topic navigation, search, empty state, and pagination.
 - [ ] Blog article detail.
-- [ ] About, contact, FAQ, and legal pages.
+- [x] About page. Redesigned as a Swiss studio profile with manifesto, learning method, principles, real event imagery, and focused CTA.
+- [ ] Contact, FAQ, and legal pages.
 
 ### Learner product
 
