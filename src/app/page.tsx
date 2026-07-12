@@ -230,7 +230,7 @@ export default async function HomePage() {
                 </p>
 
                 <div className="hero-actions hero-cta-anim">
-                  <Link href="#learning-path" className="btn btn-primary">
+                  <Link href="#featured-courses" className="btn btn-primary">
                     <svg aria-hidden="true" style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                     </svg>
@@ -256,6 +256,46 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+        {/* Featured Courses Section */}
+        <section id="featured-courses" className="section featured-courses-section" data-reveal>
+          <div className="container">
+            <div className="featured-courses-head">
+              <div>
+                <h2 className="section-title">
+                  คอร์สยอดนิยม
+                </h2>
+                <p className="section-copy">คอร์สที่ได้รับความนิยมสูงสุดจากนักเรียน</p>
+              </div>
+              <Link href="/courses" className="btn btn-secondary">
+                ดูทั้งหมด
+                <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="featured-courses-grid">
+              {featuredCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  id={course.id}
+                  title={course.title}
+                  slug={course.slug}
+                  description={course.description}
+                  thumbnailUrl={course.thumbnailUrl}
+                  price={parseFloat(course.price || '0')}
+                  promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
+                  isPromoActive={course.isPromoActive}
+                  instructorName={course.instructor?.name || null}
+                  lessonCount={course.lessonCount}
+                  outcomes={getCourseOutcomes(course.title) || undefined}
+                  variant="featured"
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Learning Path — guided beginner journey */}
         {learningPath.length > 0 && (
           <section id="learning-path" className="learning-path" data-reveal aria-label="เส้นทางการเรียนสำหรับมือใหม่">
@@ -371,46 +411,6 @@ export default async function HomePage() {
                   ร่วมกลุ่มกับนักเรียนคนอื่นๆ แลกเปลี่ยนความรู้และประสบการณ์
                 </p>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Featured Courses Section */}
-        <section id="featured-courses" className="section featured-courses-section" data-reveal>
-          <div className="container">
-            <div className="featured-courses-head">
-              <div>
-                <h2 className="section-title">
-                  คอร์สยอดนิยม
-                </h2>
-                <p className="section-copy">คอร์สที่ได้รับความนิยมสูงสุดจากนักเรียน</p>
-              </div>
-              <Link href="/courses" className="btn btn-secondary">
-                ดูทั้งหมด
-                <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-
-            <div className="featured-courses-grid">
-              {featuredCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  id={course.id}
-                  title={course.title}
-                  slug={course.slug}
-                  description={course.description}
-                  thumbnailUrl={course.thumbnailUrl}
-                  price={parseFloat(course.price || '0')}
-                  promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
-                  isPromoActive={course.isPromoActive}
-                  instructorName={course.instructor?.name || null}
-                  lessonCount={course.lessonCount}
-                  outcomes={getCourseOutcomes(course.title) || undefined}
-                  variant="featured"
-                />
-              ))}
             </div>
           </div>
         </section>

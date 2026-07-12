@@ -278,13 +278,40 @@ describe('homepage polish', () => {
         expect(courseCard).toContain('course-card__content');
         expect(courseCard).not.toContain("border: '1px solid #f5a524'");
 
-        expect(cssBlock(globals, '.featured-courses-grid {')).toContain('grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))');
+        expect(cssBlock(globals, '.featured-courses-section .featured-courses-grid {')).toContain('grid-template-columns: repeat(3, minmax(0, 1fr))');
         expect(cssBlock(globals, '.course-card {')).toContain('display: flex');
         expect(cssBlock(globals, '.course-card--featured .cc-outcomes')).toContain('min-height');
         expect(cssBlock(globals, '.course-card:focus-visible')).toContain('box-shadow: var(--focus-ring)');
         expect(cssBlock(globals, '.course-card--featured .price-badge.promo')).toContain('background: var(--primary-800)');
         expect(cssBlock(globals, '.course-card--featured .course-discount-badge')).toContain('background: #fff4d8');
         expect(cssBlock(globals, '.course-card--featured .course-discount-badge')).toContain('color: #9a5a00');
+
+        const heroIndex = page.indexOf('className="hero-section"');
+        const featuredIndex = page.indexOf('id="featured-courses"');
+        const learningPathIndex = page.indexOf('id="learning-path"');
+
+        expect(heroIndex).toBeGreaterThanOrEqual(0);
+        expect(featuredIndex).toBeGreaterThan(heroIndex);
+        expect(learningPathIndex).toBeGreaterThan(featuredIndex);
+        expect((page.match(/id="featured-courses"/g) ?? []).length).toBe(1);
+        expect(page).toContain('href="#featured-courses"');
+
+        expect(cssBlock(globals, '.featured-courses-section .container {')).toContain(
+            'grid-template-columns: repeat(12, minmax(0, 1fr))'
+        );
+        expect(cssBlock(globals, '.featured-courses-section .featured-courses-head {')).toContain('grid-column: span 4');
+        expect(cssBlock(globals, '.featured-courses-section .featured-courses-grid {')).toContain('grid-column: 5 / -1');
+        expect(cssBlock(globals, '.featured-courses-section .featured-courses-grid {')).toContain(
+            'grid-template-columns: repeat(3, minmax(0, 1fr))'
+        );
+        expect(cssBlock(globals, '.featured-courses-section .course-card--featured {')).toContain('border-radius: 0');
+        expect(cssBlock(globals, '.featured-courses-section .course-card--featured .cc-cta {')).not.toContain(
+            'background: var(--primary-gradient)'
+        );
+        expect(cssBlock(globals, '.featured-courses-section .course-card--featured:focus-visible')).toContain(
+            'box-shadow: var(--focus-ring)'
+        );
+        expect(globals).toContain('@media (prefers-reduced-motion: reduce)');
     });
 
     test('audience fit section works as a decision aid, not matching cards', () => {
