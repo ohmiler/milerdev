@@ -100,279 +100,81 @@ export default async function DashboardPage() {
   ]);
   const certificateCount = certCount?.count || 0;
   const totalPayments = paymentCount?.count || 0;
+  const completedCourses = userEnrollments.filter((enrollment) => enrollment.completedAt).length;
+  const activeCourses = userEnrollments.filter((enrollment) => !enrollment.completedAt).length;
+  const primaryEnrollment = userEnrollments.find((enrollment) => !enrollment.completedAt) ?? userEnrollments[0] ?? null;
+  const remainingEnrollments = primaryEnrollment
+    ? userEnrollments.filter((enrollment) => enrollment.id !== primaryEnrollment.id)
+    : [];
 
   return (
     <>
       <Navbar />
-
-      <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
-        <div className="container" style={{ paddingTop: '40px', paddingBottom: '60px' }}>
-          {/* Header */}
-          <div style={{ marginBottom: '40px' }}>
-            <h1 style={{
-              fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-              fontWeight: 700,
-              color: '#1e293b',
-              marginBottom: '8px',
-            }}>
-              สวัสดี, {session.user.name || 'นักเรียน'}! 👋
-            </h1>
-            <p style={{ color: '#64748b' }}>
-              ยินดีต้อนรับกลับมา! ดูคอร์สที่คุณกำลังเรียนอยู่
-            </p>
-          </div>
-
-          {/* Stats */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '20px',
-            marginBottom: '40px',
-          }}>
-            <div style={{
-              background: 'white',
-              padding: '24px',
-              borderRadius: '12px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            }}>
-              <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '8px' }}>
-                คอร์สที่ลงทะเบียน
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#2563eb' }}>
-                {userEnrollments.length}
-              </div>
+      <main className="learner-dashboard">
+        <div className="container">
+          <header className="learner-dashboard__header">
+            <div>
+              <p className="learner-dashboard__meta">Learning dashboard</p>
+              <h1>สวัสดี, {session.user.name || 'นักเรียน'}</h1>
+              <p>กลับมาเรียนต่อจากคอร์สล่าสุด หรือตรวจสอบความคืบหน้าทั้งหมดของคุณ</p>
             </div>
-            <div style={{
-              background: 'white',
-              padding: '24px',
-              borderRadius: '12px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            }}>
-              <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '8px' }}>
-                คอร์สที่เรียนจบ
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#16a34a' }}>
-                {userEnrollments.filter((e) => e.completedAt).length}
-              </div>
-            </div>
-            <div style={{
-              background: 'white',
-              padding: '24px',
-              borderRadius: '12px',
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-            }}>
-              <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '8px' }}>
-                กำลังเรียน
-              </div>
-              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f59e0b' }}>
-                {userEnrollments.filter((e) => !e.completedAt).length}
-              </div>
-            </div>
-            <Link href="/dashboard/certificates" style={{ textDecoration: 'none' }}>
-              <div style={{
-                background: 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                transition: 'box-shadow 0.2s',
-                cursor: 'pointer',
-              }}>
-                <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '8px' }}>
-                  ใบรับรอง 🎓
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: 700, color: '#7c3aed' }}>
-                  {certificateCount}
-                </div>
-              </div>
-            </Link>
-            <Link href="/dashboard/payments" style={{ textDecoration: 'none' }}>
-              <div style={{
-                background: 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                transition: 'box-shadow 0.2s',
-                cursor: 'pointer',
-              }}>
-                <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '8px' }}>
-                  การชำระเงิน 💳
-                </div>
-                <div style={{ fontSize: '2rem', fontWeight: 700, color: '#f97316' }}>
-                  {totalPayments}
-                </div>
-              </div>
-            </Link>
-          </div>
+            <nav className="learner-dashboard__nav" aria-label="เมนูบัญชีผู้เรียน">
+              <Link href="/dashboard/certificates">ใบรับรอง <span>{certificateCount}</span></Link>
+              <Link href="/dashboard/payments">การชำระเงิน <span>{totalPayments}</span></Link>
+              <Link href="/settings">ตั้งค่าบัญชี</Link>
+            </nav>
+          </header>
 
-          {/* My Courses */}
-          <div>
-            <h2 style={{
-              fontSize: '1.25rem',
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: '20px',
-            }}>
-              คอร์สของฉัน
-            </h2>
+          <section className="learner-dashboard__stats" aria-label="สรุปการเรียน">
+            <div><span>คอร์สทั้งหมด</span><strong>{userEnrollments.length}</strong></div>
+            <div><span>กำลังเรียน</span><strong>{activeCourses}</strong></div>
+            <div><span>เรียนจบแล้ว</span><strong>{completedCourses}</strong></div>
+            <div><span>ใบรับรอง</span><strong>{certificateCount}</strong></div>
+          </section>
 
-            {userEnrollments.length === 0 ? (
-              <div style={{
-                background: 'white',
-                padding: '60px 40px',
-                borderRadius: '12px',
-                textAlign: 'center',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-              }}>
-                <svg style={{ width: '64px', height: '64px', margin: '0 auto 16px', color: '#cbd5e1' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>
-                  ยังไม่มีคอร์ส
-                </h3>
-                <p style={{ color: '#64748b', marginBottom: '24px' }}>
-                  เริ่มต้นเรียนรู้กับเราได้เลย!
-                </p>
-                <Link href="/courses" className="btn btn-primary">
-                  ดูคอร์สทั้งหมด
+          {primaryEnrollment ? (
+            <>
+              <section className="dashboard-continue" aria-labelledby="dashboard-continue-title">
+                <div className="dashboard-section-head">
+                  <div><p>Next action</p><h2 id="dashboard-continue-title">{primaryEnrollment.completedAt ? 'ทบทวนคอร์สล่าสุด' : 'เรียนต่อจากคอร์สล่าสุด'}</h2></div>
+                  <span>{primaryEnrollment.completedLessons} / {primaryEnrollment.course.lessonCount} บทเรียน</span>
+                </div>
+                <Link href={`/courses/${primaryEnrollment.course.slug}/learn`} className="dashboard-continue__course">
+                  <div className="dashboard-continue__image">
+                    {primaryEnrollment.course.thumbnailUrl ? <Image src={primaryEnrollment.course.thumbnailUrl.startsWith('http') ? primaryEnrollment.course.thumbnailUrl : `https://${primaryEnrollment.course.thumbnailUrl}`} alt={primaryEnrollment.course.title} fill priority sizes="(max-width: 900px) 100vw, 48vw" /> : <div className="dashboard-course-fallback"><span>MD</span><small>Learning</small></div>}
+                  </div>
+                  <div className="dashboard-continue__content">
+                    <div className="dashboard-course-status">{primaryEnrollment.progressPercent === 100 ? 'เรียนจบแล้ว' : 'กำลังเรียน'} · {primaryEnrollment.progressPercent}%</div>
+                    <h3>{primaryEnrollment.course.title}</h3>
+                    <div className="dashboard-progress" aria-label={`ความคืบหน้า ${primaryEnrollment.progressPercent}%`}><span style={{ width: `${primaryEnrollment.progressPercent}%` }} /></div>
+                    <div className="dashboard-continue__action"><span>{primaryEnrollment.completedAt ? 'เปิดคอร์สอีกครั้ง' : 'ไปยังบทเรียนถัดไป'}</span><span aria-hidden="true">→</span></div>
+                  </div>
                 </Link>
-              </div>
-            ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: '20px',
-              }}>
-                {userEnrollments.map((enrollment) => (
-                  <Link
-                    key={enrollment.id}
-                    href={`/courses/${enrollment.course.slug}/learn`}
-                    style={{
-                      display: 'block',
-                      background: 'white',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                      textDecoration: 'none',
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                    }}
-                  >
-                    {/* Thumbnail */}
-                    <div style={{
-                      aspectRatio: '16/9',
-                      background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                      position: 'relative',
-                    }}>
-                      {enrollment.course.thumbnailUrl ? (
-                        <Image
-                          src={enrollment.course.thumbnailUrl.startsWith('http') ? enrollment.course.thumbnailUrl : `https://${enrollment.course.thumbnailUrl}`}
-                          alt={enrollment.course.title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          style={{ objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div style={{
-                          width: '100%',
-                          height: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}>
-                          <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.5)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                      )}
+              </section>
 
-                      {/* Completed Badge */}
-                      {enrollment.completedAt && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '12px',
-                          right: '12px',
-                          background: '#16a34a',
-                          color: 'white',
-                          padding: '6px 12px',
-                          borderRadius: '50px',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                        }}>
-                          ✓ เรียนจบแล้ว
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div style={{ padding: '20px' }}>
-                      <h3 style={{
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        color: '#1e293b',
-                        marginBottom: '12px',
-                        lineHeight: 1.4,
-                      }}>
-                        {enrollment.course.title}
-                      </h3>
-
-                      {/* Progress Bar */}
-                      <div style={{ marginBottom: '12px' }}>
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          fontSize: '0.75rem',
-                          color: '#64748b',
-                          marginBottom: '6px',
-                        }}>
-                          <span>{enrollment.completedLessons}/{enrollment.course.lessonCount} บท</span>
-                          <span>{enrollment.progressPercent}%</span>
-                        </div>
-                        <div style={{
-                          height: '6px',
-                          background: '#e2e8f0',
-                          borderRadius: '3px',
-                          overflow: 'hidden',
-                        }}>
-                          <div style={{
-                            height: '100%',
-                            width: `${enrollment.progressPercent}%`,
-                            background: enrollment.progressPercent === 100 ? '#16a34a' : '#2563eb',
-                            borderRadius: '3px',
-                            transition: 'width 0.3s ease',
-                          }} />
-                        </div>
-                      </div>
-
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        fontSize: '0.875rem',
-                        color: '#64748b',
-                      }}>
-                        <span style={{ color: '#2563eb', fontWeight: 500 }}>
-                          เรียนต่อ →
-                        </span>
-                        <span style={{
-                          background: enrollment.progressPercent === 100 ? '#dcfce7' : '#eff6ff',
-                          color: enrollment.progressPercent === 100 ? '#16a34a' : '#2563eb',
-                          padding: '4px 10px',
-                          borderRadius: '50px',
-                          fontSize: '0.75rem',
-                          fontWeight: 500,
-                        }}>
-                          {enrollment.progressPercent === 100 ? '✓ เรียนจบแล้ว' : 'กำลังเรียน'}
-                        </span>
-                      </div>
-                    </div>
+              <section className="dashboard-courses" aria-labelledby="dashboard-courses-title">
+                <div className="dashboard-section-head"><div><p>Course index</p><h2 id="dashboard-courses-title">คอร์สของฉัน</h2></div><Link href="/courses">ดูคอร์สเพิ่มเติม</Link></div>
+                {remainingEnrollments.length > 0 ? <div className="dashboard-course-list">{remainingEnrollments.map((enrollment, index) => (
+                  <Link key={enrollment.id} href={`/courses/${enrollment.course.slug}/learn`} className="dashboard-course-row">
+                    <span className="dashboard-course-row__index">{String(index + 2).padStart(2, '0')}</span>
+                    <div className="dashboard-course-row__title"><strong>{enrollment.course.title}</strong><span>{enrollment.completedLessons} / {enrollment.course.lessonCount} บทเรียน</span></div>
+                    <div className="dashboard-progress" aria-label={`ความคืบหน้า ${enrollment.progressPercent}%`}><span style={{ width: `${enrollment.progressPercent}%` }} /></div>
+                    <span className={`dashboard-course-row__status${enrollment.progressPercent === 100 ? ' is-complete' : ''}`}>{enrollment.progressPercent === 100 ? 'เรียนจบแล้ว' : `${enrollment.progressPercent}%`}</span>
+                    <span className="dashboard-course-row__action">{enrollment.progressPercent === 100 ? 'ทบทวน' : 'เรียนต่อ'} →</span>
                   </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                ))}</div> : <p className="dashboard-course-list__empty">คอร์สที่ลงทะเบียนทั้งหมดแสดงอยู่ด้านบนแล้ว</p>}
+              </section>
+            </>
+          ) : (
+            <section className="dashboard-empty" aria-labelledby="dashboard-empty-title">
+              <p className="learner-dashboard__meta">No enrolled courses</p>
+              <h2 id="dashboard-empty-title">เริ่มจากคอร์สที่ตรงกับสิ่งที่คุณอยากสร้าง</h2>
+              <p>ดูผลลัพธ์ เนื้อหา และระดับราคาของแต่ละคอร์สก่อนเลือกเส้นทางแรก</p>
+              <Link href="/courses">ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link>
+            </section>
+          )}
         </div>
       </main>
-
       <Footer />
     </>
   );

@@ -85,7 +85,7 @@ Verification:
 
 ### Learner product
 
-- [ ] Dashboard.
+- [x] Dashboard. Redesigned as a Swiss resume-first learner surface with next action, compact learning rail, course index, account links, and guided empty state.
 - [ ] Course learning shell and lesson rail.
 - [ ] Certificates and payments.
 - [ ] Profile and settings.
