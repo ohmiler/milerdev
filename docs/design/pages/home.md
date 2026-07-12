@@ -105,7 +105,7 @@ Use a full-width heading row above the eight real client logos. Keep the logos a
 
 Status: pending.
 
-Show all 12 event photographs as a static 4-column desktop contact sheet, 2 columns on tablet, and 1 column on mobile. Keep numbered captions and the accessible lightbox without autoplay or duplicated images.
+Show all 12 event photographs as a static 4-column desktop contact sheet, 2 columns on tablet, and 1 column on mobile. Use the VS Code Dark+ `#1e1e1e` canvas with `#252526` image cells, `#3c3c3c` rules, and brand-blue interaction details. Keep numbered captions and the accessible lightbox without autoplay or duplicated images.
 
 ### Affiliate banner
 

@@ -16,6 +16,10 @@ describe('homepage showcase gallery', () => {
         expect(gallery).toContain('SHOWCASE_IMAGES.map((img, i)');
         expect(gallery).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
         expect(gallery).toContain('className="showcase-card-index"');
+        expect(gallery).toContain('background: #1e1e1e;');
+        expect(gallery).toContain('background: #252526;');
+        expect(gallery).toContain('border-right: 1px solid #3c3c3c;');
+        expect(gallery).toContain('color: #02abff;');
         expect(gallery).not.toContain('showcase-marquee-inner');
         expect(gallery).not.toContain('@keyframes showcaseScroll');
         expect(gallery).not.toContain('📸');

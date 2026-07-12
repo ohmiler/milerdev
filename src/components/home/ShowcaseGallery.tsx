@@ -106,8 +106,8 @@ export default function ShowcaseGallery() {
         <style>{`
           .showcase-gallery-section {
             padding: clamp(64px, 8vw, 104px) 0;
-            background: var(--surface-subtle);
-            border-bottom: 1px solid var(--line);
+            background: #1e1e1e;
+            border-bottom: 1px solid #3c3c3c;
           }
           .showcase-gallery-layout {
             display: grid;
@@ -126,6 +126,7 @@ export default function ShowcaseGallery() {
             font-size: clamp(2rem, 4vw, 3.5rem);
             line-height: 1.15;
             letter-spacing: -0.03em;
+            color: #f4f4f4;
             text-wrap: balance;
           }
           .showcase-gallery-summary {
@@ -136,12 +137,12 @@ export default function ShowcaseGallery() {
           .showcase-gallery-copy {
             max-width: 42ch;
             margin: 0;
-            color: var(--ink-soft);
+            color: #cccccc;
             line-height: var(--leading-thai);
             text-wrap: pretty;
           }
           .showcase-gallery-count {
-            color: var(--accent-strong);
+            color: #02abff;
             font-family: var(--font-code);
             font-size: 0.6875rem;
             font-weight: 700;
@@ -150,38 +151,38 @@ export default function ShowcaseGallery() {
           .showcase-contact-sheet {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            border-top: 1px solid var(--line-strong);
-            border-left: 1px solid var(--line);
+            border-top: 1px solid #555555;
+            border-left: 1px solid #3c3c3c;
           }
           .showcase-card {
             display: grid;
             min-width: 0;
             padding: 0;
             border: 0;
-            border-right: 1px solid var(--line);
-            border-bottom: 1px solid var(--line);
+            border-right: 1px solid #3c3c3c;
+            border-bottom: 1px solid #3c3c3c;
             border-radius: 0;
-            background: var(--surface);
-            color: var(--ink);
+            background: #252526;
+            color: #f4f4f4;
             cursor: pointer;
             text-align: left;
             transition: background-color 160ms ease-out;
           }
           .showcase-card:hover {
-            background: var(--accent-soft);
+            background: #2d2d30;
           }
           .showcase-card:focus-visible {
             position: relative;
             z-index: 1;
             outline: none;
-            box-shadow: var(--focus-ring);
+            box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.42);
           }
           .showcase-card-media {
             display: block;
             aspect-ratio: 4 / 3;
             overflow: hidden;
-            border-bottom: 1px solid var(--line);
-            background: var(--surface-subtle);
+            border-bottom: 1px solid #3c3c3c;
+            background: #1e1e1e;
           }
           .showcase-card-img {
             display: block;
@@ -200,12 +201,12 @@ export default function ShowcaseGallery() {
             gap: 16px;
             min-height: 44px;
             padding: 0 14px;
-            color: var(--ink-soft);
+            color: #cccccc;
             font-size: 0.75rem;
             font-weight: 650;
           }
           .showcase-card-index {
-            color: var(--accent-strong);
+            color: #02abff;
             font-family: var(--font-code);
             font-size: 0.6875rem;
           }
