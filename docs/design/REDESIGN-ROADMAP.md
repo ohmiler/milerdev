@@ -71,7 +71,8 @@ Verification:
 - [x] Courses catalog. Redesigned as a Swiss editorial search surface with bundle comparison rail, labeled filter toolbar, responsive course grid, empty state, and pagination.
 - [ ] Course detail.
 - [ ] Bundle detail.
-- [ ] Blog index and article pages.
+- [x] Blog index. Redesigned as a Swiss developer journal with a lead article, editorial rows, topic navigation, search, empty state, and pagination.
+- [ ] Blog article detail.
 - [ ] About, contact, FAQ, and legal pages.
 
 ### Learner product

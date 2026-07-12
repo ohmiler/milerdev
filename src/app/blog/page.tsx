@@ -2,7 +2,6 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import PageHeader from '@/components/layout/PageHeader';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';
@@ -172,93 +171,49 @@ export default async function BlogPage({ searchParams }: Props) {
   ]);
 
   const { posts, pagination } = blogData;
+  const featuredPost = currentPage === 1 && !search && tagFilter === 'all' ? posts[0] : null;
+  const articlePosts = featuredPost ? posts.slice(1) : posts;
 
   return (
     <>
       <Navbar />
-      <main style={{ paddingTop: '0' }}>
-        <PageHeader
-          badge="บทความ"
-          title="ความรู้ด้าน Dev จากมืออาชีพ"
-          description="เรียนรู้เทคนิคและแนวคิดด้านการเขียนโปรแกรมจากบทความของเรา"
-          align="center"
-        />
-
-        <section className="section">
+      <main className="blog-index">
+        <header className="blog-index__hero">
           <div className="container">
-            <form method="GET" action="/blog" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', padding: '14px 20px', background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', flex: 1, maxWidth: '360px' }}>
-                <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-                <input type="text" name="search" defaultValue={search} placeholder="ค้นหาบทความ..." style={{ width: '100%', padding: '10px 16px 10px 38px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', boxSizing: 'border-box' }} />
-              </div>
+            <p className="blog-index__meta">Journal / {pagination.total} บทความ</p>
+            <h1>อ่านแนวคิด<br />แล้วกลับไปเขียนโค้ด</h1>
+            <p>บทความภาษาไทยสำหรับนักพัฒนาที่ต้องการเข้าใจเครื่องมือ วิธีคิด และการสร้างซอฟต์แวร์จากงานจริง</p>
+          </div>
+        </header>
+
+        <section className="blog-index__catalog" aria-labelledby="blog-catalog-title">
+          <div className="container">
+            <div className="blog-index__toolbar-head">
+              <h2 id="blog-catalog-title">บทความทั้งหมด</h2>
+              <span>{pagination.total} รายการ</span>
+            </div>
+            <form method="GET" action="/blog" className="blog-filter">
+              <div className="blog-filter__search"><label htmlFor="blog-search">ค้นหาบทความ</label><input id="blog-search" type="search" name="search" defaultValue={search} placeholder="ค้นหาจากชื่อบทความ" /></div>
               {tagFilter !== 'all' && <input type="hidden" name="tag" value={tagFilter} />}
-              <button type="submit" style={{ padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>ค้นหา</button>
-              <Link href="/blog" style={{ padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', color: '#475569', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>ล้างตัวกรอง</Link>
-              <div style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '0.8125rem' }}>{pagination.total} บทความ</div>
+              <button type="submit">แสดงผลลัพธ์</button><Link href="/blog">ล้างตัวกรอง</Link>
             </form>
 
-            {allTags.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '28px' }}>
-                {[{ id: 'all', name: 'ทั้งหมด', slug: 'all' }, ...allTags].map((tag) => {
-                  const isActive = tagFilter === tag.slug;
-                  return (
-                    <Link key={tag.id} href={buildBlogQuery({ search, tag: tag.slug, page: 1 })} style={{ padding: '6px 16px', borderRadius: '50px', border: isActive ? '2px solid #2563eb' : '2px solid #e2e8f0', background: isActive ? '#2563eb' : 'white', color: isActive ? 'white' : '#475569', fontSize: '0.8125rem', fontWeight: 500, transition: 'all 0.15s', textDecoration: 'none' }}>
-                      {tag.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+            {allTags.length > 0 && <nav className="blog-topics" aria-label="หัวข้อบทความ">{[{ id:'all',name:'ทั้งหมด',slug:'all' },...allTags].map(tag => { const isActive=tagFilter===tag.slug; return <Link key={tag.id} href={buildBlogQuery({search,tag:tag.slug,page:1})} className={isActive?'is-active':''} aria-current={isActive?'page':undefined}>{tag.name}</Link>; })}</nav>}
 
-            {posts.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748b' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px', color: '#1e293b' }}>ไม่พบบทความ</h3>
-                <p>ลองเปลี่ยนเงื่อนไขการค้นหา หรือกลับมาดูใหม่ภายหลัง</p>
-              </div>
-            ) : (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
-                  {posts.map((post) => (
-                    <Link key={post.id} href={`/blog/${post.slug}`} style={{ textDecoration: 'none' }}>
-                      <article style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', height: '100%', display: 'flex', flexDirection: 'column' }} className="card">
-                        <div style={{ aspectRatio: '16/9', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', position: 'relative', overflow: 'hidden' }}>
-                          {normalizeUrl(post.thumbnailUrl) ? (
-                            <img src={normalizeUrl(post.thumbnailUrl)!} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.5)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                            </div>
-                          )}
-                        </div>
-                        <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                          {post.tags.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-                              {post.tags.slice(0, 3).map((tag) => <span key={tag.id} style={{ padding: '2px 10px', background: '#f5f3ff', color: '#7c3aed', borderRadius: '50px', fontSize: '0.75rem', fontWeight: 500 }}>{tag.name}</span>)}
-                            </div>
-                          )}
-                          <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{post.title}</h2>
-                          {post.excerpt && <p style={{ color: '#64748b', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '16px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden', flex: 1 }}>{post.excerpt}</p>}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8125rem', color: '#94a3b8', marginTop: 'auto' }}>
-                            {post.authorName && <span>โดย {post.authorName}</span>}
-                            <span>{formatDate(post.publishedAt)}</span>
-                          </div>
-                        </div>
-                      </article>
-                    </Link>
-                  ))}
-                </div>
+            {posts.length === 0 ? <div className="blog-empty"><p className="blog-empty__meta">No matching articles</p><h3>ไม่พบบทความตามเงื่อนไขนี้</h3><p>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อใหม่</p><Link href="/blog">ดูบทความทั้งหมด</Link></div> : <>
+              {featuredPost && <Link href={`/blog/${featuredPost.slug}`} className="blog-feature"><article>
+                <div className="blog-feature__image">{normalizeUrl(featuredPost.thumbnailUrl) ? <img src={normalizeUrl(featuredPost.thumbnailUrl)!} alt={featuredPost.title} /> : <div className="blog-image-fallback"><span>MD</span><small>Journal</small></div>}</div>
+                <div className="blog-feature__content"><div className="blog-article__tags">{featuredPost.tags.slice(0,3).map(tag => <span key={tag.id}>{tag.name}</span>)}</div><p className="blog-article__date">ล่าสุด · {formatDate(featuredPost.publishedAt)}</p><h2>{featuredPost.title}</h2>{featuredPost.excerpt && <p className="blog-feature__excerpt">{featuredPost.excerpt}</p>}<div className="blog-article__footer"><span>{featuredPost.authorName ? `โดย ${featuredPost.authorName}` : 'MilerDev'}</span><strong>อ่านบทความ <span aria-hidden="true">→</span></strong></div></div>
+              </article></Link>}
 
-                {pagination.totalPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '48px', flexWrap: 'wrap' }}>
-                    {currentPage > 1 && <Link href={buildBlogQuery({ search, tag: tagFilter, page: currentPage - 1 })} style={{ padding: '8px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', color: '#374151', textDecoration: 'none', fontWeight: 500, fontSize: '0.875rem' }}>←</Link>}
-                    {getPageNumbers(pagination.totalPages, currentPage).map((page, index) =>
-                      page === '...' ? <span key={`dots-${index}`} style={{ padding: '8px 4px', color: '#94a3b8', fontSize: '0.875rem' }}>…</span> : <Link key={page} href={buildBlogQuery({ search, tag: tagFilter, page })} style={{ minWidth: '38px', padding: '8px', border: currentPage === page ? '2px solid #2563eb' : '1px solid #e2e8f0', borderRadius: '8px', background: currentPage === page ? '#2563eb' : 'white', color: currentPage === page ? 'white' : '#374151', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: currentPage === page ? 600 : 400, fontSize: '0.875rem' }}>{page}</Link>
-                    )}
-                    {currentPage < pagination.totalPages && <Link href={buildBlogQuery({ search, tag: tagFilter, page: currentPage + 1 })} style={{ padding: '8px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', color: '#374151', textDecoration: 'none', fontWeight: 500, fontSize: '0.875rem' }}>→</Link>}
-                  </div>
-                )}
-              </>
-            )}
+              {articlePosts.length > 0 && <div className="blog-article-list">{articlePosts.map((post,index) => <Link key={post.id} href={`/blog/${post.slug}`} className="blog-article-row"><article>
+                <div className="blog-article-row__index">{String((featuredPost ? index+2 : index+1)+(currentPage-1)*pagination.limit).padStart(2,'0')}</div>
+                <div className="blog-article-row__image">{normalizeUrl(post.thumbnailUrl) ? <img src={normalizeUrl(post.thumbnailUrl)!} alt={post.title} /> : <div className="blog-image-fallback"><span>MD</span></div>}</div>
+                <div className="blog-article-row__content"><div className="blog-article__tags">{post.tags.slice(0,2).map(tag => <span key={tag.id}>{tag.name}</span>)}</div><h2>{post.title}</h2>{post.excerpt && <p>{post.excerpt}</p>}<div className="blog-article__footer"><span>{post.authorName ? `โดย ${post.authorName}` : 'MilerDev'} · {formatDate(post.publishedAt)}</span><strong>อ่านบทความ <span aria-hidden="true">→</span></strong></div></div>
+              </article></Link>)}</div>}
+
+              {pagination.totalPages > 1 && <nav className="blog-pagination" aria-label="หน้ารายการบทความ">{currentPage>1 && <Link href={buildBlogQuery({search,tag:tagFilter,page:currentPage-1})}>← ก่อนหน้า</Link>}<div>{getPageNumbers(pagination.totalPages,currentPage).map((page,index)=>page==='...'?<span key={`dots-${index}`}>…</span>:<Link key={page} href={buildBlogQuery({search,tag:tagFilter,page})} className={currentPage===page?'is-active':''} aria-current={currentPage===page?'page':undefined}>{page}</Link>)}</div>{currentPage<pagination.totalPages && <Link href={buildBlogQuery({search,tag:tagFilter,page:currentPage+1})}>ถัดไป →</Link>}</nav>}
+            </>}
           </div>
         </section>
       </main>
