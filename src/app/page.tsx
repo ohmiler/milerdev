@@ -181,14 +181,14 @@ export default async function HomePage() {
           <div className="container hero-container">
             <div className="hero-rail">
               <div className="hero-text">
-<h1 className="hero-title hero-title-anim">
-                  <span className="hero-title__line">เรียน Coding ตั้งแต่พื้นฐาน</span>
-                  <span className="hero-title__line highlight">จนสร้าง<span className="hero-title__word">โปรเจกต์</span>จริงได้</span>
+                <h1 className="hero-title hero-title-anim">
+                  <span className="hero-title__line">เรียนโค้ดให้เข้าใจ</span>
+                  <span className="hero-title__line highlight">สร้างโปรเจกต์ได้จริง</span>
                 </h1>
 
                 <p className="hero-desc-anim home-lede">
-                  คอร์สเขียนโปรแกรมสำหรับผู้เริ่มต้น นักศึกษา และคนที่อยากต่อยอดรับงานหรือสร้างผลงานของตัวเอง
-                  เรียนเป็นขั้นตอน ลงมือทำจริงทุกบทเรียน
+                  <span className="home-lede__line">ปูพื้นฐานอย่างเป็นขั้นตอน พร้อมลงมือทำทุกบท</span>
+                  <span className="home-lede__line">เปลี่ยนความรู้ให้กลายเป็นผลงานที่ใช้งานได้จริง</span>
                 </p>
 
                 <div className="hero-actions hero-cta-anim">
@@ -196,7 +196,7 @@ export default async function HomePage() {
                     <svg aria-hidden="true" style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                     </svg>
-                    เริ่มตามเส้นทางการเรียน
+                    ดูคอร์สแนะนำ
                   </Link>
                   <Link href="/courses" className="hero-secondary-action">
                     ดูคอร์สทั้งหมด

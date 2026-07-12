@@ -1134,10 +1134,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .hero-title {
   width: auto;
-  max-width: 11.5ch;
+  max-width: none;
   margin: 0 0 28px;
   color: var(--ink);
-  font-size: clamp(2.75rem, 5vw, 4.5rem);
+  font-size: clamp(2.5rem, 4.2vw, 3.75rem);
   font-weight: 780;
   letter-spacing: -0.035em;
   line-height: 1.08;
@@ -1146,16 +1146,13 @@ h1, h2, h3, h4, h5, h6 {
 
 .hero-title .hero-title__line {
   display: block;
-  white-space: normal;
+  white-space: nowrap;
 }
 
 .hero-title .highlight {
   color: var(--accent-strong, var(--primary-700));
 }
 
-.hero-title__word {
-  white-space: nowrap;
-}
 
 .hero-text .home-lede {
   max-width: 44ch;
@@ -1163,6 +1160,10 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--ink-soft, var(--gray-700));
   line-height: var(--leading-thai);
   text-wrap: pretty;
+}
+
+.home-lede__line {
+  display: block;
 }
 
 .hero-actions {
@@ -1235,7 +1236,6 @@ h1, h2, h3, h4, h5, h6 {
   min-width: 0;
   align-items: center;
   padding: clamp(24px, 3vw, 40px) 0 clamp(24px, 3vw, 40px) clamp(24px, 3.5vw, 48px);
-  border-left: 1px solid var(--line);
 }
 .home-course-strip {
   background: #ffffff;
@@ -1349,20 +1349,22 @@ h1, h2, h3, h4, h5, h6 {
 
   .hero-text {
     padding: 40px 0 48px;
-    text-align: left;
+    text-align: center;
   }
 
   .hero-title,
   .hero-text .home-lede {
-    margin-left: 0;
-    margin-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-actions {
+    justify-content: center;
   }
 
   .hero-ide {
     justify-content: flex-start;
     padding: 40px 0 0;
-    border-top: 1px solid var(--line);
-    border-left: 0;
   }
 
   .hero-section {
@@ -1392,8 +1394,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .hero-title {
-    max-width: 13ch;
-    font-size: clamp(2rem, 10vw, 2.75rem);
+    font-size: clamp(1.875rem, 10vw, 2.75rem);
   }
 
   .hero-actions {
@@ -1408,7 +1409,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .hero-secondary-action {
-    justify-content: space-between;
+    justify-content: center;
     width: 100%;
   }
 

@@ -60,7 +60,7 @@ Status: Swiss refinement implemented and verified.
 
 - Preserve the existing desktop composition: learner message on the left and an interactive code editor on the right.
 - Use the 12-column homepage grid with a 5-column text region and a 7-column editor region.
-- Make the grid visible through alignment, restrained 1px rules, and a clear division between text and editor rather than decorative cards.
+- Make the grid visible through alignment and whitespace, keeping the text and editor distinct without a divider or decorative cards.
 - Keep the Thai headline and its concrete learning outcome. Replace the generic marketing kicker with concise studio metadata.
 - Keep one visually dominant course action. Present the secondary course link as a quieter text action.
 - Recompose `LEARN / BUILD / SHIP` as a grid-aligned process rail.
@@ -68,7 +68,8 @@ Status: Swiss refinement implemented and verified.
 - Replace macOS traffic-light decoration with useful file or runtime metadata.
 - Use a thin frame, a maximum 8px radius, and no diffuse decorative shadow on the editor.
 - Refine tabs, line numbers, active line, and status information with stronger alignment and ruled separation.
-- On mobile, stack text before the editor and keep the composition left-aligned.
+- On mobile, stack text before the editor and center the hero copy and actions.
+- Keep the hero headline to two deliberate lines, “เรียนโค้ดให้เข้าใจ” and “สร้างโปรเจกต์ได้จริง”, without wrapping either phrase at supported viewport widths.
 - Keep motion restrained and preserve `prefers-reduced-motion` behavior.
 
 Success criteria:
