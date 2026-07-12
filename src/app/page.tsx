@@ -181,9 +181,9 @@ export default async function HomePage() {
           <div className="container hero-container">
             <div className="hero-rail">
               <div className="hero-text">
-                <p className="hero-kicker hero-badge-anim">
-                  <span className="hero-kicker__rule" aria-hidden="true" />
-                  CODING LEARNING STUDIO
+                <p className="hero-meta hero-badge-anim">
+                  <span>MILERDEV / CODING STUDIO</span>
+                  <span>TH / ONLINE</span>
                 </p>
 
                 <h1 className="hero-title hero-title-anim">
@@ -203,17 +203,16 @@ export default async function HomePage() {
                     </svg>
                     เริ่มตามเส้นทางการเรียน
                   </Link>
-                  <Link href="/courses" className="btn btn-secondary">
+                  <Link href="/courses" className="hero-secondary-action">
                     ดูคอร์สทั้งหมด
+                    <span aria-hidden="true">↗</span>
                   </Link>
                 </div>
 
-                <div className="hero-utility hero-cta-anim" aria-label="ลำดับการเรียนรู้: เรียน สร้าง ส่งมอบ">
-                  <span>LEARN</span>
-                  <span aria-hidden="true">→</span>
-                  <span>BUILD</span>
-                  <span aria-hidden="true">→</span>
-                  <span>SHIP</span>
+                <div className="hero-process hero-cta-anim" aria-label="ลำดับการเรียนรู้: เรียน สร้าง ส่งมอบ">
+                  <span><b>01</b> LEARN</span>
+                  <span><b>02</b> BUILD</span>
+                  <span><b>03</b> SHIP</span>
                 </div>
               </div>
 

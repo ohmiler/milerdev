@@ -60,7 +60,8 @@ describe('Adaptive Dual design foundation', () => {
         expect(navbar).toContain('className="site-nav nav-public-shell"');
         expect(navbar).toContain('min-height: 72px;');
         expect(navbar).toContain('background: var(--surface-raised);');
-        expect(navbar).toContain('box-shadow: var(--shadow-md);');
+        expect(navbar).toContain('border-bottom: 1px solid var(--line);');
+        expect(navbar).not.toContain('box-shadow: var(--shadow-md);');
         expect(navbar).not.toContain('var(--gray-');
     });
 

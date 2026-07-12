@@ -56,7 +56,7 @@ Verification:
 
 ### Homepage
 
-- [x] Hero direction established.
+- [x] Hero refined as a Swiss 12-column frame with a VS Code Dark+ editor.
 - [x] Featured courses redesigned.
 - [x] Remove obsolete beginner path, why-us, and audience-fit sections.
 - [ ] Bundle section. Current focus.

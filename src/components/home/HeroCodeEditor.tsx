@@ -243,10 +243,9 @@ export default function HeroCodeEditor() {
     >
       {/* Title Bar */}
       <div className="hero-code-editor__titlebar">
-        <div className="hero-code-editor__traffic" aria-hidden="true">
-          <span className="hero-code-editor__dot hero-code-editor__dot--danger" />
-          <span className="hero-code-editor__dot hero-code-editor__dot--warning" />
-          <span className="hero-code-editor__dot hero-code-editor__dot--success" />
+        <div className="hero-code-editor__workspace" aria-hidden="true">
+          <span>WORKSPACE / MILERDEV</span>
+          <span>VS CODE DARK+</span>
         </div>
         <div className="hero-code-editor__tabs" role="tablist" aria-label="ตัวอย่างไฟล์โค้ด">
           {codeSnippets.map((s, i) => (
@@ -328,12 +327,12 @@ export default function HeroCodeEditor() {
         .hero-code-editor {
           background: #1e1e1e;
           border: 1px solid #3e3e42;
-          border-radius: 12px;
+          border-radius: 8px;
           color: #d4d4d4;
           font-family: var(--font-code);
           font-size: 13px;
           line-height: 1.65;
-          max-width: 560px;
+          max-width: none;
           min-width: 0;
           overflow: hidden;
           position: relative;
@@ -352,34 +351,32 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__titlebar {
+          align-items: stretch;
           border-bottom-style: solid;
           border-bottom-width: 1px;
-          gap: 14px;
-          min-height: 52px;
-          padding: 0 16px;
+          flex-direction: column;
+          gap: 0;
+          min-height: 68px;
+          padding: 0;
         }
 
-        .hero-code-editor__traffic {
+        .hero-code-editor__workspace {
+          align-items: center;
+          border-bottom: 1px solid #333333;
+          color: #9d9d9d;
           display: flex;
-          flex: 0 0 auto;
-          gap: 8px;
+          font-size: 10px;
+          font-weight: 700;
+          justify-content: space-between;
+          letter-spacing: 0.08em;
+          min-height: 30px;
+          padding: 0 14px;
         }
-
-        .hero-code-editor__dot {
-          border-radius: 999px;
-          display: block;
-          height: 12px;
-          width: 12px;
-        }
-
-        .hero-code-editor__dot--danger { background: #F14C4C; }
-        .hero-code-editor__dot--warning { background: #CCA700; }
-        .hero-code-editor__dot--success { background: #23D18B; }
 
         .hero-code-editor__tabs {
           display: flex;
           flex: 1;
-          gap: 4px;
+          gap: 0;
           min-width: 0;
           overflow: hidden;
         }
@@ -387,7 +384,8 @@ export default function HeroCodeEditor() {
         .hero-code-editor__tab {
           align-items: center;
           background: transparent;
-          border: 1px solid transparent;
+          border: 0;
+          border-right: 1px solid #333333;
           border-radius: 0;
           color: #858585;
           cursor: pointer;
@@ -395,9 +393,9 @@ export default function HeroCodeEditor() {
           flex: 0 1 auto;
           font: inherit;
           font-weight: 700;
-          min-height: 32px;
+          min-height: 38px;
           min-width: 0;
-          padding: 0 12px;
+          padding: 0 16px;
           text-align: left;
           text-overflow: ellipsis;
           transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
@@ -418,14 +416,14 @@ export default function HeroCodeEditor() {
 
         .hero-code-editor__tab[data-active="true"] {
           background: #1e1e1e;
-          border: 1px solid #3e3e42;
+          border-right: 1px solid #333333;
           border-bottom: 2px solid #007acc;
           color: #ffffff;
         }
 
         .hero-code-editor__body {
           background: #1e1e1e;
-          height: 320px;
+          height: 340px;
           overflow-x: auto;
           overflow-y: auto;
           padding: 18px 0;
@@ -482,7 +480,7 @@ export default function HeroCodeEditor() {
           border-top-color: #007acc;
           color: #ffffff;
           justify-content: space-between;
-          min-height: 32px;
+          min-height: 38px;
           padding: 0 16px;
         }
 
@@ -511,9 +509,8 @@ export default function HeroCodeEditor() {
 
         @media (max-width: 640px) {
           .hero-code-editor { max-width: 100%; }
-          .hero-code-editor__titlebar { gap: 10px; min-height: 48px; padding: 0 12px; }
-          .hero-code-editor__traffic { gap: 6px; }
-          .hero-code-editor__dot { height: 10px; width: 10px; }
+          .hero-code-editor__titlebar { min-height: 64px; }
+          .hero-code-editor__workspace { font-size: 9px; padding: 0 10px; }
           .hero-code-editor__tab { min-height: 30px; padding: 0 9px; }
           .hero-code-editor__body { height: 286px; padding: 16px 0; }
           .hero-code-editor__line { padding-right: 14px; }

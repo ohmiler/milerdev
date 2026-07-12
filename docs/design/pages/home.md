@@ -54,7 +54,7 @@ Do not reintroduce these removed homepage sections unless the user explicitly re
 
 ### Hero
 
-Status: approved for Swiss refinement.
+Status: Swiss refinement implemented and verified.
 
 #### Approved direction: Swiss Frame + VS Code Dark+
 
