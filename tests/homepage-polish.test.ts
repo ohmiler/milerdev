@@ -183,7 +183,7 @@ describe('homepage polish', () => {
         expect(cssBlock(globals, '.btn-primary {')).toContain('background: var(--accent, var(--primary-500))');
         expect(cssBlock(globals, '.btn-primary:hover')).toContain('background: var(--accent-strong, var(--primary-600))');
         expect(cssBlock(globals, '.cta-section {')).toContain('background: var(--primary-gradient-deep)');
-        expect(cssBlock(globals, '.lp-step__num {')).toContain('background: var(--primary-gradient)');
+        expect(cssBlock(globals, '.lp-step__num {')).toContain('background: var(--accent, var(--primary-500))');
         expect(cssBlock(globals, '.card:hover .cc-cta')).toContain('background: var(--primary-gradient)');
         expect(cssBlock(globals, '.home-final-action:focus-visible')).toContain('box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.36)');
         expect(cssBlock(globals, '.home-final-cta {')).toContain('padding: 88px 0 92px');
@@ -217,16 +217,24 @@ describe('homepage polish', () => {
         expect(globals).toContain('border: 1px solid #334155');
     });
 
-    test('learning path reads as a connected route without heavy card shadows', () => {
+    test('learning path uses a Swiss editorial split grid', () => {
         const globals = readProjectFile('src/app/globals.css');
+        const page = readProjectFile('src/app/page.tsx');
 
-        expect(cssBlock(globals, '.lp-track::before')).toContain('background: var(--primary-200)');
-        expect(cssBlock(globals, '.lp-step {')).toContain('border-radius: 12px');
-        expect(cssBlock(globals, '.lp-step:hover')).toContain('transform: translateY(-2px)');
-        expect(cssBlock(globals, '.lp-step:hover')).not.toContain('0 18px 40px');
-        expect(cssBlock(globals, '.lp-step:focus-visible')).toContain('box-shadow: var(--focus-ring)');
-        expect(globals).toContain('.lp-step-item:not(:last-child) .lp-step::after');
-        expect(globals).toContain('height: calc(100% + 20px)');
+        expect(page).toContain('className="learning-path"');
+        expect(page).toContain('className="lp-head"');
+        expect(page).toContain('className="lp-track"');
+        expect(page).toContain('className="lp-step"');
+
+        const section = cssBlock(globals, '.learning-path .container');
+        expect(section).toContain('grid-template-columns: repeat(12, minmax(0, 1fr))');
+
+        expect(cssBlock(globals, '.lp-head')).toContain('grid-column: span 4');
+        expect(cssBlock(globals, '.lp-track')).toContain('grid-column: 5 / -1');
+        expect(cssBlock(globals, '.lp-track')).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
+        expect(cssBlock(globals, '.lp-step {')).toContain('border-radius: 0');
+        expect(cssBlock(globals, '.lp-step {')).not.toContain('background: var(--primary-gradient)');
+        expect(cssBlock(globals, '.lp-step:hover')).not.toContain('box-shadow: 0 8px 14px');
     });
 
     test('trust section reads as one compact proof system', () => {
