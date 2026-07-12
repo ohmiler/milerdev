@@ -57,7 +57,7 @@ Verification:
 ### Homepage
 
 - [x] Hero refined as a Swiss 12-column frame with a VS Code Dark+ editor.
-- [x] Featured courses redesigned.
+- [x] Featured courses refined to a responsive 4 / 2 / 1 Swiss grid.
 - [x] Remove obsolete beginner path, why-us, and audience-fit sections.
 - [ ] Bundle section. Current focus.
 - [ ] Client showcase.

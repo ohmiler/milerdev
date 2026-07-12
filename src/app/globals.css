@@ -2032,7 +2032,7 @@ h1, h2, h3, h4, h5, h6 {
 @media (prefers-reduced-motion: reduce) {
 }
 
-/* Homepage featured courses: Swiss three-column grid */
+/* Homepage featured courses: Swiss four-column grid */
 .featured-courses-section {
   background: var(--canvas);
   border-bottom: 1px solid var(--line);
@@ -2061,13 +2061,32 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 42ch;
 }
 
-.featured-courses-section .featured-courses-head .btn {
-  width: fit-content;
+.featured-courses-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 160ms ease-out, color 160ms ease-out;
+}
+
+.featured-courses-all:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.featured-courses-all:focus-visible {
+  border-radius: 4px;
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .featured-courses-section .featured-courses-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
   align-items: stretch;
   border-top: 1px solid var(--line-strong);
@@ -2104,7 +2123,23 @@ h1, h2, h3, h4, h5, h6 {
 
 .featured-courses-section .course-card--featured .course-card__content {
   min-width: 0;
-  padding: 18px;
+  padding: 16px;
+}
+
+.featured-courses-section .course-card--featured .course-card__title {
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.featured-courses-section .course-card--featured .cc-outcomes {
+  min-height: 82px;
+  gap: 6px;
+}
+
+.featured-courses-section .course-card--featured .cc-outcomes li {
+  gap: 7px;
+  font-size: 0.8125rem;
+  line-height: 1.55;
 }
 
 .featured-courses-section .course-card--featured .cc-cta {
@@ -2124,7 +2159,7 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: none;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1199px) {
   .featured-courses-section .featured-courses-head {
     align-items: flex-start;
   }
@@ -2141,9 +2176,9 @@ h1, h2, h3, h4, h5, h6 {
     gap: 16px;
   }
 
-  .featured-courses-section .featured-courses-head .btn {
+  .featured-courses-section .featured-courses-all {
     width: 100%;
-    justify-content: center;
+    justify-content: space-between;
   }
 
   .featured-courses-section .featured-courses-grid {

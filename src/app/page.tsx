@@ -47,7 +47,7 @@ async function getFeaturedCourses() {
     .leftJoin(lessonCountSq, eq(courses.id, lessonCountSq.courseId))
     .where(eq(courses.status, 'published'))
     .orderBy(desc(courses.createdAt))
-    .limit(6);
+    .limit(4);
 
   const now = new Date();
   return rows.map((row) => {
@@ -232,8 +232,8 @@ export default async function HomePage() {
                 </h2>
                 <p className="section-copy">คอร์สที่ได้รับความนิยมสูงสุดจากนักเรียน</p>
               </div>
-              <Link href="/courses" className="btn btn-secondary">
-                ดูทั้งหมด
+              <Link href="/courses" className="featured-courses-all">
+                ดูคอร์สทั้งหมด
                 <svg style={{ width: '16px', height: '16px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>

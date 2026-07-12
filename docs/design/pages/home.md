@@ -80,9 +80,9 @@ Success criteria:
 
 ### Featured courses
 
-Status: redesigned.
+Status: redesigned as a four-course Swiss grid.
 
-Keep course title, outcome, lesson count, instructor, price, and action scannable without adding extra marketing decoration.
+Show four courses in one desktop row, two columns on tablet, and one column on mobile. Keep course title, outcome, lesson count, instructor, price, and action scannable without adding extra marketing decoration.
 
 ### Bundle
 
