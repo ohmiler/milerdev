@@ -16,6 +16,9 @@ describe('homepage featured courses', () => {
         expect(page).toContain('.limit(4)');
         expect(page).toContain('className="featured-courses-all"');
         expect(styles).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
+        expect(styles).not.toContain(`align-items: stretch;
+  border-top: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line);`);
     });
 
     test('steps down to two columns on tablet and one on mobile', () => {

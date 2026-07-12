@@ -9,7 +9,7 @@ function readProjectFile(filePath: string) {
 }
 
 describe('homepage final CTA', () => {
-    test('uses a solid 12-column Swiss action rail', () => {
+    test('uses a distilled 12-column Swiss action field', () => {
         const page = readProjectFile('src/app/page.tsx');
         const styles = readProjectFile('src/app/globals.css');
 
@@ -22,6 +22,9 @@ describe('homepage final CTA', () => {
         expect(styles).toContain('background: var(--accent);');
         expect(styles).toContain('.home-final-cta::before');
         expect(styles).toContain('display: none;');
+        expect(styles).not.toContain('border-top: 1px solid rgba(16, 32, 51, 0.28);');
+        expect(styles).not.toContain('border-bottom: 1px solid rgba(16, 32, 51, 0.28);');
+        expect(styles).not.toContain('border-bottom: 1px solid rgba(16, 32, 51, 0.2);');
     });
 
     test('keeps one dominant course action and a quieter registration link', () => {

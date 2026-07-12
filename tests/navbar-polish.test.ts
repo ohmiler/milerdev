@@ -45,9 +45,15 @@ describe('navbar polish', () => {
         expect(navbar).not.toContain("transition: 'all 0.15s'");
         expect(cssBlock(navbar, '.nav-public-link:hover')).toContain('color: var(--accent-strong)');
         expect(navbar).toContain('box-shadow: var(--focus-ring)');
-        expect(navbar).toContain("className={`nav-brand-lockup${pathname === '/' ? ' nav-brand-lockup--active' : ''}`}");
+        expect(navbar).toContain('className="nav-brand-lockup"');
+        expect(navbar).not.toContain('nav-brand-lockup--active');
         expect(navbar).toContain("aria-current={pathname === '/' ? 'page' : undefined}");
         expect(navbar).toContain('font-size: 1.25rem;');
+        expect(navbar).not.toContain('Coding Studio / TH');
+        expect(navbar).not.toContain('nav-brand-meta');
+        expect(cssBlock(navbar, '.nav-public-link:hover')).toContain('background: transparent');
+        expect(navbar).toContain('.nav-public-link:hover::after');
+        expect(navbar).toContain('transform: scaleX(1);');
     });
 
     test('mobile menu exposes accessible state and 44px target', () => {

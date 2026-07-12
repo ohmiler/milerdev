@@ -13,13 +13,16 @@ describe('homepage Swiss hero', () => {
         const page = readProjectFile('src/app/page.tsx');
         const styles = readProjectFile('src/app/globals.css');
 
-        expect(page).toContain('className="hero-meta hero-badge-anim"');
-        expect(page).toContain('MILERDEV / CODING STUDIO');
+        expect(page).not.toContain('className="hero-meta hero-badge-anim"');
+        expect(page).not.toContain('MILERDEV / CODING STUDIO');
+        expect(page).not.toContain('TH / ONLINE');
+        expect(styles).not.toContain('.hero-meta');
         expect(page).toContain('className="hero-secondary-action"');
         expect(page).toContain('className="hero-process hero-cta-anim"');
         expect(styles).toContain('grid-template-columns: repeat(12, minmax(0, 1fr));');
         expect(styles).toContain('grid-column: 1 / span 5;');
         expect(styles).toContain('grid-column: 6 / span 7;');
+        expect(styles).not.toContain('border-block: 1px solid var(--line);');
     });
 
     test('keeps VS Code Dark+ while replacing window decoration with useful metadata', () => {

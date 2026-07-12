@@ -181,12 +181,7 @@ export default async function HomePage() {
           <div className="container hero-container">
             <div className="hero-rail">
               <div className="hero-text">
-                <p className="hero-meta hero-badge-anim">
-                  <span>MILERDEV / CODING STUDIO</span>
-                  <span>TH / ONLINE</span>
-                </p>
-
-                <h1 className="hero-title hero-title-anim">
+<h1 className="hero-title hero-title-anim">
                   <span className="hero-title__line">เรียน Coding ตั้งแต่พื้นฐาน</span>
                   <span className="hero-title__line highlight">จนสร้าง<span className="hero-title__word">โปรเจกต์</span>จริงได้</span>
                 </h1>

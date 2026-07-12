@@ -77,14 +77,13 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
             <div className="container nav-public-rail">
                 <Link
                     href="/"
-                    className={`nav-brand-lockup${pathname === '/' ? ' nav-brand-lockup--active' : ''}`}
+                    className="nav-brand-lockup"
                     aria-label="MilerDev หน้าแรก"
                     aria-current={pathname === '/' ? 'page' : undefined}
                 >
                     <Image src="/milerdev-logo-transparent.png" alt="MilerDev" width={36} height={36} className="nav-brand-logo" />
                     <span className="nav-brand-copy">
                         <strong>MilerDev</strong>
-                        <span className="nav-brand-meta">Coding Studio / TH</span>
                     </span>
                 </Link>
 
@@ -189,10 +188,9 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     text-decoration: none;
                 }
                 .nav-brand-logo { width: 36px; height: 36px; }
-                .nav-brand-copy { display: flex; flex-direction: column; }
-                .nav-brand-copy strong { font-size: 1.25rem; font-weight: 750; line-height: 1; letter-spacing: -0.03em; }
-                .nav-brand-meta { margin-top: 4px; color: var(--ink-subtle); font-family: var(--font-code); font-size: 0.625rem; font-weight: 600; letter-spacing: 0.08em; line-height: 1; text-transform: uppercase; }
-                .nav-brand-lockup--active .nav-brand-copy strong { color: var(--accent-strong); }
+                .nav-brand-copy { display: flex; align-items: center; }
+                .nav-brand-copy strong { font-size: 1.25rem; font-weight: 750; line-height: 1; letter-spacing: -0.03em; transition: color 160ms ease; }
+                .nav-brand-lockup:hover .nav-brand-copy strong { color: var(--accent-strong); }
                 .nav-public-links {
                     grid-column: 4 / span 6;
                     align-self: stretch;
@@ -218,9 +216,9 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 .nav-public-link:hover,
                 .nav-public-link--active {
                     color: var(--accent-strong);
-                    background: var(--accent-soft);
+                    background: transparent;
                 }
-                .nav-public-link--active::after {
+                .nav-public-link::after {
                     content: '';
                     position: absolute;
                     left: 0;
@@ -228,7 +226,12 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     bottom: -1px;
                     height: 2px;
                     background: var(--accent);
+                    transform: scaleX(0);
+                    transform-origin: left;
+                    transition: transform 160ms ease-out;
                 }
+                .nav-public-link:hover::after,
+                .nav-public-link--active::after { transform: scaleX(1); }
                 .nav-public-actions { grid-column: 10 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
                 .nav-public-auth-link,
                 .nav-public-primary {
@@ -325,7 +328,6 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 .nav-mobile-auth--primary { background: var(--accent); color: #ffffff; }
                 @media (max-width: 1020px) and (min-width: 841px) {
                     .nav-public-rail { column-gap: 16px; }
-                    .nav-brand-meta { display: none; }
                     .nav-public-link { padding-inline: 12px; }
                     .nav-public-auth-link svg { display: none; }
                 }
@@ -333,7 +335,6 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     .nav-public-rail { display: flex; min-height: 64px; justify-content: space-between; gap: 12px; }
                     .nav-public-links, .nav-public-actions { display: none; }
                     .nav-mobile-btn { display: inline-flex; }
-                    .nav-brand-meta { display: none; }
                 }
                 @media (min-width: 841px) { .nav-public-mobile-panel { display: none; } }
                 @media (prefers-reduced-motion: reduce) {
