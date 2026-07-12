@@ -165,8 +165,8 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
   };
 
   return (
-    <div style={{ marginTop: '48px' }}>
-      <h2 style={{
+    <section className="course-reviews" aria-labelledby="course-reviews-title">
+      <h2 id="course-reviews-title" style={{
         fontSize: '1.5rem',
         fontWeight: 600,
         marginBottom: '24px',
@@ -515,6 +515,6 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 }

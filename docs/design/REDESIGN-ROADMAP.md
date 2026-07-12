@@ -69,7 +69,7 @@ Verification:
 ### Public discovery
 
 - [x] Courses catalog. Redesigned as a Swiss editorial search surface with bundle comparison rail, labeled filter toolbar, responsive course grid, empty state, and pagination.
-- [ ] Course detail.
+- [x] Course detail. Redesigned as a decision-first editorial surface with course facts, curriculum priority, and a responsive sticky enrollment summary.
 - [ ] Bundle detail.
 - [x] Blog index. Redesigned as a Swiss developer journal with a lead article, editorial rows, topic navigation, search, empty state, and pagination.
 - [ ] Blog article detail.

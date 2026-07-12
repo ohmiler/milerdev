@@ -113,7 +113,7 @@ async function getCourse(slug: string) {
 
 function CheckIcon() {
   return (
-    <svg style={{ width: '20px', height: '20px', color: '#16a34a', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="course-detail-check" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   );
@@ -208,31 +208,27 @@ export default async function CourseDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Navbar />
 
-      <main style={{ paddingTop: '0' }}>
+      <main className="course-detail-page">
         {/* Course Header */}
-        <section style={{
-          background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
-          padding: '60px 0',
-          color: 'white',
-        }}>
-          <div className="container">
-            <div style={{ maxWidth: '800px' }}>
+        <section className="course-detail-hero">
+          <div className="container course-detail-hero__grid">
+            <div className="course-detail-hero__content">
               {/* Breadcrumb */}
-              <div style={{ marginBottom: '24px', fontSize: '0.875rem', opacity: 0.8 }}>
-                <Link href="/" style={{ color: 'white', textDecoration: 'none' }}>หน้าแรก</Link>
+              <nav className="course-detail-breadcrumb" aria-label="เส้นทางนำทาง">
+                <Link href="/">หน้าแรก</Link>
                 {' / '}
-                <Link href="/courses" style={{ color: 'white', textDecoration: 'none' }}>คอร์สทั้งหมด</Link>
+                <Link href="/courses">คอร์สทั้งหมด</Link>
                 {' / '}
                 <span>{course.title}</span>
-              </div>
+              </nav>
 
               {course.tags && course.tags.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+                <div className="course-detail-tags">
                   {course.tags.map((tag: { id: string; name: string; slug: string }) => (
                     <Link
                       key={tag.id}
                       href={`/courses?tag=${tag.slug}`}
-                      className="course-tag-badge"
+                      className="course-detail-tag"
                       style={{
                         padding: '4px 14px',
                         background: 'rgba(255,255,255,0.15)',
@@ -249,28 +245,18 @@ export default async function CourseDetailPage({ params }: Props) {
                 </div>
               )}
 
-              <h1 style={{
-                fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-                fontWeight: 700,
-                marginBottom: '16px',
-                lineHeight: 1.3,
-              }}>
+              <h1>
                 {course.title}
               </h1>
 
               {course.description && (
-                <p style={{
-                  fontSize: '1.125rem',
-                  opacity: 0.9,
-                  marginBottom: '24px',
-                  lineHeight: 1.7,
-                }}>
+                <p className="course-detail-hero__lede">
                   {getExcerpt(course.description, 200)}
                 </p>
               )}
 
               {/* Meta */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center' }}>
+              <div className="course-detail-facts">
                 {course.instructor?.name && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{
@@ -308,14 +294,14 @@ export default async function CourseDetailPage({ params }: Props) {
         </section>
 
         {/* Course Content */}
-        <section className="section">
+        <section className="course-detail-body">
           <div className="container">
             <CourseDetailProvider>
             <div className="course-detail-grid">
               {/* Left - Description + Lessons */}
               <div className="course-detail-main">
                 {course.description && (
-                  <div style={{ marginBottom: '40px' }}>
+                  <div className="course-detail-section">
                     <h2 style={{
                       fontSize: '1.5rem',
                       fontWeight: 600,
@@ -352,21 +338,9 @@ export default async function CourseDetailPage({ params }: Props) {
 
               {/* Right - Enrollment Card */}
               <div className="course-detail-sidebar">
-                <div style={{
-                  background: 'white',
-                  borderRadius: '16px',
-                  border: '1px solid #e2e8f0',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                  overflow: 'hidden',
-                  position: 'sticky',
-                  top: '120px',
-                }}>
+                <div className="course-enroll-panel">
                   {/* Thumbnail */}
-                  <div style={{
-                    position: 'relative',
-                    paddingTop: '56.25%',
-                    background: 'linear-gradient(135deg, #1e3a5f, #2563eb)',
-                  }}>
+                  <div className="course-enroll-panel__media">
                     {normalizeUrl(course.thumbnailUrl) ? (
                       <img
                         src={normalizeUrl(course.thumbnailUrl)!}
@@ -402,17 +376,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
                   {/* Promo Banner */}
                   {isPromoActive && promoPrice !== null && (
-                    <div style={{
-                      background: 'linear-gradient(135deg, #7000FF 0%, #dc2626 100%)',
-                      color: 'white',
-                      padding: '10px 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                    }}>
+                    <div className="course-enroll-panel__promo">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M9.375 3a1.875 1.875 0 000 3.75h1.875v4.5H3.375A1.875 1.875 0 011.5 9.375v-.75c0-1.036.84-1.875 1.875-1.875h3.193A3.375 3.375 0 0112 2.753a3.375 3.375 0 015.432 3.997h3.193c1.035 0 1.875.84 1.875 1.875v.75c0 1.036-.84 1.875-1.875 1.875H12.75v-4.5h1.875a1.875 1.875 0 10-1.875-1.875V6.75h-1.5V4.875C11.25 3.839 10.41 3 9.375 3zM11.25 12.75H3v6.75a2.25 2.25 0 002.25 2.25h6v-9zM12.75 12.75v9h6a2.25 2.25 0 002.25-2.25v-6.75h-8.25z" />
                       </svg>
@@ -425,15 +389,15 @@ export default async function CourseDetailPage({ params }: Props) {
                     </div>
                   )}
 
-                  <div style={{ padding: '24px' }}>
+                  <div className="course-enroll-panel__content">
                     {/* Price Display */}
-                    <div style={{ marginBottom: '20px' }}>
+                    <div className="course-enroll-panel__price">
                       {displayPrice === 0 ? (
                         <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a' }}>ฟรี</div>
                       ) : isPromoActive ? (
                         <div>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                            <span style={{ fontSize: '1.75rem', fontWeight: 700, color: '#7000FF' }}>฿{displayPrice.toLocaleString()}</span>
+                            <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--accent-strong)' }}>฿{displayPrice.toLocaleString()}</span>
                             <span style={{ fontSize: '1.125rem', color: '#94a3b8', textDecoration: 'line-through' }}>฿{price.toLocaleString()}</span>
                           </div>
                         </div>
@@ -453,7 +417,7 @@ export default async function CourseDetailPage({ params }: Props) {
                     </div>
 
                     {/* Features */}
-                    <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e2e8f0' }}>
+                    <div className="course-enroll-panel__benefits">
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.9375rem', color: '#64748b' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <CheckIcon />
@@ -480,127 +444,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
       <Footer />
 
-      <style>{`
-        .course-detail-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 32px;
-        }
-        .course-detail-main {
-          order: 2;
-        }
-        .course-detail-sidebar {
-          order: 1;
-        }
 
-        .course-description-content {
-          color: #334155;
-          font-size: 1rem;
-          line-height: 1.8;
-        }
-        .course-description-content h2 {
-          font-size: 1.35rem;
-          font-weight: 600;
-          color: #1e293b;
-          margin: 1.5em 0 0.75em;
-        }
-        .course-description-content h3 {
-          font-size: 1.15rem;
-          font-weight: 600;
-          color: #1e293b;
-          margin: 1.25em 0 0.5em;
-        }
-        .course-description-content p {
-          margin: 0.75em 0;
-        }
-        .course-description-content ul {
-          padding-left: 1.5em;
-          margin: 0.75em 0;
-          list-style-type: disc;
-        }
-        .course-description-content ol {
-          padding-left: 1.5em;
-          margin: 0.75em 0;
-          list-style-type: decimal;
-        }
-        .course-description-content li {
-          margin: 0.4em 0;
-          display: list-item;
-        }
-        .course-description-content strong {
-          font-weight: 600;
-          color: #1e293b;
-        }
-        .course-description-content a {
-          color: #2563eb;
-          text-decoration: underline;
-        }
-        .course-description-content a:hover {
-          color: #1d4ed8;
-        }
-        .course-description-content blockquote {
-          border-left: 3px solid #3b82f6;
-          padding-left: 16px;
-          margin: 1em 0;
-          color: #64748b;
-          font-style: italic;
-        }
-        .course-description-content pre {
-          background: #1e293b;
-          color: #e2e8f0;
-          padding: 16px;
-          border-radius: 8px;
-          overflow-x: auto;
-          margin: 1em 0;
-          font-family: 'Fira Code', monospace;
-          font-size: 0.9em;
-          line-height: 1.6;
-        }
-        .course-description-content code {
-          background: #f1f5f9;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 0.9em;
-          color: #e11d48;
-          font-family: 'Fira Code', monospace;
-        }
-        .course-description-content pre code {
-          background: none;
-          color: inherit;
-          padding: 0;
-          font-size: inherit;
-        }
-        .course-description-content hr {
-          border: none;
-          border-top: 1px solid #e2e8f0;
-          margin: 1.5em 0;
-        }
-
-        @media (max-width: 1023px) {
-          .course-detail-sidebar {
-            width: 100%;
-            max-width: 100%;
-          }
-          .course-detail-sidebar > div {
-            position: relative !important;
-            top: auto !important;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .course-detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 360px;
-            gap: 48px;
-          }
-          .course-detail-main {
-            order: 1;
-          }
-          .course-detail-sidebar {
-            order: 2;
-          }
-        }
-      `}</style>
     </>
   );
 }
