@@ -326,17 +326,10 @@ export default function HeroCodeEditor() {
 
       <style jsx>{`
         .hero-code-editor {
-          background:
-            linear-gradient(135deg, rgba(0, 171, 255, 0.18), rgba(238, 250, 255, 0.08) 36%, rgba(11, 18, 32, 0.94) 72%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 34%),
-            #0b1220;
-          border: 1px solid rgba(0, 171, 255, 0.32);
+          background: #0b1220;
+          border: 1px solid #40576c;
           border-radius: 12px;
-          box-shadow:
-            0 18px 34px rgba(16, 32, 51, 0.16),
-            0 0 0 1px rgba(238, 250, 255, 0.06) inset,
-            0 22px 56px rgba(0, 171, 255, 0.12);
-          color: #d8e6f7;
+          color: #dcecf7;
           font-family: var(--font-code);
           font-size: 13px;
           line-height: 1.65;
@@ -347,34 +340,12 @@ export default function HeroCodeEditor() {
           width: 100%;
         }
 
-        .hero-code-editor::before {
-          background: linear-gradient(90deg, #00abff, rgba(115, 215, 255, 0.62), rgba(238, 250, 255, 0.18), transparent);
-          content: "";
-          height: 2px;
-          inset: 0 0 auto;
-          position: absolute;
-          z-index: 2;
-        }
-
-        .hero-code-editor::after {
-          border: 1px solid rgba(238, 250, 255, 0.08);
-          border-radius: 11px;
-          content: "";
-          inset: 1px;
-          pointer-events: none;
-          position: absolute;
-          z-index: 1;
-        }
-
         .hero-code-editor__titlebar,
         .hero-code-editor__status {
           align-items: center;
-          backdrop-filter: blur(10px);
-          background:
-            linear-gradient(180deg, rgba(238, 250, 255, 0.14), rgba(0, 171, 255, 0.07)),
-            rgba(12, 27, 44, 0.86);
-          border-color: rgba(115, 215, 255, 0.18);
-          color: #b7c7d9;
+          background: #172235;
+          border-color: #2a3d52;
+          color: #c8d9e5;
           display: flex;
           position: relative;
           z-index: 2;
@@ -401,17 +372,9 @@ export default function HeroCodeEditor() {
           width: 12px;
         }
 
-        .hero-code-editor__dot--danger {
-          background: #fb7185;
-        }
-
-        .hero-code-editor__dot--warning {
-          background: #fde68a;
-        }
-
-        .hero-code-editor__dot--success {
-          background: #86efac;
-        }
+        .hero-code-editor__dot--danger { background: #fb7185; }
+        .hero-code-editor__dot--warning { background: #fde68a; }
+        .hero-code-editor__dot--success { background: #86efac; }
 
         .hero-code-editor__tabs {
           display: flex;
@@ -425,7 +388,7 @@ export default function HeroCodeEditor() {
           align-items: center;
           background: transparent;
           border: 1px solid transparent;
-          border-radius: 8px;
+          border-radius: 0;
           color: #91a1b5;
           cursor: pointer;
           display: inline-flex;
@@ -443,8 +406,8 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__tab:hover {
-          background: rgba(0, 171, 255, 0.13);
-          border-color: rgba(115, 215, 255, 0.16);
+          background: #263c53;
+          border-color: #40576c;
           color: #eefaff;
         }
 
@@ -454,21 +417,16 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__tab[data-active="true"] {
-          background:
-            linear-gradient(135deg, rgba(0, 171, 255, 0.26), rgba(115, 215, 255, 0.14)),
-            rgba(238, 250, 255, 0.04);
-          border-color: rgba(115, 215, 255, 0.3);
-          box-shadow: 0 1px 0 rgba(238, 250, 255, 0.08) inset;
+          background: #173b51;
+          border: 1px solid #40576c;
+          border-bottom: 2px solid #63d7ff;
           color: #ffffff;
         }
 
         .hero-code-editor__body {
-          background:
-            linear-gradient(90deg, rgba(0, 171, 255, 0.08), transparent 24%),
-            linear-gradient(180deg, rgba(17, 26, 46, 0.98), rgba(11, 18, 32, 0.98)),
-            #111a2e;
+          background: #101a29;
           height: 320px;
-          overflow-x: hidden;
+          overflow-x: auto;
           overflow-y: auto;
           padding: 18px 0;
           scrollbar-color: rgba(115, 215, 255, 0.42) rgba(216, 230, 247, 0.08);
@@ -478,28 +436,18 @@ export default function HeroCodeEditor() {
           z-index: 2;
         }
 
-        .hero-code-editor__body::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .hero-code-editor__body::-webkit-scrollbar-track {
-          background: rgba(216, 230, 247, 0.08);
-        }
-
-        .hero-code-editor__body::-webkit-scrollbar-thumb {
-          background: rgba(115, 215, 255, 0.42);
-          border-radius: 999px;
-        }
+        .hero-code-editor__body::-webkit-scrollbar { width: 8px; height: 8px; }
+        .hero-code-editor__body::-webkit-scrollbar-track { background: rgba(216, 230, 247, 0.08); }
+        .hero-code-editor__body::-webkit-scrollbar-thumb { background: rgba(115, 215, 255, 0.42); border-radius: 999px; }
 
         .hero-code-editor__line {
           display: flex;
+          min-width: max-content;
           padding: 0 20px 0 0;
           transition: opacity 0.24s ease, transform 0.24s ease, background-color 0.24s ease;
         }
 
-        .hero-code-editor__line[data-current="true"] {
-          background: rgba(2, 171, 255, 0.08);
-        }
+        .hero-code-editor__line[data-current="true"] { background: rgba(2, 171, 255, 0.08); }
 
         .hero-code-editor__line-number {
           flex-shrink: 0;
@@ -512,8 +460,8 @@ export default function HeroCodeEditor() {
         .hero-code-editor__code {
           color: #d8e6f7;
           flex: 1;
-          min-width: 0;
-          overflow: hidden;
+          min-width: max-content;
+          overflow: visible;
           white-space: pre;
         }
 
@@ -551,78 +499,30 @@ export default function HeroCodeEditor() {
           width: 7px;
         }
 
-        .hero-code-editor__status-group > span[style] {
-          display: none;
-        }
+        .hero-code-editor__status-group > span[style] { display: none; }
 
         @keyframes cursorBlink {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0;
-          }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
         }
 
         @media (max-width: 640px) {
-          .hero-code-editor {
-            max-width: 100%;
-          }
-
-          .hero-code-editor__titlebar {
-            gap: 10px;
-            min-height: 48px;
-            padding: 0 12px;
-          }
-
-          .hero-code-editor__traffic {
-            gap: 6px;
-          }
-
-          .hero-code-editor__dot {
-            height: 10px;
-            width: 10px;
-          }
-
-          .hero-code-editor__tab {
-            min-height: 30px;
-            padding: 0 9px;
-          }
-
-          .hero-code-editor__body {
-            height: 286px;
-            padding: 16px 0;
-          }
-
-          .hero-code-editor__line {
-            padding-right: 14px;
-          }
-
-          .hero-code-editor__line-number {
-            padding-right: 12px;
-            width: 38px;
-          }
-
-          .hero-code-editor__status {
-            gap: 8px;
-            padding: 0 12px;
-          }
-
-          .hero-code-editor__status-group {
-            gap: 8px;
-          }
+          .hero-code-editor { max-width: 100%; }
+          .hero-code-editor__titlebar { gap: 10px; min-height: 48px; padding: 0 12px; }
+          .hero-code-editor__traffic { gap: 6px; }
+          .hero-code-editor__dot { height: 10px; width: 10px; }
+          .hero-code-editor__tab { min-height: 30px; padding: 0 9px; }
+          .hero-code-editor__body { height: 286px; padding: 16px 0; }
+          .hero-code-editor__line { padding-right: 14px; }
+          .hero-code-editor__line-number { padding-right: 12px; width: 38px; }
+          .hero-code-editor__status { gap: 8px; padding: 0 12px; }
+          .hero-code-editor__status-group { gap: 8px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .hero-code-editor__tab,
-          .hero-code-editor__line {
-            transition: none;
-          }
-
-          .hero-code-editor__cursor {
-            animation: none;
-          }
+          .hero-code-editor__line { transition: none; }
+          .hero-code-editor__cursor { animation: none; }
         }
       `}</style>
     </div>

@@ -211,96 +211,51 @@ export default async function HomePage() {
       <main style={{ paddingTop: '0' }}>
         {/* Hero Section */}
         <section className="hero-section">
-          {/* Background decorations */}
-          <div className="hero-bg-decoration hero-bg-1" />
-          <div className="hero-bg-decoration hero-bg-2" />
-          <div className="hero-bg-decoration hero-bg-3" />
-
-          <div className="container" style={{ position: 'relative', zIndex: 1, maxWidth: '1320px' }}>
-            <div className="hero-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '48px',
-              alignItems: 'center',
-            }}>
-              {/* Left: Text Content */}
+          <div className="container hero-container">
+            <div className="hero-rail">
               <div className="hero-text">
-                {/* Badge */}
-                <div className="hero-badge-anim" style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'var(--primary-50)',
-                  color: 'var(--primary-700)',
-                  padding: '10px 20px',
-                  borderRadius: '50px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  marginBottom: '28px',
-                  border: '1px solid var(--primary-200)'
-                }}>
-                  <span style={{
-                    width: '8px',
-                    height: '8px',
-                    background: 'var(--primary-500)',
-                    borderRadius: '50%',
-                    animation: 'pulse 2s infinite'
-                  }} />
-                  คอร์สเขียนเว็บสำหรับมือใหม่ ถึงระดับทำงานได้จริง
-                </div>
+                <p className="hero-kicker hero-badge-anim">
+                  <span className="hero-kicker__rule" aria-hidden="true" />
+                  CODING LEARNING STUDIO
+                </p>
 
-                {/* Title */}
                 <h1 className="hero-title hero-title-anim">
                   <span className="hero-title__line">เรียน Coding ตั้งแต่พื้นฐาน</span>
-                  <span className="hero-title__line highlight">จนสร้างโปรเจกต์จริงได้</span>
+                  <span className="hero-title__line highlight">จนสร้าง<span className="hero-title__word">โปรเจกต์</span>จริงได้</span>
                 </h1>
 
-                <p className="hero-desc-anim home-lede" style={{ marginBottom: '32px' }}>
+                <p className="hero-desc-anim home-lede">
                   คอร์สเขียนโปรแกรมสำหรับผู้เริ่มต้น นักศึกษา และคนที่อยากต่อยอดรับงานหรือสร้างผลงานของตัวเอง
                   เรียนเป็นขั้นตอน ลงมือทำจริงทุกบทเรียน
                 </p>
 
-                {/* CTA Buttons */}
-                <div className="hero-cta-anim" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
-                  <Link href="#learning-path" className="btn btn-primary" style={{ padding: '14px 28px' }}>
-                    <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="hero-actions hero-cta-anim">
+                  <Link href="#learning-path" className="btn btn-primary">
+                    <svg aria-hidden="true" style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                     </svg>
                     เริ่มตามเส้นทางการเรียน
                   </Link>
-                  <Link href="/courses" className="btn btn-secondary" style={{ padding: '14px 28px' }}>
+                  <Link href="/courses" className="btn btn-secondary">
                     ดูคอร์สทั้งหมด
                   </Link>
                 </div>
 
-                {/* Inline trust mini-stats */}
-                <div className="hero-stats hero-cta-anim">
-                  <div className="hero-stat">
-                    <strong>180,000+</strong>
-                    <span>ผู้ติดตาม</span>
-                  </div>
-                  <div className="hero-stat__divider" />
-                  <div className="hero-stat">
-                    <strong>1,000+</strong>
-                    <span>นักเรียน</span>
-                  </div>
-                  <div className="hero-stat__divider" />
-                  <div className="hero-stat">
-                    <strong>3,500+</strong>
-                    <span>วิดีโอสอนฟรี</span>
-                  </div>
+                <div className="hero-utility hero-cta-anim" aria-label="ลำดับการเรียนรู้: เรียน สร้าง ส่งมอบ">
+                  <span>LEARN</span>
+                  <span aria-hidden="true">→</span>
+                  <span>BUILD</span>
+                  <span aria-hidden="true">→</span>
+                  <span>SHIP</span>
                 </div>
-
               </div>
 
-              {/* Right: IDE Animation */}
               <div className="hero-ide hero-ide-anim">
                 <HeroCodeEditor />
               </div>
             </div>
           </div>
         </section>
-
         {/* Learning Path — guided beginner journey */}
         {learningPath.length > 0 && (
           <section id="learning-path" className="learning-path" data-reveal aria-label="เส้นทางการเรียนสำหรับมือใหม่">

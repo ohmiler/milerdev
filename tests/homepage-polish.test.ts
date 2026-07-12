@@ -47,20 +47,51 @@ describe('homepage polish', () => {
         expect(editor).not.toContain("transition: 'all 0.2s'");
         expect(editor).not.toContain('rotateY');
         expect(editor).not.toContain("boxShadow: '0 25px 60px");
+        expect(editor).not.toContain('linear-gradient');
+        expect(editor).not.toContain('backdrop-filter: blur');
         expect(cssBlock(editor, '.hero-code-editor {')).toContain('border-radius: 12px');
-        expect(cssBlock(editor, '.hero-code-editor {')).toContain('rgba(0, 171, 255, 0.18)');
-        expect(cssBlock(editor, '.hero-code-editor {')).toContain('border: 1px solid rgba(0, 171, 255, 0.32)');
+        expect(cssBlock(editor, '.hero-code-editor {')).toContain('background: #0b1220');
+        expect(cssBlock(editor, '.hero-code-editor {')).toContain('border: 1px solid #40576c');
         expect(cssBlock(editor, '.hero-code-editor {')).toContain('font-family: var(--font-code)');
-        expect(cssBlock(editor, '.hero-code-editor__titlebar,')).toContain('backdrop-filter: blur(10px)');
-        expect(cssBlock(editor, '.hero-code-editor__tab[data-active="true"]')).toContain('linear-gradient(135deg, rgba(0, 171, 255, 0.26)');
+        expect(cssBlock(editor, '.hero-code-editor__titlebar,')).toContain('background: #172235');
+        expect(cssBlock(editor, '.hero-code-editor__titlebar,')).toContain('border-color: #2a3d52');
+        expect(cssBlock(editor, '.hero-code-editor__tab[data-active="true"]')).toContain('background: #173b51');
+        expect(cssBlock(editor, '.hero-code-editor__tab[data-active="true"]')).toContain('border-bottom: 2px solid #63d7ff');
         expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('height: 320px');
-        expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('#111a2e');
+        expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('background: #101a29');
+        expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('overflow-x: auto');
         expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('overflow-y: auto');
         expect(cssBlock(editor, '.hero-code-editor__body {')).toContain('scrollbar-gutter: stable');
         expect(cssBlock(editor, '.hero-code-editor__tab:focus-visible')).toContain('box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.28)');
         expect(cssBlock(editor, '.hero-code-editor__line[data-current="true"]')).toContain('background: rgba(2, 171, 255, 0.08)');
         expect(editor).toContain("codeBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' })");
         expect(editor).toContain('@media (prefers-reduced-motion: reduce)');
+    });
+
+    test('homepage hero uses a Swiss technical rail split', () => {
+        const page = readProjectFile('src/app/page.tsx');
+        const globals = readProjectFile('src/app/globals.css');
+
+        expect(page).toContain('className="hero-section"');
+        expect(page).toContain('className="container hero-container"');
+        expect(page).toContain('className="hero-rail"');
+        expect(page).toContain('className="hero-kicker hero-badge-anim"');
+        expect(page).toContain('className="hero-actions hero-cta-anim"');
+        expect(page).toContain('className="hero-title__word"');
+        expect(page).toContain('className="hero-utility hero-cta-anim"');
+        expect(page).toContain('aria-label="');
+        expect(page).toContain('<span>LEARN</span>');
+        expect(page).not.toContain('hero-bg-decoration');
+        expect(page).not.toContain('hero-stats');
+        expect(page).not.toContain("borderRadius: '50px'");
+        expect(page).not.toContain("gridTemplateColumns: '1fr 1fr'");
+
+        expect(cssBlock(globals, '.hero-section {')).toContain('background: var(--canvas)');
+        expect(cssBlock(globals, '.hero-rail {')).toContain('grid-template-columns: minmax(0, 5fr) minmax(0, 7fr)');
+        expect(cssBlock(globals, '.hero-kicker {')).toContain('font-family: var(--font-code)');
+        expect(cssBlock(globals, '.hero-utility {')).toContain('border-top: 1px solid var(--line)');
+        expect(globals).not.toContain('.hero-bg-decoration {');
+        expect(globals).not.toContain('.hero-stats {');
     });
 
     test('bundle section avoids decorative gift motion and reads as product UI', () => {
@@ -149,8 +180,8 @@ describe('homepage polish', () => {
 
         expect(cssBlock(globals, '.btn:focus-visible')).toContain('box-shadow: var(--focus-ring)');
         expect(globals).toContain('--primary-gradient: linear-gradient(135deg, #00abff 0%, var(--primary-600) 100%)');
-        expect(cssBlock(globals, '.btn-primary {')).toContain('background: var(--primary-gradient)');
-        expect(cssBlock(globals, '.btn-primary:hover')).toContain('background: var(--primary-gradient-hover)');
+        expect(cssBlock(globals, '.btn-primary {')).toContain('background: var(--accent, var(--primary-500))');
+        expect(cssBlock(globals, '.btn-primary:hover')).toContain('background: var(--accent-strong, var(--primary-600))');
         expect(cssBlock(globals, '.cta-section {')).toContain('background: var(--primary-gradient-deep)');
         expect(cssBlock(globals, '.lp-step__num {')).toContain('background: var(--primary-gradient)');
         expect(cssBlock(globals, '.card:hover .cc-cta')).toContain('background: var(--primary-gradient)');
@@ -173,9 +204,9 @@ describe('homepage polish', () => {
         expect(footer).not.toContain("transition: 'all 0.2s'");
         expect(footer).not.toContain('onMouseOver');
         expect(footer).not.toContain('onMouseOut');
-        expect(cssBlock(footer, '.footer-link:hover')).toContain('color: #7dd3fc !important');
+        expect(cssBlock(footer, '.footer-link:hover')).toContain('color: var(--accent-strong) !important');
         expect(cssBlock(footer, '.footer-social:hover')).toContain('transform: translateY(-1px)');
-        expect(cssBlock(footer, '.footer-social:focus-visible')).toContain('box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.32)');
+        expect(cssBlock(footer, '.footer-social:focus-visible')).toContain('box-shadow: var(--focus-ring)');
     });
 
     test('global rich content blockquotes avoid thick side-tab accents', () => {
