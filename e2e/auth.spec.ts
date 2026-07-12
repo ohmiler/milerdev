@@ -78,7 +78,7 @@ test.describe('Register', () => {
     await expect(passwordInput).toHaveAttribute('type', 'password');
 
     // Click eye icon to show password
-    const toggleBtn = page.locator('button[type="button"]').first();
+    const toggleBtn = page.getByRole('button', { name: 'แสดงรหัสผ่าน', exact: true });
     await toggleBtn.click();
 
     // Should now be text type

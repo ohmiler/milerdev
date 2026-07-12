@@ -80,7 +80,8 @@ Verification:
 ### Authentication
 
 - [x] Login page. Redesigned as a Swiss return-to-learning surface with preserved credentials, Google sign-in, safe errors, password visibility, and recovery links.
-- [ ] Registration, forgot-password, and reset-password pages.
+- [x] Registration page. Redesigned as a Swiss start-learning surface with preserved validation, strength guidance, Google sign-up, auto-login, and anti-enumeration behavior.
+- [ ] Forgot-password and reset-password pages.
 
 ### Learner product
 
