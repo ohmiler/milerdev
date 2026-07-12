@@ -139,12 +139,68 @@ For narrow changes, run the most relevant subset first, then `npm run lint` and 
 - Keep the summary imperative, lowercase after the type, and under 72 characters when practical.
 - Before committing, review `git status --short` and stage only files that belong to the requested change.
 
+## Design Work
+
+Before non-trivial UI changes:
+
+1. Read `PRODUCT.md` and `DESIGN.md`.
+2. Check `docs/design/REDESIGN-ROADMAP.md` for the current focus.
+3. Read the relevant page note in `docs/design/pages/` when present.
+4. Work only on the current page section or shared component unless the user expands the scope.
+5. Preserve behavior unless the request explicitly authorizes a behavior change.
+6. After verification, update the roadmap and page note with the new status or decision.
+
+Do not treat files under `docs/superpowers/` as the long-term design source of truth. They may contain temporary plans or workflow artifacts.
 ## Agent Workflow
 
-- Start by checking `git status --short` and nearby files. Preserve user changes.
-- Search with `rg`/`rg --files` before broad file reads.
-- Read the relevant route/component/helper/test files before editing.
-- Use `apply_patch` for manual edits.
+Use the lightest workflow that fits the request. Do not stack planning, brainstorming, browser, review, and documentation workflows by default.
+
+### Quick path (default)
+
+Use this for copy changes, focused styling/layout work, small bug fixes, documentation edits, and read-only investigation.
+
+1. Run `git status --short`, search with `rg`/`rg --files`, and inspect the nearest files.
+2. Make the smallest coherent change in the requested scope.
+3. Run the narrowest useful verification.
+4. Report changed files, checks run, and any skipped checks.
+
+Do not create a separate plan/spec, open a visual companion, start a browser session, or make a commit unless the task needs it or the user asks for it.
+
+### Standard path
+
+Use this for multi-file features, route changes, reusable components, or behavior changes that need focused tests.
+
+1. Inspect existing patterns, related helpers, and nearby tests before editing.
+2. Write a short implementation plan when the change has meaningful dependencies or more than one safe implementation path.
+3. Implement in small, reviewable steps.
+4. Run targeted tests first, then `npm run lint` and `npm run build` when practical.
+5. Use browser or Playwright checks only when the route flow or responsive behavior cannot be verified adequately from code and automated tests.
+
+### High-risk path
+
+Use the extra review path for auth, roles, admin authorization, payments, enrollment, certificates, rate limits, security headers, uploads, database schema, migrations, and production data.
+
+1. Read the complete current flow before editing.
+2. Preserve idempotency, authorization, validation, safe logging, and recovery behavior.
+3. Add or update focused tests for state transitions, duplicate requests, retries, and side effects.
+4. Review the diff carefully and run the strongest relevant verification available.
+5. Ask before destructive data or schema changes, production operations, or external coordination.
+
+### Skill and workflow rules
+
+- Follow an explicitly invoked skill and the platform's required skill triggers.
+- Prefer one primary workflow skill that covers the task. Do not invoke overlapping optional skills without a concrete reason.
+- For a clear, scoped UI request, keep the design checkpoint brief. Do not automatically offer a visual companion or require browser iteration.
+- Use `impeccable` for frontend quality work when the user invokes it or the task clearly needs a design-system/UX pass.
+- Use brainstorming or a written plan when requirements are ambiguous, the scope is substantial, or the user asks for design exploration. A small, unambiguous UI change should stay lightweight.
+- Use verification before claiming that work is complete, fixed, or passing.
+- Do not create commits, pull requests, design specs, or external messages unless the user asks for them.
+
+### Editing and handoff
+
+- Preserve unrelated user changes in a dirty worktree.
 - Do not run destructive commands such as `git reset --hard`, recursive deletion, or checkout of user files unless explicitly requested.
-- After edits, run targeted tests first. Escalate to lint/build/e2e based on risk.
-- In the final response, summarize changed files, verification performed, and any skipped checks or follow-up risks.
+- Use `apply_patch` for manual edits when available. If the editing helper fails, use the safest equivalent patch-based method and call out the limitation.
+- Never read or print secret-bearing environment files.
+- Before handoff, check `git diff --check` and `git status --short`.
+- In the final response, summarize the result, changed files, verification performed, and any remaining risk or skipped check.

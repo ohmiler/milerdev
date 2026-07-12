@@ -141,36 +141,6 @@ async function getPublishedBundles() {
     });
 }
 
-async function getCourseLookup() {
-  return db
-    .select({ title: courses.title, slug: courses.slug })
-    .from(courses)
-    .where(eq(courses.status, 'published'));
-}
-
-type CourseLookupRow = { title: string; slug: string };
-
-// Guided beginner journey. Each step maps to a real published course by title keyword.
-const LEARNING_PATH_STEPS = [
-  { match: ['html', 'css'], stage: 'พื้นฐานการเขียนเว็บ', title: 'HTML & CSS', outcome: 'เขียนโครงสร้างเว็บและจัดหน้าตาให้สวย รองรับทุกหน้าจอได้' },
-  { match: ['javascript'], stage: 'ตรรกะการเขียนโปรแกรม', title: 'JavaScript', outcome: 'ทำให้เว็บโต้ตอบกับผู้ใช้ และเข้าใจการเขียนโปรแกรมจริง' },
-  { match: ['react'], stage: 'ต่อยอดด้วย Framework', title: 'ReactJS Front-End', outcome: 'สร้างเว็บแอปสมัยใหม่ด้วย React ได้ด้วยตัวเอง' },
-  { match: ['figma'], stage: 'สู่ระดับมืออาชีพ', title: 'Figma to Code', outcome: 'แปลงดีไซน์จาก Figma ให้กลายเป็นโค้ดแบบมืออาชีพ' },
-];
-
-function buildLearningPath(lookup: CourseLookupRow[]) {
-  return LEARNING_PATH_STEPS.map((step) => {
-    const course = lookup.find((c) =>
-      step.match.some((kw) => c.title.toLowerCase().includes(kw))
-    );
-    return {
-      stage: step.stage,
-      outcome: step.outcome,
-      title: course?.title ?? step.title,
-      href: course ? `/courses/${course.slug}` : '/courses',
-    };
-  });
-}
 
 // Short, outcome-focused bullets per course (matched by title keyword).
 function getCourseOutcomes(title: string): string[] | null {
@@ -195,13 +165,10 @@ const CLIENT_LOGOS = [
 
 export default async function HomePage() {
   // Parallelize independent data fetching (async-parallel rule)
-  const [featuredCourses, publishedBundles, courseLookup] = await Promise.all([
+  const [featuredCourses, publishedBundles] = await Promise.all([
     getFeaturedCourses(),
     getPublishedBundles(),
-    getCourseLookup(),
   ]);
-
-  const learningPath = buildLearningPath(courseLookup);
 
   return (
     <>
@@ -296,187 +263,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Learning Path — guided beginner journey */}
-        {learningPath.length > 0 && (
-          <section id="learning-path" className="learning-path" data-reveal aria-label="เส้นทางการเรียนสำหรับมือใหม่">
-            <div className="container">
-              <div className="lp-head">
-                <span className="lp-eyebrow">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-                  </svg>
-                  เริ่มจากศูนย์? แนะนำเส้นทางนี้
-                </span>
-                <h2>เส้นทางการเรียนสำหรับมือใหม่</h2>
-                <p>เรียนตามลำดับนี้ทีละขั้น จากพื้นฐานการเขียนเว็บ จนต่อยอดเป็น Front-end Developer ได้</p>
-              </div>
-
-              <ol className="lp-track">
-                {learningPath.map((step, i) => (
-                  <li key={i} className="lp-step-item">
-                    <Link href={step.href} className="lp-step">
-                      <span className="lp-step__num">{i + 1}</span>
-                      <span className="lp-step__stage">{step.stage}</span>
-                      <span className="lp-step__title">{step.title}</span>
-                      <span className="lp-step__outcome">{step.outcome}</span>
-                      <span className="lp-step__cta">
-                        เริ่มเรียนคอร์สนี้
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                          <polyline points="12 5 19 12 12 19" />
-                        </svg>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </section>
-        )}
-
-        {/* Features Section */}
-        <section id="why-milerdev" className="section" style={{ background: 'white' }} data-reveal>
-          <div className="container">
-            <div className="trust-section__head">
-              <h2 className="section-title">
-                ทำไมต้องเรียนกับเรา?
-              </h2>
-              <p className="section-copy">
-                เราออกแบบคอร์สให้เข้าใจง่าย เน้นลงมือทำจริง และมีประสบการณ์สอนที่ได้รับความไว้วางใจจากผู้เรียนจำนวนมาก
-              </p>
-            </div>
-
-            {/* Credibility stats band */}
-            <div className="trust-stats" data-reveal>
-              <div className="trust-stat">
-                <div className="trust-stat__value">180,000+</div>
-                <div className="trust-stat__label">ผู้ติดตามบนโซเชียลมีเดีย</div>
-              </div>
-              <div className="trust-stat">
-                <div className="trust-stat__value">1,000+</div>
-                <div className="trust-stat__label">นักเรียนที่ลงทะเบียนเรียน</div>
-              </div>
-              <div className="trust-stat">
-                <div className="trust-stat__value">3,500+</div>
-                <div className="trust-stat__label">วิดีโอสอนฟรีบน YouTube</div>
-              </div>
-              <div className="trust-stat">
-                <div className="trust-stat__value trust-stat__value--word">เข้าใจง่าย</div>
-                <div className="trust-stat__label">สอนเป็นขั้นตอนสำหรับมือใหม่</div>
-              </div>
-            </div>
-
-            <div className="trust-reasons">
-              {/* Feature 1 */}
-              <div className="trust-reason" data-reveal data-delay="0">
-                <div className="trust-reason__icon" aria-hidden="true">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-                <h3 className="trust-reason__title">
-                  เนื้อหาอัพเดทล่าสุด
-                </h3>
-                <p className="trust-reason__copy">
-                  เนื้อหาถูกอัพเดทตลอดเวลาให้ทันกับเทคโนโลยีใหม่ๆ
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="trust-reason" data-reveal data-delay="120">
-                <div className="trust-reason__icon" aria-hidden="true">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                </div>
-                <h3 className="trust-reason__title">
-                  เรียนรู้จากโปรเจกต์จริง
-                </h3>
-                <p className="trust-reason__copy">
-                  ฝึกทำโปรเจกต์จริงที่สามารถใส่ Portfolio ได้เลย
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="trust-reason" data-reveal data-delay="240">
-                <div className="trust-reason__icon" aria-hidden="true">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <h3 className="trust-reason__title">
-                  Community ที่แข็งแกร่ง
-                </h3>
-                <p className="trust-reason__copy">
-                  ร่วมกลุ่มกับนักเรียนคนอื่นๆ แลกเปลี่ยนความรู้และประสบการณ์
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Audience Fit — เหมาะกับใคร / ไม่เหมาะกับใคร */}
-        <section id="audience-fit" className="section audience-section" data-reveal>
-          <div className="container">
-            <div className="audience-head">
-              <h2 className="section-title">
-                คอร์สของเราเหมาะกับใคร?
-              </h2>
-              <p className="section-copy audience-note">
-                เราอยากให้คุณได้ผลลัพธ์จริง จึงบอกตรง ๆ ว่าคอร์สนี้เหมาะ และยังไม่เหมาะกับใคร
-              </p>
-            </div>
-
-            <div className="audience-grid">
-              <div className="audience-col audience-col--yes">
-                <div className="audience-col__head">
-                  <span className="audience-col__icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </span>
-                  <h3>เหมาะกับคุณ ถ้า...</h3>
-                </div>
-                {[
-                  'เพิ่งเริ่มต้นเขียนเว็บ และอยากมีพื้นฐานที่แน่น',
-                  'เป็นนักศึกษาที่อยากได้ทักษะไว้ใช้ทำงานจริง',
-                  'อยากสร้าง Portfolio ด้วยโปรเจกต์ของตัวเอง',
-                  'อยากต่อยอดไปรับงาน Freelance หรือสมัครงานสาย Developer',
-                ].map((item, i) => (
-                  <div key={i} className="audience-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    {item}
-                  </div>
-                ))}
-              </div>
-
-              <div className="audience-col audience-col--no">
-                <div className="audience-col__head">
-                  <span className="audience-col__icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </span>
-                  <h3>อาจยังไม่เหมาะ ถ้า...</h3>
-                </div>
-                {[
-                  'อยากได้ทางลัดแบบไม่ต้องฝึกเขียนโค้ดเอง',
-                  'ยังไม่พร้อมลงมือทำตามทีละขั้นตอน',
-                  'มองหาคอร์สขั้นสูงเฉพาะทางที่ข้ามพื้นฐานไปแล้ว',
-                ].map((item, i) => (
-                  <div key={i} className="audience-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Bundle Section */}
         {publishedBundles.length > 0 && (

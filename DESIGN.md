@@ -1,489 +1,564 @@
 # MilerDev Design System
 
-Design system สำหรับ redesign เว็บ MilerDev ให้เป็น LMS สอนเขียนโค้ดที่ดูสะอาด น่าเชื่อถือ ใช้งานง่าย และมีคาแรกเตอร์ของโรงเรียนออนไลน์สาย developer โดยใช้ธีมหลักฟ้า-ขาว สีหลัก `#02abff`
+ระบบออกแบบสำหรับ MilerDev coding learning studio ภาษาไทย
+
+ทิศทางหลักคือ **Swiss Editorial + Minimal Modern + Developer-focused Dark/Light System**
+
+เอกสารนี้เป็น visual และ interaction contract สำหรับการ redesign ทีละส่วน หากกฎในเอกสารนี้ขัดกับ [PRODUCT.md](PRODUCT.md) ให้แก้ให้กลับไปสอดคล้องกับ product job ก่อนเสมอ
 
 ## Design Direction
 
-MilerDev ควรรู้สึกเหมือน "coding studio ที่เปิดไฟสว่าง" ไม่ใช่เว็บคอร์สที่เต็มไปด้วยกล่อง marketing ทั่วไป จุดยืนภาพรวมคือ precise, calm, technical, friendly
+MilerDev ควรให้ความรู้สึกเหมือน coding studio ที่จัดวางอย่างเป็นระบบ มีความนิ่งแบบ Swiss editorial และมี visual language ของ developer tool เฉพาะในจุดที่ช่วยให้ผู้เรียนโฟกัส
 
-- สว่าง อ่านง่าย เหมาะกับการเรียนต่อเนื่องนานๆ
-- ใช้สีฟ้าเป็นสัญญาณของ action, progress, focus และ trust
-- UI ต้องให้ความรู้สึกเป็น product มากกว่า landing page
-- หน้าเรียนต้องลดสิ่งรบกวน เหลือแค่ video, lesson content, progress และ next action
-- หน้า admin/dashboard ต้อง dense แต่ไม่รก เหมาะกับการ scan ข้อมูลซ้ำๆ
+### Swiss Editorial
 
-## Brand Personality
+- ใช้ grid, alignment, rhythm และ whitespace เป็นตัวสร้าง hierarchy
+- ให้ typography และการจัดวางทำหน้าที่แทน decoration
+- ใช้เส้นแบ่ง, section band, caption และ annotation อย่างมีเหตุผล
+- ใช้ asymmetry ได้เมื่อช่วยนำสายตาหรือแสดงความสัมพันธ์ของ content
+- ไม่ใช้เลข section marker หรือ eyebrow ซ้ำทุก section เป็นโครงสำเร็จรูป
 
-- ชัดเจน: อธิบายง่าย ตัดสินใจได้เร็ว
-- มืออาชีพ: spacing, alignment, state และ copy ต้องนิ่ง
-- เป็นมิตร: ภาษาไทยธรรมชาติ ปุ่ม/empty state ไม่แข็ง
-- Developer-native: ใช้ code surface, monospace, terminal cue และ progress pattern อย่างพอดี
+### Minimal Modern
 
-## Color System
+- ลดสิ่งที่ไม่ช่วยให้ผู้ใช้เข้าใจหรือทำ action
+- ใช้ surface เท่าที่จำเป็น ไม่ซ้อน card หลายชั้น
+- ขอบและเงาต้องมีหน้าที่แยกชั้นข้อมูล ไม่ใช่ใส่เพื่อความสวยอย่างเดียว
+- component vocabulary ต้องคงที่ทั้งระบบ
+- animation ใช้เพื่อบอก state หรือช่วย orientation ไม่ใช้เป็น choreography
 
-### Core Tokens
+### Developer-focused
+
+- ใช้ code, editor, terminal, prompt และ progress เป็น signature motif เมื่อเกี่ยวข้องกับ task
+- Dark surface ใช้กับ learning, video, code และ focus state
+- Monospace ใช้กับ code และ technical metadata ไม่ใช้กับ body copy ทั้งเว็บ
+- visual ต้องสะท้อนการสร้างของจริง ไม่ทำเป็น dashboard theater หรือ fake metric
+
+## Surface Architecture
+
+ระบบมี 4 surface และแต่ละ surface มี default mode ของตัวเอง
+
+| Surface | Theme | Layout register | Priority |
+| --- | --- | --- | --- |
+| Public / Commerce | Light Editorial | wide grid, readable sections, clear CTA | outcome, discovery, trust |
+| Learning / Code | Dark Focus | focus shell, video/content split, lesson rail | content, progress, next action |
+| Dashboard | Light Product | compact modules, continue-learning first | resume, progress, status |
+| Admin | Light Operational | sidebar, toolbar, table-first | scan, filter, mutate safely |
+
+## Theme Architecture
+
+ใช้ semantic tokens และให้ page/surface เป็นผู้เลือก mode ไม่ให้ component ผูกกับสีดิบ
+
+แนวทาง implementation เป้าหมาย:
+
+```html
+<body data-theme="light" data-surface="public">
+```
+
+หน้าเรียนสามารถใช้:
+
+```html
+<body data-theme="dark" data-surface="learning">
+```
+
+ผู้เรียนสลับ `data-theme` ภายใน learning surface ได้ และ preference ต้องถูกจำไว้ใน scope ของผู้เรียน โดยไม่เปลี่ยน public หรือ admin ให้กลายเป็น dark ทั้งระบบ
+
+## Token System
+
+### Foundation Tokens
 
 ```css
 :root {
-  --color-brand: #02abff;
-  --color-brand-50: #eefaff;
-  --color-brand-100: #d8f3ff;
-  --color-brand-200: #ace7ff;
-  --color-brand-300: #73d7ff;
-  --color-brand-400: #2fc2ff;
-  --color-brand-500: #02abff;
-  --color-brand-600: #0089d6;
-  --color-brand-700: #006dab;
-  --color-brand-800: #075b8d;
-  --color-brand-900: #0b4c75;
-  --color-brand-gradient: linear-gradient(135deg, #00abff 0%, #0089d6 100%);
-  --color-brand-gradient-hover: linear-gradient(135deg, #00abff 0%, #0089d6 48%, #006dab 100%);
-  --color-brand-gradient-deep: linear-gradient(135deg, #00abff 0%, #0089d6 48%, #075b8d 100%);
+  --font-ui: var(--font-ibm-plex-sans-thai), var(--font-inter), sans-serif;
+  --font-body: var(--font-ibm-plex-sans-thai), var(--font-inter), sans-serif;
+  --font-code: "Fira Code", "JetBrains Mono", "Cascadia Code", monospace;
 
-  --color-ink: #102033;
-  --color-ink-soft: #34465c;
-  --color-muted: #64758b;
-  --color-subtle: #91a1b5;
+  --brand-blue: #02abff;
+  --brand-blue-strong: #0089d6;
+  --brand-blue-deep: #006dab;
+  --brand-blue-soft: #eaf8ff;
+  --editorial-red: #d9573f;
+  --developer-lime: #a9e768;
+  --developer-cyan: #63d7d0;
 
-  --color-canvas: #ffffff;
-  --color-surface: #f7fbff;
-  --color-surface-raised: #ffffff;
-  --color-line: #dbe8f2;
-  --color-line-strong: #bed3e3;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
 
-  --color-success: #11a66a;
-  --color-warning: #f5a524;
-  --color-danger: #e5484d;
-  --color-info: #02abff;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 
-  --color-code-bg: #0b1220;
-  --color-code-panel: #111a2e;
-  --color-code-line: #22314d;
-  --color-code-text: #d8e6f7;
+  --shadow-sm: 0 1px 2px rgba(16, 32, 51, 0.06);
+  --shadow-md: 0 8px 24px rgba(16, 32, 51, 0.08);
+  --focus-ring: 0 0 0 3px rgba(2, 171, 255, 0.3);
 }
 ```
 
-### Usage Rules
+### Light Editorial Tokens
 
-- `#02abff` ใช้กับ primary button, active navigation, progress, selected tab, focus ring และ link สำคัญ
-- ใน implementation ปัจจุบัน token จริงใน `src/app/globals.css` ใช้ชื่อ `--primary-*`; ให้ถือว่า `--primary-500` คือ `#02abff` และ `--primary-gradient` คือ gradient หลักของ brand ที่เริ่มด้วย `#00abff` แล้วไล่เข้มขึ้น
-- ใช้ `--primary-gradient` เฉพาะ primary action, marker ที่บอกลำดับ/สถานะสำคัญ, CTA arrow และ hover state ที่ต้องดึงสายตา
-- ใช้ `--primary-gradient-deep` สำหรับ filled band ที่ต้องใช้ตัวอักษรขาว เช่น proof stats band หรือ CTA band ขนาดใหญ่ ไม่ใช้เป็นพื้นหลังทั้งหน้า
-- หลีกเลี่ยงการใช้ฟ้าเต็มพื้นใหญ่ทั้งหน้า ให้ใช้เป็น accent บนพื้นขาว/ฟ้าอ่อน
-- ห้ามใช้ gradient text; emphasis ใน headline ให้ใช้สี solid `--primary-600` พร้อมน้ำหนักตัวอักษร
-- ใช้ `--color-ink` สำหรับ heading และข้อความสำคัญ ไม่ใช้ดำสนิท
-- ใช้ dark code surface เฉพาะส่วนที่เกี่ยวกับ coding เช่น editor mockup, code block, terminal, lesson examples
-- สี promo/discount ใช้ amber หรือ magenta อย่างจำกัด ไม่ใช้ม่วงเป็นสีรองหลักของเว็บ
+Light is the default for public discovery and commerce. It is crisp, readable and restrained.
 
-### Page Backgrounds
+```css
+[data-theme="light"] {
+  --canvas: #ffffff;
+  --surface: #f7f9fb;
+  --surface-raised: #ffffff;
+  --surface-subtle: #eef4f8;
+  --ink: #111b27;
+  --ink-soft: #34475a;
+  --ink-muted: #64778a;
+  --ink-subtle: #8798a8;
+  --line: #d9e3ea;
+  --line-strong: #b7c8d5;
+  --accent: var(--brand-blue);
+  --accent-strong: var(--brand-blue-strong);
+  --accent-soft: var(--brand-blue-soft);
+  --code-bg: #101a29;
+  --code-panel: #172235;
+  --code-text: #dcecf7;
+  --code-line: #2a3d56;
+}
+```
 
-- Public pages: `#ffffff` ผสม section band `#f7fbff`
-- Dashboard: `#f6f9fc`
-- Learning page: video area ใช้ dark navy, sidebar/content ใช้ white หรือ near-white
-- Admin: neutral operational background `#f5f8fb` พร้อม accent ฟ้าเฉพาะ state/action
+### Dark Focus Tokens
+
+Dark is the default for learning and code-oriented surfaces. It must remain readable for long sessions and must not rely on saturated decoration.
+
+```css
+[data-theme="dark"] {
+  --canvas: #0b1220;
+  --surface: #101a29;
+  --surface-raised: #172235;
+  --surface-subtle: #1c2a3d;
+  --ink: #edf6fb;
+  --ink-soft: #c8d9e5;
+  --ink-muted: #9eb2c2;
+  --ink-subtle: #71889a;
+  --line: #2a3d52;
+  --line-strong: #40576c;
+  --accent: #63d7ff;
+  --accent-strong: #a4e9ff;
+  --accent-soft: #173b51;
+  --code-bg: #070d16;
+  --code-panel: #101a29;
+  --code-text: #e4f4fb;
+  --code-line: #263c53;
+}
+```
+
+### Semantic Tokens
+
+Semantic colors must stay distinct from theme colors and must be paired with text or icon labels.
+
+```css
+:root {
+  --success: #087f5b;
+  --success-soft: #e8f7f1;
+  --warning: #9a6700;
+  --warning-soft: #fff6d9;
+  --danger: #b42318;
+  --danger-soft: #ffebe9;
+  --info: #075b8d;
+  --info-soft: #e7f6ff;
+}
+
+[data-theme="dark"] {
+  --success: #67e2ae;
+  --success-soft: #153e32;
+  --warning: #f4c66b;
+  --warning-soft: #493615;
+  --danger: #ff9b91;
+  --danger-soft: #4a2323;
+  --info: #8cddff;
+  --info-soft: #173b51;
+}
+```
+
+### Token Rules
+
+- Primary blue ใช้กับ action, link สำคัญ, focus, selected state และ progress
+- Editorial red ใช้เป็น annotation, editorial marker หรือ limited promo signal ไม่ใช้เป็นสีหลักของปุ่มทุกหน้า
+- Developer lime และ cyan ใช้ใน code/learning context เท่านั้น
+- ห้ามใช้ gradient text
+- ห้ามทำพื้นหลังทั้งหน้าเป็น saturated brand color
+- ห้ามผูก component กับสีดิบโดยตรงในไฟล์ใหม่
+- ระหว่าง migration ให้รักษา alias ของ `--primary-*` ที่มีอยู่จนกว่าจะย้าย component ครบ
 
 ## Typography
 
-ระบบปัจจุบันใช้ `IBM Plex Sans Thai` เป็น display/body font หลัก และใช้ `Inter` เป็น fallback สำหรับตัวอักษรละติน
+### Font Roles
 
-```css
---font-display: var(--font-ibm-plex-sans-thai), var(--font-inter), sans-serif;
---font-body: var(--font-ibm-plex-sans-thai), var(--font-inter), sans-serif;
---font-code: "Fira Code", "JetBrains Mono", "Cascadia Code", monospace;
-```
+- `IBM Plex Sans Thai`: UI, headings, body และ Thai content
+- `Inter`: Latin fallback และ numeric metadata
+- `Fira Code` หรือ monospace ที่มีอยู่: code, terminal และ technical labels
+
+ไม่เพิ่ม display font แยกโดยไม่มีเหตุผล เพราะ product UI ต้องนิ่งและอ่านง่าย
 
 ### Type Scale
 
-| Token | Size | Line height | Usage |
+| Role | Size | Line height | Use |
 | --- | ---: | ---: | --- |
-| Display XL | 56 | 1.22 | Home hero only |
-| Display L | 44 | 1.28 | Page hero / final CTA |
-| H1 | 36 | 1.22 | Page title |
-| H2 | 28 | 1.28 | Section title |
-| H3 | 22 | 1.35 | Card group / course title |
-| Body L | 18 | 1.75 | Hero/supporting copy |
-| Body | 16 | 1.75 | Default Thai body |
-| Body S | 14 | 1.65 | Meta, helper text |
-| Caption | 12 | 1.5 | Badge, table meta |
+| Display | 56px max | 1.08-1.18 | public hero เท่านั้น |
+| Page title | 36px | 1.2-1.3 | route title |
+| Section title | 28px | 1.25-1.35 | section heading |
+| Component title | 22px | 1.3-1.4 | course, panel, group |
+| Body large | 18px | 1.7-1.8 | hero support, intro |
+| Body | 16px | 1.7-1.8 | default Thai text |
+| Body small | 14px | 1.6-1.7 | metadata, helper |
+| Caption | 12px | 1.45-1.55 | table metadata, status |
+| Code | 13-15px | 1.55-1.7 | code and terminal |
 
-### Thai Text Rules
+### Typography Rules
 
-- Body ภาษาไทยควร line-height `1.7-1.8`
-- Heading ภาษาไทยใช้ line-height อย่างน้อย `1.25` เพื่อกันสระ/วรรณยุกต์ชน
-- ห้ามใช้ negative letter-spacing กับ body ไทย
-- จำกัดความกว้าง paragraph ที่ `64-72ch` หรือประมาณ `680px`
+- ใช้ `text-wrap: balance` กับ h1-h3
+- ใช้ `text-wrap: pretty` กับ prose ยาว
+- ไม่ใช้ negative letter-spacing กับ body ภาษาไทย
+- Display heading letter-spacing ไม่ต่ำกว่า `-0.04em`
+- จำกัด prose width ประมาณ 65-75ch และ reading content อยู่ราว 720-760px
+- ห้ามใช้ all caps กับประโยคยาว ใช้ได้เฉพาะ label สั้นหรือ technical metadata
 
-## Spacing & Layout
-
-### Spacing Scale
-
-```css
---space-1: 4px;
---space-2: 8px;
---space-3: 12px;
---space-4: 16px;
---space-5: 20px;
---space-6: 24px;
---space-8: 32px;
---space-10: 40px;
---space-12: 48px;
---space-16: 64px;
---space-20: 80px;
-```
+## Grid and Layout
 
 ### Containers
 
-- Main container: `max-width: 1200px`
-- Wide product container: `max-width: 1320px`
-- Reading container: `max-width: 760px`
-- Learn page content: video/content flexible + lesson sidebar `340-380px`
+- Main public container: max-width 1200px
+- Wide product container: max-width 1320px
+- Reading container: max-width 760px
+- Learn content: flexible content area + lesson rail 320-380px
+- Admin: full width ภายใน shell โดยมี side padding ที่คงที่
 
-### Responsive Breakpoints
+### Grid
+
+- Desktop public ใช้ 12-column grid
+- Catalog ใช้ `repeat(auto-fit, minmax(280px, 1fr))` เมื่อเหมาะสม
+- Grid ใช้สำหรับความสัมพันธ์แบบ 2D, flex ใช้สำหรับ row, toolbar และ 1D alignment
+- Section rhythm สร้างด้วย spacing และ band background ไม่ใช่ card ครอบทั้ง section
+- จัด alignment ให้เส้นซ้ายของ heading, body และ action ช่วยสร้าง editorial rhythm
+
+### Breakpoints
 
 - Mobile: `< 640px`
 - Tablet: `640-1023px`
 - Desktop: `1024-1279px`
 - Wide: `>= 1280px`
 
-## Radius, Shadow, Border
+The public navbar uses a component-specific compact breakpoint at `<= 840px` because its three-zone rail needs more horizontal room than the base page grid. The desktop rail resumes at `841px`.
 
-ควบคุมความรู้สึกให้เป็น product UI ที่ crisp ไม่กลมจนเหมือน toy
+Responsive behavior ต้องเป็น structural composition:
 
-```css
---radius-xs: 4px;
---radius-sm: 6px;
---radius-md: 8px;
---radius-lg: 12px;
---radius-xl: 16px;
---shadow-sm: 0 1px 2px rgba(16, 32, 51, 0.06);
---shadow-md: 0 8px 24px rgba(16, 32, 51, 0.08);
---shadow-lg: 0 20px 48px rgba(16, 32, 51, 0.12);
---focus-ring: 0 0 0 3px rgba(2, 171, 255, 0.28);
-```
+- Navbar เปลี่ยนเป็น full-width mobile panel
+- Public hero เปลี่ยนจาก text/visual split เป็น text แล้ว visual
+- Course grid เปลี่ยน 1, 2 และ 3 columns ตามพื้นที่จริง
+- Learn rail เปลี่ยนเป็น sheet หรือ drawer บน mobile
+- Admin table ต้อง scroll แนวนอนหรือเปลี่ยนเป็น row summary ที่ยังเข้าถึง action ได้
 
-- Buttons, inputs, tabs: `8px`
-- Cards: `8-12px`
-- Modal/dropdown: `12px`
-- Thumbnail/media: `12px`
-- ใช้ border ก่อน shadow สำหรับ UI ทั่วไป ใช้ shadow เฉพาะ raised/overlay/hover
+## Page Shell
 
-## Component System
+### Public Shell
 
-### Buttons
+- Sticky navbar พื้นขาวหรือ surface light ที่ไม่แย่งความสนใจ
+- Logo และ navigation อยู่บน baseline เดียวกัน
+- Active link ใช้ accent-soft และ accent text
+- Login ใช้ secondary/ghost, register หรือ primary conversion ใช้ primary
+- Footer แบ่ง content ตาม task และมี contact/support ที่ชัดเจน
 
-Primary button:
+#### Public Navbar Contract
 
-- Background `--primary-gradient`, hover `--primary-gradient-hover`
-- Text white, weight `600`
-- Height `40px` small, `48px` default, `56px` large
-- Radius `8px`
-- Focus ring ต้องชัด
-- ใช้กับ action หลักของ flow เท่านั้น เช่น เริ่มเรียน, สมัครเรียน, ดำเนินการต่อ
-- ไม่ใช้ gradient กับ secondary/ghost button เพื่อให้ hierarchy ชัด
+- Swiss Rail composition with three desktop zones: brand lockup, text navigation, and auth actions.
+- Public rail is 72px on desktop and 64px on mobile, with a full-width 1px line below.
+- Default links are text-only. The active route uses accent text plus a 2px bottom rule, not a filled pill.
+- Sign in is a quiet secondary action. Registration is the single solid accent CTA and never uses a gradient.
+- The mobile state is a full-width panel below the rail, grouped with line separators and 44px controls. It scrolls within the viewport when account/admin links make the menu taller than the available screen.
+- Public navigation has no theme toggle. Learning owns the theme control because the mode follows the learner's task.
 
-Secondary button:
+### Learning Shell
 
-- White background, border `--color-line`
-- Text `--color-ink`
-- Hover background `--color-brand-50`
+- Header สูงไม่เกิน 56px
+- Video และ lesson content เป็น visual priority
+- Dark canvas ต่อเนื่องรอบ video/code เพื่อรักษา focus
+- Lesson rail แสดง current, complete, locked และ progress อย่างสม่ำเสมอ
+- Theme toggle อยู่ใน learning controls และไม่ซ่อนอยู่ใน settings ลึกเกินไป
 
-Ghost button:
+#### Learning Navbar Contract
 
-- Transparent, text muted/ink
-- ใช้ใน navbar, table action, toolbar
+- Learning navigation is a separate 56px Developer Focus header, not a dark variant of the public navbar.
+- The header exposes course and lesson context, progress, lesson rail controls, exit, and the persisted theme toggle.
+- The learning root uses data-surface="learning" and defaults to data-theme="dark". Light mode changes the shell canvas, text, borders, and controls without changing code readability.
+- Learning controls use the shared SVG icon vocabulary with accessible labels and titles; platform-dependent text glyphs are not used as control icons.
 
-Danger button:
+### Product Shell
 
-- ใช้เฉพาะ destructive action
-- ไม่ใช้เป็น primary CTA ของ flow ปกติ
+- Dashboard มี continue learning เป็น section แรก
+- Sidebar และ top bar ใช้ spacing ที่ dense กว่า public
+- Primary action อยู่ตำแหน่งเดิมใน route category เดียวกัน
+- Status และ progress อ่านได้โดยไม่ต้องเปิด modal
 
-### Inputs
+## Component Vocabulary
 
-- Height default `44px`
-- Border `--color-line`
-- Focus border `--color-brand-500`, focus ring `--focus-ring`
-- Label อยู่บน input เสมอ
-- Error text สี danger พร้อมข้อความชัดเจน
-- Search/filter inputs ในหน้า courses/admin ควรมี icon และ clear state
+### Button
 
-### Navigation
+บทบาทหลัก:
 
-Navbar:
+- Primary: action สำคัญหนึ่งรายการต่อบริบท
+- Secondary: action รองที่ยังสำคัญ
+- Ghost: toolbar, nav และ low-emphasis action
+- Danger: destructive action เท่านั้น
 
-- Sticky top, white translucent เมื่อ scroll
-- Active link ใช้ text ฟ้า + background `--color-brand-50`
-- Login เป็น ghost/secondary, Register เป็น primary
-- Mobile menu เป็น full-width panel ไม่ซ้อนหลาย card
+กฎ:
 
-User menu:
+- min-height 40px, default 44-48px
+- radius 8px, ไม่ใช้ radius ใหญ่กับ control
+- primary ใช้ solid accent หรือ surface ที่มี contrast ชัด ไม่ใส่ gradient เป็น default
+- ทุกปุ่มต้องมี hover, focus, disabled, loading state
+- label ใช้ verb + object
 
-- Avatar + name + email
-- แยก section ด้วย border
-- Notification badge ใช้ danger red เฉพาะ unread count
+### Input and Form
 
-### Course Card
+- label ต้องอยู่กับ field อย่างชัดเจน
+- default height อย่างน้อย 44px
+- focus ใช้ accent border และ focus ring
+- error text อยู่ใกล้ field และบอกวิธีแก้
+- loading state ต้องไม่ทำให้ผู้ใช้กดซ้ำ
+- form ที่เกี่ยวกับ payment, upload และ admin ต้องมี confirmation/recovery ที่ชัดเจน
 
-Course card เป็น component สำคัญที่สุดใน catalog
+### Card and Surface
 
-- Aspect thumbnail `16:9`
-- Title line clamp 2
-- Description line clamp 2
-- Meta row: lesson count, level/duration, instructor
-- Price badge ชัด แต่ไม่บัง thumbnail สำคัญ
-- Free course ใช้ success badge
-- Promo ใช้ warning/magenta accent แบบจำกัด
-- Hover ยกขึ้นเล็กน้อย `translateY(-2px)` และ border ฟ้าอ่อน
-- CTA ภายใน card ใช้พื้น `--primary-50` เป็น default และเปลี่ยนเป็น `--primary-gradient` เฉพาะตอน hover/focus ของ card
+- ใช้ card เมื่อ item ต้องถูกแยกจากรายการหรือมี action ของตัวเอง
+- ไม่ใช้ card ซ้อน card
+- radius ของ card อยู่ราว 8-12px
+- ใช้ border หรือ shadow เป็นหลัก ไม่จับคู่ border หนักกับ shadow กว้างเพื่อ decoration
+- section ใช้ canvas/surface band และ whitespace เมื่อไม่จำเป็นต้องเป็น card
 
-Recommended structure:
+### CourseCard
 
-1. Thumbnail + status badge
-2. Tags หรือ level
-3. Course title
-4. Short outcome
-5. Meta row
-6. Price + CTA affordance
+CourseCard เป็น discovery component ที่สำคัญที่สุด ต้องอ่านได้ภายในเวลาไม่นาน:
 
-### Public Homepage Extract
+1. thumbnail และ status
+2. tag หรือ level เมื่อมีข้อมูลที่ช่วยตัดสินใจ
+3. course title
+4. outcome หรือ excerpt สั้น
+5. lesson count และ instructor/meta
+6. price และ action affordance
 
-ใช้ pattern นี้เป็นฐานเวลา polish public pages อื่น เช่น `/courses`, `/about`, `/faq`, `/blog`
+ห้ามให้ promo badge บังภาพหรือทำให้ราคาเดิม/ราคาใหม่อ่านสับสน
 
-- Section heading ใช้ `.section-title`: `var(--text-h2)`, weight `700`, line-height `1.28`, สี `var(--gray-900)`
-- Supporting copy ใช้ `.section-copy` หรือ `.home-lede`: `var(--text-body-lg)`, line-height `var(--leading-thai)`, max-width `var(--measure-prose)`
-- Section rhythm ใช้พื้นขาวสลับ `var(--primary-50)` หรือ gradient อ่อนจากขาวไปฟ้าอ่อน ไม่ใช้ section card ลอยทั้งก้อน
-- Cards ใช้ radius `12px`, border `var(--gray-200)`, hover `translateY(-2px)` และ shadow เบา ไม่ใช้ border + shadow หนักพร้อมกัน
-- Kicker/pill ใช้ icon + text, border `var(--primary-200)`, text `var(--primary-700)`, background ขาวหรือ `var(--primary-50)`
-- Number/action markers ใช้ `--primary-gradient` ได้เมื่อเป็นลำดับหรือ action สำคัญ เช่น learning path step
-- Dark code/editor surface ใช้เฉพาะบริบท coding และควรมี fixed height + scrollbar เมื่อ content เปลี่ยน
-- Trust stats และ final CTA ใช้ `--primary-gradient-deep` เป็น filled band พร้อมตัวอักษรขาว โดยต้องคุม contrast ให้ชัด
-- หลีกเลี่ยง decorative blobs/orbs ใหม่ ถ้าต้องแยก section ให้ใช้ spacing, band background, border และ content hierarchy
+### CodePanel
 
-### Lesson Player
-
-หน้าเรียนต้องให้ความรู้สึก focus mode
-
-- Header สูงไม่เกิน `56px`
-- Video area ใช้ dark navy และไม่ใส่ decorative background
-- Lesson content อยู่ใน readable container
-- Sidebar บทเรียนใช้ progress state ชัดเจน: not started, current, completed, locked
-- ปุ่ม next lesson เป็น primary, previous เป็น secondary
-- Mobile sidebar เป็น sheet จากขวา พร้อม overlay
+- ใช้เฉพาะ content ที่เป็น code, terminal หรือ technical preview
+- มี tab/title ที่สื่อ context
+- code text ต้อง readable และมี contrast
+- fixed height ใช้เมื่อจำเป็น พร้อม overflow ที่เข้าถึงได้
+- copy action ต้องมี accessible label และ feedback หลัง copy
 
 ### Progress
 
-- Progress bar background `--color-brand-100`
-- Fill `--color-brand-500`
-- Completed check ใช้ success
-- Current lesson ใช้ฟ้า + left accent border
-- Locked lesson ใช้ muted icon/state
+- background ใช้ accent-soft หรือ surface-subtle
+- fill ใช้ accent
+- completed ใช้ success พร้อม icon/label
+- current ใช้ accent และ state ที่อ่านได้โดยไม่พึ่งสีอย่างเดียว
+- locked ใช้ muted state และอธิบายเหตุผลเมื่อจำเป็น
 
-### Dashboard Cards
+### Status
 
-- ใช้สำหรับ repeated items เท่านั้น เช่น enrolled course, certificate, payment item
-- Dashboard summary ใช้ compact metric blocks มากกว่า decorative cards
-- Metric มี label, value, change/status และ optional icon
-- อย่าใช้ card ซ้อน card
+Status badge ต้องใช้ semantic role เดียวกันทั้ง public, dashboard และ admin:
 
-### Admin UI
+- Draft
+- Published
+- Pending
+- Verifying
+- Completed
+- Failed
+- Refunded
+- Archived
 
-Admin ต้องเป็น operational tool:
+## Surface Patterns
 
-- Sidebar fixed/ sticky
-- Table first สำหรับ list-heavy pages
-- Filters อยู่บน table เป็น toolbar เดียว
-- Primary action อยู่ขวาบน
-- Bulk action แสดงเมื่อเลือก item แล้วเท่านั้น
-- Row action ใช้ icon/menu ลดความรก
-- Status badge ต้องมีสี semantic และ label ที่อ่านออก
+### Homepage
 
-### Rich Content & Code
+First viewport ต้องสื่อสามเรื่อง:
 
-Blog/course content:
+1. MilerDev คือ coding learning studio
+2. ผู้เรียนจะสร้างหรือทำอะไรได้
+3. action ถัดไปคืออะไร
 
-- Reading width `720-760px`
-- Code block ใช้ dark surface
-- Inline code ใช้ `--color-brand-50` หรือ neutral code pill ไม่ใช้สีแดงจัดเป็น default
-- Copy button อยู่มุมขวาบน และแสดงเมื่อ hover/focus
-- Table ในบทความต้อง scroll แนวนอนได้บน mobile
+โครงสร้างเป้าหมาย:
 
-## Page Patterns
+- editorial hero: headline, outcome, primary CTA, secondary CTA และ product-specific code visual
+- learning path หรือ recommendation ที่มี order จริง
+- featured courses ที่ใช้ CourseCard อย่างมี rhythm
+- trust หรือ proof ที่มีข้อมูลจริง ไม่สร้าง fake metrics
+- final CTA ที่กระชับและไม่ซ้ำข้อความเดิม
 
-### Home
-
-First viewport ต้องสื่อว่า MilerDev คือเว็บเรียน coding ทันที
-
-- Hero: headline 2 บรรทัดที่ตั้งใจจัด, outcome copy, primary CTA, secondary CTA
-- Desktop ใช้ layout text + product visual; mobile จัด text/CTA/stat ให้อยู่กลางและให้ visual ตามหลัง
-- ด้านขวาใช้ code editor/course preview ที่เป็น product-specific visual และสอดคล้องกับ theme coding
-- แสดง course/recommendation section โผล่ให้เห็นใน first viewport
-- ไม่ทำ hero เป็น marketing card ซ้ายขวาทั่วไป
-- Hero stats ต้อง compact และไม่แข่งกับ CTA หลัก
-- Learning path ใช้ ordered product cards เมื่อ order มีความหมายจริงเท่านั้น
-
-### Public Page Consistency Checklist
-
-ใช้ checklist นี้ก่อนเริ่ม polish หน้า public ถัดไป
-
-- ใช้ IBM Plex Sans Thai ผ่าน `--font-display` และ `--font-body`
-- ใช้สีจาก `--primary-*`, `--gray-*`, semantic tokens เท่านั้น เว้นแต่เป็น asset/promo เฉพาะ
-- Primary action ใช้ `.btn.btn-primary`; secondary action ใช้ `.btn.btn-secondary`
-- Gradient ใช้เฉพาะ action/marker/CTA band ตาม usage rules ไม่ใช้ตกแต่งทุกจุด
-- Heading ใช้ `text-wrap: balance`; body/supporting copy ใช้ `text-wrap: pretty` และ line-height ไทย
-- Container หลักไม่เกิน `1200px`; long prose ไม่เกิน `var(--measure-prose)`
-- Mobile ต้องไม่มี text overflow, button กว้างพอดี, tap target อย่างน้อย `40x40px`
-- Focus state ต้องเห็นชัดทุก interactive element
+ไม่ใช้ hero metric template, decorative blobs หรือ grid ของ marketing cards ที่เหมือนกันทั้งหมด
 
 ### Courses Catalog
 
-- Header compact พร้อม search/filter ชัด
-- Course grid: mobile 1 column, tablet 2, desktop 3
-- Filter chips ใช้ segmented/chip pattern
-- Empty state แนะนำ action ต่อ เช่น reset filter
+- header compact พร้อม search และ filter
+- filter อยู่ใน toolbar เดียวกันและมี clear state
+- course grid จัดลำดับตาม relevance/intent ที่อธิบายได้
+- empty state บอกว่าไม่พบอะไรและเสนอ action reset filter
+- mobile ต้องเข้าถึง filter ได้โดยไม่ทำให้ content หาย
 
 ### Course Detail
 
-- Hero มี thumbnail/video preview + course outcome + price/enroll CTA
-- Sticky enroll summary บน desktop
-- Curriculum แสดง lesson count/duration/progress
-- Reviews และ FAQ อยู่หลัง curriculum
-- CTA ซ้ำท้ายหน้าแบบ compact
+- hero แสดง thumbnail/preview, outcome, level, instructor และ price
+- enroll summary sticky บน desktop เมื่อไม่รบกวนการอ่าน
+- curriculum เป็นแกนหลักก่อน reviews และ FAQ
+- payment/enrollment status อยู่ใกล้ CTA และอ่านได้ทันที
+- CTA ท้ายหน้ามีเฉพาะเมื่อช่วยให้ตัดสินใจต่อ ไม่ทำซ้ำทุก section
 
 ### Learn Page
 
-- Default เป็น focus mode
-- Video/content ซ้าย, lesson playlist ขวา
-- Progress บนสุดของ sidebar
-- ปุ่ม complete/next อยู่ใกล้จุดจบบทเรียน
-- Breadcrumb เล็กมากพอ ไม่แย่ง attention
+- default เป็น Dark Focus
+- video, lesson title, progress และ next action อยู่ใน visual hierarchy แรก
+- sidebar มี progress และ state ของแต่ละ lesson
+- content reading width ไม่กว้างเกินไป
+- complete/next อยู่ใกล้จุดจบของ lesson
+- mobile ใช้ lesson sheet จากด้านข้าง พร้อม overlay และ keyboard escape
 
 ### Dashboard
 
-- Greeting + continue learning เป็น section แรก
-- My courses เป็น list/grid ที่เห็น progress ชัด
-- Certificates, payments, announcements เป็น secondary
-- อย่าเริ่มด้วย metric cards ถ้าผู้เรียนกลับมาเพื่อเรียนต่อ
+- เริ่มด้วย greeting และ continue learning
+- my courses แสดง progress และ next lesson
+- certificates, payments และ announcements เป็น secondary modules
+- summary metric ใช้เฉพาะข้อมูลที่ช่วยตัดสินใจ ไม่ใช้เป็น decoration
 
-### Auth Pages
+### Admin
 
-- Layout split ได้ แต่ form ต้องเป็นจุดสนใจ
-- ใช้ social proof หรือ benefit สั้นๆ ได้
-- Form width `400-440px`
-- Error state อ่านง่าย ไม่ใช้ toast อย่างเดียว
+- sidebar หรือ top navigation ต้องคงที่ตาม admin shell
+- page header มี title, context และ primary action
+- filter toolbar อยู่เหนือ table
+- bulk action แสดงเมื่อมี selection เท่านั้น
+- row action ใช้ menu หรือ action group ที่สม่ำเสมอ
+- destructive action มี confirmation และ feedback
+- loading ใช้ skeleton/table placeholder ไม่ใช้ spinner กลางข้อมูลอย่างเดียว
 
-## Motion
+## Interaction and Motion
 
-- Duration: `120ms` สำหรับ hover, `180ms` สำหรับ dropdown, `240ms` สำหรับ sheet/modal
-- Easing: `cubic-bezier(.2,.8,.2,1)`
-- Page reveal ใช้เฉพาะหน้า marketing/public
-- Dashboard/admin ลด motion เหลือ state transition
-- เคารพ `prefers-reduced-motion`
+- hover: ประมาณ 120-160ms
+- dropdown: ประมาณ 180ms
+- sheet/modal: ประมาณ 220-260ms
+- easing: `cubic-bezier(.2, .8, .2, 1)`
+- ไม่ animate layout properties หากไม่จำเป็น
+- public อาจมี reveal เล็กน้อย แต่ content ต้องมองเห็นได้แม้ animation ไม่ทำงาน
+- dashboard, admin และ learn ใช้ motion เพื่อ state transition ไม่ใช้ page-load choreography
+- ทุก motion ต้องมี `prefers-reduced-motion` fallback
 
-## Accessibility
+## Accessibility and Content Rules
 
-- Text contrast ผ่าน WCAG AA
-- Focus state ต้องเห็นทุก interactive element
-- ปุ่ม icon-only ต้องมี `aria-label`
-- Form field ต้องมี label จริง
-- Error ไม่พึ่งสีอย่างเดียว
-- Video/lesson content ต้องใช้ heading hierarchy ถูกต้อง
-- Tap target อย่างน้อย `40x40px`
+- WCAG AA contrast เป็น baseline
+- body Thai line-height ประมาณ 1.7-1.8
+- ห้ามใช้สีเป็นข้อมูลเพียงอย่างเดียว
+- focus-visible ต้องเห็นชัดในทุก interactive control
+- icon-only control ต้องมี accessible label
+- ใช้ semantic heading และ landmark
+- long Thai labels ต้องไม่ล้นปุ่มหรือ table cell
+- error ต้องบอกปัญหาและ next recovery action
+- empty state ต้องสอนผู้ใช้ว่าควรทำอะไรต่อ
 
-## Content Voice
+## Implementation Phases
 
-ภาษาไทยควรตรงและเป็นมิตร
+### Phase 1: Foundation
 
-- CTA: "เริ่มเรียน", "ดูคอร์สทั้งหมด", "เรียนต่อ", "ไปบทถัดไป"
-- Empty: "ยังไม่มีคอร์สที่ตรงกับตัวกรองนี้"
-- Error: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง"
-- Success: "บันทึกเรียบร้อย"
-- หลีกเลี่ยงคำฟุ่มเฟือย เช่น "สุดยอด", "เปลี่ยนชีวิต", "ครบจบในที่เดียว" ถ้าไม่มีหลักฐานรองรับ
+- ย้าย global colors ไป semantic tokens
+- ทำ light/dark theme contract
+- ปรับ typography, spacing, grid และ focus rules
+- ทำ Button, Input, Badge, Status, Surface และ shared layout primitives
 
-## Implementation Guidance
+### Phase 2: Shared Shell
 
-### Phase 1: Tokens
+- Redesign `Navbar`, `Footer`, page header และ responsive navigation
+- ทำ public shell และ learning shell แยกจากกัน
+- ลด inline style และ hard-coded visual values ในไฟล์ที่แตะ
 
-1. ปรับ `src/app/globals.css` ให้ token หลักใช้ `#02abff`
-2. เพิ่ม utility class สำหรับ button, input, card, badge, surface
-3. ลดการ hard-code สี `#2563eb`, `#3b82f6` ใน component ใหม่
+### Phase 3: Public Discovery
 
-### Phase 2: Shell
+- Homepage
+- CourseCard
+- Courses catalog
+- Course detail และ bundle
+- Checkout/status surfaces
 
-1. Redesign `Navbar`, `Footer`, `PageHeader`
-2. สร้าง shared primitives เช่น `Button`, `Input`, `Badge`, `Card`, `Tabs`
-3. ทำ active/focus/disabled state ให้ครบ
+### Phase 4: Learning and Learner Product
 
-### Phase 3: LMS Core
+- Learn page
+- LearnSidebar
+- video/code panels
+- progress และ next lesson
+- dashboard, certificates, payments และ settings
 
-1. Redesign `CourseCard`
-2. Redesign courses catalog และ course detail
-3. Redesign learn page ให้เป็น focus mode
-4. ปรับ rich content/code block ให้ consistent
+### Phase 5: Operations
 
-### Phase 4: Product Surfaces
+- admin shell
+- table, filter, form และ status vocabulary
+- course/lesson management
+- payment, enrollment และ certificate workflows
 
-1. Dashboard: continue learning first
-2. Certificates/payment/settings
-3. Admin table/forms/filter toolbars
+ทุก phase ต้องผ่าน visual QA ที่ desktop, tablet และ mobile ก่อนเริ่ม phase ถัดไป
 
-## CSS Starter
+## Migration Rules
 
-ใช้เป็นจุดเริ่มต้นเมื่อลงมือ refactor `globals.css`
-
-```css
-:root {
-  --brand: #02abff;
-  --brand-hover: #0089d6;
-  --brand-soft: #eefaff;
-  --ink: #102033;
-  --muted: #64758b;
-  --canvas: #ffffff;
-  --surface: #f7fbff;
-  --line: #dbe8f2;
-  --radius: 8px;
-  --focus: 0 0 0 3px rgba(2, 171, 255, 0.28);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: var(--radius);
-  font-weight: 600;
-  line-height: 1;
-  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
-}
-
-.btn-primary {
-  color: #fff;
-  background: var(--brand);
-  border: 1px solid var(--brand);
-}
-
-.btn-primary:hover {
-  background: var(--brand-hover);
-  border-color: var(--brand-hover);
-  transform: translateY(-1px);
-}
-
-.btn:focus-visible,
-.input:focus-visible {
-  outline: none;
-  box-shadow: var(--focus);
-}
-```
+- `PRODUCT.md` และ `DESIGN.md` เป็น source of truth ของ direction ใหม่นี้
+- ใช้ component และ icon system ที่มีอยู่ก่อนเพิ่ม dependency ใหม่
+- รักษา data behavior, auth, payment และ enrollment behavior เดิม เว้นแต่มี design decision แยกต่างหาก
+- เปลี่ยน visual system แบบเป็น phase ไม่ทำ big-bang rewrite ที่ทำให้ทุก route เสียพร้อมกัน
+- เมื่อแก้ component ให้ย้าย hard-coded color ไป semantic token ในขอบเขตเดียวกัน
+- รักษา alias ของ `--primary-*` ระหว่าง migration เพื่อไม่ทำให้หน้าเก่าพัง
+- ไม่เขียนลง `.next`, `dist` หรือ build output โดยตรง
 
 ## Design QA Checklist
 
-- หน้าแรกเห็นชัดทันทีว่าเป็น LMS สอน coding
-- สีหลัก `#02abff` ถูกใช้กับ action/progress/focus อย่างสม่ำเสมอ
-- ไม่มี section ที่เป็น card ซ้อน card
-- Course card อ่านชื่อ ราคา และจำนวนบทเรียนได้ภายใน 3 วินาที
-- หน้าเรียนไม่มี visual noise รอบ video/content
-- Mobile menu, sidebar และ table ใช้งานได้จริงบนจอเล็ก
-- Focus state ใช้งาน keyboard ได้ครบ
-- Thai text ไม่ชน ไม่แน่น และไม่ล้นปุ่ม
-- Admin pages scan ข้อมูลได้เร็วกว่าเดิม
-- Hard-coded inline styles ลดลงเมื่อ component ถูก refactor
+### Product clarity
+
+- หน้าแรกบอกได้ทันทีว่า MilerDev สอนอะไรและผู้เรียนจะได้อะไร
+- CourseCard อ่านชื่อ outcome ราคา และ lesson count ได้เร็ว
+- ทุกหน้ามี primary next action ที่ชัด
+- payment และ enrollment status ไม่คลุมเครือ
+
+### Visual system
+
+- Light public, dark learning และ light operational มีเหตุผลจาก task
+- typography ใช้ family และ scale อย่างสม่ำเสมอ
+- ไม่มี gradient text, decorative glassmorphism หรือ card nesting
+- สี accent ใช้กับ action/focus/progress ไม่ใช่ decoration ทั่วไป
+- Swiss grid และ alignment ชัดในทุก viewport
+
+### Accessibility
+
+- contrast ผ่าน WCAG AA
+- keyboard focus เห็นชัด
+- ทุก icon-only control มี label
+- status ไม่พึ่งสีเพียงอย่างเดียว
+- reduced motion ถูกเคารพ
+
+### Responsive
+
+- ไม่มีข้อความหรือปุ่มล้นบน mobile
+- nav, filter, lesson rail และ table ใช้งานได้บนจอเล็ก
+- heading ภาษาไทยไม่ชนและอ่านง่าย
+- touch target ไม่เล็กเกินไป
+
+### State coverage
+
+- default, hover, focus, active และ disabled
+- loading และ skeleton
+- empty state พร้อม next action
+- error state พร้อม recovery action
+- long content, short content และ data ที่หายไปบางส่วน
+
+### Engineering handoff
+
+- targeted tests ยังผ่าน
+- lint/build ผ่านเมื่อ phase มี code change
+- ไม่มี console error ที่เกิดจากหน้าที่แก้
+- ใช้ route และ component boundary ที่ดูแลต่อได้

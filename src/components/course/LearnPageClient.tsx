@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LessonList from './LessonList';
+import LearningNavbar, { LEARNING_THEME_KEY } from './LearningNavbar';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
 import { sanitizeRichContent } from '@/lib/sanitize';
 
@@ -54,6 +55,7 @@ export default function LearnPageClient({
   const [lockedMessage, setLockedMessage] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [learningTheme, setLearningTheme] = useState<'dark' | 'light'>('dark');
   const [lessonSearch, setLessonSearch] = useState('');
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
   const [markingComplete, setMarkingComplete] = useState(false);
@@ -67,6 +69,19 @@ export default function LearnPageClient({
   const lastSyncRef = useRef(0);
   const isPlayingRef = useRef(false);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem(LEARNING_THEME_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark') setLearningTheme(savedTheme);
+  }, []);
+
+  const toggleLearningTheme = useCallback(() => {
+    setLearningTheme(current => {
+      const nextTheme = current === 'dark' ? 'light' : 'dark';
+      window.localStorage.setItem(LEARNING_THEME_KEY, nextTheme);
+      return nextTheme;
+    });
+  }, []);
 
   const syncWatchTime = useCallback(async () => {
     const currentWatchTime = Math.floor(watchTimeRef.current);
@@ -232,7 +247,7 @@ export default function LearnPageClient({
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0f172a' }}>
+    <div className="theme-surface learning-surface" data-theme={learningTheme} data-surface="learning">
       {/* Completion Celebration Toast */}
       {showCelebration && (
         <div style={{
@@ -257,15 +272,28 @@ export default function LearnPageClient({
         </div>
       )}
 
-      {/* Header */}
-      <header style={{
+      <LearningNavbar
+        courseSlug={course.slug}
+        courseTitle={course.title}
+        lessonTitle={currentLesson.title}
+        currentIndex={currentIndex}
+        totalCount={totalCount}
+        progressPercent={progressPercent}
+        sidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={() => setSidebarCollapsed(current => !current)}
+        onOpenSidebar={() => setSidebarOpen(true)}
+        theme={learningTheme}
+        onToggleTheme={toggleLearningTheme}
+      />
+
+      {/* Legacy header is retained temporarily for markup-safe migration and hidden from the rendered shell. */}
+      <header className="legacy-learning-header" aria-hidden="true" style={{ display: 'none',
         position: 'sticky',
         top: 0,
         zIndex: 50,
         background: '#1e293b',
         borderBottom: '1px solid #334155',
         padding: '12px 24px',
-        display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
@@ -376,7 +404,7 @@ export default function LearnPageClient({
         </div>
       </header>
 
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 57px)' }}>
+      <div className="learning-content-layout" style={{ display: 'flex', minHeight: 'calc(100vh - 56px)' }}>
         {/* Video Area */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* Video Player or Locked Message */}
@@ -683,16 +711,16 @@ export default function LearnPageClient({
           style={{
             width: sidebarCollapsed ? '0px' : '320px',
             minWidth: sidebarCollapsed ? '0px' : '320px',
-            background: '#1e293b',
-            borderLeft: sidebarCollapsed ? 'none' : '1px solid #334155',
+            background: 'var(--surface)',
+            borderLeft: sidebarCollapsed ? 'none' : '1px solid var(--line)',
             overflow: 'hidden',
             flexShrink: 0,
             transition: 'width 0.3s ease, min-width 0.3s ease',
             display: 'flex',
             flexDirection: 'column',
             position: 'sticky',
-            top: '57px',
-            height: 'calc(100vh - 57px)',
+            top: '56px',
+            height: 'calc(100vh - 56px)',
           }}
         >
           {/* Mobile Close Button */}
@@ -700,7 +728,7 @@ export default function LearnPageClient({
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px',
-            borderBottom: '1px solid #334155',
+            borderBottom: '1px solid var(--line)',
           }}>
             <span style={{ color: 'white', fontWeight: 600 }}>เนื้อหาคอร์ส</span>
             <button
@@ -711,8 +739,8 @@ export default function LearnPageClient({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: '#334155',
-                color: 'white',
+                background: 'var(--surface-subtle)',
+                color: 'var(--ink)',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -727,9 +755,9 @@ export default function LearnPageClient({
           {/* Sticky Header: Title + Progress + Search */}
           <div style={{
             padding: '12px 16px',
-            borderBottom: '1px solid #334155',
+            borderBottom: '1px solid var(--line)',
             flexShrink: 0,
-            background: '#1e293b',
+            background: 'var(--surface)',
           }}>
             <div style={{
               display: 'flex',
@@ -737,11 +765,11 @@ export default function LearnPageClient({
               alignItems: 'center',
               marginBottom: '8px',
             }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#94a3b8' }}>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-muted)' }}>
                 เนื้อหาคอร์ส ({allLessons.length} บท)
               </span>
               {isEnrolled && (
-                <span style={{ fontSize: '0.6875rem', color: progressPercent === 100 ? '#4ade80' : '#64748b' }}>
+                <span style={{ fontSize: '0.6875rem', color: progressPercent === 100 ? 'var(--success)' : 'var(--ink-subtle)' }}>
                   {completedCount}/{totalCount} ({progressPercent}%)
                 </span>
               )}
@@ -751,7 +779,7 @@ export default function LearnPageClient({
             {isEnrolled && (
               <div style={{
                 height: '3px',
-                background: '#334155',
+                background: 'var(--line)',
                 borderRadius: '2px',
                 overflow: 'hidden',
                 marginBottom: '10px',
@@ -759,7 +787,7 @@ export default function LearnPageClient({
                 <div style={{
                   height: '100%',
                   width: `${progressPercent}%`,
-                  background: progressPercent === 100 ? '#4ade80' : '#3b82f6',
+                  background: progressPercent === 100 ? 'var(--success)' : 'var(--accent)',
                   borderRadius: '2px',
                   transition: 'width 0.3s ease',
                 }} />

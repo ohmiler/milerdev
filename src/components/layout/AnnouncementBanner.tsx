@@ -72,9 +72,12 @@ export default function AnnouncementBanner() {
   const announcement = visible[0];
   const style = typeStyles[announcement.type] || typeStyles.info;
 
-  return (
-    <div
-      style={{
+    return (
+      <div
+        className="site-announcement"
+        role="region"
+        aria-label="ประกาศ"
+        style={{
         background: style.bg,
         borderBottom: `1px solid ${style.border}`,
         padding: '10px 16px',

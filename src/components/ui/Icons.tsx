@@ -14,6 +14,33 @@ export const CloseIcon = ({ className = "w-6 h-6" }: IconProps) => (
     </svg>
 );
 
+export const SunIcon = ({ className = "w-5 h-5" }: IconProps) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.5" strokeWidth={2} />
+        <path strokeLinecap="round" strokeWidth={2} d="M12 2.5v2M12 19.5v2M4.58 4.58l1.42 1.42M18 18l1.42 1.42M2.5 12h2M19.5 12h2M4.58 19.42L6 18M18 6l1.42-1.42" />
+    </svg>
+);
+
+export const MoonIcon = ({ className = "w-5 h-5" }: IconProps) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.5 15.2A8.5 8.5 0 018.8 3.5 8.5 8.5 0 1020.5 15.2z" />
+    </svg>
+);
+
+export const PanelLeftIcon = ({ className = "w-5 h-5" }: IconProps) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="16" rx="2" strokeWidth={2} />
+        <path strokeLinecap="round" strokeWidth={2} d="M9 4v16M6 8h.01M6 12h.01M6 16h.01" />
+    </svg>
+);
+
+export const PanelRightIcon = ({ className = "w-5 h-5" }: IconProps) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="16" rx="2" strokeWidth={2} />
+        <path strokeLinecap="round" strokeWidth={2} d="M15 4v16M18 8h.01M18 12h.01M18 16h.01" />
+    </svg>
+);
+
 export const ChevronDownIcon = ({ className = "w-4 h-4" }: IconProps) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -75,6 +102,26 @@ export const InfoIcon = ({ className = "w-5 h-5" }: IconProps) => (
     </svg>
 );
 
+export const CheckCircleIcon = ({ className = "w-5 h-5" }: IconProps) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" strokeWidth={2} />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12l2.5 2.5L16 9" />
+    </svg>
+);
+
+export const WarningIcon = ({ className = "w-5 h-5" }: IconProps) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3L2.8 20h18.4L12 3z" />
+        <path strokeLinecap="round" strokeWidth={2} d="M12 9v4M12 17h.01" />
+    </svg>
+);
+
+export const AlertCircleIcon = ({ className = "w-5 h-5" }: IconProps) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" strokeWidth={2} />
+        <path strokeLinecap="round" strokeWidth={2} d="M12 7v6M12 17h.01" />
+    </svg>
+);
 export const MegaphoneIcon = ({ className = "w-5 h-5" }: IconProps) => (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />

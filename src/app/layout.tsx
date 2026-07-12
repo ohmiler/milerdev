@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Thai, Inter } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
+import ThemeSurface from "@/components/theme/ThemeSurface";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -98,7 +99,11 @@ export default function RootLayout({
           }}
         />
         <SessionProvider>
-          <NotificationProvider>{children}</NotificationProvider>
+          <NotificationProvider>
+            <ThemeSurface theme="light" surface="public">
+              {children}
+            </ThemeSurface>
+          </NotificationProvider>
         </SessionProvider>
       </body>
     </html>

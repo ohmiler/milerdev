@@ -6,7 +6,7 @@ const footerLinkStyle = {
     display: 'inline-flex',
     alignItems: 'center',
     minHeight: '44px',
-    color: '#94a3b8',
+    color: 'var(--ink-muted)',
     textDecoration: 'none',
     fontSize: '0.9375rem',
     transition: 'color 0.2s ease',
@@ -15,24 +15,24 @@ const footerLinkStyle = {
 const socialLinkStyle = {
     width: '44px',
     height: '44px',
-    background: '#334155',
-    border: '1px solid #475569',
+    background: 'var(--surface-raised)',
+    border: '1px solid var(--line-strong)',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#94a3b8',
+    color: 'var(--ink-muted)',
     transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
 } as const;
 
 export default function Footer() {
     return (
-        <footer style={{
-            background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
-            color: 'white',
+        <footer className="site-footer" data-theme="dark" data-surface="public-footer" style={{
+            background: 'var(--canvas)',
+            color: 'var(--ink)',
             paddingTop: '72px',
             paddingBottom: '40px',
-            borderTop: '1px solid rgba(148, 163, 184, 0.12)',
+            borderTop: '1px solid var(--line)',
         }}>
             <div className="container">
                 {/* Main Footer Content */}
@@ -54,12 +54,12 @@ export default function Footer() {
                             <span style={{ 
                                 fontWeight: 700, 
                                 fontSize: '1.5rem',
-                                color: 'white',
+                                color: 'var(--ink)',
                                 letterSpacing: '-0.02em',
                             }}>MilerDev</span>
                         </Link>
                         <p style={{
-                            color: '#94a3b8',
+                            color: 'var(--ink-muted)',
                             maxWidth: '360px',
                             lineHeight: 1.8,
                             fontSize: '0.9375rem',
@@ -107,7 +107,7 @@ export default function Footer() {
                             fontWeight: 600,
                             marginBottom: '20px',
                             fontSize: '1rem',
-                            color: 'white',
+                            color: 'var(--ink)',
                             letterSpacing: '0.02em',
                         }}>ลิงก์ด่วน</h3>
                         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -135,7 +135,7 @@ export default function Footer() {
                             fontWeight: 600,
                             marginBottom: '20px',
                             fontSize: '1rem',
-                            color: 'white',
+                            color: 'var(--ink)',
                             letterSpacing: '0.02em',
                         }}>ช่วยเหลือ</h3>
                         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -163,24 +163,24 @@ export default function Footer() {
                             fontWeight: 600,
                             marginBottom: '20px',
                             fontSize: '1rem',
-                            color: 'white',
+                            color: 'var(--ink)',
                             letterSpacing: '0.02em',
                         }}>ติดต่อเรา</h3>
                         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#94a3b8', fontSize: '0.9375rem' }}>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--ink-muted)', fontSize: '0.9375rem' }}>
                                 <svg style={{ width: '18px', height: '18px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                                 milerdev.official@gmail.com
                             </li>
-                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: '#94a3b8', fontSize: '0.9375rem' }}>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', color: 'var(--ink-muted)', fontSize: '0.9375rem' }}>
                                 <svg style={{ width: '18px', height: '18px', flexShrink: 0, marginTop: '2px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                                 <span>กรุงเทพมหานคร, ประเทศไทย</span>
                             </li>
-                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#94a3b8', fontSize: '0.9375rem' }}>
+                            <li style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--ink-muted)', fontSize: '0.9375rem' }}>
                                 <svg style={{ width: '18px', height: '18px', flexShrink: 0 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -192,7 +192,7 @@ export default function Footer() {
 
                 {/* Bottom Bar */}
                 <div style={{
-                    borderTop: '1px solid #334155',
+                    borderTop: '1px solid var(--line)',
                     paddingTop: '32px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -201,7 +201,7 @@ export default function Footer() {
                     gap: '16px',
                 }} className="md:flex-row md:justify-between">
                     <p style={{
-                        color: '#64748b',
+                        color: 'var(--ink-subtle)',
                         fontSize: '0.875rem',
                     }}>
                         © 2026 MilerDev. สงวนลิขสิทธิ์ทั้งหมด
@@ -216,11 +216,11 @@ export default function Footer() {
                 .footer-link:focus-visible,
                 .footer-social:focus-visible {
                     outline: none;
-                    box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.32);
+                    box-shadow: var(--focus-ring);
                 }
                 .footer-link:hover,
                 .footer-link:focus-visible {
-                    color: #7dd3fc !important;
+                    color: var(--accent-strong) !important;
                 }
                 .footer-social:hover {
                     color: #ffffff !important;
