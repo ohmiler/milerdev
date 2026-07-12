@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -73,188 +74,55 @@ export default function LoginPage() {
   return (
     <>
       <Navbar />
+      <main className="login-shell">
+        <div className="container login-shell__grid">
+          <section className="login-context" aria-labelledby="login-context-title">
+            <div className="login-context__brand">
+              <Image src="/milerdev-logo-transparent.png" alt="" width={44} height={44} priority />
+              <span>MilerDev Learning</span>
+            </div>
+            <div className="login-context__copy">
+              <p className="login-context__meta">Return to learning</p>
+              <h2 id="login-context-title">กลับมาเรียนต่อ<br />จากจุดที่คุณหยุดไว้</h2>
+              <p>เข้าสู่ระบบเพื่อเปิดคอร์ส ดูความคืบหน้า และกลับไปยังบทเรียนถัดไปโดยไม่ต้องเริ่มค้นหาใหม่</p>
+            </div>
+            <ol className="login-context__steps">
+              <li><span>01</span><p>เปิดคอร์สที่ลงทะเบียนไว้</p></li>
+              <li><span>02</span><p>กลับไปยังบทเรียนล่าสุด</p></li>
+              <li><span>03</span><p>ติดตาม progress และใบประกาศ</p></li>
+            </ol>
+          </section>
 
-      <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
-        <div className="container" style={{ paddingTop: '60px', paddingBottom: '60px' }}>
-          <div style={{
-            maxWidth: '440px',
-            margin: '0 auto',
-            background: 'white',
-            borderRadius: '16px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-            padding: '40px',
-          }}>
-            {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <h1 style={{
-                fontSize: '1.75rem',
-                fontWeight: 700,
-                color: '#1e293b',
-                marginBottom: '8px',
-              }}>
-                เข้าสู่ระบบ
-              </h1>
-              <p style={{ color: '#64748b' }}>
-                ยินดีต้อนรับกลับมา! เข้าสู่ระบบเพื่อเรียนต่อ
-              </p>
+          <section className="login-panel" aria-labelledby="login-title">
+            <div className="login-panel__head">
+              <p className="login-panel__meta">Account access</p>
+              <h1 id="login-title">เข้าสู่ระบบ</h1>
+              <p>ใช้บัญชี MilerDev เพื่อกลับไปเรียนต่อ</p>
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div style={{
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
-                color: '#dc2626',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                marginBottom: '24px',
-                fontSize: '0.875rem',
-              }}>
-                {error}
-              </div>
-            )}
+            {error && <div className="login-error" role="alert">{error}</div>}
 
-            {/* Form */}
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: '#374151',
-                  marginBottom: '8px',
-                }}>
-                  อีเมล
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="your@email.com"
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    transition: 'border-color 0.2s',
-                    outline: 'none',
-                  }}
-                />
+            <form onSubmit={handleSubmit} className="login-form">
+              <div className="login-field">
+                <label htmlFor="login-email">อีเมล</label>
+                <input id="login-email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="name@example.com" />
               </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: '#374151',
-                  marginBottom: '8px',
-                }}>
-                  รหัสผ่าน
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    style={{
-                      width: '100%',
-                      padding: '12px 48px 12px 16px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      fontSize: '1rem',
-                      transition: 'border-color 0.2s',
-                      outline: 'none',
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#64748b',
-                      padding: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
-                  >
-                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                  </button>
+              <div className="login-field">
+                <div className="login-field__label"><label htmlFor="login-password">รหัสผ่าน</label><Link href="/forgot-password">ลืมรหัสผ่าน?</Link></div>
+                <div className="login-password">
+                  <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'} aria-pressed={showPassword}>{showPassword ? <EyeOffIcon /> : <EyeIcon />}</button>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'right', marginBottom: '24px' }}>
-                <Link href="/forgot-password" style={{
-                  color: '#2563eb',
-                  fontSize: '0.875rem',
-                  textDecoration: 'none',
-                  fontWeight: 500,
-                }}>
-                  ลืมรหัสผ่าน?
-                </Link>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  fontSize: '1rem',
-                  opacity: loading ? 0.7 : 1,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-              </button>
+              <button type="submit" className="login-submit" disabled={loading}>{loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}</button>
             </form>
 
-            {/* Divider */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              margin: '32px 0',
-            }}>
-              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-              <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>หรือ</span>
-              <div style={{ flex: 1, height: '1px', background: '#e2e8f0' }} />
-            </div>
+            <div className="login-divider"><span>หรือใช้บัญชี Google</span></div>
 
-            {/* Social Login */}
-            <button
-              onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-              style={{
-                width: '100%',
-                padding: '14px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                background: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                fontSize: '1rem',
-                fontWeight: 500,
-                color: '#374151',
-                transition: 'background 0.2s',
-              }}
-            >
-              <svg style={{ width: '20px', height: '20px' }} viewBox="0 0 24 24">
+            <button type="button" onClick={() => signIn('google', { callbackUrl: '/dashboard' })} className="login-google">
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -263,22 +131,11 @@ export default function LoginPage() {
               เข้าสู่ระบบด้วย Google
             </button>
 
-            {/* Register Link */}
-            <p style={{
-              textAlign: 'center',
-              marginTop: '32px',
-              color: '#64748b',
-              fontSize: '0.9375rem',
-            }}>
-              ยังไม่มีบัญชี?{' '}
-              <Link href="/register" style={{ color: '#2563eb', fontWeight: 500, textDecoration: 'none' }}>
-                สมัครสมาชิก
-              </Link>
-            </p>
-          </div>
+            <p className="login-register">ยังไม่มีบัญชี? <Link href="/register">สมัครสมาชิกฟรี</Link></p>
+            <p className="login-privacy">การเข้าสู่ระบบจะใช้ข้อมูลบัญชีตามนโยบายความเป็นส่วนตัวของ MilerDev</p>
+          </section>
         </div>
       </main>
-
       <Footer />
     </>
   );

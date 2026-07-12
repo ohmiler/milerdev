@@ -77,6 +77,11 @@ Verification:
 - [x] Contact page. Redesigned as a Swiss service desk with contact rail, accessible form, safe-data note, and complete submission states.
 - [ ] FAQ and legal pages.
 
+### Authentication
+
+- [x] Login page. Redesigned as a Swiss return-to-learning surface with preserved credentials, Google sign-in, safe errors, password visibility, and recovery links.
+- [ ] Registration, forgot-password, and reset-password pages.
+
 ### Learner product
 
 - [ ] Dashboard.

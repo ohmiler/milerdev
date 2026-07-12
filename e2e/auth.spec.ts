@@ -107,7 +107,7 @@ test.describe('Login', () => {
     await passwordInput.fill('Test1234');
 
     await expect(passwordInput).toHaveAttribute('type', 'password');
-    await page.locator('button[type="button"]').click();
+    await page.getByRole('button', { name: 'แสดงรหัสผ่าน' }).click();
     const visibleInput = page.locator('input[placeholder="••••••••"]');
     await expect(visibleInput).toHaveAttribute('type', 'text');
   });
@@ -115,7 +115,7 @@ test.describe('Login', () => {
   test('should have Google login button', async ({ page }) => {
     await page.goto('/login');
     // Check for Google OAuth button
-    const googleBtn = page.getByText(/Google/i);
+    const googleBtn = page.getByRole('button', { name: 'เข้าสู่ระบบด้วย Google' });
     await expect(googleBtn).toBeVisible();
   });
 
