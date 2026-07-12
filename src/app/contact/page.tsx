@@ -48,7 +48,7 @@ export default function ContactPage() {
                 <header className="contact-desk__hero">
                     <div className="container">
                         <p className="contact-desk__meta">Contact / MilerDev</p>
-                        <h1>บอกเราได้ว่า<br />คุณกำลังติดเรื่องไหน</h1>
+                        <h1>บอกเราได้ว่าคุณกำลังติดเรื่องไหน</h1>
                         <p>สอบถามเรื่องคอร์ส การเรียน การชำระเงิน หรือเสนอความร่วมมือ ส่งรายละเอียดมาให้ครบเพื่อให้ทีมตอบกลับได้ตรงประเด็น</p>
                     </div>
                 </header>

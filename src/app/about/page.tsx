@@ -42,7 +42,7 @@ export default function AboutPage() {
         <header className="about-studio__hero">
           <div className="container">
             <p className="about-studio__meta">About / MilerDev</p>
-            <h1>พื้นที่เรียนโค้ด<br />สำหรับคนที่อยากสร้างจริง</h1>
+            <h1>พื้นที่เรียนโค้ดสำหรับคนที่อยากสร้างจริง</h1>
             <p className="about-studio__lede">MilerDev คือ coding learning studio ภาษาไทย เราออกแบบคอร์สและบทเรียนให้ผู้เรียนเข้าใจแนวคิดผ่านการเขียนโค้ดและสร้างโปรเจกต์ด้วยตัวเอง</p>
           </div>
         </header>

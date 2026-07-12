@@ -181,7 +181,7 @@ export default async function BlogPage({ searchParams }: Props) {
         <header className="blog-index__hero">
           <div className="container">
             <p className="blog-index__meta">Journal / {pagination.total} บทความ</p>
-            <h1>อ่านแนวคิด<br />แล้วกลับไปเขียนโค้ด</h1>
+            <h1>อ่านแนวคิด แล้วกลับไปเขียนโค้ด</h1>
             <p>บทความภาษาไทยสำหรับนักพัฒนาที่ต้องการเข้าใจเครื่องมือ วิธีคิด และการสร้างซอฟต์แวร์จากงานจริง</p>
           </div>
         </header>
