@@ -297,10 +297,11 @@ describe('homepage polish', () => {
         expect(page).toContain('href="#featured-courses"');
 
         expect(cssBlock(globals, '.featured-courses-section .container {')).toContain(
-            'grid-template-columns: repeat(12, minmax(0, 1fr))'
+            'display: block'
         );
-        expect(cssBlock(globals, '.featured-courses-section .featured-courses-head {')).toContain('grid-column: span 4');
-        expect(cssBlock(globals, '.featured-courses-section .featured-courses-grid {')).toContain('grid-column: 5 / -1');
+        expect(cssBlock(globals, '.featured-courses-section .featured-courses-head {')).toContain('display: flex');
+        expect(cssBlock(globals, '.featured-courses-section .featured-courses-head {')).toContain('justify-content: space-between');
+        expect(cssBlock(globals, '.featured-courses-section .featured-courses-grid {')).not.toContain('grid-column: 5 / -1');
         expect(cssBlock(globals, '.featured-courses-section .featured-courses-grid {')).toContain(
             'grid-template-columns: repeat(3, minmax(0, 1fr))'
         );
