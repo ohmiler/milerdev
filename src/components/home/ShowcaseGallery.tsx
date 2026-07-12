@@ -62,205 +62,197 @@ export default function ShowcaseGallery() {
   return (
     <>
       <section className="showcase-gallery-section" aria-labelledby="showcase-gallery-title">
-        {/* Header */}
-        <div className="container showcase-gallery-head">
-          <div className="showcase-gallery-kicker">
-            <span style={{ fontSize: '1rem' }}>📸</span>
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--primary-700)' }}>กิจกรรมและงานบรรยาย</span>
-          </div>
-          <h2 id="showcase-gallery-title" className="section-title showcase-gallery-title">
-            ภาพบรรยากาศจากงานต่างๆ
-          </h2>
-          <p className="section-copy showcase-gallery-copy">
-            บรรยายด้าน Web Development, AI และเส้นทางสายอาชีพ Developer ให้กับนักศึกษาและองค์กรต่าง ๆ
-          </p>
-        </div>
+        <div className="container showcase-gallery-layout">
+          <header className="showcase-gallery-head">
+            <h2 id="showcase-gallery-title" className="section-title showcase-gallery-title">
+              ภาพบรรยากาศจากงานต่างๆ
+            </h2>
+            <div className="showcase-gallery-summary">
+              <p className="section-copy showcase-gallery-copy">
+                งานบรรยายด้าน Web Development, AI และเส้นทางอาชีพ Developer สำหรับนักศึกษาและองค์กร
+              </p>
+              <span className="showcase-gallery-count">12 PHOTOGRAPHS</span>
+            </div>
+          </header>
 
-        {/* Carousel Marquee */}
-        <div className="showcase-marquee-wrapper">
-          <div className="showcase-marquee-inner">
-            {[0, 1].map((copy) => (
-              <div key={copy} className="showcase-marquee-track" aria-hidden={copy === 1}>
-                {SHOWCASE_IMAGES.map((img, i) => (
-                  <button
-                    key={`${copy}-${i}`}
-                    onClick={() => openLightbox(i)}
-                    type="button"
-                    className="showcase-card"
-                    tabIndex={copy === 0 ? 0 : -1}
-                    aria-label={`ดูรูปภาพบรรยากาศงานบรรยาย ${i + 1}`}
-                  >
-                    <Image
-                      src={img.src}
-                      alt={copy === 0 ? img.alt : ''}
-                      width={400}
-                      height={300}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                      className="showcase-card-img"
-                    />
-                    <div className="showcase-card-overlay">
-                      <span style={{
-                        color: 'white',
-                        fontSize: '0.8125rem',
-                        fontWeight: 500,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" />
-                        </svg>
-                        คลิกเพื่อดูเต็ม
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+          <div className="showcase-contact-sheet" aria-label="ภาพบรรยากาศจากงานบรรยาย MilerDev">
+            {SHOWCASE_IMAGES.map((img, i) => (
+              <button
+                key={img.src}
+                onClick={() => openLightbox(i)}
+                type="button"
+                className="showcase-card"
+                aria-label={`ดูรูปภาพบรรยากาศงานบรรยาย ${i + 1}`}
+              >
+                <span className="showcase-card-media">
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    width={640}
+                    height={480}
+                    sizes="(max-width: 640px) 100vw, (max-width: 900px) 50vw, 25vw"
+                    className="showcase-card-img"
+                  />
+                </span>
+                <span className="showcase-card-meta" aria-hidden="true">
+                  <span className="showcase-card-index">{String(i + 1).padStart(2, '0')}</span>
+                  <span>ดูภาพเต็ม ↗</span>
+                </span>
+              </button>
             ))}
           </div>
         </div>
 
         <style>{`
           .showcase-gallery-section {
-            padding: 72px 0 64px;
-            background: white;
-            overflow: hidden;
+            padding: clamp(64px, 8vw, 104px) 0;
+            background: var(--surface-subtle);
+            border-bottom: 1px solid var(--line);
+          }
+          .showcase-gallery-layout {
+            display: grid;
+            gap: clamp(40px, 5vw, 64px);
           }
           .showcase-gallery-head {
-            text-align: center;
-            margin-bottom: 38px;
-          }
-          .showcase-gallery-kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--primary-50);
-            border: 1px solid var(--primary-200);
-            border-radius: 999px;
-            padding: 6px 16px;
-            margin-bottom: 16px;
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            align-items: end;
           }
           .showcase-gallery-title {
-            margin: 0 auto 12px;
+            grid-column: 1 / span 8;
+            max-width: 20ch;
+            margin: 0;
+            padding-right: clamp(24px, 4vw, 64px);
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            line-height: 1.15;
+            letter-spacing: -0.03em;
             text-wrap: balance;
           }
+          .showcase-gallery-summary {
+            grid-column: 9 / -1;
+            display: grid;
+            gap: 20px;
+          }
           .showcase-gallery-copy {
-            margin: 0 auto;
-            max-width: 56ch;
+            max-width: 42ch;
+            margin: 0;
+            color: var(--ink-soft);
+            line-height: var(--leading-thai);
             text-wrap: pretty;
           }
-          .showcase-marquee-wrapper {
-            width: 100%;
-            overflow: hidden;
-            mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+          .showcase-gallery-count {
+            color: var(--accent-strong);
+            font-family: var(--font-code);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
           }
-          .showcase-marquee-inner {
-            display: flex;
-            width: max-content;
-            animation: showcaseScroll 160s linear infinite;
-            will-change: transform;
-          }
-          .showcase-marquee-track {
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-            gap: 14px;
-            padding: 0 7px;
+          .showcase-contact-sheet {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            border-top: 1px solid var(--line-strong);
+            border-left: 1px solid var(--line);
           }
           .showcase-card {
-            flex-shrink: 0;
-            width: 344px;
-            height: 258px;
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            border: 1px solid rgba(219, 232, 242, 0.9);
+            display: grid;
+            min-width: 0;
             padding: 0;
-            background: #f1f5f9;
-            position: relative;
-            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            border: 0;
+            border-right: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            border-radius: 0;
+            background: var(--surface);
+            color: var(--ink);
+            cursor: pointer;
+            text-align: left;
+            transition: background-color 160ms ease-out;
           }
           .showcase-card:hover {
-            transform: translateY(-3px);
-            border-color: rgba(2, 171, 255, 0.38);
-            box-shadow: 0 8px 14px rgba(16, 32, 51, 0.1);
+            background: var(--accent-soft);
           }
           .showcase-card:focus-visible {
+            position: relative;
+            z-index: 1;
             outline: none;
             box-shadow: var(--focus-ring);
-            border-color: var(--primary-500);
+          }
+          .showcase-card-media {
+            display: block;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            border-bottom: 1px solid var(--line);
+            background: var(--surface-subtle);
           }
           .showcase-card-img {
-            transition: transform 0.25s ease;
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
           }
           .showcase-card:hover .showcase-card-img {
-            transform: scale(1.035);
+            transform: scale(1.015);
           }
-          .showcase-card-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.48) 0%, transparent 58%);
-            opacity: 0;
-            transition: opacity 0.2s ease;
+          .showcase-card-meta {
             display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding: 16px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            min-height: 44px;
+            padding: 0 14px;
+            color: var(--ink-soft);
+            font-size: 0.75rem;
+            font-weight: 650;
           }
-          .showcase-card:hover .showcase-card-overlay,
-          .showcase-card:focus-visible .showcase-card-overlay {
-            opacity: 1;
+          .showcase-card-index {
+            color: var(--accent-strong);
+            font-family: var(--font-code);
+            font-size: 0.6875rem;
           }
-          @keyframes showcaseScroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-          .showcase-marquee-wrapper:hover .showcase-marquee-inner,
-          .showcase-marquee-wrapper:focus-within .showcase-marquee-inner {
-            animation-play-state: paused;
+          @media (max-width: 900px) {
+            .showcase-gallery-title {
+              grid-column: 1 / span 7;
+            }
+            .showcase-gallery-summary {
+              grid-column: 8 / -1;
+            }
+            .showcase-contact-sheet {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
           }
           @media (max-width: 640px) {
             .showcase-gallery-section {
-              padding: 56px 0 52px;
+              padding: 56px 0;
             }
             .showcase-gallery-head {
-              margin-bottom: 30px;
+              grid-template-columns: 1fr;
+              gap: 18px;
             }
-            .showcase-card {
-              width: 268px;
-              height: 201px;
+            .showcase-gallery-title,
+            .showcase-gallery-summary {
+              grid-column: 1;
+            }
+            .showcase-gallery-title {
+              padding-right: 0;
+            }
+            .showcase-gallery-summary {
+              gap: 14px;
+            }
+            .showcase-contact-sheet {
+              grid-template-columns: 1fr;
             }
           }
           @media (prefers-reduced-motion: reduce) {
-            .showcase-marquee-wrapper {
-              overflow-x: auto;
-              mask-image: none;
-              -webkit-mask-image: none;
-            }
-            .showcase-marquee-inner {
-              animation: none;
-            }
-            .showcase-marquee-track[aria-hidden="true"] {
-              display: none;
-            }
             .showcase-card,
-            .showcase-card-img,
-            .showcase-card-overlay {
+            .showcase-card-img {
               transition: none;
             }
-            .showcase-card:hover,
             .showcase-card:hover .showcase-card-img {
               transform: none;
             }
           }
         `}</style>
       </section>
-
       {/* Lightbox */}
       {lightboxIndex !== null && (
         <div

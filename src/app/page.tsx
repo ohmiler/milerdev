@@ -686,136 +686,180 @@ export default async function HomePage() {
 
         {/* Client Showcase Section */}
         <section className="client-showcase-section" aria-labelledby="client-showcase-title">
-          <div className="container client-showcase-head">
-            <h2 id="client-showcase-title" className="section-title client-showcase-title">
-              องค์กรและมหาวิทยาลัยที่เคยเชิญ MilerDev ไปแบ่งปันความรู้
-            </h2>
-            <p className="section-copy client-showcase-copy">
-              องค์กรชั้นนำและสถาบันการศึกษาที่เชิญ MilerDev ไปเป็นวิทยากรอบรมและแบ่งปันความรู้ด้านการเขียนโปรแกรม
-            </p>
-          </div>
-
-          <div className="marquee-wrapper" aria-label="องค์กรและสถาบันที่เคยร่วมงานกับ MilerDev">
-            <div className="marquee-inner">
-              {[0, 1].map((copy) => (
-                <div key={copy} className="marquee-track" aria-hidden={copy === 1}>
-                  {[...CLIENT_LOGOS, ...CLIENT_LOGOS].map((logo, i) => (
-                    <div key={`${copy}-${logo.src}-${i}`} className="marquee-item">
-                      <img
-                        src={logo.src}
-                        alt={copy === 0 && i < CLIENT_LOGOS.length ? logo.alt : ''}
-                        className="marquee-logo"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
+          <div className="container client-showcase-layout">
+            <div className="client-showcase-head">
+              <p className="client-showcase-meta">
+                <span>SELECTED INVITATIONS</span>
+                <span>08 / TH</span>
+              </p>
+              <h2 id="client-showcase-title" className="section-title client-showcase-title">
+                องค์กรและมหาวิทยาลัยที่เคยเชิญ MilerDev ไปแบ่งปันความรู้
+              </h2>
+              <p className="section-copy client-showcase-copy">
+                ตัวอย่างองค์กรและสถาบันการศึกษาที่เชิญ MilerDev เป็นวิทยากรด้านการเขียนโปรแกรมและการพัฒนาเว็บไซต์
+              </p>
             </div>
+
+            <ul className="client-logo-grid" aria-label="องค์กรและสถาบันที่เคยร่วมงานกับ MilerDev">
+              {CLIENT_LOGOS.map((logo, index) => (
+                <li key={logo.src} className="client-logo-item">
+                  <span className="client-logo-index" aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div className="client-logo-media">
+                    <img src={logo.src} alt="" className="client-logo-image" loading="lazy" decoding="async" />
+                  </div>
+                  <span className="client-logo-name">{logo.alt}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <style>{`
             .client-showcase-section {
-              padding: 72px 0 64px;
-              background: #f8fafc;
-              overflow: hidden;
+              padding: clamp(64px, 8vw, 104px) 0;
+              background: var(--canvas);
+              border-bottom: 1px solid var(--line);
+            }
+            .client-showcase-layout {
+              display: grid;
+              grid-template-columns: repeat(12, minmax(0, 1fr));
+              align-items: start;
+              row-gap: clamp(40px, 5vw, 64px);
             }
             .client-showcase-head {
-              text-align: center;
-              margin-bottom: 38px;
+              grid-column: 1 / -1;
+              display: grid;
+              grid-template-columns: repeat(12, minmax(0, 1fr));
+              align-items: end;
             }
+            .client-showcase-meta {
+              display: flex;
+              justify-content: space-between;
+              gap: 16px;
+              grid-column: 1 / -1;
+              margin: 0 0 40px;
+              color: var(--ink-muted);
+              font-family: var(--font-code);
+              font-size: 0.6875rem;
+              font-weight: 700;
+              letter-spacing: 0.06em;
+            }
+            .client-showcase-meta span:last-child { color: var(--accent-strong); }
             .client-showcase-title {
-              max-width: 820px;
-              margin: 0 auto 12px;
+              grid-column: 1 / span 8;
+              max-width: 24ch;
+              margin: 0;
+              padding-right: clamp(24px, 4vw, 64px);
+              font-size: clamp(1.875rem, 3vw, 3rem);
+              line-height: 1.22;
+              letter-spacing: -0.025em;
               text-wrap: balance;
             }
             .client-showcase-copy {
-              max-width: 720px;
-              margin: 0 auto;
+              grid-column: 9 / -1;
+              max-width: 42ch;
+              margin: 0;
+              color: var(--ink-soft);
+              line-height: var(--leading-thai);
               text-wrap: pretty;
             }
-            .marquee-wrapper {
-              width: 100%;
-              overflow: hidden;
-              mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-              -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+            .client-logo-grid {
+              grid-column: 1 / -1;
+              display: grid;
+              grid-template-columns: repeat(4, minmax(0, 1fr));
+              margin: 0;
+              padding: 0;
+              border-top: 1px solid var(--line-strong);
+              border-left: 1px solid var(--line);
+              list-style: none;
             }
-            .marquee-inner {
-              display: flex;
-              width: max-content;
-              animation: marquee 92s linear infinite;
-              will-change: transform;
+            .client-logo-item {
+              display: grid;
+              grid-template-rows: auto minmax(72px, 1fr) auto;
+              min-width: 0;
+              min-height: 164px;
+              padding: 14px;
+              border-right: 1px solid var(--line);
+              border-bottom: 1px solid var(--line);
+              background: var(--surface);
             }
-            .marquee-track {
-              display: flex;
-              align-items: center;
-              flex-shrink: 0;
+            .client-logo-index {
+              color: var(--accent-strong);
+              font-family: var(--font-code);
+              font-size: 0.625rem;
+              font-weight: 700;
+              letter-spacing: 0.06em;
             }
-            .marquee-item {
-              flex-shrink: 0;
+            .client-logo-media {
               display: flex;
               align-items: center;
               justify-content: center;
-              flex: 0 0 168px;
-              height: 84px;
-              padding: 0 18px;
+              min-width: 0;
+              padding: 12px 4px;
             }
-            .marquee-logo {
-              max-height: 56px;
-              max-width: 132px;
+            .client-logo-image {
               width: auto;
               height: auto;
+              max-width: 124px;
+              max-height: 54px;
               object-fit: contain;
-              filter: grayscale(16%) saturate(0.92);
-              opacity: 0.84;
-              transition: filter 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+              filter: grayscale(12%) saturate(0.92);
             }
-            .marquee-logo:hover {
-              filter: grayscale(0%) saturate(1);
-              opacity: 1;
-              transform: translateY(-1px);
+            .client-logo-name {
+              min-width: 0;
+              color: var(--ink-soft);
+              font-size: 0.75rem;
+              font-weight: 650;
+              line-height: 1.45;
+              text-wrap: pretty;
             }
-            @keyframes marquee {
-              0% { transform: translateX(0); }
-              100% { transform: translateX(-50%); }
+            @media (max-width: 1023px) {
+              .client-showcase-title {
+                grid-column: 1 / span 7;
+                padding-right: 32px;
+              }
+              .client-showcase-copy {
+                grid-column: 8 / -1;
+              }
             }
-            .marquee-wrapper:hover .marquee-inner {
-              animation-play-state: paused;
+            @media (max-width: 760px) {
+              .client-showcase-head {
+                grid-template-columns: 1fr;
+                gap: 18px;
+              }
+              .client-showcase-meta,
+              .client-showcase-title,
+              .client-showcase-copy {
+                grid-column: 1;
+              }
+              .client-showcase-meta {
+                margin-bottom: 18px;
+              }
+              .client-showcase-title {
+                max-width: 22ch;
+                padding-right: 0;
+              }
+              .client-showcase-copy {
+                max-width: 60ch;
+              }
             }
             @media (max-width: 640px) {
-              .client-showcase-section {
-                padding: 56px 0 52px;
+              .client-showcase-section { padding: 56px 0; }
+              .client-showcase-layout { gap: 32px; }
+              .client-logo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+              .client-logo-item {
+                min-height: 146px;
+                padding: 12px;
               }
-              .client-showcase-head {
-                margin-bottom: 30px;
-              }
-              .marquee-item {
-                flex-basis: 142px;
-                height: 74px;
-                padding: 0 14px;
-              }
-              .marquee-logo {
+              .client-logo-image {
+                max-width: 110px;
                 max-height: 48px;
-                max-width: 116px;
               }
-            }
-            @media (prefers-reduced-motion: reduce) {
-              .marquee-wrapper {
-                overflow-x: auto;
-                mask-image: none;
-                -webkit-mask-image: none;
-              }
-              .marquee-inner {
-                animation: none;
-              }
-              .marquee-track[aria-hidden="true"] {
-                display: none;
-              }
+              .client-logo-name { font-size: 0.6875rem; }
             }
           `}</style>
         </section>
-
         {/* Showcase Gallery */}
         <ShowcaseGallery />
 
@@ -825,12 +869,18 @@ export default async function HomePage() {
         {/* CTA Section */}
         <section className="cta-section home-final-cta">
           <div className="container home-final-cta__inner">
-            <h2 className="home-final-cta__title">
-              เริ่มสร้างทักษะ Coding ที่ใช้ได้จริงตั้งแต่วันนี้
-            </h2>
-            <p className="home-final-cta__copy">
-              เลือกคอร์สที่เหมาะกับคุณ แล้วลงมือสร้างผลงานชิ้นแรกของคุณ
-            </p>
+            <div className="home-final-cta__content">
+              <p className="home-final-cta__meta">
+                <span>NEXT STEP</span>
+                <span>START HERE</span>
+              </p>
+              <h2 className="home-final-cta__title">
+                เริ่มสร้างทักษะ Coding ที่ใช้ได้จริงตั้งแต่วันนี้
+              </h2>
+              <p className="home-final-cta__copy">
+                เลือกคอร์สที่เหมาะกับคุณ แล้วลงมือสร้างผลงานชิ้นแรกของคุณ
+              </p>
+            </div>
             <div className="home-final-actions">
               <Link
                 href="/courses"
@@ -846,6 +896,7 @@ export default async function HomePage() {
                 className="home-final-action home-final-action--secondary"
               >
                 สมัครสมาชิกฟรี
+                <span aria-hidden="true">↗</span>
               </Link>
             </div>
           </div>

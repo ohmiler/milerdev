@@ -97,15 +97,15 @@ Goals:
 
 ### Client showcase
 
-Status: pending.
+Status: redesigned as a static Swiss proof index.
 
-Use real client proof and readable context. Avoid a decorative logo wall without explanation.
+Use a full-width heading row above the eight real client logos. Keep the logos as a static 4 × 2 desktop index with visible organization names, a 2-column mobile layout, and no automatic marquee.
 
 ### Showcase gallery
 
 Status: pending.
 
-Prioritize real work and legible captions. Let imagery carry the section rather than surrounding every item with a heavy card.
+Show all 12 event photographs as a static 4-column desktop contact sheet, 2 columns on tablet, and 1 column on mobile. Keep numbered captions and the accessible lightbox without autoplay or duplicated images.
 
 ### Affiliate banner
 
@@ -117,8 +117,13 @@ Integrate it into the page rhythm without competing with the primary course and 
 
 Status: pending.
 
-Keep it concise, specific, and non-repetitive. It should present one clear next action.
+Use a brand-blue 12-column field with the closing statement and supporting copy stacked in one full-width text row, followed by a paired action row. Keep “ดูคอร์สทั้งหมด” dominant with an ink-filled button and “สมัครสมาชิกฟรี” as a white outlined secondary action.
 
+### Footer
+
+Status: redesigned.
+
+Use a responsive 12-column Swiss information rail on the VS Code Dark+ `#1e1e1e` canvas. Give the brand five columns and contact three columns on desktop, separate groups with 1px rules, and use brand blue only for links, focus, and interaction feedback.
 ## Per-section Handoff Checklist
 
 - Read this file and the current focus in the roadmap.

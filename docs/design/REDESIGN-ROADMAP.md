@@ -52,7 +52,7 @@ Verification:
 - [x] Adaptive public and learning navigation direction established.
 - [x] Public navbar refined into a 12-column Swiss rail with compact authenticated controls.
 - [ ] Extract stable layout primitives after two or more sections prove the same pattern.
-- [ ] Finalize shared footer treatment.
+- [x] Shared footer redesigned as a responsive Swiss grid on VS Code Dark+ `#1e1e1e`.
 
 ### Homepage
 
@@ -60,10 +60,10 @@ Verification:
 - [x] Featured courses refined to a responsive 4 / 2 / 1 Swiss grid.
 - [x] Remove obsolete beginner path, why-us, and audience-fit sections.
 - [ ] Bundle section. Current focus.
-- [ ] Client showcase.
-- [ ] Showcase gallery.
+- [x] Client showcase redesigned as a static Swiss proof index.
+- [x] Showcase gallery redesigned as a static Swiss contact sheet.
 - [ ] Affiliate banner placement and visual integration.
-- [ ] Final CTA.
+- [x] Final CTA redesigned as a brand-blue Swiss field with paired actions.
 - [ ] Full-page responsive and accessibility pass.
 
 ### Public discovery
