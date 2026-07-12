@@ -91,7 +91,7 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
   }
 
   return (
-    <div>
+    <div className="lesson-list">
       {paginatedLessons.map((lesson) => {
         const originalIndex = lessons.findIndex(l => l.id === lesson.id);
         const isLocked = !isEnrolled && !lesson.isFreePreview;
@@ -100,7 +100,7 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
 
         if (isLocked) {
           return (
-            <div
+            <div className="lesson-list__item is-locked"
               key={lesson.id}
               onClick={() => onLockedClick?.(lesson.id)}
               style={{
@@ -156,7 +156,7 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
         }
 
         return (
-          <Link
+          <Link className="lesson-list__item"
             key={lesson.id}
             ref={isCurrent ? (currentItemRef as React.RefObject<HTMLAnchorElement>) : null}
             href={`/courses/${courseSlug}/learn/${lesson.id}`}
@@ -176,7 +176,7 @@ export default function LessonList({ lessons, courseSlug, currentLessonId, isEnr
             onMouseOver={(e) => { if (!isCurrent) e.currentTarget.style.background = '#2d3f55'; }}
             onMouseOut={(e) => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
           >
-            <div style={{
+            <div className="lesson-list__marker" style={{
               width: '28px',
               height: '28px',
               borderRadius: '50%',

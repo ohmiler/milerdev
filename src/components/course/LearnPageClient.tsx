@@ -281,7 +281,10 @@ export default function LearnPageClient({
         progressPercent={progressPercent}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={() => setSidebarCollapsed(current => !current)}
-        onOpenSidebar={() => setSidebarOpen(true)}
+        onOpenSidebar={() => {
+          setSidebarCollapsed(false);
+          setSidebarOpen(true);
+        }}
         theme={learningTheme}
         onToggleTheme={toggleLearningTheme}
       />
@@ -382,7 +385,10 @@ export default function LearnPageClient({
           </button>
           {/* Mobile sidebar toggle */}
           <button
-            onClick={() => setSidebarOpen(true)}
+            onClick={() => {
+              setSidebarCollapsed(false);
+              setSidebarOpen(true);
+            }}
             className="flex lg:hidden"
             style={{
               alignItems: 'center',
@@ -406,9 +412,9 @@ export default function LearnPageClient({
 
       <div className="learning-content-layout" style={{ display: 'flex', minHeight: 'calc(100vh - 56px)' }}>
         {/* Video Area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <main className="learning-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           {/* Video Player or Locked Message */}
-          <div style={{ width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative', flexShrink: 0 }}>
+          <div className="learning-video" style={{ width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative', flexShrink: 0 }}>
             {lockedMessage ? (
               <div style={{
                 position: 'absolute',
@@ -536,9 +542,9 @@ export default function LearnPageClient({
           )}
 
           {/* Lesson Info */}
-          <div style={{ padding: '20px 24px', flex: 1, overflowY: 'auto', background: '#0f172a' }}>
+          <section className="learning-lesson" style={{ padding: '20px 24px', flex: 1, overflowY: 'auto', background: '#0f172a' }}>
             {/* Title row + Mark Complete */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '10px' }}>
+            <div className="learning-lesson__heading" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '10px' }}>
               <h1 style={{ fontSize: '1.375rem', fontWeight: 600, color: 'white', lineHeight: 1.4, flex: 1, margin: 0 }}>
                 {currentLesson.title}
               </h1>
@@ -577,7 +583,7 @@ export default function LearnPageClient({
               )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+            <div className="learning-lesson__meta" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
               {formatDuration(currentLesson.videoDuration) && (
                 <div style={{ color: '#64748b', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -688,8 +694,8 @@ export default function LearnPageClient({
                 </button>
               ) : null}
             </div>
-          </div>
-        </div>
+          </section>
+        </main>
 
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
@@ -707,7 +713,7 @@ export default function LearnPageClient({
 
         {/* Sidebar */}
         <aside 
-          className={`learn-sidebar ${sidebarOpen ? 'open' : ''}`}
+          className={`learn-sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'is-collapsed' : ''}`}
           style={{
             width: sidebarCollapsed ? '0px' : '320px',
             minWidth: sidebarCollapsed ? '0px' : '320px',
@@ -724,7 +730,7 @@ export default function LearnPageClient({
           }}
         >
           {/* Mobile Close Button */}
-          <div className="flex lg:hidden" style={{
+          <div className="learn-sidebar__mobile-header flex lg:hidden" style={{
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px',
@@ -795,7 +801,7 @@ export default function LearnPageClient({
             )}
 
             {/* Search */}
-            <input
+            <input className="learn-sidebar__search"
               type="text"
               value={lessonSearch}
               onChange={(e) => setLessonSearch(e.target.value)}
@@ -814,7 +820,7 @@ export default function LearnPageClient({
           </div>
 
           {/* Scrollable Lesson List */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px' }}>
+          <div className="learn-sidebar__list" style={{ flex: 1, overflowY: 'auto', padding: '8px 16px' }}>
             <LessonList 
               lessons={allLessons} 
               courseSlug={course.slug}

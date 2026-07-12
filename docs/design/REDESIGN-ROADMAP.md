@@ -86,7 +86,7 @@ Verification:
 ### Learner product
 
 - [x] Dashboard. Redesigned as a Swiss resume-first learner surface with next action, compact learning rail, course index, account links, and guided empty state.
-- [ ] Course learning shell and lesson rail.
+- [x] Course learning shell and lesson rail. Redesigned as a VS Code Dark+ focus workspace with editor, video, lesson explorer, progress, locked/completed states, and responsive lesson sheet.
 - [ ] Certificates and payments.
 - [ ] Profile and settings.
 
