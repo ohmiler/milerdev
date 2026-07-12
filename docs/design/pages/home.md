@@ -54,9 +54,29 @@ Do not reintroduce these removed homepage sections unless the user explicitly re
 
 ### Hero
 
-Status: established.
+Status: approved for Swiss refinement.
 
-Keep the coding-studio message, concrete learner outcome, primary course action, and code-oriented visual hierarchy.
+#### Approved direction: Swiss Frame + VS Code Dark+
+
+- Preserve the existing desktop composition: learner message on the left and an interactive code editor on the right.
+- Use the 12-column homepage grid with a 5-column text region and a 7-column editor region.
+- Make the grid visible through alignment, restrained 1px rules, and a clear division between text and editor rather than decorative cards.
+- Keep the Thai headline and its concrete learning outcome. Replace the generic marketing kicker with concise studio metadata.
+- Keep one visually dominant course action. Present the secondary course link as a quieter text action.
+- Recompose `LEARN / BUILD / SHIP` as a grid-aligned process rail.
+- Keep the code editor recognizably based on VS Code Dark+ (`#1e1e1e` canvas and Dark+ syntax colors).
+- Replace macOS traffic-light decoration with useful file or runtime metadata.
+- Use a thin frame, a maximum 8px radius, and no diffuse decorative shadow on the editor.
+- Refine tabs, line numbers, active line, and status information with stronger alignment and ruled separation.
+- On mobile, stack text before the editor and keep the composition left-aligned.
+- Keep motion restrained and preserve `prefers-reduced-motion` behavior.
+
+Success criteria:
+
+- The section still reads immediately as a coding course hero and a working code editor.
+- The composition feels connected to the Swiss public navbar through shared grid lines, rules, typography, and restrained radius.
+- The editor retains the familiarity and contrast of VS Code Dark+ without looking like a generic operating-system window mockup.
+- Thai copy, actions, tabs, keyboard focus, responsive behavior, and editor animation remain usable.
 
 ### Featured courses
 
