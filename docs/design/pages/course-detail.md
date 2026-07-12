@@ -27,3 +27,13 @@
 - `npm run lint`
 - `npm run build`
 - ตรวจ responsive visual flow เมื่อมีข้อมูลคอร์สใน local database
+
+
+## Decision-first Wide Pass (2026-07-12)
+
+- Move the preview, price, enrollment action, and included benefits into the hero decision area.
+- Use an 8 / 4 desktop hero split and keep the reading body on nine of twelve columns.
+- Increase curriculum row density and hierarchy without changing lesson access behavior.
+- Present review summaries and individual reviews as ruled editorial rows instead of stacked cards.
+- Keep tablet and mobile order as course context, enrollment decision, details, curriculum, then reviews.
+- Preserve CourseDetailProvider, preview video, promotions, payment actions, lesson access, and review behavior.

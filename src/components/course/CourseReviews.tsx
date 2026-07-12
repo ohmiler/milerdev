@@ -177,7 +177,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
 
       {/* Stats Summary */}
       {stats && stats.totalReviews > 0 && (
-        <div style={{
+        <div className="course-reviews__summary" style={{
           display: 'flex',
           gap: '32px',
           marginBottom: '32px',
@@ -232,7 +232,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
       )}
 
       {/* Actions */}
-      <div style={{
+      <div className="course-reviews__actions" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -401,9 +401,9 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
           )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="course-reviews__list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {reviews.map(review => (
-            <div key={review.id} style={{
+            <article className="course-review-row" key={review.id} style={{
               padding: '20px',
               background: 'white',
               border: '1px solid #e2e8f0',
@@ -466,7 +466,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
                   {review.comment}
                 </p>
               )}
-            </div>
+            </article>
           ))}
         </div>
       )}

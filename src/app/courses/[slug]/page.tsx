@@ -208,6 +208,7 @@ export default async function CourseDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Navbar />
 
+      <CourseDetailProvider>
       <main className="course-detail-page">
         {/* Course Header */}
         <section className="course-detail-hero">
@@ -257,26 +258,6 @@ export default async function CourseDetailPage({ params }: Props) {
 
               {/* Meta */}
               <div className="course-detail-facts">
-                {course.instructor?.name && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      background: 'rgba(255,255,255,0.2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                      <span style={{ fontWeight: 600 }}>{course.instructor.name.charAt(0)}</span>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>ผู้สอน</div>
-                      <div style={{ fontWeight: 500 }}>{course.instructor.name}</div>
-                    </div>
-                  </div>
-                )}
-
                 <div>
                   <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>บทเรียน</div>
                   <div style={{ fontWeight: 500 }}>{course.lessons.length} บท</div>
@@ -290,52 +271,6 @@ export default async function CourseDetailPage({ params }: Props) {
                 )}
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Course Content */}
-        <section className="course-detail-body">
-          <div className="container">
-            <CourseDetailProvider>
-            <div className="course-detail-grid">
-              {/* Left - Description + Lessons */}
-              <div className="course-detail-main">
-                {course.description && (
-                  <div className="course-detail-section">
-                    <h2 style={{
-                      fontSize: '1.5rem',
-                      fontWeight: 600,
-                      marginBottom: '24px',
-                      color: '#1e293b',
-                    }}>
-                      รายละเอียดคอร์ส
-                    </h2>
-                    <div
-                      className="course-description-content"
-                      dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }}
-                    />
-                  </div>
-                )}
-
-                <h2 style={{
-                  fontSize: '1.5rem',
-                  fontWeight: 600,
-                  marginBottom: '24px',
-                  color: '#1e293b',
-                }}>
-                  เนื้อหาคอร์ส
-                </h2>
-
-                <CourseDetailClient
-                  courseId={course.id}
-                  courseSlug={course.slug}
-                  lessons={course.lessons}
-                />
-
-                {/* Reviews Section */}
-                <CourseReviewsWrapper courseSlug={course.slug} />
-              </div>
-
               {/* Right - Enrollment Card */}
               <div className="course-detail-sidebar">
                 <div className="course-enroll-panel">
@@ -436,11 +371,57 @@ export default async function CourseDetailPage({ params }: Props) {
                   </div>
                 </div>
               </div>
+
+          </div>
+        </section>
+
+        {/* Course Content */}
+        <section className="course-detail-body">
+          <div className="container">
+            <div className="course-detail-grid">
+              {/* Left - Description + Lessons */}
+              <div className="course-detail-main">
+                {course.description && (
+                  <div className="course-detail-section">
+                    <h2 style={{
+                      fontSize: '1.5rem',
+                      fontWeight: 600,
+                      marginBottom: '24px',
+                      color: '#1e293b',
+                    }}>
+                      รายละเอียดคอร์ส
+                    </h2>
+                    <div
+                      className="course-description-content"
+                      dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }}
+                    />
+                  </div>
+                )}
+
+                <h2 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: 600,
+                  marginBottom: '24px',
+                  color: '#1e293b',
+                }}>
+                  เนื้อหาคอร์ส
+                </h2>
+
+                <CourseDetailClient
+                  courseId={course.id}
+                  courseSlug={course.slug}
+                  lessons={course.lessons}
+                />
+
+                {/* Reviews Section */}
+                <CourseReviewsWrapper courseSlug={course.slug} />
+              </div>
+
             </div>
-            </CourseDetailProvider>
           </div>
         </section>
       </main>
+      </CourseDetailProvider>
 
       <Footer />
 
