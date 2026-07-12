@@ -8,14 +8,14 @@ interface CodeLine {
 }
 
 const syntax = {
-  keyword: '#7dd3fc',
-  symbol: '#d8e6f7',
-  function: '#38bdf8',
-  identifier: '#facc15',
-  property: '#f0abfc',
-  string: '#a7f3d0',
-  value: '#fbbf24',
-  muted: '#64758b',
+  keyword: '#569CD6',
+  symbol: '#D4D4D4',
+  function: '#DCDCAA',
+  identifier: '#9CDCFE',
+  property: '#9CDCFE',
+  string: '#CE9178',
+  value: '#B5CEA8',
+  muted: '#6A9955',
 };
 
 const codeSnippets: { fileName: string; lang: string; lines: CodeLine[] }[] = [
@@ -292,7 +292,7 @@ export default function HeroCodeEditor() {
               <div
                 className="hero-code-editor__line-number"
                 style={{
-                  color: isCurrentLine ? 'var(--primary-300)' : '#4f5f78',
+                  color: isCurrentLine ? '#C6C6C6' : '#858585',
                 }}
               >
                 {lineNum}
@@ -326,10 +326,10 @@ export default function HeroCodeEditor() {
 
       <style jsx>{`
         .hero-code-editor {
-          background: #0b1220;
-          border: 1px solid #40576c;
+          background: #1e1e1e;
+          border: 1px solid #3e3e42;
           border-radius: 12px;
-          color: #dcecf7;
+          color: #d4d4d4;
           font-family: var(--font-code);
           font-size: 13px;
           line-height: 1.65;
@@ -343,9 +343,9 @@ export default function HeroCodeEditor() {
         .hero-code-editor__titlebar,
         .hero-code-editor__status {
           align-items: center;
-          background: #172235;
-          border-color: #2a3d52;
-          color: #c8d9e5;
+          background: #181818;
+          border-color: #333333;
+          color: #d4d4d4;
           display: flex;
           position: relative;
           z-index: 2;
@@ -372,9 +372,9 @@ export default function HeroCodeEditor() {
           width: 12px;
         }
 
-        .hero-code-editor__dot--danger { background: #fb7185; }
-        .hero-code-editor__dot--warning { background: #fde68a; }
-        .hero-code-editor__dot--success { background: #86efac; }
+        .hero-code-editor__dot--danger { background: #F14C4C; }
+        .hero-code-editor__dot--warning { background: #CCA700; }
+        .hero-code-editor__dot--success { background: #23D18B; }
 
         .hero-code-editor__tabs {
           display: flex;
@@ -389,7 +389,7 @@ export default function HeroCodeEditor() {
           background: transparent;
           border: 1px solid transparent;
           border-radius: 0;
-          color: #91a1b5;
+          color: #858585;
           cursor: pointer;
           display: inline-flex;
           flex: 0 1 auto;
@@ -406,30 +406,30 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__tab:hover {
-          background: #263c53;
-          border-color: #40576c;
-          color: #eefaff;
+          background: #2d2d2d;
+          border-color: #3e3e42;
+          color: #ffffff;
         }
 
         .hero-code-editor__tab:focus-visible {
-          box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.28);
+          box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.45);
           outline: none;
         }
 
         .hero-code-editor__tab[data-active="true"] {
-          background: #173b51;
-          border: 1px solid #40576c;
-          border-bottom: 2px solid #63d7ff;
+          background: #1e1e1e;
+          border: 1px solid #3e3e42;
+          border-bottom: 2px solid #007acc;
           color: #ffffff;
         }
 
         .hero-code-editor__body {
-          background: #101a29;
+          background: #1e1e1e;
           height: 320px;
           overflow-x: auto;
           overflow-y: auto;
           padding: 18px 0;
-          scrollbar-color: rgba(115, 215, 255, 0.42) rgba(216, 230, 247, 0.08);
+          scrollbar-color: #424242 #1e1e1e;
           scrollbar-gutter: stable;
           scrollbar-width: thin;
           position: relative;
@@ -437,8 +437,8 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__body::-webkit-scrollbar { width: 8px; height: 8px; }
-        .hero-code-editor__body::-webkit-scrollbar-track { background: rgba(216, 230, 247, 0.08); }
-        .hero-code-editor__body::-webkit-scrollbar-thumb { background: rgba(115, 215, 255, 0.42); border-radius: 999px; }
+        .hero-code-editor__body::-webkit-scrollbar-track { background: #1e1e1e; }
+        .hero-code-editor__body::-webkit-scrollbar-thumb { background: #424242; border-radius: 999px; }
 
         .hero-code-editor__line {
           display: flex;
@@ -447,7 +447,7 @@ export default function HeroCodeEditor() {
           transition: opacity 0.24s ease, transform 0.24s ease, background-color 0.24s ease;
         }
 
-        .hero-code-editor__line[data-current="true"] { background: rgba(2, 171, 255, 0.08); }
+        .hero-code-editor__line[data-current="true"] { background: #2a2d2e; }
 
         .hero-code-editor__line-number {
           flex-shrink: 0;
@@ -458,7 +458,7 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__code {
-          color: #d8e6f7;
+          color: #d4d4d4;
           flex: 1;
           min-width: max-content;
           overflow: visible;
@@ -467,7 +467,7 @@ export default function HeroCodeEditor() {
 
         .hero-code-editor__cursor {
           animation: cursorBlink 1s step-end infinite;
-          background: var(--primary-300);
+          background: #aeafad;
           display: inline-block;
           height: 16px;
           margin-left: 1px;
@@ -476,8 +476,11 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__status {
+          background: #007acc;
           border-top-style: solid;
           border-top-width: 1px;
+          border-top-color: #007acc;
+          color: #ffffff;
           justify-content: space-between;
           min-height: 32px;
           padding: 0 16px;
@@ -491,9 +494,9 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__ready-dot {
-          background: #86efac;
+          background: #23d18b;
           border-radius: 999px;
-          box-shadow: 0 0 0 3px rgba(134, 239, 172, 0.12);
+          box-shadow: 0 0 0 3px rgba(35, 209, 139, 0.18);
           display: inline-block;
           height: 7px;
           width: 7px;
