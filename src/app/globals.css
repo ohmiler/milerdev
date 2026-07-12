@@ -366,7 +366,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-primary {
   background: var(--accent, var(--primary-500));
-  color: #062033;
+  color: #ffffff;
   box-shadow: var(--shadow-sm);
 }
 
