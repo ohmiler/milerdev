@@ -50,7 +50,7 @@ Verification:
 - [x] Product direction documented in `PRODUCT.md`.
 - [x] Visual direction documented in `DESIGN.md`.
 - [x] Adaptive public and learning navigation direction established.
-- [x] Public navbar refined into a 12-column Swiss rail with compact authenticated controls.
+- [x] Public navbar refined into a 12-column Swiss studio index with numbered navigation, restrained zone rules, compact authenticated controls, and a recomposed mobile menu.
 - [ ] Extract stable layout primitives after two or more sections prove the same pattern.
 - [x] Shared footer redesigned as a responsive Swiss grid on VS Code Dark+ `#1e1e1e`.
 

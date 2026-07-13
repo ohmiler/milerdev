@@ -48,7 +48,10 @@ describe('navbar polish', () => {
         expect(navbar).toContain('className="nav-brand-lockup"');
         expect(navbar).not.toContain('nav-brand-lockup--active');
         expect(navbar).toContain("aria-current={pathname === '/' ? 'page' : undefined}");
-        expect(navbar).toContain('font-size: 1.25rem;');
+        expect(navbar).toContain('font-size: 1.18rem;');
+        expect(navbar).toContain('className="nav-public-link-index"');
+        expect(cssBlock(navbar, '.nav-brand-lockup')).toContain('border-right: 1px solid var(--line)');
+        expect(cssBlock(navbar, '.nav-public-actions')).toContain('border-left: 1px solid var(--line)');
         expect(navbar).not.toContain('Coding Studio / TH');
         expect(navbar).not.toContain('nav-brand-meta');
         expect(cssBlock(navbar, '.nav-public-link:hover')).toContain('background: transparent');
@@ -84,13 +87,17 @@ describe('navbar polish', () => {
     test('uses a compact authenticated rail and text-first mobile navigation', () => {
         const userMenu = readProjectFile('src/components/layout/NavbarUserMenu.tsx');
         const mobilePanel = readProjectFile('src/components/layout/MobileNavPanel.tsx');
+        const publicNavbar = readProjectFile('src/components/layout/PublicNavbar.tsx');
 
         expect(userMenu).toContain('aria-label={`เมนูผู้ใช้ ${session.user?.name');
         expect(userMenu).not.toContain('className="nav-user-name"');
         expect(userMenu).toContain('<NotificationTypeIcon type={notification.type} />');
         expect(userMenu).not.toContain("notification.type === 'success' ? '✅'");
         expect(mobilePanel).toContain('nav-mobile-link-group nav-mobile-link-group--primary');
-        expect(mobilePanel).toContain('NAV_LINKS.map(({ href, label })');
+        expect(mobilePanel).toContain('NAV_LINKS.map(({ href, label }, index)');
+        expect(mobilePanel).toContain('className="nav-mobile-panel-header"');
+        expect(mobilePanel).toContain('className="nav-mobile-link-index"');
+        expect(publicNavbar).toContain('grid-template-columns: 40px minmax(0, 1fr) auto');
         expect(mobilePanel).toContain('nav-mobile-link nav-mobile-link--primary');
     });
     test('keeps announcements outside the sticky public navigation rail', () => {
