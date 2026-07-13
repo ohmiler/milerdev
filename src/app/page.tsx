@@ -690,8 +690,8 @@ export default async function HomePage() {
           <div className="container client-showcase-layout">
             <div className="client-showcase-head">
               <p className="client-showcase-meta">
-                <span>SELECTED INVITATIONS</span>
-                <span>08 / TH</span>
+                <span>PROOF INDEX / 01—08</span>
+                <span>TH / EDUCATION + TECH</span>
               </p>
               <h2 id="client-showcase-title" className="section-title client-showcase-title">
                 องค์กรและมหาวิทยาลัยที่เคยเชิญ MilerDev ไปแบ่งปันความรู้
@@ -739,7 +739,9 @@ export default async function HomePage() {
               justify-content: space-between;
               gap: 16px;
               grid-column: 1 / -1;
-              margin: 0 0 40px;
+              margin: 0 0 32px;
+              padding: 10px 0;
+              border-block: 1px solid var(--line);
               color: var(--ink-muted);
               font-family: var(--font-code);
               font-size: 0.6875rem;
@@ -779,8 +781,8 @@ export default async function HomePage() {
               display: grid;
               grid-template-rows: auto minmax(72px, 1fr) auto;
               min-width: 0;
-              min-height: 164px;
-              padding: 14px;
+              min-height: 148px;
+              padding: 12px;
               border-right: 1px solid var(--line);
               border-bottom: 1px solid var(--line);
               background: var(--surface);
@@ -797,20 +799,19 @@ export default async function HomePage() {
               align-items: center;
               justify-content: center;
               min-width: 0;
-              padding: 12px 4px;
+              padding: 8px 4px;
             }
             .client-logo-image {
               width: auto;
               height: auto;
-              max-width: 124px;
-              max-height: 54px;
+              max-width: 148px;
+              max-height: 60px;
               object-fit: contain;
-              filter: grayscale(12%) saturate(0.92);
             }
             .client-logo-name {
               min-width: 0;
               color: var(--ink-soft);
-              font-size: 0.75rem;
+              font-size: 0.8125rem;
               font-weight: 650;
               line-height: 1.45;
               text-wrap: pretty;
@@ -850,14 +851,14 @@ export default async function HomePage() {
               .client-showcase-layout { gap: 32px; }
               .client-logo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
               .client-logo-item {
-                min-height: 146px;
+                min-height: 140px;
                 padding: 12px;
               }
               .client-logo-image {
-                max-width: 110px;
-                max-height: 48px;
+                max-width: 118px;
+                max-height: 52px;
               }
-              .client-logo-name { font-size: 0.6875rem; }
+              .client-logo-name { font-size: 0.75rem; }
             }
           `}</style>
         </section>

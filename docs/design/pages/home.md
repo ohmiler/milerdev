@@ -98,9 +98,9 @@ Goals:
 
 ### Client showcase
 
-Status: redesigned as a static Swiss proof index.
+Status: refined as an institutional Gridgeist proof ledger.
 
-Use a full-width heading row above the eight real client logos. Keep the logos as a static 4 × 2 desktop index with visible organization names, a 2-column mobile layout, and no automatic marquee.
+Use a ruled proof metadata rail and a full-width heading above the eight real organization logos. Keep the logos in their authentic brand colors as a compact static 4 × 2 desktop ledger with readable organization names, a 2-column mobile layout, and no automatic marquee.
 
 ### Showcase gallery
 

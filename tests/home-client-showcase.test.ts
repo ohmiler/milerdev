@@ -15,6 +15,8 @@ describe('homepage client showcase', () => {
         expect(page).toContain('className="container client-showcase-layout"');
         expect(page).toContain('className="client-logo-grid"');
         expect(page).toContain('className="client-logo-name"');
+        expect(page).toContain('PROOF INDEX / 01—08');
+        expect(page).toContain('TH / EDUCATION + TECH');
         expect(page).toContain('grid-template-columns: repeat(12, minmax(0, 1fr));');
         expect(page).toContain('grid-column: 1 / -1;');
         expect(page).toContain('grid-column: 1 / span 8;');
@@ -22,6 +24,9 @@ describe('homepage client showcase', () => {
         expect(page).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
         expect(page).not.toContain('className="marquee-inner"');
         expect(page).not.toContain('@keyframes marquee');
+        expect(page).toContain('border-block: 1px solid var(--line);');
+        expect(page).toContain('max-width: 148px;');
+        expect(page).not.toContain('filter: grayscale(12%) saturate(0.92);');
     });
 
     test('uses a two-column logo index on mobile without duplicate announcements', () => {

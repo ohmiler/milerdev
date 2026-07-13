@@ -61,7 +61,7 @@ Verification:
 - [x] Featured courses refined to an adaptive 12-column index that fills the available course count, then steps down to 2 / 1 columns.
 - [x] Remove obsolete beginner path, why-us, and audience-fit sections.
 - [ ] Bundle section. Current focus.
-- [x] Client showcase redesigned as a static Swiss proof index.
+- [x] Client showcase refined as a ruled Gridgeist proof ledger with authentic logo colors, readable organization names, and a static 4 × 2 / 2-column responsive index.
 - [x] Showcase gallery redesigned as a static Swiss contact sheet.
 - [ ] Affiliate banner placement and visual integration.
 - [x] Final CTA redesigned as a brand-blue Swiss field with paired actions.
