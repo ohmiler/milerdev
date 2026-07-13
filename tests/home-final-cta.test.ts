@@ -14,12 +14,17 @@ describe('homepage final CTA', () => {
         const styles = readProjectFile('src/app/globals.css');
 
         expect(page).toContain('className="home-final-cta__meta"');
+        expect(page).toContain('NEXT STEP / 01');
+        expect(page).toContain('COURSE CATALOG / REGISTER');
         expect(styles).toContain('grid-template-columns: repeat(12, minmax(0, 1fr));');
         expect(styles).toContain('.home-final-cta__title {');
         expect(styles).toContain('color: #ffffff;');
         expect(styles).toContain('grid-column: 1 / -1;');
         expect(styles).toContain('display: flex;');
         expect(styles).toContain('background: var(--accent);');
+        expect(styles).toContain('grid-column: 1 / span 8;');
+        expect(styles).toContain('grid-column: 9 / -1;');
+        expect(styles).toContain('border-block: 1px solid rgba(16, 32, 51, 0.28);');
         expect(styles).toContain('.home-final-cta::before');
         expect(styles).toContain('display: none;');
         expect(styles).not.toContain('border-top: 1px solid rgba(16, 32, 51, 0.28);');

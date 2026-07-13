@@ -116,9 +116,9 @@ Integrate it into the page rhythm without competing with the primary course and 
 
 ### Final CTA
 
-Status: pending.
+Status: refined as a Gridgeist closing decision rail.
 
-Use a brand-blue 12-column field with the closing statement and supporting copy stacked in one full-width text row, followed by a paired action row. Keep “ดูคอร์สทั้งหมด” dominant with an ink-filled button and “สมัครสมาชิกฟรี” as a white outlined secondary action.
+Use a brand-blue 12-column closing field with a ruled metadata rail, an 8-column learner message, and a 4-column stacked decision rail. Keep the course catalog as the ink-filled dominant action and free registration as the quieter outlined secondary action; collapse to one reading sequence on mobile.
 
 ### Footer
 

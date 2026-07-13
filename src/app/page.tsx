@@ -871,11 +871,11 @@ export default async function HomePage() {
         {/* CTA Section */}
         <section className="cta-section home-final-cta">
           <div className="container home-final-cta__inner">
+            <p className="home-final-cta__meta">
+              <span>NEXT STEP / 01</span>
+              <span>COURSE CATALOG / REGISTER</span>
+            </p>
             <div className="home-final-cta__content">
-              <p className="home-final-cta__meta">
-                <span>NEXT STEP</span>
-                <span>START HERE</span>
-              </p>
               <h2 className="home-final-cta__title">
                 เริ่มสร้างทักษะ Coding ที่ใช้ได้จริงตั้งแต่วันนี้
               </h2>

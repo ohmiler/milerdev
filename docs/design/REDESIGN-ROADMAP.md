@@ -64,7 +64,7 @@ Verification:
 - [x] Client showcase refined as a ruled Gridgeist proof ledger with authentic logo colors, readable organization names, and a static 4 × 2 / 2-column responsive index.
 - [x] Showcase gallery refined as a Gridgeist event archive with a ruled metadata rail, specific frame captions, and the preserved accessible lightbox.
 - [ ] Affiliate banner placement and visual integration.
-- [x] Final CTA redesigned as a brand-blue Swiss field with paired actions.
+- [x] Final CTA refined as a Gridgeist 8 / 4 closing decision rail with a dominant course action and quieter registration path.
 - [ ] Full-page responsive and accessibility pass.
 
 ### Public discovery
