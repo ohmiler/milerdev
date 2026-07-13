@@ -52,7 +52,7 @@ Verification:
 - [x] Adaptive public and learning navigation direction established.
 - [x] Public navbar refined into a 12-column Swiss studio index with numbered navigation, restrained zone rules, compact authenticated controls, and a recomposed mobile menu.
 - [ ] Extract stable layout primitives after two or more sections prove the same pattern.
-- [x] Shared footer redesigned as a responsive Swiss grid on VS Code Dark+ `#1e1e1e`.
+- [x] Shared footer refined as an indexed Gridgeist site directory with a 5/2/2/3 desktop grid and a compact two-column mobile link registry.
 
 ### Homepage
 

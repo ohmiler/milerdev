@@ -122,9 +122,9 @@ Use a brand-blue 12-column closing field with a ruled metadata rail, an 8-column
 
 ### Footer
 
-Status: redesigned.
+Status: refined as a Gridgeist site directory.
 
-Use a responsive 12-column Swiss information rail on the VS Code Dark+ `#1e1e1e` canvas. Give the brand five columns and contact three columns on desktop, separate groups with 1px rules, and use brand blue only for links, focus, and interaction feedback.
+Use a responsive 12-column Swiss directory on the VS Code Dark+ `#1e1e1e` canvas. Keep the desktop 5/2/2/3 brand, navigation, support, and contact split; index the information groups as `01–03`, use directional arrows that communicate internal navigation, and pair navigation/support on mobile before the full-width contact row.
 ## Per-section Handoff Checklist
 
 - Read this file and the current focus in the roadmap.

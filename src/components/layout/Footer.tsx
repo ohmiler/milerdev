@@ -17,8 +17,8 @@ export default function Footer() {
         <footer className="site-footer" data-theme="dark" data-surface="public-footer">
             <div className="container site-footer__inner">
                 <div className="site-footer__meta" aria-hidden="true">
-                    <span>MILERDEV / ONLINE LEARNING</span>
-                    <span>BANGKOK, THAILAND</span>
+                    <span>SITE DIRECTORY / MILERDEV</span>
+                    <span>BANGKOK / THAILAND</span>
                 </div>
 
                 <div className="site-footer__grid">
@@ -65,29 +65,29 @@ export default function Footer() {
                     </div>
 
                     <nav className="site-footer__column site-footer__column--quick" aria-labelledby="footer-quick-links">
-                        <h2 id="footer-quick-links">สำรวจ</h2>
+                        <h2 id="footer-quick-links"><span aria-hidden="true">01</span>สำรวจ</h2>
                         <ul>
                             {quickLinks.map((link) => (
                                 <li key={link.href}>
-                                    <Link href={link.href}>{link.label}<span aria-hidden="true">↗</span></Link>
+                                    <Link href={link.href}>{link.label}<span aria-hidden="true">→</span></Link>
                                 </li>
                             ))}
                         </ul>
                     </nav>
 
                     <nav className="site-footer__column site-footer__column--support" aria-labelledby="footer-support-links">
-                        <h2 id="footer-support-links">ช่วยเหลือ</h2>
+                        <h2 id="footer-support-links"><span aria-hidden="true">02</span>ช่วยเหลือ</h2>
                         <ul>
                             {supportLinks.map((link) => (
                                 <li key={link.href}>
-                                    <Link href={link.href}>{link.label}<span aria-hidden="true">↗</span></Link>
+                                    <Link href={link.href}>{link.label}<span aria-hidden="true">→</span></Link>
                                 </li>
                             ))}
                         </ul>
                     </nav>
 
                     <div className="site-footer__column site-footer__contact">
-                        <h2>ติดต่อเรา</h2>
+                        <h2><span aria-hidden="true">03</span>ติดต่อเรา</h2>
                         <a href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
                         <address>กรุงเทพมหานคร, ประเทศไทย</address>
                         <p>จันทร์–ศุกร์ / 09:00–18:00 น.</p>
@@ -190,11 +190,20 @@ export default function Footer() {
                 .site-footer__column--support { grid-column: 8 / span 2; }
                 .site-footer__contact { grid-column: 10 / span 3; padding-right: 0; }
                 .site-footer__column h2 {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 10px;
                     margin: 0 0 28px;
                     color: var(--footer-ink);
                     font-size: 0.875rem;
                     font-weight: 700;
                     line-height: 1.4;
+                }
+                .site-footer__column h2 span {
+                    color: var(--footer-accent);
+                    font-family: var(--font-code);
+                    font-size: 0.625rem;
+                    letter-spacing: 0.06em;
                 }
                 .site-footer__column ul {
                     display: grid;
@@ -280,18 +289,27 @@ export default function Footer() {
                 }
                 @media (max-width: 700px) {
                     .site-footer__meta { align-items: flex-start; flex-direction: column; gap: 8px; }
-                    .site-footer__grid { grid-template-columns: 1fr; }
-                    .site-footer__brand,
-                    .site-footer__column--quick,
-                    .site-footer__column--support,
-                    .site-footer__contact { grid-column: 1; }
-                    .site-footer__brand { padding: 32px 0 36px; }
-                    .site-footer__column {
+                    .site-footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                    .site-footer__brand { grid-column: 1 / -1; padding: 32px 0 36px; }
+                    .site-footer__column--quick {
+                        grid-column: 1;
+                        padding: 28px 16px 28px 0;
+                        border-top: 1px solid var(--footer-line);
+                        border-left: 0;
+                    }
+                    .site-footer__column--support {
+                        grid-column: 2;
+                        padding: 28px 0 28px 16px;
+                        border-top: 1px solid var(--footer-line);
+                        border-left: 1px solid var(--footer-line);
+                    }
+                    .site-footer__contact {
+                        grid-column: 1 / -1;
+                        display: block;
                         padding: 28px 0;
                         border-top: 1px solid var(--footer-line);
                         border-left: 0;
                     }
-                    .site-footer__contact { display: block; }
                     .site-footer__contact h2 { margin-bottom: 24px; }
                     .site-footer__contact a,
                     .site-footer__contact address,
