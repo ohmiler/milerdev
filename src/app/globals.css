@@ -2099,12 +2099,25 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .featured-courses-section .featured-courses-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  margin: 0 0 36px;
-  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: end;
+  gap: 0;
+  margin: 0 0 40px;
+  padding: 0 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.featured-courses-index {
+  grid-column: 1 / span 2;
+  align-self: start;
+  color: var(--ink-muted);
+  font: 700 0.625rem/1.5 var(--font-code);
+  letter-spacing: 0.08em;
+}
+
+.featured-courses-intro {
+  grid-column: 3 / span 6;
 }
 
 .featured-courses-section .featured-courses-head .section-title {
@@ -2113,8 +2126,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .featured-courses-section .featured-courses-head .section-copy {
-  margin: 0 0 24px;
-  max-width: 42ch;
+  margin: 0;
+  max-width: 52ch;
 }
 
 .featured-courses-all {
@@ -2134,6 +2147,11 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--accent-strong);
 }
 
+.featured-courses-section .featured-courses-all {
+  grid-column: 10 / -1;
+  justify-self: end;
+}
+
 .featured-courses-all:focus-visible {
   border-radius: 4px;
   outline: none;
@@ -2142,10 +2160,26 @@ h1, h2, h3, h4, h5, h6 {
 
 .featured-courses-section .featured-courses-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 0;
   align-items: stretch;
   border-left: 1px solid var(--line);
+}
+
+.featured-courses-section .featured-courses-grid > * {
+  grid-column: span 3;
+}
+
+.featured-courses-section .featured-courses-grid[data-count="1"] > * {
+  grid-column: span 12;
+}
+
+.featured-courses-section .featured-courses-grid[data-count="2"] > * {
+  grid-column: span 6;
+}
+
+.featured-courses-section .featured-courses-grid[data-count="3"] > * {
+  grid-column: span 4;
 }
 
 .featured-courses-section .course-card--featured {
@@ -2220,24 +2254,38 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .featured-courses-section .featured-courses-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .featured-courses-section .featured-courses-grid > * {
+    grid-column: span 6;
   }
 }
 
 @media (max-width: 640px) {
   .featured-courses-section .featured-courses-head {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 20px;
+  }
+
+  .featured-courses-index,
+  .featured-courses-intro,
+  .featured-courses-section .featured-courses-all {
+    grid-column: 1;
+    justify-self: start;
   }
 
   .featured-courses-section .featured-courses-all {
-    width: 100%;
-    justify-content: space-between;
+    width: fit-content;
   }
 
   .featured-courses-section .featured-courses-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .featured-courses-section .featured-courses-grid > * {
+    grid-column: span 12;
   }
 }
 

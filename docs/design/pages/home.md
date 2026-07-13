@@ -81,9 +81,9 @@ Success criteria:
 
 ### Featured courses
 
-Status: redesigned as a four-course Swiss grid.
+Status: redesigned as an adaptive Gridgeist course index.
 
-Show four courses in one desktop row, two columns on tablet, and one column on mobile. Keep course title, outcome, lesson count, instructor, price, and action scannable without adding extra marketing decoration.
+Use a 12-column course index that adapts to the number of available courses: 1 / 2 / 3 / 4 courses span 12 / 6 / 4 / 3 columns on desktop, then two columns on tablet and one on mobile. Keep course title, outcome, lesson count, instructor, price, and action scannable without adding extra marketing decoration.
 
 ### Bundle
 

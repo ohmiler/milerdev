@@ -226,11 +226,12 @@ export default async function HomePage() {
         <section id="featured-courses" className="section featured-courses-section" data-reveal>
           <div className="container">
             <div className="featured-courses-head">
-              <div>
+              <span className="featured-courses-index">COURSE INDEX / 01—{String(featuredCourses.length).padStart(2, '0')}</span>
+              <div className="featured-courses-intro">
                 <h2 className="section-title">
                   คอร์สยอดนิยม
                 </h2>
-                <p className="section-copy">คอร์สที่ได้รับความนิยมสูงสุดจากนักเรียน</p>
+                <p className="section-copy">เส้นทางที่นักเรียนเลือกเริ่มต้น เพื่อสร้างพื้นฐานและต่อยอดสู่โปรเจกต์จริง</p>
               </div>
               <Link href="/courses" className="featured-courses-all">
                 ดูคอร์สทั้งหมด
@@ -240,7 +241,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="featured-courses-grid">
+            <div className="featured-courses-grid" data-count={Math.min(featuredCourses.length, 4)}>
               {featuredCourses.map((course) => (
                 <CourseCard
                   key={course.id}
