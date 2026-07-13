@@ -189,11 +189,13 @@ Use the extra review path for auth, roles, admin authorization, payments, enroll
 ### Skill and workflow rules
 
 - Follow an explicitly invoked skill and the platform's required skill triggers.
+- Do not use any skill whose name starts with `superpowers:`.
+- Do not invoke equivalent Superpowers workflow skills from `.agents/skills`, including `brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, `verification-before-completion`, `requesting-code-review`, and `finishing-a-development-branch`.
+- Follow the quick, standard, or high-risk workflow in this `AGENTS.md` directly instead of loading a separate workflow skill.
+- Use another skill only when the user explicitly invokes it, the task clearly requires its specialized capability, or a platform-level instruction requires it.
+- If a platform-level instruction requires a prohibited workflow skill, tell the user briefly before using it.
 - Prefer one primary workflow skill that covers the task. Do not invoke overlapping optional skills without a concrete reason.
 - For a clear, scoped UI request, keep the design checkpoint brief. Do not automatically offer a visual companion or require browser iteration.
-- Use `impeccable` for frontend quality work when the user invokes it or the task clearly needs a design-system/UX pass.
-- Use brainstorming or a written plan when requirements are ambiguous, the scope is substantial, or the user asks for design exploration. A small, unambiguous UI change should stay lightweight.
-- Use verification before claiming that work is complete, fixed, or passing.
 - Do not create commits, pull requests, design specs, or external messages unless the user asks for them.
 
 ### Editing and handoff

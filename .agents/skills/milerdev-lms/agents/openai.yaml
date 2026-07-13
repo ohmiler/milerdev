@@ -1,4 +1,0 @@
-interface:
-  display_name: "MilerDev LMS"
-  short_description: "MilerDev LMS feature workflow"
-  default_prompt: "Use $milerdev-lms to implement a MilerDev LMS feature safely."
