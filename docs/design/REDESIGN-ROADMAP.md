@@ -56,7 +56,7 @@ Verification:
 
 ### Homepage
 
-- [x] Hero refined as a Swiss 12-column frame with a VS Code Dark+ editor.
+- [x] Hero refined as a Gridgeist 12-column learning index with a VS Code Dark+ editor and left-aligned mobile composition.
 - [x] Hero copy tightened around a clear beginner journey, concrete outcome, and recommended-course action across responsive layouts.
 - [x] Featured courses refined to a responsive 4 / 2 / 1 Swiss grid.
 - [x] Remove obsolete beginner path, why-us, and audience-fit sections.

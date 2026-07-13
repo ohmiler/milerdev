@@ -1109,7 +1109,7 @@ h1, h2, h3, h4, h5, h6 {
 .hero-section {
   background: var(--canvas);
   border-bottom: 1px solid var(--line);
-  padding: clamp(48px, 6vw, 88px) 0 clamp(64px, 8vw, 112px);
+  padding: clamp(32px, 4vw, 56px) 0 clamp(48px, 6vw, 80px);
 }
 
 .hero-container {
@@ -1131,6 +1131,24 @@ h1, h2, h3, h4, h5, h6 {
   text-align: left;
 }
 
+.hero-context {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding: 9px 0;
+  border-block: 1px solid var(--line);
+  color: var(--ink-muted, var(--gray-500));
+  font-family: var(--font-code);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.hero-context span:last-child {
+  color: var(--accent-strong, var(--primary-700));
+  text-align: right;
+}
 
 .hero-title {
   width: auto;
@@ -1177,7 +1195,7 @@ h1, h2, h3, h4, h5, h6 {
 .hero-actions .btn {
   min-height: 48px;
   padding-inline: 20px;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .hero-secondary-action {
@@ -1218,6 +1236,20 @@ h1, h2, h3, h4, h5, h6 {
   display: grid;
   gap: 8px;
   padding: 14px 10px 0 0;
+}
+
+.hero-process strong {
+  color: var(--ink);
+  font-size: 0.6875rem;
+}
+
+.hero-process small {
+  color: var(--ink-muted, var(--gray-500));
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.5;
 }
 
 .hero-process span + span {
@@ -1349,17 +1381,7 @@ h1, h2, h3, h4, h5, h6 {
 
   .hero-text {
     padding: 40px 0 48px;
-    text-align: center;
-  }
-
-  .hero-title,
-  .hero-text .home-lede {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .hero-actions {
-    justify-content: center;
+    text-align: left;
   }
 
   .hero-ide {
@@ -1409,12 +1431,21 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .hero-secondary-action {
-    justify-content: center;
-    width: 100%;
+    justify-content: flex-start;
+    align-self: flex-start;
+    width: fit-content;
   }
 
   .hero-process {
     font-size: 0.625rem;
+  }
+
+  .hero-context {
+    align-items: flex-start;
+  }
+
+  .hero-context span:last-child {
+    display: none;
   }
 
   .hero-process span {

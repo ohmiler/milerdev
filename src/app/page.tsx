@@ -181,6 +181,11 @@ export default async function HomePage() {
           <div className="container hero-container">
             <div className="hero-rail">
               <div className="hero-text">
+                <div className="hero-context hero-badge-anim" aria-label="เส้นทางการเรียนจากพื้นฐานสู่โปรเจกต์">
+                  <span>MILERDEV / PATH 01</span>
+                  <span>LEARN → BUILD → SHIP</span>
+                </div>
+
                 <h1 className="hero-title hero-title-anim">
                   <span className="hero-title__line">เรียนโค้ดให้เข้าใจ</span>
                   <span className="hero-title__line highlight">สร้างโปรเจกต์ได้จริง</span>
@@ -205,9 +210,9 @@ export default async function HomePage() {
                 </div>
 
                 <div className="hero-process hero-cta-anim" aria-label="ลำดับการเรียนรู้: เรียน สร้าง ส่งมอบ">
-                  <span><b>01</b> LEARN</span>
-                  <span><b>02</b> BUILD</span>
-                  <span><b>03</b> SHIP</span>
+                  <span><b>01</b><strong>LEARN</strong><small>เรียนให้เข้าใจ</small></span>
+                  <span><b>02</b><strong>BUILD</strong><small>ลงมือสร้าง</small></span>
+                  <span><b>03</b><strong>SHIP</strong><small>ส่งมอบผลงาน</small></span>
                 </div>
               </div>
 

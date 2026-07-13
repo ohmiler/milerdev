@@ -54,21 +54,21 @@ Do not reintroduce these removed homepage sections unless the user explicitly re
 
 ### Hero
 
-Status: Swiss refinement implemented and verified.
+Status: Gridgeist learning-index refinement implemented and verified.
 
 #### Approved direction: Swiss Frame + VS Code Dark+
 
 - Preserve the existing desktop composition: learner message on the left and an interactive code editor on the right.
 - Use the 12-column homepage grid with a 5-column text region and a 7-column editor region.
 - Make the grid visible through alignment and whitespace, keeping the text and editor distinct without a divider or decorative cards.
-- Keep the Thai headline and its concrete learning outcome. Replace the generic marketing kicker with concise studio metadata.
+- Keep the Thai headline and its concrete learning outcome. Use a ruled learning-path index (MILERDEV / PATH 01) to connect the learner promise to LEARN → BUILD → SHIP.
 - Keep one visually dominant course action. Present the secondary course link as a quieter text action.
-- Recompose `LEARN / BUILD / SHIP` as a grid-aligned process rail.
+- Recompose `LEARN / BUILD / SHIP` as a grid-aligned process rail with concise Thai outcomes.
 - Keep the code editor recognizably based on VS Code Dark+ (`#1e1e1e` canvas and Dark+ syntax colors).
 - Replace macOS traffic-light decoration with useful file or runtime metadata.
 - Use a thin frame, a maximum 8px radius, and no diffuse decorative shadow on the editor.
 - Refine tabs, line numbers, active line, and status information with stronger alignment and ruled separation.
-- On mobile, stack text before the editor and center the hero copy and actions.
+- On mobile, stack text before the editor, keep the copy and actions left-aligned, show only the path ID in the metadata rail, and let the process rail carry the full learning sequence.
 - Keep the hero headline to two deliberate lines, “เรียนโค้ดให้เข้าใจ” and “สร้างโปรเจกต์ได้จริง”, without wrapping either phrase at supported viewport widths.
 - Keep motion restrained and preserve `prefers-reduced-motion` behavior.
 
