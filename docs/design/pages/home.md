@@ -104,9 +104,9 @@ Use a ruled proof metadata rail and a full-width heading above the eight real or
 
 ### Showcase gallery
 
-Status: pending.
+Status: refined as a Gridgeist event archive.
 
-Show all 12 event photographs as a static 4-column desktop contact sheet, 2 columns on tablet, and 1 column on mobile. Use the VS Code Dark+ `#1e1e1e` canvas with `#252526` image cells, `#3c3c3c` rules, and brand-blue interaction details. Keep numbered captions and the accessible lightbox without autoplay or duplicated images.
+Show all 12 event photographs as a static 4-column desktop contact sheet, 2 columns on tablet, and 1 column on mobile. Use a ruled event-archive rail and specific frame captions for keynote, workshop, panel, production, studio, and community contexts. Keep the VS Code Dark+ canvas, numbered frames, brand-blue interaction details, and accessible lightbox without autoplay or duplicated images.
 
 ### Affiliate banner
 

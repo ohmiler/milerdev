@@ -16,6 +16,11 @@ describe('homepage showcase gallery', () => {
         expect(gallery).toContain('SHOWCASE_IMAGES.map((img, i)');
         expect(gallery).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
         expect(gallery).toContain('className="showcase-card-index"');
+        expect(gallery).toContain('EVENT ARCHIVE / 01—12');
+        expect(gallery).toContain('TH / TALKS + WORKSHOPS');
+        expect(gallery).toContain('KEYNOTE / ISCHOOL KKU');
+        expect(gallery).toContain('{img.label}');
+        expect(gallery).not.toContain('<span>ดูภาพเต็ม ↗</span>');
         expect(gallery).toContain('background: #1e1e1e;');
         expect(gallery).toContain('background: #252526;');
         expect(gallery).toContain('border-right: 1px solid #3c3c3c;');

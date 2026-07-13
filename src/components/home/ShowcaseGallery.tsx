@@ -3,9 +3,25 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 
-const SHOWCASE_IMAGES = Array.from({ length: 12 }, (_, i) => ({
+const SHOWCASE_LABELS = [
+  'KEYNOTE / ISCHOOL KKU',
+  'WORKSHOP / CLASSROOM',
+  'PANEL / CODING DAY',
+  'TALK / DEVELOPER',
+  'PRODUCTION / LIGHTING',
+  'RECORDING / HOME STUDIO',
+  'STUDIO / PRESENTER',
+  'PRODUCTION / GREEN SCREEN',
+  'CONTENT / CAMERA SET',
+  'BEHIND THE SCENES',
+  'COMMUNITY / CODING DAY',
+  'COMMUNITY / NETWORKING',
+] as const;
+
+const SHOWCASE_IMAGES = SHOWCASE_LABELS.map((label, i) => ({
   src: `/showcase/${String(i + 1).padStart(2, '0')}-showcase-1024x768.webp`,
   alt: `ภาพบรรยากาศงานบรรยาย MilerDev ${i + 1}`,
+  label,
 }));
 
 export default function ShowcaseGallery() {
@@ -64,6 +80,10 @@ export default function ShowcaseGallery() {
       <section className="showcase-gallery-section" aria-labelledby="showcase-gallery-title">
         <div className="container showcase-gallery-layout">
           <header className="showcase-gallery-head">
+            <p className="showcase-gallery-meta">
+              <span>EVENT ARCHIVE / 01—12</span>
+              <span>TH / TALKS + WORKSHOPS</span>
+            </p>
             <h2 id="showcase-gallery-title" className="section-title showcase-gallery-title">
               ภาพบรรยากาศจากงานต่างๆ
             </h2>
@@ -71,7 +91,7 @@ export default function ShowcaseGallery() {
               <p className="section-copy showcase-gallery-copy">
                 งานบรรยายด้าน Web Development, AI และเส้นทางอาชีพ Developer สำหรับนักศึกษาและองค์กร
               </p>
-              <span className="showcase-gallery-count">12 PHOTOGRAPHS</span>
+              <span className="showcase-gallery-count">SELECT FRAME / OPEN VIEW</span>
             </div>
           </header>
 
@@ -96,7 +116,7 @@ export default function ShowcaseGallery() {
                 </span>
                 <span className="showcase-card-meta" aria-hidden="true">
                   <span className="showcase-card-index">{String(i + 1).padStart(2, '0')}</span>
-                  <span>ดูภาพเต็ม ↗</span>
+                  <span>{img.label}</span>
                 </span>
               </button>
             ))}
@@ -117,6 +137,22 @@ export default function ShowcaseGallery() {
             display: grid;
             grid-template-columns: repeat(12, minmax(0, 1fr));
             align-items: end;
+          }
+          .showcase-gallery-meta {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 0 0 40px;
+            padding: 10px 0;
+            border-block: 1px solid #3c3c3c;
+            color: #a9a9a9;
+            font: 700 0.625rem/1.5 var(--font-code);
+            letter-spacing: 0.08em;
+          }
+          .showcase-gallery-meta span:last-child {
+            color: #02abff;
+            text-align: right;
           }
           .showcase-gallery-title {
             grid-column: 1 / span 8;
@@ -205,6 +241,14 @@ export default function ShowcaseGallery() {
             font-size: 0.75rem;
             font-weight: 650;
           }
+          .showcase-card-meta > span:last-child {
+            overflow: hidden;
+            font-family: var(--font-code);
+            font-size: 0.625rem;
+            letter-spacing: 0.04em;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
           .showcase-card-index {
             color: #02abff;
             font-family: var(--font-code);
@@ -230,8 +274,12 @@ export default function ShowcaseGallery() {
               gap: 18px;
             }
             .showcase-gallery-title,
-            .showcase-gallery-summary {
+            .showcase-gallery-summary,
+            .showcase-gallery-meta {
               grid-column: 1;
+            }
+            .showcase-gallery-meta {
+              margin-bottom: 14px;
             }
             .showcase-gallery-title {
               padding-right: 0;
