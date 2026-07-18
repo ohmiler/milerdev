@@ -44,6 +44,10 @@
   text-wrap: pretty;
 }
 
+.brandPanel {
+  min-width: 0;
+}
+
 .socials {
   display: flex;
   flex-wrap: wrap;
@@ -115,14 +119,14 @@
 }
 
 .contact {
-  grid-column: 1 / -1;
+  margin-top: 32px;
   padding-top: 26px;
   border-top: 1px solid var(--color-border);
 }
 
 .contactBody {
   display: grid;
-  grid-template-columns: 1.25fr 0.9fr 0.9fr;
+  grid-template-columns: minmax(180px, 1.25fr) repeat(2, minmax(120px, 0.9fr));
   gap: 18px;
 }
 
@@ -186,10 +190,6 @@
   .directory,
   .contactBody {
     grid-template-columns: 1fr;
-  }
-
-  .contact {
-    grid-column: 1;
   }
 
   .bottom {

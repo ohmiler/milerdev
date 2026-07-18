@@ -18,7 +18,7 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.main}>
-          <div>
+          <div className={styles.brandPanel}>
             <Link href="/" className={styles.brandLink} aria-label="MilerDev หน้าแรก">
               <img src="/milerdev-logo-transparent.png" alt="" width={54} height={54} />
               <span>MilerDev</span>
@@ -53,6 +53,29 @@ export default function Footer() {
                 </svg>
                 YouTube
               </a>
+              <a
+                href="https://discord.gg/9Y5ZckGD2B"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.social}
+                aria-label="เข้าร่วมชุมชน MilerDev บน Discord"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8.25 7.25A9.8 9.8 0 0 1 12 6.5c1.32 0 2.58.26 3.75.75" />
+                  <path d="M7.2 18.2c-1.65-.45-2.7-1.08-3.45-1.8.18-3.65 1.18-6.72 2.9-9.2A8.2 8.2 0 0 1 9 6.35l.55 1.1a9.8 9.8 0 0 1 4.9 0l.55-1.1c.82.18 1.6.47 2.35.85 1.72 2.48 2.72 5.55 2.9 9.2-.75.72-1.8 1.35-3.45 1.8l-.85-1.15c.82-.25 1.55-.6 2.18-1.02-1.45.68-3.52 1.12-6.13 1.12s-4.68-.44-6.13-1.12c.63.42 1.36.77 2.18 1.02L7.2 18.2Z" />
+                  <path d="M9 13.25h.01M15 13.25h.01" />
+                </svg>
+                Discord
+              </a>
+            </div>
+
+            <div className={styles.contact}>
+              <h2>คุยกับเรา</h2>
+              <div className={styles.contactBody}>
+                <a href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
+                <address>กรุงเทพมหานคร, ประเทศไทย</address>
+                <p>จันทร์–ศุกร์ / 09:00–18:00 น.</p>
+              </div>
             </div>
           </div>
 
@@ -75,14 +98,6 @@ export default function Footer() {
               </ul>
             </nav>
 
-            <div className={styles.contact}>
-              <h2>คุยกับเรา</h2>
-              <div className={styles.contactBody}>
-                <a href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
-                <address>กรุงเทพมหานคร, ประเทศไทย</address>
-                <p>จันทร์–ศุกร์ / 09:00–18:00 น.</p>
-              </div>
-            </div>
           </div>
         </div>
 
