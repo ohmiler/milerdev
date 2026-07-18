@@ -3,20 +3,20 @@ import styles from './LearningWorkspacePreview.module.css';
 const LESSON_STEPS = [
   {
     index: '01',
-    title: 'เห็นภาพรวมของบทเรียน',
-    meta: 'เข้าใจแนวคิดก่อนลงมือ',
+    title: 'เข้าใจแนวคิดก่อนเขียนโค้ด',
+    meta: 'เห็นภาพรวมของสิ่งที่จะสร้าง',
     state: 'complete',
   },
   {
     index: '02',
-    title: 'ลงมือทำตามทีละขั้น',
+    title: 'ลงมือทำไปพร้อมกับบทเรียน',
     meta: 'วิดีโอ · โค้ด · ผลลัพธ์',
     state: 'active',
   },
   {
     index: '03',
-    title: 'กลับมาสร้างต่อได้ทันที',
-    meta: 'ระบบจำความคืบหน้า',
+    title: 'กลับมาทำต่อจากจุดล่าสุด',
+    meta: 'ระบบบันทึกความคืบหน้า',
     state: 'next',
   },
 ] as const;
@@ -43,7 +43,7 @@ export default function LearningWorkspacePreview() {
         <aside className={styles.lessonRail} aria-label="ตัวอย่างลำดับการเรียน">
           <div className={styles.railHeading}>
             <span>COURSE INDEX</span>
-            <strong>เส้นทางของบทนี้</strong>
+            <strong>ลำดับการเรียน</strong>
           </div>
           <ol className={styles.lessonList}>
             {LESSON_STEPS.map((lesson) => (
@@ -65,7 +65,7 @@ export default function LearningWorkspacePreview() {
           <div className={styles.stageHeading}>
             <div>
               <span>บทเรียนปัจจุบัน</span>
-              <h3>ดูแนวคิด แล้วลงมือทำให้เห็นผล</h3>
+              <h3>เข้าใจแนวคิด แล้วเขียนโค้ดให้เห็นผล</h3>
             </div>
             <span className={styles.lessonPosition}>02 / 03</span>
           </div>
@@ -100,12 +100,12 @@ export default function LearningWorkspacePreview() {
               >
                 <span />
               </div>
-              <small>บันทึกสถานะเพื่อให้กลับมาเรียนต่อได้โดยไม่เสียจังหวะ</small>
+              <small>ระบบบันทึกจุดล่าสุดไว้ให้กลับมาเรียนต่อ</small>
             </div>
 
             <div className={styles.nextAction}>
               <span>NEXT ACTION</span>
-              <strong>ไปยังบทเรียนถัดไป</strong>
+              <strong>เรียนบทถัดไป</strong>
               <span className={styles.nextArrow} aria-hidden="true">→</span>
             </div>
           </div>

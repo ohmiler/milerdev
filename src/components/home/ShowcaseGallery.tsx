@@ -74,15 +74,15 @@ export default function ShowcaseGallery() {
       <section className="showcase-gallery-section" aria-labelledby="showcase-gallery-title">
         <div className="container showcase-gallery-layout">
           <header className="showcase-gallery-head">
-            <p className="showcase-gallery-kicker">ภาพจากการสอนและการทำงานจริง</p>
+            <p className="showcase-gallery-kicker">บรรยากาศจากห้องเรียนและเวทีจริง</p>
             <h2 id="showcase-gallery-title" className="showcase-gallery-title">
               การสอนที่เกิดขึ้นนอกหน้าจอ
             </h2>
             <div className="showcase-gallery-summary">
               <p className="showcase-gallery-copy">
-                ภาพคัดเลือกจากงานสอน Web Development, AI และเส้นทางอาชีพ Developer สำหรับนักศึกษาและองค์กร
+                ภาพคัดเลือกจากการสอน Web Development, AI และเส้นทางอาชีพ Developer ให้กับนักศึกษาและทีมงานในองค์กร
               </p>
-              <p className="showcase-gallery-hint">เลือกภาพเพื่อดูบรรยากาศแบบเต็ม</p>
+              <p className="showcase-gallery-hint">เปิดดูภาพขนาดเต็ม</p>
             </div>
           </header>
 

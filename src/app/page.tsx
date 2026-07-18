@@ -96,8 +96,8 @@ export default async function HomePage() {
                 <span>สร้างให้เป็นงานจริง</span>
               </h1>
               <p className={styles.heroLead}>
-                ค่อย ๆ วางพื้นฐานไปพร้อมกับการลงมือทำ ทุกบทเชื่อมความรู้เข้ากับโปรเจกต์
-                เพื่อให้คุณรู้ว่ากำลังเรียนอะไร และจะนำไปใช้ต่ออย่างไร
+                ค่อย ๆ วางพื้นฐานผ่านการลงมือทำ ทุกบทเชื่อมแนวคิดเข้ากับโปรเจกต์
+                เพื่อให้คุณเข้าใจว่าโค้ดทำงานอย่างไร และนำไปสร้างอะไรต่อได้
               </p>
 
               <div className={styles.heroActions}>
@@ -122,20 +122,20 @@ export default async function HomePage() {
           <div className={styles.shell}>
             <header className={styles.workspaceIntro}>
               <div>
-                <p className={styles.sectionLabel}>ไม่ใช่แค่ดูวิดีโอ แล้วปล่อยให้คุณไปต่อเอง</p>
+                <p className={styles.sectionLabel}>วิดีโอ ลำดับบทเรียน และความคืบหน้าในพื้นที่เดียว</p>
                 <h2 id="learning-workspace-title" className={styles.workspaceTitle}>
-                  พื้นที่เรียนที่จำว่า <span>คุณกำลังสร้างอะไร</span>
+                  กลับมาเรียนต่อได้ทันที <span>จากจุดที่คุณหยุดไว้</span>
                 </h2>
               </div>
               <div className={styles.workspaceStory}>
                 <p>
-                  ทุกบทเชื่อมวิดีโอ ลำดับเนื้อหา และความคืบหน้าไว้ในพื้นที่เดียว
-                  เพื่อให้คุณหยุด ทบทวน และกลับมาลงมือทำต่อได้โดยไม่เสียจังหวะ
+                  ระบบเก็บลำดับบทเรียนและความคืบหน้าของคุณไว้
+                  จึงกลับมาดูวิดีโอ ทบทวนโค้ด และทำโปรเจกต์ต่อได้โดยไม่ต้องเริ่มใหม่
                 </p>
                 <ul aria-label="สิ่งที่มีในพื้นที่เรียน MilerDev">
-                  <li><span>01</span> วิดีโอและบทเรียนตามลำดับ</li>
-                  <li><span>02</span> บันทึกบทที่เรียนจบและจุดล่าสุด</li>
-                  <li><span>03</span> ใบรับรองเมื่อผ่านเงื่อนไขของคอร์ส</li>
+                  <li><span>01</span> เรียนตามลำดับ พร้อมลงมือทำทีละขั้น</li>
+                  <li><span>02</span> ระบบจำบทที่เรียนจบและจุดล่าสุด</li>
+                  <li><span>03</span> รับใบรับรองเมื่อเรียนครบตามเงื่อนไข</li>
                 </ul>
               </div>
             </header>
@@ -148,13 +148,13 @@ export default async function HomePage() {
           <div className={styles.shell}>
             <div className={styles.sectionIntro}>
               <div>
-                <p className={styles.sectionLabel}>เริ่มจากบทที่เหมาะกับคุณ</p>
-                <h2 id="featured-courses-title" className={styles.sectionTitle}>คอร์สล่าสุดสำหรับก้าวถัดไป</h2>
+                <p className={styles.sectionLabel}>เลือกเส้นทางที่เหมาะกับคุณ</p>
+                <h2 id="featured-courses-title" className={styles.sectionTitle}>เลือกคอร์สสำหรับก้าวถัดไป</h2>
               </div>
               <div>
                 <p className={styles.sectionCopy}>
-                  ดูหัวข้อ จำนวนบทเรียน และราคาได้จากข้อมูลที่เผยแพร่จริง
-                  แล้วเลือกเส้นทางที่ใกล้กับสิ่งที่คุณอยากสร้าง
+                  เปรียบเทียบเนื้อหา จำนวนบทเรียน และราคา
+                  แล้วเลือกคอร์สที่ใกล้กับโปรเจกต์ที่คุณอยากสร้าง
                 </p>
                 <Link href="/courses" className={styles.sectionLink}>ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link>
               </div>
@@ -193,12 +193,12 @@ export default async function HomePage() {
           <div className={styles.shell}>
             <div className={styles.proofLead}>
               <div>
-                <p className={styles.sectionLabel}>ประสบการณ์จากห้องเรียนจริง</p>
-                <h2 id="teaching-proof-title" className={styles.proofTitle}>ก่อนมาเป็นบทเรียน ความรู้นี้เคยถูกนำไปใช้สอนจริง</h2>
+                <p className={styles.sectionLabel}>จากประสบการณ์สอน สู่บทเรียนออนไลน์</p>
+                <h2 id="teaching-proof-title" className={styles.proofTitle}>บทเรียนที่กลั่นจากห้องเรียน เวิร์กช็อป และงานจริง</h2>
               </div>
               <p className={styles.sectionCopy}>
-                MilerDev นำประสบการณ์จากงานสอน Web Development, AI และเส้นทางอาชีพ Developer
-                กลับมาจัดเป็นบทเรียนที่เห็นภาพ เข้าใจเหตุผล และลงมือทำตามได้
+                ประสบการณ์สอน Web Development, AI และเส้นทางอาชีพ Developer
+                ถูกนำมาจัดลำดับใหม่ให้เห็นภาพ เข้าใจเหตุผล และลงมือทำตามได้
               </p>
             </div>
 
@@ -216,8 +216,8 @@ export default async function HomePage() {
 
               <div className={styles.proofNote}>
                 <span>FROM FIELD TO LESSON</span>
-                <strong>อธิบายให้เข้าใจก่อน แล้วค่อยพาเปลี่ยนความคิดให้เป็นโค้ด</strong>
-                <p>ทั้งในเวิร์กช็อป ห้องเรียน และพื้นที่ออนไลน์ หลักยังเหมือนเดิม—เรียนเพื่อกลับไปสร้างต่อได้ด้วยตัวเอง</p>
+                <strong>เริ่มจากความเข้าใจ แล้วค่อยเปลี่ยนแนวคิดให้เป็นโค้ด</strong>
+                <p>ไม่ว่าจะเป็นเวิร์กช็อป ห้องเรียน หรือบทเรียนออนไลน์ เป้าหมายยังเหมือนเดิม—ให้ผู้เรียนกลับไปสร้างต่อได้ด้วยตัวเอง</p>
               </div>
             </div>
 
@@ -245,8 +245,8 @@ export default async function HomePage() {
         <section className={styles.closing} aria-labelledby="home-closing-title">
           <div className={[styles.shell, styles.closingInner].join(' ')}>
             <div>
-              <h2 id="home-closing-title">เริ่มจากหนึ่งบท แล้วค่อยสร้างสิ่งที่ใหญ่ขึ้น</h2>
-              <p>เลือกคอร์สที่ตรงกับสิ่งที่อยากทำ หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนของคุณไว้ก่อน</p>
+              <h2 id="home-closing-title">เริ่มจากหนึ่งบท แล้วค่อยสร้างโปรเจกต์ที่ใหญ่ขึ้น</h2>
+              <p>เลือกคอร์สที่ตรงกับสิ่งที่อยากสร้าง หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน</p>
             </div>
             <div className={styles.closingActions}>
               <Link href="/courses" className={styles.primaryAction}>เลือกคอร์สแรก <span aria-hidden="true">→</span></Link>

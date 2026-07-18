@@ -25,11 +25,6 @@ const codeSnippets: { fileName: string; lang: string; lines: CodeLine[] }[] = [
     lines: [
       { indent: 0, tokens: [{ text: '<!doctype html>', color: syntax.muted }] },
       { indent: 0, tokens: [{ text: '<', color: syntax.symbol }, { text: 'html', color: syntax.property }, { text: ' lang', color: syntax.value }, { text: '="th"', color: syntax.string }, { text: '>', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: '<', color: syntax.symbol }, { text: 'head', color: syntax.property }, { text: '>', color: syntax.symbol }] },
-      { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'meta', color: syntax.property }, { text: ' charset', color: syntax.value }, { text: '="utf-8"', color: syntax.string }, { text: ' />', color: syntax.symbol }] },
-      { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'title', color: syntax.property }, { text: '>', color: syntax.symbol }, { text: 'MilerDev Course', color: syntax.string }, { text: '</', color: syntax.symbol }, { text: 'title', color: syntax.property }, { text: '>', color: syntax.symbol }] },
-      { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'link', color: syntax.property }, { text: ' rel', color: syntax.value }, { text: '="stylesheet"', color: syntax.string }, { text: ' href', color: syntax.value }, { text: '="./styles.css"', color: syntax.string }, { text: ' />', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: '</', color: syntax.symbol }, { text: 'head', color: syntax.property }, { text: '>', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: '<', color: syntax.symbol }, { text: 'body', color: syntax.property }, { text: '>', color: syntax.symbol }] },
       { indent: 2, tokens: [{ text: '<', color: syntax.symbol }, { text: 'main', color: syntax.property }, { text: ' class', color: syntax.value }, { text: '="course-card"', color: syntax.string }, { text: '>', color: syntax.symbol }] },
       { indent: 3, tokens: [{ text: '<', color: syntax.symbol }, { text: 'span', color: syntax.property }, { text: ' class', color: syntax.value }, { text: '="badge"', color: syntax.string }, { text: '>', color: syntax.symbol }, { text: 'Beginner path', color: syntax.string }, { text: '</', color: syntax.symbol }, { text: 'span', color: syntax.property }, { text: '>', color: syntax.symbol }] },
@@ -49,14 +44,6 @@ const codeSnippets: { fileName: string; lang: string; lines: CodeLine[] }[] = [
       { indent: 1, tokens: [{ text: '--brand:', color: syntax.property }, { text: ' #00abff', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: '--ink:', color: syntax.property }, { text: ' #111820', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
-      { indent: 0, tokens: [] },
-      { indent: 0, tokens: [{ text: 'body', color: syntax.property }, { text: ' {', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: 'margin:', color: syntax.property }, { text: ' 0', color: syntax.value }, { text: ';', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: 'font-family:', color: syntax.property }, { text: ' "IBM Plex Sans Thai", sans-serif', color: syntax.string }, { text: ';', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: 'background:', color: syntax.property }, { text: ' #f7f9fb', color: syntax.value }, { text: ';', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: 'color:', color: syntax.property }, { text: ' var(--ink)', color: syntax.function }, { text: ';', color: syntax.symbol }] },
-      { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
-      { indent: 0, tokens: [] },
       { indent: 0, tokens: [{ text: '.course-card', color: syntax.property }, { text: ' {', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'max-width:', color: syntax.property }, { text: ' 720px', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'margin:', color: syntax.property }, { text: ' 48px auto', color: syntax.value }, { text: ';', color: syntax.symbol }] },
@@ -356,11 +343,11 @@ export default function HeroCodeEditor() {
           color-scheme: dark;
           background: var(--editor-background);
           border: 1px solid var(--editor-border);
-          border-radius: 5px;
+          border-radius: 3px;
           color: var(--editor-text);
           font-family: var(--font-code);
-          font-size: 13px;
-          line-height: 1.65;
+          font-size: 12.5px;
+          line-height: 1.6;
           max-width: none;
           min-width: 0;
           overflow: hidden;
@@ -383,23 +370,24 @@ export default function HeroCodeEditor() {
           align-items: stretch;
           border-bottom-style: solid;
           border-bottom-width: 1px;
-          flex-direction: column;
+          flex-direction: row;
           gap: 0;
-          min-height: 68px;
+          min-height: 48px;
           padding: 0;
         }
 
         .hero-code-editor__workspace {
           align-items: center;
-          border-bottom: 1px solid var(--editor-border);
+          border-right: 1px solid var(--editor-border);
           color: var(--editor-text-secondary);
           display: flex;
           font-size: 10px;
           font-weight: 700;
           justify-content: space-between;
           letter-spacing: 0.08em;
-          min-height: 30px;
-          padding: 0 14px;
+          flex: 0 0 152px;
+          min-height: 48px;
+          padding: 0 16px;
         }
 
         .hero-code-editor__tabs {
@@ -422,7 +410,7 @@ export default function HeroCodeEditor() {
           flex: 0 1 auto;
           font: inherit;
           font-weight: 700;
-          min-height: 44px;
+          min-height: 48px;
           min-width: 0;
           padding: 0 16px;
           text-align: left;
@@ -452,20 +440,16 @@ export default function HeroCodeEditor() {
 
         .hero-code-editor__body {
           background: var(--editor-background);
-          height: 340px;
+          height: 306px;
           overflow-x: auto;
-          overflow-y: auto;
-          padding: 18px 0;
-          scrollbar-color: var(--editor-border) var(--editor-background);
-          scrollbar-gutter: stable;
-          scrollbar-width: thin;
+          overflow-y: hidden;
+          padding: 12px 0;
+          scrollbar-width: none;
           position: relative;
           z-index: 2;
         }
 
-        .hero-code-editor__body::-webkit-scrollbar { width: 8px; height: 8px; }
-        .hero-code-editor__body::-webkit-scrollbar-track { background: var(--editor-background); }
-        .hero-code-editor__body::-webkit-scrollbar-thumb { background: var(--editor-border); border-radius: 999px; }
+        .hero-code-editor__body::-webkit-scrollbar { display: none; }
 
         .hero-code-editor__line {
           display: flex;
@@ -503,14 +487,14 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__status {
-          background: var(--editor-accent-pressed);
+          background: var(--editor-surface);
           border-top-style: solid;
           border-top-width: 1px;
-          border-top-color: var(--editor-accent-pressed);
-          color: var(--editor-text);
+          border-top-color: var(--editor-border);
+          color: var(--editor-text-secondary);
           justify-content: space-between;
-          min-height: 38px;
-          padding: 0 16px;
+          min-height: 36px;
+          padding: 0 14px;
         }
 
         .hero-code-editor__status-group {
@@ -518,6 +502,14 @@ export default function HeroCodeEditor() {
           display: flex;
           gap: 14px;
           min-width: 0;
+        }
+
+        .hero-code-editor__status-group:first-child {
+          align-self: stretch;
+          margin-left: -14px;
+          padding: 0 14px;
+          background: var(--editor-accent-pressed);
+          color: var(--editor-text);
         }
 
         .hero-code-editor__ready-dot {
@@ -535,11 +527,11 @@ export default function HeroCodeEditor() {
         }
 
         @media (max-width: 640px) {
-          .hero-code-editor { max-width: 100%; }
-          .hero-code-editor__titlebar { min-height: 64px; }
-          .hero-code-editor__workspace { font-size: 9px; padding: 0 10px; }
+          .hero-code-editor { max-width: 100%; font-size: 11.5px; }
+          .hero-code-editor__titlebar { flex-direction: column; min-height: 72px; }
+          .hero-code-editor__workspace { min-height: 28px; flex-basis: auto; border-right: 0; border-bottom: 1px solid var(--editor-border); font-size: 9px; padding: 0 10px; }
           .hero-code-editor__tab { min-height: 44px; padding: 0 9px; }
-          .hero-code-editor__body { height: 286px; padding: 16px 0; }
+          .hero-code-editor__body { height: 282px; padding: 10px 0; }
           .hero-code-editor__line { padding-right: 14px; }
           .hero-code-editor__line-number { padding-right: 12px; width: 38px; }
           .hero-code-editor__status { gap: 8px; padding: 0 12px; }
