@@ -244,7 +244,7 @@ export default async function HomePage() {
 
         <section className={styles.closing} aria-labelledby="home-closing-title">
           <div className={[styles.shell, styles.closingInner].join(' ')}>
-            <div>
+            <div className={styles.closingCopy}>
               <h2 id="home-closing-title">เริ่มจากหนึ่งบท แล้วค่อยสร้างโปรเจกต์ที่ใหญ่ขึ้น</h2>
               <p>เลือกคอร์สที่ตรงกับสิ่งที่อยากสร้าง หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน</p>
             </div>
