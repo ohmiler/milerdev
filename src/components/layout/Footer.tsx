@@ -69,35 +69,33 @@ export default function Footer() {
               </a>
             </div>
 
-            <div className={styles.contact}>
-              <h2>คุยกับเรา</h2>
-              <div className={styles.contactBody}>
-                <a href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
-                <address>กรุงเทพมหานคร, ประเทศไทย</address>
-                <p>จันทร์–ศุกร์ / 09:00–18:00 น.</p>
-              </div>
-            </div>
           </div>
 
-          <div className={styles.directory}>
-            <nav className={styles.column} aria-labelledby="footer-explore">
-              <h2 id="footer-explore">สำรวจ MilerDev</h2>
-              <ul>
-                {quickLinks.map((link) => (
-                  <li key={link.href}><Link href={link.href}>{link.label}</Link></li>
-                ))}
-              </ul>
-            </nav>
+          <nav className={styles.column} aria-labelledby="footer-explore">
+            <h2 id="footer-explore">สำรวจ MilerDev</h2>
+            <ul>
+              {quickLinks.map((link) => (
+                <li key={link.href}><Link href={link.href}>{link.label}</Link></li>
+              ))}
+            </ul>
+          </nav>
 
-            <nav className={styles.column} aria-labelledby="footer-support">
-              <h2 id="footer-support">ข้อมูลและความช่วยเหลือ</h2>
-              <ul>
-                {supportLinks.map((link) => (
-                  <li key={link.href}><Link href={link.href}>{link.label}</Link></li>
-                ))}
-              </ul>
-            </nav>
+          <nav className={styles.column} aria-labelledby="footer-support">
+            <h2 id="footer-support">ข้อมูลและความช่วยเหลือ</h2>
+            <ul>
+              {supportLinks.map((link) => (
+                <li key={link.href}><Link href={link.href}>{link.label}</Link></li>
+              ))}
+            </ul>
+          </nav>
 
+          <div className={styles.contact}>
+            <h2>คุยกับเรา</h2>
+            <div className={styles.contactBody}>
+              <a href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
+              <address>กรุงเทพมหานคร, ประเทศไทย</address>
+              <p>จันทร์–ศุกร์ / 09:00–18:00 น.</p>
+            </div>
           </div>
         </div>
 
