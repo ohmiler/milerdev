@@ -88,14 +88,13 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 </Link>
 
                 <div className="nav-public-links">
-                    {NAV_LINKS.map(({ href, label }, index) => (
+                    {NAV_LINKS.map(({ href, label }) => (
                         <Link
                             key={href}
                             href={href}
                             className={`nav-public-link${isActive(href) ? ' nav-public-link--active' : ''}`}
                             aria-current={isActive(href) ? 'page' : undefined}
                         >
-                            <span className="nav-public-link-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                             {label}
                         </Link>
                     ))}
@@ -169,32 +168,22 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     position: sticky;
                     top: 0;
                     z-index: 50;
-                    background: var(--surface-raised);
-                    border-bottom: 1px solid var(--line);
-                }
-                .nav-public-shell::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0 0 auto;
-                    height: 3px;
-                    background: var(--accent);
+                    background: rgba(255, 253, 249, 0.94);
+                    border-bottom: 1px solid rgba(190, 203, 207, 0.68);
+                    backdrop-filter: blur(16px);
                 }
                 .nav-public-rail {
-                    min-height: 72px;
-                    display: grid;
-                    grid-template-columns: repeat(12, minmax(0, 1fr));
+                    min-height: 76px;
+                    display: flex;
                     align-items: center;
-                    column-gap: 24px;
+                    gap: clamp(24px, 4vw, 56px);
                 }
                 .nav-brand-lockup {
-                    grid-column: 1 / span 3;
                     display: inline-flex;
                     align-items: center;
                     gap: 10px;
                     width: fit-content;
-                    min-height: 72px;
-                    padding-right: 24px;
-                    border-right: 1px solid var(--line);
+                    min-height: 76px;
                     color: var(--ink);
                     text-decoration: none;
                 }
@@ -203,41 +192,30 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 .nav-brand-copy strong { font-size: 1.18rem; font-weight: 750; line-height: 1; letter-spacing: -0.03em; transition: color 160ms ease; }
                 .nav-brand-lockup:hover .nav-brand-copy strong { color: var(--accent-strong); }
                 .nav-public-links {
-                    grid-column: 4 / span 6;
                     align-self: stretch;
                     display: flex;
                     align-items: center;
                     justify-content: flex-start;
-                    gap: clamp(18px, 2vw, 34px);
+                    gap: clamp(20px, 2.5vw, 38px);
+                    margin-right: auto;
                 }
                 .nav-public-link {
                     position: relative;
                     display: inline-flex;
                     align-items: center;
-                    min-height: 72px;
-                    gap: 7px;
+                    min-height: 76px;
                     padding: 2px 0 0;
                     color: var(--ink-muted);
-                    font-size: 0.88rem;
+                    font-size: 0.92rem;
                     font-weight: 650;
                     text-decoration: none;
                     transition: color 160ms ease, background-color 160ms ease;
-                }
-                .nav-public-link-index {
-                    color: var(--ink-subtle);
-                    font-family: var(--font-code);
-                    font-size: 0.62rem;
-                    font-weight: 500;
-                    letter-spacing: 0.04em;
-                    transition: color 160ms ease;
                 }
                 .nav-public-link:hover,
                 .nav-public-link--active {
                     color: var(--accent-strong);
                     background: transparent;
                 }
-                .nav-public-link:hover .nav-public-link-index,
-                .nav-public-link--active .nav-public-link-index { color: var(--accent-strong); }
                 .nav-public-link::after {
                     content: '';
                     position: absolute;
@@ -253,15 +231,12 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 .nav-public-link:hover::after,
                 .nav-public-link--active::after { transform: scaleX(1); }
                 .nav-public-actions {
-                    grid-column: 10 / -1;
                     display: flex;
                     align-items: center;
                     justify-content: flex-end;
                     gap: 8px;
                     min-width: 0;
-                    min-height: 72px;
-                    padding-left: 24px;
-                    border-left: 1px solid var(--line);
+                    min-height: 76px;
                 }
                 .nav-public-auth-link,
                 .nav-public-primary {
@@ -278,7 +253,7 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 }
                 .nav-public-auth-link { color: var(--ink-muted); }
                 .nav-public-auth-link:hover { color: var(--accent-strong); }
-                .nav-public-primary { color: #ffffff; background: var(--accent); border: 1px solid var(--accent); border-radius: 4px; }
+                .nav-public-primary { color: #06263a; background: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding-inline: 17px; }
                 .nav-public-primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
                 .nav-user-controls { display: flex; align-items: center; gap: 4px; }
                 .nav-control-anchor { position: relative; }
@@ -339,19 +314,16 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 .nav-public-shell a:focus-visible,
                 .nav-public-shell button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
                 .nav-public-shell .nav-dropdown:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
-                .nav-public-mobile-panel { position: absolute; top: 100%; left: 0; right: 0; max-height: calc(100dvh - 64px); overflow-y: auto; overscroll-behavior: contain; background: var(--surface-raised); border-bottom: 1px solid var(--line); box-shadow: 0 4px 8px rgba(16, 32, 51, 0.08); }
+                .nav-public-mobile-panel { position: absolute; top: 100%; left: 0; right: 0; max-height: calc(100dvh - 64px); overflow-y: auto; overscroll-behavior: contain; background: #fffdf9; border-bottom: 1px solid var(--line); box-shadow: 0 14px 28px rgba(16, 32, 51, 0.1); }
                 .nav-mobile-panel-inner { display: flex; width: min(100% - 32px, 1200px); margin: 0 auto; flex-direction: column; gap: 0; padding: 0 0 20px; }
                 .nav-mobile-panel-header { display: flex; align-items: center; justify-content: space-between; min-height: 48px; border-bottom: 1px solid var(--line); color: var(--ink-muted); }
                 .nav-mobile-panel-header span { font-size: 0.78rem; font-weight: 700; }
-                .nav-mobile-panel-header small { color: var(--ink-subtle); font-family: var(--font-code); font-size: 0.64rem; letter-spacing: 0.08em; }
                 .nav-mobile-user-summary { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
                 .nav-mobile-link-group { display: flex; flex-direction: column; gap: 0; }
-                .nav-mobile-link { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 10px 0; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink-soft); font-size: 0.95rem; font-weight: 500; text-decoration: none; }
-                .nav-mobile-link--primary { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; min-height: 60px; font-size: 1.08rem; font-weight: 650; }
-                .nav-mobile-link-index { color: var(--ink-subtle); font-family: var(--font-code); font-size: 0.68rem; font-weight: 500; letter-spacing: 0.04em; }
-                .nav-mobile-link--primary::after { content: '↗'; margin-left: auto; color: var(--ink-subtle); font-family: var(--font-code); font-size: 0.85rem; }
+                .nav-mobile-link { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 0; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink-soft); font-size: 1rem; font-weight: 600; text-decoration: none; }
+                .nav-mobile-link--primary { position: relative; min-height: 58px; font-size: 1.08rem; font-weight: 650; }
+                .nav-mobile-link--primary::after { content: '→'; margin-left: auto; color: var(--ink-subtle); font-size: 0.95rem; }
                 .nav-mobile-link:hover, .nav-mobile-link--active { color: var(--accent-strong); }
-                .nav-mobile-link:hover .nav-mobile-link-index, .nav-mobile-link--active .nav-mobile-link-index { color: var(--accent-strong); }
                 .nav-mobile-link--active { background: transparent; }
                 .nav-mobile-link--admin { color: var(--accent-strong); }
                 .nav-mobile-divider { height: 1px; margin: 0; background: var(--line); }
@@ -364,8 +336,6 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 @media (max-width: 1020px) and (min-width: 841px) {
                     .nav-public-rail { column-gap: 16px; }
                     .nav-public-links { gap: 16px; }
-                    .nav-public-link-index { display: none; }
-                    .nav-public-actions { padding-left: 16px; }
                     .nav-public-auth-link svg { display: none; }
                 }
                 @media (max-width: 840px) {

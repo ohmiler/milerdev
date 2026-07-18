@@ -4,23 +4,17 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 
 const SHOWCASE_LABELS = [
-  'KEYNOTE / ISCHOOL KKU',
-  'WORKSHOP / CLASSROOM',
-  'PANEL / CODING DAY',
-  'TALK / DEVELOPER',
-  'PRODUCTION / LIGHTING',
-  'RECORDING / HOME STUDIO',
-  'STUDIO / PRESENTER',
-  'PRODUCTION / GREEN SCREEN',
-  'CONTENT / CAMERA SET',
-  'BEHIND THE SCENES',
-  'COMMUNITY / CODING DAY',
-  'COMMUNITY / NETWORKING',
+  'เวทีแบ่งปันประสบการณ์',
+  'เวิร์กช็อปในห้องเรียน',
+  'วงสนทนาเรื่องเส้นทางนักพัฒนา',
+  'บรรยายเรื่องการสร้างซอฟต์แวร์',
+  'เบื้องหลังการเตรียมเนื้อหา',
+  'พื้นที่บันทึกบทเรียนออนไลน์',
 ] as const;
 
 const SHOWCASE_IMAGES = SHOWCASE_LABELS.map((label, i) => ({
   src: `/showcase/${String(i + 1).padStart(2, '0')}-showcase-1024x768.webp`,
-  alt: `ภาพบรรยากาศงานบรรยาย MilerDev ${i + 1}`,
+  alt: `ภาพบรรยากาศการสอนและแบ่งปันความรู้ของ MilerDev ${i + 1}`,
   label,
 }));
 
@@ -80,18 +74,15 @@ export default function ShowcaseGallery() {
       <section className="showcase-gallery-section" aria-labelledby="showcase-gallery-title">
         <div className="container showcase-gallery-layout">
           <header className="showcase-gallery-head">
-            <p className="showcase-gallery-meta">
-              <span>EVENT ARCHIVE / 01—12</span>
-              <span>TH / TALKS + WORKSHOPS</span>
-            </p>
-            <h2 id="showcase-gallery-title" className="section-title showcase-gallery-title">
-              ภาพบรรยากาศจากงานต่างๆ
+            <p className="showcase-gallery-kicker">ภาพจากการสอนและการทำงานจริง</p>
+            <h2 id="showcase-gallery-title" className="showcase-gallery-title">
+              การสอนที่เกิดขึ้นนอกหน้าจอ
             </h2>
             <div className="showcase-gallery-summary">
-              <p className="section-copy showcase-gallery-copy">
-                งานบรรยายด้าน Web Development, AI และเส้นทางอาชีพ Developer สำหรับนักศึกษาและองค์กร
+              <p className="showcase-gallery-copy">
+                ภาพคัดเลือกจากงานสอน Web Development, AI และเส้นทางอาชีพ Developer สำหรับนักศึกษาและองค์กร
               </p>
-              <span className="showcase-gallery-count">SELECT FRAME / OPEN VIEW</span>
+              <p className="showcase-gallery-hint">เลือกภาพเพื่อดูบรรยากาศแบบเต็ม</p>
             </div>
           </header>
 
@@ -114,10 +105,7 @@ export default function ShowcaseGallery() {
                     className="showcase-card-img"
                   />
                 </span>
-                <span className="showcase-card-meta" aria-hidden="true">
-                  <span className="showcase-card-index">{String(i + 1).padStart(2, '0')}</span>
-                  <span>{img.label}</span>
-                </span>
+                <span className="showcase-card-meta" aria-hidden="true">{img.label}</span>
               </button>
             ))}
           </div>
@@ -125,100 +113,104 @@ export default function ShowcaseGallery() {
 
         <style>{`
           .showcase-gallery-section {
-            padding: clamp(64px, 8vw, 104px) 0;
-            background: #1e1e1e;
-            border-bottom: 1px solid #3c3c3c;
+            padding: clamp(88px, 10vw, 148px) 0;
+            color-scheme: light;
+            background: var(--color-background);
+            color: var(--color-text-primary);
           }
           .showcase-gallery-layout {
             display: grid;
-            gap: clamp(40px, 5vw, 64px);
+            gap: clamp(36px, 6vw, 72px);
           }
           .showcase-gallery-head {
             display: grid;
-            grid-template-columns: repeat(12, minmax(0, 1fr));
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 0.5fr);
+            gap: clamp(30px, 7vw, 96px);
             align-items: end;
           }
-          .showcase-gallery-meta {
+          .showcase-gallery-kicker {
             grid-column: 1 / -1;
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            margin: 0 0 40px;
-            padding: 10px 0;
-            border-block: 1px solid #3c3c3c;
-            color: #a9a9a9;
-            font: 700 0.625rem/1.5 var(--font-code);
-            letter-spacing: 0.08em;
-          }
-          .showcase-gallery-meta span:last-child {
-            color: #02abff;
-            text-align: right;
+            margin: 0 0 -26px;
+            color: var(--color-accent-pressed);
+            font-size: 0.9rem;
+            font-weight: 720;
           }
           .showcase-gallery-title {
-            grid-column: 1 / span 8;
-            max-width: 20ch;
+            max-width: 14ch;
             margin: 0;
-            padding-right: clamp(24px, 4vw, 64px);
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            line-height: 1.15;
-            letter-spacing: -0.03em;
-            color: #f4f4f4;
+            font-size: clamp(2.4rem, 5vw, 5.1rem);
+            font-weight: 750;
+            line-height: 1.08;
+            letter-spacing: -0.045em;
+            color: var(--color-text-primary);
             text-wrap: balance;
           }
           .showcase-gallery-summary {
-            grid-column: 9 / -1;
             display: grid;
-            gap: 20px;
+            gap: 14px;
           }
           .showcase-gallery-copy {
             max-width: 42ch;
             margin: 0;
-            color: #cccccc;
-            line-height: var(--leading-thai);
+            color: var(--color-text-secondary);
+            line-height: 1.8;
             text-wrap: pretty;
           }
-          .showcase-gallery-count {
-            color: #02abff;
-            font-family: var(--font-code);
-            font-size: 0.6875rem;
+          .showcase-gallery-hint {
+            margin: 0;
+            color: var(--color-accent-pressed);
+            font-size: 0.82rem;
             font-weight: 700;
-            letter-spacing: 0.06em;
           }
           .showcase-contact-sheet {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            border-top: 1px solid #555555;
-            border-left: 1px solid #3c3c3c;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            grid-auto-flow: dense;
+            gap: 14px;
           }
           .showcase-card {
             display: grid;
+            grid-column: span 4;
             min-width: 0;
+            overflow: hidden;
             padding: 0;
-            border: 0;
-            border-right: 1px solid #3c3c3c;
-            border-bottom: 1px solid #3c3c3c;
+            border: 1px solid var(--color-border);
             border-radius: 0;
-            background: #252526;
-            color: #f4f4f4;
+            background: var(--color-surface);
+            color: var(--color-text-primary);
             cursor: pointer;
             text-align: left;
-            transition: background-color 160ms ease-out;
+            box-shadow: none;
+            transition: transform 180ms ease-out, border-color 180ms ease-out;
+          }
+          .showcase-card:first-child {
+            grid-column: span 7;
+            grid-row: span 2;
+          }
+          .showcase-card:nth-child(2),
+          .showcase-card:nth-child(3) {
+            grid-column: span 5;
           }
           .showcase-card:hover {
-            background: #2d2d30;
+            z-index: 1;
+            transform: translateY(-4px);
+            border-color: var(--color-accent);
           }
           .showcase-card:focus-visible {
             position: relative;
             z-index: 1;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.42);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 46%, transparent);
           }
           .showcase-card-media {
             display: block;
             aspect-ratio: 4 / 3;
             overflow: hidden;
-            border-bottom: 1px solid #3c3c3c;
-            background: #1e1e1e;
+            background: var(--color-surface-hover);
+          }
+          .showcase-card:first-child .showcase-card-media {
+            aspect-ratio: auto;
+            min-height: 100%;
           }
           .showcase-card-img {
             display: block;
@@ -231,38 +223,31 @@ export default function ShowcaseGallery() {
             transform: scale(1.015);
           }
           .showcase-card-meta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
+            display: block;
             min-height: 44px;
-            padding: 0 14px;
-            color: #cccccc;
-            font-size: 0.75rem;
-            font-weight: 650;
-          }
-          .showcase-card-meta > span:last-child {
-            overflow: hidden;
-            font-family: var(--font-code);
-            font-size: 0.625rem;
-            letter-spacing: 0.04em;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-          .showcase-card-index {
-            color: #02abff;
-            font-family: var(--font-code);
-            font-size: 0.6875rem;
+            padding: 14px 16px;
+            color: var(--color-text-secondary);
+            font-size: 0.82rem;
+            font-weight: 680;
+            line-height: 1.55;
           }
           @media (max-width: 900px) {
-            .showcase-gallery-title {
-              grid-column: 1 / span 7;
-            }
-            .showcase-gallery-summary {
-              grid-column: 8 / -1;
-            }
             .showcase-contact-sheet {
               grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .showcase-card,
+            .showcase-card:first-child,
+            .showcase-card:nth-child(2),
+            .showcase-card:nth-child(3) {
+              grid-column: span 1;
+              grid-row: auto;
+            }
+            .showcase-card:first-child {
+              grid-column: 1 / -1;
+            }
+            .showcase-card:first-child .showcase-card-media {
+              min-height: 0;
+              aspect-ratio: 16 / 9;
             }
           }
           @media (max-width: 640px) {
@@ -275,20 +260,21 @@ export default function ShowcaseGallery() {
             }
             .showcase-gallery-title,
             .showcase-gallery-summary,
-            .showcase-gallery-meta {
+            .showcase-gallery-kicker {
               grid-column: 1;
             }
-            .showcase-gallery-meta {
-              margin-bottom: 14px;
-            }
-            .showcase-gallery-title {
-              padding-right: 0;
+            .showcase-gallery-kicker {
+              margin-bottom: 0;
             }
             .showcase-gallery-summary {
               gap: 14px;
             }
             .showcase-contact-sheet {
               grid-template-columns: 1fr;
+            }
+            .showcase-card,
+            .showcase-card:first-child {
+              grid-column: 1;
             }
           }
           @media (prefers-reduced-motion: reduce) {

@@ -8,14 +8,14 @@ interface CodeLine {
 }
 
 const syntax = {
-  keyword: '#569CD6',
-  symbol: '#D4D4D4',
-  function: '#DCDCAA',
-  identifier: '#9CDCFE',
-  property: '#9CDCFE',
-  string: '#CE9178',
-  value: '#B5CEA8',
-  muted: '#6A9955',
+  keyword: '#33BCFF',
+  symbol: '#F5F8FA',
+  function: '#F59E0B',
+  identifier: '#00ABFF',
+  property: '#33BCFF',
+  string: '#22C55E',
+  value: '#F5F8FA',
+  muted: '#657483',
 };
 
 const codeSnippets: { fileName: string; lang: string; lines: CodeLine[] }[] = [
@@ -46,14 +46,14 @@ const codeSnippets: { fileName: string; lang: string; lines: CodeLine[] }[] = [
     lang: 'css',
     lines: [
       { indent: 0, tokens: [{ text: ':root', color: syntax.property }, { text: ' {', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: '--brand:', color: syntax.property }, { text: ' #02abff', color: syntax.value }, { text: ';', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: '--ink:', color: syntax.property }, { text: ' #102033', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: '--brand:', color: syntax.property }, { text: ' #00abff', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: '--ink:', color: syntax.property }, { text: ' #111820', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
       { indent: 0, tokens: [] },
       { indent: 0, tokens: [{ text: 'body', color: syntax.property }, { text: ' {', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'margin:', color: syntax.property }, { text: ' 0', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'font-family:', color: syntax.property }, { text: ' "IBM Plex Sans Thai", sans-serif', color: syntax.string }, { text: ';', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: 'background:', color: syntax.property }, { text: ' #f7fbff', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'background:', color: syntax.property }, { text: ' #f7f9fb', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'color:', color: syntax.property }, { text: ' var(--ink)', color: syntax.function }, { text: ';', color: syntax.symbol }] },
       { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
       { indent: 0, tokens: [] },
@@ -61,7 +61,7 @@ const codeSnippets: { fileName: string; lang: string; lines: CodeLine[] }[] = [
       { indent: 1, tokens: [{ text: 'max-width:', color: syntax.property }, { text: ' 720px', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'margin:', color: syntax.property }, { text: ' 48px auto', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'padding:', color: syntax.property }, { text: ' 32px', color: syntax.value }, { text: ';', color: syntax.symbol }] },
-      { indent: 1, tokens: [{ text: 'border:', color: syntax.property }, { text: ' 1px solid #dbe8f2', color: syntax.value }, { text: ';', color: syntax.symbol }] },
+      { indent: 1, tokens: [{ text: 'border:', color: syntax.property }, { text: ' 1px solid #d8e1e8', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'border-radius:', color: syntax.property }, { text: ' 12px', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 1, tokens: [{ text: 'background:', color: syntax.property }, { text: ' white', color: syntax.value }, { text: ';', color: syntax.symbol }] },
       { indent: 0, tokens: [{ text: '}', color: syntax.symbol }] },
@@ -103,6 +103,7 @@ export default function HeroCodeEditor() {
   const [isTyping, setIsTyping] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const codeBodyRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const snippet = codeSnippets[snippetIndex];
   const totalLines = snippet.lines.length;
@@ -139,6 +140,20 @@ export default function HeroCodeEditor() {
   const renderedVisibleLines = prefersReducedMotion ? totalLines : visibleLines;
   const renderedCharIndex = prefersReducedMotion ? 0 : charIndex;
   const renderedIsTyping = !prefersReducedMotion && isTyping;
+
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex: number | null = null;
+
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % codeSnippets.length;
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + codeSnippets.length) % codeSnippets.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = codeSnippets.length - 1;
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    activateSnippet(nextIndex);
+    tabRefs.current[nextIndex]?.focus();
+  };
 
   useEffect(() => {
     codeBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' });
@@ -244,19 +259,21 @@ export default function HeroCodeEditor() {
       {/* Title Bar */}
       <div className="hero-code-editor__titlebar">
         <div className="hero-code-editor__workspace" aria-hidden="true">
-          <span>WORKSPACE / MILERDEV</span>
-          <span>VS CODE DARK+</span>
+          <span>MilerDev Project</span>
         </div>
         <div className="hero-code-editor__tabs" role="tablist" aria-label="ตัวอย่างไฟล์โค้ด">
           {codeSnippets.map((s, i) => (
             <button
               type="button"
               key={i}
+              ref={(element) => { tabRefs.current[i] = element; }}
               className="hero-code-editor__tab"
               data-active={i === snippetIndex}
               role="tab"
               aria-selected={i === snippetIndex}
+              tabIndex={i === snippetIndex ? 0 : -1}
               onClick={() => activateSnippet(i)}
+              onKeyDown={(event) => handleTabKeyDown(event, i)}
             >
               {s.fileName}
             </button>
@@ -291,7 +308,7 @@ export default function HeroCodeEditor() {
               <div
                 className="hero-code-editor__line-number"
                 style={{
-                  color: isCurrentLine ? '#C6C6C6' : '#858585',
+                  color: isCurrentLine ? '#F5F8FA' : '#657483',
                 }}
               >
                 {lineNum}
@@ -312,7 +329,6 @@ export default function HeroCodeEditor() {
       <div className="hero-code-editor__status">
         <div className="hero-code-editor__status-group">
           <span className="hero-code-editor__ready-dot" aria-hidden="true" />
-          <span style={{ color: '#a6e3a1' }}>●</span>
           <span>
             Ln {Math.min(renderedVisibleLines + 1, totalLines)}, Col {renderedCharIndex + 1}
           </span>
@@ -325,10 +341,23 @@ export default function HeroCodeEditor() {
 
       <style jsx>{`
         .hero-code-editor {
-          background: #1e1e1e;
-          border: 1px solid #3e3e42;
-          border-radius: 8px;
-          color: #d4d4d4;
+          --editor-accent: #00abff;
+          --editor-accent-hover: #33bcff;
+          --editor-accent-pressed: #0089cc;
+          --editor-accent-soft: #003d5c;
+          --editor-background: #080b0f;
+          --editor-surface: #10151c;
+          --editor-surface-hover: #17202a;
+          --editor-border: #26313d;
+          --editor-text: #f5f8fa;
+          --editor-text-secondary: #9aa8b5;
+          --editor-text-muted: #657483;
+          --editor-success: #22c55e;
+          color-scheme: dark;
+          background: var(--editor-background);
+          border: 1px solid var(--editor-border);
+          border-radius: 5px;
+          color: var(--editor-text);
           font-family: var(--font-code);
           font-size: 13px;
           line-height: 1.65;
@@ -342,9 +371,9 @@ export default function HeroCodeEditor() {
         .hero-code-editor__titlebar,
         .hero-code-editor__status {
           align-items: center;
-          background: #181818;
-          border-color: #333333;
-          color: #d4d4d4;
+          background: var(--editor-surface);
+          border-color: var(--editor-border);
+          color: var(--editor-text);
           display: flex;
           position: relative;
           z-index: 2;
@@ -362,8 +391,8 @@ export default function HeroCodeEditor() {
 
         .hero-code-editor__workspace {
           align-items: center;
-          border-bottom: 1px solid #333333;
-          color: #9d9d9d;
+          border-bottom: 1px solid var(--editor-border);
+          color: var(--editor-text-secondary);
           display: flex;
           font-size: 10px;
           font-weight: 700;
@@ -385,15 +414,15 @@ export default function HeroCodeEditor() {
           align-items: center;
           background: transparent;
           border: 0;
-          border-right: 1px solid #333333;
+          border-right: 1px solid var(--editor-border);
           border-radius: 0;
-          color: #858585;
+          color: var(--editor-text-muted);
           cursor: pointer;
           display: inline-flex;
           flex: 0 1 auto;
           font: inherit;
           font-weight: 700;
-          min-height: 38px;
+          min-height: 44px;
           min-width: 0;
           padding: 0 16px;
           text-align: left;
@@ -404,30 +433,30 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__tab:hover {
-          background: #2d2d2d;
-          border-color: #3e3e42;
-          color: #ffffff;
+          background: var(--editor-surface-hover);
+          border-color: var(--editor-border);
+          color: var(--editor-text);
         }
 
         .hero-code-editor__tab:focus-visible {
-          box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.45);
+          box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--editor-accent) 52%, transparent);
           outline: none;
         }
 
         .hero-code-editor__tab[data-active="true"] {
-          background: #1e1e1e;
-          border-right: 1px solid #333333;
-          border-bottom: 2px solid #007acc;
-          color: #ffffff;
+          background: var(--editor-background);
+          border-right: 1px solid var(--editor-border);
+          border-bottom: 2px solid var(--editor-accent);
+          color: var(--editor-text);
         }
 
         .hero-code-editor__body {
-          background: #1e1e1e;
+          background: var(--editor-background);
           height: 340px;
           overflow-x: auto;
           overflow-y: auto;
           padding: 18px 0;
-          scrollbar-color: #424242 #1e1e1e;
+          scrollbar-color: var(--editor-border) var(--editor-background);
           scrollbar-gutter: stable;
           scrollbar-width: thin;
           position: relative;
@@ -435,8 +464,8 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__body::-webkit-scrollbar { width: 8px; height: 8px; }
-        .hero-code-editor__body::-webkit-scrollbar-track { background: #1e1e1e; }
-        .hero-code-editor__body::-webkit-scrollbar-thumb { background: #424242; border-radius: 999px; }
+        .hero-code-editor__body::-webkit-scrollbar-track { background: var(--editor-background); }
+        .hero-code-editor__body::-webkit-scrollbar-thumb { background: var(--editor-border); border-radius: 999px; }
 
         .hero-code-editor__line {
           display: flex;
@@ -445,7 +474,7 @@ export default function HeroCodeEditor() {
           transition: opacity 0.24s ease, transform 0.24s ease, background-color 0.24s ease;
         }
 
-        .hero-code-editor__line[data-current="true"] { background: #2a2d2e; }
+        .hero-code-editor__line[data-current="true"] { background: var(--editor-surface-hover); }
 
         .hero-code-editor__line-number {
           flex-shrink: 0;
@@ -456,7 +485,7 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__code {
-          color: #d4d4d4;
+          color: var(--editor-text);
           flex: 1;
           min-width: max-content;
           overflow: visible;
@@ -465,7 +494,7 @@ export default function HeroCodeEditor() {
 
         .hero-code-editor__cursor {
           animation: cursorBlink 1s step-end infinite;
-          background: #aeafad;
+          background: var(--editor-accent-hover);
           display: inline-block;
           height: 16px;
           margin-left: 1px;
@@ -474,11 +503,11 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__status {
-          background: #007acc;
+          background: var(--editor-accent-pressed);
           border-top-style: solid;
           border-top-width: 1px;
-          border-top-color: #007acc;
-          color: #ffffff;
+          border-top-color: var(--editor-accent-pressed);
+          color: var(--editor-text);
           justify-content: space-between;
           min-height: 38px;
           padding: 0 16px;
@@ -492,15 +521,13 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__ready-dot {
-          background: #23d18b;
+          background: var(--editor-success);
           border-radius: 999px;
-          box-shadow: 0 0 0 3px rgba(35, 209, 139, 0.18);
+          box-shadow: 0 0 0 3px color-mix(in srgb, var(--editor-success) 22%, transparent);
           display: inline-block;
           height: 7px;
           width: 7px;
         }
-
-        .hero-code-editor__status-group > span[style] { display: none; }
 
         @keyframes cursorBlink {
           0%, 100% { opacity: 1; }
@@ -511,7 +538,7 @@ export default function HeroCodeEditor() {
           .hero-code-editor { max-width: 100%; }
           .hero-code-editor__titlebar { min-height: 64px; }
           .hero-code-editor__workspace { font-size: 9px; padding: 0 10px; }
-          .hero-code-editor__tab { min-height: 30px; padding: 0 9px; }
+          .hero-code-editor__tab { min-height: 44px; padding: 0 9px; }
           .hero-code-editor__body { height: 286px; padding: 16px 0; }
           .hero-code-editor__line { padding-right: 14px; }
           .hero-code-editor__line-number { padding-right: 12px; width: 38px; }

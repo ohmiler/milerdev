@@ -24,8 +24,7 @@ export default function MobileNavPanel({
         <div id="mobile-navigation" className="nav-public-mobile-panel" aria-label="เมนูหลัก">
             <div className="nav-mobile-panel-inner">
                 <div className="nav-mobile-panel-header" aria-hidden="true">
-                    <span>NAVIGATION</span>
-                    <small>MILERDEV / TH</small>
+                    <span>ไปที่หน้าต่าง ๆ ของ MilerDev</span>
                 </div>
                 {session && (
                     <div className="nav-mobile-user-summary">
@@ -38,14 +37,13 @@ export default function MobileNavPanel({
                 )}
 
                 <nav className="nav-mobile-link-group nav-mobile-link-group--primary" aria-label="ลิงก์หลัก">
-                    {NAV_LINKS.map(({ href, label }, index) => (
+                    {NAV_LINKS.map(({ href, label }) => (
                         <Link
                             key={href}
                             href={href}
                             onClick={onClose}
                             className={`nav-mobile-link nav-mobile-link--primary${isActive(href) ? ' nav-mobile-link--active' : ''}`}
                         >
-                            <span className="nav-mobile-link-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                             {label}
                         </Link>
                     ))}
