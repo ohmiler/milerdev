@@ -18,6 +18,7 @@
   --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-error: #f43f5e;
+  --color-promo: #c5163a;
 
   /* Compatibility aliases for existing surfaces */
   --background: var(--color-background);
@@ -690,36 +691,78 @@ h1, h2, h3, h4, h5, h6 {
 /* Price Badge */
 .price-badge {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  padding: 0.5rem 1rem;
-  border-radius: 2rem;
+  right: 0;
+  bottom: 0;
+  display: inline-grid;
+  min-height: 52px;
+  grid-template-columns: auto auto;
+  align-items: stretch;
+  padding: 0;
+  border-top: 1px solid rgba(216, 225, 232, 0.9);
+  border-left: 1px solid rgba(216, 225, 232, 0.9);
+  border-radius: 0;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   z-index: 2;
-  box-shadow: 0 3px 8px rgba(16, 32, 51, 0.16);
+  box-shadow: none;
 }
 
 .price-badge.paid {
-  background: white;
-  color: var(--primary-600);
+  color: var(--color-text-primary);
 }
 
 .price-badge.free {
-  background: var(--success);
-  color: white;
+  background: var(--color-accent-soft);
+  color: var(--color-text-primary);
 }
 
 .price-badge.promo {
-  display: flex;
+  background: var(--color-promo);
+  color: #ffffff;
+}
+
+.price-badge.promo .price-badge__label {
+  border-right-color: rgba(255, 255, 255, 0.34);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.price-badge.promo .price-badge__was {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.price-badge__label,
+.price-badge__value,
+.price-badge__prices {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: #f59e0b;
-  color: white;
+}
+
+.price-badge__label {
+  padding: 9px 10px;
+  border-right: 1px solid currentColor;
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.price-badge__value {
+  padding: 9px 12px;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.price-badge__prices {
+  gap: 7px;
+  padding: 9px 12px;
+  white-space: nowrap;
 }
 
 .price-badge__was {
-  opacity: 0.72;
+  color: var(--color-text-muted);
   font-size: 0.75rem;
   text-decoration: line-through;
 }
@@ -731,7 +774,7 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 2;
   padding: 4px 10px;
   border-radius: 6px;
-  background: #f5a524;
+  background: var(--color-promo);
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;

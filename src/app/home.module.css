@@ -466,11 +466,12 @@
 }
 
 .courseGrid :global(.price-badge) {
-  top: 0;
+  top: auto;
   right: 0;
-  min-height: 42px;
-  padding: 10px 13px;
-  border-bottom: 1px solid var(--home-line);
+  bottom: 0;
+  min-height: 48px;
+  padding: 0;
+  border-top: 1px solid var(--home-line);
   border-left: 1px solid var(--home-line);
   font-size: 0.78rem;
   font-weight: 720;
@@ -478,18 +479,39 @@
 
 .courseGrid :global(.price-badge.paid) {
   background: var(--home-white);
-  color: var(--home-blue-deep);
+  color: var(--home-ink);
 }
 
 .courseGrid :global(.price-badge.free) {
-  background: var(--home-blue);
+  background: var(--home-blue-soft);
   color: var(--home-ink);
 }
 
 .courseGrid :global(.price-badge.promo) {
-  gap: 7px;
-  background: var(--color-warning);
-  color: var(--home-ink);
+  background: var(--color-promo);
+  color: var(--home-white);
+}
+
+.courseGrid :global(.price-badge.promo .price-badge__label) {
+  border-right-color: rgba(255, 255, 255, 0.34);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.courseGrid :global(.price-badge.promo .price-badge__was) {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.courseGrid :global(.price-badge__label) {
+  padding: 8px 9px;
+  border-right-color: var(--home-line);
+  color: var(--home-text-muted);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+}
+
+.courseGrid :global(.price-badge__value),
+.courseGrid :global(.price-badge__prices) {
+  padding: 8px 11px;
 }
 
 .courseGrid :global(.price-badge__was) {
@@ -501,7 +523,7 @@
   top: 0;
   left: 0;
   padding: 8px 10px;
-  background: var(--home-ink);
+  background: var(--color-promo);
   color: var(--home-white);
   font-size: 0.7rem;
 }
@@ -729,18 +751,7 @@
   padding: clamp(76px, 9vw, 126px) 0;
   overflow: hidden;
   background: var(--home-blue);
-  color: var(--home-ink);
-}
-
-.closing::before {
-  position: absolute;
-  top: 0;
-  right: 8%;
-  width: 18%;
-  height: 100%;
-  background: var(--home-blue-deep);
-  content: '';
-  transform: skewX(-10deg);
+  color: var(--home-white);
 }
 
 .closingInner {
@@ -754,7 +765,7 @@
 .closing h2 {
   max-width: 12ch;
   margin: 0;
-  color: var(--home-ink);
+  color: var(--home-white);
   font-size: clamp(3rem, 6.4vw, 7rem);
   font-weight: 780;
   letter-spacing: -0.06em;
@@ -765,7 +776,7 @@
 .closing p {
   max-width: 52ch;
   margin: 22px 0 0;
-  color: color-mix(in srgb, var(--home-ink) 76%, transparent);
+  color: color-mix(in srgb, var(--home-white) 84%, transparent);
   line-height: 1.78;
 }
 
@@ -781,8 +792,8 @@
 }
 
 .closing .secondaryAction {
-  border-color: color-mix(in srgb, var(--home-ink) 45%, transparent);
-  color: var(--home-ink);
+  border-color: color-mix(in srgb, var(--home-white) 62%, transparent);
+  color: var(--home-white);
 }
 
 @media (max-width: 1040px) {
@@ -869,11 +880,6 @@
   .proofImage img {
     min-height: 0;
     aspect-ratio: 16 / 9;
-  }
-
-  .closing::before {
-    right: -8%;
-    width: 30%;
   }
 
   .closingActions {
@@ -998,14 +1004,6 @@
 
   .clientName {
     font-size: 0.68rem;
-  }
-
-  .closing::before {
-    top: auto;
-    right: -14%;
-    bottom: 0;
-    width: 56%;
-    height: 26%;
   }
 
   .closing h2 {

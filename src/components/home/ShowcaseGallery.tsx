@@ -87,7 +87,7 @@ export default function ShowcaseGallery() {
           </header>
 
           <div className="showcase-contact-sheet" aria-label="ภาพบรรยากาศจากงานบรรยาย MilerDev">
-            {SHOWCASE_IMAGES.slice(0, 3).map((img, i) => (
+            {SHOWCASE_IMAGES.slice(0, 5).map((img, i) => (
               <button
                 key={img.src}
                 onClick={() => openLightbox(i)}
@@ -166,11 +166,13 @@ export default function ShowcaseGallery() {
             display: grid;
             grid-template-columns: repeat(12, minmax(0, 1fr));
             grid-auto-flow: dense;
+            align-items: start;
             gap: 14px;
           }
           .showcase-card {
             display: grid;
-            grid-column: span 4;
+            grid-column: span 3;
+            align-content: start;
             min-width: 0;
             overflow: hidden;
             padding: 0;
@@ -184,12 +186,17 @@ export default function ShowcaseGallery() {
             transition: transform 180ms ease-out, border-color 180ms ease-out;
           }
           .showcase-card:first-child {
-            grid-column: span 7;
+            grid-column: span 6;
             grid-row: span 2;
+            grid-template-rows: minmax(0, 1fr) auto;
+            align-self: stretch;
+            align-content: stretch;
           }
           .showcase-card:nth-child(2),
-          .showcase-card:nth-child(3) {
-            grid-column: span 5;
+          .showcase-card:nth-child(3),
+          .showcase-card:nth-child(4),
+          .showcase-card:nth-child(5) {
+            grid-column: span 3;
           }
           .showcase-card:hover {
             z-index: 1;
@@ -209,8 +216,8 @@ export default function ShowcaseGallery() {
             background: var(--color-surface-hover);
           }
           .showcase-card:first-child .showcase-card-media {
+            min-height: 0;
             aspect-ratio: auto;
-            min-height: 100%;
           }
           .showcase-card-img {
             display: block;
@@ -238,7 +245,9 @@ export default function ShowcaseGallery() {
             .showcase-card,
             .showcase-card:first-child,
             .showcase-card:nth-child(2),
-            .showcase-card:nth-child(3) {
+            .showcase-card:nth-child(3),
+            .showcase-card:nth-child(4),
+            .showcase-card:nth-child(5) {
               grid-column: span 1;
               grid-row: auto;
             }

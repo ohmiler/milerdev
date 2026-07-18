@@ -76,16 +76,25 @@ export default function CourseCard({
                     </span>
                 )}
 
-                {/* Price Badge - Top Right */}
+                {/* Price marker — anchored to the thumbnail boundary */}
                 {displayPrice === 0 ? (
-                    <span className="price-badge free">ฟรี</span>
+                    <span className="price-badge free">
+                        <span className="price-badge__label">ราคา</span>
+                        <span className="price-badge__value">ฟรี</span>
+                    </span>
                 ) : showOriginalPrice ? (
                     <span className="price-badge promo">
-                        <span className="price-badge__was">฿{price.toLocaleString()}</span>
-                        <span style={{ fontWeight: 700 }}>฿{displayPrice.toLocaleString()}</span>
+                        <span className="price-badge__label">ราคาพิเศษ</span>
+                        <span className="price-badge__prices">
+                            <span className="price-badge__was">฿{price.toLocaleString()}</span>
+                            <span className="price-badge__value">฿{displayPrice.toLocaleString()}</span>
+                        </span>
                     </span>
                 ) : (
-                    <span className="price-badge paid">฿{displayPrice.toLocaleString()}</span>
+                    <span className="price-badge paid">
+                        <span className="price-badge__label">ราคา</span>
+                        <span className="price-badge__value">฿{displayPrice.toLocaleString()}</span>
+                    </span>
                 )}
             </div>
 

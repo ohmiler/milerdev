@@ -44,6 +44,7 @@ Public UI ใช้ light mode เป็นค่าเริ่มต้น แ
 |---|---:|---|
 | `success` | `#22C55E` | สำเร็จ ออนไลน์ หรือผ่าน |
 | `warning` | `#F59E0B` | คำเตือนหรือสิ่งที่ต้องตรวจสอบ |
+| `promo` | `#C5163A` | ราคาพิเศษ โปรโมชัน และส่วนลดที่กำลังใช้งาน |
 | `error` | `#F43F5E` | Error การลบ หรือสถานะอันตราย |
 
 ## CSS Variables
@@ -68,6 +69,7 @@ Public UI ใช้ light mode เป็นค่าเริ่มต้น แ
 
   --color-success: #22c55e;
   --color-warning: #f59e0b;
+  --color-promo: #c5163a;
   --color-error: #f43f5e;
 }
 

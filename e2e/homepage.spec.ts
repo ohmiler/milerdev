@@ -25,7 +25,7 @@ test.describe('public homepage', () => {
     await page.goto('/');
 
     const gallery = page.getByRole('region', { name: 'การสอนที่เกิดขึ้นนอกหน้าจอ' });
-    await expect(gallery.getByRole('button')).toHaveCount(3);
+    await expect(gallery.getByRole('button')).toHaveCount(5);
     const firstImage = gallery.getByRole('button').first();
 
     await firstImage.focus();
