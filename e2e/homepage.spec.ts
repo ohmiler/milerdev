@@ -5,6 +5,11 @@ test.describe('public homepage', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
+    const navbar = page.getByRole('navigation', { name: 'เมนูหลัก' });
+    const brandLockup = navbar.locator('.nav-brand-lockup');
+    await expect(brandLockup).not.toContainText('เรียนโค้ดออนไลน์');
+    await expect.poll(() => brandLockup.evaluate((brand) => getComputedStyle(brand, '::after').content)).toBe('none');
+
     const hasHorizontalOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
     );

@@ -84,7 +84,6 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     <Image src="/milerdev-logo-transparent.png" alt="MilerDev" width={36} height={36} className="nav-brand-logo" />
                     <span className="nav-brand-copy">
                         <strong>MilerDev</strong>
-                        <small>เรียนโค้ดออนไลน์</small>
                     </span>
                 </Link>
 
@@ -197,22 +196,9 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     color: var(--ink);
                     text-decoration: none;
                 }
-                .nav-brand-lockup::after {
-                    position: absolute;
-                    right: -1px;
-                    bottom: -1px;
-                    width: 1px;
-                    height: 0;
-                    background: var(--accent);
-                    content: '';
-                    transition: height 180ms ease-out;
-                }
-                .nav-brand-lockup:hover::after,
-                .nav-brand-lockup--active::after { height: 24px; }
                 .nav-brand-logo { width: 34px; height: 34px; }
                 .nav-brand-copy { display: flex; align-items: flex-start; flex-direction: column; gap: 4px; }
                 .nav-brand-copy strong { font-size: 1.14rem; font-weight: 760; line-height: 1; letter-spacing: -0.035em; transition: color 160ms ease; }
-                .nav-brand-copy small { color: var(--ink-subtle); font-size: 0.65rem; font-weight: 650; line-height: 1; letter-spacing: 0.04em; }
                 .nav-brand-lockup:hover .nav-brand-copy strong { color: var(--accent-strong); }
                 .nav-public-links {
                     align-self: stretch;
@@ -379,19 +365,16 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     .nav-public-rail { column-gap: 16px; }
                     .nav-public-links { gap: 16px; }
                     .nav-public-auth-link svg { display: none; }
-                    .nav-brand-copy small { display: none; }
                 }
                 @media (max-width: 840px) {
                     .nav-public-rail { display: flex; width: min(calc(100% - 36px), 1280px); min-height: 68px; justify-content: space-between; gap: 12px; }
                     .nav-brand-lockup { min-height: 68px; padding-right: 0; border-right: 0; }
-                    .nav-brand-lockup::after { right: auto; bottom: -1px; left: 0; width: 40px; height: 3px; }
                     .nav-public-links, .nav-public-actions { display: none; }
                     .nav-mobile-btn { display: inline-flex; }
                 }
                 @media (max-width: 620px) {
                     .nav-public-rail,
                     .nav-mobile-panel-inner { width: min(calc(100% - 28px), 1280px); }
-                    .nav-brand-copy small { display: none; }
                 }
                 @media (min-width: 841px) { .nav-public-mobile-panel { display: none; } }
                 @media (prefers-reduced-motion: reduce) {
