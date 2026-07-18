@@ -120,7 +120,7 @@ export default async function HomePage() {
       <main className={styles.page}>
         <section className={styles.hero} aria-labelledby="home-hero-title">
           <div className={[styles.shell, styles.heroLayout].join(' ')}>
-            <div className={styles.heroCopy}>
+            <div className={styles.heroCopy} data-hero-copy>
               <p className={styles.heroKicker}>พื้นที่เรียนโค้ดที่เริ่มจากความเข้าใจ</p>
               <h1 id="home-hero-title" className={styles.heroTitle}>
                 เรียนให้เห็นภาพ
@@ -140,7 +140,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className={styles.heroStage}>
+            <div className={styles.heroStage} data-hero-editor>
               <div className={styles.codeEvidence}>
                 <HeroCodeEditor />
               </div>

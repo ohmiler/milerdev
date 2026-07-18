@@ -28,17 +28,46 @@ test.describe('public homepage', () => {
     await expect(page.locator('#mobile-navigation a[href="/courses"]')).toBeVisible();
   });
 
-  test('connects code to a demo result and preserves manual tab control', async ({ page }) => {
+  test('presents a full editor workspace and preserves manual tab control', async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto('/');
 
-    const editor = page.getByLabel('ตัวอย่างจำลองจากโค้ดสู่ผลลัพธ์ของ MilerDev');
-    await expect(editor.getByRole('region', { name: 'ผลลัพธ์ตัวอย่างจากโค้ด' })).toContainText('ตัวอย่างจำลอง');
+    const editor = page.getByLabel('ตัวอย่างพื้นที่เขียนโค้ดของ MilerDev');
+    const heroTracks = await page.locator('[aria-labelledby="home-hero-title"]').evaluate((hero) => {
+      const copy = hero.querySelector<HTMLElement>('[data-hero-copy]');
+      const stage = hero.querySelector<HTMLElement>('[data-hero-editor]');
+      const editorSurface = hero.querySelector<HTMLElement>('.hero-code-editor');
+
+      if (!copy || !stage || !editorSurface) throw new Error('Hero tracks are missing');
+
+      const copyRect = copy.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      const editorRect = editorSurface.getBoundingClientRect();
+
+      return {
+        trackDelta: Math.abs(copyRect.width - stageRect.width),
+        contentHeightDelta: Math.abs(copyRect.height - editorRect.height),
+        editorWidthDelta: Math.abs(stageRect.width - editorRect.width),
+        editorHeightDelta: Math.abs(stageRect.height - editorRect.height),
+      };
+    });
+    expect(heroTracks.trackDelta).toBeLessThanOrEqual(1);
+    expect(heroTracks.contentHeightDelta).toBeLessThanOrEqual(1);
+    expect(heroTracks.editorWidthDelta).toBeLessThanOrEqual(1);
+    expect(heroTracks.editorHeightDelta).toBeLessThanOrEqual(1);
+
+    await expect(editor.getByRole('tab')).toHaveCount(3);
+    await expect(editor).not.toContainText('RESULT');
 
     await editor.hover();
-    await expect(editor).toHaveAttribute('data-playback', 'paused');
-
-    await page.getByRole('heading', { level: 1 }).hover();
     await expect(editor).toHaveAttribute('data-playback', 'auto');
+    await expect(editor.locator('.hero-code-editor__cursor')).toBeVisible();
+    const cursorPosition = editor.locator('.hero-code-editor__status-group').first();
+    await expect(cursorPosition).toHaveText(/Ln \d+, Col \d+/);
+    const initialPosition = await cursorPosition.textContent();
+    await expect.poll(() => cursorPosition.textContent()).not.toBe(initialPosition);
+    await expect(editor.locator('.hero-code-editor__status')).toHaveCSS('background-color', 'rgb(0, 137, 204)');
 
     const htmlTab = editor.getByRole('tab', { name: 'index.html' });
     const cssTab = editor.getByRole('tab', { name: 'styles.css' });
@@ -49,7 +78,13 @@ test.describe('public homepage', () => {
     await expect(cssTab).toHaveAttribute('aria-selected', 'true');
     await expect(editor).toHaveAttribute('data-playback', 'manual');
     await expect(editor.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'hero-code-tab-css');
-    await expect(editor.locator('.hero-code-editor__preview-focus')).toContainText('PRESENTATION');
+
+    await page.getByRole('heading', { level: 1 }).click();
+    await expect(editor).toHaveAttribute('data-playback', 'auto');
+    await expect(editor.locator('.hero-code-editor__cursor')).toBeVisible();
+    const jsTab = editor.getByRole('tab', { name: 'app.js' });
+    await expect(jsTab).toHaveAttribute('aria-selected', 'true', { timeout: 15_000 });
+    await expect(htmlTab).toHaveAttribute('aria-selected', 'true', { timeout: 30_000 });
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await expect(editor).toHaveAttribute('data-playback', 'reduced');

@@ -3,15 +3,21 @@ import { describe, expect, it } from 'vitest';
 import HeroCodeEditor from '@/components/home/HeroCodeEditor';
 
 describe('HeroCodeEditor product evidence', () => {
-  it('labels the illustrative code-to-result demo and exposes a linked tab panel', () => {
+  it('renders a tabs-only editor without explorer or result preview chrome', () => {
     const html = renderToStaticMarkup(<HeroCodeEditor />);
 
     expect(html).toContain('data-playback="auto"');
-    expect(html).toContain('ตัวอย่างจำลองจากโค้ดสู่ผลลัพธ์ของ MilerDev');
-    expect(html).toContain('ผลลัพธ์ตัวอย่างจากโค้ด');
+    expect(html).toContain('ตัวอย่างพื้นที่เขียนโค้ดของ MilerDev');
     expect(html).toContain('DEMO');
-    expect(html).toContain('RESULT');
-    expect(html).toContain('STRUCTURE');
+    expect(html).not.toContain('EXPLORER');
+    expect(html).not.toContain('โครงสร้างไฟล์ตัวอย่าง');
+    expect(html).not.toContain('hero-code-editor__activity');
+    expect(html).not.toContain('hero-code-editor__explorer');
+    expect(html).not.toContain('RESULT');
+    expect(html).not.toContain('hero-code-editor__preview');
+    expect(html).toContain('Ln 1, Col 1');
+    expect(html).not.toContain('Auto typing');
+    expect(html).not.toMatch(/Ln \(\d+\)|Col \(\d+\)/);
     expect(html.match(/role="tab"/g)).toHaveLength(3);
     expect(html).toContain('role="tabpanel"');
     expect(html).toContain('aria-controls="hero-code-panel"');

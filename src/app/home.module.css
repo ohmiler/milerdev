@@ -24,42 +24,26 @@
 .hero {
   position: relative;
   isolation: isolate;
-  padding: clamp(72px, 8vw, 124px) 0 clamp(112px, 12vw, 168px);
+  padding: clamp(64px, 7vw, 96px) 0;
   background: var(--home-paper);
-}
-
-.hero::before {
-  position: absolute;
-  z-index: -1;
-  top: 0;
-  right: 0;
-  width: min(28vw, 420px);
-  height: min(28vw, 420px);
-  background: var(--home-blue-soft);
-  content: '';
-}
-
-.hero::after {
-  position: absolute;
-  z-index: 2;
-  right: 0;
-  bottom: 0;
-  width: 36%;
-  height: 14px;
-  background: var(--home-blue);
-  content: '';
 }
 
 .heroLayout {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(42px, 5vw, 72px) clamp(26px, 4vw, 58px);
-  align-items: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  align-items: stretch;
+  min-height: 0;
+  width: min(calc(100% - 48px), 1480px);
 }
 
 .heroCopy {
-  grid-column: 1 / 7;
+  display: flex;
+  grid-column: 1;
+  flex-direction: column;
+  justify-content: center;
   min-width: 0;
+  padding: 0 clamp(42px, 5vw, 78px) 0 0;
 }
 
 .heroKicker {
@@ -185,37 +169,18 @@
 
 .heroStage {
   position: relative;
-  grid-column: 7 / 13;
+  display: flex;
+  grid-column: 2;
   min-width: 0;
-  padding: clamp(48px, 5vw, 68px) 0 clamp(34px, 4vw, 52px) clamp(24px, 3vw, 42px);
-}
-
-.heroStage::before {
-  position: absolute;
-  inset: 0 7% 0 0;
-  background: var(--home-blue-soft);
-  clip-path: polygon(0 0, 91% 0, 100% 13%, 100% 100%, 0 100%);
-  content: '';
-}
-
-.heroStage::after {
-  position: absolute;
-  top: 22px;
-  left: 0;
-  width: 76px;
-  height: 4px;
-  background: var(--home-blue);
-  content: '';
+  min-height: 0;
 }
 
 .codeEvidence {
+  display: flex;
   position: relative;
   z-index: 1;
   min-width: 0;
-}
-
-.codeEvidence :global(.hero-code-editor) {
-  box-shadow: 0 30px 70px color-mix(in srgb, var(--home-ink) 24%, transparent);
+  width: 100%;
 }
 
 .section {
@@ -894,14 +859,6 @@
     font-size: clamp(3.7rem, 6.8vw, 6.2rem);
   }
 
-  .heroLayout {
-    gap-inline: 28px;
-  }
-
-  .heroStage {
-    padding-left: 20px;
-  }
-
   .clientCloud {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -918,21 +875,18 @@
     width: min(calc(100% - 36px), 1280px);
   }
 
-  .hero {
-    padding-top: 58px;
-  }
-
-  .hero::before {
-    width: 25vw;
-    height: 25vw;
-  }
-
   .heroCopy {
     grid-column: 1;
+    padding: 0 0 52px;
+  }
+
+  .hero {
+    padding: 58px 0 72px;
   }
 
   .heroLayout {
     grid-template-columns: 1fr;
+    min-height: 0;
   }
 
   .heroStage {
@@ -949,9 +903,8 @@
   }
 
   .heroStage {
-    width: min(94%, 700px);
-    margin-left: auto;
-    padding: 52px 0 40px 30px;
+    min-height: 560px;
+    width: 100%;
   }
 
   .sectionIntro,
@@ -985,18 +938,7 @@
   }
 
   .hero {
-    padding: 44px 0 76px;
-  }
-
-  .hero::before {
-    top: 18px;
-    width: 84px;
-    height: 84px;
-  }
-
-  .hero::after {
-    width: 58%;
-    height: 9px;
+    padding: 44px 0 58px;
   }
 
   .heroKicker {
@@ -1028,21 +970,16 @@
   }
 
   .heroLayout {
-    gap: 32px;
+    gap: 0;
   }
 
   .heroStage {
     width: 100%;
-    padding: 36px 0 24px 14px;
+    min-height: 470px;
   }
 
-  .heroStage::before {
-    right: 4%;
-  }
-
-  .heroStage::after {
-    top: 18px;
-    width: 56px;
+  .heroCopy {
+    padding: 0 0 36px;
   }
 
   .section {
