@@ -9,6 +9,8 @@ test.describe('public homepage', () => {
     const brandLockup = navbar.locator('.nav-brand-lockup');
     await expect(brandLockup).not.toContainText('เรียนโค้ดออนไลน์');
     await expect.poll(() => brandLockup.evaluate((brand) => getComputedStyle(brand, '::after').content)).toBe('none');
+    const courseGrid = page.locator('#featured-courses [data-count]');
+    await expect.poll(() => courseGrid.evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length)).toBe(1);
 
     const hasHorizontalOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -31,6 +33,9 @@ test.describe('public homepage', () => {
     await menuButton.click();
     await expect(page.locator('#mobile-navigation')).toBeVisible();
     await expect(page.locator('#mobile-navigation a[href="/courses"]')).toBeVisible();
+
+    await page.setViewportSize({ width: 768, height: 900 });
+    await expect.poll(() => courseGrid.evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length)).toBe(2);
   });
 
   test('presents a full editor workspace and preserves manual tab control', async ({ page }) => {
@@ -61,6 +66,11 @@ test.describe('public homepage', () => {
     expect(heroTracks.contentHeightDelta).toBeLessThanOrEqual(1);
     expect(heroTracks.editorWidthDelta).toBeLessThanOrEqual(1);
     expect(heroTracks.editorHeightDelta).toBeLessThanOrEqual(1);
+
+    const featuredCourseColumns = await page.locator('#featured-courses [data-count]').evaluate(
+      (grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+    );
+    expect(featuredCourseColumns).toBe(4);
 
     await expect(editor.getByRole('tab')).toHaveCount(3);
     await expect(editor).not.toContainText('RESULT');
