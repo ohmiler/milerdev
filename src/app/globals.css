@@ -700,6 +700,49 @@ h1, h2, h3, h4, h5, h6 {
   color: rgba(255, 255, 255, 0.62);
 }
 
+.course-thumbnail--empty {
+  background: var(--surface-subtle);
+  color: var(--ink);
+}
+
+.course-thumbnail--empty::before {
+  opacity: 0.72;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.course-thumbnail__fallback {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: min(78%, 440px);
+  gap: 10px;
+  padding-left: 16px;
+  border-left: 4px solid var(--accent);
+  text-align: left;
+}
+
+.course-thumbnail__fallback span,
+.course-thumbnail__fallback small {
+  color: var(--accent-strong);
+  font: 700 0.67rem/1.4 var(--font-code);
+  letter-spacing: 0.06em;
+}
+
+.course-thumbnail__fallback strong {
+  max-width: 22ch;
+  color: var(--ink);
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  line-height: 1.25;
+}
+
+.course-thumbnail__fallback small {
+  color: var(--ink-muted);
+  font-size: 0.58rem;
+}
+
 .course-thumbnail::before {
   content: '';
   position: absolute;
@@ -1495,6 +1538,9 @@ h1, h2, h3, h4, h5, h6 {
 .courses-filter__actions{display:flex;gap:8px}.courses-filter__actions button,.courses-filter__actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 16px;border-radius:var(--radius-sm);font-size:.875rem;font-weight:700;text-decoration:none;white-space:nowrap}.courses-filter__actions button{border:1px solid var(--accent-strong);background:var(--accent);color:#062438;cursor:pointer}.courses-filter__actions a{border:1px solid var(--line-strong);color:var(--ink-soft)}
 .courses-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line);border-left:1px solid var(--line)}
 .courses-grid .course-card{min-width:0;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;box-shadow:none}.courses-grid .course-card:hover{transform:none;background:var(--accent-soft);border-color:var(--line);box-shadow:none}.courses-grid .course-thumbnail{border-radius:0;border-bottom:1px solid var(--line)}.courses-grid .course-card__content{padding:20px}.courses-grid .cc-cta{justify-content:flex-start;padding:0;border:0;background:transparent;box-shadow:none;color:var(--accent-strong)}.courses-grid .course-card:hover .cc-cta{border:0;background:transparent;box-shadow:none;color:var(--accent-strong)}
+.courses-grid .course-card__meta{flex-direction:column;align-items:stretch;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
+.courses-grid .course-card__facts{gap:7px 12px}
+.courses-grid .course-card__instructor{overflow:visible;color:var(--ink-muted);text-overflow:clip;white-space:normal}
 .courses-empty{padding:72px 24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center}.courses-empty__code{color:var(--accent-strong)!important;font:600 .75rem/1.5 var(--font-code)!important;text-transform:uppercase}.courses-empty h3{margin:8px 0;font-size:1.5rem}.courses-empty p{margin:0 0 20px;color:var(--ink-muted);line-height:1.7}.courses-empty a{color:var(--accent-strong);font-weight:700}
 .courses-pagination{display:flex;justify-content:center;align-items:center;gap:16px;margin-top:48px}.courses-pagination a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:1px solid var(--line);color:var(--ink-soft);text-decoration:none}.courses-pagination__pages{display:flex}.courses-pagination__pages a+.courses-pagination__pages a{margin-left:-1px}.courses-pagination__pages .is-active{position:relative;border-color:var(--accent);background:var(--accent);color:#062438;font-weight:700}.courses-pagination__direction{padding:0 16px}.courses-pagination a:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 @media(max-width:1023px){.courses-hero__index{grid-column:1/4}.courses-hero h1{grid-column:4/13}.courses-hero__lede{grid-column:4/11;margin-top:8px}.courses-bundle{grid-template-columns:1fr 2.2fr 1.5fr auto}.courses-bundle__courses{display:none}.courses-filter{grid-template-columns:2fr repeat(3,1fr)}.courses-filter__actions{grid-column:1/-1}.courses-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

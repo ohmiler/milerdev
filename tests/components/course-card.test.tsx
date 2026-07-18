@@ -41,4 +41,19 @@ describe('CourseCard decision evidence', () => {
     expect(html).not.toContain('สอนโดย');
     expect(html).toContain('ดูรายละเอียดคอร์ส');
   });
+
+  it('uses existing course data for missing media without implying a real thumbnail', () => {
+    const html = renderToStaticMarkup(
+      <CourseCard
+        {...baseProps}
+        tags={[{ id: 'tag-1', name: 'React', slug: 'react' }]}
+      />,
+    );
+
+    expect(html).toContain('course-thumbnail--empty');
+    expect(html).toContain('course-thumbnail__fallback');
+    expect(html).toContain('COURSE / REACT');
+    expect(html).toContain('React &amp; Next.js Masterclass');
+    expect(html).not.toContain('course-thumbnail__placeholder');
+  });
 });

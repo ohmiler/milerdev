@@ -227,12 +227,12 @@ export default async function HomePage() {
           <div className={styles.shell}>
             <div className={styles.proofLead}>
               <div>
-                <p className={styles.sectionLabel}>จากประสบการณ์สอน สู่บทเรียนออนไลน์</p>
-                <h2 id="teaching-proof-title" className={styles.proofTitle}>บทเรียนที่กลั่นจากห้องเรียน เวิร์กช็อป และงานจริง</h2>
+                <p className={styles.sectionLabel}>จากประสบการณ์จริง สู่โครงสร้างบทเรียน</p>
+                <h2 id="teaching-proof-title" className={styles.proofTitle}>เปลี่ยนสิ่งที่อธิบายในห้องเรียน ให้เป็นลำดับที่กลับมาทบทวนได้</h2>
               </div>
               <p className={styles.sectionCopy}>
-                ประสบการณ์สอน Web Development, AI และเส้นทางอาชีพ Developer
-                ถูกนำมาจัดลำดับใหม่ให้เห็นภาพ เข้าใจเหตุผล และลงมือทำตามได้
+                ประสบการณ์สอน Web Development, AI และเส้นทางอาชีพ Developer ช่วยให้เห็นว่าผู้เรียนติดตรงไหน
+                ก่อนนำมาเรียงใหม่เป็นภาพรวม เหตุผล และขั้นลงมือทำ
               </p>
             </div>
 
@@ -250,8 +250,12 @@ export default async function HomePage() {
 
               <div className={styles.proofNote}>
                 <span>FROM FIELD TO LESSON</span>
-                <strong>เริ่มจากความเข้าใจ แล้วค่อยเปลี่ยนแนวคิดให้เป็นโค้ด</strong>
-                <p>ไม่ว่าจะเป็นเวิร์กช็อป ห้องเรียน หรือบทเรียนออนไลน์ เป้าหมายยังเหมือนเดิม—ให้ผู้เรียนกลับไปสร้างต่อได้ด้วยตัวเอง</p>
+                <strong>เห็นภาพรวม เข้าใจเหตุผล แล้วลงมือทำตามได้</strong>
+                <ul className={styles.proofSteps} aria-label="ลำดับการเปลี่ยนประสบการณ์สอนเป็นบทเรียน">
+                  <li><span>01</span> ภาพรวมของสิ่งที่จะสร้าง</li>
+                  <li><span>02</span> เหตุผลที่โค้ดทำงาน</li>
+                  <li><span>03</span> ขั้นลงมือทำที่กลับมาทบทวนได้</li>
+                </ul>
               </div>
             </div>
 

@@ -429,12 +429,21 @@
     display: none;
   }
 
+  .body {
+    display: block;
+    min-height: 0;
+  }
+
+  .lessonRail {
+    display: none;
+  }
+
   .previewLabel {
     min-width: 76px;
   }
 
   .stage {
-    padding: 18px 14px;
+    padding: 16px 14px;
   }
 
   .stageHeading {
@@ -446,29 +455,43 @@
   }
 
   .videoStage {
-    min-height: 300px;
+    min-height: 220px;
   }
 
   .videoCaption {
+    display: block;
+  }
+
+  .videoCaption span {
+    display: none;
+  }
+
+  .checkpoint {
+    grid-template-columns: minmax(0, 1fr) 112px;
+  }
+
+  .progressBlock {
+    border-right: 1px solid var(--workspace-line);
+    border-bottom: 0;
+    padding: 16px;
+  }
+
+  .progressCopy {
     display: grid;
     gap: 5px;
   }
 
-  .videoCaption span {
-    text-align: left;
-  }
-
-  .checkpoint {
-    grid-template-columns: 1fr;
-  }
-
-  .progressBlock {
-    border-right: 0;
-    border-bottom: 1px solid var(--workspace-line);
+  .progressBlock small {
+    display: none;
   }
 
   .nextAction {
-    min-height: 112px;
+    min-height: 0;
+    padding: 16px 12px;
+  }
+
+  .nextAction strong {
+    max-width: 9ch;
   }
 
   .statusbar span:last-child {

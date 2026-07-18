@@ -83,17 +83,35 @@ const languageLabels: Record<string, string> = {
   js: 'JavaScript',
 };
 
+const previewDetails: Record<string, { eyebrow: string; label: string }> = {
+  html: { eyebrow: 'STRUCTURE', label: 'วางโครงเนื้อหาให้เป็นลำดับ' },
+  css: { eyebrow: 'PRESENTATION', label: 'เปลี่ยนโครงสร้างให้เป็นหน้าที่อ่านง่าย' },
+  js: { eyebrow: 'INTERACTION', label: 'เชื่อมปุ่มเข้ากับการเริ่มเรียน' },
+};
+
 export default function HeroCodeEditor() {
   const [snippetIndex, setSnippetIndex] = useState(0);
   const [visibleLines, setVisibleLines] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isPointerInside, setIsPointerInside] = useState(false);
+  const [isFocusWithin, setIsFocusWithin] = useState(false);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const codeBodyRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const snippet = codeSnippets[snippetIndex];
   const totalLines = snippet.lines.length;
+  const preview = previewDetails[snippet.lang];
+  const isPlaybackPaused = prefersReducedMotion || isPointerInside || isFocusWithin || hasUserInteracted;
+  const playbackState = prefersReducedMotion
+    ? 'reduced'
+    : hasUserInteracted
+      ? 'manual'
+      : isPlaybackPaused
+        ? 'paused'
+        : 'auto';
 
   const getLineText = useCallback((line: CodeLine): string => {
     return line.tokens.map((t) => t.text).join('');
@@ -109,10 +127,14 @@ export default function HeroCodeEditor() {
     return () => media.removeEventListener('change', syncPreference);
   }, []);
 
-  const activateSnippet = useCallback((nextIndex: number) => {
+  const activateSnippet = useCallback((nextIndex: number, userInitiated = false) => {
     setSnippetIndex(nextIndex);
 
-    if (prefersReducedMotion) {
+    if (userInitiated) {
+      setHasUserInteracted(true);
+    }
+
+    if (prefersReducedMotion || userInitiated) {
       setVisibleLines(codeSnippets[nextIndex].lines.length);
       setCharIndex(0);
       setIsTyping(false);
@@ -125,7 +147,6 @@ export default function HeroCodeEditor() {
   }, [prefersReducedMotion]);
 
   const renderedVisibleLines = prefersReducedMotion ? totalLines : visibleLines;
-  const renderedCharIndex = prefersReducedMotion ? 0 : charIndex;
   const renderedIsTyping = !prefersReducedMotion && isTyping;
 
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -138,7 +159,7 @@ export default function HeroCodeEditor() {
     if (nextIndex === null) return;
 
     event.preventDefault();
-    activateSnippet(nextIndex);
+    activateSnippet(nextIndex, true);
     tabRefs.current[nextIndex]?.focus();
   };
 
@@ -148,7 +169,7 @@ export default function HeroCodeEditor() {
 
   // Typing animation
   useEffect(() => {
-    if (prefersReducedMotion) return;
+    if (isPlaybackPaused) return;
     if (!isTyping) return;
 
     if (visibleLines >= totalLines) {
@@ -189,7 +210,7 @@ export default function HeroCodeEditor() {
       setCharIndex((prev) => prev + 1);
     }, speed);
     return () => clearTimeout(timeout);
-  }, [visibleLines, charIndex, isTyping, totalLines, snippet, getLineText, prefersReducedMotion]);
+  }, [visibleLines, charIndex, isTyping, totalLines, snippet, getLineText, isPlaybackPaused]);
 
   const renderLine = (line: CodeLine, lineIdx: number, isCurrentLine: boolean) => {
     const indent = '  '.repeat(line.indent);
@@ -241,12 +262,22 @@ export default function HeroCodeEditor() {
   return (
     <div
       className="hero-code-editor"
-      aria-label="ตัวอย่างโค้ดจากเส้นทางเรียนของ MilerDev"
+      data-playback={playbackState}
+      aria-label="ตัวอย่างจำลองจากโค้ดสู่ผลลัพธ์ของ MilerDev"
+      onPointerEnter={() => setIsPointerInside(true)}
+      onPointerLeave={() => setIsPointerInside(false)}
+      onFocusCapture={() => setIsFocusWithin(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setIsFocusWithin(false);
+        }
+      }}
     >
       {/* Title Bar */}
       <div className="hero-code-editor__titlebar">
-        <div className="hero-code-editor__workspace" aria-hidden="true">
+        <div className="hero-code-editor__workspace">
           <span>MilerDev Project</span>
+          <span className="hero-code-editor__demo">DEMO</span>
         </div>
         <div className="hero-code-editor__tabs" role="tablist" aria-label="ตัวอย่างไฟล์โค้ด">
           {codeSnippets.map((s, i) => (
@@ -255,11 +286,13 @@ export default function HeroCodeEditor() {
               key={i}
               ref={(element) => { tabRefs.current[i] = element; }}
               className="hero-code-editor__tab"
+              id={`hero-code-tab-${s.lang}`}
               data-active={i === snippetIndex}
               role="tab"
               aria-selected={i === snippetIndex}
+              aria-controls="hero-code-panel"
               tabIndex={i === snippetIndex ? 0 : -1}
-              onClick={() => activateSnippet(i)}
+              onClick={() => activateSnippet(i, true)}
               onKeyDown={(event) => handleTabKeyDown(event, i)}
             >
               {s.fileName}
@@ -268,13 +301,15 @@ export default function HeroCodeEditor() {
         </div>
       </div>
 
-      {/* Code Area */}
-      <div
-        ref={codeBodyRef}
-        className="hero-code-editor__body"
-        role="tabpanel"
-        aria-label={snippet.fileName}
-      >
+      <div className="hero-code-editor__canvas">
+        {/* Code Area */}
+        <div
+          id="hero-code-panel"
+          ref={codeBodyRef}
+          className="hero-code-editor__body"
+          role="tabpanel"
+          aria-labelledby={`hero-code-tab-${snippet.lang}`}
+        >
         {snippet.lines.map((line, idx) => {
           const isVisible = idx < renderedVisibleLines || (idx === renderedVisibleLines && renderedIsTyping);
           const isCurrentLine = idx === renderedVisibleLines && renderedIsTyping;
@@ -310,6 +345,26 @@ export default function HeroCodeEditor() {
             </div>
           );
         })}
+        </div>
+
+        <section className="hero-code-editor__preview" aria-label="ผลลัพธ์ตัวอย่างจากโค้ด">
+          <div className="hero-code-editor__preview-head">
+            <span>RESULT</span>
+            <span>ตัวอย่างจำลอง</span>
+          </div>
+          <div className="hero-code-editor__preview-stage">
+            <div className="hero-code-editor__preview-card">
+              <span className="hero-code-editor__preview-badge">BEGINNER PATH</span>
+              <strong>เรียน Coding<br />จนสร้างโปรเจกต์ได้</strong>
+              <p>ค่อย ๆ เข้าใจแนวคิด แล้วลงมือสร้างผลลัพธ์ที่มองเห็นได้</p>
+              <span className="hero-code-editor__preview-action">เริ่มเรียน</span>
+            </div>
+          </div>
+          <div className="hero-code-editor__preview-focus">
+            <span>{preview.eyebrow}</span>
+            <strong>{preview.label}</strong>
+          </div>
+        </section>
       </div>
 
       {/* Status Bar */}
@@ -317,7 +372,7 @@ export default function HeroCodeEditor() {
         <div className="hero-code-editor__status-group">
           <span className="hero-code-editor__ready-dot" aria-hidden="true" />
           <span>
-            Ln {Math.min(renderedVisibleLines + 1, totalLines)}, Col {renderedCharIndex + 1}
+            {playbackState === 'auto' ? 'Auto preview' : playbackState === 'reduced' ? 'Reduced motion' : 'Preview paused'}
           </span>
         </div>
         <div className="hero-code-editor__status-group">
@@ -385,9 +440,18 @@ export default function HeroCodeEditor() {
           font-weight: 700;
           justify-content: space-between;
           letter-spacing: 0.08em;
-          flex: 0 0 152px;
+          flex: 0 0 170px;
+          gap: 12px;
           min-height: 48px;
           padding: 0 16px;
+        }
+
+        .hero-code-editor__demo {
+          border: 1px solid var(--editor-accent);
+          color: var(--editor-accent-hover);
+          font-size: 9px;
+          line-height: 1;
+          padding: 4px 6px;
         }
 
         .hero-code-editor__tabs {
@@ -438,8 +502,15 @@ export default function HeroCodeEditor() {
           color: var(--editor-text);
         }
 
+        .hero-code-editor__canvas {
+          display: grid;
+          grid-template-columns: minmax(0, 1.35fr) minmax(190px, 0.65fr);
+          min-height: 306px;
+        }
+
         .hero-code-editor__body {
           background: var(--editor-background);
+          border-right: 1px solid var(--editor-border);
           height: 306px;
           overflow-x: auto;
           overflow-y: hidden;
@@ -450,6 +521,107 @@ export default function HeroCodeEditor() {
         }
 
         .hero-code-editor__body::-webkit-scrollbar { display: none; }
+
+        .hero-code-editor__preview {
+          background: #edf6fb;
+          color: #111820;
+          display: grid;
+          grid-template-rows: auto minmax(0, 1fr) auto;
+          min-width: 0;
+        }
+
+        .hero-code-editor__preview-head,
+        .hero-code-editor__preview-focus {
+          align-items: center;
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          padding: 10px 12px;
+        }
+
+        .hero-code-editor__preview-head {
+          border-bottom: 1px solid #c8d9e5;
+          color: #33485a;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .hero-code-editor__preview-head span:last-child {
+          color: #0089cc;
+          letter-spacing: 0;
+        }
+
+        .hero-code-editor__preview-stage {
+          align-items: center;
+          display: grid;
+          padding: 18px 14px;
+        }
+
+        .hero-code-editor__preview-card {
+          background: #ffffff;
+          border: 1px solid #c8d9e5;
+          display: grid;
+          gap: 12px;
+          padding: 18px;
+        }
+
+        .hero-code-editor__preview-badge {
+          color: #0089cc;
+          font-size: 8px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .hero-code-editor__preview-card strong {
+          font-family: var(--font-ui);
+          font-size: clamp(1.05rem, 1.5vw, 1.35rem);
+          letter-spacing: -0.035em;
+          line-height: 1.12;
+        }
+
+        .hero-code-editor__preview-card p {
+          color: #52697b;
+          font-family: var(--font-ui);
+          font-size: 10px;
+          line-height: 1.65;
+          margin: 0;
+        }
+
+        .hero-code-editor__preview-action {
+          align-items: center;
+          background: #111820;
+          color: #ffffff;
+          display: inline-flex;
+          font-family: var(--font-ui);
+          font-size: 10px;
+          font-weight: 750;
+          justify-content: center;
+          min-height: 32px;
+          padding: 6px 10px;
+          width: fit-content;
+        }
+
+        .hero-code-editor__preview-focus {
+          align-items: flex-start;
+          border-top: 1px solid #c8d9e5;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .hero-code-editor__preview-focus span {
+          color: #0089cc;
+          font-size: 8px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+        }
+
+        .hero-code-editor__preview-focus strong {
+          color: #33485a;
+          font-family: var(--font-ui);
+          font-size: 10px;
+          line-height: 1.45;
+        }
 
         .hero-code-editor__line {
           display: flex;
@@ -529,9 +701,20 @@ export default function HeroCodeEditor() {
         @media (max-width: 640px) {
           .hero-code-editor { max-width: 100%; font-size: 11.5px; }
           .hero-code-editor__titlebar { flex-direction: column; min-height: 72px; }
-          .hero-code-editor__workspace { min-height: 28px; flex-basis: auto; border-right: 0; border-bottom: 1px solid var(--editor-border); font-size: 9px; padding: 0 10px; }
+          .hero-code-editor__workspace { min-height: 32px; flex-basis: auto; border-right: 0; border-bottom: 1px solid var(--editor-border); font-size: 9px; padding: 0 10px; }
           .hero-code-editor__tab { min-height: 44px; padding: 0 9px; }
-          .hero-code-editor__body { height: 282px; padding: 10px 0; }
+          .hero-code-editor__canvas { grid-template-columns: 1fr; }
+          .hero-code-editor__body { border-right: 0; border-bottom: 1px solid var(--editor-border); height: 224px; padding: 10px 0; }
+          .hero-code-editor__preview { grid-template-rows: auto minmax(0, 1fr); }
+          .hero-code-editor__preview-stage { min-height: 176px; padding: 12px; }
+          .hero-code-editor__preview-card { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; align-items: end; padding: 14px; }
+          .hero-code-editor__preview-badge,
+          .hero-code-editor__preview-card strong,
+          .hero-code-editor__preview-card p { grid-column: 1; }
+          .hero-code-editor__preview-card strong { font-size: 1.1rem; }
+          .hero-code-editor__preview-card p { display: none; }
+          .hero-code-editor__preview-action { grid-column: 2; grid-row: 1 / 4; align-self: stretch; }
+          .hero-code-editor__preview-focus { display: none; }
           .hero-code-editor__line { padding-right: 14px; }
           .hero-code-editor__line-number { padding-right: 12px; width: 38px; }
           .hero-code-editor__status { gap: 8px; padding: 0 12px; }
@@ -542,6 +725,7 @@ export default function HeroCodeEditor() {
           .hero-code-editor__tab,
           .hero-code-editor__line { transition: none; }
           .hero-code-editor__cursor { animation: none; }
+          .hero-code-editor__preview * { transition: none; }
         }
       `}</style>
     </div>

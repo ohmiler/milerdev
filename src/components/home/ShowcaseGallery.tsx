@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
+import styles from './ShowcaseGallery.module.css';
 
 const SHOWCASE_LABELS = [
   'เวทีแบ่งปันประสบการณ์',
@@ -312,90 +313,28 @@ export default function ShowcaseGallery() {
       {lightboxIndex !== null && (
         <div
           ref={lightboxRef}
-          className="showcase-lightbox"
+          className={styles.lightbox}
           role="dialog"
           aria-modal="true"
           aria-label="ภาพบรรยากาศจากงานบรรยาย MilerDev"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 120,
-            background: 'rgba(0, 0, 0, 0.92)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            animation: 'lbFadeIn 0.25s ease',
-          }}
           onClick={closeLightbox}
         >
-          {/* Close button */}
           <button
             ref={closeButtonRef}
             type="button"
-            className="showcase-lightbox-button showcase-lightbox-close"
+            className={styles.close}
             onClick={closeLightbox}
-            style={{
-              position: 'absolute',
-              top: '20px',
-              right: '20px',
-              background: 'rgba(255,255,255,0.1)',
-              border: 'none',
-              color: 'white',
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              fontSize: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.2s',
-              zIndex: 2,
-            }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
             aria-label="ปิด"
           >
-            ✕
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
           </button>
 
-          {/* Counter */}
-          <div style={{
-            position: 'absolute',
-            top: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-          }}>
-            {lightboxIndex + 1} / {SHOWCASE_IMAGES.length}
-          </div>
-
-          {/* Prev button */}
           <button
             type="button"
-            className="showcase-lightbox-button showcase-lightbox-nav showcase-lightbox-nav--prev"
+            className={`${styles.nav} ${styles.navPrev}`}
             onClick={(e) => { e.stopPropagation(); goPrev(); }}
-            style={{
-              position: 'absolute',
-              left: '16px',
-              background: 'rgba(255,255,255,0.1)',
-              border: 'none',
-              color: 'white',
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              fontSize: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.2s',
-              zIndex: 2,
-            }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
             aria-label="ก่อนหน้า"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -403,54 +342,31 @@ export default function ShowcaseGallery() {
             </svg>
           </button>
 
-          {/* Image */}
-          <div
+          <figure
+            className={styles.figure}
             onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'relative',
-              maxWidth: '90vw',
-              maxHeight: '85vh',
-              width: '1024px',
-              aspectRatio: '4 / 3',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              animation: 'lbZoomIn 0.3s ease',
-            }}
           >
-            <Image
-              src={SHOWCASE_IMAGES[lightboxIndex].src}
-              alt={SHOWCASE_IMAGES[lightboxIndex].alt}
-              fill
-              sizes="90vw"
-              style={{ objectFit: 'contain' }}
-              priority
-            />
-          </div>
+            <div className={styles.media}>
+              <Image
+                src={SHOWCASE_IMAGES[lightboxIndex].src}
+                alt={SHOWCASE_IMAGES[lightboxIndex].alt}
+                fill
+                sizes="(max-width: 640px) calc(100vw - 28px), min(1024px, calc(100vw - 152px))"
+                priority
+              />
+            </div>
+            <figcaption className={styles.meta}>
+              <span className={styles.label}>{SHOWCASE_IMAGES[lightboxIndex].label}</span>
+              <span className={styles.position} aria-live="polite">
+                {String(lightboxIndex + 1).padStart(2, '0')} / {String(SHOWCASE_IMAGES.length).padStart(2, '0')}
+              </span>
+            </figcaption>
+          </figure>
 
-          {/* Next button */}
           <button
             type="button"
-            className="showcase-lightbox-button showcase-lightbox-nav showcase-lightbox-nav--next"
+            className={[styles.nav, styles.navNext].join(' ')}
             onClick={(e) => { e.stopPropagation(); goNext(); }}
-            style={{
-              position: 'absolute',
-              right: '16px',
-              background: 'rgba(255,255,255,0.1)',
-              border: 'none',
-              color: 'white',
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              cursor: 'pointer',
-              fontSize: '1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background 0.2s',
-              zIndex: 2,
-            }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.25)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
             aria-label="ถัดไป"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -458,29 +374,6 @@ export default function ShowcaseGallery() {
             </svg>
           </button>
 
-          <style>{`
-            .showcase-lightbox-button:focus-visible {
-              outline: none;
-              box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.34);
-            }
-            @keyframes lbFadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
-            @keyframes lbZoomIn {
-              from { opacity: 0; transform: scale(0.92); }
-              to { opacity: 1; transform: scale(1); }
-            }
-            @media (prefers-reduced-motion: reduce) {
-              .showcase-lightbox {
-                animation: none !important;
-              }
-              .showcase-lightbox * {
-                animation: none !important;
-                transition: none !important;
-              }
-            }
-          `}</style>
         </div>
       )}
     </>

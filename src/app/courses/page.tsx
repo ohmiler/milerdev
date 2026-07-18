@@ -38,6 +38,8 @@ interface CourseListItem {
   isPromoActive: boolean;
   instructor: { id: string; name: string | null; avatarUrl: string | null } | null;
   lessonCount: number;
+  totalDurationSeconds: number;
+  hasFreePreview: boolean;
   tags: Tag[];
 }
 
@@ -194,11 +196,16 @@ async function getCoursesData(input: {
   }
 
   const whereCondition = and(...conditions);
-  const lessonCountSubquery = db
-    .select({ courseId: lessons.courseId, lessonCount: count().as('lesson_count') })
+  const lessonStatsSubquery = db
+    .select({
+      courseId: lessons.courseId,
+      lessonCount: count().as('lesson_count'),
+      totalDurationSeconds: sql<number>`COALESCE(SUM(${lessons.videoDuration}), 0)`.as('total_duration_seconds'),
+      freePreviewCount: sql<number>`COALESCE(SUM(CASE WHEN ${lessons.isFreePreview} = 1 THEN 1 ELSE 0 END), 0)`.as('free_preview_count'),
+    })
     .from(lessons)
     .groupBy(lessons.courseId)
-    .as('lc');
+    .as('lesson_stats');
 
   const [courseRows, totalResult] = await Promise.all([
     db
@@ -215,11 +222,13 @@ async function getCoursesData(input: {
         instructorId: courses.instructorId,
         instructorName: users.name,
         instructorAvatarUrl: users.avatarUrl,
-        lessonCount: sql<number>`COALESCE(${lessonCountSubquery.lessonCount}, 0)`.as('lesson_count'),
+        lessonCount: sql<number>`COALESCE(${lessonStatsSubquery.lessonCount}, 0)`.as('lesson_count'),
+        totalDurationSeconds: sql<number>`COALESCE(${lessonStatsSubquery.totalDurationSeconds}, 0)`.as('total_duration_seconds'),
+        freePreviewCount: sql<number>`COALESCE(${lessonStatsSubquery.freePreviewCount}, 0)`.as('free_preview_count'),
       })
       .from(courses)
       .leftJoin(users, eq(courses.instructorId, users.id))
-      .leftJoin(lessonCountSubquery, eq(courses.id, lessonCountSubquery.courseId))
+      .leftJoin(lessonStatsSubquery, eq(courses.id, lessonStatsSubquery.courseId))
       .where(whereCondition)
       .orderBy(orderBy)
       .limit(limit)
@@ -267,6 +276,8 @@ async function getCoursesData(input: {
         ? { id: row.instructorId, name: row.instructorName, avatarUrl: row.instructorAvatarUrl }
         : null,
       lessonCount: Number(row.lessonCount) || 0,
+      totalDurationSeconds: Number(row.totalDurationSeconds) || 0,
+      hasFreePreview: Number(row.freePreviewCount) > 0,
       tags: tagsByCourse.get(row.id) || [],
     };
   });
@@ -304,7 +315,7 @@ export default async function CoursesPage({ searchParams }: Props) {
       {bundlesList.length > 0 && <section className="courses-bundles" aria-labelledby="courses-bundles-title"><div className="container"><div className="courses-section-head"><h2 id="courses-bundles-title">เรียนเป็นชุด</h2><p>รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div><div className="courses-bundles__list">{bundlesList.map(bundle => <Link key={bundle.id} href={`/bundles/${bundle.slug}`} className="courses-bundle"><div className="courses-bundle__meta">Bundle · {bundle.courseCount} คอร์ส</div><div className="courses-bundle__content"><h3>{bundle.title}</h3>{bundle.description && <p>{bundle.description.slice(0,120)}{bundle.description.length > 120 ? '…' : ''}</p>}</div><div className="courses-bundle__courses">{bundle.courses.slice(0,2).map((course,index) => <span key={`${bundle.id}-${index}`}>{course.courseTitle}</span>)}{bundle.courses.length > 2 && <span>+{bundle.courses.length - 2} คอร์ส</span>}</div><div className="courses-bundle__price"><span>฿{parseFloat(bundle.price).toLocaleString()}</span><s>฿{bundle.totalOriginalPrice.toLocaleString()}</s>{bundle.discount > 0 && <small>ประหยัด {bundle.discount}%</small>}</div><span className="courses-bundle__action">ดูรายละเอียด <span aria-hidden="true">→</span></span></Link>)}</div></div></section>}
       <section className="courses-catalog" aria-labelledby="courses-catalog-title"><div className="container"><div className="courses-catalog__head"><h2 id="courses-catalog-title">คอร์สทั้งหมด</h2><p aria-live="polite">พบ {pagination.total} คอร์ส</p></div>
         <form method="GET" action="/courses" className="courses-filter"><div className="courses-filter__search"><label htmlFor="course-search">ค้นหาจากชื่อคอร์ส</label><input id="course-search" type="search" name="search" defaultValue={search} placeholder="เช่น JavaScript, React, Next.js" /></div><div className="courses-filter__field"><label htmlFor="course-price">ราคา</label><select id="course-price" name="price" defaultValue={priceFilter}><option value="all">ทุกราคา</option><option value="free">ฟรี</option><option value="paid">มีค่าใช้จ่าย</option></select></div><div className="courses-filter__field"><label htmlFor="course-tag">หัวข้อ</label><select id="course-tag" name="tag" defaultValue={tagFilter}><option value="all">ทุกหัวข้อ</option>{allTags.map(tag => <option key={tag.id} value={tag.slug}>{tag.name}</option>)}</select></div><div className="courses-filter__field"><label htmlFor="course-sort">เรียงตาม</label><select id="course-sort" name="sort" defaultValue={sort}><option value="newest">ใหม่ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="price-low">ราคาต่ำไปสูง</option><option value="price-high">ราคาสูงไปต่ำ</option></select></div><div className="courses-filter__actions"><button type="submit">แสดงผลลัพธ์</button><Link href="/courses">ล้างตัวกรอง</Link></div></form>
-        {courseList.length === 0 ? <div className="courses-empty"><p className="courses-empty__code">No matching courses</p><h3>ไม่พบคอร์สตามเงื่อนไขนี้</h3><p>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</p><Link href="/courses">ดูคอร์สทั้งหมด</Link></div> : <><div className="courses-grid">{courseList.map(course => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} price={parseFloat(course.price || '0')} promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null} isPromoActive={course.isPromoActive} instructorName={course.instructor?.name || null} lessonCount={course.lessonCount} tags={course.tags} />)}</div>{pagination.totalPages > 1 && <nav className="courses-pagination" aria-label="หน้ารายการคอร์ส">{currentPage > 1 && <Link className="courses-pagination__direction" href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:currentPage-1})}>← ก่อนหน้า</Link>}<div className="courses-pagination__pages">{Array.from({length:Math.min(5,pagination.totalPages)},(_,index)=>{let pageNumber;if(pagination.totalPages<=5)pageNumber=index+1;else if(currentPage<=3)pageNumber=index+1;else if(currentPage>=pagination.totalPages-2)pageNumber=pagination.totalPages-4+index;else pageNumber=currentPage-2+index;const isActive=currentPage===pageNumber;return <Link key={pageNumber} href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:pageNumber})} className={isActive?'is-active':''} aria-current={isActive?'page':undefined}>{pageNumber}</Link>})}</div>{currentPage < pagination.totalPages && <Link className="courses-pagination__direction" href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:currentPage+1})}>ถัดไป →</Link>}</nav>}</>}</div></section>
+        {courseList.length === 0 ? <div className="courses-empty"><p className="courses-empty__code">No matching courses</p><h3>ไม่พบคอร์สตามเงื่อนไขนี้</h3><p>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</p><Link href="/courses">ดูคอร์สทั้งหมด</Link></div> : <><div className="courses-grid">{courseList.map(course => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} price={parseFloat(course.price || '0')} promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null} isPromoActive={course.isPromoActive} instructorName={course.instructor?.name || null} lessonCount={course.lessonCount} totalDurationSeconds={course.totalDurationSeconds} hasFreePreview={course.hasFreePreview} tags={course.tags} />)}</div>{pagination.totalPages > 1 && <nav className="courses-pagination" aria-label="หน้ารายการคอร์ส">{currentPage > 1 && <Link className="courses-pagination__direction" href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:currentPage-1})}>← ก่อนหน้า</Link>}<div className="courses-pagination__pages">{Array.from({length:Math.min(5,pagination.totalPages)},(_,index)=>{let pageNumber;if(pagination.totalPages<=5)pageNumber=index+1;else if(currentPage<=3)pageNumber=index+1;else if(currentPage>=pagination.totalPages-2)pageNumber=pagination.totalPages-4+index;else pageNumber=currentPage-2+index;const isActive=currentPage===pageNumber;return <Link key={pageNumber} href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:pageNumber})} className={isActive?'is-active':''} aria-current={isActive?'page':undefined}>{pageNumber}</Link>})}</div>{currentPage < pagination.totalPages && <Link className="courses-pagination__direction" href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:currentPage+1})}>ถัดไป →</Link>}</nav>}</>}</div></section>
     </main><Footer /></>
   );
 }

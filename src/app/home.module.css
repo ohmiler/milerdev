@@ -437,8 +437,17 @@
   background: var(--home-blue);
 }
 
+.courseGrid :global(.course-thumbnail--empty) {
+  aspect-ratio: 16 / 7;
+  background: var(--home-surface-muted);
+}
+
 .courseGrid[data-count='2'] :global(.course-thumbnail) {
   aspect-ratio: 16 / 8.5;
+}
+
+.courseGrid[data-count='2'] :global(.course-thumbnail--empty) {
+  aspect-ratio: 16 / 6.5;
 }
 
 .courseGrid[data-count='2'] :global(.course-card__content) {
@@ -746,6 +755,30 @@
   line-height: 1.78;
 }
 
+.proofSteps {
+  margin: 22px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--home-line);
+  list-style: none;
+}
+
+.proofSteps li {
+  display: grid;
+  min-height: 48px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid var(--home-line);
+  color: var(--home-ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.proofSteps li span {
+  color: var(--home-blue-deep);
+  font: 700 0.65rem/1.4 var(--font-code);
+}
+
 .clientCloud {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -952,7 +985,7 @@
   }
 
   .hero {
-    padding: 44px 0 92px;
+    padding: 44px 0 76px;
   }
 
   .hero::before {
@@ -995,12 +1028,12 @@
   }
 
   .heroLayout {
-    gap: 36px;
+    gap: 32px;
   }
 
   .heroStage {
     width: 100%;
-    padding: 44px 0 28px 14px;
+    padding: 36px 0 24px 14px;
   }
 
   .heroStage::before {
@@ -1014,6 +1047,14 @@
 
   .section {
     padding: 64px 0;
+  }
+
+  .workspaceSection {
+    padding: 56px 0 48px;
+  }
+
+  .workspaceIntro {
+    margin-bottom: 30px;
   }
 
   .sectionTitle {
@@ -1043,6 +1084,10 @@
 
   .courseGrid :global(.course-thumbnail) {
     aspect-ratio: 16 / 8.4;
+  }
+
+  .courseGrid :global(.course-thumbnail--empty) {
+    aspect-ratio: 16 / 6.3;
   }
 
   .clientCloud {
