@@ -9,19 +9,21 @@ import ShowcaseGallery from '@/components/home/ShowcaseGallery';
 import HeroCodeEditor from '@/components/home/HeroCodeEditor';
 import LearningWorkspacePreview from '@/components/home/LearningWorkspacePreview';
 import { db } from '@/lib/db';
-import { courses, lessons } from '@/lib/db/schema';
-import { eq, desc, count, sql } from 'drizzle-orm';
+import { courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 import styles from './home.module.css';
 
 async function getFeaturedCourses() {
-  const lessonCountSq = db
+  const lessonStatsSq = db
     .select({
       courseId: lessons.courseId,
-      lessonCount: count().as('lesson_count'),
+      lessonCount: sql<number>`COUNT(*)`.as('lesson_count'),
+      totalDurationSeconds: sql<number>`COALESCE(SUM(${lessons.videoDuration}), 0)`.as('total_duration_seconds'),
+      freePreviewCount: sql<number>`COALESCE(SUM(CASE WHEN ${lessons.isFreePreview} = 1 THEN 1 ELSE 0 END), 0)`.as('free_preview_count'),
     })
     .from(lessons)
     .groupBy(lessons.courseId)
-    .as('lc');
+    .as('lesson_stats');
 
   const rows = await db
     .select({
@@ -37,13 +39,38 @@ async function getFeaturedCourses() {
       status: courses.status,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
-      lessonCount: sql<number>`COALESCE(${lessonCountSq.lessonCount}, 0)`.as('lesson_count'),
+      instructorName: users.name,
+      lessonCount: sql<number>`COALESCE(${lessonStatsSq.lessonCount}, 0)`.as('lesson_count'),
+      totalDurationSeconds: sql<number>`COALESCE(${lessonStatsSq.totalDurationSeconds}, 0)`.as('total_duration_seconds'),
+      freePreviewCount: sql<number>`COALESCE(${lessonStatsSq.freePreviewCount}, 0)`.as('free_preview_count'),
     })
     .from(courses)
-    .leftJoin(lessonCountSq, eq(courses.id, lessonCountSq.courseId))
+    .leftJoin(users, eq(courses.instructorId, users.id))
+    .leftJoin(lessonStatsSq, eq(courses.id, lessonStatsSq.courseId))
     .where(eq(courses.status, 'published'))
     .orderBy(desc(courses.createdAt))
     .limit(4);
+
+  const courseIds = rows.map((course) => course.id);
+  const courseTagRows = courseIds.length > 0
+    ? await db
+        .select({
+          courseId: courseTags.courseId,
+          id: tags.id,
+          name: tags.name,
+          slug: tags.slug,
+        })
+        .from(courseTags)
+        .innerJoin(tags, eq(courseTags.tagId, tags.id))
+        .where(inArray(courseTags.courseId, courseIds))
+    : [];
+
+  const tagsByCourse = new Map<string, Array<{ id: string; name: string; slug: string }>>();
+  for (const tag of courseTagRows) {
+    const existingTags = tagsByCourse.get(tag.courseId) ?? [];
+    existingTags.push({ id: tag.id, name: tag.name, slug: tag.slug });
+    tagsByCourse.set(tag.courseId, existingTags);
+  }
 
   const now = new Date();
   return rows.map((row) => {
@@ -64,6 +91,10 @@ async function getFeaturedCourses() {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       lessonCount: Number(row.lessonCount) || 0,
+      totalDurationSeconds: Number(row.totalDurationSeconds) || 0,
+      hasFreePreview: Number(row.freePreviewCount) > 0,
+      instructorName: row.instructorName,
+      tags: tagsByCourse.get(row.id) ?? [],
     };
   });
 }
@@ -153,8 +184,8 @@ export default async function HomePage() {
               </div>
               <div>
                 <p className={styles.sectionCopy}>
-                  เปรียบเทียบเนื้อหา จำนวนบทเรียน และราคา
-                  แล้วเลือกคอร์สที่ใกล้กับโปรเจกต์ที่คุณอยากสร้าง
+                  ดูหัวข้อ เวลาเรียน ผู้สอน และบทเรียนทดลองจากข้อมูลจริง
+                  แล้วเลือกคอร์สที่ใกล้กับสิ่งที่คุณอยากสร้าง
                 </p>
                 <Link href="/courses" className={styles.sectionLink}>ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link>
               </div>
@@ -173,8 +204,11 @@ export default async function HomePage() {
                     price={parseFloat(course.price)}
                     promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
                     isPromoActive={course.isPromoActive}
-                    instructorName={null}
+                    instructorName={course.instructorName}
                     lessonCount={course.lessonCount}
+                    totalDurationSeconds={course.totalDurationSeconds}
+                    hasFreePreview={course.hasFreePreview}
+                    tags={course.tags}
                     variant="featured"
                   />
                 ))}

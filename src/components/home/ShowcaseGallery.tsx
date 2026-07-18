@@ -113,24 +113,24 @@ export default function ShowcaseGallery() {
 
         <style>{`
           .showcase-gallery-section {
-            padding: clamp(72px, 8vw, 104px) 0;
+            padding: clamp(64px, 7vw, 88px) 0;
             color-scheme: light;
             background: var(--color-background);
             color: var(--color-text-primary);
           }
           .showcase-gallery-layout {
             display: grid;
-            gap: clamp(32px, 5vw, 56px);
+            gap: clamp(32px, 4vw, 48px);
           }
           .showcase-gallery-head {
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(280px, 0.5fr);
-            gap: clamp(30px, 7vw, 96px);
+            gap: clamp(30px, 6vw, 72px);
             align-items: end;
           }
           .showcase-gallery-kicker {
             grid-column: 1 / -1;
-            margin: 0 0 -26px;
+            margin: 0 0 -18px;
             color: var(--color-accent-pressed);
             font-size: 0.9rem;
             font-weight: 720;
@@ -138,7 +138,7 @@ export default function ShowcaseGallery() {
           .showcase-gallery-title {
             max-width: 14ch;
             margin: 0;
-            font-size: clamp(2.35rem, 4.4vw, 4.5rem);
+            font-size: clamp(2.35rem, 4vw, 4.1rem);
             font-weight: 750;
             line-height: 1.08;
             letter-spacing: -0.045em;
@@ -167,7 +167,7 @@ export default function ShowcaseGallery() {
             grid-template-columns: repeat(12, minmax(0, 1fr));
             grid-auto-flow: dense;
             align-items: start;
-            gap: 14px;
+            gap: 20px;
           }
           .showcase-card {
             display: grid;
@@ -176,14 +176,14 @@ export default function ShowcaseGallery() {
             min-width: 0;
             overflow: hidden;
             padding: 0;
-            border: 1px solid var(--color-border);
+            border: 0;
             border-radius: 0;
             background: var(--color-surface);
             color: var(--color-text-primary);
             cursor: pointer;
             text-align: left;
             box-shadow: none;
-            transition: transform 180ms ease-out, border-color 180ms ease-out;
+            transition: background-color 180ms ease-out;
           }
           .showcase-card:first-child {
             grid-column: span 6;
@@ -200,8 +200,7 @@ export default function ShowcaseGallery() {
           }
           .showcase-card:hover {
             z-index: 1;
-            transform: translateY(-4px);
-            border-color: var(--color-accent);
+            background: var(--color-surface-hover);
           }
           .showcase-card:focus-visible {
             position: relative;
@@ -213,6 +212,7 @@ export default function ShowcaseGallery() {
             display: block;
             aspect-ratio: 4 / 3;
             overflow: hidden;
+            border: 1px solid var(--color-border);
             background: var(--color-surface-hover);
           }
           .showcase-card:first-child .showcase-card-media {
@@ -232,7 +232,7 @@ export default function ShowcaseGallery() {
           .showcase-card-meta {
             display: block;
             min-height: 44px;
-            padding: 14px 16px;
+            padding: 12px 2px;
             color: var(--color-text-secondary);
             font-size: 0.82rem;
             font-weight: 680;

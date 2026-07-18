@@ -4,9 +4,9 @@ solodeveling_schema: 1
 
 # State
 
-- Goal: None; HOME-006 and its promo-color follow-up are complete.
-- Progress: HOME-006 established the grid-anchored marker and now uses the documented `promo` red with white text for active discounts across Home and `/courses`.
-- Active work: None. Completed work is archived in `work/archive/HOME-006.md`; evidence is in `evidence/HOME-006.md`.
+- Goal: HOME-009 completed: Home now surfaces real course decision evidence without schema changes or invented content.
+- Progress: Featured courses conditionally show existing tags, duration, instructor, and preview availability; focused tests, lint, build, and Playwright checks passed.
+- Active work: None. HOME-009 is archived in `work/archive/HOME-009.md`; evidence is in `evidence/HOME-009.md`.
 - Blockers: None.
-- Current risks: HOME-006 changes remain uncommitted. Published courses without real thumbnails continue to use the existing visual fallback. Development render inspection showed CSS preload warnings but no browser errors.
-- Next action: Await product direction or a request to commit the completed course-price marker refinement.
+- Current risks: HOME-007 through HOME-009 remain uncommitted. Current local lessons have zero aggregate duration, so the positive-duration render path is unit-tested but not observed with local data.
+- Next action: Await user review or a commit request.

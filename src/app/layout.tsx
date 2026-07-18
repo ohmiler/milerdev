@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans_Thai, Inter } from "next/font/google";
+import { Inter, Prompt } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
@@ -11,11 +11,11 @@ const inter = Inter({
   display: "swap",
 });
 
-const ibmPlexSansThai = IBM_Plex_Sans_Thai({
-  variable: "--font-ibm-plex-sans-thai",
+const prompt = Prompt({
+  variable: "--font-prompt",
   subsets: ["thai", "latin"],
   display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
@@ -75,7 +75,7 @@ export default function RootLayout({
   return (
     <html
       lang="th"
-      className={`${inter.variable} ${ibmPlexSansThai.variable}`}
+      className={`${inter.variable} ${prompt.variable}`}
       suppressHydrationWarning
     >
       <body className="antialiased">
