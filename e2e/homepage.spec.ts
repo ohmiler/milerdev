@@ -10,6 +10,11 @@ test.describe('public homepage', () => {
     );
     expect(hasHorizontalOverflow).toBe(false);
 
+    const main = page.getByRole('main');
+    await expect(main.getByRole('article', { name: 'ตัวอย่างพื้นที่เรียนออนไลน์ของ MilerDev' })).toBeVisible();
+    await expect(main.locator('.affiliate-section')).toHaveCount(0);
+    await expect(main.locator('a[href^="/bundles/"]')).toHaveCount(0);
+
     const menuButton = page.getByRole('button', { name: 'เปิดเมนูหลัก' });
     await menuButton.click();
     await expect(page.locator('#mobile-navigation')).toBeVisible();
@@ -20,6 +25,7 @@ test.describe('public homepage', () => {
     await page.goto('/');
 
     const gallery = page.getByRole('region', { name: 'การสอนที่เกิดขึ้นนอกหน้าจอ' });
+    await expect(gallery.getByRole('button')).toHaveCount(3);
     const firstImage = gallery.getByRole('button').first();
 
     await firstImage.focus();

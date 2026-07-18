@@ -43,6 +43,7 @@ export default function MobileNavPanel({
                             href={href}
                             onClick={onClose}
                             className={`nav-mobile-link nav-mobile-link--primary${isActive(href) ? ' nav-mobile-link--active' : ''}`}
+                            aria-current={isActive(href) ? 'page' : undefined}
                         >
                             {label}
                         </Link>
@@ -59,6 +60,7 @@ export default function MobileNavPanel({
                                     href={href}
                                     onClick={onClose}
                                     className={`nav-mobile-link${isActive(href) ? ' nav-mobile-link--active' : ''}`}
+                                    aria-current={isActive(href) ? 'page' : undefined}
                                 >
                                     <Icon className="w-5 h-5" />
                                     {label}

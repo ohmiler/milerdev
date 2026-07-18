@@ -87,7 +87,7 @@ export default function ShowcaseGallery() {
           </header>
 
           <div className="showcase-contact-sheet" aria-label="ภาพบรรยากาศจากงานบรรยาย MilerDev">
-            {SHOWCASE_IMAGES.map((img, i) => (
+            {SHOWCASE_IMAGES.slice(0, 3).map((img, i) => (
               <button
                 key={img.src}
                 onClick={() => openLightbox(i)}
@@ -113,14 +113,14 @@ export default function ShowcaseGallery() {
 
         <style>{`
           .showcase-gallery-section {
-            padding: clamp(88px, 10vw, 148px) 0;
+            padding: clamp(72px, 8vw, 104px) 0;
             color-scheme: light;
             background: var(--color-background);
             color: var(--color-text-primary);
           }
           .showcase-gallery-layout {
             display: grid;
-            gap: clamp(36px, 6vw, 72px);
+            gap: clamp(32px, 5vw, 56px);
           }
           .showcase-gallery-head {
             display: grid;
@@ -138,7 +138,7 @@ export default function ShowcaseGallery() {
           .showcase-gallery-title {
             max-width: 14ch;
             margin: 0;
-            font-size: clamp(2.4rem, 5vw, 5.1rem);
+            font-size: clamp(2.35rem, 4.4vw, 4.5rem);
             font-weight: 750;
             line-height: 1.08;
             letter-spacing: -0.045em;
@@ -252,7 +252,7 @@ export default function ShowcaseGallery() {
           }
           @media (max-width: 640px) {
             .showcase-gallery-section {
-              padding: 56px 0;
+              padding: 48px 0 64px;
             }
             .showcase-gallery-head {
               grid-template-columns: 1fr;
@@ -270,11 +270,22 @@ export default function ShowcaseGallery() {
               gap: 14px;
             }
             .showcase-contact-sheet {
-              grid-template-columns: 1fr;
+              display: flex;
+              gap: 12px;
+              overflow-x: auto;
+              padding: 0 14px 14px;
+              margin-inline: -14px;
+              scroll-snap-type: x mandatory;
+              scrollbar-color: var(--color-border) var(--color-background);
             }
             .showcase-card,
             .showcase-card:first-child {
-              grid-column: 1;
+              flex: 0 0 min(86vw, 340px);
+              grid-column: auto;
+              scroll-snap-align: start;
+            }
+            .showcase-card:first-child .showcase-card-media {
+              aspect-ratio: 4 / 3;
             }
           }
           @media (prefers-reduced-motion: reduce) {

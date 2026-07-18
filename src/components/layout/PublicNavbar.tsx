@@ -77,13 +77,14 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
             <div className="container nav-public-rail">
                 <Link
                     href="/"
-                    className="nav-brand-lockup"
+                    className={`nav-brand-lockup${pathname === '/' ? ' nav-brand-lockup--active' : ''}`}
                     aria-label="MilerDev หน้าแรก"
                     aria-current={pathname === '/' ? 'page' : undefined}
                 >
                     <Image src="/milerdev-logo-transparent.png" alt="MilerDev" width={36} height={36} className="nav-brand-logo" />
                     <span className="nav-brand-copy">
                         <strong>MilerDev</strong>
+                        <small>เรียนโค้ดออนไลน์</small>
                     </span>
                 </Link>
 
@@ -136,6 +137,7 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                             <Link href="/register" className="nav-public-primary">
                                 <RegisterIcon className="w-4 h-4" />
                                 สมัครเรียน
+                                <span aria-hidden="true">→</span>
                             </Link>
                         </>
                     )}
@@ -150,6 +152,7 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     aria-controls="mobile-navigation"
                 >
                     {isMenuOpen ? <CloseIcon className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
+                    <span className="nav-mobile-label">{isMenuOpen ? 'ปิด' : 'เมนู'}</span>
                 </button>
             </div>
 
@@ -168,61 +171,82 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     position: sticky;
                     top: 0;
                     z-index: 50;
-                    background: rgba(255, 253, 249, 0.94);
-                    border-bottom: 1px solid rgba(190, 203, 207, 0.68);
-                    backdrop-filter: blur(16px);
+                    background: rgba(247, 249, 251, 0.94);
+                    border-bottom: 1px solid var(--color-border);
+                    backdrop-filter: blur(18px) saturate(130%);
                 }
                 .nav-public-rail {
-                    min-height: 76px;
+                    width: min(calc(100% - 48px), 1280px);
+                    max-width: none;
+                    min-height: 72px;
+                    margin-inline: auto;
+                    padding: 0;
                     display: flex;
                     align-items: center;
-                    gap: clamp(24px, 4vw, 56px);
+                    gap: 0;
                 }
                 .nav-brand-lockup {
+                    position: relative;
                     display: inline-flex;
                     align-items: center;
-                    gap: 10px;
+                    gap: 11px;
                     width: fit-content;
-                    min-height: 76px;
+                    min-height: 72px;
+                    padding-right: clamp(22px, 2.5vw, 36px);
+                    border-right: 1px solid var(--color-border);
                     color: var(--ink);
                     text-decoration: none;
                 }
-                .nav-brand-logo { width: 32px; height: 32px; }
-                .nav-brand-copy { display: flex; align-items: center; }
-                .nav-brand-copy strong { font-size: 1.18rem; font-weight: 750; line-height: 1; letter-spacing: -0.03em; transition: color 160ms ease; }
+                .nav-brand-lockup::after {
+                    position: absolute;
+                    right: -1px;
+                    bottom: -1px;
+                    width: 1px;
+                    height: 0;
+                    background: var(--accent);
+                    content: '';
+                    transition: height 180ms ease-out;
+                }
+                .nav-brand-lockup:hover::after,
+                .nav-brand-lockup--active::after { height: 24px; }
+                .nav-brand-logo { width: 34px; height: 34px; }
+                .nav-brand-copy { display: flex; align-items: flex-start; flex-direction: column; gap: 4px; }
+                .nav-brand-copy strong { font-size: 1.14rem; font-weight: 760; line-height: 1; letter-spacing: -0.035em; transition: color 160ms ease; }
+                .nav-brand-copy small { color: var(--ink-subtle); font-size: 0.65rem; font-weight: 650; line-height: 1; letter-spacing: 0.04em; }
                 .nav-brand-lockup:hover .nav-brand-copy strong { color: var(--accent-strong); }
                 .nav-public-links {
                     align-self: stretch;
                     display: flex;
                     align-items: center;
                     justify-content: flex-start;
-                    gap: clamp(20px, 2.5vw, 38px);
+                    gap: 2px;
+                    padding-left: clamp(12px, 1.5vw, 22px);
                     margin-right: auto;
                 }
                 .nav-public-link {
                     position: relative;
                     display: inline-flex;
                     align-items: center;
-                    min-height: 76px;
-                    padding: 2px 0 0;
+                    min-height: 72px;
+                    padding: 2px clamp(10px, 1.1vw, 15px) 0;
                     color: var(--ink-muted);
-                    font-size: 0.92rem;
+                    font-size: 0.88rem;
                     font-weight: 650;
                     text-decoration: none;
                     transition: color 160ms ease, background-color 160ms ease;
                 }
-                .nav-public-link:hover,
-                .nav-public-link--active {
+                .nav-public-link:hover {
                     color: var(--accent-strong);
-                    background: transparent;
+                    background: var(--accent-soft);
                 }
+                .nav-public-link--active { color: var(--ink); background: var(--color-surface); }
                 .nav-public-link::after {
                     content: '';
                     position: absolute;
-                    left: 0;
-                    right: 0;
+                    left: 12px;
+                    right: 12px;
                     bottom: -1px;
-                    height: 2px;
+                    height: 3px;
                     background: var(--accent);
                     transform: scaleX(0);
                     transform-origin: left;
@@ -236,7 +260,9 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     justify-content: flex-end;
                     gap: 8px;
                     min-width: 0;
-                    min-height: 76px;
+                    min-height: 72px;
+                    padding-left: clamp(14px, 1.7vw, 24px);
+                    border-left: 1px solid var(--color-border);
                 }
                 .nav-public-auth-link,
                 .nav-public-primary {
@@ -245,16 +271,28 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     justify-content: center;
                     gap: 7px;
                     min-height: 44px;
-                    padding: 0 13px;
-                    font-size: 0.9rem;
+                    padding: 0 14px;
+                    font-size: 0.87rem;
                     font-weight: 650;
                     text-decoration: none;
                     transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
                 }
                 .nav-public-auth-link { color: var(--ink-muted); }
-                .nav-public-auth-link:hover { color: var(--accent-strong); }
-                .nav-public-primary { color: #06263a; background: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding-inline: 17px; }
-                .nav-public-primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+                .nav-public-auth-link:hover { color: var(--ink); background: var(--color-surface); }
+                .nav-public-primary {
+                    min-width: 128px;
+                    justify-content: space-between;
+                    padding-inline: 16px 13px;
+                    border: 1px solid var(--accent);
+                    border-radius: 0;
+                    background: var(--accent);
+                    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+                    color: #061923;
+                }
+                .nav-public-primary svg { display: none; }
+                .nav-public-primary span { font-size: 1rem; transition: transform 160ms ease; }
+                .nav-public-primary:hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
+                .nav-public-primary:hover span { transform: translateX(3px); }
                 .nav-user-controls { display: flex; align-items: center; gap: 4px; }
                 .nav-control-anchor { position: relative; }
                 .nav-icon-button,
@@ -264,8 +302,8 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     align-items: center;
                     justify-content: center;
                     min-height: 44px;
-                    border: 0;
-                    border-radius: 6px;
+                    border: 1px solid transparent;
+                    border-radius: 0;
                     background: transparent;
                     color: var(--ink-muted);
                     cursor: pointer;
@@ -277,13 +315,13 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 .nav-icon-button--active,
                 .nav-user-button:hover,
                 .nav-user-button--active,
-                .nav-mobile-btn:hover { color: var(--accent-strong); background: var(--accent-soft); }
+                .nav-mobile-btn:hover { border-color: var(--color-border); color: var(--accent-strong); background: var(--accent-soft); }
                 .nav-user-chevron { transition: transform 160ms ease; }
                 .nav-user-chevron--open { transform: rotate(180deg); }
                 .nav-avatar-fallback { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent); color: var(--ink); font-size: 0.875rem; font-weight: 700; }
                 .nav-notification-badge { position: absolute; top: 3px; right: 2px; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--danger); color: white; font-size: 0.65rem; font-weight: 700; }
                 .nav-loading-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-subtle); }
-                .nav-dropdown { position: absolute; right: 0; top: calc(100% + 8px); z-index: 100; overflow: hidden; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 8px rgba(16, 32, 51, 0.08); }
+                .nav-dropdown { position: absolute; right: 0; top: calc(100% + 14px); z-index: 100; overflow: hidden; background: var(--surface-raised); border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: 0; box-shadow: 0 18px 42px rgba(16, 32, 51, 0.13); }
                 .nav-notification-panel { width: min(360px, calc(100vw - 32px)); }
                 .nav-user-menu { width: 280px; }
                 .nav-dropdown-header, .nav-dropdown-footer { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 0.9rem; font-weight: 700; }
@@ -310,39 +348,50 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 .nav-menu-link--admin { color: var(--accent-strong); }
                 .nav-menu-footer { padding: 0; border-top: 1px solid var(--line); }
                 .nav-menu-action--danger:hover { background: var(--danger-soft); color: var(--danger); }
-                .nav-mobile-btn { display: none; width: 44px; padding: 0; }
+                .nav-mobile-btn { display: none; width: auto; gap: 8px; padding: 0 12px; }
+                .nav-mobile-btn svg { width: 19px; height: 19px; }
+                .nav-mobile-label { font-size: 0.82rem; font-weight: 700; }
                 .nav-public-shell a:focus-visible,
                 .nav-public-shell button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
                 .nav-public-shell .nav-dropdown:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
-                .nav-public-mobile-panel { position: absolute; top: 100%; left: 0; right: 0; max-height: calc(100dvh - 64px); overflow-y: auto; overscroll-behavior: contain; background: #fffdf9; border-bottom: 1px solid var(--line); box-shadow: 0 14px 28px rgba(16, 32, 51, 0.1); }
-                .nav-mobile-panel-inner { display: flex; width: min(100% - 32px, 1200px); margin: 0 auto; flex-direction: column; gap: 0; padding: 0 0 20px; }
-                .nav-mobile-panel-header { display: flex; align-items: center; justify-content: space-between; min-height: 48px; border-bottom: 1px solid var(--line); color: var(--ink-muted); }
-                .nav-mobile-panel-header span { font-size: 0.78rem; font-weight: 700; }
+                .nav-public-mobile-panel { position: absolute; top: 100%; left: 0; right: 0; max-height: calc(100dvh - 68px); overflow-y: auto; overscroll-behavior: contain; background: var(--color-surface); border-bottom: 3px solid var(--accent); box-shadow: 0 22px 50px rgba(16, 32, 51, 0.14); }
+                .nav-mobile-panel-inner { display: flex; width: min(calc(100% - 36px), 1280px); margin: 0 auto; flex-direction: column; gap: 0; padding: 0 0 24px; }
+                .nav-mobile-panel-header { display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); color: var(--ink-muted); }
+                .nav-mobile-panel-header span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; }
                 .nav-mobile-user-summary { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
                 .nav-mobile-link-group { display: flex; flex-direction: column; gap: 0; }
-                .nav-mobile-link { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 0; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink-soft); font-size: 1rem; font-weight: 600; text-decoration: none; }
-                .nav-mobile-link--primary { position: relative; min-height: 58px; font-size: 1.08rem; font-weight: 650; }
-                .nav-mobile-link--primary::after { content: '→'; margin-left: auto; color: var(--ink-subtle); font-size: 0.95rem; }
+                .nav-mobile-link { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 12px; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink-soft); font-size: 1rem; font-weight: 600; text-decoration: none; }
+                .nav-mobile-link--primary { position: relative; min-height: 62px; padding-inline: 14px 12px; font-size: 1.08rem; font-weight: 680; }
+                .nav-mobile-link--primary::after { content: '→'; margin-left: auto; color: var(--ink-subtle); font-size: 0.95rem; transition: transform 160ms ease; }
                 .nav-mobile-link:hover, .nav-mobile-link--active { color: var(--accent-strong); }
-                .nav-mobile-link--active { background: transparent; }
+                .nav-mobile-link:hover { background: var(--color-surface-hover); }
+                .nav-mobile-link:hover::after { transform: translateX(3px); }
+                .nav-mobile-link--active { box-shadow: inset 3px 0 0 var(--accent); background: var(--accent-soft); color: var(--ink); }
                 .nav-mobile-link--admin { color: var(--accent-strong); }
                 .nav-mobile-divider { height: 1px; margin: 0; background: var(--line); }
                 .nav-mobile-action { width: 100%; border: 0; background: transparent; cursor: pointer; }
                 .nav-mobile-action--danger:hover { background: var(--danger-soft); color: var(--danger); }
-                .nav-mobile-auth-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding-top: 8px; }
+                .nav-mobile-auth-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 18px; }
                 .nav-mobile-auth { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 0; font-size: 0.95rem; font-weight: 700; text-decoration: none; }
                 .nav-mobile-auth--secondary { border: 1px solid var(--line); color: var(--ink-soft); }
-                .nav-mobile-auth--primary { background: var(--accent); color: #ffffff; }
+                .nav-mobile-auth--primary { background: var(--accent); color: #061923; }
                 @media (max-width: 1020px) and (min-width: 841px) {
                     .nav-public-rail { column-gap: 16px; }
                     .nav-public-links { gap: 16px; }
                     .nav-public-auth-link svg { display: none; }
+                    .nav-brand-copy small { display: none; }
                 }
                 @media (max-width: 840px) {
-                    .nav-public-rail { display: flex; min-height: 64px; justify-content: space-between; gap: 12px; }
-                    .nav-brand-lockup { min-height: 64px; padding-right: 0; border-right: 0; }
+                    .nav-public-rail { display: flex; width: min(calc(100% - 36px), 1280px); min-height: 68px; justify-content: space-between; gap: 12px; }
+                    .nav-brand-lockup { min-height: 68px; padding-right: 0; border-right: 0; }
+                    .nav-brand-lockup::after { right: auto; bottom: -1px; left: 0; width: 40px; height: 3px; }
                     .nav-public-links, .nav-public-actions { display: none; }
                     .nav-mobile-btn { display: inline-flex; }
+                }
+                @media (max-width: 620px) {
+                    .nav-public-rail,
+                    .nav-mobile-panel-inner { width: min(calc(100% - 28px), 1280px); }
+                    .nav-brand-copy small { display: none; }
                 }
                 @media (min-width: 841px) { .nav-public-mobile-panel { display: none; } }
                 @media (prefers-reduced-motion: reduce) {

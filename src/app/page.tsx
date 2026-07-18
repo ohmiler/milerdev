@@ -7,10 +7,10 @@ import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
 import ShowcaseGallery from '@/components/home/ShowcaseGallery';
 import HeroCodeEditor from '@/components/home/HeroCodeEditor';
-import AffiliateBannerCarousel from '@/components/home/AffiliateBannerCarousel';
+import LearningWorkspacePreview from '@/components/home/LearningWorkspacePreview';
 import { db } from '@/lib/db';
-import { courses, lessons, users, bundles, bundleCourses } from '@/lib/db/schema';
-import { eq, desc, asc, count, sql } from 'drizzle-orm';
+import { courses, lessons } from '@/lib/db/schema';
+import { eq, desc, count, sql } from 'drizzle-orm';
 import styles from './home.module.css';
 
 async function getFeaturedCourses() {
@@ -35,14 +35,11 @@ async function getFeaturedCourses() {
       promoStartsAt: courses.promoStartsAt,
       promoEndsAt: courses.promoEndsAt,
       status: courses.status,
-      instructorId: courses.instructorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
-      instructorName: users.name,
       lessonCount: sql<number>`COALESCE(${lessonCountSq.lessonCount}, 0)`.as('lesson_count'),
     })
     .from(courses)
-    .leftJoin(users, eq(courses.instructorId, users.id))
     .leftJoin(lessonCountSq, eq(courses.id, lessonCountSq.courseId))
     .where(eq(courses.status, 'published'))
     .orderBy(desc(courses.createdAt))
@@ -64,93 +61,11 @@ async function getFeaturedCourses() {
       promoPrice: row.promoPrice,
       isPromoActive: hasPromo && promoStartOk && promoEndOk,
       status: row.status,
-      instructorId: row.instructorId,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-      instructor: row.instructorId ? { id: row.instructorId, name: row.instructorName } : null,
       lessonCount: Number(row.lessonCount) || 0,
     };
   });
-}
-
-async function getPublishedBundles() {
-  const rows = await db
-    .select({
-      id: bundles.id,
-      title: bundles.title,
-      slug: bundles.slug,
-      description: bundles.description,
-      thumbnailUrl: bundles.thumbnailUrl,
-      price: bundles.price,
-      status: bundles.status,
-      createdAt: bundles.createdAt,
-      updatedAt: bundles.updatedAt,
-      courseId: bundleCourses.courseId,
-      courseTitle: courses.title,
-      coursePrice: courses.price,
-      orderIndex: bundleCourses.orderIndex,
-    })
-    .from(bundles)
-    .leftJoin(bundleCourses, eq(bundles.id, bundleCourses.bundleId))
-    .leftJoin(courses, eq(bundleCourses.courseId, courses.id))
-    .where(eq(bundles.status, 'published'))
-    .orderBy(desc(bundles.createdAt), asc(bundleCourses.orderIndex));
-
-  const bundleMap = new Map<string, {
-    id: string;
-    title: string;
-    slug: string;
-    description: string | null;
-    thumbnailUrl: string | null;
-    price: string;
-    status: string;
-    createdAt: Date | null;
-    updatedAt: Date | null;
-    courses: { courseId: string | null; courseTitle: string | null; coursePrice: string | null }[];
-  }>();
-
-  for (const row of rows) {
-    if (!bundleMap.has(row.id)) {
-      bundleMap.set(row.id, {
-        id: row.id,
-        title: row.title,
-        slug: row.slug,
-        description: row.description,
-        thumbnailUrl: row.thumbnailUrl,
-        price: row.price,
-        status: row.status,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        courses: [],
-      });
-    }
-
-    if (row.courseId) {
-      bundleMap.get(row.id)!.courses.push({
-        courseId: row.courseId,
-        courseTitle: row.courseTitle,
-        coursePrice: row.coursePrice,
-      });
-    }
-  }
-
-  return Array.from(bundleMap.values())
-    .slice(0, 3)
-    .map((bundle) => {
-      const totalOriginalPrice = bundle.courses.reduce(
-        (sum, course) => sum + parseFloat(course.coursePrice || '0'),
-        0,
-      );
-
-      return {
-        ...bundle,
-        courseCount: bundle.courses.length,
-        totalOriginalPrice,
-        discount: totalOriginalPrice > 0
-          ? Math.round((1 - parseFloat(bundle.price) / totalOriginalPrice) * 100)
-          : 0,
-      };
-    });
 }
 
 const CLIENT_LOGOS = [
@@ -165,10 +80,7 @@ const CLIENT_LOGOS = [
 ] as const;
 
 export default async function HomePage() {
-  const [featuredCourses, publishedBundles] = await Promise.all([
-    getFeaturedCourses(),
-    getPublishedBundles(),
-  ]);
+  const featuredCourses = await getFeaturedCourses();
 
   return (
     <>
@@ -203,20 +115,32 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <ol className={styles.learningRhythm} aria-label="จังหวะการเรียนรู้ของ MilerDev">
-              <li className={styles.rhythmItem}>
-                <span className={styles.rhythmMark} aria-hidden="true" />
-                <span><strong>เห็นภาพรวมก่อน</strong>เข้าใจเหตุผลและโครงสร้าง ไม่เริ่มจากการจำคำสั่ง</span>
-              </li>
-              <li className={styles.rhythmItem}>
-                <span className={styles.rhythmMark} aria-hidden="true" />
-                <span><strong>ลงมือไปพร้อมบทเรียน</strong>เปลี่ยนแนวคิดให้เป็นโค้ดและโปรเจกต์ทีละขั้น</span>
-              </li>
-              <li className={styles.rhythmItem}>
-                <span className={styles.rhythmMark} aria-hidden="true" />
-                <span><strong>ต่อยอดด้วยตัวเอง</strong>กลับมาอ่าน แก้ และพัฒนางานของคุณได้อย่างมั่นใจขึ้น</span>
-              </li>
-            </ol>
+          </div>
+        </section>
+
+        <section className={[styles.section, styles.workspaceSection].join(' ')} aria-labelledby="learning-workspace-title">
+          <div className={styles.shell}>
+            <header className={styles.workspaceIntro}>
+              <div>
+                <p className={styles.sectionLabel}>ไม่ใช่แค่ดูวิดีโอ แล้วปล่อยให้คุณไปต่อเอง</p>
+                <h2 id="learning-workspace-title" className={styles.workspaceTitle}>
+                  พื้นที่เรียนที่จำว่า <span>คุณกำลังสร้างอะไร</span>
+                </h2>
+              </div>
+              <div className={styles.workspaceStory}>
+                <p>
+                  ทุกบทเชื่อมวิดีโอ ลำดับเนื้อหา และความคืบหน้าไว้ในพื้นที่เดียว
+                  เพื่อให้คุณหยุด ทบทวน และกลับมาลงมือทำต่อได้โดยไม่เสียจังหวะ
+                </p>
+                <ul aria-label="สิ่งที่มีในพื้นที่เรียน MilerDev">
+                  <li><span>01</span> วิดีโอและบทเรียนตามลำดับ</li>
+                  <li><span>02</span> บันทึกบทที่เรียนจบและจุดล่าสุด</li>
+                  <li><span>03</span> ใบรับรองเมื่อผ่านเงื่อนไขของคอร์ส</li>
+                </ul>
+              </div>
+            </header>
+
+            <LearningWorkspacePreview />
           </div>
         </section>
 
@@ -229,7 +153,7 @@ export default async function HomePage() {
               </div>
               <div>
                 <p className={styles.sectionCopy}>
-                  ดูหัวข้อ จำนวนบทเรียน ผู้สอน และราคาได้จากข้อมูลที่เผยแพร่จริง
+                  ดูหัวข้อ จำนวนบทเรียน และราคาได้จากข้อมูลที่เผยแพร่จริง
                   แล้วเลือกเส้นทางที่ใกล้กับสิ่งที่คุณอยากสร้าง
                 </p>
                 <Link href="/courses" className={styles.sectionLink}>ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link>
@@ -237,7 +161,7 @@ export default async function HomePage() {
             </div>
 
             {featuredCourses.length > 0 ? (
-              <div className={styles.courseGrid}>
+              <div className={styles.courseGrid} data-count={Math.min(featuredCourses.length, 4)}>
                 {featuredCourses.map((course) => (
                   <CourseCard
                     key={course.id}
@@ -249,7 +173,7 @@ export default async function HomePage() {
                     price={parseFloat(course.price)}
                     promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
                     isPromoActive={course.isPromoActive}
-                    instructorName={course.instructor?.name ?? null}
+                    instructorName={null}
                     lessonCount={course.lessonCount}
                     variant="featured"
                   />
@@ -265,66 +189,36 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {publishedBundles.length > 0 && (
-          <section className={[styles.section, styles.bundleSection].join(' ')} aria-labelledby="bundle-title">
-            <div className={[styles.shell, styles.bundleIntro].join(' ')}>
-              <div className={styles.bundleIntroCopy}>
-                <p className={styles.sectionLabel}>เมื่ออยากเรียนต่อเนื่อง</p>
-                <h2 id="bundle-title" className={styles.sectionTitle}>รวมหลายคอร์สให้เดินเป็นเส้นทางเดียว</h2>
-                <p className={styles.sectionCopy}>
-                  เห็นคอร์สที่รวมอยู่ มูลค่าปกติ และราคาชุดก่อนตัดสินใจ
-                  ไม่มีการเร่งเวลา—เลือกเมื่อเส้นทางนี้ตรงกับเป้าหมายของคุณ
-                </p>
-              </div>
-
-              <div className={styles.bundleList}>
-                {publishedBundles.map((bundle) => {
-                  const bundlePrice = parseFloat(bundle.price);
-                  const savings = Math.max(bundle.totalOriginalPrice - bundlePrice, 0);
-
-                  return (
-                    <Link key={bundle.id} href={'/bundles/' + bundle.slug} className={styles.bundleRow}>
-                      <div className={styles.bundleStory}>
-                        <h3>{bundle.title}</h3>
-                        {bundle.description && <p>{bundle.description}</p>}
-                        <ul className={styles.bundleCourses} aria-label={'คอร์สในชุด ' + bundle.title}>
-                          {bundle.courses.map((course) => (
-                            <li key={course.courseId}>{course.courseTitle}</li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className={styles.bundleValue}>
-                        <div>
-                          <span className={styles.bundlePrice}>฿{bundlePrice.toLocaleString()}</span>
-                          {bundle.totalOriginalPrice > bundlePrice && (
-                            <>
-                              <span className={styles.bundleOriginal}>จากมูลค่ารวม ฿{bundle.totalOriginalPrice.toLocaleString()}</span>
-                              <span className={styles.bundleSavings}>ประหยัด ฿{savings.toLocaleString()}</span>
-                            </>
-                          )}
-                        </div>
-                        <span className={styles.bundleAction}>ดูรายละเอียด <span aria-hidden="true">→</span></span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
         <section className={[styles.section, styles.proofSection].join(' ')} aria-labelledby="teaching-proof-title">
           <div className={styles.shell}>
             <div className={styles.proofLead}>
               <div>
-                <p className={styles.sectionLabel}>ความรู้ที่ออกไปพบผู้คน</p>
-                <h2 id="teaching-proof-title" className={styles.sectionTitle}>ประสบการณ์สอนที่เกิดขึ้นนอกหน้าคอร์ส</h2>
+                <p className={styles.sectionLabel}>ประสบการณ์จากห้องเรียนจริง</p>
+                <h2 id="teaching-proof-title" className={styles.proofTitle}>ก่อนมาเป็นบทเรียน ความรู้นี้เคยถูกนำไปใช้สอนจริง</h2>
               </div>
               <p className={styles.sectionCopy}>
-                ตัวอย่างองค์กรและสถาบันการศึกษาที่เคยเชิญ MilerDev ไปแบ่งปันความรู้
-                ด้านการเขียนโปรแกรมและการพัฒนาเว็บไซต์
+                MilerDev นำประสบการณ์จากงานสอน Web Development, AI และเส้นทางอาชีพ Developer
+                กลับมาจัดเป็นบทเรียนที่เห็นภาพ เข้าใจเหตุผล และลงมือทำตามได้
               </p>
+            </div>
+
+            <div className={styles.proofFeature}>
+              <figure className={styles.proofImage}>
+                <Image
+                  src="/showcase/06-showcase-1024x768.webp"
+                  alt="เบื้องหลังพื้นที่บันทึกบทเรียนออนไลน์ของ MilerDev"
+                  width={1024}
+                  height={768}
+                  sizes="(max-width: 820px) 100vw, 56vw"
+                />
+                <figcaption>ONLINE CLASSROOM / เบื้องหลังการบันทึกบทเรียน</figcaption>
+              </figure>
+
+              <div className={styles.proofNote}>
+                <span>FROM FIELD TO LESSON</span>
+                <strong>อธิบายให้เข้าใจก่อน แล้วค่อยพาเปลี่ยนความคิดให้เป็นโค้ด</strong>
+                <p>ทั้งในเวิร์กช็อป ห้องเรียน และพื้นที่ออนไลน์ หลักยังเหมือนเดิม—เรียนเพื่อกลับไปสร้างต่อได้ด้วยตัวเอง</p>
+              </div>
             </div>
 
             <ul className={styles.clientCloud} aria-label="องค์กรและสถาบันที่เคยร่วมงานกับ MilerDev">
@@ -347,7 +241,6 @@ export default async function HomePage() {
         </section>
 
         <ShowcaseGallery />
-        <AffiliateBannerCarousel />
 
         <section className={styles.closing} aria-labelledby="home-closing-title">
           <div className={[styles.shell, styles.closingInner].join(' ')}>
