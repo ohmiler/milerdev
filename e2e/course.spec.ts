@@ -29,8 +29,7 @@ test.describe('Course Browsing', () => {
 
     const slug = courses[0].slug;
     await page.goto(`/courses/${slug}`);
-    await expect(page.locator('nav')).toBeVisible();
-    await expect(page.locator('main')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'เส้นทางนำทาง' })).toBeVisible();
   });
 
   test('non-existent course shows 404 or error', async ({ page }) => {
