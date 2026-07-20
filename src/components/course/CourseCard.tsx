@@ -81,8 +81,8 @@ export default function CourseCard({
                     ) : (
                         <div className="course-thumbnail__fallback" aria-hidden="true">
                             <span>COURSE / {(tags?.[0]?.name ?? 'MilerDev').toUpperCase()}</span>
-                            <strong>{title}</strong>
-                            <small>MILERDEV LEARNING</small>
+                            <strong>MILERDEV</strong>
+                            <small>LEARNING MODULE</small>
                         </div>
                     )}
                 </div>

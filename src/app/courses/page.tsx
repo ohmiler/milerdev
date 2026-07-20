@@ -301,6 +301,13 @@ export default async function CoursesPage({ searchParams }: Props) {
   const tagFilter = getSingleParam(resolved.tag) || 'all';
   const sort = getSingleParam(resolved.sort) || 'newest';
   const currentPage = Math.max(1, parseInt(getSingleParam(resolved.page) || '1', 10) || 1);
+  const hasActiveFilters = Boolean(
+    search
+      || priceFilter !== 'all'
+      || tagFilter !== 'all'
+      || sort !== 'newest'
+      || currentPage > 1,
+  );
 
   const [coursesData, allTags, bundlesList] = await Promise.all([
     getCoursesData({ page: currentPage, limit: 12, search, priceFilter, tagSlug: tagFilter, sort }),
@@ -315,18 +322,12 @@ export default async function CoursesPage({ searchParams }: Props) {
       <Navbar />
       <main className={styles.page}>
         <header className={styles.hero}>
-          <div className={'container ' + styles.heroGrid}>
-            <div className={styles.heroCopy}>
-              <p className={styles.eyebrow}>Course directory / เลือกเส้นทางของคุณ</p>
+          <div className={'container'}>
+            <p className={styles.eyebrow}>COURSE DIRECTORY / {String(pagination.total).padStart(2, '0')}</p>
+            <div className={styles.heroGrid}>
               <h1>เลือกคอร์สที่พาไปถึงงานชิ้นถัดไป</h1>
               <p className={styles.heroLede}>เปรียบเทียบหัวข้อ ราคา และบทเรียนที่เปิดให้ทดลอง แล้วเลือกจุดเริ่มต้นที่ตรงกับทักษะที่คุณอยากพัฒนาจริง</p>
-              <a href="#course-catalog" className={styles.jumpLink}>เริ่มเลือกคอร์ส <span aria-hidden="true">↓</span></a>
             </div>
-            <dl className={styles.catalogFacts} aria-label="ภาพรวมแคตตาล็อก">
-              <div><dt>คอร์สที่พบ</dt><dd>{pagination.total}</dd><span>หลักสูตรที่เผยแพร่</span></div>
-              <div><dt>หัวข้อ</dt><dd>{allTags.length}</dd><span>ตัวเลือกสำหรับกรอง</span></div>
-              <div><dt>เส้นทางแบบชุด</dt><dd>{bundlesList.length}</dd><span>Bundle ที่เผยแพร่</span></div>
-            </dl>
           </div>
         </header>
         <section id="course-catalog" className={styles.catalog} aria-labelledby="courses-catalog-title">
@@ -343,7 +344,7 @@ export default async function CoursesPage({ searchParams }: Props) {
                   <div className={styles.filterField}><label htmlFor="course-price">ราคา</label><select id="course-price" name="price" defaultValue={priceFilter}><option value="all">ทุกราคา</option><option value="free">ฟรี</option><option value="paid">มีค่าใช้จ่าย</option></select></div>
                   <div className={styles.filterField}><label htmlFor="course-tag">หัวข้อ</label><select id="course-tag" name="tag" defaultValue={tagFilter}><option value="all">ทุกหัวข้อ</option>{allTags.map((tag) => <option key={tag.id} value={tag.slug}>{tag.name}</option>)}</select></div>
                   <div className={styles.filterField}><label htmlFor="course-sort">เรียงตาม</label><select id="course-sort" name="sort" defaultValue={sort}><option value="newest">ใหม่ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="price-low">ราคาต่ำไปสูง</option><option value="price-high">ราคาสูงไปต่ำ</option></select></div>
-                  <div className={styles.filterActions}><button type="submit">แสดงผลลัพธ์</button><Link href="/courses">ล้างตัวกรอง</Link></div>
+                  <div className={styles.filterActions}><button type='submit'>แสดงผลลัพธ์</button>{hasActiveFilters && <Link href='/courses'>ล้างตัวกรอง</Link>}</div>
                 </form>
             </aside>
             <div className={styles.resultsHeader}><p>{search ? 'ผลการค้นหาสำหรับ “' + search + '”' : 'หลักสูตรที่เปิดให้เรียน'}</p><span>หน้า {pagination.page} / {Math.max(1, pagination.totalPages)}</span></div>

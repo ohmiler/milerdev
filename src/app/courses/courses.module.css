@@ -4,29 +4,32 @@
 }
 
 .hero {
-  overflow: hidden;
-  border-bottom: 1px solid var(--line);
-  background:
-    linear-gradient(90deg, transparent calc(100% - 1px), var(--line) 0) 0 0 / 25% 100%,
-    var(--canvas);
+  padding-block: clamp(58px, 8vw, 96px);
+  border-bottom: 1px solid var(--line-strong);
+  background-color: var(--surface-subtle);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 64px 64px;
 }
 
 .heroGrid {
   display: grid;
-  grid-template-columns: minmax(0, 8fr) minmax(260px, 4fr);
-  min-height: 390px;
-}
-
-.heroCopy {
-  display: flex;
-  align-items: flex-start;
-  flex-direction: column;
-  justify-content: center;
-  padding: 64px 64px 64px 0;
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.7fr);
+  gap: clamp(48px, 9vw, 128px);
+  align-items: end;
+  margin-top: 22px;
 }
 
 .eyebrow,
-.sectionHeader > p,
+.sectionHeader > p {
+  margin: 0;
+  color: var(--accent-strong);
+  font: 700 0.7rem/1.5 var(--font-code);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
 .filterIntro span,
 .bundleMeta {
   margin: 0;
@@ -36,82 +39,23 @@
   text-transform: uppercase;
 }
 
-.heroCopy h1 {
+.heroGrid h1 {
   max-width: 14ch;
-  margin: 24px 0 0;
-  font-size: clamp(2.8rem, 5.4vw, 5.35rem);
-  line-height: 1.05;
-  letter-spacing: -0.045em;
+  margin: 0;
+  font-size: clamp(2.8rem, 6.4vw, 6rem);
+  line-height: 1.02;
+  letter-spacing: -0.055em;
   text-wrap: balance;
 }
 
 .heroLede {
-  max-width: 62ch;
-  margin: 28px 0 0;
+  margin: 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-strong);
   color: var(--ink-soft);
-  font-size: 1.02rem;
-  line-height: 1.8;
+  font-size: 1rem;
+  line-height: 1.85;
   text-wrap: pretty;
-}
-
-.jumpLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-  min-height: 46px;
-  margin-top: 32px;
-  border-bottom: 1px solid var(--ink);
-  color: var(--ink);
-  font-weight: 750;
-  text-decoration: none;
-}
-
-.jumpLink span {
-  color: var(--accent-strong);
-}
-
-.jumpLink:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.catalogFacts {
-  display: grid;
-  grid-template-rows: repeat(3, 1fr);
-  margin: 0;
-  border-left: 1px solid var(--line);
-}
-
-.catalogFacts div {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-content: center;
-  gap: 8px 20px;
-  padding: 28px 0 28px 32px;
-  border-bottom: 1px solid var(--line);
-}
-
-.catalogFacts div:last-child {
-  border-bottom: 0;
-}
-
-.catalogFacts dt {
-  color: var(--ink-soft);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.catalogFacts dd {
-  grid-row: 1 / 3;
-  grid-column: 2;
-  margin: 0;
-  color: var(--accent-strong);
-  font: 700 clamp(2rem, 3vw, 3.25rem)/1 var(--font-code);
-}
-
-.catalogFacts span {
-  color: var(--ink-muted);
-  font-size: 0.72rem;
 }
 
 .catalog,
@@ -211,6 +155,10 @@
   display: grid;
   gap: 8px;
   margin-top: 4px;
+}
+
+.filterActions > :only-child {
+  grid-column: 1 / -1;
 }
 
 .filterActions button,
@@ -316,6 +264,32 @@
 
 .catalogLayout :global(.courses-grid .course-card__content) {
   padding: 24px;
+}
+
+.catalogLayout :global(.courses-grid .course-card__tags) {
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.catalogLayout :global(.courses-grid .course-tag-badge) {
+  padding: 3px 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--accent-strong);
+  font: 700 0.64rem/1.35 var(--font-code);
+  letter-spacing: 0.03em;
+}
+
+.catalogLayout :global(.courses-grid .course-card__title) {
+  margin-bottom: 10px;
+  color: var(--ink);
+  font-size: clamp(1.25rem, 2.1vw, 1.55rem);
+  line-height: 1.3;
+}
+
+.catalogLayout :global(.courses-grid .course-card__description) {
+  color: var(--ink-soft);
 }
 
 .catalogLayout :global(.courses-grid .course-card__meta) {
@@ -442,6 +416,7 @@
 .bundle {
   display: grid;
   grid-template-columns: minmax(130px, 1.2fr) minmax(220px, 2.4fr) minmax(170px, 1.8fr) minmax(130px, 1.2fr) auto;
+  grid-template-areas: 'meta content courses price action';
   gap: 24px;
   align-items: center;
   min-height: 150px;
@@ -450,6 +425,14 @@
   color: inherit;
   text-decoration: none;
   transition: background-color 160ms ease-out;
+}
+
+.bundleMeta {
+  grid-area: meta;
+}
+
+.bundleContent {
+  grid-area: content;
 }
 
 .bundle:hover {
@@ -475,6 +458,7 @@
 
 .bundleCourses {
   display: flex;
+  grid-area: courses;
   flex-direction: column;
   gap: 5px;
   color: var(--ink-soft);
@@ -484,6 +468,7 @@
 
 .bundlePrice {
   display: flex;
+  grid-area: price;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
@@ -507,6 +492,7 @@
 
 .bundleAction {
   display: flex;
+  grid-area: action;
   gap: 10px;
   color: var(--accent-strong);
   font-weight: 750;
@@ -514,16 +500,9 @@
 }
 
 @media (max-width: 1023px) {
-  .hero {
-    background: var(--canvas);
-  }
-
   .heroGrid {
-    grid-template-columns: minmax(0, 7fr) minmax(220px, 5fr);
-  }
-
-  .heroCopy {
-    padding-right: 40px;
+    grid-template-columns: 1fr;
+    gap: 32px;
   }
 
   .sectionHeader {
@@ -547,74 +526,27 @@
   }
 
   .bundle {
-    grid-template-columns: 1fr 2.2fr 1.4fr auto;
-  }
-
-  .bundleCourses {
-    display: none;
+    grid-template-columns: minmax(110px, 0.9fr) minmax(0, 2fr) minmax(130px, 1fr) auto;
+    grid-template-areas:
+      'meta content price action'
+      'meta courses price action';
+    gap: 14px 20px;
   }
 }
 
 @media (max-width: 767px) {
+  .hero {
+    padding-block: 48px;
+    background-size: 48px 48px;
+  }
+
   .heroGrid {
-    display: block;
-    min-height: 0;
+    gap: 28px;
+    margin-top: 18px;
   }
 
-  .heroCopy {
-    padding: 52px 0 48px;
-  }
-
-  .heroCopy h1 {
-    margin-top: 20px;
+  .heroGrid h1 {
     font-size: clamp(2.55rem, 13vw, 4rem);
-  }
-
-  .heroLede {
-    margin-top: 22px;
-  }
-
-  .jumpLink {
-    margin-top: 26px;
-  }
-
-  .catalogFacts {
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: none;
-    border-top: 1px solid var(--line);
-    border-left: 0;
-  }
-
-  .catalogFacts div {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 6px;
-    padding: 18px 12px;
-    border-right: 1px solid var(--line);
-    border-bottom: 0;
-  }
-
-  .catalogFacts div:first-child {
-    padding-left: 0;
-  }
-
-  .catalogFacts div:last-child {
-    padding-right: 0;
-    border-right: 0;
-  }
-
-  .catalogFacts dd {
-    order: -1;
-    font-size: 1.8rem;
-  }
-
-  .catalogFacts dt {
-    line-height: 1.4;
-  }
-
-  .catalogFacts span {
-    display: none;
   }
 
   .catalog,
@@ -642,14 +574,22 @@
   }
 
   .filterPanel {
-    padding: 24px 0 28px;
+    padding: 20px 0 24px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
 
+  .filterIntro {
+    margin-bottom: 18px;
+  }
+
   .filterForm {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 12px;
+    gap: 12px;
+  }
+
+  .filterForm label {
+    margin-bottom: 6px;
   }
 
   .searchField,
@@ -691,30 +631,24 @@
 
   .bundle {
     grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'meta meta'
+      'content content'
+      'courses courses'
+      'price action';
     gap: 16px;
   }
 
-  .bundleMeta,
-  .bundleContent {
-    grid-column: 1 / -1;
-  }
-
-  .bundlePrice {
-    grid-column: 1;
+  .bundleCourses {
+    gap: 7px;
+    padding-block: 14px;
+    border-block: 1px solid var(--line);
   }
 }
 
 @media (max-width: 420px) {
-  .heroCopy h1 {
+  .heroGrid h1 {
     font-size: 2.65rem;
-  }
-
-  .catalogFacts dt {
-    font-size: 0.69rem;
-  }
-
-  .filterActions {
-    grid-template-columns: 1fr;
   }
 }
 

@@ -50,8 +50,28 @@ test.describe('public learning journey', () => {
     await expect(evidenceCard).toContainText('ทดลองบทเรียนฟรี');
   });
 
+  test('catalog keeps included bundle courses visible on mobile', async ({ page }) => {
+    const response = await page.request.get('/api/bundles');
+    expect(response.ok()).toBeTruthy();
+
+    const payload = await response.json();
+    const bundle = payload.bundles?.find((item: { courses?: unknown[] }) => item.courses?.length);
+    test.skip(!bundle, 'No published bundle with courses in local data');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/courses');
+
+    const bundleRegion = page.getByRole('region', { name: 'ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด' });
+    const bundleLink = bundleRegion.getByRole('link').filter({ hasText: bundle.title }).first();
+
+    await expect(bundleLink.getByText(bundle.courses[0].courseTitle, { exact: true })).toBeVisible();
+  });
+
   test('catalog preserves a no-result search and offers a clear reset path', async ({ page }) => {
     await page.goto('/courses');
+
+    const filters = page.getByRole('complementary', { name: 'ตัวกรองคอร์ส' });
+    await expect(filters.getByRole('link', { name: 'ล้างตัวกรอง' })).toHaveCount(0);
 
     await page.getByRole('searchbox', { name: 'ค้นหาจากชื่อคอร์ส' }).fill('no-course-matches-this-query-9f4e');
     await page.getByRole('button', { name: 'แสดงผลลัพธ์' }).click();
@@ -62,7 +82,11 @@ test.describe('public learning journey', () => {
     );
     await expect(page.getByRole('heading', { name: 'ไม่พบคอร์สตามเงื่อนไขนี้' })).toBeVisible();
 
-    await page.getByRole('main').getByRole('link', { name: 'ดูคอร์สทั้งหมด' }).click();
+    const resetFilters = filters.getByRole('link', { name: 'ล้างตัวกรอง' });
+    await expect(resetFilters).toBeVisible();
+    await expect(resetFilters).toHaveAttribute('href', '/courses');
+
+    await resetFilters.click();
 
     await expect(page).toHaveURL('/courses');
     await expect(page.getByRole('searchbox', { name: 'ค้นหาจากชื่อคอร์ส' })).toHaveValue('');
