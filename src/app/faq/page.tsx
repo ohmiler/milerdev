@@ -1,233 +1,67 @@
-'use client';
-
-import { useState } from 'react';
-import Navbar from '@/components/layout/Navbar';
+import Link from 'next/link';
+import FAQAccordion from '@/components/faq/FAQAccordion';
 import Footer from '@/components/layout/Footer';
+import Navbar from '@/components/layout/Navbar';
+import { FAQ_CATEGORIES } from './faq-data';
+import styles from './faq.module.css';
 
-const FAQ_CATEGORIES = [
-  {
-    title: 'ทั่วไป',
-    icon: '💡',
-    items: [
-      {
-        q: 'MilerDev คืออะไร?',
-        a: 'MilerDev เป็นแพลตฟอร์มเรียนเขียนโปรแกรมออนไลน์ที่สอนโดยวิทยากรผู้มีประสบการณ์จริง เราเน้นสอนตั้งแต่พื้นฐานจนถึงระดับมืออาชีพ พร้อมโปรเจกต์จริงให้ฝึกทำ',
-      },
-      {
-        q: 'ต้องมีพื้นฐานการเขียนโปรแกรมก่อนไหม?',
-        a: 'ไม่จำเป็นครับ เรามีคอร์สสำหรับผู้เริ่มต้นที่ไม่มีพื้นฐานเลย และมีคอร์สขั้นสูงสำหรับผู้ที่ต้องการพัฒนาทักษะเพิ่มเติม',
-      },
-      {
-        q: 'สมัครสมาชิกฟรีไหม?',
-        a: 'การสมัครสมาชิกฟรีครับ คุณสามารถเข้าดูเนื้อหาคอร์สและรายละเอียดต่างๆ ได้ แต่การเข้าเรียนจะต้องลงทะเบียนในแต่ละคอร์ส ซึ่งมีทั้งคอร์สฟรีและคอร์สที่มีค่าใช้จ่าย',
-      },
-    ],
-  },
-  {
-    title: 'การเรียนและคอร์ส',
-    icon: '📚',
-    items: [
-      {
-        q: 'เรียนได้ตลอดชีพหรือมีกำหนดเวลา?',
-        a: 'เมื่อคุณลงทะเบียนแล้ว สามารถเรียนได้ตลอดชีพ ไม่มีกำหนดเวลาหมดอายุ เรียนซ้ำกี่รอบก็ได้',
-      },
-      {
-        q: 'มีใบรับรอง (Certificate) ให้ไหม?',
-        a: 'มีครับ เมื่อคุณเรียนจบคอร์สครบทุกบทเรียน ระบบจะออกใบรับรองอิเล็กทรอนิกส์ให้อัตโนมัติ สามารถดาวน์โหลดหรือแชร์ได้',
-      },
-      {
-        q: 'สามารถเรียนบนมือถือได้ไหม?',
-        a: 'ได้ครับ เว็บไซต์รองรับการใช้งานบนมือถือและแท็บเล็ต สามารถเรียนได้ทุกที่ทุกเวลา',
-      },
-      {
-        q: 'Bundle คืออะไร?',
-        a: 'Bundle คือแพ็กเกจคอร์สเรียนหลายคอร์สรวมกัน ในราคาพิเศษที่ถูกกว่าซื้อแยก เหมาะสำหรับผู้ที่ต้องการเรียนรู้หลายหัวข้อ',
-      },
-    ],
-  },
-  {
-    title: 'การชำระเงิน',
-    icon: '💳',
-    items: [
-      {
-        q: 'ชำระเงินได้ช่องทางไหนบ้าง?',
-        a: 'รองรับ 2 ช่องทาง ได้แก่ 1) โอนเงินผ่าน PromptPay แล้วแนบสลิป ระบบตรวจสอบอัตโนมัติ 2) บัตรเครดิต/เดบิต ผ่านระบบ Stripe (รองรับ Visa, Mastercard)',
-      },
-      {
-        q: 'ชำระเงินแล้วได้เรียนเลยไหม?',
-        a: 'สำหรับการชำระผ่านบัตรเครดิต/เดบิต จะได้เรียนทันทีหลังชำระเงินสำเร็จ สำหรับการโอนเงินผ่าน PromptPay หากสลิปผ่านการตรวจสอบจะได้เรียนทันทีเช่นกัน',
-      },
-      {
-        q: 'ขอคืนเงินได้ไหม?',
-        a: 'เนื่องจากเป็นสินค้าดิจิทัล เราไม่มีนโยบายคืนเงินหลังจากเริ่มเรียนแล้ว กรุณาศึกษารายละเอียดคอร์สให้ดีก่อนตัดสินใจ หากมีปัญหาสามารถติดต่อเราได้',
-      },
-    ],
-  },
-  {
-    title: 'บัญชีและการตั้งค่า',
-    icon: '⚙️',
-    items: [
-      {
-        q: 'ลืมรหัสผ่านทำอย่างไร?',
-        a: 'ไปที่หน้า "ลืมรหัสผ่าน" แล้วกรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์รีเซ็ตรหัสผ่านไปทางอีเมล',
-      },
-      {
-        q: 'เปลี่ยนอีเมลหรือรหัสผ่านได้ไหม?',
-        a: 'ได้ครับ เข้าไปที่เมนู "ตั้งค่า" ในแดชบอร์ดของคุณ จะสามารถเปลี่ยนรหัสผ่านได้ สำหรับการเปลี่ยนอีเมล กรุณาติดต่อทีมงาน',
-      },
-      {
-        q: 'ติดต่อทีมงานได้อย่างไร?',
-        a: 'สามารถติดต่อผ่านอีเมล milerdev.official@gmail.com หรือผ่านหน้า "ติดต่อ" บนเว็บไซต์ หรือทาง Facebook Page: MilerDev',
-      },
-    ],
-  },
-];
-
-function AccordionItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div style={{
-      border: '1px solid #e2e8f0',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      transition: 'box-shadow 0.2s',
-      boxShadow: open ? '0 4px 16px rgba(0,0,0,0.06)' : 'none',
-    }}>
-      <button
-        onClick={() => setOpen(!open)}
-        style={{
-          width: '100%',
-          padding: '18px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '16px',
-          background: open ? '#f8fafc' : 'white',
-          border: 'none',
-          cursor: 'pointer',
-          textAlign: 'left',
-          transition: 'background 0.2s',
-        }}
-      >
-        <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.9375rem', lineHeight: 1.5 }}>{q}</span>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#94a3b8"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            flexShrink: 0,
-            transition: 'transform 0.3s',
-            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-          }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-      <div style={{
-        maxHeight: open ? '300px' : '0px',
-        overflow: 'hidden',
-        transition: 'max-height 0.3s ease',
-      }}>
-        <div style={{
-          padding: '0 20px 18px',
-          color: '#64748b',
-          fontSize: '0.9375rem',
-          lineHeight: 1.7,
-        }}>
-          {a}
-        </div>
-      </div>
-    </div>
-  );
-}
+const questionCount = FAQ_CATEGORIES.reduce((total, category) => total + category.items.length, 0);
 
 export default function FAQPage() {
   return (
     <>
       <Navbar />
-      <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
-        {/* Hero */}
-        <section style={{
-          padding: '80px 0 48px',
-          background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-          textAlign: 'center',
-        }}>
-          <div className="container">
-            <h1 style={{
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: 700,
-              color: 'white',
-              marginBottom: '12px',
-            }}>
-              คำถามที่พบบ่อย
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.0625rem', maxWidth: '500px', margin: '0 auto' }}>
-              รวบรวมคำถามที่ผู้เรียนถามบ่อยเกี่ยวกับ MilerDev
-            </p>
+      <main className={styles.page}>
+        <header className={styles.hero}>
+          <div className={`container ${styles.heroGrid}`}>
+            <div className={styles.heroCopy}>
+              <p className={styles.meta}>Help desk / 04</p>
+              <h1>คำตอบที่ช่วยให้ไปต่อได้</h1>
+              <p>รวมข้อมูลเรื่องการเริ่มเรียน คอร์ส การชำระเงิน และบัญชี เพื่อให้คุณตัดสินใจหรือแก้ปัญหาได้จากจุดเดียว</p>
+            </div>
+            <dl className={styles.heroEvidence} aria-label={'ภาพรวมคำถามที่พบบ่อย'}>
+              <div><dt>คำถาม</dt><dd>{questionCount}</dd></div>
+              <div><dt>หมวด</dt><dd>{FAQ_CATEGORIES.length}</dd></div>
+              <div><dt>ทางเลือกถัดไป</dt><dd><Link href={'/contact'}>ติดต่อทีม</Link></dd></div>
+            </dl>
           </div>
-        </section>
+        </header>
 
-        {/* FAQ Content */}
-        <section style={{ padding: '64px 0 80px' }}>
-          <div className="container" style={{ maxWidth: '800px' }}>
-            {FAQ_CATEGORIES.map((cat, ci) => (
-              <div key={ci} style={{ marginBottom: ci < FAQ_CATEGORIES.length - 1 ? '48px' : 0 }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '20px',
-                }}>
-                  <span style={{ fontSize: '1.25rem' }}>{cat.icon}</span>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b' }}>{cat.title}</h2>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {cat.items.map((item, qi) => (
-                    <AccordionItem key={qi} q={item.q} a={item.a} />
-                  ))}
-                </div>
-              </div>
-            ))}
+        <section className={styles.body} aria-labelledby={'faq-index-title'}>
+          <div className={`container ${styles.layout}`}>
+            <aside className={styles.index}>
+              <p className={styles.sectionLabel}>Question index</p>
+              <h2 id={'faq-index-title'}>เลือกหัวข้อ</h2>
+              <nav aria-label={'หมวดคำถาม'}>
+                {FAQ_CATEGORIES.map((category, index) => (
+                  <a href={`#faq-category-${index + 1}`} key={category.title}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    {category.title}
+                  </a>
+                ))}
+              </nav>
+            </aside>
 
-            {/* Contact CTA */}
-            <div style={{
-              marginTop: '64px',
-              padding: '32px',
-              background: 'white',
-              borderRadius: '16px',
-              border: '1px solid #e2e8f0',
-              textAlign: 'center',
-            }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-                ยังไม่เจอคำตอบที่ต้องการ?
-              </h3>
-              <p style={{ color: '#64748b', fontSize: '0.9375rem', marginBottom: '20px' }}>
-                ติดต่อทีมงานได้เลย เรายินดีช่วยเหลือครับ
-              </p>
-              <a
-                href="/contact"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px 28px',
-                  background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
-                  color: 'white',
-                  borderRadius: '10px',
-                  fontWeight: 600,
-                  fontSize: '0.9375rem',
-                  textDecoration: 'none',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                }}
-              >
-                ติดต่อเรา
-              </a>
+            <div className={styles.categories}>
+              {FAQ_CATEGORIES.map((category, index) => (
+                <section id={`faq-category-${index + 1}`} className={styles.category} aria-labelledby={`faq-category-title-${index + 1}`} key={category.title}>
+                  <div className={styles.categoryHead}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <div>
+                      <p>{category.items.length} คำถาม</p>
+                      <h2 id={`faq-category-title-${index + 1}`}>{category.title}</h2>
+                    </div>
+                  </div>
+                  <FAQAccordion categoryIndex={index} items={category.items} />
+                </section>
+              ))}
+
+              <section className={styles.contactCta} aria-labelledby={'faq-contact-title'}>
+                <p className={styles.sectionLabel}>Still need help?</p>
+                <h2 id={'faq-contact-title'}>ยังไม่เจอคำตอบที่ตรงกับเรื่องของคุณ</h2>
+                <p>ส่งรายละเอียดให้ทีม MilerDev พร้อมข้อมูลที่จำเป็น เราจะตอบกลับผ่านอีเมลที่คุณระบุ</p>
+                <Link href={'/contact'}>ติดต่อทีม MilerDev <span aria-hidden={true}>→</span></Link>
+              </section>
             </div>
           </div>
         </section>

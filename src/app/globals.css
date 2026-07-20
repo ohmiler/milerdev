@@ -1457,49 +1457,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* About: Swiss coding studio profile */
-.about-studio{background:var(--canvas);color:var(--ink)}
-.about-studio__hero{padding:72px 0 68px;border-bottom:1px solid var(--line)}
-.about-studio__meta{margin:0 0 20px;color:var(--accent-strong);font:600 .75rem/1.5 var(--font-code);text-transform:uppercase;letter-spacing:.06em}
-.about-studio__hero h1{max-width:950px;margin:0;font-size:clamp(2.8rem,5.6vw,5.25rem);line-height:1.08;letter-spacing:-.035em;text-wrap:balance}
-.about-studio__lede{max-width:68ch;margin:26px 0 0;color:var(--ink-soft);font-size:1.0625rem;line-height:1.8;text-wrap:pretty}
-.about-manifesto{padding:clamp(64px,8vw,108px) 0;background:var(--surface);border-bottom:1px solid var(--line)}
-.about-manifesto__grid{display:grid;grid-template-columns:5fr 7fr;gap:clamp(48px,8vw,112px);align-items:center}
-.about-manifesto__mark{display:flex;min-height:430px;align-items:center;justify-content:center;position:relative;overflow:hidden;background:#1e1e1e;border:1px solid #3c3c3c}
-.about-manifesto__mark img{width:min(52%,280px);height:auto}.about-manifesto__mark span{position:absolute;right:20px;bottom:18px;color:var(--code-text);font:500 .6875rem/1.5 var(--font-code);letter-spacing:.08em}
-.about-section-label{margin:0 0 18px;color:var(--accent-strong);font:600 .75rem/1.5 var(--font-code);text-transform:uppercase;letter-spacing:.06em}
-.about-manifesto__content h2{margin:0 0 28px;font-size:clamp(2rem,3.6vw,3.5rem);line-height:1.2;letter-spacing:-.03em;text-wrap:balance}.about-manifesto__content>p:not(.about-section-label){max-width:64ch;margin:0 0 18px;color:var(--ink-soft);font-size:1.0625rem;line-height:1.85;text-wrap:pretty}
-.about-method{padding:clamp(64px,8vw,104px) 0;border-bottom:1px solid var(--line)}
-.about-section-head{display:grid;grid-template-columns:7fr 5fr;gap:48px;align-items:end;margin-bottom:40px}.about-section-head h2{margin:0;font-size:clamp(2rem,3vw,2.75rem);line-height:1.25;letter-spacing:-.025em}.about-section-head p{max-width:48ch;margin:0;color:var(--ink-soft);line-height:1.8}
-.about-method__list{display:grid;grid-template-columns:repeat(3,1fr);margin:0;padding:0;border-top:1px solid var(--line);border-left:1px solid var(--line);list-style:none}.about-method__list li{min-height:310px;padding:26px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.about-method__list li>span{color:var(--accent-strong);font:600 .75rem/1.5 var(--font-code)}.about-method__list h3{margin:72px 0 14px;font-size:1.5rem;line-height:1.35}.about-method__list p{margin:0;color:var(--ink-soft);line-height:1.8}
-.about-principles{padding:clamp(64px,8vw,104px) 0;background:var(--surface);border-bottom:1px solid var(--line)}
-.about-principles__grid{display:grid;grid-template-columns:5fr 7fr;gap:clamp(48px,8vw,112px)}.about-principles__intro{position:sticky;top:104px;align-self:start}.about-principles__intro h2{max-width:10ch;margin:0;font-size:clamp(2rem,3.5vw,3.25rem);line-height:1.2;letter-spacing:-.03em;text-wrap:balance}.about-principles dl{margin:0;border-top:1px solid var(--line)}.about-principles dl>div{display:grid;grid-template-columns:2fr 3fr;gap:28px;padding:28px 0;border-bottom:1px solid var(--line)}.about-principles dt{font-size:1.125rem;font-weight:700}.about-principles dd{margin:0;color:var(--ink-soft);line-height:1.8}
-.about-proof{padding:clamp(64px,8vw,104px) 0;background:#1e1e1e;color:var(--code-text)}.about-section-head--light p{color:#b8c8d5}.about-proof__images{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#3c3c3c;border:1px solid #3c3c3c}.about-proof figure{margin:0;background:#1e1e1e}.about-proof figure img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;filter:saturate(.85);transition:filter 180ms ease-out}.about-proof figure:hover img{filter:saturate(1)}.about-proof figcaption{padding:12px 14px;color:#9eb2c2;font:500 .6875rem/1.5 var(--font-code);text-transform:uppercase;letter-spacing:.06em}
-.about-cta{padding:clamp(64px,8vw,104px) 0;background:var(--accent);color:#062438}.about-cta__grid{display:grid;grid-template-columns:7fr 5fr;gap:24px}.about-cta h2{grid-column:1/-1;max-width:17ch;margin:0;color:#fff;font-size:clamp(2.5rem,5vw,4.75rem);line-height:1.1;letter-spacing:-.035em;text-wrap:balance}.about-cta p{align-self:end;max-width:45ch;margin:28px 0 0;color:#fff;font-size:1rem;line-height:1.75}.about-cta__actions{display:flex;justify-content:flex-end;align-items:end;gap:12px}.about-cta__actions a{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:10px 18px;border:1px solid #062438;color:#062438;font-weight:700;text-decoration:none}.about-cta__actions a:first-child{background:#062438;color:#fff}.about-cta__actions a:last-child{border-color:#fff;color:#fff}.about-cta__actions a:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(255,255,255,.75)}
-@media(max-width:900px){.about-manifesto__grid,.about-principles__grid{grid-template-columns:1fr}.about-manifesto__mark{min-height:360px}.about-principles__intro{position:static}.about-principles__intro h2{max-width:16ch}.about-section-head{grid-template-columns:1fr;gap:16px}.about-method__list{grid-template-columns:1fr}.about-method__list li{min-height:0}.about-method__list h3{margin-top:32px}.about-cta__grid{grid-template-columns:1fr}.about-cta__actions{justify-content:flex-start}}
-@media(max-width:640px){.about-studio__hero{padding:48px 0}.about-studio__hero h1{font-size:2.55rem}.about-manifesto__mark{min-height:280px}.about-manifesto__content h2{font-size:2rem}.about-principles dl>div{grid-template-columns:1fr;gap:8px}.about-proof__images{grid-template-columns:1fr}.about-cta h2{font-size:2.55rem}.about-cta__actions{align-items:stretch;flex-direction:column}.about-cta__actions a{width:100%}}
-@media(prefers-reduced-motion:reduce){.about-proof figure img{transition:none}}
 
-/* Contact: Swiss service desk */
-.contact-desk{min-height:100vh;background:var(--canvas);color:var(--ink)}
-.contact-desk__hero{padding:72px 0 68px;border-bottom:1px solid var(--line)}
-.contact-desk__meta{margin:0 0 20px;color:var(--accent-strong);font:600 .75rem/1.5 var(--font-code);text-transform:uppercase;letter-spacing:.06em}
-.contact-desk__hero h1{max-width:920px;margin:0;font-size:clamp(2.8rem,5.6vw,5.25rem);line-height:1.08;letter-spacing:-.035em;text-wrap:balance}
-.contact-desk__hero>div>p:last-child{max-width:68ch;margin:26px 0 0;color:var(--ink-soft);font-size:1.0625rem;line-height:1.8;text-wrap:pretty}
-.contact-desk__body{padding:clamp(64px,8vw,104px) 0;background:var(--surface)}
-.contact-desk__grid{display:grid;grid-template-columns:4fr 8fr;gap:clamp(48px,8vw,112px);align-items:start}
-.contact-desk__info{position:sticky;top:104px}.contact-desk__section-label{margin:0 0 14px;color:var(--accent-strong);font:600 .75rem/1.5 var(--font-code);text-transform:uppercase;letter-spacing:.06em}
-.contact-desk__info h2,.contact-form-panel__head h2{margin:0;font-size:clamp(1.75rem,3vw,2.5rem);line-height:1.3;letter-spacing:-.025em;text-wrap:balance}
-.contact-desk__info dl{margin:36px 0 0;border-top:1px solid var(--line)}.contact-desk__info dl>div{padding:20px 0;border-bottom:1px solid var(--line)}.contact-desk__info dt{margin-bottom:6px;color:var(--ink-muted);font-size:.75rem;font-weight:700}.contact-desk__info dd{margin:0;color:var(--ink-soft);line-height:1.75}.contact-desk__info dd a{color:var(--accent-strong);font-weight:700;text-decoration-thickness:1px;text-underline-offset:4px}.contact-desk__note{margin:24px 0 0;color:var(--ink-muted);font-size:.8125rem;line-height:1.7}
-.contact-form-panel{border-top:3px solid var(--accent);background:var(--surface-raised)}.contact-form-panel__head{padding:28px 32px 30px;border-bottom:1px solid var(--line)}.contact-form-panel__head>p:last-child{max-width:62ch;margin:14px 0 0;color:var(--ink-soft);line-height:1.75}
-.contact-form{position:relative;padding:32px}.contact-honeypot{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
-.contact-form__error{margin-bottom:24px;padding:14px 16px;border:1px solid var(--danger);background:var(--danger-soft);color:var(--danger);font-size:.875rem;line-height:1.6}
-.contact-form__row{display:grid;grid-template-columns:1fr 1fr;gap:20px}.contact-field{margin-bottom:22px}.contact-field label{display:block;margin-bottom:8px;color:var(--ink);font-size:.875rem;font-weight:700}.contact-field__label{display:flex;align-items:center;justify-content:space-between;gap:16px}.contact-field__label span{margin-bottom:8px;color:var(--ink-muted);font-size:.75rem}
-.contact-field input,.contact-field textarea{width:100%;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--canvas);color:var(--ink);font:inherit}.contact-field input{min-height:48px;padding:10px 13px}.contact-field textarea{min-height:180px;padding:12px 13px;line-height:1.7;resize:vertical}.contact-field input::placeholder,.contact-field textarea::placeholder{color:#586d80;opacity:1}.contact-field input:focus-visible,.contact-field textarea:focus-visible{outline:none;border-color:var(--accent);box-shadow:var(--focus-ring)}
-.contact-form__submit{display:flex;align-items:center;justify-content:space-between;gap:28px;padding-top:8px}.contact-form__submit p{max-width:42ch;margin:0;color:var(--ink-muted);font-size:.75rem;line-height:1.65}.contact-form__submit button,.contact-success button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 20px;border:1px solid var(--accent-strong);border-radius:var(--radius-sm);background:var(--accent);color:#062438;font:700 .9375rem/1.4 var(--font-ui);cursor:pointer;white-space:nowrap}.contact-form__submit button:hover,.contact-success button:hover{background:var(--accent-strong);color:#fff}.contact-form__submit button:focus-visible,.contact-success button:focus-visible{outline:none;box-shadow:var(--focus-ring)}.contact-form__submit button:disabled{cursor:wait;opacity:.62}
-.contact-success{min-height:460px;padding:64px 32px;display:flex;align-items:flex-start;flex-direction:column;justify-content:center}.contact-success>span{display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;margin-bottom:28px;background:var(--success-soft);color:var(--success);font-size:1.5rem;font-weight:800}.contact-success h3{margin:0 0 10px;font-size:1.75rem}.contact-success p{max-width:50ch;margin:0 0 28px;color:var(--ink-soft);line-height:1.75}
-@media(max-width:900px){.contact-desk__grid{grid-template-columns:1fr}.contact-desk__info{position:static}.contact-desk__info dl{display:grid;grid-template-columns:repeat(3,1fr);border-left:1px solid var(--line)}.contact-desk__info dl>div{padding:18px;border-right:1px solid var(--line)}}
-@media(max-width:640px){.contact-desk__hero{padding:48px 0}.contact-desk__hero h1{font-size:2.55rem}.contact-desk__body{padding:48px 0 72px}.contact-desk__info dl{grid-template-columns:1fr}.contact-form-panel__head,.contact-form{padding:24px 18px}.contact-form__row{grid-template-columns:1fr;gap:0}.contact-field__label{align-items:flex-start;flex-direction:column;gap:0}.contact-form__submit{align-items:stretch;flex-direction:column}.contact-form__submit button{width:100%}.contact-success{min-height:380px;padding:48px 18px}}
 
 /* Login: Swiss return-to-learning surface */
 .login-shell{min-height:calc(100vh - 72px);padding:clamp(48px,7vw,88px) 0;background:var(--surface);color:var(--ink)}
@@ -1528,26 +1486,6 @@ h1, h2, h3, h4, h5, h6 {
 @media(max-width:640px){.register-context{min-height:0;padding:32px 24px}.register-context__list li{grid-template-columns:1fr;gap:5px}.register-panel{padding:40px 24px}.register-form__row,.register-password-grid{grid-template-columns:1fr;gap:0}.register-strength ul{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.register-strength__track span{transition:none}}
 
-/* Public page title alignment: single-line Swiss rail on wide screens */
-.about-studio__hero h1,
-.contact-desk__hero h1 {
-  max-width: none;
-  color: #111b27;
-  font-size: clamp(2.5rem, 4.4vw, 4rem);
-  white-space: nowrap;
-}
-
-@media (max-width: 900px) {
-  .about-studio__hero h1,
-  .contact-desk__hero h1 {
-    white-space: normal;
-  }
-}
-/* Public page metadata: consistent brand-blue label */
-.about-studio__meta,
-.contact-desk__meta {
-  color: #0089d6;
-}
 /* Auth dark surface: VS Code black, not blue-black */
 .login-context {
   background: #1e1e1e;
