@@ -8,11 +8,18 @@ const viewports = [
 ] as const;
 
 test.describe('public learning journey', () => {
-  test('keeps Home and catalog within representative viewport widths', async ({ page }) => {
+  test('keeps Home, catalog, and course detail within representative viewport widths', async ({ page }) => {
+    const response = await page.request.get('/api/courses');
+    expect(response.ok()).toBeTruthy();
+    const payload = await response.json();
+    const courses = payload.courses || payload;
+    const course = courses[0];
+    test.skip(!course, 'No published course in local data');
+
     for (const viewport of viewports) {
       await page.setViewportSize(viewport);
 
-      for (const route of ['/', '/courses']) {
+      for (const route of ['/', '/courses', `/courses/${course.slug}`]) {
         await page.goto(route);
         const dimensions = await page.evaluate(() => ({
           clientWidth: document.documentElement.clientWidth,
@@ -59,5 +66,42 @@ test.describe('public learning journey', () => {
 
     await expect(page).toHaveURL('/courses');
     await expect(page.getByRole('searchbox', { name: 'ค้นหาจากชื่อคอร์ส' })).toHaveValue('');
+  });
+
+  test('course detail presents decision evidence before enrollment', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrors.push(message.text());
+    });
+
+    const response = await page.request.get('/api/courses');
+    expect(response.ok()).toBeTruthy();
+
+    const payload = await response.json();
+    const courses = payload.courses || payload;
+    const course = courses[0];
+    test.skip(!course, 'No published course in local data');
+
+    await page.goto(`/courses/${course.slug}`);
+
+    const skipLink = page.getByRole('link', { name: 'ข้ามไปดูเนื้อหาคอร์ส' });
+    for (let tabIndex = 0; tabIndex < 3 && !(await skipLink.evaluate((element) => element === document.activeElement)); tabIndex += 1) {
+      await page.keyboard.press('Tab');
+    }
+    await expect(skipLink).toBeFocused();
+
+    await expect(page.getByRole('heading', { level: 1, name: course.title })).toBeVisible();
+
+    const evidence = page.getByRole('region', { name: 'ข้อมูลประกอบการตัดสินใจ' });
+    await expect(evidence).toContainText(`${course.lessonCount} บท`);
+
+    const sectionNavigation = page.getByRole('navigation', { name: 'ส่วนต่าง ๆ ของคอร์ส' });
+    await expect(sectionNavigation.getByRole('link', { name: 'ภาพรวม' })).toHaveAttribute('href', '#course-overview');
+    await expect(sectionNavigation.getByRole('link', { name: 'เนื้อหาคอร์ส' })).toHaveAttribute('href', '#course-curriculum');
+    await expect(sectionNavigation.getByRole('link', { name: 'รีวิวผู้เรียน' })).toHaveAttribute('href', '#course-reviews');
+
+    await expect(page.getByRole('heading', { level: 2, name: 'ภาพรวมคอร์ส' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'เนื้อหาคอร์ส' })).toBeVisible();
+    expect(consoleErrors).toEqual([]);
   });
 });

@@ -51,6 +51,42 @@ test.describe('Course Pricing Display', () => {
     const freeBtn = page.getByText(/ลงทะเบียนเรียนฟรี/);
     await expect(freeBtn).toBeVisible({ timeout: 10000 });
   });
+
+  test('authenticated paid course opens payment choices without contacting a provider', async ({ page }) => {
+    const { paid } = await getCourses(page);
+    if (!paid) { test.skip(true, 'No paid courses in DB'); return; }
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    await page.route('**/api/auth/session', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ user: { id: 'visual-test-user', name: 'Visual Test' }, expires: '2099-01-01T00:00:00.000Z' }),
+      });
+    });
+    await page.route('**/api/enrollments/check?**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ enrolled: false }) });
+    });
+
+    await page.goto(`/courses/${paid.slug}`);
+    await page.getByRole('button', { name: /ซื้อคอร์สนี้/ }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'เลือกช่องทางชำระเงิน' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByLabel('มีโค้ดส่วนลด?')).toBeVisible();
+    await expect(dialog.getByRole('button', { name: /บัตรเครดิต/ })).toBeVisible();
+    const promptPayButton = dialog.getByRole('button', { name: /PromptPay/ });
+    await expect(promptPayButton).toBeVisible();
+
+    await promptPayButton.click();
+    const slipDialog = page.getByRole('dialog', { name: 'โอนเงินและแนบสลิป' });
+    await expect(slipDialog.getByRole('button', { name: 'คลิกเพื่อเลือกรูปสลิป' })).toBeVisible();
+    await expect(slipDialog.getByRole('button', { name: 'ตรวจสอบและชำระเงิน' })).toBeDisabled();
+    await slipDialog.getByRole('button', { name: 'กลับ' }).click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'ยกเลิก' }).click();
+    await expect(dialog).toBeHidden();
+  });
 });
 
 // ============================================================
@@ -224,8 +260,8 @@ test.describe('Bundle Pages', () => {
 
     const slug = bundles[0].slug;
     await page.goto(`/bundles/${slug}`);
-    await expect(page.locator('nav')).toBeVisible();
-    await expect(page.locator('main')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'เมนูหลัก' })).toBeVisible();
+    await expect(page.getByRole('main')).toBeVisible();
   });
 });
 

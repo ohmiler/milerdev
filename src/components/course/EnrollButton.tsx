@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Modal from '@/components/ui/Modal';
+import styles from './EnrollButton.module.css';
 
 interface EnrollButtonProps {
   courseId: string;
@@ -282,19 +284,9 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   if (checking) {
     return (
       <button
+        type="button"
         disabled
-        style={{
-          display: 'block',
-          width: '100%',
-          textAlign: 'center',
-          padding: '16px',
-          fontSize: '1.125rem',
-          background: '#e2e8f0',
-          color: '#64748b',
-          border: 'none',
-          borderRadius: '12px',
-          cursor: 'not-allowed',
-        }}
+        className={styles.primaryButton}
       >
         กำลังตรวจสอบ...
       </button>
@@ -305,27 +297,11 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     <>
       {enrolled ? (
         <button
+          type="button"
           onClick={handleGoToLearn}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            width: '100%',
-            textAlign: 'center',
-            padding: '16px',
-            fontSize: '1.125rem',
-            background: 'linear-gradient(135deg, #16a34a, #15803d)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontWeight: 600,
-            boxShadow: '0 4px 14px rgba(22, 163, 74, 0.3)',
-            transition: 'all 0.2s',
-          }}
+          className={`${styles.primaryButton} ${styles.successButton}`}
         >
-          <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -333,26 +309,10 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
         </button>
       ) : (
         <button
+          type="button"
           onClick={handleEnroll}
           disabled={loading}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            width: '100%',
-            textAlign: 'center',
-            padding: '16px',
-            fontSize: '1.125rem',
-            background: loading ? '#94a3b8' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
-            boxShadow: loading ? 'none' : '0 4px 14px rgba(59, 130, 246, 0.3)',
-            transition: 'all 0.2s',
-          }}
+          className={styles.primaryButton}
         >
           {loading ? (
             'กำลังดำเนินการ...'
@@ -365,60 +325,63 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       )}
 
       {/* Payment Method Selection Modal */}
-      {paymentStep === 'method' && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setPaymentStep('idle')}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
-          <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '420px', width: '100%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px', textAlign: 'center' }}>เลือกช่องทางชำระเงิน</h3>
-            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+      {paymentStep === 'method' && createPortal(
+        <div className={styles.dialogLayer} onClick={() => setPaymentStep('idle')}>
+          <div className={styles.dialogBackdrop} aria-hidden="true" />
+          <div className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="payment-method-title" onClick={(e) => e.stopPropagation()}>
+            <p className={styles.dialogEyebrow}>Payment / เลือกวิธีชำระ</p>
+            <h3 id="payment-method-title" className={styles.dialogTitle}>เลือกช่องทางชำระเงิน</h3>
+            <div className={styles.paymentSummary}>
               {appliedCoupon ? (
                 <div>
-                  <span style={{ color: '#94a3b8', textDecoration: 'line-through', fontSize: '0.9rem' }}>฿{price.toLocaleString()}</span>
-                  {' '}
-                  <strong style={{ color: '#16a34a', fontSize: '1.1rem' }}>฿{effectivePrice.toLocaleString()}</strong>
-                  <div style={{ fontSize: '0.8rem', color: '#16a34a', marginTop: '2px' }}>ใช้คูปอง {appliedCoupon.code} ลด ฿{appliedCoupon.discountAmount.toLocaleString()}</div>
+                  <span className={styles.originalPrice}>฿{price.toLocaleString()}</span>
+                  <strong className={styles.effectivePrice}>฿{effectivePrice.toLocaleString()}</strong>
+                  <div className={styles.couponSaving}>ใช้คูปอง {appliedCoupon.code} ลด ฿{appliedCoupon.discountAmount.toLocaleString()}</div>
                 </div>
               ) : (
-                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>ยอดชำระ <strong style={{ color: '#2563eb' }}>฿{price.toLocaleString()}</strong></p>
+                <p>ยอดชำระ <strong>฿{price.toLocaleString()}</strong></p>
               )}
             </div>
 
             {/* Coupon Input */}
-            <div style={{ marginBottom: '20px', padding: '16px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>มีโค้ดส่วนลด?</label>
+            <div className={styles.couponPanel}>
+              <label className={styles.fieldLabel} htmlFor="course-coupon-code">มีโค้ดส่วนลด?</label>
               {appliedCoupon ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f0fdf4', padding: '10px 14px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                <div className={styles.couponApplied}>
                   <div>
-                    <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#16a34a' }}>{appliedCoupon.code}</span>
-                    {appliedCoupon.description && <span style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '8px' }}>{appliedCoupon.description}</span>}
+                    <span className={styles.couponCode}>{appliedCoupon.code}</span>
+                    {appliedCoupon.description && <span className={styles.couponDescription}>{appliedCoupon.description}</span>}
                   </div>
-                  <button onClick={handleRemoveCoupon} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500 }}>ลบ</button>
+                  <button type="button" onClick={handleRemoveCoupon} className={`${styles.textButton} ${styles.dangerText}`}>ลบ</button>
                 </div>
               ) : (
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className={styles.couponInputRow}>
                   <input
+                    id="course-coupon-code"
                     value={couponCode}
                     onChange={e => setCouponCode(e.target.value.toUpperCase())}
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
                     placeholder="ใส่โค้ดส่วนลด"
-                    style={{ flex: 1, padding: '10px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'monospace', textTransform: 'uppercase' }}
+                    className={styles.couponInput}
                   />
                   <button
+                    type="button"
                     onClick={handleApplyCoupon}
                     disabled={couponLoading || !couponCode.trim()}
-                    style={{ padding: '10px 16px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600, cursor: couponLoading ? 'wait' : 'pointer', opacity: couponLoading || !couponCode.trim() ? 0.5 : 1, whiteSpace: 'nowrap' }}
+                    className={styles.compactButton}
                   >
                     {couponLoading ? '...' : 'ใช้โค้ด'}
                   </button>
                 </div>
               )}
-              {couponError && <p style={{ color: '#dc2626', fontSize: '0.8125rem', marginTop: '6px', margin: '6px 0 0' }}>{couponError}</p>}
+              {couponError && <p className={styles.errorText}>{couponError}</p>}
             </div>
 
             {/* If coupon makes it free, show enroll button instead of payment */}
             {effectivePrice === 0 && appliedCoupon ? (
               <>
                 <button
+                  type="button"
                   onClick={async () => {
                     setLoading(true);
                     try {
@@ -439,147 +402,131 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
                     finally { setLoading(false); }
                   }}
                   disabled={loading}
-                  style={{ width: '100%', padding: '14px', background: loading ? '#94a3b8' : 'linear-gradient(135deg, #16a34a, #15803d)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 600, fontSize: '1rem', cursor: loading ? 'not-allowed' : 'pointer' }}
+                  className={`${styles.primaryButton} ${styles.successButton}`}
                 >
                   {loading ? 'กำลังดำเนินการ...' : 'ลงทะเบียนเรียนฟรี (คูปอง 100%)'}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setPaymentStep('idle')}
-                  style={{ width: '100%', padding: '12px', marginTop: '12px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem' }}
+                  className={`${styles.textButton} ${styles.cancelButton}`}
                 >
                   ยกเลิก
                 </button>
               </>
             ) : (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className={styles.methodList}>
                   {/* Stripe Card */}
                   <button
+                    type="button"
                     onClick={handleStripePayment}
                     disabled={loading}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '16px',
-                      padding: '16px 20px', background: '#f8fafc', border: '2px solid #e2e8f0',
-                      borderRadius: '12px', cursor: loading ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s', textAlign: 'left', width: '100%',
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#eff6ff'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc'; }}
+                    className={styles.methodButton}
                   >
-                    <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #6366f1, #4f46e5)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg style={{ width: '22px', height: '22px', color: 'white' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className={styles.methodIcon}>
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                       </svg>
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1rem' }}>บัตรเครดิต / เดบิต</div>
-                      <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '2px' }}>Visa, Mastercard ผ่าน Stripe</div>
+                      <div className={styles.methodTitle}>บัตรเครดิต / เดบิต</div>
+                      <div className={styles.methodDescription}>Visa, Mastercard ผ่าน Stripe</div>
                     </div>
                   </button>
 
                   {/* Bank Transfer */}
                   <button
+                    type="button"
                     onClick={() => {
                       setPaymentStep('transfer');
                     }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '16px',
-                      padding: '16px 20px', background: '#f8fafc', border: '2px solid #e2e8f0',
-                      borderRadius: '12px', cursor: 'pointer',
-                      transition: 'all 0.2s', textAlign: 'left', width: '100%',
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.borderColor = '#10b981'; e.currentTarget.style.background = '#f0fdf4'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.background = '#f8fafc'; }}
+                    className={styles.methodButton}
                   >
-                    <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg style={{ width: '22px', height: '22px', color: 'white' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className={`${styles.methodIcon} ${styles.transferIcon}`}>
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '1rem' }}>โอนเงิน / PromptPay</div>
-                      <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '2px' }}>โอนแล้วแนบสลิป ตรวจสอบอัตโนมัติ</div>
+                      <div className={styles.methodTitle}>โอนเงิน / PromptPay</div>
+                      <div className={styles.methodDescription}>โอนแล้วแนบสลิป ตรวจสอบอัตโนมัติ</div>
                     </div>
                   </button>
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => setPaymentStep('idle')}
-                  style={{ width: '100%', padding: '12px', marginTop: '16px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.9rem' }}
+                  className={`${styles.textButton} ${styles.cancelButton}`}
                 >
                   ยกเลิก
                 </button>
               </>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Bank Transfer / Slip Upload Modal */}
-      {(paymentStep === 'transfer' || paymentStep === 'verifying') && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => { if (paymentStep !== 'verifying') { setPaymentStep('idle'); resetSlipState(); } }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
-          <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative', background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '480px', width: '100%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>โอนเงินและแนบสลิป</h3>
-            <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '20px' }}>ยอดชำระ <strong style={{ color: '#2563eb', fontSize: '1.1rem' }}>฿{effectivePrice.toLocaleString()}</strong></p>
+      {(paymentStep === 'transfer' || paymentStep === 'verifying') && createPortal(
+        <div className={styles.dialogLayer} onClick={() => { if (paymentStep !== 'verifying') { setPaymentStep('idle'); resetSlipState(); } }}>
+          <div className={styles.dialogBackdrop} aria-hidden="true" />
+          <div className={`${styles.dialog} ${styles.transferDialog}`} role="dialog" aria-modal="true" aria-labelledby="slip-payment-title" onClick={(e) => e.stopPropagation()}>
+            <p className={styles.dialogEyebrow}>PromptPay / Slip verification</p>
+            <h3 id="slip-payment-title" className={styles.dialogTitle}>โอนเงินและแนบสลิป</h3>
+            <div className={styles.paymentSummary}>ยอดชำระ <strong>฿{effectivePrice.toLocaleString()}</strong></div>
 
             {/* Bank Info */}
-            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-              <div style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ข้อมูลสำหรับโอนเงิน</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.875rem' }}>ธนาคาร</span>
-                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</span>
+            <div className={styles.bankInfo}>
+              <div className={styles.bankInfoLabel}>ข้อมูลสำหรับโอนเงิน</div>
+              <div className={styles.bankRows}>
+                <div className={styles.bankRow}>
+                  <span>ธนาคาร</span>
+                  <strong>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.875rem' }}>เลขบัญชี</span>
-                  <span style={{ fontWeight: 600, color: '#1e293b', fontFamily: 'monospace', letterSpacing: '0.05em' }}>{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</span>
+                <div className={styles.bankRow}>
+                  <span>เลขบัญชี</span>
+                  <strong className={styles.accountNumber}>{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.875rem' }}>ชื่อบัญชี</span>
-                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</span>
+                <div className={styles.bankRow}>
+                  <span>ชื่อบัญชี</span>
+                  <strong>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.875rem' }}>จำนวนเงิน</span>
-                  <span style={{ fontWeight: 700, color: '#16a34a', fontSize: '1.1rem' }}>฿{effectivePrice.toLocaleString()}</span>
+                <div className={styles.bankRow}>
+                  <span>จำนวนเงิน</span>
+                  <strong className={styles.amount}>฿{effectivePrice.toLocaleString()}</strong>
                 </div>
               </div>
             </div>
 
             {/* Upload Area */}
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>
+            <div className={styles.uploadField}>
+              <label className={styles.fieldLabel}>
                 แนบสลิปการโอนเงิน
               </label>
 
               {!slipPreview ? (
-                <div
+                <button
+                  type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  style={{
-                    border: '2px dashed #cbd5e1', borderRadius: '12px', padding: '32px',
-                    textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s',
-                    background: '#f8fafc',
-                  }}
-                  onMouseOver={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.background = '#eff6ff'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.background = '#f8fafc'; }}
+                  className={styles.uploadButton}
                 >
-                  <svg style={{ width: '40px', height: '40px', color: '#94a3b8', margin: '0 auto 8px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p style={{ color: '#64748b', fontSize: '0.9rem', margin: 0 }}>คลิกเพื่อเลือกรูปสลิป</p>
-                  <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '4px 0 0' }}>JPG, PNG, WEBP (ไม่เกิน 5MB)</p>
-                </div>
+                  <p className={styles.uploadTitle}>คลิกเพื่อเลือกรูปสลิป</p>
+                  <p className={styles.uploadHint}>JPG, PNG, WEBP (ไม่เกิน 5MB)</p>
+                </button>
               ) : (
-                <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-                  <img src={slipPreview} alt="สลิป" style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', background: '#f8fafc' }} />
+                <div className={styles.slipPreview}>
+                  <img src={slipPreview} alt="สลิป" />
                   <button
+                    type="button"
                     onClick={() => resetSlipState()}
-                    style={{
-                      position: 'absolute', top: '8px', right: '8px',
-                      width: '32px', height: '32px', borderRadius: '50%',
-                      background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
+                    className={styles.removePreviewButton}
+                    aria-label="ลบรูปสลิปที่เลือก"
                   >
                     ✕
                   </button>
@@ -591,57 +538,44 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleFileChange}
-                style={{ display: 'none' }}
+                className={styles.hiddenInput}
               />
             </div>
 
             {/* Error */}
             {verifyError && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px', marginBottom: '16px', color: '#dc2626', fontSize: '0.875rem' }}>
+              <div className={styles.errorPanel} role="alert">
                 {verifyError}
               </div>
             )}
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div className={styles.dialogActions}>
               <button
+                type="button"
                 onClick={handleSlipVerify}
                 disabled={!slipFile || paymentStep === 'verifying'}
-                style={{
-                  flex: 1, padding: '14px', borderRadius: '10px', border: 'none',
-                  background: !slipFile || paymentStep === 'verifying' ? '#94a3b8' : 'linear-gradient(135deg, #10b981, #059669)',
-                  color: 'white', fontWeight: 600, fontSize: '1rem',
-                  cursor: !slipFile || paymentStep === 'verifying' ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                }}
+                className={`${styles.primaryButton} ${styles.successButton}`}
               >
                 {paymentStep === 'verifying' ? (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <span style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  <span className={styles.loadingContent}>
+                    <span className={styles.spinner} aria-hidden="true" />
                     กำลังตรวจสอบสลิป...
                   </span>
                 ) : 'ตรวจสอบและชำระเงิน'}
               </button>
               <button
+                type="button"
                 onClick={() => { setPaymentStep('method'); resetSlipState(); }}
                 disabled={paymentStep === 'verifying'}
-                style={{
-                  padding: '14px 20px', borderRadius: '10px', border: '1px solid #e2e8f0',
-                  background: 'white', color: '#64748b', cursor: paymentStep === 'verifying' ? 'not-allowed' : 'pointer',
-                  fontSize: '0.9rem',
-                }}
+                className={styles.secondaryButton}
               >
                 กลับ
               </button>
             </div>
           </div>
-
-          <style>{`
-            @keyframes spin {
-              to { transform: rotate(360deg); }
-            }
-          `}</style>
-        </div>
+        </div>,
+        document.body,
       )}
 
       <Modal
