@@ -5,8 +5,8 @@ solodeveling_schema: 1
 # State
 
 - Goal: Keep MilerDev learning and commerce journeys truthful, usable, and production-safe.
-- Progress: BUNDLES-001 is complete at code and build level. Bundle detail now uses the MilerDev dossier/purchase-rail language, and payment controls share accessible dialog behavior without changing commerce APIs or entitlement rules.
+- Progress: BLOG-001 is done. The Blog index and article journey now share the MilerDev editorial system, with preserved discovery/reading behavior and recent rendered, interaction, test, lint, and build evidence.
 - Active work: None.
 - Blockers: None.
 - Current risks: Generated Playwright artifacts remain untracked and must stay outside product commits. Rendered checks use local guest-facing data and are not production performance or user-research evidence.
-- Next action: Continue the Gridgeist public-journey review at Blog, or inspect DESIGN-001 and BUNDLES-001 visually when a browser backend becomes available.
+- Next action: Shape the next separately scoped public-journey slice for About, Contact, and FAQ in the existing roadmap order.

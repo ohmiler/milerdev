@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import styles from './BlogControls.module.css';
 
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -15,31 +16,16 @@ export default function ScrollToTop() {
 
   return (
     <button
-      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      aria-label="กลับขึ้นด้านบน"
-      style={{
-        position: 'fixed',
-        bottom: '32px',
-        right: '32px',
-        zIndex: 100,
-        width: '44px',
-        height: '44px',
-        borderRadius: '50%',
-        background: '#2563eb',
-        color: 'white',
-        border: 'none',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 4px 12px rgba(37,99,235,0.4)',
-        transition: 'background 0.2s, transform 0.2s',
+      type={'button'}
+      className={styles.scrollTop}
+      onClick={() => {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
       }}
-      onMouseEnter={e => (e.currentTarget.style.background = '#1d4ed8')}
-      onMouseLeave={e => (e.currentTarget.style.background = '#2563eb')}
+      aria-label={'กลับขึ้นด้านบน'}
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <polyline points="18 15 12 9 6 15" />
+      <svg viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} strokeWidth={2.5} aria-hidden={true}>
+        <polyline points={'18 15 12 9 6 15'} />
       </svg>
     </button>
   );

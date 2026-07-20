@@ -1,36 +1,41 @@
 'use client';
 
 import { useEffect } from 'react';
+import styles from './BlogControls.module.css';
+
+const copyIcon = `<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='9' width='13' height='13' rx='2'/><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/></svg>`;
+const successIcon = `<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>`;
 
 export default function CodeCopyButton({ selector = '.rich-content pre' }: { selector?: string } = {}) {
   useEffect(() => {
     const blocks = document.querySelectorAll<HTMLPreElement>(selector);
 
     blocks.forEach((pre) => {
-      if (pre.querySelector('.code-copy-btn')) return;
+      if (pre.querySelector(`.${styles.codeCopyButton}`)) return;
 
-      const btn = document.createElement('button');
-      btn.className = 'code-copy-btn';
-      btn.setAttribute('aria-label', 'Copy code');
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>คัดลอก`;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = styles.codeCopyButton;
+      button.setAttribute('aria-label', 'คัดลอกโค้ด');
+      button.innerHTML = `${copyIcon}คัดลอก`;
 
-      btn.addEventListener('click', async () => {
+      button.addEventListener('click', async () => {
         const code = pre.querySelector('code')?.innerText ?? '';
         try {
           await navigator.clipboard.writeText(code);
-          btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>คัดลอกแล้ว!`;
-          btn.classList.add('copied');
+          button.innerHTML = `${successIcon}คัดลอกแล้ว`;
+          button.classList.add(styles.copied);
           setTimeout(() => {
-            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>คัดลอก`;
-            btn.classList.remove('copied');
+            button.innerHTML = `${copyIcon}คัดลอก`;
+            button.classList.remove(styles.copied);
           }, 2000);
         } catch {
-          btn.textContent = 'Error';
+          button.textContent = 'Error';
         }
       });
 
       pre.style.position = 'relative';
-      pre.appendChild(btn);
+      pre.appendChild(button);
     });
   }, [selector]);
 

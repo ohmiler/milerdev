@@ -1,10 +1,11 @@
-import Link from 'next/link';
 import type { Metadata } from 'next';
-import Navbar from '@/components/layout/Navbar';
+import Link from 'next/link';
 import Footer from '@/components/layout/Footer';
+import Navbar from '@/components/layout/Navbar';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';
+import styles from './blog-index.module.css';
 
 export const revalidate = 300;
 
@@ -71,7 +72,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const hasFacets = !!search || tag !== 'all' || page > 1;
 
   return {
-    title: search ? `ผลการค้นหา "${search}"` : 'บทความ',
+    title: search ? `ผลการค้นหา ${search}` : 'บทความ',
     alternates: { canonical: '/blog' },
     robots: hasFacets ? { index: false, follow: true } : { index: true, follow: true },
   };
@@ -93,7 +94,7 @@ async function getBlogData(input: { page: number; limit: number; search: string;
         SELECT bpt.post_id FROM blog_post_tags bpt
         INNER JOIN tags t ON bpt.tag_id = t.id
         WHERE t.slug = ${tagSlug}
-      )`
+      )`,
     );
   }
 
@@ -159,6 +160,18 @@ function getPageNumbers(totalPages: number, currentPage: number): (number | '...
   return pages;
 }
 
+function PostImage({ post, featured = false }: { post: BlogPostItem; featured?: boolean }) {
+  const imageUrl = normalizeUrl(post.thumbnailUrl);
+  if (imageUrl) return <img src={imageUrl} alt={post.title} />;
+
+  return (
+    <div className={styles.imageFallback} aria-hidden={true}>
+      <span>MD</span>
+      {featured ? <small>Journal</small> : null}
+    </div>
+  );
+}
+
 export default async function BlogPage({ searchParams }: Props) {
   const resolved = searchParams ? await searchParams : {};
   const search = getSingleParam(resolved.search).trim();
@@ -173,47 +186,141 @@ export default async function BlogPage({ searchParams }: Props) {
   const { posts, pagination } = blogData;
   const featuredPost = currentPage === 1 && !search && tagFilter === 'all' ? posts[0] : null;
   const articlePosts = featuredPost ? posts.slice(1) : posts;
+  const topicItems = [{ id: 'all', name: 'ทั้งหมด', slug: 'all' }, ...allTags];
 
   return (
     <>
       <Navbar />
-      <main className="blog-index">
-        <header className="blog-index__hero">
-          <div className="container">
-            <p className="blog-index__meta">Journal / {pagination.total} บทความ</p>
-            <h1>อ่านแนวคิด แล้วกลับไปเขียนโค้ด</h1>
-            <p>บทความภาษาไทยสำหรับนักพัฒนาที่ต้องการเข้าใจเครื่องมือ วิธีคิด และการสร้างซอฟต์แวร์จากงานจริง</p>
+      <main className={styles.page}>
+        <header className={styles.hero}>
+          <div className={styles.shell}>
+            <p className={styles.eyebrow}>MILERDEV JOURNAL / {String(pagination.total).padStart(2, '0')}</p>
+            <div className={styles.heroGrid}>
+              <h1>อ่านแนวคิด แล้วกลับไปเขียนโค้ด</h1>
+              <p>บทความภาษาไทยสำหรับนักพัฒนาที่ต้องการเข้าใจเครื่องมือ วิธีคิด และการสร้างซอฟต์แวร์จากงานจริง</p>
+            </div>
           </div>
         </header>
 
-        <section className="blog-index__catalog" aria-labelledby="blog-catalog-title">
-          <div className="container">
-            <div className="blog-index__toolbar-head">
-              <h2 id="blog-catalog-title">บทความทั้งหมด</h2>
-              <span>{pagination.total} รายการ</span>
+        <section className={styles.catalog} aria-labelledby={'blog-catalog-title'}>
+          <div className={styles.shell}>
+            <div className={styles.catalogHeading}>
+              <div>
+                <p className={styles.eyebrow}>ARTICLE INDEX</p>
+                <h2 id={'blog-catalog-title'}>{search || tagFilter !== 'all' ? 'ผลลัพธ์ที่กรองแล้ว' : 'บทความทั้งหมด'}</h2>
+              </div>
+              <p aria-live={'polite'}>{pagination.total} รายการ</p>
             </div>
-            <form method="GET" action="/blog" className="blog-filter">
-              <div className="blog-filter__search"><label htmlFor="blog-search">ค้นหาบทความ</label><input id="blog-search" type="search" name="search" defaultValue={search} placeholder="ค้นหาจากชื่อบทความ" /></div>
-              {tagFilter !== 'all' && <input type="hidden" name="tag" value={tagFilter} />}
-              <button type="submit">แสดงผลลัพธ์</button><Link href="/blog">ล้างตัวกรอง</Link>
+
+            <form method={'GET'} action={'/blog'} className={styles.filter} role={'search'}>
+              <div className={styles.searchField}>
+                <label htmlFor={'blog-search'}>ค้นหาบทความ</label>
+                <input
+                  id={'blog-search'}
+                  type={'search'}
+                  name={'search'}
+                  defaultValue={search}
+                  placeholder={'ค้นหาจากชื่อบทความ'}
+                />
+              </div>
+              {tagFilter !== 'all' ? <input type={'hidden'} name={'tag'} value={tagFilter} /> : null}
+              <button type={'submit'}>แสดงผลลัพธ์</button>
+              <Link href={'/blog'}>ล้างตัวกรอง</Link>
             </form>
 
-            {allTags.length > 0 && <nav className="blog-topics" aria-label="หัวข้อบทความ">{[{ id:'all',name:'ทั้งหมด',slug:'all' },...allTags].map(tag => { const isActive=tagFilter===tag.slug; return <Link key={tag.id} href={buildBlogQuery({search,tag:tag.slug,page:1})} className={isActive?'is-active':''} aria-current={isActive?'page':undefined}>{tag.name}</Link>; })}</nav>}
+            {allTags.length > 0 ? (
+              <nav className={styles.topics} aria-label={'หัวข้อบทความ'}>
+                {topicItems.map((tag) => {
+                  const isActive = tagFilter === tag.slug;
+                  return (
+                    <Link
+                      key={tag.id}
+                      href={buildBlogQuery({ search, tag: tag.slug, page: 1 })}
+                      data-active={isActive || undefined}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {tag.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+            ) : null}
 
-            {posts.length === 0 ? <div className="blog-empty"><p className="blog-empty__meta">No matching articles</p><h3>ไม่พบบทความตามเงื่อนไขนี้</h3><p>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อใหม่</p><Link href="/blog">ดูบทความทั้งหมด</Link></div> : <>
-              {featuredPost && <Link href={`/blog/${featuredPost.slug}`} className="blog-feature"><article>
-                <div className="blog-feature__image">{normalizeUrl(featuredPost.thumbnailUrl) ? <img src={normalizeUrl(featuredPost.thumbnailUrl)!} alt={featuredPost.title} /> : <div className="blog-image-fallback"><span>MD</span><small>Journal</small></div>}</div>
-                <div className="blog-feature__content"><div className="blog-article__tags">{featuredPost.tags.slice(0,3).map(tag => <span key={tag.id}>{tag.name}</span>)}</div><p className="blog-article__date">ล่าสุด · {formatDate(featuredPost.publishedAt)}</p><h2>{featuredPost.title}</h2>{featuredPost.excerpt && <p className="blog-feature__excerpt">{featuredPost.excerpt}</p>}<div className="blog-article__footer"><span>{featuredPost.authorName ? `โดย ${featuredPost.authorName}` : 'MilerDev'}</span><strong>อ่านบทความ <span aria-hidden="true">→</span></strong></div></div>
-              </article></Link>}
+            {posts.length === 0 ? (
+              <div className={styles.empty}>
+                <p className={styles.eyebrow}>NO MATCHING ARTICLES</p>
+                <h3>ไม่พบบทความตามเงื่อนไขนี้</h3>
+                <p>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อใหม่</p>
+                <Link href={'/blog'}>ดูบทความทั้งหมด</Link>
+              </div>
+            ) : (
+              <>
+                {featuredPost ? (
+                  <Link href={`/blog/${featuredPost.slug}`} className={styles.feature}>
+                    <article>
+                      <figure className={styles.featureImage}><PostImage post={featuredPost} featured={true} /></figure>
+                      <div className={styles.featureContent}>
+                        <div className={styles.tags}>{featuredPost.tags.slice(0, 3).map((tag) => <span key={tag.id}>{tag.name}</span>)}</div>
+                        <p className={styles.date}>LATEST / {formatDate(featuredPost.publishedAt)}</p>
+                        <h2>{featuredPost.title}</h2>
+                        {featuredPost.excerpt ? <p className={styles.excerpt}>{featuredPost.excerpt}</p> : null}
+                        <div className={styles.articleFooter}>
+                          <span>{featuredPost.authorName ? `โดย ${featuredPost.authorName}` : 'MilerDev'}</span>
+                          <strong>อ่านบทความ <span aria-hidden={true}>→</span></strong>
+                        </div>
+                      </div>
+                    </article>
+                  </Link>
+                ) : null}
 
-              {articlePosts.length > 0 && <div className="blog-article-list">{articlePosts.map((post,index) => <Link key={post.id} href={`/blog/${post.slug}`} className="blog-article-row"><article>
-                <div className="blog-article-row__index">{String((featuredPost ? index+2 : index+1)+(currentPage-1)*pagination.limit).padStart(2,'0')}</div>
-                <div className="blog-article-row__image">{normalizeUrl(post.thumbnailUrl) ? <img src={normalizeUrl(post.thumbnailUrl)!} alt={post.title} /> : <div className="blog-image-fallback"><span>MD</span></div>}</div>
-                <div className="blog-article-row__content"><div className="blog-article__tags">{post.tags.slice(0,2).map(tag => <span key={tag.id}>{tag.name}</span>)}</div><h2>{post.title}</h2>{post.excerpt && <p>{post.excerpt}</p>}<div className="blog-article__footer"><span>{post.authorName ? `โดย ${post.authorName}` : 'MilerDev'} · {formatDate(post.publishedAt)}</span><strong>อ่านบทความ <span aria-hidden="true">→</span></strong></div></div>
-              </article></Link>)}</div>}
+                {articlePosts.length > 0 ? (
+                  <ol className={styles.articleList}>
+                    {articlePosts.map((post, index) => {
+                      const itemNumber = (featuredPost ? index + 2 : index + 1) + (currentPage - 1) * pagination.limit;
+                      return (
+                        <li key={post.id}>
+                          <Link href={`/blog/${post.slug}`} className={styles.articleRow}>
+                            <span className={styles.articleIndex}>{String(itemNumber).padStart(2, '0')}</span>
+                            <figure className={styles.rowImage}><PostImage post={post} /></figure>
+                            <div className={styles.rowContent}>
+                              <div className={styles.tags}>{post.tags.slice(0, 2).map((tag) => <span key={tag.id}>{tag.name}</span>)}</div>
+                              <h2>{post.title}</h2>
+                              {post.excerpt ? <p>{post.excerpt}</p> : null}
+                              <div className={styles.articleFooter}>
+                                <span>{post.authorName ? `โดย ${post.authorName}` : 'MilerDev'} / {formatDate(post.publishedAt)}</span>
+                                <strong>อ่านบทความ <span aria-hidden={true}>→</span></strong>
+                              </div>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : null}
 
-              {pagination.totalPages > 1 && <nav className="blog-pagination" aria-label="หน้ารายการบทความ">{currentPage>1 && <Link href={buildBlogQuery({search,tag:tagFilter,page:currentPage-1})}>← ก่อนหน้า</Link>}<div>{getPageNumbers(pagination.totalPages,currentPage).map((page,index)=>page==='...'?<span key={`dots-${index}`}>…</span>:<Link key={page} href={buildBlogQuery({search,tag:tagFilter,page})} className={currentPage===page?'is-active':''} aria-current={currentPage===page?'page':undefined}>{page}</Link>)}</div>{currentPage<pagination.totalPages && <Link href={buildBlogQuery({search,tag:tagFilter,page:currentPage+1})}>ถัดไป →</Link>}</nav>}
-            </>}
+                {pagination.totalPages > 1 ? (
+                  <nav className={styles.pagination} aria-label={'หน้ารายการบทความ'}>
+                    {currentPage > 1 ? <Link href={buildBlogQuery({ search, tag: tagFilter, page: currentPage - 1 })}>← ก่อนหน้า</Link> : <span />}
+                    <div>
+                      {getPageNumbers(pagination.totalPages, currentPage).map((pageNumber, index) => pageNumber === '...'
+                        ? <span key={`dots-${index}`} aria-hidden={true}>…</span>
+                        : (
+                          <Link
+                            key={pageNumber}
+                            href={buildBlogQuery({ search, tag: tagFilter, page: pageNumber })}
+                            data-active={currentPage === pageNumber || undefined}
+                            aria-current={currentPage === pageNumber ? 'page' : undefined}
+                            aria-label={`หน้า ${pageNumber}`}
+                          >
+                            {pageNumber}
+                          </Link>
+                        ))}
+                    </div>
+                    {currentPage < pagination.totalPages ? <Link href={buildBlogQuery({ search, tag: tagFilter, page: currentPage + 1 })}>ถัดไป →</Link> : <span />}
+                  </nav>
+                ) : null}
+              </>
+            )}
           </div>
         </section>
       </main>

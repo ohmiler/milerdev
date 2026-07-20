@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import styles from './BlogControls.module.css';
 
 export default function ReadingProgress() {
   const [progress, setProgress] = useState(0);
@@ -8,8 +9,8 @@ export default function ReadingProgress() {
   useEffect(() => {
     const updateProgress = () => {
       const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0);
+      const documentHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(documentHeight > 0 ? Math.min(100, (scrollTop / documentHeight) * 100) : 0);
     };
 
     window.addEventListener('scroll', updateProgress, { passive: true });
@@ -18,21 +19,15 @@ export default function ReadingProgress() {
   }, []);
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: '3px',
-      background: '#e2e8f0',
-      zIndex: 9999,
-    }}>
-      <div style={{
-        height: '100%',
-        width: `${progress}%`,
-        background: 'linear-gradient(90deg, #2563eb, #7c3aed)',
-        transition: 'width 0.1s linear',
-      }} />
+    <div
+      className={styles.readingProgress}
+      role={'progressbar'}
+      aria-label={'ความคืบหน้าการอ่าน'}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(progress)}
+    >
+      <div style={{ width: `${progress}%` }} />
     </div>
   );
 }
