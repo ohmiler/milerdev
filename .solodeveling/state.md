@@ -5,8 +5,8 @@ solodeveling_schema: 1
 # State
 
 - Goal: Keep MilerDev learning and commerce journeys truthful, usable, and production-safe.
-- Progress: The Home redesign and COURSES-001 catalog reference-page redesign are complete. The approved public language now covers Home and the first catalog journey.
-- Active work: None. COURSES-001 is archived at `work/archive/COURSES-001.md`; cumulative evidence is in `evidence/COURSES-001.md`.
+- Progress: BUNDLES-001 is complete at code and build level. Bundle detail now uses the MilerDev dossier/purchase-rail language, and payment controls share accessible dialog behavior without changing commerce APIs or entitlement rules.
+- Active work: None.
 - Blockers: None.
 - Current risks: Generated Playwright artifacts remain untracked and must stay outside product commits. Rendered checks use local guest-facing data and are not production performance or user-research evidence.
-- Next action: Shape and redesign `/courses/[slug]` as the next separately scoped public journey, preserving course detail, enrollment, and payment behavior.
+- Next action: Continue the Gridgeist public-journey review at Blog, or inspect DESIGN-001 and BUNDLES-001 visually when a browser backend becomes available.

@@ -1,0 +1,400 @@
+.primaryButton,
+.secondaryButton,
+.verifyButton,
+.methodButton,
+.uploadButton,
+.removePreviewButton {
+  min-height: 44px;
+  border-radius: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primaryButton {
+  display: inline-flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px 18px;
+  border: 1px solid var(--accent-strong);
+  background: var(--accent);
+  color: #062438;
+  font-size: .95rem;
+  font-weight: 800;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+.primaryButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.successButton {
+  border-color: var(--success);
+  background: var(--success);
+  color: #fff;
+}
+
+.successButton:hover {
+  background: color-mix(in srgb, var(--success) 82%, var(--ink));
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.verifyButton:disabled,
+.methodButton:disabled {
+  border-color: var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.verifyButton:focus-visible,
+.methodButton:focus-visible,
+.uploadButton:focus-visible,
+.removePreviewButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.dialogAmount {
+  margin-left: 5px;
+  color: var(--ink);
+  font: 750 1.05rem/1.3 var(--font-code);
+}
+
+.methodList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.methodButton {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--line-strong);
+  background: var(--canvas);
+  color: var(--ink);
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.methodButton::after {
+  color: var(--accent-strong);
+  content: '→';
+}
+
+.methodButton:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.methodIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--accent-strong);
+}
+
+.transferIcon {
+  color: var(--success);
+}
+
+.methodIcon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.methodButton > span:last-child {
+  min-width: 0;
+}
+
+.methodTitle,
+.methodDescription {
+  display: block;
+}
+
+.methodTitle {
+  color: var(--ink);
+  font-size: .92rem;
+  font-weight: 750;
+}
+
+.methodDescription {
+  margin-top: 3px;
+  color: var(--ink-muted);
+  font-size: .74rem;
+  line-height: 1.5;
+}
+
+.bankInfo {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--success);
+  background: var(--surface);
+}
+
+.bankInfo h4 {
+  margin: 0 0 9px;
+  color: var(--success);
+  font: 750 .68rem/1.5 var(--font-code);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.bankRows {
+  margin: 0;
+}
+
+.bankRows div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: baseline;
+  padding-block: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.bankRows dt,
+.bankRows dd {
+  margin: 0;
+  font-size: .82rem;
+}
+
+.bankRows dt {
+  color: var(--ink-muted);
+}
+
+.bankRows dd {
+  max-width: 260px;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-weight: 750;
+  text-align: right;
+}
+
+.accountNumber {
+  font-family: var(--font-code);
+  letter-spacing: .04em;
+}
+
+.amount {
+  color: var(--success) !important;
+  font-size: 1rem !important;
+}
+
+.uploadField {
+  margin-bottom: 2px;
+}
+
+.fieldLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink-soft);
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.uploadButton {
+  display: flex;
+  width: 100%;
+  min-height: 136px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 26px;
+  border: 1px dashed var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-soft);
+  text-align: center;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.uploadButton:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.uploadButton svg {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 8px;
+  color: var(--ink-muted);
+}
+
+.uploadTitle {
+  color: var(--ink-soft);
+  font-size: .86rem;
+  font-weight: 700;
+}
+
+.uploadHint {
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: .73rem;
+}
+
+.slipPreview {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.slipPreview img {
+  display: block;
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.removePreviewButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  width: 36px;
+  min-height: 36px;
+  place-items: center;
+  border: 1px solid var(--canvas);
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.errorPanel {
+  display: grid;
+  gap: 3px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--error) 35%, var(--line));
+  border-left: 3px solid var(--error);
+  background: color-mix(in srgb, var(--error) 7%, var(--canvas));
+  color: var(--error);
+  font-size: .8rem;
+}
+
+.errorPanel strong {
+  font-size: .76rem;
+}
+
+.secondaryButton,
+.verifyButton {
+  padding: 11px 18px;
+  border: 1px solid var(--line-strong);
+  font-size: .84rem;
+  font-weight: 750;
+}
+
+.secondaryButton {
+  background: var(--canvas);
+  color: var(--ink-soft);
+}
+
+.secondaryButton:hover:not(:disabled) {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.verifyButton {
+  border-color: var(--accent-strong);
+  background: var(--accent);
+  color: #062438;
+}
+
+.verifyButton:hover:not(:disabled) {
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+.loadingContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: bundleEnrollSpin .8s linear infinite;
+}
+
+@keyframes bundleEnrollSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 520px) {
+  .methodButton {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 11px;
+    padding: 13px;
+  }
+
+  .methodIcon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .bankRows div {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .bankRows dd {
+    max-width: none;
+    text-align: left;
+  }
+
+  .secondaryButton,
+  .verifyButton {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primaryButton,
+  .methodButton,
+  .uploadButton {
+    transition: none;
+  }
+
+  .spinner {
+    animation-duration: 1.6s;
+  }
+}
