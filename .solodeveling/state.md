@@ -5,8 +5,8 @@ solodeveling_schema: 1
 # State
 
 - Goal: Keep MilerDev learning and commerce journeys truthful, usable, and production-safe.
-- Progress: SUPPORT-001 is complete. About, Contact, and FAQ now share the scoped studio/support grammar while preserving content, metadata, contact delivery contracts, and accessible recovery states.
+- Progress: SUPPORT-001 is committed. AUTH-001 is complete: the four account routes now share a scoped server-shell/client-island workflow with backend identity behavior unchanged.
 - Active work: None.
 - Blockers: None.
-- Current risks: Generated Playwright artifacts remain untracked and must stay outside product commits. Production contact delivery and assistive-technology user testing were not exercised; provider/API behavior is unchanged.
-- Next action: Shape the authentication public journey before changing login, registration, password recovery, session, or role-sensitive behavior.
+- Current risks: Real Google sign-in, SMTP delivery, real reset links, production distributed rate limiting, and production monitoring remain unverified. The existing global dark Navbar has low logo contrast and is outside AUTH-001 scope. Generated artifacts and dirty tooling files must remain outside product commits.
+- Next action: Commit only AUTH-001 source, tests, state, archived work, and evidence when the user requests the checkpoint; then choose the next public journey.
