@@ -1,51 +1,23 @@
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-
-function Skeleton({ width, height, borderRadius = '8px', style = {} }: { width: string; height: string; borderRadius?: string; style?: React.CSSProperties }) {
-    return (
-        <div style={{
-            width,
-            height,
-            borderRadius,
-            background: 'linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%)',
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 1.5s infinite',
-            ...style,
-        }} />
-    );
-}
+import LearnerAccountShell from '@/components/account/LearnerAccountShell';
+import styles from '@/components/account/LearnerAccount.module.css';
 
 export default function SettingsLoading() {
-    return (
-        <>
-            <style>{`@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }`}</style>
-            <Navbar />
-            <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
-                <div className="container" style={{ paddingTop: '40px', paddingBottom: '60px', maxWidth: '800px' }}>
-                    {/* Header */}
-                    <div style={{ marginBottom: '32px' }}>
-                        <Skeleton width="100px" height="32px" style={{ marginBottom: '8px' }} />
-                        <Skeleton width="220px" height="18px" />
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                        {/* Account Settings */}
-                        <div style={{
-                            background: 'white',
-                            borderRadius: '16px',
-                            padding: '24px',
-                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                        }}>
-                            <Skeleton width="60px" height="20px" style={{ marginBottom: '20px' }} />
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <Skeleton width="100%" height="64px" borderRadius="12px" />
-                                <Skeleton width="100%" height="64px" borderRadius="12px" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-            <Footer />
-        </>
-    );
+  return (
+    <LearnerAccountShell
+      current="settings"
+      eyebrow="Account controls"
+      title="ตั้งค่าบัญชี"
+      description="จัดการข้อมูลที่แสดงในบัญชีและควบคุมความปลอดภัยของการเข้าสู่ระบบ"
+    >
+      <div aria-busy="true" aria-label="กำลังโหลดการตั้งค่าบัญชี">
+        {[1, 2].map((section) => (
+          <section className={styles.settingsSection} key={section}>
+            <span className={`${styles.skeleton} ${styles.skeletonShort}`} />
+            <span className={`${styles.skeleton} ${styles.skeletonTitle}`} />
+            <span className={`${styles.skeleton} ${styles.skeletonRow}`} />
+          </section>
+        ))}
+      </div>
+    </LearnerAccountShell>
+  );
 }

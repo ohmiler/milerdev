@@ -1,173 +1,87 @@
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { eq, count } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { users, enrollments } from '@/lib/db/schema';
-import { eq, count } from 'drizzle-orm';
+import LearnerAccountShell from '@/components/account/LearnerAccountShell';
+import styles from '@/components/account/LearnerAccount.module.css';
 import ProfileForm from './ProfileForm';
 
 export const metadata: Metadata = {
-    title: 'โปรไฟล์',
-    description: 'จัดการข้อมูลส่วนตัวและดูสถิติการเรียนของคุณ',
+  title: 'โปรไฟล์',
+  description: 'จัดการข้อมูลส่วนตัวและดูสถิติการเรียนของคุณ',
 };
 
 export const dynamic = 'force-dynamic';
 
 async function getUserProfile(userId: string) {
-    const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
+  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) return null;
 
-    if (!user) return null;
+  const [enrollmentStats] = await db
+    .select({ count: count() })
+    .from(enrollments)
+    .where(eq(enrollments.userId, userId));
 
-    // Get enrollment stats
-    const [enrollmentStats] = await db
-        .select({ count: count() })
-        .from(enrollments)
-        .where(eq(enrollments.userId, userId));
+  return { ...user, totalEnrollments: enrollmentStats?.count || 0 };
+}
 
-    return {
-        ...user,
-        totalEnrollments: enrollmentStats?.count || 0,
-    };
+function getRoleLabel(role: string) {
+  if (role === 'admin') return 'Admin';
+  if (role === 'instructor') return 'ผู้สอน';
+  return 'นักเรียน';
 }
 
 export default async function ProfilePage() {
-    const session = await auth();
+  const session = await auth();
+  if (!session?.user) redirect('/login');
 
-    if (!session?.user) {
-        redirect('/login');
-    }
+  const user = await getUserProfile(session.user.id);
+  if (!user) redirect('/login');
 
-    const user = await getUserProfile(session.user.id);
+  const memberSince = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'short' })
+    : '-';
 
-    if (!user) {
-        redirect('/login');
-    }
+  return (
+    <LearnerAccountShell
+      current="profile"
+      eyebrow="Learner identity"
+      title="โปรไฟล์ของฉัน"
+      description="ข้อมูลระบุตัวตนสำหรับบัญชีผู้เรียนและชื่อที่ใช้ในประสบการณ์เรียนของคุณ"
+    >
+      <section aria-labelledby="profile-identity-title">
+        <div className={styles.profileLead}>
+          <div className={styles.avatarWrap}>
+            {user.avatarUrl ? (
+              <Image className={styles.avatar} src={user.avatarUrl} alt="" width={96} height={96} />
+            ) : (
+              <div className={styles.avatarFallback} aria-hidden="true">
+                {user.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            )}
+          </div>
+          <div className={styles.profileIdentity}>
+            <p className={styles.sectionLabel}>Account identity</p>
+            <h2 id="profile-identity-title">{user.name || 'ไม่ระบุชื่อ'}</h2>
+            <p>{user.email}</p>
+          </div>
+        </div>
 
-    return (
-        <>
-            <Navbar />
+        <div className={`${styles.summary} ${styles.profileStats}`} aria-label="ข้อมูลสรุปบัญชี">
+          <div><span>คอร์สที่ลงทะเบียน</span><strong data-accent="true">{user.totalEnrollments}</strong></div>
+          <div><span>ประเภทบัญชี</span><strong>{getRoleLabel(user.role)}</strong></div>
+          <div><span>สมาชิกตั้งแต่</span><strong>{memberSince}</strong></div>
+        </div>
+      </section>
 
-            <main style={{ minHeight: '100vh', background: '#f8fafc' }}>
-                <div className="container" style={{ paddingTop: '40px', paddingBottom: '60px', maxWidth: '800px' }}>
-                    {/* Header */}
-                    <div style={{ marginBottom: '32px' }}>
-                        <h1 style={{
-                            fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-                            fontWeight: 700,
-                            color: '#1e293b',
-                            marginBottom: '8px',
-                        }}>
-                            โปรไฟล์ของฉัน
-                        </h1>
-                        <p style={{ color: '#64748b' }}>
-                            จัดการข้อมูลส่วนตัวของคุณ
-                        </p>
-                    </div>
-
-                    {/* Profile Card */}
-                    <div style={{
-                        background: 'white',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                    }}>
-                        {/* Cover & Avatar */}
-                        <div style={{
-                            background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
-                            height: '120px',
-                            position: 'relative',
-                        }}>
-                            <div style={{
-                                position: 'absolute',
-                                bottom: '-40px',
-                                left: '32px',
-                            }}>
-                                {user.avatarUrl ? (
-                                    <Image
-                                        src={user.avatarUrl}
-                                        alt={user.name || 'Avatar'}
-                                        width={100}
-                                        height={100}
-                                        style={{
-                                            borderRadius: '50%',
-                                            border: '4px solid white',
-                                            objectFit: 'cover',
-                                        }}
-                                    />
-                                ) : (
-                                    <div style={{
-                                        width: '100px',
-                                        height: '100px',
-                                        borderRadius: '50%',
-                                        border: '4px solid white',
-                                        background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: 'white',
-                                        fontSize: '2.5rem',
-                                        fontWeight: 700,
-                                    }}>
-                                        {user.name?.charAt(0).toUpperCase() || 'U'}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Info */}
-                        <div style={{ padding: '60px 32px 32px' }}>
-                            <div style={{ marginBottom: '24px' }}>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
-                                    {user.name || 'ไม่ระบุชื่อ'}
-                                </h2>
-                                <p style={{ color: '#64748b' }}>{user.email}</p>
-                            </div>
-
-                            {/* Stats */}
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 1fr)',
-                                gap: '16px',
-                                padding: '20px',
-                                background: '#f8fafc',
-                                borderRadius: '12px',
-                                marginBottom: '24px',
-                            }}>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2563eb' }}>
-                                        {user.totalEnrollments}
-                                    </div>
-                                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>คอร์สที่ลงทะเบียน</div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>
-                                        {user.role === 'admin' ? 'Admin' : user.role === 'instructor' ? 'ผู้สอน' : 'นักเรียน'}
-                                    </div>
-                                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>สถานะ</div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f59e0b' }}>
-                                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'short' }) : '-'}
-                                    </div>
-                                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>สมาชิกตั้งแต่</div>
-                                </div>
-                            </div>
-
-                            {/* Edit Form */}
-                            <ProfileForm user={user} />
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            <Footer />
-        </>
-    );
+      <section className={styles.formSection} aria-labelledby="edit-profile-title">
+        <p className={styles.sectionLabel}>Editable information</p>
+        <h2 id="edit-profile-title">แก้ไขข้อมูล</h2>
+        <ProfileForm user={user} />
+      </section>
+    </LearnerAccountShell>
+  );
 }

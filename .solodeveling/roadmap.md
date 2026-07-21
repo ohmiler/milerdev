@@ -7,9 +7,11 @@ solodeveling_schema: 1
 1. Make the approved light palette the public UI default.
 2. Establish Gridgeist and Solodeveling as the repository design and delivery workflow.
 3. Improve homepage truth, hierarchy, bundle presentation, affiliate behavior, and responsive interaction.
-4. Extend the approved Home design language to other public journeys through separately scoped work:
-   - Next: redesign `/courses` as the first reference page, preserving its real catalog data, filters, pagination, empty state, links, and responsive behavior.
-   - Then: continue through `/courses/[slug]`, bundle detail, Blog, About/Contact/FAQ, authentication, learner surfaces, and Admin in that order unless user priorities change.
+4. Complete learner-facing journeys before starting Admin, through separately scoped work:
+   - Completed: Dashboard and generic course entry now resume the learner at the truthful current or next lesson.
+   - Completed: the account set—`/dashboard/certificates`, `/dashboard/payments`, `/profile`, and `/settings`—now shares one learner dashboard-derived system.
+   - Next: review transactional completion and proof surfaces—course/bundle payment success and public certificate—followed by announcements and legal/content pages that still use legacy presentation.
+   - Admin begins only after the user-facing audit and these prioritized gaps are complete, per user direction.
    - Reuse Home principles—paper/ink/accent palette, square geometry, bordered grids, editorial Thai hierarchy, product evidence, purposeful motion, and responsive recomposition—without copying the Hero editor motif into unrelated pages.
    - Promote only repeated patterns into shared primitives and global semantic tokens; do not spread page-local `--home-*` aliases across the application.
    - Verify representative public pages at 390, 768, 1280, and 1600 CSS pixels with keyboard focus, reduced motion, overflow, loading, empty, and error states where applicable.
