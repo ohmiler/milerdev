@@ -506,8 +506,7 @@
   color: color-mix(in srgb, var(--home-white) 72%, transparent);
 }
 
-.courseGrid :global(.price-badge),
-.courseGrid :global(.course-discount-badge) {
+.courseGrid :global(.price-badge) {
   border-radius: 0;
   box-shadow: none;
   font-family: var(--font-code);
@@ -566,15 +565,6 @@
 .courseGrid :global(.price-badge__was) {
   color: color-mix(in srgb, var(--home-ink) 68%, transparent);
   opacity: 1;
-}
-
-.courseGrid :global(.course-discount-badge) {
-  top: 0;
-  left: 0;
-  padding: 8px 10px;
-  background: var(--color-promo);
-  color: var(--home-white);
-  font-size: 0.7rem;
 }
 
 .courseGrid :global(.course-card__content) {
@@ -653,13 +643,10 @@
 }
 
 .courseGrid :global(.cc-cta) {
-  display: inline-flex;
   width: 100%;
   min-height: 42px;
-  align-items: center;
   justify-content: flex-start;
   gap: 9px;
-  margin-top: 14px;
   padding: 10px 0 0;
   border: 0;
   border-top: 1px solid var(--home-line);
@@ -669,19 +656,6 @@
   color: var(--home-blue-deep);
   font-size: 0.83rem;
   font-weight: 720;
-  line-height: 1.35;
-  white-space: nowrap;
-}
-
-.courseGrid :global(.cc-cta svg) {
-  flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  transition: transform 180ms ease;
-}
-
-.courseGrid :global(.course-card--featured:hover .cc-cta svg) {
-  transform: translateX(4px);
 }
 
 .emptyState {
@@ -1182,7 +1156,6 @@
   .emptyAction,
   .courseGrid :global(.course-card--featured),
   .courseGrid :global(.course-card__image),
-  .courseGrid :global(.cc-cta svg),
   .primaryAction > span,
   .sectionLink::after,
   .sectionLink span {
