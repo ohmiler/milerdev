@@ -13,7 +13,7 @@ import NavbarUserMenu from './NavbarUserMenu';
 import { NAV_LINKS } from './navigation-config';
 
 interface PublicNavbarProps {
-    onRequestLogout: () => void;
+    onRequestLogout: (returnFocus: HTMLElement | null) => void;
 }
 
 export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
@@ -26,6 +26,7 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
     const pathname = usePathname();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const notiRef = useRef<HTMLDivElement>(null);
+    const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
     const { unreadCount, notifications, markAsRead, deleteRead, setNotificationsPanelOpen } = useNotifications();
 
     const isActive = useCallback((href: string) => pathname === href || pathname.startsWith(href + '/'), [pathname]);
@@ -67,9 +68,9 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
         setNotificationsPanelOpen(showNotiDropdown);
     }, [showNotiDropdown, setNotificationsPanelOpen]);
 
-    const requestLogout = () => {
+    const requestLogout = (returnFocus: HTMLElement | null) => {
         closeAllMenus();
-        onRequestLogout();
+        onRequestLogout(returnFocus);
     };
 
     return (
@@ -144,6 +145,7 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
 
                 <button
                     type="button"
+                    ref={mobileMenuTriggerRef}
                     className="nav-mobile-btn"
                     onClick={() => setIsMenuOpen((current) => !current)}
                     aria-label={isMenuOpen ? 'ปิดเมนูหลัก' : 'เปิดเมนูหลัก'}
@@ -161,7 +163,7 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     isAdmin={isAdmin}
                     isActive={isActive}
                     onClose={closeAllMenus}
-                    onLogout={requestLogout}
+                    onLogout={() => requestLogout(mobileMenuTriggerRef.current)}
                 />
             )}
 

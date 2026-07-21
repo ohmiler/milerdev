@@ -312,6 +312,7 @@ export default function BundleEnrollButton({
                 ref={fileInputRef}
                 className={styles.hiddenInput}
                 type={'file'}
+                tabIndex={-1}
                 accept={'image/jpeg,image/jpg,image/png,image/webp'}
                 onChange={handleFileChange}
               />

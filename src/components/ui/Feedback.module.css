@@ -8,8 +8,8 @@
   --feedback-action: var(--admin-accent, var(--accent, #00abff));
   --feedback-action-strong: var(--admin-accent-strong, var(--accent-strong, #0075b3));
   --feedback-focus: var(--focus-ring, 0 0 0 3px rgba(0, 171, 255, .3));
-  --feedback-radius: var(--admin-radius-md, var(--radius-md, 8px));
-  --feedback-shadow: var(--admin-shadow-lg, 0 18px 42px rgba(16, 32, 51, .16));
+  --feedback-radius: var(--admin-radius-md, 0px);
+  --feedback-shadow: var(--admin-shadow-lg, 12px 12px 0 rgba(8, 11, 15, .16));
   --feedback-tone: var(--feedback-action-strong);
   --feedback-tone-soft: var(--admin-accent-soft, var(--accent-soft, #e0f5ff));
   position: fixed;
@@ -43,6 +43,10 @@
 
 .panel {
   width: min(100%, 430px);
+  max-height: calc(100dvh - clamp(32px, 8vw, 64px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   outline: none;
   border: 1px solid var(--feedback-line-strong);
   border-top: 3px solid var(--feedback-tone);
@@ -54,7 +58,27 @@
 }
 
 .panel[data-size=wide] {
-  width: min(100%, 500px);
+  width: min(100%, 540px);
+}
+
+.panel[data-size=media] {
+  width: min(100%, 960px);
+}
+
+.panel[data-variant=media] {
+  --feedback-surface: #080b0f;
+  --feedback-surface-muted: #10151c;
+  --feedback-ink: #f5f8fa;
+  --feedback-ink-soft: #9aa8b5;
+  --feedback-line: #26313d;
+  --feedback-line-strong: #384657;
+  --feedback-shadow: 12px 12px 0 rgba(0, 0, 0, .36);
+}
+
+.panel[data-variant=media] .taskBody {
+  overflow: hidden;
+  border: 1px solid var(--feedback-line);
+  background: #000000;
 }
 
 .content {
@@ -68,7 +92,7 @@
   place-items: center;
   margin-bottom: 20px;
   border: 1px solid color-mix(in srgb, var(--feedback-tone) 42%, var(--feedback-line));
-  border-radius: var(--admin-radius-sm, var(--radius-sm, 6px));
+  border-radius: var(--admin-radius-sm, 0px);
   background: var(--feedback-tone-soft);
   color: var(--feedback-tone);
 }
@@ -103,6 +127,8 @@
   justify-content: flex-end;
   gap: 10px;
   margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--feedback-line);
 }
 
 .button {
@@ -112,7 +138,7 @@
   justify-content: center;
   padding: 9px 18px;
   border: 1px solid transparent;
-  border-radius: var(--admin-radius-sm, var(--radius-sm, 6px));
+  border-radius: var(--admin-radius-sm, 0px);
   font: 700 var(--text-body-sm, .875rem)/1.4 var(--font-ui, sans-serif);
   cursor: pointer;
   transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;

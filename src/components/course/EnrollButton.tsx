@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import DialogShell from '@/components/ui/DialogShell';
 import Modal from '@/components/ui/Modal';
 import styles from './EnrollButton.module.css';
 
@@ -15,6 +15,20 @@ interface EnrollButtonProps {
 }
 
 type PaymentStep = 'idle' | 'method' | 'transfer' | 'verifying';
+
+export const COURSE_PAYMENT_CONTRACT = {
+  enrollEndpoint: '/api/enroll',
+  stripeEndpoint: '/api/stripe/checkout',
+  couponEndpoint: '/api/coupons/validate',
+  slipEndpoint: '/api/slip/verify',
+  slipFields: {
+    file: 'slip',
+    courseId: 'courseId',
+    amount: 'amount',
+  },
+  allowedSlipTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'] as readonly string[],
+  maxSlipBytes: 5 * 1024 * 1024,
+} as const;
 
 export default function EnrollButton({ courseId, courseSlug, price, onEnrollmentChange }: EnrollButtonProps) {
   const router = useRouter();
@@ -127,7 +141,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     setCouponLoading(true);
     setCouponError(null);
     try {
-      const res = await fetch('/api/coupons/validate', {
+      const res = await fetch(COURSE_PAYMENT_CONTRACT.couponEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: couponCode, courseId, originalPrice: price }),
@@ -159,10 +173,51 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     setCouponError(null);
   };
 
+  const handleCouponEnrollment = async () => {
+    if (!appliedCoupon || effectivePrice !== 0) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(COURSE_PAYMENT_CONTRACT.enrollEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, couponId: appliedCoupon.couponId }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        updateEnrolled(true);
+        setPaymentStep('idle');
+        setModal({
+          isOpen: true,
+          type: 'success',
+          title: 'ลงทะเบียนสำเร็จ!',
+          message: 'ใช้คูปองส่วนลด 100% ลงทะเบียนเรียบร้อยแล้ว',
+        });
+      } else {
+        setModal({
+          isOpen: true,
+          type: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          message: data.error || 'ไม่สามารถลงทะเบียนได้',
+        });
+      }
+    } catch {
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'เกิดข้อผิดพลาด',
+        message: 'ไม่สามารถเชื่อมต่อได้',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleStripePayment = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/stripe/checkout', {
+      const res = await fetch(COURSE_PAYMENT_CONTRACT.stripeEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseId, ...(appliedCoupon && { couponId: appliedCoupon.couponId }) }),
@@ -200,14 +255,13 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     if (!file) return;
 
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
+    if (!COURSE_PAYMENT_CONTRACT.allowedSlipTypes.includes(file.type)) {
       setVerifyError('รองรับเฉพาะไฟล์ JPG, PNG, WEBP เท่านั้น');
       return;
     }
 
     // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > COURSE_PAYMENT_CONTRACT.maxSlipBytes) {
       setVerifyError('ไฟล์ต้องมีขนาดไม่เกิน 5MB');
       return;
     }
@@ -231,11 +285,11 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
 
     try {
       const formData = new FormData();
-      formData.append('slip', slipFile);
-      formData.append('courseId', courseId);
-      formData.append('amount', effectivePrice.toString());
+      formData.append(COURSE_PAYMENT_CONTRACT.slipFields.file, slipFile);
+      formData.append(COURSE_PAYMENT_CONTRACT.slipFields.courseId, courseId);
+      formData.append(COURSE_PAYMENT_CONTRACT.slipFields.amount, effectivePrice.toString());
 
-      const res = await fetch('/api/slip/verify', {
+      const res = await fetch(COURSE_PAYMENT_CONTRACT.slipEndpoint, {
         method: 'POST',
         body: formData,
       });
@@ -325,23 +379,21 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       )}
 
       {/* Payment Method Selection Modal */}
-      {paymentStep === 'method' && createPortal(
-        <div className={styles.dialogLayer} onClick={() => setPaymentStep('idle')}>
-          <div className={styles.dialogBackdrop} aria-hidden="true" />
-          <div className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="payment-method-title" onClick={(e) => e.stopPropagation()}>
-            <p className={styles.dialogEyebrow}>Payment / เลือกวิธีชำระ</p>
-            <h3 id="payment-method-title" className={styles.dialogTitle}>เลือกช่องทางชำระเงิน</h3>
-            <div className={styles.paymentSummary}>
-              {appliedCoupon ? (
-                <div>
-                  <span className={styles.originalPrice}>฿{price.toLocaleString()}</span>
-                  <strong className={styles.effectivePrice}>฿{effectivePrice.toLocaleString()}</strong>
-                  <div className={styles.couponSaving}>ใช้คูปอง {appliedCoupon.code} ลด ฿{appliedCoupon.discountAmount.toLocaleString()}</div>
-                </div>
-              ) : (
-                <p>ยอดชำระ <strong>฿{price.toLocaleString()}</strong></p>
-              )}
-            </div>
+      <DialogShell
+        isOpen={paymentStep === 'method'}
+        onClose={() => setPaymentStep('idle')}
+        title={'เลือกช่องทางชำระเงิน'}
+        description={appliedCoupon ? (
+          <span className={styles.discountSummary}>
+            <span className={styles.originalPrice}>฿{price.toLocaleString()}</span>
+            <strong className={styles.effectivePrice}>฿{effectivePrice.toLocaleString()}</strong>
+            <span className={styles.couponSaving}>ใช้คูปอง {appliedCoupon.code} ลด ฿{appliedCoupon.discountAmount.toLocaleString()}</span>
+          </span>
+        ) : (
+          <span>ยอดชำระ <strong className={styles.dialogAmount}>฿{price.toLocaleString()}</strong></span>
+        )}
+        body={(
+          <>
 
             {/* Coupon Input */}
             <div className={styles.couponPanel}>
@@ -377,44 +429,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
               {couponError && <p className={styles.errorText}>{couponError}</p>}
             </div>
 
-            {/* If coupon makes it free, show enroll button instead of payment */}
-            {effectivePrice === 0 && appliedCoupon ? (
-              <>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setLoading(true);
-                    try {
-                      const res = await fetch('/api/enroll', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ courseId, couponId: appliedCoupon.couponId }),
-                      });
-                      const data = await res.json();
-                      if (res.ok) {
-                        updateEnrolled(true);
-                        setPaymentStep('idle');
-                        setModal({ isOpen: true, type: 'success', title: 'ลงทะเบียนสำเร็จ!', message: 'ใช้คูปองส่วนลด 100% ลงทะเบียนเรียบร้อยแล้ว' });
-                      } else {
-                        setModal({ isOpen: true, type: 'error', title: 'เกิดข้อผิดพลาด', message: data.error || 'ไม่สามารถลงทะเบียนได้' });
-                      }
-                    } catch { setModal({ isOpen: true, type: 'error', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถเชื่อมต่อได้' }); }
-                    finally { setLoading(false); }
-                  }}
-                  disabled={loading}
-                  className={`${styles.primaryButton} ${styles.successButton}`}
-                >
-                  {loading ? 'กำลังดำเนินการ...' : 'ลงทะเบียนเรียนฟรี (คูปอง 100%)'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentStep('idle')}
-                  className={`${styles.textButton} ${styles.cancelButton}`}
-                >
-                  ยกเลิก
-                </button>
-              </>
-            ) : (
+            {effectivePrice === 0 && appliedCoupon ? null : (
               <>
                 <div className={styles.methodList}>
                   {/* Stripe Card */}
@@ -454,29 +469,40 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
                     </div>
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentStep('idle')}
-                  className={`${styles.textButton} ${styles.cancelButton}`}
-                >
-                  ยกเลิก
-                </button>
               </>
             )}
-          </div>
-        </div>,
-        document.body,
-      )}
+          </>
+        )}
+        dismissOnBackdrop={true}
+        size={'wide'}
+      >
+        <button
+          type={'button'}
+          onClick={() => setPaymentStep('idle')}
+          className={styles.secondaryButton}
+        >
+          ยกเลิก
+        </button>
+        {effectivePrice === 0 && appliedCoupon ? (
+          <button
+            type={'button'}
+            onClick={handleCouponEnrollment}
+            disabled={loading}
+            className={styles.primaryButton}
+          >
+            {loading ? 'กำลังดำเนินการ...' : 'ลงทะเบียนเรียนฟรี (คูปอง 100%)'}
+          </button>
+        ) : null}
+      </DialogShell>
 
       {/* Bank Transfer / Slip Upload Modal */}
-      {(paymentStep === 'transfer' || paymentStep === 'verifying') && createPortal(
-        <div className={styles.dialogLayer} onClick={() => { if (paymentStep !== 'verifying') { setPaymentStep('idle'); resetSlipState(); } }}>
-          <div className={styles.dialogBackdrop} aria-hidden="true" />
-          <div className={`${styles.dialog} ${styles.transferDialog}`} role="dialog" aria-modal="true" aria-labelledby="slip-payment-title" onClick={(e) => e.stopPropagation()}>
-            <p className={styles.dialogEyebrow}>PromptPay / Slip verification</p>
-            <h3 id="slip-payment-title" className={styles.dialogTitle}>โอนเงินและแนบสลิป</h3>
-            <div className={styles.paymentSummary}>ยอดชำระ <strong>฿{effectivePrice.toLocaleString()}</strong></div>
+      <DialogShell
+        isOpen={paymentStep === 'transfer' || paymentStep === 'verifying'}
+        onClose={() => { if (paymentStep !== 'verifying') { setPaymentStep('idle'); resetSlipState(); } }}
+        title={'โอนเงินและแนบสลิป'}
+        description={<span>ยอดที่ระบบจะตรวจสอบ <strong className={styles.dialogAmount}>฿{effectivePrice.toLocaleString()}</strong></span>}
+        body={(
+          <>
 
             {/* Bank Info */}
             <div className={styles.bankInfo}>
@@ -536,6 +562,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
               <input
                 ref={fileInputRef}
                 type="file"
+                tabIndex={-1}
                 accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleFileChange}
                 className={styles.hiddenInput}
@@ -549,34 +576,33 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
               </div>
             )}
 
-            {/* Actions */}
-            <div className={styles.dialogActions}>
-              <button
-                type="button"
-                onClick={handleSlipVerify}
-                disabled={!slipFile || paymentStep === 'verifying'}
-                className={`${styles.primaryButton} ${styles.successButton}`}
-              >
-                {paymentStep === 'verifying' ? (
-                  <span className={styles.loadingContent}>
-                    <span className={styles.spinner} aria-hidden="true" />
-                    กำลังตรวจสอบสลิป...
-                  </span>
-                ) : 'ตรวจสอบและชำระเงิน'}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setPaymentStep('method'); resetSlipState(); }}
-                disabled={paymentStep === 'verifying'}
-                className={styles.secondaryButton}
-              >
-                กลับ
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
+          </>
+        )}
+        dismissOnBackdrop={paymentStep !== 'verifying'}
+        size={'wide'}
+      >
+        <button
+          type={'button'}
+          onClick={() => { setPaymentStep('method'); resetSlipState(); }}
+          disabled={paymentStep === 'verifying'}
+          className={styles.secondaryButton}
+        >
+          กลับ
+        </button>
+        <button
+          type={'button'}
+          onClick={handleSlipVerify}
+          disabled={!slipFile || paymentStep === 'verifying'}
+          className={styles.primaryButton}
+        >
+          {paymentStep === 'verifying' ? (
+            <span className={styles.loadingContent}>
+              <span className={styles.spinner} aria-hidden={true} />
+              กำลังตรวจสอบสลิป...
+            </span>
+          ) : 'ตรวจสอบและชำระเงิน'}
+        </button>
+      </DialogShell>
 
       <Modal
         isOpen={modal.isOpen}

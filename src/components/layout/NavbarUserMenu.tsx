@@ -44,7 +44,7 @@ interface NavbarUserMenuProps {
     onToggleUserMenu: () => void;
     onMarkAsRead: (ids?: string[]) => Promise<void>;
     onDeleteRead: () => Promise<void>;
-    onLogout: () => void;
+    onLogout: (returnFocus: HTMLElement | null) => void;
     onCloseMenu: () => void;
 }
 
@@ -220,7 +220,7 @@ export default function NavbarUserMenu({
                             )}
                         </div>
                         <div className="nav-menu-footer">
-                            <button type="button" onClick={onLogout} className="nav-menu-link nav-menu-action nav-menu-action--danger">
+                            <button type="button" onClick={() => onLogout(userTriggerRef.current)} className="nav-menu-link nav-menu-action nav-menu-action--danger">
                                 <LogoutIcon className="w-5 h-5" />
                                 ออกจากระบบ
                             </button>

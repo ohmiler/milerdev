@@ -1,5 +1,6 @@
 'use client';
 
+import type { RefObject } from 'react';
 import { useRef } from 'react';
 import DialogShell from './DialogShell';
 import styles from './Feedback.module.css';
@@ -12,6 +13,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
   confirmText?: string;
   cancelText?: string;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
 function DestructiveIcon() {
@@ -30,6 +32,7 @@ export default function ConfirmDialog({
   onCancel,
   confirmText = '\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19',
   cancelText = '\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01',
+  returnFocusRef,
 }: ConfirmDialogProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -43,6 +46,7 @@ export default function ConfirmDialog({
       tone={'error'}
       variant={'destructive'}
       initialFocusRef={cancelButtonRef}
+      returnFocusRef={returnFocusRef}
       icon={<DestructiveIcon />}
     >
       <button

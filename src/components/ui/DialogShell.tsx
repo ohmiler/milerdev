@@ -13,15 +13,16 @@ interface DialogShellProps {
   title?: ReactNode;
   description: ReactNode;
   body?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   role?: DialogRole;
   tone?: FeedbackTone;
-  variant?: 'informational' | 'destructive';
+  variant?: 'informational' | 'destructive' | 'media';
   label?: string;
   dismissOnBackdrop?: boolean;
   initialFocusRef?: RefObject<HTMLButtonElement | null>;
+  returnFocusRef?: RefObject<HTMLElement | null>;
   icon?: ReactNode;
-  size?: 'default' | 'wide';
+  size?: 'default' | 'wide' | 'media';
 }
 
 const focusableSelector = [
@@ -30,12 +31,17 @@ const focusableSelector = [
   'input:not(:disabled)',
   'select:not(:disabled)',
   'textarea:not(:disabled)',
+  'iframe',
   '[tabindex]',
 ].join(',');
 
 function focusableElements(container: HTMLElement) {
   return Array.from(container.querySelectorAll<HTMLElement>(focusableSelector))
-    .filter((element) => element.tabIndex >= 0 && !element.hasAttribute('hidden'));
+    .filter((element) => (
+      element.tabIndex >= 0
+      && !element.hasAttribute('hidden')
+      && element.getClientRects().length > 0
+    ));
 }
 
 export default function DialogShell({
@@ -51,6 +57,7 @@ export default function DialogShell({
   label,
   dismissOnBackdrop = false,
   initialFocusRef,
+  returnFocusRef,
   icon,
   size = 'default',
 }: DialogShellProps) {
@@ -69,6 +76,7 @@ export default function DialogShell({
     const previousFocus = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
+    const explicitReturnTarget = returnFocusRef?.current;
     const previousOverflow = document.body.style.overflow;
     const panel = panelRef.current;
     document.body.style.overflow = 'hidden';
@@ -110,14 +118,18 @@ export default function DialogShell({
       window.cancelAnimationFrame(animationFrame);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
-      if (previousFocus?.isConnected) previousFocus.focus();
+      const returnTarget = explicitReturnTarget ?? previousFocus;
+      if (returnTarget?.isConnected) returnTarget.focus();
     };
-  }, [initialFocusRef, isOpen]);
+  }, [initialFocusRef, isOpen, returnFocusRef]);
 
   if (!isOpen) return null;
 
   const handleBackdrop = (event: MouseEvent<HTMLDivElement>) => {
-    if (dismissOnBackdrop && event.target === event.currentTarget) onClose();
+    if (dismissOnBackdrop && event.target === event.currentTarget) {
+      event.preventDefault();
+      onClose();
+    }
   };
 
   return (
@@ -144,7 +156,7 @@ export default function DialogShell({
           {title ? <h3 className={styles.title} id={titleId}>{title}</h3> : null}
           <div className={styles.body} id={descriptionId}>{description}</div>
           {body ? <div className={styles.taskBody}>{body}</div> : null}
-          <div className={styles.actions}>{children}</div>
+          {children ? <div className={styles.actions}>{children}</div> : null}
         </div>
       </div>
     </div>

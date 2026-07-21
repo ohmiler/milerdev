@@ -130,6 +130,7 @@ Borders explain containment, comparison, sequence, and sticky/adjacent regions. 
 
 - Labels stay visible. Inputs and selects use at least 44px targets, clear borders, and explicit focus.
 - Learner-facing text inputs, textareas, and form actions inherit their base anatomy and states from `src/components/ui/FormControls.tsx`; use square geometry across Auth, Contact, Profile, and Settings, with surface variants changing density and background rather than corner radius.
+- Learner-facing informational, confirmation, and payment dialogs inherit named structure, focus management, square geometry, scroll containment, and task-ordered actions from src/components/ui/DialogShell.tsx; admin --admin-* tokens retain their separate operational geometry.
 - Preserve valid input across errors where the existing flow supports recovery.
 - Loading, empty, error, success, disabled, selected, and destructive states are part of the component contract, not follow-up polish.
 - Toasts, dialogs, and confirmation flows inherit semantics from src/components/ui; destructive actions require wording and confirmation proportional to risk.

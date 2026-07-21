@@ -77,71 +77,17 @@
   box-shadow: var(--focus-ring);
 }
 
-.dialogLayer {
-  position: fixed;
-  z-index: 9999;
-  inset: 0;
+.dialogAmount {
+  margin-left: 5px;
+  color: var(--ink);
+  font: 750 1.05rem/1.3 var(--font-code);
+}
+
+.discountSummary {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.dialogBackdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(12, 20, 31, .66);
-  backdrop-filter: blur(3px);
-}
-
-.dialog {
-  position: relative;
-  width: min(100%, 440px);
-  max-height: min(90vh, 760px);
-  overflow-y: auto;
-  padding: 30px;
-  border: 1px solid var(--line-strong);
-  border-radius: 0;
-  background: var(--canvas);
-  color: var(--ink);
-  box-shadow: 14px 14px 0 rgba(12, 20, 31, .16);
-}
-
-.transferDialog {
-  width: min(100%, 500px);
-}
-
-.dialogEyebrow {
-  margin: 0 0 6px;
-  color: var(--accent-strong);
-  font: 700 .68rem/1.5 var(--font-code);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.dialogTitle {
-  margin: 0;
-  color: var(--ink);
-  font-size: 1.4rem;
-  line-height: 1.3;
-  letter-spacing: -.025em;
-}
-
-.paymentSummary {
-  margin: 14px 0 20px;
-  padding-block: 12px;
-  border-block: 1px solid var(--line);
-  color: var(--ink-soft);
-  font-size: .875rem;
-}
-
-.paymentSummary p {
-  margin: 0;
-}
-
-.paymentSummary strong {
-  color: var(--ink);
-  font-size: 1.05rem;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
 }
 
 .originalPrice {
@@ -159,6 +105,11 @@
   margin-top: 4px;
   color: var(--success);
   font-size: .78rem;
+}
+
+.discountSummary .couponSaving {
+  flex-basis: 100%;
+  margin-top: 0;
 }
 
 .couponPanel {
@@ -242,17 +193,12 @@
 }
 
 .dangerText {
-  color: var(--danger);
-}
-
-.cancelButton {
-  width: 100%;
-  margin-top: 10px;
+  color: var(--error);
 }
 
 .errorText {
   margin: 7px 0 0;
-  color: var(--danger);
+  color: var(--error);
   font-size: .8rem;
 }
 
@@ -452,17 +398,11 @@
 .errorPanel {
   margin-bottom: 16px;
   padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--line));
-  border-left: 3px solid var(--danger);
-  background: color-mix(in srgb, var(--danger) 7%, var(--canvas));
-  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--error) 35%, var(--line));
+  border-left: 3px solid var(--error);
+  background: color-mix(in srgb, var(--error) 7%, var(--canvas));
+  color: var(--error);
   font-size: .84rem;
-}
-
-.dialogActions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
 }
 
 .secondaryButton {
@@ -501,22 +441,7 @@
 }
 
 @media (max-width: 520px) {
-  .dialogLayer {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .dialog {
-    width: 100%;
-    max-height: 92vh;
-    padding: 24px 20px;
-    border-inline: 0;
-    border-bottom: 0;
-    box-shadow: 0 -10px 0 rgba(12, 20, 31, .12);
-  }
-
-  .couponInputRow,
-  .dialogActions {
+  .couponInputRow {
     grid-template-columns: 1fr;
   }
 

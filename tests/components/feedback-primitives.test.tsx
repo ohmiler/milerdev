@@ -80,6 +80,28 @@ describe('shared feedback primitives', () => {
     expect(html).toContain('Cancel');
   });
 
+  it('keeps media previews named inside the shared modal contract', () => {
+    const html = renderToStaticMarkup(
+      <DialogShell
+        isOpen
+        onClose={vi.fn()}
+        title={'Course preview'}
+        description={'Preview before enrolling'}
+        body={<iframe title={'Preview player'} />}
+        variant={'media'}
+        size={'media'}
+      >
+        <button type={'button'}>Close preview</button>
+      </DialogShell>,
+    );
+
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('data-variant="media"');
+    expect(html).toContain('data-size="media"');
+    expect(html).toContain('Preview player');
+    expect(html).toContain('Close preview');
+  });
+
   it('keeps the toast timing contract and escalates errors to alerts', () => {
     expect(TOAST_LIFETIME_MS).toBe(3000);
     expect(toastRoleFor('info')).toBe('status');
