@@ -7,7 +7,8 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { db } from '@/lib/db';
 import { enrollments, courses, lessons, lessonProgress, certificates, payments } from '@/lib/db/schema';
-import { eq, desc, count, and, sql, isNull } from 'drizzle-orm';
+import { selectContinuationLesson, sortCoursesByLearningActivity } from '@/lib/learning-continuation';
+import { eq, desc, count, and, inArray, isNull } from 'drizzle-orm';
 
 export const metadata: Metadata = {
     title: 'แดชบอร์ด',
@@ -33,44 +34,56 @@ async function getUserEnrollments(userId: string) {
   // Get all course IDs
   const courseIds = userEnrollments.map(e => e.course.id);
 
-  // Parallelize lesson counts and completed counts queries (async-parallel rule)
-  const [lessonCounts, completedCounts] = await Promise.all([
-    // Get lesson counts for all courses in one query
+  // Read the ordered curriculum and this learner's matching progress without N+1 queries.
+  const [courseLessons, courseProgress] = await Promise.all([
     db
       .select({
+        id: lessons.id,
         courseId: lessons.courseId,
-        count: count(),
+        orderIndex: lessons.orderIndex,
       })
       .from(lessons)
-      .where(sql`${lessons.courseId} IN ${courseIds}`)
-      .groupBy(lessons.courseId),
-    // Get completed lessons for all courses in one query
+      .where(inArray(lessons.courseId, courseIds)),
     db
       .select({
         courseId: lessons.courseId,
-        count: count(),
+        lessonId: lessonProgress.lessonId,
+        completed: lessonProgress.completed,
+        watchTimeSeconds: lessonProgress.watchTimeSeconds,
+        lastWatchedAt: lessonProgress.lastWatchedAt,
       })
       .from(lessonProgress)
       .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
       .where(
         and(
           eq(lessonProgress.userId, userId),
-          sql`${lessons.courseId} IN ${courseIds}`,
-          eq(lessonProgress.completed, true)
+          inArray(lessons.courseId, courseIds),
         )
-      )
-      .groupBy(lessons.courseId),
+      ),
   ]);
 
-  // Create lookup maps for O(1) access
-  const lessonCountMap = new Map(lessonCounts.map(l => [l.courseId, l.count]));
-  const completedCountMap = new Map(completedCounts.map(c => [c.courseId, c.count]));
+  const lessonsByCourse = new Map<string, typeof courseLessons>();
+  const progressByCourse = new Map<string, typeof courseProgress>();
 
-  // Build result with all data
-  return userEnrollments.map(({ enrollment, course }) => {
-    const totalLessons = lessonCountMap.get(course.id) || 0;
-    const completedLessons = completedCountMap.get(course.id) || 0;
+  for (const lesson of courseLessons) {
+    const list = lessonsByCourse.get(lesson.courseId) ?? [];
+    list.push(lesson);
+    lessonsByCourse.set(lesson.courseId, list);
+  }
+
+  for (const progress of courseProgress) {
+    const list = progressByCourse.get(progress.courseId) ?? [];
+    list.push(progress);
+    progressByCourse.set(progress.courseId, list);
+  }
+
+  const enrichedEnrollments = userEnrollments.map(({ enrollment, course }) => {
+    const orderedLessons = lessonsByCourse.get(course.id) ?? [];
+    const progress = progressByCourse.get(course.id) ?? [];
+    const totalLessons = orderedLessons.length;
+    const completedLessons = progress.filter(item => item.completed).length;
     const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    const continuationLesson = selectContinuationLesson(orderedLessons, progress);
 
     return {
       ...enrollment,
@@ -80,8 +93,12 @@ async function getUserEnrollments(userId: string) {
       },
       completedLessons,
       progressPercent,
+      continuationLessonId: continuationLesson?.id ?? null,
+      progress,
     };
   });
+
+  return sortCoursesByLearningActivity(enrichedEnrollments);
 }
 
 export default async function DashboardPage() {
@@ -139,7 +156,7 @@ export default async function DashboardPage() {
                   <div><p>Next action</p><h2 id="dashboard-continue-title">{primaryEnrollment.completedAt ? 'ทบทวนคอร์สล่าสุด' : 'เรียนต่อจากคอร์สล่าสุด'}</h2></div>
                   <span>{primaryEnrollment.completedLessons} / {primaryEnrollment.course.lessonCount} บทเรียน</span>
                 </div>
-                <Link href={`/courses/${primaryEnrollment.course.slug}/learn`} className="dashboard-continue__course">
+                <Link href={primaryEnrollment.continuationLessonId ? `/courses/${primaryEnrollment.course.slug}/learn/${primaryEnrollment.continuationLessonId}` : `/courses/${primaryEnrollment.course.slug}/learn`} className="dashboard-continue__course">
                   <div className="dashboard-continue__image">
                     {primaryEnrollment.course.thumbnailUrl ? <Image src={primaryEnrollment.course.thumbnailUrl.startsWith('http') ? primaryEnrollment.course.thumbnailUrl : `https://${primaryEnrollment.course.thumbnailUrl}`} alt={primaryEnrollment.course.title} fill priority sizes="(max-width: 900px) 100vw, 48vw" /> : <div className="dashboard-course-fallback"><span>MD</span><small>Learning</small></div>}
                   </div>
@@ -155,7 +172,7 @@ export default async function DashboardPage() {
               <section className="dashboard-courses" aria-labelledby="dashboard-courses-title">
                 <div className="dashboard-section-head"><div><p>Course index</p><h2 id="dashboard-courses-title">คอร์สของฉัน</h2></div><Link href="/courses">ดูคอร์สเพิ่มเติม</Link></div>
                 {remainingEnrollments.length > 0 ? <div className="dashboard-course-list">{remainingEnrollments.map((enrollment, index) => (
-                  <Link key={enrollment.id} href={`/courses/${enrollment.course.slug}/learn`} className="dashboard-course-row">
+                  <Link key={enrollment.id} href={enrollment.continuationLessonId ? `/courses/${enrollment.course.slug}/learn/${enrollment.continuationLessonId}` : `/courses/${enrollment.course.slug}/learn`} className="dashboard-course-row">
                     <span className="dashboard-course-row__index">{String(index + 2).padStart(2, '0')}</span>
                     <div className="dashboard-course-row__title"><strong>{enrollment.course.title}</strong><span>{enrollment.completedLessons} / {enrollment.course.lessonCount} บทเรียน</span></div>
                     <div className="dashboard-progress" aria-label={`ความคืบหน้า ${enrollment.progressPercent}%`}><span style={{ width: `${enrollment.progressPercent}%` }} /></div>

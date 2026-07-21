@@ -3,7 +3,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { courses, lessons, enrollments } from '@/lib/db/schema';
+import { courses, lessons, enrollments, lessonProgress } from '@/lib/db/schema';
+import { selectContinuationLesson } from '@/lib/learning-continuation';
 import { eq, and, asc } from 'drizzle-orm';
 import LessonList from '@/components/course/LessonList';
 
@@ -43,17 +44,34 @@ async function getCourseWithAccess(slug: string, userId: string) {
 
   if (!enrollment) return null;
 
-  // Get lessons
-  const courseLessons = await db
-    .select()
-    .from(lessons)
-    .where(eq(lessons.courseId, course.id))
-    .orderBy(asc(lessons.orderIndex));
+  const [courseLessons, courseProgress] = await Promise.all([
+    db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.courseId, course.id))
+      .orderBy(asc(lessons.orderIndex)),
+    db
+      .select({
+        lessonId: lessonProgress.lessonId,
+        completed: lessonProgress.completed,
+        watchTimeSeconds: lessonProgress.watchTimeSeconds,
+        lastWatchedAt: lessonProgress.lastWatchedAt,
+      })
+      .from(lessonProgress)
+      .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+      .where(
+        and(
+          eq(lessonProgress.userId, userId),
+          eq(lessons.courseId, course.id),
+        ),
+      ),
+  ]);
 
   return {
     course,
     enrollment,
     lessons: courseLessons,
+    progress: courseProgress,
   };
 }
 
@@ -73,12 +91,11 @@ export default async function LearnPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  const { course, lessons: courseLessons } = data;
+  const { course, lessons: courseLessons, progress } = data;
 
-  // ถ้ามีบทเรียน ให้ redirect ไปบทเรียนแรกโดยอัตโนมัติ
-  if (courseLessons.length > 0) {
-    const firstLesson = courseLessons[0];
-    redirect(`/courses/${slug}/learn/${firstLesson.id}`);
+  const continuationLesson = selectContinuationLesson(courseLessons, progress);
+  if (continuationLesson) {
+    redirect(`/courses/${slug}/learn/${continuationLesson.id}`);
   }
 
   return (
