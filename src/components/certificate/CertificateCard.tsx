@@ -1,7 +1,10 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import type { CSSProperties } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { toPng } from 'html-to-image';
+import styles from '@/components/proof/proof.module.css';
 
 interface CertificateData {
   certificateCode: string;
@@ -16,50 +19,43 @@ interface CertificateData {
   certificateHeaderImage?: string | null;
 }
 
-// Generate a full theme from any hex color
 function hexToRgb(hex: string) {
-  const h = hex.replace('#', '');
+  const value = hex.replace('#', '');
   return {
-    r: parseInt(h.substring(0, 2), 16) || 0,
-    g: parseInt(h.substring(2, 4), 16) || 0,
-    b: parseInt(h.substring(4, 6), 16) || 0,
+    r: Number.parseInt(value.substring(0, 2), 16) || 0,
+    g: Number.parseInt(value.substring(2, 4), 16) || 0,
+    b: Number.parseInt(value.substring(4, 6), 16) || 0,
   };
 }
 
 function darken(hex: string, amount: number) {
   const { r, g, b } = hexToRgb(hex);
-  const f = 1 - amount;
-  const toHex = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
-  return `#${toHex(r * f)}${toHex(g * f)}${toHex(b * f)}`;
+  const factor = 1 - amount;
+  const toHex = (value: number) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0');
+  return `#${toHex(r * factor)}${toHex(g * factor)}${toHex(b * factor)}`;
 }
 
 function lighten(hex: string, amount: number) {
   const { r, g, b } = hexToRgb(hex);
-  const toHex = (n: number) => Math.max(0, Math.min(255, Math.round(n + (255 - n) * amount))).toString(16).padStart(2, '0');
+  const toHex = (value: number) => Math.max(0, Math.min(255, Math.round(value + (255 - value) * amount))).toString(16).padStart(2, '0');
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 function buildTheme(color: string) {
-  const primary = color.startsWith('#') && color.length === 7 ? color : '#2563eb';
-  const secondary = darken(primary, 0.4);
-  const accent = lighten(primary, 0.2);
-  const light = lighten(primary, 0.9);
+  const primary = color.startsWith('#') && color.length === 7 ? color : '#00abff';
   return {
     primary,
-    secondary,
-    accent,
-    light,
-    gradient: `linear-gradient(135deg, ${secondary} 0%, ${primary} 100%)`,
+    secondary: darken(primary, 0.46),
+    accent: lighten(primary, 0.2),
+    light: lighten(primary, 0.9),
   };
 }
 
-// Convert an image URL to a data URL for html-to-image compatibility
 async function toDataUrl(url: string): Promise<string> {
   try {
-    // For same-origin images (e.g. /milerdev-logo-transparent.png), fetch directly
     if (url.startsWith('/') && !url.startsWith('//')) {
-      const res = await fetch(url);
-      const blob = await res.blob();
+      const response = await fetch(url);
+      const blob = await response.blob();
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
@@ -67,10 +63,10 @@ async function toDataUrl(url: string): Promise<string> {
         reader.readAsDataURL(blob);
       });
     }
-    // For cross-origin images (e.g. Bunny CDN), use server-side proxy to bypass CORS/CSP
-    const proxyRes = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
-    if (proxyRes.ok) {
-      const data = await proxyRes.json();
+
+    const response = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
+    if (response.ok) {
+      const data = await response.json();
       if (data.dataUrl) return data.dataUrl;
     }
     return url;
@@ -82,12 +78,18 @@ async function toDataUrl(url: string): Promise<string> {
 export default function CertificateCard({ cert }: { cert: CertificateData }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
-  const [logoDataUrl, setLogoDataUrl] = useState<string>('/milerdev-logo-transparent.png');
+  const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+  const [logoDataUrl, setLogoDataUrl] = useState('/milerdev-logo-transparent.png');
   const [headerDataUrl, setHeaderDataUrl] = useState<string | null>(cert.certificateHeaderImage || null);
-  const theme = buildTheme(cert.certificateTheme || '#2563eb');
-  const isRevoked = !!cert.revokedAt;
+  const theme = buildTheme(cert.certificateTheme || '#00abff');
+  const isRevoked = Boolean(cert.revokedAt);
+  const documentStyle = {
+    '--certificate-primary': theme.primary,
+    '--certificate-secondary': theme.secondary,
+    '--certificate-accent': theme.accent,
+    '--certificate-light': theme.light,
+  } as CSSProperties;
 
-  // Pre-cache images as data URLs for download compatibility
   useEffect(() => {
     toDataUrl('/milerdev-logo-transparent.png').then(setLogoDataUrl);
     if (cert.certificateHeaderImage) {
@@ -102,9 +104,11 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
     ? new Date(cert.issuedAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })
     : completedDate;
 
-  const handleDownload = async () => {
+  async function handleDownload() {
     if (!cardRef.current || downloading) return;
     setDownloading(true);
+    setFeedback(null);
+
     try {
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
@@ -116,249 +120,95 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
       link.download = `certificate-${cert.certificateCode}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (err) {
-      console.error('Download error:', err);
-      alert('เกิดข้อผิดพลาดในการดาวน์โหลด');
+      setFeedback({ tone: 'success', message: 'เตรียมไฟล์ใบรับรองสำหรับดาวน์โหลดแล้ว' });
+    } catch (error) {
+      console.error('Download error:', error);
+      setFeedback({ tone: 'error', message: 'ยังสร้างไฟล์ดาวน์โหลดไม่ได้ กรุณาลองใหม่' });
     } finally {
       setDownloading(false);
     }
-  };
+  }
+
+  async function handleShare() {
+    setFeedback(null);
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setFeedback({ tone: 'success', message: 'คัดลอกลิงก์ตรวจสอบใบรับรองแล้ว' });
+    } catch {
+      setFeedback({ tone: 'error', message: 'คัดลอกลิงก์ไม่ได้ กรุณาคัดลอกจากแถบที่อยู่ของเบราว์เซอร์' });
+    }
+  }
 
   return (
     <>
-      {/* Certificate Card */}
       <div
+        className={`${styles.certificateDocument} ${isRevoked ? styles.certificateRevoked : ''}`}
+        data-certificate-status={isRevoked ? 'revoked' : 'valid'}
         ref={cardRef}
-        style={{
-          background: 'white',
-          borderRadius: '24px',
-          boxShadow: '0 4px 40px rgba(0,0,0,0.08)',
-          overflow: 'hidden',
-          border: isRevoked ? '2px solid #fecaca' : `2px solid ${theme.accent}33`,
-          opacity: isRevoked ? 0.7 : 1,
-        }}
+        role="document"
+        aria-labelledby="certificate-document-title"
+        style={documentStyle}
       >
-        {/* Header */}
-        <div style={{
-          background: headerDataUrl ? undefined : theme.gradient,
-          padding: '48px 40px 40px',
-          textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-          {/* Header background image (using img tag for download compatibility) */}
+        {isRevoked && <div className={styles.revokedWatermark}>REVOKED / เพิกถอนแล้ว</div>}
+
+        <header className={styles.certificateMasthead}>
           {headerDataUrl && (
-            <img
-              src={headerDataUrl}
-              alt=""
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                zIndex: 0,
-              }}
-            />
+            // A plain image is required because html-to-image exports the rendered node directly.
+            <img className={styles.certificateHeaderImage} src={headerDataUrl} alt="" />
           )}
-          {/* Decorative elements (only show when no custom image) */}
-          {!headerDataUrl && (
-            <>
-              <div style={{ position: 'absolute', top: '-30px', left: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-              <div style={{ position: 'absolute', bottom: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-              <div style={{ position: 'absolute', top: '20px', right: '60px', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
-            </>
-          )}
-
-          {/* Logo */}
-          <div style={{
-            width: '64px',
-            height: '64px',
-            margin: '0 auto 20px',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            background: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            zIndex: 1,
-          }}>
-            <img
-              src={logoDataUrl}
-              alt="MilerDev"
-              style={{ width: '52px', height: '52px', objectFit: 'contain' }}
-            />
+          <div className={styles.certificateBrand}>
+            <img src={logoDataUrl} alt="MilerDev" />
+            <span>MilerDev Learning</span>
           </div>
+          <div className={styles.certificateHeading}>
+            <p>Certificate of Completion</p>
+            <strong id="certificate-document-title">ใบรับรองการสำเร็จหลักสูตร</strong>
+          </div>
+          <span className={styles.certificateSerial}>NO. {cert.certificateCode}</span>
+        </header>
 
-          <p style={{
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: '0.75rem',
-            letterSpacing: '4px',
-            textTransform: 'uppercase',
-            marginBottom: '8px',
-            fontWeight: 500,
-            position: 'relative',
-            zIndex: 1,
-          }}>
-            Certificate of Completion
-          </p>
-          <h1 style={{ color: 'white', fontSize: '1.25rem', fontWeight: 600, margin: 0, position: 'relative', zIndex: 1 }}>
-            ใบรับรองสำเร็จหลักสูตร
-          </h1>
+        <div className={styles.certificateBody}>
+          <p className={styles.certificateIntro}>เอกสารฉบับนี้รับรองว่า</p>
+          <h2>{cert.recipientName}</h2>
+          <p className={styles.certificateIntro}>ได้สำเร็จหลักสูตร</p>
+          <h3>{cert.courseTitle}</h3>
+
+          <div className={styles.certificateRule} aria-hidden="true" />
+
+          <dl className={styles.certificateDetails}>
+            <div><dt>วันที่สำเร็จ</dt><dd>{completedDate}</dd></div>
+            <div><dt>วันที่ออกใบรับรอง</dt><dd>{issuedDate}</dd></div>
+            <div><dt>สถานะเอกสาร</dt><dd>{isRevoked ? 'เพิกถอนแล้ว' : 'ตรวจสอบได้'}</dd></div>
+          </dl>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: '48px 40px', textAlign: 'center' }}>
-          <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '4px' }}>มอบให้แก่</p>
-          <h2 style={{
-            fontSize: '2rem',
-            fontWeight: 700,
-            color: '#1e293b',
-            marginBottom: '32px',
-            lineHeight: 1.3,
-          }}>
-            {cert.recipientName}
-          </h2>
-
-          <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '4px' }}>สำเร็จหลักสูตร</p>
-          <h3 style={{
-            fontSize: '1.375rem',
-            fontWeight: 600,
-            color: theme.primary,
-            marginBottom: '32px',
-            lineHeight: 1.4,
-          }}>
-            {cert.courseTitle}
-          </h3>
-
-          {/* Decorative line with accent */}
-          <div style={{
-            width: '80px',
-            height: '3px',
-            background: `linear-gradient(90deg, ${theme.primary}, ${theme.accent})`,
-            margin: '0 auto 32px',
-            borderRadius: '2px',
-          }} />
-
-          {/* Details */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '24px',
-            maxWidth: '500px',
-            margin: '0 auto',
-          }}>
-            <div>
-              <p style={{ color: '#94a3b8', fontSize: '0.8125rem', marginBottom: '4px' }}>วันที่สำเร็จ</p>
-              <p style={{ fontWeight: 600, color: '#334155' }}>{completedDate}</p>
-            </div>
-            <div>
-              <p style={{ color: '#94a3b8', fontSize: '0.8125rem', marginBottom: '4px' }}>วันที่ออกใบรับรอง</p>
-              <p style={{ fontWeight: 600, color: '#334155' }}>{issuedDate}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={{
-          background: '#f8fafc',
-          padding: '20px 40px',
-          borderTop: '1px solid #e2e8f0',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}>
+        <footer className={styles.certificateFooter}>
           <div>
-            <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '2px' }}>รหัสใบรับรอง</p>
-            <p style={{ fontFamily: 'monospace', fontWeight: 700, color: theme.primary, fontSize: '0.9375rem' }}>
-              {cert.certificateCode}
-            </p>
+            <span>ISSUED BY</span>
+            <strong>MilerDev</strong>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginBottom: '2px' }}>ออกโดย</p>
-            <p style={{ fontWeight: 600, color: '#334155', fontSize: '0.9375rem' }}>MilerDev</p>
+          <div>
+            <span>VERIFICATION CODE</span>
+            <strong>{cert.certificateCode}</strong>
           </div>
-        </div>
+        </footer>
       </div>
 
-      {/* Action Buttons */}
-      <div style={{ textAlign: 'center', marginTop: '32px', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <button
-          onClick={handleDownload}
-          disabled={downloading}
-          style={{
-            padding: '12px 24px',
-            background: theme.primary,
-            color: 'white',
-            border: 'none',
-            borderRadius: '10px',
-            fontWeight: 600,
-            fontSize: '0.9375rem',
-            cursor: downloading ? 'wait' : 'pointer',
-            opacity: downloading ? 0.7 : 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          {downloading ? 'กำลังดาวน์โหลด...' : 'ดาวน์โหลดใบรับรอง'}
+      <div className={styles.certificateActions} aria-label="เครื่องมือใบรับรอง">
+        <button className={styles.primaryAction} type="button" onClick={handleDownload} disabled={downloading}>
+          {downloading ? 'กำลังสร้างไฟล์...' : 'ดาวน์โหลด PNG'}
         </button>
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(window.location.href);
-            alert('คัดลอกลิงก์แล้ว!');
-          }}
-          style={{
-            padding: '12px 24px',
-            background: 'white',
-            color: '#334155',
-            border: '1px solid #e2e8f0',
-            borderRadius: '10px',
-            fontWeight: 500,
-            fontSize: '0.9375rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-            <polyline points="16 6 12 2 8 6" />
-            <line x1="12" y1="2" x2="12" y2="15" />
-          </svg>
-          แชร์ลิงก์
-        </button>
-        {cert.courseSlug && (
-          <a
-            href={`/courses/${cert.courseSlug}`}
-            style={{
-              padding: '12px 24px',
-              background: 'white',
-              color: '#334155',
-              border: '1px solid #e2e8f0',
-              borderRadius: '10px',
-              fontWeight: 500,
-              fontSize: '0.9375rem',
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            ดูรายละเอียดคอร์ส
-          </a>
-        )}
+        <button className={styles.secondaryAction} type="button" onClick={handleShare}>คัดลอกลิงก์</button>
+        {cert.courseSlug && <Link className={styles.secondaryAction} href={`/courses/${cert.courseSlug}`}>ดูรายละเอียดคอร์ส</Link>}
       </div>
+
+      <p
+        className={`${styles.certificateFeedback} ${feedback?.tone === 'error' ? styles.feedbackError : ''}`}
+        role={feedback?.tone === 'error' ? 'alert' : 'status'}
+        aria-live="polite"
+      >
+        {feedback?.message || ''}
+      </p>
     </>
   );
 }

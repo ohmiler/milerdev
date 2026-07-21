@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
@@ -6,6 +7,7 @@ import CertificateCard from '@/components/certificate/CertificateCard';
 import { db } from '@/lib/db';
 import { certificates, courses } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import styles from '@/components/proof/proof.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +15,7 @@ interface Props {
   params: Promise<{ code: string }>;
 }
 
-async function getCertificate(code: string) {
+const getCertificate = cache(async (code: string) => {
   const [cert] = await db
     .select({
       id: certificates.id,
@@ -49,7 +51,7 @@ async function getCertificate(code: string) {
     certificateHeaderImage: cert.certificateHeaderImage || null,
     courseSlug: course?.slug || null,
   };
-}
+});
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params;
@@ -91,32 +93,26 @@ export default async function CertificatePage({ params }: Props) {
   return (
     <>
       <Navbar />
-      <main style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #eff6ff 0%, #f8fafc 50%, #eff6ff 100%)' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '60px 16px 80px' }}>
-
-          {/* Verification Status */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            {isRevoked ? (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                background: '#fef2f2', color: '#dc2626', padding: '10px 24px',
-                borderRadius: '24px', fontSize: '0.9375rem', fontWeight: 600,
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
-                ใบรับรองนี้ถูกเพิกถอนแล้ว
+      <main className={styles.publicCertificatePage}>
+        <div className={`container ${styles.publicCertificateContainer}`}>
+          <header className={styles.publicCertificateHeader}>
+            <div>
+              <p className={styles.eyebrow}>Credential verification</p>
+              <h1>ตรวจสอบใบรับรอง</h1>
+              <p>เอกสารสาธารณะสำหรับยืนยันผู้เรียน หลักสูตร วันที่สำเร็จ และสถานะใบรับรองจาก MilerDev</p>
+            </div>
+            <div
+              className={`${styles.verificationState} ${isRevoked ? styles.verificationRevoked : styles.verificationValid}`}
+              data-verification-status={isRevoked ? 'revoked' : 'valid'}
+              role="status"
+            >
+              <span aria-hidden="true">{isRevoked ? '×' : '✓'}</span>
+              <div>
+                <p>{isRevoked ? 'REVOKED CREDENTIAL' : 'VERIFIED CREDENTIAL'}</p>
+                <strong>{isRevoked ? 'ใบรับรองนี้ถูกเพิกถอนแล้ว' : 'ใบรับรองนี้ตรวจสอบได้'}</strong>
               </div>
-            ) : (
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                background: '#f0fdf4', color: '#16a34a', padding: '10px 24px',
-                borderRadius: '24px', fontSize: '0.9375rem', fontWeight: 600,
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
-                ใบรับรองนี้ถูกต้องและเป็นของจริง
-              </div>
-            )}
-          </div>
-
+            </div>
+          </header>
           <CertificateCard cert={cert} />
         </div>
       </main>
