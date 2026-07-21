@@ -3,37 +3,12 @@
   color: var(--ink);
 }
 
-.hero {
-  padding: 72px 0 68px;
-  border-bottom: 1px solid var(--line);
-}
-
-.meta,
 .sectionLabel {
   margin: 0 0 20px;
   color: var(--accent-strong);
   font: 600 0.75rem/1.5 var(--font-code);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.hero h1 {
-  margin: 0;
-  color: #111b27;
-  font-size: clamp(2.5rem, 4.4vw, 4rem);
-  line-height: 1.08;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
-  white-space: nowrap;
-}
-
-.lede {
-  max-width: 68ch;
-  margin: 26px 0 0;
-  color: var(--ink-soft);
-  font-size: 1.0625rem;
-  line-height: 1.8;
-  text-wrap: pretty;
 }
 
 .manifesto,
@@ -317,10 +292,6 @@
 }
 
 @media (max-width: 900px) {
-  .hero h1 {
-    white-space: normal;
-  }
-
   .manifestoGrid,
   .principlesGrid,
   .sectionHead,
@@ -367,11 +338,6 @@
 }
 
 @media (max-width: 640px) {
-  .hero {
-    padding: 48px 0;
-  }
-
-  .hero h1,
   .cta h2 {
     font-size: 2.55rem;
   }

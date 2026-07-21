@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
+import PublicPageHeader from '@/components/layout/PublicPageHeader';
 import styles from './about.module.css';
 
 export const metadata: Metadata = {
@@ -40,13 +41,12 @@ export default function AboutPage() {
     <>
       <Navbar />
       <main className={styles.page}>
-        <header className={styles.hero}>
-          <div className={'container'}>
-            <p className={styles.meta}>About / MilerDev</p>
-            <h1>พื้นที่เรียนโค้ดสำหรับคนที่อยากสร้างจริง</h1>
-            <p className={styles.lede}>MilerDev คือ coding learning studio ภาษาไทย เราออกแบบคอร์สและบทเรียนให้ผู้เรียนเข้าใจแนวคิดผ่านการเขียนโค้ดและสร้างโปรเจกต์ด้วยตัวเอง</p>
-          </div>
-        </header>
+        <PublicPageHeader
+          variant="story"
+          eyebrow="About / MilerDev"
+          title="พื้นที่เรียนโค้ดสำหรับคนที่อยากสร้างจริง"
+          description="MilerDev คือ coding learning studio ภาษาไทย เราออกแบบคอร์สและบทเรียนให้ผู้เรียนเข้าใจแนวคิดผ่านการเขียนโค้ดและสร้างโปรเจกต์ด้วยตัวเอง"
+        />
 
         <section className={styles.manifesto} aria-labelledby={'about-manifesto-title'}>
           <div className={`container ${styles.manifestoGrid}`}>

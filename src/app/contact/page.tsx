@@ -1,6 +1,7 @@
 import ContactForm from '@/components/contact/ContactForm';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
+import PublicPageHeader from '@/components/layout/PublicPageHeader';
 import styles from './contact.module.css';
 
 export default function ContactPage() {
@@ -8,13 +9,12 @@ export default function ContactPage() {
     <>
       <Navbar />
       <main className={styles.page}>
-        <header className={styles.hero}>
-          <div className={'container'}>
-            <p className={styles.meta}>Contact / MilerDev</p>
-            <h1>บอกเราได้ว่าคุณกำลังติดเรื่องไหน</h1>
-            <p>สอบถามเรื่องคอร์ส การเรียน การชำระเงิน หรือเสนอความร่วมมือ ส่งรายละเอียดมาให้ครบเพื่อให้ทีมตอบกลับได้ตรงประเด็น</p>
-          </div>
-        </header>
+        <PublicPageHeader
+          variant="task"
+          eyebrow="Contact / MilerDev"
+          title="บอกเราได้ว่าคุณกำลังติดเรื่องไหน"
+          description="สอบถามเรื่องคอร์ส การเรียน การชำระเงิน หรือเสนอความร่วมมือ ส่งรายละเอียดมาให้ครบเพื่อให้ทีมตอบกลับได้ตรงประเด็น"
+        />
 
         <section className={styles.body} aria-labelledby={'contact-form-title'}>
           <div className={`container ${styles.grid}`}>
