@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { FormButton, FormInput } from '@/components/ui/FormControls';
 import { GoogleIcon, PasswordIcon } from './AuthIcons';
 import styles from './auth.module.css';
 
@@ -86,11 +87,11 @@ export default function RegisterForm() {
         <div className={styles.formGrid}>
           <div className={styles.field}>
             <label htmlFor={'register-name'}>ชื่อ-นามสกุล</label>
-            <input id={'register-name'} name={'name'} type={'text'} value={name} onChange={(event) => setName(event.target.value)} required maxLength={100} autoComplete={'name'} placeholder={'ชื่อที่ใช้ในบัญชี'} />
+            <FormInput id={'register-name'} name={'name'} type={'text'} value={name} onChange={(event) => setName(event.target.value)} required maxLength={100} autoComplete={'name'} placeholder={'ชื่อที่ใช้ในบัญชี'} />
           </div>
           <div className={styles.field}>
             <label htmlFor={'register-email'}>อีเมล</label>
-            <input id={'register-email'} name={'email'} type={'email'} value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete={'email'} placeholder={'name@example.com'} />
+            <FormInput id={'register-email'} name={'email'} type={'email'} value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete={'email'} placeholder={'name@example.com'} />
           </div>
         </div>
 
@@ -98,14 +99,14 @@ export default function RegisterForm() {
           <div className={styles.field}>
             <label htmlFor={'register-password'}>รหัสผ่าน</label>
             <div className={styles.passwordField}>
-              <input id={'register-password'} name={'password'} type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete={'new-password'} placeholder={'อย่างน้อย 8 ตัวอักษร'} aria-describedby={'register-password-strength'} />
+              <FormInput id={'register-password'} name={'password'} type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete={'new-password'} placeholder={'อย่างน้อย 8 ตัวอักษร'} aria-describedby={'register-password-strength'} />
               <button type={'button'} onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'} aria-pressed={showPassword}><PasswordIcon visible={showPassword} /></button>
             </div>
           </div>
           <div className={styles.field}>
             <label htmlFor={'register-confirm-password'}>ยืนยันรหัสผ่าน</label>
             <div className={styles.passwordField}>
-              <input id={'register-confirm-password'} name={'confirmPassword'} type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required autoComplete={'new-password'} placeholder={'พิมพ์รหัสผ่านอีกครั้ง'} aria-invalid={Boolean(confirmPassword && confirmPassword !== password)} aria-describedby={'register-confirm-status'} />
+              <FormInput id={'register-confirm-password'} name={'confirmPassword'} type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required autoComplete={'new-password'} placeholder={'พิมพ์รหัสผ่านอีกครั้ง'} invalid={Boolean(confirmPassword && confirmPassword !== password)} aria-describedby={'register-confirm-status'} />
               <button type={'button'} onClick={() => setShowConfirmPassword((visible) => !visible)} aria-label={showConfirmPassword ? 'ซ่อนรหัสผ่านยืนยัน' : 'แสดงรหัสผ่านยืนยัน'} aria-pressed={showConfirmPassword}><PasswordIcon visible={showConfirmPassword} /></button>
             </div>
             <div id={'register-confirm-status'} className={styles.matchStatus} data-valid={Boolean(confirmPassword && confirmPassword === password)} aria-live={'polite'}>
@@ -125,11 +126,11 @@ export default function RegisterForm() {
             <li data-valid={passwordStrength.checks.special}>อักขระพิเศษ (แนะนำ)</li>
           </ul>
         </div>
-        <button type={'submit'} className={styles.primaryButton} disabled={loading}>{loading ? 'กำลังสร้างบัญชี...' : 'สร้างบัญชีผู้เรียน'}</button>
+        <FormButton type={'submit'} block pending={loading} disabled={loading}>{loading ? 'กำลังสร้างบัญชี...' : 'สร้างบัญชีผู้เรียน'}</FormButton>
       </form>
 
       <div className={styles.divider}><span>หรือใช้บัญชี Google</span></div>
-      <button type={'button'} onClick={() => signIn('google', { callbackUrl: '/dashboard' })} className={styles.providerButton}><GoogleIcon />สมัครสมาชิกด้วย Google</button>
+      <FormButton type={'button'} variant={'secondary'} block onClick={() => signIn('google', { callbackUrl: '/dashboard' })}><GoogleIcon />สมัครสมาชิกด้วย Google</FormButton>
       <p className={styles.switchLink}>มีบัญชีอยู่แล้ว? <Link href={'/login'}>เข้าสู่ระบบ</Link></p>
       <p className={styles.privacy}>การสมัครสมาชิกหมายถึงคุณยอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัวของ MilerDev</p>
     </>

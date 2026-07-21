@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { FormButton, FormInput } from '@/components/ui/FormControls';
 import { PasswordIcon } from './AuthIcons';
 import styles from './auth.module.css';
 
@@ -80,7 +81,7 @@ export default function ResetPasswordForm() {
         <div className={styles.field}>
           <label htmlFor={'reset-password'}>รหัสผ่านใหม่</label>
           <div className={styles.passwordField}>
-            <input
+            <FormInput
               id={'reset-password'}
               name={'password'}
               type={showPassword ? 'text' : 'password'}
@@ -106,7 +107,7 @@ export default function ResetPasswordForm() {
 
         <div className={styles.field}>
           <label htmlFor={'reset-confirm-password'}>ยืนยันรหัสผ่านใหม่</label>
-          <input
+          <FormInput
             id={'reset-confirm-password'}
             name={'confirmPassword'}
             type={showPassword ? 'text' : 'password'}
@@ -119,9 +120,9 @@ export default function ResetPasswordForm() {
           />
         </div>
 
-        <button type={'submit'} className={styles.primaryButton} disabled={loading}>
+        <FormButton type={'submit'} block pending={loading} disabled={loading}>
           {loading ? 'กำลังบันทึก...' : 'ตั้งรหัสผ่านใหม่'}
-        </button>
+        </FormButton>
       </form>
       <p className={styles.switchLink}><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></p>
     </>

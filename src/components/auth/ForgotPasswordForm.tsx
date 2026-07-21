@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { FormButton, FormInput } from '@/components/ui/FormControls';
 import styles from './auth.module.css';
 
 export default function ForgotPasswordForm() {
@@ -65,7 +66,7 @@ export default function ForgotPasswordForm() {
       <form onSubmit={handleSubmit} className={styles.form} aria-busy={loading}>
         <div className={styles.field}>
           <label htmlFor={'forgot-email'}>อีเมล</label>
-          <input
+          <FormInput
             id={'forgot-email'}
             name={'email'}
             type={'email'}
@@ -76,9 +77,9 @@ export default function ForgotPasswordForm() {
             placeholder={'your@email.com'}
           />
         </div>
-        <button type={'submit'} className={styles.primaryButton} disabled={loading}>
+        <FormButton type={'submit'} block pending={loading} disabled={loading}>
           {loading ? 'กำลังส่ง...' : 'ส่งลิงก์รีเซ็ตรหัสผ่าน'}
-        </button>
+        </FormButton>
       </form>
       <p className={styles.switchLink}><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></p>
     </>

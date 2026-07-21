@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { FormButton, FormInput, FormTextarea } from '@/components/ui/FormControls';
 import styles from '@/app/contact/contact.module.css';
 
 type SubmitStatus = 'idle' | 'success' | 'error';
@@ -50,7 +51,7 @@ export default function ContactForm() {
         <span aria-hidden={true}>✓</span>
         <h3>ส่งข้อความเรียบร้อย</h3>
         <p>ทีมได้รับรายละเอียดแล้ว และจะตอบกลับผ่านอีเมลที่คุณระบุ</p>
-        <button type={'button'} onClick={() => setSubmitStatus('idle')}>ส่งข้อความใหม่</button>
+        <FormButton type={'button'} onClick={() => setSubmitStatus('idle')}>ส่งข้อความใหม่</FormButton>
       </div>
     );
   }
@@ -69,17 +70,17 @@ export default function ContactForm() {
       <div className={styles.formRow}>
         <div className={styles.field}>
           <label htmlFor={'contact-name'}>ชื่อ</label>
-          <input id={'contact-name'} name={'name'} type={'text'} required minLength={2} maxLength={100} autoComplete={'name'} value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} placeholder={'ชื่อที่ใช้ติดต่อ'} />
+          <FormInput id={'contact-name'} name={'name'} type={'text'} required minLength={2} maxLength={100} autoComplete={'name'} value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} placeholder={'ชื่อที่ใช้ติดต่อ'} />
         </div>
         <div className={styles.field}>
           <label htmlFor={'contact-email'}>อีเมล</label>
-          <input id={'contact-email'} name={'email'} type={'email'} required maxLength={255} autoComplete={'email'} value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} placeholder={'name@example.com'} />
+          <FormInput id={'contact-email'} name={'email'} type={'email'} required maxLength={255} autoComplete={'email'} value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} placeholder={'name@example.com'} />
         </div>
       </div>
 
       <div className={styles.field}>
         <label htmlFor={'contact-subject'}>หัวข้อที่ต้องการติดต่อ</label>
-        <input id={'contact-subject'} name={'subject'} type={'text'} required minLength={2} maxLength={200} value={formData.subject} onChange={(event) => setFormData({ ...formData, subject: event.target.value })} placeholder={'เช่น สอบถามการเข้าเรียนคอร์ส'} />
+        <FormInput id={'contact-subject'} name={'subject'} type={'text'} required minLength={2} maxLength={200} value={formData.subject} onChange={(event) => setFormData({ ...formData, subject: event.target.value })} placeholder={'เช่น สอบถามการเข้าเรียนคอร์ส'} />
       </div>
 
       <div className={styles.field}>
@@ -87,12 +88,12 @@ export default function ContactForm() {
           <label htmlFor={'contact-message'}>รายละเอียด</label>
           <span>10 ถึง 5,000 ตัวอักษร</span>
         </div>
-        <textarea id={'contact-message'} name={'message'} required minLength={10} maxLength={5000} rows={7} value={formData.message} onChange={(event) => setFormData({ ...formData, message: event.target.value })} placeholder={'อธิบายสิ่งที่ต้องการให้ทีมช่วย พร้อมข้อมูลที่เกี่ยวข้อง'} />
+        <FormTextarea id={'contact-message'} name={'message'} required minLength={10} maxLength={5000} rows={7} value={formData.message} onChange={(event) => setFormData({ ...formData, message: event.target.value })} placeholder={'อธิบายสิ่งที่ต้องการให้ทีมช่วย พร้อมข้อมูลที่เกี่ยวข้อง'} />
       </div>
 
       <div className={styles.formSubmit}>
         <p>เมื่อส่งข้อความ คุณยืนยันว่าข้อมูลที่ระบุสามารถใช้เพื่อติดต่อกลับได้</p>
-        <button type={'submit'} disabled={isSubmitting}>{isSubmitting ? 'กำลังส่งข้อความ…' : 'ส่งข้อความถึงทีม'}</button>
+        <FormButton className={styles.submitButton} type={'submit'} pending={isSubmitting} disabled={isSubmitting}>{isSubmitting ? 'กำลังส่งข้อความ…' : 'ส่งข้อความถึงทีม'}</FormButton>
       </div>
     </form>
   );

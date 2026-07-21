@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { FormButton, FormInput } from '@/components/ui/FormControls';
 import { GoogleIcon, PasswordIcon } from './AuthIcons';
 import styles from './auth.module.css';
 
@@ -63,7 +64,7 @@ export default function LoginForm() {
       <form onSubmit={handleSubmit} className={styles.form} aria-busy={loading}>
         <div className={styles.field}>
           <label htmlFor={'login-email'}>อีเมล</label>
-          <input
+          <FormInput
             id={'login-email'}
             name={'email'}
             type={'email'}
@@ -81,7 +82,7 @@ export default function LoginForm() {
             <Link href={'/forgot-password'}>ลืมรหัสผ่าน?</Link>
           </div>
           <div className={styles.passwordField}>
-            <input
+            <FormInput
               id={'login-password'}
               name={'password'}
               type={showPassword ? 'text' : 'password'}
@@ -102,21 +103,22 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <button type={'submit'} className={styles.primaryButton} disabled={loading}>
+        <FormButton type={'submit'} block pending={loading} disabled={loading}>
           {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-        </button>
+        </FormButton>
       </form>
 
       <div className={styles.divider}><span>หรือใช้บัญชี Google</span></div>
 
-      <button
+      <FormButton
         type={'button'}
         onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-        className={styles.providerButton}
+        variant={'secondary'}
+        block
       >
         <GoogleIcon />
         เข้าสู่ระบบด้วย Google
-      </button>
+      </FormButton>
 
       <p className={styles.switchLink}>ยังไม่มีบัญชี? <Link href={'/register'}>สมัครสมาชิกฟรี</Link></p>
       <p className={styles.privacy}>การเข้าสู่ระบบจะใช้ข้อมูลบัญชีตามนโยบายความเป็นส่วนตัวของ MilerDev</p>

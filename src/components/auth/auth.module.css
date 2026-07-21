@@ -166,9 +166,9 @@
 .status {
   margin-top: 24px;
   padding: 13px 15px;
-  border: 1px solid var(--danger);
-  background: var(--danger-soft);
-  color: var(--danger);
+  border: 1px solid var(--error);
+  background: color-mix(in srgb, var(--error) 8%, var(--canvas));
+  color: color-mix(in srgb, var(--error) 76%, var(--ink));
   font-size: 0.875rem;
   line-height: 1.65;
 }
@@ -210,33 +210,12 @@
   text-decoration: none;
 }
 
-.field input {
-  width: 100%;
-  min-height: 48px;
-  padding: 10px 13px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface-raised);
-  color: var(--ink);
-  font: inherit;
-}
-
-.field input::placeholder {
-  color: var(--ink-muted);
-  opacity: 1;
-}
-
-.field input:focus-visible,
 .fieldLabel a:focus-visible,
 .switchLink a:focus-visible,
 .recoveryLink:focus-visible,
 .retryButton:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-}
-
-.field input:focus-visible {
-  border-color: var(--accent);
 }
 
 .passwordField {
@@ -264,51 +243,9 @@
   cursor: pointer;
 }
 
-.passwordField button:focus-visible,
-.primaryButton:focus-visible,
-.providerButton:focus-visible {
+.passwordField button:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-}
-
-.primaryButton,
-.providerButton {
-  display: flex;
-  width: 100%;
-  min-height: 48px;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px 16px;
-  border-radius: var(--radius-sm);
-  font: 700 0.9375rem/1.4 var(--font-ui);
-  cursor: pointer;
-}
-
-.primaryButton {
-  border: 1px solid var(--accent-strong);
-  background: var(--accent);
-  color: #fff;
-}
-
-.primaryButton:hover:not(:disabled) {
-  background: var(--accent-strong);
-}
-
-.primaryButton:disabled,
-.providerButton:disabled {
-  cursor: wait;
-  opacity: 0.62;
-}
-
-.providerButton {
-  border: 1px solid var(--line-strong);
-  background: var(--canvas);
-  color: var(--ink);
-}
-
-.providerButton:hover {
-  background: var(--surface);
 }
 
 .divider {
@@ -362,7 +299,7 @@
 .matchStatus {
   min-height: 18px;
   margin-top: 5px;
-  color: var(--danger);
+  color: var(--error);
   font-size: 0.75rem;
 }
 
@@ -401,7 +338,7 @@
   display: block;
   height: 100%;
   width: 0;
-  background: var(--danger);
+  background: var(--error);
   transition: width 180ms ease-out;
 }
 
@@ -487,7 +424,7 @@
 }
 
 .recoveryState[data-tone='error'] .stateMark {
-  color: var(--danger);
+  color: var(--error);
 }
 
 .recoveryActions {
@@ -617,9 +554,6 @@
   .brand,
   .evidence,
   .evidence li,
-  .field input,
-  .primaryButton,
-  .providerButton,
   .alert,
   .status,
   .strength,
@@ -627,10 +561,7 @@
     border-color: CanvasText;
   }
 
-  .primaryButton,
-  .passwordField button:focus-visible,
-  .primaryButton:focus-visible,
-  .providerButton:focus-visible {
+  .passwordField button:focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }

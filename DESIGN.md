@@ -129,6 +129,7 @@ Borders explain containment, comparison, sequence, and sticky/adjacent regions. 
 ### Forms and feedback
 
 - Labels stay visible. Inputs and selects use at least 44px targets, clear borders, and explicit focus.
+- Learner-facing text inputs, textareas, and form actions inherit their base anatomy and states from `src/components/ui/FormControls.tsx`; use square geometry across Auth, Contact, Profile, and Settings, with surface variants changing density and background rather than corner radius.
 - Preserve valid input across errors where the existing flow supports recovery.
 - Loading, empty, error, success, disabled, selected, and destructive states are part of the component contract, not follow-up polish.
 - Toasts, dialogs, and confirmation flows inherit semantics from src/components/ui; destructive actions require wording and confirmation proportional to risk.
@@ -217,3 +218,4 @@ Before changing the system:
 - Admin system: src/app/admin/admin-theme.css
 - Public navigation and footer: src/components/layout/PublicNavbar.tsx, src/components/layout/Footer.module.css
 - Feedback and dialog primitives: src/components/ui/Feedback.module.css, src/components/ui/DialogShell.tsx, src/components/ui/ConfirmDialog.tsx
+- Learner-facing form controls: src/components/ui/FormControls.tsx, src/components/ui/FormControls.module.css

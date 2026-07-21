@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { FormButton, FormInput } from '@/components/ui/FormControls';
 import styles from '@/components/account/LearnerAccount.module.css';
 
 interface PasswordStrength {
@@ -131,8 +132,8 @@ export default function ChangePasswordForm({ hasPassword }: { hasPassword: boole
               <div className={styles.field}>
                 <label htmlFor="current-password">รหัสผ่านปัจจุบัน</label>
                 <div className={styles.passwordField}>
-                  <input
-                    className={styles.input}
+                  <FormInput
+                    surface="workspace"
                     id="current-password"
                     type={showCurrentPassword ? 'text' : 'password'}
                     value={currentPassword}
@@ -155,8 +156,8 @@ export default function ChangePasswordForm({ hasPassword }: { hasPassword: boole
               <div className={styles.field}>
                 <label htmlFor="new-password">รหัสผ่านใหม่</label>
                 <div className={styles.passwordField}>
-                  <input
-                    className={styles.input}
+                  <FormInput
+                    surface="workspace"
                     id="new-password"
                     type={showNewPassword ? 'text' : 'password'}
                     value={newPassword}
@@ -189,15 +190,15 @@ export default function ChangePasswordForm({ hasPassword }: { hasPassword: boole
 
               <div className={styles.field}>
                 <label htmlFor="confirm-password">ยืนยันรหัสผ่านใหม่</label>
-                <input
-                  className={`${styles.input} ${confirmPassword && !passwordsMatch ? styles.inputInvalid : ''}`}
+                <FormInput
+                  surface="workspace"
+                  invalid={Boolean(confirmPassword && !passwordsMatch)}
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   required
                   autoComplete="new-password"
-                  aria-invalid={Boolean(confirmPassword && !passwordsMatch)}
                   aria-describedby={confirmPassword && !passwordsMatch ? 'password-match-error' : undefined}
                 />
                 {confirmPassword && !passwordsMatch && (
@@ -206,8 +207,9 @@ export default function ChangePasswordForm({ hasPassword }: { hasPassword: boole
               </div>
 
               <div className={styles.formActions}>
-                <button
-                  className={styles.secondaryAction}
+                <FormButton
+                  surface="workspace"
+                  variant="secondary"
                   type="button"
                   onClick={() => {
                     setIsOpen(false);
@@ -215,10 +217,10 @@ export default function ChangePasswordForm({ hasPassword }: { hasPassword: boole
                   }}
                 >
                   ยกเลิก
-                </button>
-                <button className={styles.primaryAction} type="submit" disabled={isDisabled}>
+                </FormButton>
+                <FormButton surface="workspace" type="submit" pending={loading} disabled={isDisabled}>
                   {loading ? 'กำลังบันทึก...' : 'เปลี่ยนรหัสผ่าน'}
-                </button>
+                </FormButton>
               </div>
             </form>
           )}

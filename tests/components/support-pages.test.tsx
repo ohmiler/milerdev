@@ -39,7 +39,7 @@ describe('studio and support page contracts', () => {
     expect(html).toContain(`name=${quote}message${quote}`);
     expect(html).toContain(`minLength=${quote}10${quote}`);
     expect(html).toContain(`maxLength=${quote}5000${quote}`);
-    expect(html).toContain(`<button type=${quote}submit${quote}`);
+    expect(html).toMatch(new RegExp(`<button[^>]*type=${quote}submit${quote}`));
   });
 
   it('keeps the Contact API request and anti-spam payload boundary', () => {

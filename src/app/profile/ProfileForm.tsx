@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { FormButton, FormInput } from '@/components/ui/FormControls';
 import styles from '@/components/account/LearnerAccount.module.css';
 
 interface User {
@@ -53,8 +54,8 @@ export default function ProfileForm({ user }: { user: User }) {
 
       <div className={styles.field}>
         <label htmlFor="profile-name">ชื่อ</label>
-        <input
-          className={styles.input}
+        <FormInput
+          surface="workspace"
           id="profile-name"
           type="text"
           value={name}
@@ -66,14 +67,14 @@ export default function ProfileForm({ user }: { user: User }) {
 
       <div className={styles.field}>
         <label htmlFor="profile-email">อีเมล</label>
-        <input className={styles.input} id="profile-email" type="email" value={user.email} disabled />
+        <FormInput surface="workspace" id="profile-email" type="email" value={user.email} disabled />
         <p className={styles.fieldHint}>อีเมลเป็นข้อมูลประจำบัญชีและไม่สามารถเปลี่ยนจากหน้านี้ได้</p>
       </div>
 
       <div className={styles.formActions}>
-        <button className={styles.primaryAction} type="submit" disabled={isSubmitting}>
+        <FormButton surface="workspace" type="submit" pending={isSubmitting} disabled={isSubmitting}>
           {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
-        </button>
+        </FormButton>
       </div>
     </form>
   );
