@@ -11,7 +11,10 @@ solodeveling_schema: 1
    - Completed: Dashboard and generic course entry now resume the learner at the truthful current or next lesson.
    - Completed: the account set—`/dashboard/certificates`, `/dashboard/payments`, `/profile`, and `/settings`—now shares one learner dashboard-derived system.
    - Completed: course/bundle payment completion and public certificates now share a verification-first receipt and credential system while preserving fulfillment boundaries.
-   - Next: align announcements and legal/content pages that still use legacy presentation, then perform the final learner-facing audit before Admin.
+   - Completed: announcements, privacy, and terms now share a public reading system with resilient notice states and indexed policy documents.
+   - Completed: the reachable no-lessons fallback at `/courses/[slug]/learn` now uses the learning workspace and gives truthful dashboard, course, and support recovery paths.
+   - Completed: the lesson-route loading state now matches the learning workspace, exposes accessible busy/status text, respects reduced motion, and recomposes without mobile overflow.
+   - User-side presentation audit is complete; Admin is the next phase when authorized.
    - Admin begins only after the user-facing audit and these prioritized gaps are complete, per user direction.
    - Reuse Home principles—paper/ink/accent palette, square geometry, bordered grids, editorial Thai hierarchy, product evidence, purposeful motion, and responsive recomposition—without copying the Hero editor motif into unrelated pages.
    - Promote only repeated patterns into shared primitives and global semantic tokens; do not spread page-local `--home-*` aliases across the application.

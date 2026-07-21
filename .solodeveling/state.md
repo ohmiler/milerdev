@@ -5,8 +5,8 @@ solodeveling_schema: 1
 # State
 
 - Goal: Keep MilerDev learning and commerce journeys truthful, usable, and production-safe.
-- Progress: COURSES-006, LEARN-001, LEARNER-001, ACCOUNT-001, and PROOF-001 are complete. Transaction receipts and public credential proof now share the learner-facing design system.
+- Progress: The learner-facing presentation audit is complete across discovery, learning and its loading/empty states, account, proof, announcements, and policy documents.
 - Active work: None.
 - Blockers: None.
-- Current risks: Real Stripe return sessions, paid learner accounts, and issued certificate records were not used during local visual verification; production-provider smoke checks remain release evidence.
-- Next action: Align announcements, privacy, and terms with the public design system, then reassess whether any learner-facing legacy presentation remains before Admin.
+- Current risks: Existing privacy and terms wording has not received legal review. Announcement populated/error states were verified with labeled browser-only sample responses because local data contained no active announcement.
+- Next action: Review and shape the Admin dashboard phase when the user authorizes it.

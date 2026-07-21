@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   selectContinuationLesson,
@@ -56,6 +57,32 @@ describe('selectContinuationLesson', () => {
     }));
 
     expect(selectContinuationLesson(lessons, progress)?.id).toBe('lesson-1');
+  });
+});
+
+describe('generic learning entry', () => {
+  it('keeps continuation redirects and gives an honest recovery path when no lesson exists', () => {
+    const source = readFileSync('src/app/courses/[slug]/learn/page.tsx', 'utf8');
+    const presentation = readFileSync('src/app/courses/[slug]/learn/EmptyCourseWorkspace.tsx', 'utf8');
+
+    expect(source).toContain('selectContinuationLesson(courseLessons, progress)');
+    expect(source).toContain("redirect('/courses/' + slug + '/learn/' + continuationLesson.id)");
+    expect(presentation).toContain('คอร์สนี้ยังไม่มีบทเรียนที่เปิดให้เรียน');
+    expect(presentation).toContain('ทีมกำลังเตรียมเนื้อหาบทเรียน');
+    expect(presentation).toContain('href="/dashboard"');
+    expect(presentation).toContain('href="/contact"');
+    expect(source + presentation).not.toContain('style={{');
+    expect(source + presentation).not.toContain('<LessonList');
+  });
+
+  it('keeps the lesson loading state accessible and within the learning workspace', () => {
+    const loading = readFileSync('src/app/courses/[slug]/learn/[lessonId]/loading.tsx', 'utf8');
+
+    expect(loading).toContain('aria-busy="true"');
+    expect(loading).toContain('role="status"');
+    expect(loading).toContain('กำลังโหลดบทเรียน กรุณารอสักครู่');
+    expect(loading).not.toContain('style={{');
+    expect(loading).not.toContain('borderRadius');
   });
 });
 
