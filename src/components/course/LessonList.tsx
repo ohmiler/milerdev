@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 
 interface Lesson {
@@ -29,269 +29,136 @@ const formatDuration = (seconds: number | null) => {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-export default function LessonList({ lessons, courseSlug, currentLessonId, isEnrolled = false, completedLessonIds, onLockedClick, searchQuery = '' }: LessonListProps) {
-  const currentItemRef = useRef<HTMLAnchorElement | HTMLDivElement | null>(null);
-
-  // Scroll to current lesson whenever it changes
-  useEffect(() => {
-    if (currentItemRef.current) {
-      currentItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-  }, [currentLessonId]);
-
-  // Calculate which page the current lesson is on
+export default function LessonList({
+  lessons,
+  courseSlug,
+  currentLessonId,
+  isEnrolled = false,
+  completedLessonIds,
+  onLockedClick,
+  searchQuery = '',
+}: LessonListProps) {
+  const currentItemRef = useRef<HTMLAnchorElement | null>(null);
   const currentLessonPage = useMemo(() => {
     if (!currentLessonId) return 0;
-    const idx = lessons.findIndex(l => l.id === currentLessonId);
-    return idx >= 0 ? Math.floor(idx / LESSONS_PER_PAGE) : 0;
+    const index = lessons.findIndex((lesson) => lesson.id === currentLessonId);
+    return index >= 0 ? Math.floor(index / LESSONS_PER_PAGE) : 0;
   }, [lessons, currentLessonId]);
-
-  const [page, setPage] = useState(currentLessonPage);
-
-  // Reset to current lesson page when lesson changes
-  useEffect(() => {
-    setPage(currentLessonPage);
-  }, [currentLessonPage]);
-
-  const isSearching = searchQuery.trim() !== '';
-
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const isSearching = normalizedSearch !== '';
+  const [pagination, setPagination] = useState({
+    lessonId: currentLessonId,
+    page: currentLessonPage,
+  });
+  const page = isSearching
+    ? 0
+    : pagination.lessonId === currentLessonId
+      ? pagination.page
+      : currentLessonPage;
   const filteredLessons = isSearching
-    ? lessons.filter(l => l.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? lessons.filter((lesson) => lesson.title.toLowerCase().includes(normalizedSearch))
     : lessons;
-
   const totalPages = Math.ceil(filteredLessons.length / LESSONS_PER_PAGE);
   const paginatedLessons = isSearching
     ? filteredLessons
     : filteredLessons.slice(page * LESSONS_PER_PAGE, (page + 1) * LESSONS_PER_PAGE);
 
-  // Reset page when search changes
   useEffect(() => {
-    if (isSearching) setPage(0);
-    else setPage(currentLessonPage);
-  }, [searchQuery, isSearching, currentLessonPage]);
+    currentItemRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [currentLessonId]);
 
   if (lessons.length === 0) {
-    return (
-      <div style={{
-        padding: '40px 20px',
-        textAlign: 'center',
-        color: '#64748b',
-      }}>
-        ยังไม่มีบทเรียน
-      </div>
-    );
+    return <p className="lesson-list__empty">ยังไม่มีบทเรียน</p>;
   }
 
   if (filteredLessons.length === 0) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '0.8125rem' }}>
+      <p className="lesson-list__empty">
         ไม่พบบทเรียนที่ตรงกับ &ldquo;{searchQuery}&rdquo;
-      </div>
+      </p>
     );
   }
 
   return (
     <div className="lesson-list">
-      {paginatedLessons.map((lesson) => {
-        const originalIndex = lessons.findIndex(l => l.id === lesson.id);
-        const isLocked = !isEnrolled && !lesson.isFreePreview;
-        const isCurrent = lesson.id === currentLessonId;
-        const isCompleted = completedLessonIds?.has(lesson.id) ?? false;
+      <ol className="lesson-list__items">
+        {paginatedLessons.map((lesson) => {
+          const originalIndex = lessons.findIndex((item) => item.id === lesson.id);
+          const isLocked = !isEnrolled && !lesson.isFreePreview;
+          const isCurrent = lesson.id === currentLessonId;
+          const isCompleted = completedLessonIds?.has(lesson.id) ?? false;
+          const duration = formatDuration(lesson.videoDuration);
+          const number = String(originalIndex + 1).padStart(2, '0');
 
-        if (isLocked) {
           return (
-            <div className="lesson-list__item is-locked"
-              key={lesson.id}
-              onClick={() => onLockedClick?.(lesson.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                color: '#64748b',
-                marginBottom: '2px',
-                cursor: 'pointer',
-                transition: 'background 0.2s',
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#334155'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <div style={{
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                background: '#475569',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.75rem',
-                flexShrink: 0,
-              }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C9.24 2 7 4.24 7 7v3H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V12c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v3H9V7c0-1.66 1.34-3 3-3zm0 10c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
-                </svg>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}>
-                  {lesson.title}
-                </div>
-                {formatDuration(lesson.videoDuration) && (
-                  <div style={{ fontSize: '0.75rem', color: '#475569' }}>
-                    {formatDuration(lesson.videoDuration)}
-                  </div>
-                )}
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-                <path d="M12 2C9.24 2 7 4.24 7 7v3H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V12c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v3H9V7c0-1.66 1.34-3 3-3z"/>
-              </svg>
-            </div>
-          );
-        }
-
-        return (
-          <Link className="lesson-list__item"
-            key={lesson.id}
-            ref={isCurrent ? (currentItemRef as React.RefObject<HTMLAnchorElement>) : null}
-            href={`/courses/${courseSlug}/learn/${lesson.id}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              color: 'white',
-              marginBottom: '2px',
-              transition: 'background 0.2s',
-              background: isCurrent ? '#334155' : 'transparent',
-              borderLeft: isCurrent ? '3px solid #3b82f6' : '3px solid transparent',
-            }}
-            onMouseOver={(e) => { if (!isCurrent) e.currentTarget.style.background = '#2d3f55'; }}
-            onMouseOut={(e) => { if (!isCurrent) e.currentTarget.style.background = 'transparent'; }}
-          >
-            <div className="lesson-list__marker" style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: isCompleted ? '#16a34a' : isCurrent ? '#2563eb' : '#334155',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              flexShrink: 0,
-            }}>
-              {isCompleted ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                  <path d="M5 13l4 4L19 7" />
-                </svg>
+            <li key={lesson.id}>
+              {isLocked ? (
+                <button
+                  type="button"
+                  className="lesson-list__item is-locked"
+                  onClick={() => onLockedClick?.(lesson.id)}
+                  aria-label={`บทที่ ${originalIndex + 1} ${lesson.title}, ต้องสมัครเรียนก่อน`}
+                >
+                  <span className="lesson-list__index">{number}</span>
+                  <span className="lesson-list__copy">
+                    <strong>{lesson.title}</strong>
+                    {duration && <small>{duration}</small>}
+                  </span>
+                  <span className="lesson-list__state">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2C9.24 2 7 4.24 7 7v3H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V12c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v3H9V7c0-1.66 1.34-3 3-3z" />
+                    </svg>
+                    ล็อก
+                  </span>
+                </button>
               ) : (
-                originalIndex + 1
+                <Link
+                  ref={isCurrent ? currentItemRef : null}
+                  href={`/courses/${courseSlug}/learn/${lesson.id}`}
+                  className={`lesson-list__item${isCurrent ? ' is-current' : ''}${isCompleted ? ' is-complete' : ''}`}
+                  aria-current={isCurrent ? 'page' : undefined}
+                >
+                  <span className="lesson-list__index">{isCompleted ? '✓' : number}</span>
+                  <span className="lesson-list__copy">
+                    <strong>{lesson.title}</strong>
+                    {duration && <small>{duration}</small>}
+                  </span>
+                  <span className="lesson-list__state">
+                    {lesson.isFreePreview && !isEnrolled ? 'ฟรี' : isCompleted ? 'จบแล้ว' : isCurrent ? 'กำลังเรียน' : 'เปิด'}
+                  </span>
+                </Link>
               )}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {lesson.title}
-              </div>
-              {formatDuration(lesson.videoDuration) && (
-                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                  {formatDuration(lesson.videoDuration)}
-                </div>
-              )}
-            </div>
-            {lesson.isFreePreview && !isEnrolled && (
-              <span style={{
-                fontSize: '0.625rem',
-                background: '#16a34a',
-                color: 'white',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                flexShrink: 0,
-              }}>
-                ฟรี
-              </span>
-            )}
-          </Link>
-        );
-      })}
+            </li>
+          );
+        })}
+      </ol>
 
-      {/* Pagination */}
       {!isSearching && totalPages > 1 && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          padding: '12px 0',
-          marginTop: '8px',
-          borderTop: '1px solid #334155',
-        }}>
+        <nav className="lesson-list__pagination" aria-label="หน้ารายการบทเรียน">
           <button
-            onClick={() => setPage(p => Math.max(0, p - 1))}
+            type="button"
+            onClick={() => setPagination({
+              lessonId: currentLessonId,
+              page: Math.max(0, page - 1),
+            })}
             disabled={page === 0}
-            style={{
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: page === 0 ? '#1e293b' : '#334155',
-              color: page === 0 ? '#475569' : 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: page === 0 ? 'default' : 'pointer',
-              fontSize: '0.875rem',
-            }}
+            aria-label="หน้าบทเรียนก่อนหน้า"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
+            ←
           </button>
-          <span style={{
-            padding: '5px 12px',
-            background: '#334155',
-            color: 'white',
-            borderRadius: '6px',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-          }}>
-            หน้า {page + 1} / {totalPages}
-          </span>
+          <span>หน้า {page + 1} / {totalPages}</span>
           <button
-            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            type="button"
+            onClick={() => setPagination({
+              lessonId: currentLessonId,
+              page: Math.min(totalPages - 1, page + 1),
+            })}
             disabled={page === totalPages - 1}
-            style={{
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: page === totalPages - 1 ? '#1e293b' : '#334155',
-              color: page === totalPages - 1 ? '#475569' : 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: page === totalPages - 1 ? 'default' : 'pointer',
-              fontSize: '0.875rem',
-            }}
+            aria-label="หน้าบทเรียนถัดไป"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+            →
           </button>
-        </div>
+        </nav>
       )}
     </div>
   );

@@ -63,6 +63,8 @@ export default function LearnPageClient({
   const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState<number | null>(null);
   const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoAdvanceIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sidebarCloseRef = useRef<HTMLButtonElement | null>(null);
+  const sidebarReturnFocusRef = useRef<HTMLElement | null>(null);
 
   // Watch time tracking
   const watchTimeRef = useRef(0);
@@ -74,6 +76,29 @@ export default function LearnPageClient({
     const savedTheme = window.localStorage.getItem(LEARNING_THEME_KEY);
     if (savedTheme === 'light' || savedTheme === 'dark') setLearningTheme(savedTheme);
   }, []);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+
+    sidebarReturnFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    const previousOverflow = document.body.style.overflow;
+    const focusFrame = window.requestAnimationFrame(() => sidebarCloseRef.current?.focus());
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSidebarOpen(false);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      window.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = previousOverflow;
+      sidebarReturnFocusRef.current?.focus();
+    };
+  }, [sidebarOpen]);
 
   const toggleLearningTheme = useCallback(() => {
     setLearningTheme(current => {
@@ -279,6 +304,7 @@ export default function LearnPageClient({
         currentIndex={currentIndex}
         totalCount={totalCount}
         progressPercent={progressPercent}
+        isEnrolled={isEnrolled}
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={() => setSidebarCollapsed(current => !current)}
         onOpenSidebar={() => {
@@ -413,10 +439,19 @@ export default function LearnPageClient({
       <div className="learning-content-layout" style={{ display: 'flex', minHeight: 'calc(100vh - 56px)' }}>
         {/* Video Area */}
         <main className="learning-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          <header className="learning-stage-header">
+            <p>บทเรียนปัจจุบัน</p>
+            <div>
+              <h1>{currentLesson.title}</h1>
+              <span>{String(currentIndex + 1).padStart(2, '0')} / {String(allLessons.length).padStart(2, '0')}</span>
+            </div>
+            <small>{isEnrolled ? course.title : `บททดลองจาก ${course.title}`}</small>
+          </header>
+
           {/* Video Player or Locked Message */}
           <div className="learning-video" style={{ width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative', flexShrink: 0 }}>
             {lockedMessage ? (
-              <div style={{
+              <div className="learning-locked" style={{
                 position: 'absolute',
                 inset: 0,
                 display: 'flex',
@@ -487,7 +522,7 @@ export default function LearnPageClient({
                 onEnded={handleEnded}
               />
             ) : (
-              <div style={{
+              <div className="learning-video-empty" style={{
                 position: 'absolute',
                 inset: 0,
                 display: 'flex',
@@ -502,7 +537,7 @@ export default function LearnPageClient({
 
           {/* Auto-advance banner */}
           {autoAdvanceCountdown !== null && nextLesson && (
-            <div style={{
+            <div className="learning-auto-advance" style={{
               background: '#1e293b',
               borderBottom: '1px solid #334155',
               padding: '10px 24px',
@@ -541,46 +576,63 @@ export default function LearnPageClient({
             </div>
           )}
 
-          {/* Lesson Info */}
-          <section className="learning-lesson" style={{ padding: '20px 24px', flex: 1, overflowY: 'auto', background: '#0f172a' }}>
-            {/* Title row + Mark Complete */}
-            <div className="learning-lesson__heading" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '10px' }}>
-              <h1 style={{ fontSize: '1.375rem', fontWeight: 600, color: 'white', lineHeight: 1.4, flex: 1, margin: 0 }}>
-                {currentLesson.title}
-              </h1>
+          <section className="learning-stage-summary" aria-label="สถานะและการเรียนต่อ">
+            <div className="learning-stage-progress">
+              <div>
+                <span>{isEnrolled ? 'ความคืบหน้าคอร์ส' : 'สถานะการเข้าถึง'}</span>
+                <strong>{isEnrolled ? `เรียนจบแล้ว ${progressPercent}%` : 'บทเรียนทดลองฟรี'}</strong>
+              </div>
+              {isEnrolled ? (
+                <>
+                  <div className="learning-stage-progress__track" aria-hidden="true">
+                    <span style={{ width: `${progressPercent}%` }} />
+                  </div>
+                  <p>ระบบบันทึกความคืบหน้าเพื่อให้กลับมาเรียนต่อได้</p>
+                </>
+              ) : (
+                <p>ดูบทนี้ได้โดยไม่ต้องลงทะเบียน ส่วนบทที่ล็อกยังคงต้องสมัครเรียนก่อน</p>
+              )}
+            </div>
+
+            <div className="learning-stage-actions">
               {isEnrolled && (
                 <button
+                  type="button"
+                  className={`learning-complete${isCurrentCompleted ? ' is-complete' : ''}`}
                   onClick={handleMarkComplete}
                   disabled={markingComplete}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: isCurrentCompleted ? '1px solid #22c55e' : '1px solid #475569',
-                    background: isCurrentCompleted ? 'rgba(34,197,94,0.12)' : '#1e293b',
-                    color: isCurrentCompleted ? '#4ade80' : '#94a3b8',
-                    cursor: markingComplete ? 'wait' : 'pointer',
-                    fontSize: '0.8125rem',
-                    fontWeight: 500,
-                    transition: 'all 0.2s',
-                    flexShrink: 0,
-                    whiteSpace: 'nowrap',
-                  }}
                 >
-                  {isCurrentCompleted ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                    </svg>
-                  )}
-                  {markingComplete ? 'กำลังบันทึก...' : isCurrentCompleted ? 'เรียนจบแล้ว' : 'ทำเครื่องหมายว่าเรียนจบ'}
+                  {markingComplete ? 'กำลังบันทึก...' : isCurrentCompleted ? '✓ เรียนจบแล้ว' : 'ทำเครื่องหมายว่าเรียนจบ'}
                 </button>
               )}
+              <span>Next action</span>
+              {nextLesson && (isEnrolled || nextLesson.isFreePreview) ? (
+                <Link className="learning-next-action" href={`/courses/${course.slug}/learn/${nextLesson.id}`}>
+                  <span>เรียนบทถัดไป</span>
+                  <strong>{nextLesson.title}</strong>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              ) : nextLesson ? (
+                <button type="button" className="learning-next-action is-locked" onClick={() => handleLockedClick(nextLesson.id)}>
+                  <span>บทถัดไป</span>
+                  <strong>{nextLesson.title}</strong>
+                  <span aria-hidden="true">ล็อก</span>
+                </button>
+              ) : (
+                <Link className="learning-next-action" href="/dashboard">
+                  <span>เรียนครบทุกบทแล้ว</span>
+                  <strong>กลับไปแดชบอร์ด</strong>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              )}
+            </div>
+          </section>
+
+          {/* Lesson Info */}
+          <section className="learning-lesson" style={{ padding: '20px 24px', flex: 1, overflowY: 'auto', background: '#0f172a' }}>
+            <div className="learning-reading-head">
+              <p>Lesson notes</p>
+              <h2>เนื้อหาบทเรียน</h2>
             </div>
 
             <div className="learning-lesson__meta" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
@@ -595,7 +647,7 @@ export default function LearnPageClient({
               <div style={{ color: '#475569', fontSize: '0.8125rem' }}>บทที่ {currentIndex + 1} จาก {allLessons.length}</div>
             </div>
 
-            {currentLesson.content && (
+            {currentLesson.content ? (
               <div
                 className="lesson-content"
                 style={{
@@ -609,10 +661,12 @@ export default function LearnPageClient({
                 }}
                 dangerouslySetInnerHTML={{ __html: sanitizeRichContent(currentLesson.content ?? '') }}
               />
+            ) : (
+              <p className="learning-content-empty">บทเรียนนี้ไม่มีเนื้อหาเพิ่มเติม</p>
             )}
 
             {/* Navigation */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid #1e293b' }}>
+            <div className="learning-lesson__navigation" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid #1e293b' }}>
               {prevLesson ? (
                 <Link
                   href={`/courses/${course.slug}/learn/${prevLesson.id}`}
@@ -714,6 +768,7 @@ export default function LearnPageClient({
         {/* Sidebar */}
         <aside 
           className={`learn-sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'is-collapsed' : ''}`}
+          aria-label="ลำดับบทเรียน"
           style={{
             width: sidebarCollapsed ? '0px' : '320px',
             minWidth: sidebarCollapsed ? '0px' : '320px',
@@ -738,7 +793,10 @@ export default function LearnPageClient({
           }}>
             <span style={{ color: 'white', fontWeight: 600 }}>เนื้อหาคอร์ส</span>
             <button
+              ref={sidebarCloseRef}
+              type="button"
               onClick={() => setSidebarOpen(false)}
+              aria-label="ปิดรายการบทเรียน"
               style={{
                 width: '32px',
                 height: '32px',
@@ -759,21 +817,21 @@ export default function LearnPageClient({
           </div>
 
           {/* Sticky Header: Title + Progress + Search */}
-          <div style={{
+          <div className="learn-sidebar__head" style={{
             padding: '12px 16px',
             borderBottom: '1px solid var(--line)',
             flexShrink: 0,
             background: 'var(--surface)',
           }}>
-            <div style={{
+            <p className="learn-sidebar__eyebrow">Course index</p>
+            <div className="learn-sidebar__title" style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               marginBottom: '8px',
             }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink-muted)' }}>
-                เนื้อหาคอร์ส ({allLessons.length} บท)
-              </span>
+              <h2>ลำดับการเรียน</h2>
+              <span>{allLessons.length} บท</span>
               {isEnrolled && (
                 <span style={{ fontSize: '0.6875rem', color: progressPercent === 100 ? 'var(--success)' : 'var(--ink-subtle)' }}>
                   {completedCount}/{totalCount} ({progressPercent}%)
@@ -803,9 +861,10 @@ export default function LearnPageClient({
             {/* Search */}
             <input className="learn-sidebar__search"
               type="text"
+              aria-label="ค้นหาบทเรียน"
               value={lessonSearch}
               onChange={(e) => setLessonSearch(e.target.value)}
-              placeholder="🔍 ค้นหาบทเรียน..."
+              placeholder="ค้นหาบทเรียน..."
               style={{
                 width: '100%',
                 padding: '7px 10px',

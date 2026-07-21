@@ -124,8 +124,81 @@ test.describe('public learning journey', () => {
     await expect(sectionNavigation.getByRole('link', { name: 'เนื้อหาคอร์ส' })).toHaveAttribute('href', '#course-curriculum');
     await expect(sectionNavigation.getByRole('link', { name: 'รีวิวผู้เรียน' })).toHaveAttribute('href', '#course-reviews');
 
-    await expect(page.getByRole('heading', { level: 2, name: 'ภาพรวมคอร์ส' })).toBeVisible();
-    await expect(page.getByRole('heading', { level: 2, name: 'เนื้อหาคอร์ส' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'รายละเอียดคอร์ส' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'เส้นทางการเรียน' })).toBeVisible();
     expect(consoleErrors).toEqual([]);
+  });
+
+  test('free preview uses the focused learning workspace and recoverable lesson rail', async ({ page }) => {
+    const response = await page.request.get('/api/courses');
+    expect(response.ok()).toBeTruthy();
+    const payload = await response.json();
+    const courses = payload.courses || payload;
+    const course = courses[0];
+    test.skip(!course, 'No published course in local data');
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/courses/${course.slug}`);
+
+    const previewLesson = page.getByRole('button', { name: /ดูฟรี/ }).first();
+    test.skip(await previewLesson.count() === 0, 'No public preview lesson in local data');
+    await previewLesson.click();
+
+    await expect(page.getByRole('banner', { name: 'แถบควบคุมการเรียน' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'สถานะและการเรียนต่อ' })).toContainText('บทเรียนทดลองฟรี');
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      const dimensions = await page.evaluate(() => ({
+        clientWidth: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+      }));
+
+      expect(dimensions.scrollWidth, `learning workspace at ${viewport.width}px`).toBe(
+        dimensions.clientWidth,
+      );
+    }
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+
+    const rail = page.getByRole('complementary', { name: 'ลำดับบทเรียน' });
+    const main = page.getByRole('main');
+    const [railBox, mainBox] = await Promise.all([rail.boundingBox(), main.boundingBox()]);
+    expect(railBox).not.toBeNull();
+    expect(mainBox).not.toBeNull();
+    expect(railBox!.x).toBeLessThan(mainBox!.x);
+
+    const currentLesson = rail.locator('a[aria-current="page"]');
+    await expect(currentLesson).toHaveCount(1);
+    await expect(currentLesson).toContainText('ฟรี');
+
+    const lockedLesson = rail.getByRole('button', { name: /ต้องสมัครเรียนก่อน/ }).first();
+    await lockedLesson.click();
+    await expect(page.getByRole('heading', { name: /บทเรียนนี้ต้องลงทะเบียน/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'ลงทะเบียนเรียน' })).toHaveAttribute('href', `/courses/${course.slug}`);
+    await page.getByRole('button', { name: 'กลับไปดูบทเรียนปัจจุบัน' }).click();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const openRail = page.getByRole('button', { name: 'เปิดรายการบทเรียน', exact: true });
+    await openRail.click();
+
+    const closeRail = page.getByRole('button', { name: 'ปิดรายการบทเรียน', exact: true });
+    await expect(closeRail).toBeFocused();
+    await closeRail.click();
+    await expect(openRail).toBeFocused();
+    await openRail.click();
+    await expect(closeRail).toBeFocused();
+    const search = page.getByRole('textbox', { name: 'ค้นหาบทเรียน' });
+    await search.fill('no-lesson-matches-this-query');
+    await expect(rail).toContainText('ไม่พบบทเรียนที่ตรงกับ');
+    await page.keyboard.press('Escape');
+    await expect(openRail).toBeFocused();
+
+    const dimensions = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth,
+    }));
+    expect(dimensions.scrollWidth).toBe(dimensions.clientWidth);
   });
 });
