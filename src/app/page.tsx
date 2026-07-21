@@ -112,6 +112,8 @@ const CLIENT_LOGOS = [
 
 export default async function HomePage() {
   const featuredCourses = await getFeaturedCourses();
+  const featuredLessonCount = featuredCourses.reduce((total, course) => total + course.lessonCount, 0);
+  const featuredPreviewCount = featuredCourses.filter((course) => course.hasFreePreview).length;
 
   return (
     <>
@@ -121,22 +123,22 @@ export default async function HomePage() {
         <section className={styles.hero} aria-labelledby="home-hero-title">
           <div className={[styles.shell, styles.heroLayout].join(' ')}>
             <div className={styles.heroCopy} data-hero-copy>
-              <p className={styles.heroKicker}>พื้นที่เรียนโค้ดที่เริ่มจากความเข้าใจ</p>
+              <p className={styles.heroKicker}>คอร์สออนไลน์สำหรับคนที่อยากเขียนโค้ดเป็นงานจริง</p>
               <h1 id="home-hero-title" className={styles.heroTitle}>
-                เรียนให้เห็นภาพ
-                <span>สร้างให้เป็นงานจริง</span>
+                เลือกเส้นทางให้ชัด
+                <span>แล้วลงมือสร้างจริง</span>
               </h1>
               <p className={styles.heroLead}>
-                ค่อย ๆ วางพื้นฐานผ่านการลงมือทำ ทุกบทเชื่อมแนวคิดเข้ากับโปรเจกต์
-                เพื่อให้คุณเข้าใจว่าโค้ดทำงานอย่างไร และนำไปสร้างอะไรต่อได้
+                ดูหัวข้อ ราคา จำนวนบทเรียน และบททดลองก่อนสมัคร
+                แล้วเรียนตามลำดับพร้อมกลับมาทำโปรเจกต์ต่อจากจุดเดิมได้ทุกเมื่อ
               </p>
 
               <div className={styles.heroActions}>
-                <Link href="#featured-courses" className={styles.primaryAction}>
-                  เลือกจุดเริ่มต้น
+                <Link href="/courses" className={styles.primaryAction}>
+                  ดูคอร์สทั้งหมด
                   <span aria-hidden="true">→</span>
                 </Link>
-                <Link href="/courses" className={styles.secondaryAction}>สำรวจทุกคอร์ส</Link>
+                <Link href="#featured-courses" className={styles.secondaryAction}>ดูคอร์สแนะนำ</Link>
               </div>
             </div>
 
@@ -149,29 +151,42 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className={[styles.section, styles.workspaceSection].join(' ')} aria-labelledby="learning-workspace-title">
-          <div className={styles.shell}>
-            <header className={styles.workspaceIntro}>
-              <div>
-                <p className={styles.sectionLabel}>วิดีโอ ลำดับบทเรียน และความคืบหน้าในพื้นที่เดียว</p>
-                <h2 id="learning-workspace-title" className={styles.workspaceTitle}>
-                  กลับมาเรียนต่อได้ทันที <span>จากจุดที่คุณหยุดไว้</span>
-                </h2>
-              </div>
-              <div className={styles.workspaceStory}>
-                <p>
-                  ระบบเก็บลำดับบทเรียนและความคืบหน้าของคุณไว้
-                  จึงกลับมาดูวิดีโอ ทบทวนโค้ด และทำโปรเจกต์ต่อได้โดยไม่ต้องเริ่มใหม่
-                </p>
-                <ul aria-label="สิ่งที่มีในพื้นที่เรียน MilerDev">
-                  <li><span>01</span> เรียนตามลำดับ พร้อมลงมือทำทีละขั้น</li>
-                  <li><span>02</span> ระบบจำบทที่เรียนจบและจุดล่าสุด</li>
-                  <li><span>03</span> รับใบรับรองเมื่อเรียนครบตามเงื่อนไข</li>
-                </ul>
-              </div>
+        <section
+          className={styles.courseEvidence}
+          aria-labelledby="course-evidence-title"
+          data-source="featured-courses"
+        >
+          <div className={[styles.shell, styles.courseEvidenceInner].join(' ')}>
+            <header className={styles.courseEvidenceIntro}>
+              <p>BEFORE YOU ENROLL</p>
+              <h2 id="course-evidence-title">ข้อมูลคอร์สที่ใช้ตัดสินใจก่อนสมัคร</h2>
             </header>
 
-            <LearningWorkspacePreview />
+            {featuredCourses.length > 0 ? (
+              <dl className={styles.courseEvidenceFacts}>
+                <div>
+                  <dt>คอร์สแนะนำบนหน้านี้</dt>
+                  <dd>{featuredCourses.length}</dd>
+                </div>
+                <div>
+                  <dt>บทเรียนในชุดแนะนำ</dt>
+                  <dd>{featuredLessonCount}</dd>
+                </div>
+                <div>
+                  <dt>คอร์สที่มีบททดลอง</dt>
+                  <dd>{featuredPreviewCount}</dd>
+                </div>
+              </dl>
+            ) : (
+              <p className={styles.courseEvidenceFallback}>
+                ดูหัวข้อ ราคา ผู้สอน และสถานะบททดลองจากหน้ารวมคอร์สก่อนเลือกจุดเริ่มต้น
+              </p>
+            )}
+
+            <Link href="/courses" className={styles.courseEvidenceLink}>
+              เปรียบเทียบทุกคอร์ส
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </section>
 
@@ -179,13 +194,13 @@ export default async function HomePage() {
           <div className={styles.shell}>
             <div className={styles.sectionIntro}>
               <div>
-                <p className={styles.sectionLabel}>เลือกเส้นทางที่เหมาะกับคุณ</p>
-                <h2 id="featured-courses-title" className={styles.sectionTitle}>เลือกคอร์สสำหรับก้าวถัดไป</h2>
+                <p className={styles.sectionLabel}>เริ่มจากสิ่งที่คุณอยากสร้าง</p>
+                <h2 id="featured-courses-title" className={styles.sectionTitle}>เลือกคอร์สแรกจากข้อมูลจริง</h2>
               </div>
               <div>
                 <p className={styles.sectionCopy}>
-                  ดูหัวข้อ เวลาเรียน ผู้สอน และบทเรียนทดลองจากข้อมูลจริง
-                  แล้วเลือกคอร์สที่ใกล้กับสิ่งที่คุณอยากสร้าง
+                  เปรียบเทียบเนื้อหา เวลาเรียน ราคา ผู้สอน และบททดลอง
+                  เพื่อเลือกเส้นทางที่เหมาะกับพื้นฐานและงานที่คุณอยากทำต่อ
                 </p>
                 <Link href="/courses" className={styles.sectionLink}>ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link>
               </div>
@@ -220,6 +235,32 @@ export default async function HomePage() {
                 <Link href="/contact" className={styles.emptyAction}>เสนอหัวข้อที่อยากเรียน</Link>
               </div>
             )}
+          </div>
+        </section>
+
+        <section className={[styles.section, styles.workspaceSection].join(' ')} aria-labelledby="learning-workspace-title">
+          <div className={styles.shell}>
+            <header className={styles.workspaceIntro}>
+              <div>
+                <p className={styles.sectionLabel}>หลังเลือกคอร์ส พื้นที่เรียนช่วยให้ไปต่อได้</p>
+                <h2 id="learning-workspace-title" className={styles.workspaceTitle}>
+                  กลับมาเรียนต่อได้ทันที <span>จากจุดที่คุณหยุดไว้</span>
+                </h2>
+              </div>
+              <div className={styles.workspaceStory}>
+                <p>
+                  ระบบเก็บลำดับบทเรียนและความคืบหน้าของคุณไว้
+                  จึงกลับมาดูวิดีโอ ทบทวนโค้ด และทำโปรเจกต์ต่อได้โดยไม่ต้องเริ่มใหม่
+                </p>
+                <ul aria-label="สิ่งที่มีในพื้นที่เรียน MilerDev">
+                  <li><span>01</span> เรียนตามลำดับ พร้อมลงมือทำทีละขั้น</li>
+                  <li><span>02</span> ระบบจำบทที่เรียนจบและจุดล่าสุด</li>
+                  <li><span>03</span> รับใบรับรองเมื่อเรียนครบตามเงื่อนไข</li>
+                </ul>
+              </div>
+            </header>
+
+            <LearningWorkspacePreview />
           </div>
         </section>
 
@@ -283,12 +324,12 @@ export default async function HomePage() {
         <section className={styles.closing} aria-labelledby="home-closing-title">
           <div className={[styles.shell, styles.closingInner].join(' ')}>
             <div className={styles.closingCopy}>
-              <h2 id="home-closing-title">เริ่มจากหนึ่งบท แล้วค่อยสร้างโปรเจกต์ที่ใหญ่ขึ้น</h2>
-              <p>เลือกคอร์สที่ตรงกับสิ่งที่อยากสร้าง หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน</p>
+              <h2 id="home-closing-title">เลือกคอร์สแรก แล้วเริ่มสร้างงานของคุณ</h2>
+              <p>ดูเนื้อหา ราคา และบททดลองให้ครบก่อนตัดสินใจ หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน</p>
             </div>
             <div className={styles.closingActions}>
-              <Link href="/courses" className={styles.primaryAction}>เลือกคอร์สแรก <span aria-hidden="true">→</span></Link>
-              <Link href="/register" className={styles.secondaryAction}>สร้างบัญชีฟรี</Link>
+              <Link href="/courses" className={styles.primaryAction}>ดูคอร์สและราคา <span aria-hidden="true">→</span></Link>
+              <Link href="/register" className={styles.secondaryAction}>สร้างบัญชีเพื่อเริ่มเรียน</Link>
             </div>
           </div>
         </section>

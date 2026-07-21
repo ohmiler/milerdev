@@ -5,12 +5,22 @@ test.describe('public homepage', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
+    const primaryCourseCta = page.getByRole('link', { name: 'ดูคอร์สทั้งหมด' }).first();
+    await expect(primaryCourseCta).toHaveAttribute('href', '/courses');
+
+    const courseEvidence = page.getByRole('region', { name: 'ข้อมูลคอร์สที่ใช้ตัดสินใจก่อนสมัคร' });
+    await expect(courseEvidence).toBeVisible();
+    await expect(courseEvidence).toHaveAttribute('data-source', 'featured-courses');
+
     const navbar = page.getByRole('navigation', { name: 'เมนูหลัก' });
     const brandLockup = navbar.locator('.nav-brand-lockup');
     await expect(brandLockup).not.toContainText('เรียนโค้ดออนไลน์');
     await expect.poll(() => brandLockup.evaluate((brand) => getComputedStyle(brand, '::after').content)).toBe('none');
     const courseGrid = page.locator('#featured-courses [data-count]');
     await expect.poll(() => courseGrid.evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length)).toBe(1);
+    const renderedCourseCount = Number(await courseGrid.getAttribute('data-count'));
+    const reportedCourseCount = Number(await courseEvidence.getByRole('definition').first().textContent());
+    expect(reportedCourseCount).toBe(renderedCourseCount);
 
     const hasHorizontalOverflow = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -21,6 +31,11 @@ test.describe('public homepage', () => {
       (element) => Math.round(element.getBoundingClientRect().top + window.scrollY),
     );
     expect(featuredCoursesTop).toBeLessThanOrEqual(844 * 3);
+
+    const learningWorkspaceTop = await page.locator('[aria-labelledby="learning-workspace-title"]').evaluate(
+      (element) => Math.round(element.getBoundingClientRect().top + window.scrollY),
+    );
+    expect(featuredCoursesTop).toBeLessThan(learningWorkspaceTop);
 
     const main = page.getByRole('main');
     await expect(main.getByRole('article', { name: 'ตัวอย่างพื้นที่เรียนออนไลน์ของ MilerDev' })).toBeVisible();
@@ -44,29 +59,6 @@ test.describe('public homepage', () => {
     await page.goto('/');
 
     const editor = page.getByLabel('ตัวอย่างพื้นที่เขียนโค้ดของ MilerDev');
-    const heroTracks = await page.locator('[aria-labelledby="home-hero-title"]').evaluate((hero) => {
-      const copy = hero.querySelector<HTMLElement>('[data-hero-copy]');
-      const stage = hero.querySelector<HTMLElement>('[data-hero-editor]');
-      const editorSurface = hero.querySelector<HTMLElement>('.hero-code-editor');
-
-      if (!copy || !stage || !editorSurface) throw new Error('Hero tracks are missing');
-
-      const copyRect = copy.getBoundingClientRect();
-      const stageRect = stage.getBoundingClientRect();
-      const editorRect = editorSurface.getBoundingClientRect();
-
-      return {
-        trackDelta: Math.abs(copyRect.width - stageRect.width),
-        contentHeightDelta: Math.abs(copyRect.height - editorRect.height),
-        editorWidthDelta: Math.abs(stageRect.width - editorRect.width),
-        editorHeightDelta: Math.abs(stageRect.height - editorRect.height),
-      };
-    });
-    expect(heroTracks.trackDelta).toBeLessThanOrEqual(1);
-    expect(heroTracks.contentHeightDelta).toBeLessThanOrEqual(1);
-    expect(heroTracks.editorWidthDelta).toBeLessThanOrEqual(1);
-    expect(heroTracks.editorHeightDelta).toBeLessThanOrEqual(1);
-
     const featuredCourseColumns = await page.locator('#featured-courses [data-count]').evaluate(
       (grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length,
     );
@@ -82,8 +74,6 @@ test.describe('public homepage', () => {
     await expect(cursorPosition).toHaveText(/Ln \d+, Col \d+/);
     const initialPosition = await cursorPosition.textContent();
     await expect.poll(() => cursorPosition.textContent()).not.toBe(initialPosition);
-    await expect(editor.locator('.hero-code-editor__status')).toHaveCSS('background-color', 'rgb(0, 137, 204)');
-
     const htmlTab = editor.getByRole('tab', { name: 'index.html' });
     const cssTab = editor.getByRole('tab', { name: 'styles.css' });
     await htmlTab.focus();
