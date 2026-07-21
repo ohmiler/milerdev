@@ -82,6 +82,7 @@
 
 .breadcrumb a:focus-visible,
 .tag:focus-visible,
+.decisionPrompt a:focus-visible,
 .sectionNav a:focus-visible,
 .readingRail a:focus-visible {
   outline: none;
@@ -157,7 +158,7 @@
 
 .evidence {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   border-top: 1px solid var(--line-strong);
   border-left: 1px solid var(--line-strong);
   background: rgba(255, 255, 255, .7);
@@ -188,6 +189,57 @@
   line-height: 1.45;
 }
 
+.decisionPrompt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-left: 3px solid var(--accent);
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+.decisionPrompt span,
+.decisionPrompt p {
+  display: block;
+}
+
+.decisionPrompt div > span {
+  margin-bottom: 3px;
+  color: var(--accent);
+  font: 700 .65rem/1.4 var(--font-code);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.decisionPrompt p {
+  margin: 0;
+  color: rgba(247, 249, 251, .78);
+  font-size: .875rem;
+  line-height: 1.55;
+}
+
+.decisionPrompt a {
+  display: inline-flex;
+  min-height: 44px;
+  gap: 12px;
+  align-items: center;
+  padding-inline: 16px;
+  border: 1px solid rgba(247, 249, 251, .34);
+  color: var(--canvas);
+  font-size: .8125rem;
+  font-weight: 750;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.decisionPrompt a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .sectionNav {
   display: flex;
   flex-wrap: wrap;
@@ -215,6 +267,8 @@
 }
 
 .enrollment {
+  position: sticky;
+  top: 92px;
   min-width: 0;
 }
 
@@ -228,7 +282,7 @@
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-bottom: 1px solid var(--line-strong);
+  border-top: 1px solid var(--line-strong);
   background: var(--code-bg);
 }
 
@@ -270,9 +324,22 @@
   padding: 25px;
 }
 
+.priceHeader {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
 .priceLabel {
   margin-bottom: 4px;
   color: var(--ink-muted);
+}
+
+.priceHeader > span {
+  color: var(--ink-muted);
+  font-size: .72rem;
+  line-height: 1.4;
 }
 
 .price {
@@ -304,21 +371,32 @@
   font-size: 1rem;
 }
 
+.enrollFootnote {
+  margin: 10px 0 0;
+  color: var(--ink-muted);
+  font-size: .75rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
 .benefits {
   margin-top: 22px;
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
-.benefits > div {
+.benefits ul {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin: 0;
+  padding: 0;
   color: var(--ink-soft);
   font-size: .875rem;
+  list-style: none;
 }
 
-.benefits > div > div {
+.benefits li {
   display: flex;
   gap: 10px;
   align-items: center;
@@ -462,6 +540,52 @@
   line-height: 1.8;
 }
 
+.instructorCard {
+  display: flex;
+  max-width: 620px;
+  gap: 18px;
+  align-items: center;
+  padding-block: 22px;
+  border-block: 1px solid var(--line-strong);
+}
+
+.instructorAvatar,
+.instructorInitial {
+  width: 68px;
+  height: 68px;
+  flex: none;
+  border: 1px solid var(--line-strong);
+}
+
+.instructorAvatar {
+  object-fit: cover;
+}
+
+.instructorInitial {
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--canvas);
+  font: 700 1.35rem/1 var(--font-code);
+}
+
+.instructorCard div > span,
+.instructorCard strong {
+  display: block;
+}
+
+.instructorCard div > span {
+  margin-bottom: 4px;
+  color: var(--ink-muted);
+  font: 600 .7rem/1.5 var(--font-code);
+}
+
+.instructorCard strong {
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+
 .reviewsAnchor {
   scroll-margin-top: 24px;
   padding-top: 8px;
@@ -574,7 +698,12 @@
     max-width: 760px;
   }
 
+  .evidence {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .enrollment {
+    position: static;
     width: min(680px, 100%);
   }
 
@@ -600,7 +729,7 @@
   }
 
   .heroGrid {
-    gap: 32px;
+    gap: 20px;
     padding-block: 30px 0;
   }
 
@@ -637,6 +766,10 @@
   .sectionNav {
     gap: 5px 18px;
     margin-top: 18px;
+  }
+
+  .decisionPrompt {
+    display: none;
   }
 
   .sectionNav a {

@@ -30,6 +30,17 @@ test.describe('Course Browsing', () => {
     const slug = courses[0].slug;
     await page.goto(`/courses/${slug}`);
     await expect(page.getByRole('navigation', { name: 'เส้นทางนำทาง' })).toBeVisible();
+    await expect(page.getByRole('complementary', { name: 'การสมัครเรียน' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'เส้นทางการเรียน' })).toBeVisible();
+    await expect(page.locator('#enroll-button-slot button')).toHaveCount(1);
+
+    const sectionOrder = await page.locator('main').evaluate((main) => {
+      const curriculum = main.querySelector('#course-curriculum');
+      const overview = main.querySelector('#course-overview');
+      if (!curriculum || !overview) return null;
+      return curriculum.compareDocumentPosition(overview) & Node.DOCUMENT_POSITION_FOLLOWING;
+    });
+    expect(sectionOrder).toBeTruthy();
   });
 
   test('non-existent course shows 404 or error', async ({ page }) => {

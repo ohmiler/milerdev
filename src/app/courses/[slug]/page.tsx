@@ -155,6 +155,8 @@ export default async function CourseDetailPage({ params }: Props) {
   const promoPrice = isPromoActive ? parseFloat(course.promoPrice || '0') : null;
   const displayPrice = promoPrice !== null ? promoPrice : price;
   const instructorName = course.instructor?.name?.trim() || null;
+  const instructorAvatarUrl = normalizeUrl(course.instructor?.avatarUrl || null);
+  const reviewsIndex = instructorName ? '04' : '03';
 
   const courseJsonLd = {
     '@context': 'https://schema.org',
@@ -239,7 +241,7 @@ export default async function CourseDetailPage({ params }: Props) {
                 </div>
               )}
 
-              <p className={styles.eyebrow}>Course dossier / รายละเอียดก่อนเริ่มเรียน</p>
+              <p className={styles.eyebrow}>Course brief / เรียนอะไร แล้วเริ่มอย่างไร</p>
               <h1>{course.title}</h1>
 
               {course.description && (
@@ -250,8 +252,12 @@ export default async function CourseDetailPage({ params }: Props) {
 
               <section className={styles.evidence} aria-label="ข้อมูลประกอบการตัดสินใจ">
                 <div className={styles.fact}>
-                  <span>เนื้อหา</span>
+                  <span>หลักสูตร</span>
                   <strong>{course.lessons.length} บท</strong>
+                </div>
+                <div className={styles.fact}>
+                  <span>บททดลอง</span>
+                  <strong>{freePreviewCount > 0 ? `${freePreviewCount} บทฟรี` : 'ยังไม่มีบททดลอง'}</strong>
                 </div>
                 {totalSeconds > 0 && (
                   <div className={styles.fact}>
@@ -259,10 +265,6 @@ export default async function CourseDetailPage({ params }: Props) {
                     <strong>{durationText}</strong>
                   </div>
                 )}
-                <div className={styles.fact}>
-                  <span>ทดลองก่อน</span>
-                  <strong>{freePreviewCount > 0 ? `${freePreviewCount} บทฟรี` : 'ยังไม่มีบททดลอง'}</strong>
-                </div>
                 {instructorName && (
                   <div className={styles.fact}>
                     <span>ผู้สอน</span>
@@ -271,37 +273,30 @@ export default async function CourseDetailPage({ params }: Props) {
                 )}
               </section>
 
+              <div className={styles.decisionPrompt}>
+                <div>
+                  <span>สำรวจก่อนสมัคร</span>
+                  <p>
+                    {freePreviewCount > 0
+                      ? `เปิดดูบททดลองได้ ${freePreviewCount} บท แล้วค่อยตัดสินใจ`
+                      : `ตรวจหัวข้อทั้ง ${course.lessons.length} บทก่อนตัดสินใจ`}
+                  </p>
+                </div>
+                <a href="#course-curriculum">
+                  ดูแผนการเรียน
+                  <span aria-hidden="true">↓</span>
+                </a>
+              </div>
+
               <nav className={styles.sectionNav} aria-label="ส่วนต่าง ๆ ของคอร์ส">
-                <a href="#course-overview">ภาพรวม</a>
                 <a href="#course-curriculum">เนื้อหาคอร์ส</a>
+                <a href="#course-overview">ภาพรวม</a>
+                {instructorName && <a href="#course-instructor">ผู้สอน</a>}
                 <a href="#course-reviews">รีวิวผู้เรียน</a>
               </nav>
             </div>
               <aside className={styles.enrollment} aria-label="การสมัครเรียน">
                 <div className={styles.enrollPanel}>
-                  {/* Thumbnail */}
-                  <div className={styles.media}>
-                    {normalizeUrl(course.thumbnailUrl) ? (
-                      <img
-                        src={normalizeUrl(course.thumbnailUrl)!}
-                        alt={course.title}
-                        className={styles.thumbnail}
-                      />
-                    ) : (
-                      <div className={styles.mediaFallback}>
-                        <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                    )}
-
-                    {/* Preview Video Play Button */}
-                    {signedPreviewVideoUrl && (
-                      <CoursePreviewVideo previewVideoUrl={signedPreviewVideoUrl} />
-                    )}
-                  </div>
-
                   {/* Promo Banner */}
                   {isPromoActive && promoPrice !== null && (
                     <div className={styles.promo}>
@@ -318,7 +313,10 @@ export default async function CourseDetailPage({ params }: Props) {
                   )}
 
                   <div className={styles.enrollContent}>
-                    <p className={styles.priceLabel}>ค่าสมัครคอร์ส</p>
+                    <div className={styles.priceHeader}>
+                      <p className={styles.priceLabel}>ค่าสมัครคอร์ส</p>
+                      <span>ชำระครั้งเดียว</span>
+                    </div>
                     {/* Price Display */}
                     <div className={styles.price}>
                       {displayPrice === 0 ? (
@@ -345,23 +343,51 @@ export default async function CourseDetailPage({ params }: Props) {
                       />
                     </div>
 
+                    <p className={styles.enrollFootnote}>
+                      {displayPrice === 0
+                        ? 'เริ่มเรียนได้ทันทีหลังลงทะเบียน'
+                        : 'เลือกชำระด้วยบัตรหรือ PromptPay ในขั้นตอนถัดไป'}
+                    </p>
+
                     {/* Features */}
                     <div className={styles.benefits}>
-                      <div>
-                        <div>
+                      <ul>
+                        <li>
                           <CheckIcon />
                           เข้าถึงได้ตลอดชีพ
-                        </div>
-                        <div>
+                        </li>
+                        <li>
                           <CheckIcon />
                           เรียนได้ทุกอุปกรณ์
-                        </div>
-                        <div>
+                        </li>
+                        <li>
                           <CheckIcon />
                           Certificate เมื่อเรียนจบ
-                        </div>
-                      </div>
+                        </li>
+                      </ul>
                     </div>
+                  </div>
+
+                  {/* Course media and optional preview follow the primary decision action. */}
+                  <div className={styles.media}>
+                    {normalizeUrl(course.thumbnailUrl) ? (
+                      <img
+                        src={normalizeUrl(course.thumbnailUrl)!}
+                        alt={course.title}
+                        className={styles.thumbnail}
+                      />
+                    ) : (
+                      <div className={styles.mediaFallback}>
+                        <svg style={{ width: '48px', height: '48px', color: 'rgba(255,255,255,0.6)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    )}
+
+                    {signedPreviewVideoUrl && (
+                      <CoursePreviewVideo previewVideoUrl={signedPreviewVideoUrl} />
+                    )}
                   </div>
                 </div>
               </aside>
@@ -372,26 +398,11 @@ export default async function CourseDetailPage({ params }: Props) {
         <section className={styles.body}>
           <div className={styles.bodyGrid}>
             <article className={styles.readingColumn}>
-              <section id="course-overview" className={styles.contentSection} aria-labelledby="course-overview-title">
-                <div className={styles.sectionHeading}>
-                  <p>01 / Overview</p>
-                  <h2 id="course-overview-title">ภาพรวมคอร์ส</h2>
-                </div>
-                {course.description ? (
-                  <div
-                    className={styles.description}
-                    dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }}
-                  />
-                ) : (
-                  <p className={styles.emptyCopy}>คอร์สนี้ยังไม่มีรายละเอียดเพิ่มเติม</p>
-                )}
-              </section>
-
               <section id="course-curriculum" className={styles.contentSection} aria-labelledby="course-curriculum-title">
                 <div className={styles.sectionHeadingRow}>
                   <div className={styles.sectionHeading}>
-                    <p>02 / Curriculum</p>
-                    <h2 id="course-curriculum-title">เนื้อหาคอร์ส</h2>
+                    <p>01 / Curriculum</p>
+                    <h2 id="course-curriculum-title">เส้นทางการเรียน</h2>
                   </div>
                   <p className={styles.sectionNote}>
                     {freePreviewCount > 0
@@ -407,22 +418,59 @@ export default async function CourseDetailPage({ params }: Props) {
                 />
               </section>
 
+              <section id="course-overview" className={styles.contentSection} aria-labelledby="course-overview-title">
+                <div className={styles.sectionHeading}>
+                  <p>02 / Overview</p>
+                  <h2 id="course-overview-title">รายละเอียดคอร์ส</h2>
+                </div>
+                {course.description ? (
+                  <div
+                    className={styles.description}
+                    dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }}
+                  />
+                ) : (
+                  <p className={styles.emptyCopy}>คอร์สนี้ยังไม่มีรายละเอียดเพิ่มเติม</p>
+                )}
+              </section>
+
+              {instructorName && (
+                <section id="course-instructor" className={styles.contentSection} aria-labelledby="course-instructor-title">
+                  <div className={styles.sectionHeading}>
+                    <p>03 / Instructor</p>
+                    <h2 id="course-instructor-title">รู้จักผู้สอน</h2>
+                  </div>
+                  <div className={styles.instructorCard}>
+                    {instructorAvatarUrl ? (
+                      <img src={instructorAvatarUrl} alt="" className={styles.instructorAvatar} />
+                    ) : (
+                      <span className={styles.instructorInitial} aria-hidden="true">
+                        {instructorName.charAt(0)}
+                      </span>
+                    )}
+                    <div>
+                      <span>ผู้สอนคอร์สนี้</span>
+                      <strong>{instructorName}</strong>
+                    </div>
+                  </div>
+                </section>
+              )}
+
               <div id="course-reviews" className={styles.reviewsAnchor}>
-                <p className={styles.reviewIndex}>03 / Learner reviews</p>
+                <p className={styles.reviewIndex}>{reviewsIndex} / Learner reviews</p>
                 <CourseReviewsWrapper courseSlug={course.slug} />
               </div>
             </article>
 
             <aside className={styles.readingRail} aria-label="สรุปก่อนสมัคร">
-              <p className={styles.railLabel}>Decision notes</p>
-              <h2>เช็กให้ครบก่อนเริ่ม</h2>
+              <p className={styles.railLabel}>Course map</p>
+              <h2>ข้อมูลคอร์สในหน้าเดียว</h2>
               <dl>
                 <div><dt>บทเรียนทั้งหมด</dt><dd>{course.lessons.length} บท</dd></div>
                 <div><dt>บททดลอง</dt><dd>{freePreviewCount > 0 ? `${freePreviewCount} บท` : 'ไม่มี'}</dd></div>
                 {totalSeconds > 0 && <div><dt>เวลาวิดีโอ</dt><dd>{durationText}</dd></div>}
                 {instructorName && <div><dt>ผู้สอน</dt><dd>{instructorName}</dd></div>}
               </dl>
-              <a href="#enroll-button-slot">ไปที่การสมัครเรียน ↑</a>
+              <a href="#enroll-button-slot">กลับไปสมัครคอร์ส ↑</a>
             </aside>
           </div>
         </section>
