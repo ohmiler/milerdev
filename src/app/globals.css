@@ -1854,11 +1854,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .learning-main {
+  --learning-stage-gutter: clamp(20px, 3vw, 40px);
+  --learning-stage-max: 1280px;
   min-width: 0;
   background: var(--canvas);
 }
 
 .learning-stage-header {
+  width: min(100%, 1360px);
+  margin-inline: auto;
   padding: clamp(28px, 4vw, 48px) clamp(24px, 4vw, 52px) 24px;
   border-bottom: 0;
 }
@@ -1903,10 +1907,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .learning-video {
-  width: auto !important;
-  height: min(48dvh, 520px);
-  aspect-ratio: auto !important;
-  margin: 0 clamp(20px, 3vw, 40px);
+  width: min(
+    calc(100% - var(--learning-stage-gutter) - var(--learning-stage-gutter)),
+    var(--learning-stage-max)
+  ) !important;
+  height: auto;
+  aspect-ratio: 16 / 9 !important;
+  margin: 0 auto;
   overflow: hidden;
   padding: 0;
   border: 1px solid var(--line-strong);
@@ -1945,7 +1952,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .learning-auto-advance {
-  margin: 0 clamp(20px, 3vw, 40px);
+  width: min(
+    calc(100% - var(--learning-stage-gutter) - var(--learning-stage-gutter)),
+    var(--learning-stage-max)
+  );
+  margin: 0 auto;
   border: 1px solid var(--line) !important;
   border-top: 0 !important;
   background: var(--surface-raised) !important;
@@ -1953,8 +1964,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .learning-stage-summary {
   display: grid;
+  width: min(
+    calc(100% - var(--learning-stage-gutter) - var(--learning-stage-gutter)),
+    var(--learning-stage-max)
+  );
   grid-template-columns: minmax(0, 1.7fr) minmax(250px, .9fr);
-  margin: 0 clamp(20px, 3vw, 40px);
+  margin: 0 auto;
   border: 1px solid var(--line);
   border-top: 0;
 }
@@ -2444,6 +2459,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .learning-video {
+    width: 100% !important;
     height: auto;
     aspect-ratio: 16 / 9 !important;
     margin: 0;
@@ -2453,6 +2469,7 @@ h1, h2, h3, h4, h5, h6 {
 
   .learning-auto-advance,
   .learning-stage-summary {
+    width: 100%;
     margin: 0;
     border-right: 0;
     border-left: 0;

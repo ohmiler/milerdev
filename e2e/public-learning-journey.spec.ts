@@ -7,8 +7,13 @@ const viewports = [
   { width: 1600, height: 900 },
 ] as const;
 
+const playerViewports = [
+  ...viewports,
+  { width: 2048, height: 1024 },
+] as const;
+
 test.describe('public learning journey', () => {
-  test('keeps the lesson player inside its viewport-sized frame', async ({ page }) => {
+  test('keeps the lesson player centered in a responsive 16:9 frame', async ({ page }) => {
     await page.setContent(
       '<div class=learning-surface data-surface=learning>' +
       '<div class=learning-content-layout>' +
@@ -19,25 +24,34 @@ test.describe('public learning journey', () => {
     );
     await page.addStyleTag({ path: 'src/app/globals.css' });
 
-    for (const viewport of viewports) {
+    for (const viewport of playerViewports) {
       await page.setViewportSize(viewport);
       const dimensions = await page.locator('.learning-video').evaluate((frame) => {
         const player = frame.firstElementChild;
+        const main = frame.closest('.learning-main');
         const frameBox = frame.getBoundingClientRect();
         const playerBox = player?.getBoundingClientRect();
+        const mainBox = main?.getBoundingClientRect();
 
         return {
+          frameLeft: frameBox.left,
+          frameWidth: frameBox.width,
           frameHeight: frameBox.height,
           playerHeight: playerBox?.height ?? 0,
+          mainLeft: mainBox?.left ?? 0,
+          mainWidth: mainBox?.width ?? 0,
         };
       });
 
-      expect(dimensions.frameHeight, 'lesson frame at ' + viewport.width + 'px').toBeLessThanOrEqual(
-        Math.min(viewport.height * 0.48, 520) + 1,
-      );
+      expect(dimensions.frameWidth, 'lesson frame width at ' + viewport.width + 'px').toBeLessThanOrEqual(1281);
+      expect(dimensions.frameWidth / dimensions.frameHeight, 'lesson frame ratio at ' + viewport.width + 'px').toBeCloseTo(16 / 9, 2);
       expect(dimensions.playerHeight, 'lesson player at ' + viewport.width + 'px').toBeLessThanOrEqual(
         dimensions.frameHeight + 1,
       );
+      expect(
+        dimensions.frameLeft + (dimensions.frameWidth / 2),
+        'lesson frame alignment at ' + viewport.width + 'px',
+      ).toBeCloseTo(dimensions.mainLeft + (dimensions.mainWidth / 2), 0);
     }
   });
 
