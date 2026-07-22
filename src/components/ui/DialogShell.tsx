@@ -2,6 +2,7 @@
 
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 import { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Feedback.module.css';
 
 type DialogRole = 'dialog' | 'alertdialog';
@@ -132,7 +133,7 @@ export default function DialogShell({
     }
   };
 
-  return (
+  const dialog = (
     <div
       className={styles.overlay}
       data-tone={tone}
@@ -161,4 +162,8 @@ export default function DialogShell({
       </div>
     </div>
   );
+
+  return typeof document === 'undefined'
+    ? dialog
+    : createPortal(dialog, document.body);
 }
