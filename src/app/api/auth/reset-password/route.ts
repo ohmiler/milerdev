@@ -5,7 +5,11 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/email';
 import { randomBytes, createHash } from 'crypto';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import {
+    authRateLimitUnavailableResponse,
+    consumeAuthRateLimit,
+} from '@/lib/auth-rate-limit';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const DUPLICATE_RESET_SUPPRESSION_MS = 5 * 60 * 1000;
@@ -20,7 +24,15 @@ export async function POST(request: Request) {
 
         // Rate limiting
         const clientIP = getClientIP(request);
-        const rateLimit = checkRateLimit(`reset:${clientIP}`, rateLimits.auth);
+        const rateLimit = await consumeAuthRateLimit({
+            namespace: 'reset',
+            identifier: clientIP,
+            ...rateLimits.auth,
+        }).catch(() => null);
+
+        if (!rateLimit) {
+            return authRateLimitUnavailableResponse();
+        }
         
         if (!rateLimit.success) {
             return rateLimitResponse(rateLimit.resetTime);

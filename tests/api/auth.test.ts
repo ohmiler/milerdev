@@ -24,9 +24,23 @@ vi.mock('@paralleldrive/cuid2', () => ({
     createId: vi.fn().mockReturnValue('mock-cuid-token'),
 }));
 
-// Mock rate-limit (allow all requests by default)
+// Mock shared auth rate-limit (allow all requests by default)
+vi.mock('@/lib/auth-rate-limit', () => ({
+    consumeAuthRateLimit: vi.fn().mockResolvedValue({
+        success: true,
+        remaining: 10,
+        resetTime: Date.now() + 60000,
+    }),
+    authRateLimitUnavailableResponse: vi.fn().mockImplementation(() =>
+        new Response(
+            JSON.stringify({ error: 'Service temporarily unavailable.' }),
+            { status: 503 }
+        )
+    ),
+}));
+
+// Mock existing response/IP helpers
 vi.mock('@/lib/rate-limit', () => ({
-    checkRateLimit: vi.fn().mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 }),
     getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
     rateLimits: {
         auth: { maxRequests: 5, windowMs: 60000 },
@@ -80,12 +94,12 @@ vi.mock('@/lib/db', () => ({
 import { auth } from '@/lib/auth';
 import { sendPasswordResetEmail } from '@/lib/email';
 import bcrypt from 'bcryptjs';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { consumeAuthRateLimit } from '@/lib/auth-rate-limit';
 
 const mockedAuth = vi.mocked(auth);
 const mockedSendPasswordResetEmail = vi.mocked(sendPasswordResetEmail);
 const mockedBcrypt = vi.mocked(bcrypt);
-const mockedRateLimit = vi.mocked(checkRateLimit);
+const mockedRateLimit = vi.mocked(consumeAuthRateLimit);
 
 function makeRequest(url: string, body: Record<string, unknown>, method = 'POST') {
     return new Request(url, {
@@ -105,7 +119,7 @@ describe('POST /api/auth/register', () => {
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
         mockDbState.updateAffectedRows = 1;
-        mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
+        mockedRateLimit.mockResolvedValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
         mockedSendPasswordResetEmail.mockResolvedValue(true);
     });
 
@@ -170,9 +184,23 @@ describe('POST /api/auth/register', () => {
     });
 
     it('should return 429 when rate limited', async () => {
-        mockedRateLimit.mockReturnValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
+        mockedRateLimit.mockResolvedValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
         const res = await callRegister({ name: 'Test', email: 'test@example.com', password: 'Test1234' });
         expect(res.status).toBe(429);
+    });
+
+    it('should fail closed before account lookup when the shared limiter is unavailable', async () => {
+        mockedRateLimit.mockRejectedValue(new Error('database detail must not escape'));
+
+        const res = await callRegister({
+            name: 'Test',
+            email: 'test@example.com',
+            password: 'Test1234',
+        });
+
+        expect(res.status).toBe(503);
+        expect(mockDbState.insertCalled).toBe(false);
+        expect(await res.json()).toEqual({ error: 'Service temporarily unavailable.' });
     });
 
     it('should always assign student role', async () => {
@@ -199,7 +227,7 @@ describe('POST /api/auth/reset-password', () => {
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
         mockDbState.updateAffectedRows = 1;
-        mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
+        mockedRateLimit.mockResolvedValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
     });
 
     async function callReset(body: Record<string, unknown>) {
@@ -266,7 +294,7 @@ describe('POST /api/auth/reset-password', () => {
     });
 
     it('should return 429 when rate limited', async () => {
-        mockedRateLimit.mockReturnValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
+        mockedRateLimit.mockResolvedValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
         const res = await callReset({ email: 'user@example.com' });
         expect(res.status).toBe(429);
     });
@@ -282,7 +310,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
         mockDbState.updateAffectedRows = 1;
-        mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
+        mockedRateLimit.mockResolvedValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
     });
 
     async function callResetConfirm(body: Record<string, unknown>) {
@@ -335,7 +363,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
     });
 
     it('should return 429 when rate limited', async () => {
-        mockedRateLimit.mockReturnValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
+        mockedRateLimit.mockResolvedValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
         const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
         expect(res.status).toBe(429);
     });
@@ -351,7 +379,7 @@ describe('POST /api/auth/change-password', () => {
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
         mockDbState.updateAffectedRows = 1;
-        mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
+        mockedRateLimit.mockResolvedValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
     });
 
     async function callChangePassword(body: Record<string, unknown>) {
@@ -441,7 +469,7 @@ describe('POST /api/auth/change-password', () => {
             user: { id: 'user-1', role: 'student' },
             expires: new Date(Date.now() + 86400000).toISOString(),
         } as never);
-        mockedRateLimit.mockReturnValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
+        mockedRateLimit.mockResolvedValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
         const res = await callChangePassword({ currentPassword: 'Old1234!', newPassword: 'New1234!' });
         expect(res.status).toBe(429);
     });

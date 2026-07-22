@@ -5,7 +5,11 @@ import { and, eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import {
+    authRateLimitUnavailableResponse,
+    consumeAuthRateLimit,
+} from '@/lib/auth-rate-limit';
 
 const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, 'กรุณากรอกรหัสผ่านปัจจุบัน'),
@@ -29,7 +33,15 @@ export async function POST(request: Request) {
 
         // Rate limiting
         const clientIP = getClientIP(request);
-        const rateLimit = checkRateLimit(`change-pw:${clientIP}`, rateLimits.auth);
+        const rateLimit = await consumeAuthRateLimit({
+            namespace: 'change-pw',
+            identifier: clientIP,
+            ...rateLimits.auth,
+        }).catch(() => null);
+
+        if (!rateLimit) {
+            return authRateLimitUnavailableResponse();
+        }
 
         if (!rateLimit.success) {
             return rateLimitResponse(rateLimit.resetTime);

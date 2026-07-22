@@ -4,7 +4,11 @@ import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import {
+    authRateLimitUnavailableResponse,
+    consumeAuthRateLimit,
+} from '@/lib/auth-rate-limit';
 import { sendWelcomeEmail } from '@/lib/email';
 
 // Validation schema
@@ -25,7 +29,15 @@ export async function POST(request: Request) {
 
     // Rate limiting - 5 requests per minute per IP
     const clientIP = getClientIP(request);
-    const rateLimit = checkRateLimit(`register:${clientIP}`, rateLimits.auth);
+    const rateLimit = await consumeAuthRateLimit({
+      namespace: 'register',
+      identifier: clientIP,
+      ...rateLimits.auth,
+    }).catch(() => null);
+
+    if (!rateLimit) {
+      return authRateLimitUnavailableResponse();
+    }
     
     if (!rateLimit.success) {
       return rateLimitResponse(rateLimit.resetTime);

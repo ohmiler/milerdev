@@ -5,8 +5,8 @@ solodeveling_schema: 1
 # State
 
 - Goal: Keep MilerDev learning and commerce journeys truthful, usable, and production-safe.
-- Progress: Learner-side cleanup, critical payment fulfillment hardening, and critical authentication/session hardening are complete.
-- Active work: None. `AUTH-SEC-002` is archived; cumulative evidence remains in `.solodeveling/evidence/AUTH-SEC-002.md`.
+- Progress: Learner-side cleanup, critical payment fulfillment hardening, authentication/session hardening, OAuth identity/migration hardening, and distributed auth abuse limiting are complete.
+- Active work: None. `AUTH-RATE-004` is archived; cumulative evidence remains in `.solodeveling/evidence/AUTH-RATE-004.md`.
 - Blockers: None.
-- Current risks: Live MySQL migration and production auth smoke are release-controlled and unverified; legacy `docs`/`doc_groups` tables remain physically present but unmanaged; OAuth account links still lack database-level provider identity uniqueness; per-session authorization now adds one narrow user-state query whose production load has not been measured.
-- Next action: Select the next bounded backend improvement; recommended follow-up is OAuth account-link uniqueness with a duplicate-data preflight, followed by distributed auth rate limiting.
+- Current risks: Production OAuth duplicate preflight, migrations 0010/0011, provider/login smoke, and auth limiter latency/load remain release-controlled; the shared limiter intentionally denies scoped auth mutations when MySQL is unavailable; legacy docs tables remain physically present but unmanaged; per-session authorization query load is unmeasured.
+- Next action: Ask for release-planning authority before applying migrations or running production smoke; otherwise select the next bounded backend item.

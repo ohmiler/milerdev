@@ -7,6 +7,8 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { createGoogleProvider, isTrustedGoogleProfile } from "./auth-google";
 import { applyJwtSessionPolicy, exposeAuthorizedSession } from "./auth-session";
+import { authorizeCredentials } from "./auth-credentials";
+import { consumeAuthRateLimit } from "./auth-rate-limit";
 
 const EXPECTED_AUTH_ERROR_TYPES = new Set(["CredentialsSignin", "MissingCSRF"]);
 
@@ -56,39 +58,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 email: { label: "Email", type: "email" },
                 password: { label: "Password", type: "password" },
             },
-            async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) {
-                    return null;
-                }
-
-                const normalizedEmail = (credentials.email as string).toLowerCase().trim();
-                const user = await db.query.users.findFirst({
-                    where: eq(schema.users.email, normalizedEmail),
+            async authorize(credentials, request) {
+                return authorizeCredentials(credentials, request, {
+                    consumeRateLimit: consumeAuthRateLimit,
+                    findUserByEmail: async (email) => db.query.users.findFirst({
+                        where: eq(schema.users.email, email),
+                    }),
+                    comparePassword: (password, passwordHash) => bcrypt.compare(
+                        password,
+                        passwordHash
+                    ),
                 });
-
-                if (!user) {
-                    return null;
-                }
-
-                if (!user.passwordHash) {
-                    return null;
-                }
-
-                const isValidPassword = await bcrypt.compare(
-                    credentials.password as string,
-                    user.passwordHash
-                );
-
-                if (!isValidPassword) {
-                    return null;
-                }
-
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                };
             },
         }),
     ],

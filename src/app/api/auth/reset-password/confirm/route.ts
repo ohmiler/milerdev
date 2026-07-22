@@ -4,7 +4,11 @@ import { users } from '@/lib/db/schema';
 import { eq, and, gt, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import {
+    authRateLimitUnavailableResponse,
+    consumeAuthRateLimit,
+} from '@/lib/auth-rate-limit';
 import { createHash } from 'crypto';
 
 const confirmResetSchema = z.object({
@@ -21,7 +25,15 @@ export async function POST(request: Request) {
     try {
         // Rate limiting
         const clientIP = getClientIP(request);
-        const rateLimit = checkRateLimit(`reset-confirm:${clientIP}`, rateLimits.auth);
+        const rateLimit = await consumeAuthRateLimit({
+            namespace: 'reset-confirm',
+            identifier: clientIP,
+            ...rateLimits.auth,
+        }).catch(() => null);
+
+        if (!rateLimit) {
+            return authRateLimitUnavailableResponse();
+        }
 
         if (!rateLimit.success) {
             return rateLimitResponse(rateLimit.resetTime);

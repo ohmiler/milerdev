@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, decimal, datetime, boolean, uniqueIndex, index } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, uniqueIndex, index } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -44,7 +44,9 @@ export const accounts = mysqlTable('accounts', {
     scope: varchar('scope', { length: 255 }),
     id_token: text('id_token'),
     session_state: varchar('session_state', { length: 255 }),
-});
+}, (table) => [
+    uniqueIndex('uq_accounts_provider_identity').on(table.provider, table.providerAccountId),
+]);
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
     user: one(users, {
@@ -204,6 +206,17 @@ export const paymentsRelations = relations(payments, ({ one, many }) => ({
     analyticsEvents: many(analyticsEvents),
     stripeEvents: many(stripeEvents),
 }));
+
+// =====================
+// AUTH RATE LIMIT BUCKETS
+// =====================
+export const rateLimitBuckets = mysqlTable('rate_limit_buckets', {
+    keyHash: char('key_hash', { length: 64 }).primaryKey(),
+    count: int('count').notNull(),
+    resetAt: datetime('reset_at', { fsp: 3 }).notNull(),
+}, (table) => [
+    index('idx_rate_limit_buckets_reset_at').on(table.resetAt),
+]);
 
 // =====================
 // STRIPE EVENTS TABLE
@@ -658,6 +671,7 @@ export type BundleCourse = typeof bundleCourses.$inferSelect;
 export type NewBundleCourse = typeof bundleCourses.$inferInsert;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
+export type RateLimitBucket = typeof rateLimitBuckets.$inferSelect;
 
 // =====================
 // AFFILIATE BANNERS TABLE

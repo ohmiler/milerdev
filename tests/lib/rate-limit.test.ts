@@ -68,6 +68,29 @@ describe('Rate Limiter', () => {
             const request = new Request('http://localhost');
             expect(getClientIP(request)).toBe('unknown');
         });
+
+        it('prefers the Railway x-real-ip contract over spoofable alternates', () => {
+            const request = new Request('http://localhost', {
+                headers: {
+                    'x-real-ip': '203.0.113.10',
+                    'x-client-ip': '198.51.100.20',
+                    'fly-client-ip': '198.51.100.21',
+                },
+            });
+
+            expect(getClientIP(request)).toBe('203.0.113.10');
+        });
+
+        it('does not trust alternate client IP headers by themselves', () => {
+            const request = new Request('http://localhost', {
+                headers: {
+                    'x-client-ip': '198.51.100.20',
+                    'fly-client-ip': '198.51.100.21',
+                },
+            });
+
+            expect(getClientIP(request)).toBe('unknown');
+        });
     });
 
     describe('rateLimits presets', () => {

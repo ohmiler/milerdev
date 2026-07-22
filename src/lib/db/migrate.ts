@@ -4,6 +4,8 @@ import mysql from 'mysql2/promise';
 import * as dotenv from 'dotenv';
 import path from 'path';
 
+import { getSafeMigrationFailureMessage } from './migration-error';
+
 // Load .env.local only in development (production uses real env vars)
 if (!process.env.DATABASE_URL) {
     dotenv.config({ path: '.env.local' });
@@ -28,6 +30,6 @@ async function main() {
 }
 
 main().catch((err) => {
-    console.error('Migration failed:', err);
+    console.error(getSafeMigrationFailureMessage(err));
     process.exit(1);
 });
