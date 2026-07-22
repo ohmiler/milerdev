@@ -8,6 +8,39 @@ const viewports = [
 ] as const;
 
 test.describe('public learning journey', () => {
+  test('keeps the lesson player inside its viewport-sized frame', async ({ page }) => {
+    await page.setContent(
+      '<div class=learning-surface data-surface=learning>' +
+      '<div class=learning-content-layout>' +
+      '<main class=learning-main style=flex:1;min-width:0>' +
+      '<div class=learning-video style=width:100%;aspect-ratio:16/9;position:relative;flex-shrink:0>' +
+      '<div style=position:relative;padding-top:56.25%;background:#000></div>' +
+      '</div></main><aside class=learn-sidebar></aside></div></div>',
+    );
+    await page.addStyleTag({ path: 'src/app/globals.css' });
+
+    for (const viewport of viewports) {
+      await page.setViewportSize(viewport);
+      const dimensions = await page.locator('.learning-video').evaluate((frame) => {
+        const player = frame.firstElementChild;
+        const frameBox = frame.getBoundingClientRect();
+        const playerBox = player?.getBoundingClientRect();
+
+        return {
+          frameHeight: frameBox.height,
+          playerHeight: playerBox?.height ?? 0,
+        };
+      });
+
+      expect(dimensions.frameHeight, 'lesson frame at ' + viewport.width + 'px').toBeLessThanOrEqual(
+        Math.min(viewport.height * 0.48, 520) + 1,
+      );
+      expect(dimensions.playerHeight, 'lesson player at ' + viewport.width + 'px').toBeLessThanOrEqual(
+        dimensions.frameHeight + 1,
+      );
+    }
+  });
+
   test('keeps Home, catalog, and course detail within representative viewport widths', async ({ page }) => {
     const response = await page.request.get('/api/courses');
     expect(response.ok()).toBeTruthy();
@@ -157,6 +190,21 @@ test.describe('public learning journey', () => {
 
       expect(dimensions.scrollWidth, `learning workspace at ${viewport.width}px`).toBe(
         dimensions.clientWidth,
+      );
+
+      const videoDimensions = await page.locator('.learning-video').evaluate((frame) => {
+        const player = frame.firstElementChild;
+        const frameBox = frame.getBoundingClientRect();
+        const playerBox = player?.getBoundingClientRect();
+
+        return {
+          frameHeight: frameBox.height,
+          playerHeight: playerBox?.height ?? 0,
+        };
+      });
+
+      expect(videoDimensions.playerHeight, `lesson player at ${viewport.width}px`).toBeLessThanOrEqual(
+        videoDimensions.frameHeight + 1,
       );
     }
 

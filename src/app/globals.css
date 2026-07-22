@@ -1907,6 +1907,7 @@ h1, h2, h3, h4, h5, h6 {
   height: min(48dvh, 520px);
   aspect-ratio: auto !important;
   margin: 0 clamp(20px, 3vw, 40px);
+  overflow: hidden;
   padding: 0;
   border: 1px solid var(--line-strong);
   border-top: 3px solid var(--accent);
@@ -1914,6 +1915,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .learning-video > * {
+  width: 100%;
+  height: 100%;
+  padding-top: 0 !important;
   border: 0;
   border-radius: 0;
 }
