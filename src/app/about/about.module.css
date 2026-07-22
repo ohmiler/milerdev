@@ -228,7 +228,7 @@
 .cta {
   padding: clamp(64px, 8vw, 104px) 0;
   background: var(--accent);
-  color: #062438;
+  color: var(--accent-foreground);
 }
 
 .ctaGrid {
@@ -241,7 +241,7 @@
   grid-column: 1 / -1;
   max-width: 17ch;
   margin: 0;
-  color: #fff;
+  color: var(--accent-foreground);
   font-size: clamp(2.5rem, 5vw, 4.75rem);
   line-height: 1.1;
   letter-spacing: -0.035em;
@@ -252,7 +252,7 @@
   align-self: end;
   max-width: 45ch;
   margin: 28px 0 0;
-  color: #fff;
+  color: var(--accent-foreground);
   line-height: 1.75;
 }
 
@@ -270,25 +270,25 @@
   justify-content: center;
   gap: 10px;
   padding: 10px 18px;
-  border: 1px solid #062438;
-  color: #062438;
+  border: 1px solid var(--accent-foreground);
+  color: var(--accent-foreground);
   font-weight: 700;
   text-decoration: none;
 }
 
 .ctaActions a:first-child {
-  background: #062438;
+  background: var(--accent-foreground);
   color: #fff;
 }
 
 .ctaActions a:last-child {
-  border-color: #fff;
-  color: #fff;
+  border-color: var(--accent-foreground);
+  color: var(--accent-foreground);
 }
 
 .ctaActions a:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-foreground) 55%, transparent);
 }
 
 @media (max-width: 900px) {

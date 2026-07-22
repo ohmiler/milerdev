@@ -246,13 +246,13 @@
 .contactCta {
   margin-top: clamp(72px, 9vw, 120px);
   padding: clamp(32px, 5vw, 56px);
-  border-top: 3px solid #fff;
+  border-top: 3px solid var(--accent-foreground);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-foreground);
 }
 
 .contactCta .sectionLabel {
-  color: #062438;
+  color: var(--accent-foreground);
 }
 
 .contactCta h2 {
@@ -286,7 +286,7 @@
 
 .contactCta > a:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.78);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-foreground) 55%, transparent);
 }
 
 @media (max-width: 900px) {

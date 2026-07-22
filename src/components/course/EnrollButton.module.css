@@ -21,7 +21,7 @@
   padding: 14px 18px;
   border: 1px solid var(--accent-strong);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-foreground);
   font-size: 1rem;
   font-weight: 750;
   line-height: 1.35;
@@ -33,6 +33,7 @@
 .primaryButton:hover:not(:disabled) {
   border-color: var(--ink);
   background: var(--accent-strong);
+  color: var(--accent-strong-foreground);
 }
 
 .primaryButton:active:not(:disabled) {
@@ -172,7 +173,7 @@
   padding: 9px 15px;
   border: 1px solid var(--accent-strong);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-foreground);
   font-size: .82rem;
   font-weight: 750;
   white-space: nowrap;
@@ -180,6 +181,7 @@
 
 .compactButton:hover:not(:disabled) {
   background: var(--accent-strong);
+  color: var(--accent-strong-foreground);
 }
 
 .textButton {

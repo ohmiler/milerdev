@@ -218,8 +218,8 @@
   cursor: pointer;
 }
 
-.primaryAction { border-color: var(--accent-strong); background: var(--accent); color: #fff; }
-.primaryAction:hover { background: var(--accent-strong); }
+.primaryAction { border-color: var(--accent-strong); background: var(--accent); color: var(--accent-foreground); }
+.primaryAction:hover { background: var(--accent-strong); color: var(--accent-strong-foreground); }
 .secondaryAction { background: var(--canvas); color: var(--ink); }
 .secondaryAction:hover { border-color: var(--accent-strong); color: var(--accent-strong); }
 .textAction { padding-inline: 0; border-color: transparent; background: transparent; color: var(--accent-strong); }
@@ -269,7 +269,7 @@
 
 .avatarWrap { display: grid; min-height: 156px; place-items: center; border-right: 1px solid var(--line); background: var(--accent-soft); }
 .avatar { width: 96px; height: 96px; border: 1px solid var(--accent-strong); object-fit: cover; }
-.avatarFallback { display: grid; width: 96px; height: 96px; place-items: center; border: 1px solid var(--accent-strong); background: var(--accent); color: #fff; font-size: 2.25rem; font-weight: 800; }
+.avatarFallback { display: grid; width: 96px; height: 96px; place-items: center; border: 1px solid var(--accent-strong); background: var(--accent); color: var(--accent-foreground); font-size: 2.25rem; font-weight: 800; }
 .profileIdentity { align-self: center; padding: 26px 30px; }
 .profileIdentity h2 { margin: 0 0 5px; font-size: clamp(1.45rem, 3vw, 2.15rem); }
 .profileIdentity p { margin: 0; color: var(--ink-soft); overflow-wrap: anywhere; }

@@ -56,6 +56,8 @@ The canonical light roles are:
 | Accent hover | --color-accent-hover | #008ED6 |
 | Accent pressed | --color-accent-pressed / light --accent-strong | #0075B3 |
 | Accent soft | --color-accent-soft / --accent-soft | #E0F5FF |
+| On accent | --color-on-accent / --accent-foreground | #061923 |
+| On strong accent | --color-on-accent-strong / --accent-strong-foreground | Contextual: #FFFFFF on light, #061923 on dark |
 | Success | --color-success | #22C55E |
 | Warning | --color-warning | #F59E0B |
 | Error/destructive | --color-error | #F43F5E |
@@ -116,6 +118,7 @@ Borders explain containment, comparison, sequence, and sticky/adjacent regions. 
 - Global actions have at least a 44px target; directory/filter actions commonly use 48px.
 - Name variants by purpose: primary, secondary/quiet, and destructive. Promotion is content state, not a button style.
 - Primary public actions may use accent blue or near-black when the composition needs a stronger editorial anchor.
+- Exact `#00ABFF` fields and actions use `--accent-foreground`; contextual hover/pressed fields use `--accent-strong-foreground` because dark-theme strong accent is brighter than its light-theme counterpart.
 - Hover movement is restrained to roughly 1–2px; active and selected states must remain visible without motion.
 - Use the shared focus ring or the equivalent 3px accent outline with offset.
 

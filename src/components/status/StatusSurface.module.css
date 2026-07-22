@@ -155,7 +155,7 @@
 .actions > :first-child {
   border-color: var(--accent-strong);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-foreground);
 }
 
 .actions > a:hover,
@@ -167,7 +167,7 @@
 
 .actions > :first-child:hover {
   background: var(--accent-strong);
-  color: #fff;
+  color: var(--accent-strong-foreground);
 }
 
 .actions > a:focus-visible,

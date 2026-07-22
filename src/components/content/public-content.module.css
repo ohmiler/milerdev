@@ -34,8 +34,8 @@
 .feedState { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 28px; min-height: 320px; align-items: center; padding: clamp(28px, 5vw, 52px); border: 1px solid var(--line); background: var(--surface); }
 .feedState h2 { margin: 0 0 10px; font-size: clamp(1.4rem, 3vw, 2rem); }
 .feedState p:not(.stateCode) { max-width: 48ch; margin: 0; color: var(--ink-soft); line-height: 1.75; }
-.feedState button { min-height: 44px; margin-top: 22px; padding: 9px 16px; border: 1px solid var(--accent); border-radius: 0; background: var(--accent); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
-.feedState button:hover { background: var(--accent-strong); }
+.feedState button { min-height: 44px; margin-top: 22px; padding: 9px 16px; border: 1px solid var(--accent); border-radius: 0; background: var(--accent); color: var(--accent-foreground); font: inherit; font-weight: 700; cursor: pointer; }
+.feedState button:hover { background: var(--accent-strong); color: var(--accent-strong-foreground); }
 .feedState button:focus-visible, .legalIndex a:focus-visible, .heroEvidence a:focus-visible, .legalDocument a:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 3px; }
 .stateSymbol, .loadingMark { display: grid; width: 72px; height: 72px; place-items: center; border: 1px solid var(--line-strong); color: var(--accent-strong); font: 500 2rem/1 var(--font-code); }
 .loadingMark::before { width: 20px; height: 20px; border: 2px solid var(--line-strong); border-top-color: var(--accent); content: ''; animation: contentSpin 800ms linear infinite; }

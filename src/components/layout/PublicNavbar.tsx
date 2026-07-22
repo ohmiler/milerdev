@@ -275,7 +275,7 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     border-radius: 0;
                     background: var(--accent);
                     clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
-                    color: #061923;
+                    color: var(--accent-foreground);
                 }
                 .nav-public-primary svg { display: none; }
                 .nav-public-primary span { font-size: 1rem; transition: transform 160ms ease; }
@@ -362,7 +362,7 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                 .nav-mobile-auth-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 18px; }
                 .nav-mobile-auth { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 0; font-size: 0.95rem; font-weight: 700; text-decoration: none; }
                 .nav-mobile-auth--secondary { border: 1px solid var(--line); color: var(--ink-soft); }
-                .nav-mobile-auth--primary { background: var(--accent); color: #061923; }
+                .nav-mobile-auth--primary { background: var(--accent); color: var(--accent-foreground); }
                 @media (max-width: 1020px) and (min-width: 841px) {
                     .nav-public-rail { column-gap: 16px; }
                     .nav-public-links { gap: 16px; }

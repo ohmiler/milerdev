@@ -261,8 +261,8 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
               onClick={() => setFilterRating(null)}
               style={{
                 padding: '6px 12px',
-                background: '#eff6ff',
-                color: '#2563eb',
+                background: 'var(--accent-soft)',
+                color: 'var(--accent-strong)',
                 border: 'none',
                 borderRadius: '6px',
                 fontSize: '0.8125rem',
@@ -279,8 +279,8 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
             onClick={() => setShowForm(!showForm)}
             style={{
               padding: '10px 20px',
-              background: '#2563eb',
-              color: 'white',
+              background: 'var(--accent)',
+              color: 'var(--accent-foreground)',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 500,
@@ -338,8 +338,8 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
             disabled={submitting || formRating === 0}
             style={{
               padding: '10px 24px',
-              background: submitting ? '#94a3b8' : '#2563eb',
-              color: 'white',
+              background: submitting ? '#94a3b8' : 'var(--accent)',
+              color: submitting ? 'var(--ink)' : 'var(--accent-foreground)',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 500,
@@ -388,8 +388,8 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
               style={{
                 marginTop: '16px',
                 padding: '10px 20px',
-                background: '#2563eb',
-                color: 'white',
+                background: 'var(--accent)',
+                color: 'var(--accent-foreground)',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -420,8 +420,8 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
                     width: '40px',
                     height: '40px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                    color: 'white',
+                    background: 'var(--accent)',
+                    color: 'var(--accent-foreground)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

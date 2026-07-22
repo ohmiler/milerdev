@@ -415,7 +415,7 @@ function ToastItem({ toast, onDismiss }: { toast: Notification; onDismiss: (id: 
                 {toast.link && (
                     <a
                         href={toast.link}
-                        style={{ color: '#2563eb', fontSize: '0.8125rem', fontWeight: 500, textDecoration: 'none', marginTop: '4px', display: 'inline-block' }}
+                        style={{ color: 'var(--accent-strong)', fontSize: '0.8125rem', fontWeight: 500, textDecoration: 'none', marginTop: '4px', display: 'inline-block' }}
                     >
                         ดูรายละเอียด →
                     </a>

@@ -10,6 +10,7 @@
   --home-blue-hover: var(--color-accent-hover);
   --home-blue-deep: var(--color-accent-pressed);
   --home-blue-soft: var(--color-accent-soft);
+  --home-on-blue: var(--color-on-accent);
   --home-line: var(--color-border);
   overflow: clip;
   background: var(--home-paper);
@@ -131,9 +132,9 @@
 }
 
 .primaryAction {
-  border-color: var(--home-ink);
-  background: var(--home-ink);
-  color: var(--home-white);
+  border-color: var(--home-blue-deep);
+  background: var(--home-blue);
+  color: var(--home-on-blue);
 }
 
 .secondaryAction {
@@ -152,6 +153,14 @@
 .primaryAction:hover {
   border-color: var(--home-blue-deep);
   background: var(--home-blue-deep);
+  color: var(--home-white);
+}
+
+.primaryAction:active {
+  border-color: var(--home-ink);
+  background: var(--home-ink);
+  color: var(--home-white);
+  transform: translateY(0);
 }
 
 .secondaryAction:hover {
@@ -838,7 +847,7 @@
   padding: clamp(76px, 9vw, 126px) 0;
   overflow: hidden;
   background: var(--home-blue);
-  color: var(--home-white);
+  color: var(--home-on-blue);
 }
 
 .closingInner {
@@ -860,7 +869,7 @@
 .closing h2 {
   max-width: 12ch;
   margin: 0;
-  color: var(--home-white);
+  color: var(--home-on-blue);
   font-size: clamp(3rem, 6.4vw, 7rem);
   font-weight: 780;
   letter-spacing: -0.06em;
@@ -871,7 +880,7 @@
 .closing p {
   max-width: 52ch;
   margin: 22px 0 0;
-  color: color-mix(in srgb, var(--home-white) 84%, transparent);
+  color: color-mix(in srgb, var(--home-on-blue) 82%, var(--home-blue-deep));
   line-height: 1.78;
 }
 
@@ -885,20 +894,26 @@
   min-width: 220px;
 }
 
-.closing .secondaryAction {
-  border-color: color-mix(in srgb, var(--home-white) 62%, transparent);
+.closing .primaryAction {
+  border-color: var(--home-ink);
+  background: var(--home-ink);
   color: var(--home-white);
 }
 
+.closing .secondaryAction {
+  border-color: color-mix(in srgb, var(--home-on-blue) 62%, transparent);
+  color: var(--home-on-blue);
+}
+
 .closing .secondaryAction:hover {
-  border-color: var(--home-white);
-  background: var(--home-white);
-  color: var(--home-ink);
+  border-color: var(--home-on-blue);
+  background: var(--home-on-blue);
+  color: var(--home-white);
 }
 
 .closing .primaryAction:focus-visible,
 .closing .secondaryAction:focus-visible {
-  outline-color: var(--home-white);
+  outline-color: var(--home-on-blue);
 }
 
 @media (max-width: 1040px) {

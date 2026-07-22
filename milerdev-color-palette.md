@@ -9,6 +9,8 @@ Public UI ใช้ light mode เป็นค่าเริ่มต้น แ
 | Token | Color | Usage |
 |---|---:|---|
 | `accent` | `#00ABFF` | ปุ่มหลัก ลิงก์ และ Active state |
+| `on-accent` | `#061923` | ข้อความและไอคอนบนพื้น `#00ABFF` |
+| `on-accent-strong` | Contextual | สีตัวอักษรบน accent hover/pressed: ขาวบน light-theme deep blue และเข้มบน dark-theme bright blue |
 | `accent-hover` | `#33BCFF` | ปุ่มและลิงก์เมื่อ Hover ใน Dark theme |
 | `accent-pressed` | `#0089CC` | สถานะเมื่อกด |
 | `accent-soft-dark` | `#003D5C` | Badge หรือ Highlight บนพื้นมืด |
@@ -57,6 +59,8 @@ Public UI ใช้ light mode เป็นค่าเริ่มต้น แ
   --color-accent-hover: #008ed6;
   --color-accent-pressed: #0075b3;
   --color-accent-soft: #e0f5ff;
+  --color-on-accent: #061923;
+  --color-on-accent-strong: #ffffff;
 
   --color-background: #f7f9fb;
   --color-surface: #ffffff;
@@ -80,6 +84,7 @@ Public UI ใช้ light mode เป็นค่าเริ่มต้น แ
   --color-accent-hover: #33bcff;
   --color-accent-pressed: #0089cc;
   --color-accent-soft: #003d5c;
+  --color-on-accent-strong: #061923;
 
   --color-background: #080b0f;
   --color-surface: #10151c;
@@ -106,7 +111,7 @@ body {
 }
 
 .button-primary {
-  color: #001018;
+  color: var(--color-on-accent);
   background: var(--color-accent);
 }
 

@@ -125,7 +125,7 @@
 .filter button {
   border: 1px solid var(--accent-strong);
   background: var(--accent);
-  color: #062438;
+  color: var(--accent-foreground);
   cursor: pointer;
 }
 
@@ -138,7 +138,7 @@
 
 .filter button:hover {
   background: var(--accent-strong);
-  color: #fff;
+  color: var(--accent-strong-foreground);
 }
 
 .filter > a:hover,
@@ -425,7 +425,7 @@
   position: relative;
   border-color: var(--accent-strong);
   background: var(--accent);
-  color: #062438;
+  color: var(--accent-foreground);
   font-weight: 800;
 }
 

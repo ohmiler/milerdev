@@ -76,7 +76,7 @@ export default function CourseFilters({ totalCourses }: CourseFiltersProps) {
               transition: 'border-color 0.2s',
               background: 'white',
             }}
-            onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+            onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
             onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
           />
         </div>

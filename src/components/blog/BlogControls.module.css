@@ -83,13 +83,13 @@
   border: 1px solid var(--accent-strong);
   border-radius: 0;
   background: var(--accent);
-  color: #062438;
+  color: var(--accent-foreground);
   cursor: pointer;
   box-shadow: 6px 6px 0 rgba(12, 20, 31, .14);
   transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
-.scrollTop:hover { background: var(--accent-strong); color: #fff; transform: translateY(-2px); }
+.scrollTop:hover { background: var(--accent-strong); color: var(--accent-strong-foreground); transform: translateY(-2px); }
 .scrollTop svg { width: 19px; height: 19px; }
 
 .readingProgress {

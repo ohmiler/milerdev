@@ -365,7 +365,7 @@ export default function LearnPageClient({
                   <div style={{
                     height: '100%',
                     width: `${progressPercent}%`,
-                    background: progressPercent === 100 ? '#4ade80' : '#3b82f6',
+                    background: progressPercent === 100 ? '#4ade80' : 'var(--accent)',
                     borderRadius: '3px',
                     transition: 'width 0.4s ease',
                   }} />
@@ -502,8 +502,8 @@ export default function LearnPageClient({
                     href={`/courses/${course.slug}`}
                     style={{
                       padding: '12px 24px',
-                      background: '#2563eb',
-                      color: 'white',
+                      background: 'var(--accent)',
+                      color: 'var(--accent-foreground)',
                       textDecoration: 'none',
                       borderRadius: '8px',
                       fontWeight: 500,
@@ -548,12 +548,12 @@ export default function LearnPageClient({
               flexShrink: 0,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.875rem', minWidth: 0 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" style={{ flexShrink: 0 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" style={{ flexShrink: 0 }}>
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
                 <span>บทถัดไป:</span>
                 <span style={{ color: 'white', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextLesson.title}</span>
-                <span style={{ color: '#3b82f6', fontWeight: 700, flexShrink: 0 }}>({autoAdvanceCountdown}s)</span>
+                <span style={{ color: 'var(--accent)', fontWeight: 700, flexShrink: 0 }}>({autoAdvanceCountdown}s)</span>
               </div>
               <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                 <button
@@ -568,7 +568,7 @@ export default function LearnPageClient({
                 </button>
                 <Link
                   href={`/courses/${course.slug}/learn/${nextLesson.id}`}
-                  style={{ padding: '5px 12px', background: '#2563eb', color: 'white', borderRadius: '6px', textDecoration: 'none', fontSize: '0.8125rem', fontWeight: 500 }}
+                  style={{ padding: '5px 12px', background: 'var(--accent)', color: 'var(--accent-foreground)', borderRadius: '6px', textDecoration: 'none', fontSize: '0.8125rem', fontWeight: 700 }}
                 >
                   ไปเลย
                 </Link>
@@ -705,8 +705,8 @@ export default function LearnPageClient({
                   href={`/courses/${course.slug}/learn/${nextLesson.id}`}
                   style={{
                     padding: '10px 18px',
-                    background: '#2563eb',
-                    color: 'white',
+                    background: 'var(--accent)',
+                    color: 'var(--accent-foreground)',
                     textDecoration: 'none',
                     borderRadius: '8px',
                     display: 'flex',
@@ -716,8 +716,14 @@ export default function LearnPageClient({
                     fontWeight: 500,
                     transition: 'background 0.2s',
                   }}
-                  onMouseOver={(e) => (e.currentTarget.style.background = '#1d4ed8')}
-                  onMouseOut={(e) => (e.currentTarget.style.background = '#2563eb')}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = 'var(--accent-strong)';
+                    e.currentTarget.style.color = 'var(--accent-strong-foreground)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'var(--accent)';
+                    e.currentTarget.style.color = 'var(--accent-foreground)';
+                  }}
                 >
                   บทถัดไป
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
