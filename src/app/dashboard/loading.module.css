@@ -1,0 +1,347 @@
+.main {
+  min-height: 100vh;
+  padding: 48px 0 88px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skeleton {
+  display: block;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--line) 0%, var(--surface-subtle) 42%, var(--line) 82%);
+  background-size: 220% 100%;
+  animation: dashboardShimmer 1.4s ease-in-out infinite;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 8fr 4fr;
+  gap: 48px;
+  align-items: end;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+}
+
+.headerCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eyebrow {
+  width: 132px;
+  height: 12px;
+}
+
+.title {
+  width: min(72%, 520px);
+  height: clamp(38px, 5vw, 58px);
+}
+
+.description {
+  width: min(88%, 560px);
+  height: 16px;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.navItem {
+  width: 92px;
+  height: 40px;
+}
+
+.navItemShort {
+  width: 74px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 64px;
+  border-left: 1px solid var(--line);
+}
+
+.stat {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--canvas);
+}
+
+.statLabel {
+  width: 82px;
+  height: 11px;
+}
+
+.statValue {
+  width: 32px;
+  height: 28px;
+}
+
+.continueSection {
+  margin-bottom: 72px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 22px;
+}
+
+.sectionHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionLabel {
+  width: 92px;
+  height: 11px;
+}
+
+.sectionTitle {
+  width: 220px;
+  height: 34px;
+}
+
+.sectionMeta {
+  width: 116px;
+  height: 13px;
+}
+
+.continueFeature {
+  display: grid;
+  min-height: 360px;
+  grid-template-columns: 7fr 5fr;
+  border: 1px solid var(--line);
+  background: var(--canvas);
+}
+
+.media {
+  min-height: 360px;
+  background:
+    linear-gradient(135deg, transparent 62%, rgba(0, 171, 255, 0.18) 62%),
+    var(--code-bg);
+}
+
+.featureContent {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 36px;
+}
+
+.status {
+  width: 112px;
+  height: 12px;
+}
+
+.featureTitle {
+  width: 86%;
+  height: 72px;
+  margin-top: 24px;
+}
+
+.progress {
+  width: 100%;
+  height: 5px;
+  margin-top: 28px;
+}
+
+.featureAction {
+  width: 148px;
+  height: 16px;
+  margin-top: auto;
+}
+
+.courseList {
+  border-top: 1px solid var(--line);
+}
+
+.courseRow {
+  display: grid;
+  min-height: 94px;
+  grid-template-columns: 52px minmax(220px, 2fr) minmax(140px, 1fr) 100px 92px;
+  gap: 24px;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.index {
+  width: 20px;
+  height: 11px;
+}
+
+.courseTitle {
+  width: min(82%, 340px);
+  height: 18px;
+}
+
+.courseProgress {
+  width: 100%;
+  height: 5px;
+}
+
+.courseStatus {
+  width: 68px;
+  height: 12px;
+}
+
+.courseAction {
+  width: 74px;
+  height: 14px;
+  justify-self: end;
+}
+
+@keyframes dashboardShimmer {
+  from { background-position: 180% 0; }
+  to { background-position: -60% 0; }
+}
+
+@media (max-width: 900px) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+
+  .navigation {
+    justify-content: flex-start;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .continueFeature {
+    grid-template-columns: 1fr;
+  }
+
+  .media {
+    min-height: 320px;
+  }
+
+  .courseRow {
+    grid-template-columns: 40px minmax(0, 1fr) 82px;
+  }
+
+  .courseProgress {
+    grid-column: 2;
+  }
+
+  .courseStatus {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .courseAction {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: 36px 0 64px;
+  }
+
+  .header {
+    gap: 24px;
+  }
+
+  .title {
+    width: 88%;
+    height: 44px;
+  }
+
+  .navigation {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .navItem,
+  .navItemShort {
+    width: 100%;
+    height: 41px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+    margin-bottom: 48px;
+  }
+
+  .sectionHead {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .continueSection {
+    margin-bottom: 52px;
+  }
+
+  .media {
+    min-height: 220px;
+  }
+
+  .featureContent {
+    min-height: 260px;
+    padding: 24px;
+  }
+
+  .courseRow {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 10px 12px;
+    padding: 18px 0;
+  }
+
+  .courseTitle,
+  .courseProgress,
+  .courseStatus,
+  .courseAction {
+    grid-column: 2;
+  }
+
+  .courseStatus {
+    grid-row: 3;
+  }
+
+  .courseAction {
+    grid-row: 4;
+    justify-self: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--line);
+  }
+}
