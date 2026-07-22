@@ -62,7 +62,7 @@
 }
 
 .panel[data-size=media] {
-  width: min(100%, 960px);
+  width: min(100%, 1280px);
 }
 
 .panel[data-variant=media] {
@@ -77,8 +77,25 @@
 
 .panel[data-variant=media] .taskBody {
   overflow: hidden;
+  margin-top: 16px;
   border: 1px solid var(--feedback-line);
   background: #000000;
+}
+
+.panel[data-variant=media] .content {
+  padding: clamp(20px, 2.5vw, 32px);
+}
+
+.panel[data-variant=media] .body {
+  max-width: 64ch;
+  margin-top: 6px;
+  font-size: var(--text-body-sm, .875rem);
+  line-height: 1.6;
+}
+
+.panel[data-variant=media] .actions {
+  margin-top: 16px;
+  padding-top: 16px;
 }
 
 .content {

@@ -55,6 +55,43 @@ test.describe('public learning journey', () => {
     }
   });
 
+  test('gives the course preview video a centered responsive media dialog', async ({ page }) => {
+    await page.setContent(
+      '<div class=overlay data-tone=info>' +
+      '<div class=panel data-size=media data-variant=media>' +
+      '<div class=content><h3 class=title>Course preview</h3>' +
+      '<div class=body>Preview the course before enrolling.</div>' +
+      '<div class=taskBody><div class=player style=position:relative;padding-top:56.25%;background:#000></div></div>' +
+      '<div class=actions><button class=closeButton>Close preview</button></div>' +
+      '</div></div></div>',
+    );
+    await page.addStyleTag({ content: '*{box-sizing:border-box;margin:0;padding:0}' });
+    await page.addStyleTag({ path: 'src/components/ui/Feedback.module.css' });
+    await page.addStyleTag({ path: 'src/components/course/CoursePreviewVideo.module.css' });
+
+    for (const viewport of playerViewports) {
+      await page.setViewportSize(viewport);
+      const dimensions = await page.locator('.panel').evaluate((panel) => {
+        const player = panel.querySelector('.player');
+        const panelBox = panel.getBoundingClientRect();
+        const playerBox = player?.getBoundingClientRect();
+
+        return {
+          panelLeft: panelBox.left,
+          panelWidth: panelBox.width,
+          panelHeight: panelBox.height,
+          playerWidth: playerBox?.width ?? 0,
+          playerHeight: playerBox?.height ?? 0,
+        };
+      });
+
+      expect(dimensions.panelWidth, 'preview dialog width at ' + viewport.width + 'px').toBeLessThanOrEqual(1281);
+      expect(dimensions.panelHeight, 'preview dialog height at ' + viewport.width + 'px').toBeLessThanOrEqual(viewport.height - 31);
+      expect(dimensions.playerWidth / dimensions.playerHeight, 'preview video ratio at ' + viewport.width + 'px').toBeCloseTo(16 / 9, 2);
+      expect(dimensions.panelLeft + (dimensions.panelWidth / 2), 'preview dialog alignment at ' + viewport.width + 'px').toBeCloseTo(viewport.width / 2, 0);
+    }
+  });
+
   test('keeps Home, catalog, and course detail within representative viewport widths', async ({ page }) => {
     const response = await page.request.get('/api/courses');
     expect(response.ok()).toBeTruthy();
