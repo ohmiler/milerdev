@@ -61,13 +61,24 @@ export default function ReconciliationPage() {
     }, [fetchData]);
 
     const handleRetry = async (paymentId: string, action: 'approve' | 'reject') => {
+        const reason = window.prompt(
+            action === 'approve'
+                ? 'ระบุเหตุผลและหลักฐานที่ใช้อนุมัติ (อย่างน้อย 5 ตัวอักษร)'
+                : 'ระบุเหตุผลที่ปฏิเสธ (อย่างน้อย 5 ตัวอักษร)'
+        );
+        if (reason === null) return;
+        if (reason.trim().length < 5) {
+            setMessage({ type: 'error', text: 'เหตุผลต้องมีอย่างน้อย 5 ตัวอักษร' });
+            return;
+        }
+
         setActionLoading(paymentId);
         setMessage(null);
         try {
             const res = await fetch(`/api/admin/reconciliation/${paymentId}/retry`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action }),
+                body: JSON.stringify({ action, reason: reason.trim() }),
             });
             const data = await res.json();
             if (res.ok) {
@@ -85,12 +96,22 @@ export default function ReconciliationPage() {
 
     const handleBulkMarkFailed = async () => {
         if (selected.size === 0) return;
+        const reason = window.prompt('ระบุเหตุผลที่ทำเครื่องหมายรายการเหล่านี้ว่าล้มเหลว (อย่างน้อย 5 ตัวอักษร)');
+        if (reason === null) return;
+        if (reason.trim().length < 5) {
+            setMessage({ type: 'error', text: 'เหตุผลต้องมีอย่างน้อย 5 ตัวอักษร' });
+            return;
+        }
         setMessage(null);
         try {
             const res = await fetch('/api/admin/reconciliation', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'mark_failed', paymentIds: Array.from(selected) }),
+                body: JSON.stringify({
+                    action: 'mark_failed',
+                    paymentIds: Array.from(selected),
+                    reason: reason.trim(),
+                }),
             });
             const data = await res.json();
             if (res.ok) {

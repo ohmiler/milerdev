@@ -4,8 +4,8 @@ import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, enrollments, payments } from '@/lib/db/schema';
 import { eq, and, desc, asc } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { safeInsertEnrollment } from '@/lib/db/safe-insert';
 import { stripe } from '@/lib/stripe';
+import { fulfillStripeCheckoutSession } from '@/lib/payment-fulfillment';
 import TransactionReceipt from '@/components/proof/TransactionReceipt';
 
 export const dynamic = 'force-dynamic';
@@ -93,42 +93,18 @@ async function verifyAndFulfillBundle(
   sessionId: string | undefined,
   userId: string,
   bundleId: string,
-  courseIds: string[],
-  paymentId: string | undefined
 ) {
   if (!sessionId) return;
 
   try {
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
-    if (stripeSession.payment_status !== 'paid') return;
-
-    // Verify that the Stripe session metadata matches this user, bundle, and payment
-    const meta = stripeSession.metadata || {};
-    if (meta.userId && meta.userId !== userId) return;
-    if (meta.bundleId && meta.bundleId !== bundleId) return;
-    if (meta.paymentId && paymentId && meta.paymentId !== paymentId) return;
-    if (meta.type && meta.type !== 'bundle') return;
-
-    // Update payment status if still pending
-    if (paymentId) {
-      await db
-        .update(payments)
-        .set({
-          status: 'completed',
-          stripePaymentId: stripeSession.payment_intent as string,
-        })
-        .where(and(eq(payments.id, paymentId), eq(payments.status, 'pending')));
+    const result = await fulfillStripeCheckoutSession({
+      session: stripeSession,
+      expected: { userId, type: 'bundle', itemId: bundleId },
+    });
+    if (result.status === 'rejected') {
+      console.error(`[PaymentSuccess] Bundle fulfillment rejected (${result.code})`);
     }
-
-    // Create enrollment for each course (safe — handles duplicates)
-    for (const courseId of courseIds) {
-      try {
-        await safeInsertEnrollment(userId, courseId);
-      } catch (error) {
-        console.error(`Fallback enrollment failed for course ${courseId}:`, error);
-      }
-    }
-
   } catch (error) {
     console.error('Stripe session verification fallback failed:', error);
   }
@@ -158,8 +134,6 @@ export default async function BundlePaymentSuccessPage({ params, searchParams }:
       session_id,
       session.user.id,
       bundle.id,
-      bundleCourseList.map(c => c.courseId),
-      payment?.id
     );
   }
 

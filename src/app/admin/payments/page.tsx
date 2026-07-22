@@ -3,13 +3,11 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import {
-  AdminButton,
   AdminPageHero,
   AdminPill,
   AdminSectionHeading,
   AdminSurfaceCard,
 } from '@/components/admin/ui/AdminPrimitives';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 
 interface Payment {
@@ -17,7 +15,7 @@ interface Payment {
   amount: string;
   currency: string;
   method: 'stripe' | 'promptpay' | 'bank_transfer';
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  status: 'pending' | 'completed' | 'failed' | 'refunded' | 'verifying';
   stripePaymentId: string | null;
   slipUrl: string | null;
   createdAt: string;
@@ -52,7 +50,6 @@ export default function AdminPaymentsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   const [statusFilter, setStatusFilter] = useState('all');
@@ -94,45 +91,20 @@ export default function AdminPaymentsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, methodFilter, currentPage, searchDebounce]);
 
-  const handleDelete = async (id: string) => {
-    setDeleteConfirm(null);
-    try {
-      const res = await fetch(`/api/admin/payments/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        showToast('ลบรายการชำระเงินสำเร็จ', 'success');
-        await fetchPayments();
-      } else {
-        const data = await res.json();
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
-    }
-  };
-
-  const handleCleanup = async () => {
-    if (!confirm('ต้องการล้างรายการ pending ที่ค้างเกิน 24 ชั่วโมงใช่ไหม?')) return;
-    try {
-      const res = await fetch('/api/admin/payments/cleanup', { method: 'DELETE' });
-      const data = await res.json();
-      if (res.ok) {
-        showToast(`${data.message} (${data.deleted} รายการ)`, 'success');
-        await fetchPayments();
-      } else {
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
-    }
-  };
-
   const handleStatusChange = async (id: string, newStatus: string) => {
+    const reason = window.prompt('กรุณาระบุเหตุผลการเปลี่ยนสถานะ (อย่างน้อย 5 ตัวอักษร)');
+    if (reason === null) return;
+    if (reason.trim().length < 5) {
+      showToast('เหตุผลต้องมีอย่างน้อย 5 ตัวอักษร', 'error');
+      return;
+    }
+
     setUpdatingStatus(id);
     try {
       const res = await fetch(`/api/admin/payments/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, reason: reason.trim() }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -158,6 +130,8 @@ export default function AdminPaymentsPage() {
         return 'ล้มเหลว';
       case 'refunded':
         return 'คืนเงิน';
+      case 'verifying':
+        return 'กำลังตรวจสอบ';
       default:
         return status;
     }
@@ -245,9 +219,6 @@ export default function AdminPaymentsPage() {
         description="รวมการค้นหา กรอง ตรวจสอบรายการที่มีปัญหา และคำสั่งอัปเดตสถานะไว้ใน workspace เดียว เพื่อให้ทีมจัดการ payment operations ได้เร็วและมั่นใจขึ้น"
         actions={
           <>
-            <AdminButton tone="dark" onClick={handleCleanup}>
-              ล้าง pending เก่า
-            </AdminButton>
             <AdminPill tone={statusFilter === 'all' ? 'default' : 'warning'}>
               {statusFilter === 'all' ? 'ทุกสถานะ' : `สถานะ ${getStatusText(statusFilter)}`}
             </AdminPill>
@@ -396,7 +367,6 @@ export default function AdminPaymentsPage() {
                     <th style={{ ...headerCellStyle, textAlign: 'center' }}>ช่องทาง</th>
                     <th style={{ ...headerCellStyle, textAlign: 'center' }}>สถานะ</th>
                     <th style={{ ...headerCellStyle, textAlign: 'center' }}>เวลา</th>
-                    <th style={{ ...headerCellStyle, textAlign: 'center' }}>จัดการ</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -474,32 +444,18 @@ export default function AdminPaymentsPage() {
                             ...getStatusStyle(payment.status),
                           }}
                         >
-                          <option value="pending">รอดำเนินการ</option>
-                          <option value="completed">สำเร็จ</option>
-                          <option value="failed">ล้มเหลว</option>
-                          <option value="refunded">คืนเงิน</option>
+                          <option value={payment.status}>{getStatusText(payment.status)}</option>
+                          {payment.status === 'completed' && <option value="refunded">คืนเงิน</option>}
+                          {payment.status !== 'completed'
+                            && payment.status !== 'refunded'
+                            && payment.method !== 'stripe'
+                            && <option value="completed">สำเร็จ</option>}
+                          {(payment.status === 'pending' || payment.status === 'verifying')
+                            && <option value="failed">ล้มเหลว</option>}
                         </select>
                       </td>
                       <td style={{ ...bodyCellStyle, textAlign: 'center', fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6 }}>
                         {formatDate(payment.createdAt)}
-                      </td>
-                      <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                        <button
-                          onClick={() => setDeleteConfirm(payment.id)}
-                          title="ลบ"
-                          style={{
-                            padding: '8px 12px',
-                            background: '#fef2f2',
-                            color: '#dc2626',
-                            border: '1px solid #fecaca',
-                            borderRadius: '10px',
-                            fontSize: '0.78rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          ลบ
-                        </button>
                       </td>
                     </tr>
                   ))}
@@ -541,14 +497,6 @@ export default function AdminPaymentsPage() {
         )}
       </AdminSurfaceCard>
 
-      <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        title="ลบรายการชำระเงิน"
-        message="คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้ การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-        confirmText="ลบรายการ"
-        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
-        onCancel={() => setDeleteConfirm(null)}
-      />
     </div>
   );
 }

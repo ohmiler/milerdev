@@ -1,55 +1,14 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
-import { db } from '@/lib/db';
-import { payments } from '@/lib/db/schema';
-import { eq, and, lte, sql } from 'drizzle-orm';
-import { logAudit } from '@/lib/auditLog';
 
-// DELETE /api/admin/payments/cleanup - Clean up stale pending payments (older than 24 hours)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function DELETE(_request: Request) {
-  try {
-    const authResult = await requireAdmin();
-    if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
+// Payment attempts are immutable financial records. Retention or archival must
+// use an explicit, separately reviewed policy instead of deleting rows in bulk.
+export async function DELETE() {
+  const authResult = await requireAdmin();
+  if (authResult instanceof NextResponse) return authResult;
 
-    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
-
-    // Count before deleting
-    const [countResult] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(payments)
-      .where(and(eq(payments.status, 'pending'), lte(payments.createdAt, cutoff)));
-
-    const staleCount = countResult?.count || 0;
-
-    if (staleCount === 0) {
-      return NextResponse.json({ message: 'ไม่มีรายการ pending ที่ค้างเกิน 24 ชั่วโมง', deleted: 0 });
-    }
-
-    // Delete stale pending payments
-    await db
-      .delete(payments)
-      .where(and(eq(payments.status, 'pending'), lte(payments.createdAt, cutoff)));
-
-    await logAudit({
-      userId: session.user.id,
-      action: 'delete',
-      entityType: 'payment',
-      entityId: 'bulk-cleanup',
-      newValue: `Cleaned up ${staleCount} stale pending payments (older than 24h)`,
-    });
-
-    return NextResponse.json({
-      message: `ลบรายการ pending ที่ค้างเกิน 24 ชั่วโมง สำเร็จ`,
-      deleted: staleCount,
-    });
-  } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error cleaning up payments:' });
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาด' },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    { error: 'ไม่อนุญาตให้ลบประวัติการชำระเงิน กรุณาใช้สถานะเพื่อจัดการรายการ' },
+    { status: 405, headers: { Allow: 'GET' } },
+  );
 }

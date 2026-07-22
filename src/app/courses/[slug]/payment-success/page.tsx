@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { courses, enrollments, payments, coupons, couponUsages } from '@/lib/db/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { courses, enrollments, payments } from '@/lib/db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { safeInsertEnrollment, isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { stripe } from '@/lib/stripe';
+import { fulfillStripeCheckoutSession } from '@/lib/payment-fulfillment';
 import TransactionReceipt from '@/components/proof/TransactionReceipt';
 
 export const dynamic = 'force-dynamic';
@@ -69,52 +69,17 @@ async function getPaymentStatus(slug: string, userId: string) {
 }
 
 // Verify Stripe session and fulfill payment + enrollment if webhook hasn't done it yet
-async function verifyAndFulfill(sessionId: string | undefined, userId: string, courseId: string, paymentId: string | undefined) {
+async function verifyAndFulfill(sessionId: string | undefined, userId: string, courseId: string) {
   if (!sessionId) return;
 
   try {
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
-    if (stripeSession.payment_status !== 'paid') return;
-
-    // Verify that the Stripe session metadata matches this user, course, and payment
-    const meta = stripeSession.metadata || {};
-    if (meta.userId && meta.userId !== userId) return;
-    if (meta.courseId && meta.courseId !== courseId) return;
-    if (meta.paymentId && paymentId && meta.paymentId !== paymentId) return;
-    if (meta.type && meta.type !== 'course') return;
-
-    // Update payment status if still pending
-    if (paymentId) {
-      await db
-        .update(payments)
-        .set({
-          status: 'completed',
-          stripePaymentId: stripeSession.payment_intent as string,
-        })
-        .where(and(eq(payments.id, paymentId), eq(payments.status, 'pending')));
-    }
-
-    // Create enrollment (safe — handles duplicates)
-    await safeInsertEnrollment(userId, courseId);
-
-    // Record coupon usage if coupon was applied (idempotent)
-    const couponId = stripeSession.metadata?.couponId;
-    if (couponId && userId) {
-      try {
-        await db.insert(couponUsages).values({
-          couponId,
-          userId,
-          courseId,
-          discountAmount: '0',
-        });
-        await db.update(coupons)
-          .set({ usageCount: sql`${coupons.usageCount} + 1` })
-          .where(eq(coupons.id, couponId));
-      } catch (dupErr) {
-        if (!isDuplicateKeyError(dupErr)) {
-          console.error('Failed to record coupon usage:', dupErr);
-        }
-      }
+    const result = await fulfillStripeCheckoutSession({
+      session: stripeSession,
+      expected: { userId, type: 'course', itemId: courseId },
+    });
+    if (result.status === 'rejected') {
+      console.error(`[PaymentSuccess] Course fulfillment rejected (${result.code})`);
     }
   } catch (error) {
     console.error('Stripe session verification fallback failed:', error);
@@ -141,7 +106,7 @@ export default async function PaymentSuccessPage({ params, searchParams }: Props
 
   // If not enrolled yet, try to verify with Stripe and fulfill
   if (!isEnrolled) {
-    await verifyAndFulfill(session_id, session.user.id, course.id, payment?.id);
+    await verifyAndFulfill(session_id, session.user.id, course.id);
   }
 
   // Re-check enrollment after potential fulfillment

@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
-import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { payments, users, courses, bundles } from '@/lib/db/schema';
+import { auditLogs, payments, users, courses, bundles } from '@/lib/db/schema';
+
+const bulkReconciliationSchema = z.object({
+    action: z.literal('mark_failed'),
+    paymentIds: z.array(z.string().min(1)).min(1).max(50),
+    reason: z.string().trim().min(5).max(500),
+}).strict();
+
+class BulkReconciliationConflict extends Error {}
+
+function getAffectedRows(result: unknown): number | null {
+    const candidate = Array.isArray(result) ? result[0] : result;
+    if (!candidate || typeof candidate !== 'object' || !('affectedRows' in candidate)) return null;
+    const affectedRows = Number((candidate as { affectedRows: unknown }).affectedRows);
+    return Number.isFinite(affectedRows) ? affectedRows : null;
+}
 
 // GET /api/admin/reconciliation - List payments needing reconciliation
 export async function GET(request: Request) {
@@ -98,30 +114,51 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { action, paymentIds } = await request.json();
-
-        if (!action || !Array.isArray(paymentIds) || paymentIds.length === 0) {
-            return NextResponse.json({ error: 'Missing action or paymentIds' }, { status: 400 });
+        const parsedBody = bulkReconciliationSchema.safeParse(
+            await request.json().catch(() => null),
+        );
+        if (!parsedBody.success) {
+            return NextResponse.json(
+                { error: 'กรุณาระบุรายการและเหตุผลอย่างน้อย 5 ตัวอักษร' },
+                { status: 400 },
+            );
         }
 
-        if (paymentIds.length > 50) {
-            return NextResponse.json({ error: 'Maximum 50 payments per batch' }, { status: 400 });
-        }
+        const paymentIds = [...new Set(parsedBody.data.paymentIds)];
+        const reason = parsedBody.data.reason;
+        await db.transaction(async (tx) => {
+            for (const paymentId of paymentIds) {
+                const updateResult = await tx
+                    .update(payments)
+                    .set({ status: 'failed' })
+                    .where(and(
+                        eq(payments.id, paymentId),
+                        eq(payments.status, 'verifying'),
+                        eq(payments.method, 'promptpay'),
+                    ));
+                if (getAffectedRows(updateResult) !== 1) {
+                    throw new BulkReconciliationConflict(paymentId);
+                }
 
-        if (action === 'mark_failed') {
-            await db.update(payments)
-                .set({ status: 'failed' })
-                .where(
-                    and(
-                        inArray(payments.id, paymentIds),
-                        eq(payments.status, 'verifying')
-                    )
-                );
-            return NextResponse.json({ message: `Marked ${paymentIds.length} payments as failed` });
-        }
+                await tx.insert(auditLogs).values({
+                    userId: session.user.id,
+                    action: 'update',
+                    entityType: 'payment',
+                    entityId: paymentId,
+                    oldValue: 'status: verifying',
+                    newValue: `status: failed; bulk reconciliation; reason: ${reason}`,
+                });
+            }
+        });
 
-        return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+        return NextResponse.json({ message: `Marked ${paymentIds.length} payments as failed` });
     } catch (error) {
+        if (error instanceof BulkReconciliationConflict) {
+            return NextResponse.json(
+                { error: 'บางรายการถูกเปลี่ยนสถานะไปแล้ว กรุณาโหลดข้อมูลใหม่' },
+                { status: 409 },
+            );
+        }
         console.error('Error in reconciliation action:', error);
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }

@@ -95,7 +95,7 @@ vi.mock('@/lib/db', () => ({
         update: vi.fn().mockReturnValue({
             set: vi.fn().mockImplementation((data: Record<string, unknown>) => {
                 mockDb.updateSetData = data;
-                return { where: vi.fn().mockResolvedValue(undefined) };
+                return { where: vi.fn().mockResolvedValue([{ affectedRows: 1 }]) };
             }),
         }),
         delete: vi.fn().mockReturnValue({
@@ -119,7 +119,7 @@ vi.mock('@/lib/db', () => ({
                 update: vi.fn().mockReturnValue({
                     set: vi.fn().mockImplementation((data: Record<string, unknown>) => {
                         mockDb.updateSetData = data;
-                        return { where: vi.fn().mockResolvedValue(undefined) };
+                        return { where: vi.fn().mockResolvedValue([{ affectedRows: 1 }]) };
                     }),
                 }),
                 query: {
@@ -261,6 +261,36 @@ describe('POST /api/stripe/checkout', () => {
         expect(stripeCall?.line_items?.[0]?.price_data?.unit_amount).toBe(99000);
     });
 
+    it('should create a new immutable payment attempt instead of reusing pending state', async () => {
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+        mockDb.selectResults = [{
+            id: 'stale-pending',
+            userId: 'user-1',
+            courseId: 'course-1',
+            amount: '490.00',
+            status: 'pending',
+            method: 'stripe',
+        }];
+
+        const res = await callCheckout({ courseId: 'course-1' });
+
+        expect(res.status).toBe(200);
+        expect(db.insert).toHaveBeenCalled();
+        expect(db.update).not.toHaveBeenCalled();
+    });
+
+    it('should bind Stripe retries to the new payment attempt id', async () => {
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+
+        const res = await callCheckout({ courseId: 'course-1' });
+
+        expect(res.status).toBe(200);
+        const createCall = (mockedStripe.checkout.sessions.create as ReturnType<typeof vi.fn>).mock.calls[0];
+        const paymentId = createCall?.[0]?.metadata?.paymentId;
+        expect(paymentId).toBeTruthy();
+        expect(createCall?.[1]).toEqual({ idempotencyKey: `checkout:${paymentId}` });
+    });
+
     // Note: coupon discount logic is thoroughly tested in tests/lib/coupon.test.ts
     // Complex multi-chain DB mocks for coupon flows are fragile in integration tests
 });
@@ -293,6 +323,7 @@ describe('POST /api/stripe/webhook', () => {
 
     it('should process checkout.session.completed and create enrollment', async () => {
         (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_course_completed',
             type: 'checkout.session.completed',
             data: {
                 object: {
@@ -308,7 +339,7 @@ describe('POST /api/stripe/webhook', () => {
 
         vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never); // not enrolled
         vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
-        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', status: 'pending' }];
+        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', method: 'stripe', stripePaymentId: null, status: 'pending' }];
 
         const res = await callWebhook('valid-body');
         expect(res.status).toBe(200);
@@ -317,6 +348,7 @@ describe('POST /api/stripe/webhook', () => {
 
     it('should skip duplicate enrollment on webhook retry', async () => {
         (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_course_retry',
             type: 'checkout.session.completed',
             data: {
                 object: {
@@ -331,7 +363,7 @@ describe('POST /api/stripe/webhook', () => {
         });
 
         vi.mocked(db.query.enrollments.findFirst).mockResolvedValue({ id: 'enroll-1' } as never); // already enrolled
-        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', status: 'pending' }];
+        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', method: 'stripe', stripePaymentId: null, status: 'pending' }];
 
         const res = await callWebhook('valid-body');
         expect(res.status).toBe(200);
@@ -340,6 +372,7 @@ describe('POST /api/stripe/webhook', () => {
 
     it('should not fulfill checkout session unless Stripe marks it paid', async () => {
         (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_unpaid',
             type: 'checkout.session.completed',
             data: {
                 object: {
@@ -360,8 +393,148 @@ describe('POST /api/stripe/webhook', () => {
         expect(mockDb.updateSetData).toBeNull();
     });
 
+    it('should never restore access from a refunded Stripe payment', async () => {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_refunded_replay',
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'paid',
+                    amount_total: 99000,
+                    currency: 'thb',
+                },
+            },
+        });
+        mockDb.selectResults = [{
+            id: 'pay-1',
+            userId: 'user-1',
+            courseId: 'course-1',
+            bundleId: null,
+            amount: '990.00',
+            currency: 'THB',
+            method: 'stripe',
+            status: 'refunded',
+        }];
+
+        const res = await callWebhook('valid-body');
+
+        expect(res.status).toBe(200);
+        expect(mockDb.transactionCalled).toBe(true);
+        expect(mockDb.updateSetData?.status).not.toBe('completed');
+    });
+
+    it('should require exact target metadata before entering fulfillment', async () => {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_missing_target',
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'paid',
+                    amount_total: 99000,
+                    currency: 'thb',
+                },
+            },
+        });
+        mockDb.selectResults = [{
+            id: 'pay-1',
+            userId: 'user-1',
+            courseId: 'course-1',
+            bundleId: null,
+            amount: '990.00',
+            currency: 'THB',
+            method: 'stripe',
+            status: 'pending',
+        }];
+
+        const res = await callWebhook('valid-body');
+
+        expect(res.status).toBe(200);
+        expect(mockDb.transactionCalled).toBe(false);
+        expect(mockDb.updateSetData).toBeNull();
+    });
+
+    it('should reject a Stripe session bound to a different payment owner', async () => {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_owner_mismatch',
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'paid',
+                    amount_total: 99000,
+                    currency: 'thb',
+                },
+            },
+        });
+        mockDb.selectResults = [{
+            id: 'pay-1', userId: 'user-2', courseId: 'course-1', bundleId: null,
+            amount: '990.00', currency: 'THB', method: 'stripe', stripePaymentId: null, status: 'pending',
+        }];
+
+        const res = await callWebhook('valid-body');
+
+        expect(res.status).toBe(200);
+        expect(mockDb.updateSetData).toBeNull();
+    });
+
+    it('should reject a Stripe amount that does not match the immutable attempt', async () => {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_amount_mismatch',
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'paid',
+                    amount_total: 100,
+                    currency: 'thb',
+                },
+            },
+        });
+        mockDb.selectResults = [{
+            id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null,
+            amount: '990.00', currency: 'THB', method: 'stripe', stripePaymentId: null, status: 'pending',
+        }];
+
+        const res = await callWebhook('valid-body');
+
+        expect(res.status).toBe(200);
+        expect(mockDb.updateSetData).toBeNull();
+    });
+
+    it('should repair entitlement idempotently without rewriting an already completed payment', async () => {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_completed_repair',
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'paid',
+                    amount_total: 99000,
+                    currency: 'thb',
+                },
+            },
+        });
+        mockDb.selectResults = [{
+            id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null,
+            amount: '990.00', currency: 'THB', method: 'stripe', stripePaymentId: 'pi_test', status: 'completed',
+        }];
+
+        const res = await callWebhook('valid-body');
+
+        expect(res.status).toBe(200);
+        expect(mockDb.updateSetData).toBeNull();
+    });
+
     it('should return 500 and not mark completed when fulfillment transaction fails', async () => {
         (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_transaction_failure',
             type: 'checkout.session.completed',
             data: {
                 object: {
@@ -557,6 +730,41 @@ describe('POST /api/stripe/bundle-checkout', () => {
         mockedRateLimit.mockReturnValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
         const res = await callBundleCheckout({ bundleId: 'bundle-1' });
         expect(res.status).toBe(429);
+    });
+
+    it('should create an immutable bundle attempt with a bound idempotency key', async () => {
+        vi.mocked(db.select)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    where: vi.fn().mockReturnValue({
+                        limit: vi.fn().mockResolvedValue([{
+                            id: 'bundle-1', title: 'Backend Bundle', slug: 'backend-bundle',
+                            status: 'published', price: '1990.00', thumbnailUrl: null,
+                        }]),
+                    }),
+                }),
+            } as never)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    innerJoin: vi.fn().mockReturnValue({
+                        where: vi.fn().mockReturnValue({
+                            orderBy: vi.fn().mockResolvedValue([{
+                                courseId: 'course-1', courseTitle: 'Backend Basics', courseSlug: 'backend-basics',
+                            }]),
+                        }),
+                    }),
+                }),
+            } as never);
+
+        const res = await callBundleCheckout({ bundleId: 'bundle-1' });
+
+        expect(res.status).toBe(200);
+        const createCall = (mockedStripe.checkout.sessions.create as ReturnType<typeof vi.fn>).mock.calls[0];
+        const paymentId = createCall?.[0]?.metadata?.paymentId;
+        expect(paymentId).toBeTruthy();
+        expect(createCall?.[1]).toEqual({ idempotencyKey: `checkout:${paymentId}` });
+        expect(db.insert).toHaveBeenCalled();
+        expect(db.update).not.toHaveBeenCalled();
     });
 });
 

@@ -69,39 +69,20 @@ export async function POST(request: Request) {
 
         const courseNames = bCourses.map(c => c.courseTitle).join(', ');
 
-        // Reuse existing pending payment or create new one
-        const [existingPending] = await db
-            .select()
-            .from(payments)
-            .where(
-                and(
-                    eq(payments.userId, session.user.id),
-                    eq(payments.bundleId, bundle.id),
-                    eq(payments.status, 'pending'),
-                    eq(payments.method, 'stripe')
-                )
-            )
-            .limit(1);
-
-        let paymentId: string;
-        if (existingPending) {
-            paymentId = existingPending.id;
-            await db.update(payments).set({
-                amount: priceNumber.toString(),
-            }).where(eq(payments.id, existingPending.id));
-        } else {
-            paymentId = crypto.randomUUID();
-            await db.insert(payments).values({
-                id: paymentId,
-                userId: session.user.id,
-                bundleId: bundle.id,
-                amount: priceNumber.toString(),
-                currency: "THB",
-                method: "stripe",
-                itemTitle: `📦 ${bundle.title}`,
-                status: "pending",
-            });
-        }
+        // A checkout session is an immutable payment attempt. Reusing and repricing
+        // an older pending row would let multiple Stripe sessions point at mutable
+        // local state and can strand a successfully paid session.
+        const paymentId = crypto.randomUUID();
+        await db.insert(payments).values({
+            id: paymentId,
+            userId: session.user.id,
+            bundleId: bundle.id,
+            amount: priceNumber.toFixed(2),
+            currency: "THB",
+            method: "stripe",
+            itemTitle: `📦 ${bundle.title}`,
+            status: "pending",
+        });
 
         // Normalize thumbnail URL
         const thumbnailUrl = bundle.thumbnailUrl
@@ -134,6 +115,8 @@ export async function POST(request: Request) {
             },
             success_url: `${process.env.NEXT_PUBLIC_APP_URL}/bundles/${bundle.slug}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/bundles/${bundle.slug}?payment=cancelled`,
+        }, {
+            idempotencyKey: `checkout:${paymentId}`,
         });
 
         return NextResponse.json({

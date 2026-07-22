@@ -61,22 +61,19 @@ describe('transaction and credential proof contracts', () => {
     expect(html).toContain(`href=${quote}/courses/typescript${quote}`);
   });
 
-  it('preserves Stripe and enrollment fallback controls in both return routes', () => {
+  it('delegates both Stripe return routes to the strict fulfillment boundary', () => {
     const course = readFileSync('src/app/courses/[slug]/payment-success/page.tsx', 'utf8');
     const bundle = readFileSync('src/app/bundles/[slug]/payment-success/page.tsx', 'utf8');
 
     for (const source of [course, bundle]) {
       expect(source).toContain('stripe.checkout.sessions.retrieve(sessionId)');
-      expect(source).toContain("stripeSession.payment_status !== 'paid'");
-      expect(source).toContain("eq(payments.status, 'pending')");
-      expect(source).toContain('safeInsertEnrollment');
+      expect(source).toContain('fulfillStripeCheckoutSession');
+      expect(source).toContain('expected: { userId');
+      expect(source).not.toContain('safeInsertEnrollment');
+      expect(source).not.toContain('.update(payments)');
     }
-    expect(course).toContain('meta.userId && meta.userId !== userId');
-    expect(course).toContain('meta.courseId && meta.courseId !== courseId');
-    expect(course).toContain("meta.type !== 'course'");
-    expect(bundle).toContain('meta.userId && meta.userId !== userId');
-    expect(bundle).toContain('meta.bundleId && meta.bundleId !== bundleId');
-    expect(bundle).toContain("meta.type !== 'bundle'");
+    expect(course).toContain("type: 'course', itemId: courseId");
+    expect(bundle).toContain("type: 'bundle', itemId: bundleId");
   });
 
   it('keeps revoked certificate status in the document and names client actions', () => {
