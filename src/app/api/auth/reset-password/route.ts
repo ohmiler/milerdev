@@ -96,7 +96,7 @@ export async function POST(request: Request) {
                     })
                     .where(eq(users.id, user.id));
 
-                console.error('[Reset] Password reset email was not sent for user:', user.id);
+                console.error('[Reset] Password reset email delivery failed');
             }
         }
 

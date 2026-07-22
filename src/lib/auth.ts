@@ -6,6 +6,7 @@ import * as schema from "./db/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { createGoogleProvider, isTrustedGoogleProfile } from "./auth-google";
+import { applyJwtSessionPolicy, exposeAuthorizedSession } from "./auth-session";
 
 const EXPECTED_AUTH_ERROR_TYPES = new Set(["CredentialsSignin", "MissingCSRF"]);
 
@@ -100,41 +101,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return true;
         },
         async jwt({ token, user }) {
-            if (user) {
-                token.id = user.id;
-                token.role = (user as { role?: string }).role;
-                token.roleCheckedAt = Date.now();
-            }
-
-            // Refresh admin roles on every session check so demotions take effect immediately.
-            // Non-admin roles still use a short cache to avoid extra DB load on every request.
-            const ROLE_REFRESH_MS = token.role === "admin" ? 0 : 5 * 60 * 1000;
-            const lastChecked = (token.roleCheckedAt as number) || 0;
-            if (Date.now() - lastChecked > ROLE_REFRESH_MS && token.id) {
-                try {
-                    const freshUser = await db.query.users.findFirst({
-                        where: eq(schema.users.id, token.id as string),
-                        columns: { role: true },
-                    });
-                    if (freshUser) {
-                        token.role = freshUser.role;
-                    } else {
-                        delete token.role;
-                    }
-                    token.roleCheckedAt = Date.now();
-                } catch {
-                    // On DB error, keep existing role; admin tokens will retry next request.
-                }
-            }
-
-            return token;
+            return applyJwtSessionPolicy({
+                token,
+                user,
+                loadUserState: async (userId) => db.query.users.findFirst({
+                    where: eq(schema.users.id, userId),
+                    columns: {
+                        role: true,
+                        sessionVersion: true,
+                    },
+                }),
+            });
         },
         async session({ session, token }) {
-            if (session.user) {
-                session.user.id = token.id as string;
-                session.user.role = token.role as string;
-            }
-            return session;
+            return exposeAuthorizedSession(session, token);
         },
     },
     pages: {

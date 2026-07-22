@@ -1,0 +1,3 @@
+-- Metadata baseline only. Migration 0007 already applies the payment idempotency
+-- schema represented by meta/0008_snapshot.json. Legacy docs/doc_groups tables are
+-- intentionally left untouched pending a separately authorized destructive review.

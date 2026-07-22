@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
-import { eq, and, gt } from 'drizzle-orm';
+import { eq, and, gt, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
@@ -64,15 +64,27 @@ export async function POST(request: Request) {
         // Hash new password and clear reset token
         const passwordHash = await bcrypt.hash(newPassword, 12);
 
-        await db
+        const updateResult = await db
             .update(users)
             .set({
                 passwordHash,
                 resetToken: null,
                 resetExpires: null,
+                sessionVersion: sql`${users.sessionVersion} + 1`,
                 updatedAt: new Date(),
             })
-            .where(eq(users.id, user.id));
+            .where(and(
+                eq(users.id, user.id),
+                eq(users.resetToken, tokenHash),
+                gt(users.resetExpires, new Date())
+            ));
+
+        if (updateResult[0]?.affectedRows !== 1) {
+            return NextResponse.json(
+                { error: 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว' },
+                { status: 400 }
+            );
+        }
 
         return NextResponse.json({
             message: 'ตั้งรหัสผ่านใหม่สำเร็จ',

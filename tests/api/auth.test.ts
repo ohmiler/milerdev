@@ -43,6 +43,7 @@ const mockDbState = {
     selectResult: [] as unknown[],
     insertCalled: false,
     updateSet: null as Record<string, unknown> | null,
+    updateAffectedRows: 1,
 };
 
 vi.mock('@/lib/db', () => ({
@@ -64,7 +65,9 @@ vi.mock('@/lib/db', () => ({
             set: vi.fn().mockImplementation((data: Record<string, unknown>) => {
                 mockDbState.updateSet = data;
                 return {
-                    where: vi.fn().mockResolvedValue(undefined),
+                    where: vi.fn().mockImplementation(() => Promise.resolve([
+                        { affectedRows: mockDbState.updateAffectedRows },
+                    ])),
                 };
             }),
         }),
@@ -101,6 +104,7 @@ describe('POST /api/auth/register', () => {
         mockDbState.selectResult = [];
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
+        mockDbState.updateAffectedRows = 1;
         mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
         mockedSendPasswordResetEmail.mockResolvedValue(true);
     });
@@ -194,6 +198,7 @@ describe('POST /api/auth/reset-password', () => {
         mockDbState.selectResult = [];
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
+        mockDbState.updateAffectedRows = 1;
         mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
     });
 
@@ -276,6 +281,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
         mockDbState.selectResult = [];
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
+        mockDbState.updateAffectedRows = 1;
         mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
     });
 
@@ -300,6 +306,22 @@ describe('POST /api/auth/reset-password/confirm', () => {
         expect(mockDbState.updateSet).toHaveProperty('resetToken', null);
         expect(mockDbState.updateSet).toHaveProperty('resetExpires', null);
         expect(mockDbState.updateSet).toHaveProperty('passwordHash');
+        expect(mockDbState.updateSet).toHaveProperty('sessionVersion');
+    });
+
+    it('should reject a reset token that loses the conditional consume race', async () => {
+        mockDbState.selectResult = [{
+            id: 'user-1',
+            resetToken: 'valid-token',
+            resetExpires: new Date(Date.now() + 3600000),
+        }];
+        mockDbState.updateAffectedRows = 0;
+
+        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
+
+        expect(res.status).toBe(400);
+        const data = await res.json();
+        expect(data.error).toContain('หมดอายุ');
     });
 
     it('should reject weak new password', async () => {
@@ -328,6 +350,7 @@ describe('POST /api/auth/change-password', () => {
         mockDbState.selectResult = [];
         mockDbState.insertCalled = false;
         mockDbState.updateSet = null;
+        mockDbState.updateAffectedRows = 1;
         mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
     });
 
@@ -388,6 +411,7 @@ describe('POST /api/auth/change-password', () => {
         expect(mockDbState.updateSet).toHaveProperty('resetToken', null);
         expect(mockDbState.updateSet).toHaveProperty('resetExpires', null);
         expect(mockDbState.updateSet).toHaveProperty('passwordHash');
+        expect(mockDbState.updateSet).toHaveProperty('sessionVersion');
     });
 
     it('should reject OAuth user (no passwordHash)', async () => {

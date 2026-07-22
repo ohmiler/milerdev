@@ -12,6 +12,7 @@ export const users = mysqlTable('users', {
     name: varchar('name', { length: 255 }),
     avatarUrl: text('avatar_url'),
     role: varchar('role', { length: 20, enum: ['student', 'instructor', 'admin'] }).default('student').notNull(),
+    sessionVersion: int('session_version').default(0).notNull(),
     emailVerifiedAt: datetime('email_verified_at'),
     resetToken: varchar('reset_token', { length: 255 }),
     resetExpires: datetime('reset_expires'),

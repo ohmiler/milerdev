@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
@@ -89,15 +89,26 @@ export async function POST(request: Request) {
 
         // Hash and update
         const newHash = await bcrypt.hash(newPassword, 12);
-        await db
+        const updateResult = await db
             .update(users)
             .set({
                 passwordHash: newHash,
                 resetToken: null,
                 resetExpires: null,
+                sessionVersion: sql`${users.sessionVersion} + 1`,
                 updatedAt: new Date(),
             })
-            .where(eq(users.id, session.user.id));
+            .where(and(
+                eq(users.id, session.user.id),
+                eq(users.passwordHash, user.passwordHash)
+            ));
+
+        if (updateResult[0]?.affectedRows !== 1) {
+            return NextResponse.json(
+                { error: 'บัญชีมีการเปลี่ยนแปลง กรุณาเข้าสู่ระบบแล้วลองใหม่' },
+                { status: 409 }
+            );
+        }
 
         return NextResponse.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
     } catch (error) {
