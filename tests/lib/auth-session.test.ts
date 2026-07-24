@@ -18,6 +18,7 @@ describe('JWT session policy', () => {
         const loadUserState = vi.fn().mockResolvedValue({
             role: 'student',
             sessionVersion: 3,
+            deactivatedAt: null,
         });
 
         const result = await applyJwtSessionPolicy({
@@ -38,6 +39,7 @@ describe('JWT session policy', () => {
         const loadUserState = vi.fn().mockResolvedValue({
             role: 'student',
             sessionVersion: 0,
+            deactivatedAt: null,
         });
 
         const result = await applyJwtSessionPolicy({
@@ -52,6 +54,7 @@ describe('JWT session policy', () => {
         const loadUserState = vi.fn().mockResolvedValue({
             role: 'student',
             sessionVersion: 2,
+            deactivatedAt: null,
         });
 
         const result = await applyJwtSessionPolicy({
@@ -66,6 +69,7 @@ describe('JWT session policy', () => {
         const loadUserState = vi.fn().mockResolvedValue({
             role: 'student',
             sessionVersion: 0,
+            deactivatedAt: null,
         });
 
         const result = await applyJwtSessionPolicy({
@@ -80,6 +84,33 @@ describe('JWT session policy', () => {
         const result = await applyJwtSessionPolicy({
             token: token(),
             loadUserState: vi.fn().mockResolvedValue(null),
+        });
+
+        expect(result).toBeNull();
+    });
+
+    it('rejects an inactive account even during a new sign-in callback', async () => {
+        const result = await applyJwtSessionPolicy({
+            token: token(),
+            user: { id: 'user-1' } as User,
+            loadUserState: vi.fn().mockResolvedValue({
+                role: 'student',
+                sessionVersion: 4,
+                deactivatedAt: new Date('2026-07-24T00:00:00.000Z'),
+            }),
+        });
+
+        expect(result).toBeNull();
+    });
+
+    it('does not restore a token issued before deactivate-reactivate rotation', async () => {
+        const result = await applyJwtSessionPolicy({
+            token: token({ sessionVersion: 3 }),
+            loadUserState: vi.fn().mockResolvedValue({
+                role: 'student',
+                sessionVersion: 5,
+                deactivatedAt: null,
+            }),
         });
 
         expect(result).toBeNull();

@@ -2,8 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import {
+  AdminButton,
+  AdminPageHero,
+  AdminSurfaceCard,
+} from '@/components/admin/ui/AdminPrimitives';
+import {
+  AdminUserLifecycleAction,
+  AdminUserLifecycleBadge,
+} from '@/components/admin/AdminUserLifecycleControls';
 import { showToast } from '@/components/ui/Toast';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  applyAuthoritativeLifecycleState,
+  getLifecyclePresentation,
+  lifecycleDeactivationDialog,
+  lifecycleMutationFeedback,
+  type AdminUserLifecycleAction as AdminUserLifecycleActionName,
+  type AuthoritativeLifecycleUser,
+} from '@/lib/admin-user-lifecycle-ui';
 
 interface UserInfo {
   id: string;
@@ -11,6 +28,8 @@ interface UserInfo {
   email: string;
   role: 'student' | 'instructor' | 'admin';
   createdAt: string;
+  lifecycleStatus: 'active' | 'inactive';
+  deactivatedAt: string | null;
 }
 
 interface Enrollment {
@@ -46,6 +65,8 @@ export default function AdminUserDetailPage() {
   const [enrolling, setEnrolling] = useState(false);
   const [searchAvailable, setSearchAvailable] = useState('');
   const [searchEnrolled, setSearchEnrolled] = useState('');
+  const [lifecycleConfirm, setLifecycleConfirm] = useState(false);
+  const [updatingLifecycle, setUpdatingLifecycle] = useState(false);
 
   const fetchUserData = async () => {
     setLoading(true);
@@ -93,6 +114,47 @@ export default function AdminUserDetailPage() {
     }
   };
 
+  const executeLifecycleAction = async (action: AdminUserLifecycleActionName) => {
+    if (!user) return;
+    setUpdatingLifecycle(true);
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        showToast(data.error || 'ไม่สามารถเปลี่ยนสถานะบัญชีได้', 'error');
+        return;
+      }
+
+      setUser((current) => {
+        if (!current) return current;
+        return applyAuthoritativeLifecycleState(
+          [current],
+          (data.users || []) as AuthoritativeLifecycleUser[],
+        )[0] as UserInfo;
+      });
+      showToast(lifecycleMutationFeedback(action, data.changedCount ?? 0, data.skippedCount ?? 0), 'success');
+    } catch {
+      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+    } finally {
+      setUpdatingLifecycle(false);
+      if (action === 'deactivate') setLifecycleConfirm(false);
+    }
+  };
+
+  const requestLifecycleAction = () => {
+    if (!user) return;
+    const { action } = getLifecyclePresentation(user.lifecycleStatus);
+    if (action === 'deactivate') {
+      setLifecycleConfirm(true);
+      return;
+    }
+    void executeLifecycleAction(action);
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('th-TH', {
@@ -100,14 +162,6 @@ export default function AdminUserDetailPage() {
       month: 'short',
       day: 'numeric',
     });
-  };
-
-  const getRoleStyle = (role: string) => {
-    switch (role) {
-      case 'admin': return { background: '#fef2f2', color: '#dc2626' };
-      case 'instructor': return { background: '#f0fdf4', color: '#16a34a' };
-      default: return { background: '#eff6ff', color: '#2563eb' };
-    }
   };
 
   const getRoleText = (role: string) => {
@@ -139,66 +193,33 @@ export default function AdminUserDetailPage() {
   if (!user) return null;
 
   return (
-    <div>
-      {/* Back button + Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <button
-          onClick={() => router.push('/admin/users')}
-          style={{
-            padding: '8px 16px',
-            background: 'none',
-            color: '#64748b',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}
-        >
-          ← กลับไปหน้ารายชื่อผู้ใช้
-        </button>
+    <div className="admin-user-detail-workspace">
+      <AdminPageHero
+        eyebrow="User detail"
+        title={user.name || 'ไม่ระบุชื่อ'}
+        description={`${user.email} · ${getRoleText(user.role)} · สมัครเมื่อ ${formatDate(user.createdAt)}`}
+        actions={
+          <>
+            <AdminButton href="/admin/users" tone="default">← กลับไปรายชื่อผู้ใช้</AdminButton>
+            <AdminUserLifecycleBadge status={user.lifecycleStatus} />
+            <AdminUserLifecycleAction
+              status={user.lifecycleStatus}
+              pending={updatingLifecycle}
+              onRequest={requestLifecycleAction}
+            />
+          </>
+        }
+        meta={user.lifecycleStatus === 'inactive' && user.deactivatedAt
+          ? `ปิดใช้งานตั้งแต่ ${formatDate(user.deactivatedAt)} ข้อมูลการเรียนและธุรกรรมยังคงอยู่`
+          : 'บัญชีนี้เข้าสู่ระบบและใช้งานระบบได้ตามสิทธิ์ปัจจุบัน'}
+      />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontWeight: 700,
-            fontSize: '1.5rem',
-            flexShrink: 0,
-          }}>
-            {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
-              {user.name || 'ไม่ระบุชื่อ'}
-            </h1>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '4px' }}>
-              {user.email}
-              <span style={{
-                marginLeft: '12px',
-                padding: '2px 10px',
-                borderRadius: '50px',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                ...getRoleStyle(user.role),
-              }}>
-                {getRoleText(user.role)}
-              </span>
-              <span style={{ marginLeft: '12px', color: '#94a3b8' }}>
-                สมัครเมื่อ {formatDate(user.createdAt)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {user.lifecycleStatus === 'inactive' ? (
+        <AdminSurfaceCard className="admin-user-lifecycle-note" role="status">
+          <strong>บัญชีถูกปิดใช้งาน</strong>
+          <span>ผู้ใช้เข้าสู่ระบบหรือใช้เซสชันเดิมไม่ได้ แต่การลงทะเบียน ความคืบหน้า การชำระเงิน และใบรับรองยังคงอยู่</span>
+        </AdminSurfaceCard>
+      ) : null}
 
       {/* Stats */}
       <div style={{
@@ -530,6 +551,15 @@ export default function AdminUserDetailPage() {
         confirmText={deleting ? 'กำลังดำเนินการ...' : 'ยกเลิกการลงทะเบียน'}
         onConfirm={() => deleteConfirm && handleUnenroll(deleteConfirm)}
         onCancel={() => setDeleteConfirm(null)}
+      />
+      <ConfirmDialog
+        isOpen={lifecycleConfirm}
+        title={lifecycleDeactivationDialog.title}
+        message={`${user.name || user.email}: ${lifecycleDeactivationDialog.message}`}
+        confirmText={updatingLifecycle ? 'กำลังปิดใช้งาน...' : lifecycleDeactivationDialog.confirmText}
+        confirmDisabled={updatingLifecycle}
+        onConfirm={() => void executeLifecycleAction('deactivate')}
+        onCancel={() => setLifecycleConfirm(false)}
       />
     </div>
   );

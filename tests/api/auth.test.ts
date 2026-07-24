@@ -244,7 +244,7 @@ describe('POST /api/auth/reset-password', () => {
     });
 
     it('should return success for existing email', async () => {
-        mockDbState.selectResult = [{ id: 'user-1', email: 'user@example.com', name: 'User' }];
+        mockDbState.selectResult = [{ id: 'user-1', email: 'user@example.com', name: 'User', deactivatedAt: null }];
         const res = await callReset({ email: 'user@example.com' });
         expect(res.status).toBe(200);
         const data = await res.json();
@@ -252,16 +252,46 @@ describe('POST /api/auth/reset-password', () => {
     });
 
     it('should generate reset token for existing user', async () => {
-        mockDbState.selectResult = [{ id: 'user-1', email: 'user@example.com', name: 'User' }];
+        mockDbState.selectResult = [{ id: 'user-1', email: 'user@example.com', name: 'User', deactivatedAt: null }];
         await callReset({ email: 'user@example.com' });
         expect(mockDbState.updateSet).toBeTruthy();
         expect(mockDbState.updateSet).toHaveProperty('resetToken');
         expect(mockDbState.updateSet).toHaveProperty('resetExpires');
     });
 
+    it('should return the generic success shape without issuing a token for an inactive user', async () => {
+        mockDbState.selectResult = [{
+            id: 'user-1',
+            email: 'user@example.com',
+            name: 'User',
+            deactivatedAt: new Date('2026-07-24T00:00:00.000Z'),
+        }];
+
+        const res = await callReset({ email: 'user@example.com' });
+
+        expect(res.status).toBe(200);
+        expect(mockDbState.updateSet).toBeNull();
+        expect(mockedSendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('should not email a token when deactivation wins the conditional issue race', async () => {
+        mockDbState.selectResult = [{
+            id: 'user-1',
+            email: 'user@example.com',
+            name: 'User',
+            deactivatedAt: null,
+        }];
+        mockDbState.updateAffectedRows = 0;
+
+        const res = await callReset({ email: 'user@example.com' });
+
+        expect(res.status).toBe(200);
+        expect(mockedSendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
     it('should clear reset token if email delivery fails', async () => {
         mockedSendPasswordResetEmail.mockResolvedValueOnce(false);
-        mockDbState.selectResult = [{ id: 'user-1', email: 'user@example.com', name: 'User' }];
+        mockDbState.selectResult = [{ id: 'user-1', email: 'user@example.com', name: 'User', deactivatedAt: null }];
 
         const res = await callReset({ email: 'user@example.com' });
 
@@ -279,6 +309,7 @@ describe('POST /api/auth/reset-password', () => {
             name: 'User',
             resetToken: 'existing-token-hash',
             resetExpires: new Date(Date.now() + 58 * 60 * 1000),
+            deactivatedAt: null,
         }];
 
         const res = await callReset({ email: 'user@example.com' });
@@ -327,7 +358,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
     });
 
     it('should reset password with valid token', async () => {
-        mockDbState.selectResult = [{ id: 'user-1', resetToken: 'valid-token', resetExpires: new Date(Date.now() + 3600000) }];
+        mockDbState.selectResult = [{ id: 'user-1', resetToken: 'valid-token', resetExpires: new Date(Date.now() + 3600000), deactivatedAt: null }];
         const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
         expect(res.status).toBe(200);
         // Verify token is cleared
@@ -342,6 +373,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
             id: 'user-1',
             resetToken: 'valid-token',
             resetExpires: new Date(Date.now() + 3600000),
+            deactivatedAt: null,
         }];
         mockDbState.updateAffectedRows = 0;
 
@@ -350,6 +382,21 @@ describe('POST /api/auth/reset-password/confirm', () => {
         expect(res.status).toBe(400);
         const data = await res.json();
         expect(data.error).toContain('หมดอายุ');
+    });
+
+    it('should reject a pre-issued reset token after the account becomes inactive', async () => {
+        mockDbState.selectResult = [{
+            id: 'user-1',
+            resetToken: 'valid-token',
+            resetExpires: new Date(Date.now() + 3600000),
+            deactivatedAt: new Date('2026-07-24T00:00:00.000Z'),
+        }];
+
+        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
+
+        expect(res.status).toBe(400);
+        expect(mockDbState.updateSet).toBeNull();
+        expect(mockedBcrypt.hash).not.toHaveBeenCalled();
     });
 
     it('should reject weak new password', async () => {

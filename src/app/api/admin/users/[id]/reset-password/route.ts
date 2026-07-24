@@ -3,7 +3,7 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { logAudit } from '@/lib/auditLog';
 
@@ -37,7 +37,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     // Check if user exists
     const [user] = await db
-      .select({ id: users.id, email: users.email })
+      .select({ id: users.id, deactivatedAt: users.deactivatedAt })
       .from(users)
       .where(eq(users.id, id))
       .limit(1);
@@ -48,17 +48,31 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     // Hash and update password
     const hashedPassword = await bcrypt.hash(newPassword, 12);
-    await db
+    const updateResult = await db
       .update(users)
       .set({
         passwordHash: hashedPassword,
         resetToken: null,
         resetExpires: null,
+        sessionVersion: sql`${users.sessionVersion} + 1`,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id));
 
-    await logAudit({ userId: session.user.id, action: 'update', entityType: 'user', entityId: id, newValue: `Admin reset password for ${user.email}` });
+    if (updateResult[0]?.affectedRows !== 1) {
+      return NextResponse.json(
+        { error: 'สถานะผู้ใช้มีการเปลี่ยนแปลง กรุณาลองใหม่' },
+        { status: 409 }
+      );
+    }
+
+    await logAudit({
+      userId: session.user.id,
+      action: 'update',
+      entityType: 'user',
+      entityId: id,
+      newValue: 'Admin reset password; sessions revoked',
+    });
 
     return NextResponse.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
   } catch (error) {

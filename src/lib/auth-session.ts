@@ -6,6 +6,7 @@ const AUTH_ROLES = new Set(['student', 'instructor', 'admin']);
 export type AuthUserState = {
     role: string;
     sessionVersion: number;
+    deactivatedAt: Date | null;
 };
 
 type ApplyJwtSessionPolicyParams = {
@@ -18,7 +19,8 @@ function isValidUserState(state: AuthUserState | null | undefined): state is Aut
     return !!state
         && AUTH_ROLES.has(state.role)
         && Number.isSafeInteger(state.sessionVersion)
-        && state.sessionVersion >= 0;
+        && state.sessionVersion >= 0
+        && state.deactivatedAt === null;
 }
 
 function getTokenSessionVersion(token: JWT): number {

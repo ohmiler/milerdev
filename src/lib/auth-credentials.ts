@@ -9,6 +9,7 @@ type CredentialUser = {
     name: string | null;
     role: string;
     passwordHash: string | null;
+    deactivatedAt: Date | null;
 };
 
 type AuthorizeCredentialsDependencies = {
@@ -51,13 +52,23 @@ export async function authorizeCredentials(
     if (!rateLimit.success) return null;
 
     const normalizedEmail = credentials.email.toLowerCase().trim();
-    const user = await dependencies.findUserByEmail(normalizedEmail);
-    if (!user?.passwordHash) return null;
+    let user: CredentialUser | null | undefined;
+    try {
+        user = await dependencies.findUserByEmail(normalizedEmail);
+    } catch {
+        return null;
+    }
+    if (!user?.passwordHash || user.deactivatedAt !== null) return null;
 
-    const isValidPassword = await dependencies.comparePassword(
-        credentials.password,
-        user.passwordHash
-    );
+    let isValidPassword: boolean;
+    try {
+        isValidPassword = await dependencies.comparePassword(
+            credentials.password,
+            user.passwordHash
+        );
+    } catch {
+        return null;
+    }
     if (!isValidPassword) return null;
 
     return {

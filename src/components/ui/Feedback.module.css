@@ -198,6 +198,11 @@
   background: color-mix(in srgb, var(--feedback-tone) 84%, #000000);
 }
 
+.button:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+
 .toastViewport {
   position: fixed;
   top: 20px;

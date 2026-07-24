@@ -26,6 +26,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         email: users.email,
         role: users.role,
         createdAt: users.createdAt,
+        deactivatedAt: users.deactivatedAt,
       })
       .from(users)
       .where(eq(users.id, id))
@@ -73,7 +74,14 @@ export async function GET(request: Request, { params }: RouteParams) {
       )
       .orderBy(courses.title);
 
-    return NextResponse.json({ user, enrollments: userEnrollments, availableCourses });
+    return NextResponse.json({
+      user: {
+        ...user,
+        lifecycleStatus: user.deactivatedAt === null ? 'active' : 'inactive',
+      },
+      enrollments: userEnrollments,
+      availableCourses,
+    });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user enrollments:' });
     return NextResponse.json(

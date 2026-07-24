@@ -11,6 +11,19 @@ import {
 } from '@/components/admin/ui/AdminPrimitives';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
+import {
+  AdminUserLifecycleAction,
+  AdminUserLifecycleBadge,
+} from '@/components/admin/AdminUserLifecycleControls';
+import {
+  applyAuthoritativeLifecycleState,
+  buildAdminUsersSearchParams,
+  getLifecyclePresentation,
+  lifecycleDeactivationDialog,
+  lifecycleMutationFeedback,
+  type AdminUserLifecycleAction as AdminUserLifecycleActionName,
+  type AuthoritativeLifecycleUser,
+} from '@/lib/admin-user-lifecycle-ui';
 
 interface User {
   id: string;
@@ -19,10 +32,14 @@ interface User {
   role: 'student' | 'instructor' | 'admin';
   createdAt: string;
   enrollmentCount: number;
+  lifecycleStatus: 'active' | 'inactive';
+  deactivatedAt: string | null;
 }
 
 interface Stats {
   total: number;
+  active: number;
+  inactive: number;
   admins: number;
   instructors: number;
   students: number;
@@ -40,6 +57,7 @@ export default function AdminUsersPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({ name: '', role: 'student' });
@@ -48,6 +66,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('');
   const [searchDebounce, setSearchDebounce] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -69,6 +88,7 @@ export default function AdminUsersPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [lifecycleConfirm, setLifecycleConfirm] = useState<User | null>(null);
 
   // Password reset
   const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
@@ -78,21 +98,28 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
+      const params = buildAdminUsersSearchParams({
+        page: currentPage,
         role: roleFilter,
-        ...(searchDebounce && { search: searchDebounce }),
+        status: statusFilter,
+        search: searchDebounce,
         sortBy,
         sortOrder,
       });
       const res = await fetch(`/api/admin/users?${params}`);
       const data = await res.json();
-      setUsers(data.users || []);
+      if (!res.ok) {
+        throw new Error(data.error || 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
+      }
+      const nextUsers = (data.users || []) as User[];
+      setUsers(nextUsers);
+      setSelectedUsers((current) => current.filter((id) => nextUsers.some((user) => user.id === id)));
       setStats(data.stats || null);
       setPagination(data.pagination || null);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      setLoadError(error instanceof Error ? error.message : 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
     } finally {
       setLoading(false);
     }
@@ -101,7 +128,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, roleFilter, sortBy, sortOrder, searchDebounce]);
+  }, [currentPage, roleFilter, statusFilter, sortBy, sortOrder, searchDebounce]);
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
@@ -134,29 +161,46 @@ export default function AdminUsersPage() {
     }
   };
 
-  const confirmDeleteUser = async () => {
-    if (!deleteConfirm) return;
-    const userId = deleteConfirm;
-    setDeleteConfirm(null);
-
-    setUpdating(userId);
+  const executeLifecycleAction = async (user: User, action: AdminUserLifecycleActionName) => {
+    setUpdating(user.id);
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE',
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
       });
-
+      const data = await res.json();
       if (res.ok) {
+        setUsers((current) => applyAuthoritativeLifecycleState(
+          current,
+          (data.users || []) as AuthoritativeLifecycleUser[],
+        ) as User[]);
+        showToast(lifecycleMutationFeedback(action, data.changedCount ?? 0, data.skippedCount ?? 0), 'success');
         await fetchUsers();
-        showToast('ลบผู้ใช้สำเร็จ', 'success');
       } else {
-        const data = await res.json();
-        showToast(data.error || 'ไม่สามารถลบผู้ใช้ได้', 'error');
+        showToast(data.error || 'ไม่สามารถเปลี่ยนสถานะบัญชีได้', 'error');
       }
     } catch {
       showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
+      if (action === 'deactivate') setLifecycleConfirm(null);
     }
+  };
+
+  const handleLifecycleRequest = (user: User) => {
+    const { action } = getLifecyclePresentation(user.lifecycleStatus);
+    if (action === 'deactivate') {
+      setLifecycleConfirm(user);
+      return;
+    }
+    void executeLifecycleAction(user, action);
+  };
+
+  const confirmDeleteUser = () => {
+    const user = users.find((candidate) => candidate.id === deleteConfirm);
+    setDeleteConfirm(null);
+    if (user) void executeLifecycleAction(user, 'deactivate');
   };
 
   const handleResetPassword = async () => {
@@ -208,7 +252,7 @@ export default function AdminUsersPage() {
 
 
   const handleExport = async () => {
-    const params = new URLSearchParams({ role: roleFilter });
+    const params = new URLSearchParams({ role: roleFilter, status: statusFilter });
     window.open(`/api/admin/users/export?${params}`, '_blank');
   };
 
@@ -262,7 +306,7 @@ export default function AdminUsersPage() {
       return;
     }
 
-    if (bulkAction === 'delete') {
+    if (bulkAction === 'delete' || bulkAction === 'deactivate') {
       setBulkDeleteConfirm(true);
       return;
     }
@@ -271,7 +315,6 @@ export default function AdminUsersPage() {
   };
 
   const executeBulkAction = async () => {
-    setBulkDeleteConfirm(false);
     setProcessingBulk(true);
     try {
       const res = await fetch('/api/admin/users/bulk', {
@@ -286,7 +329,16 @@ export default function AdminUsersPage() {
 
       const data = await res.json();
       if (res.ok) {
-        showToast(`ดำเนินการสำเร็จ ${data.affectedCount} รายการ`, 'success');
+        const lifecycleAction = bulkAction === 'reactivate' ? 'reactivate' : 'deactivate';
+        if (bulkAction !== 'updateRole') {
+          setUsers((current) => applyAuthoritativeLifecycleState(
+            current,
+            (data.users || []) as AuthoritativeLifecycleUser[],
+          ) as User[]);
+          showToast(lifecycleMutationFeedback(lifecycleAction, data.changedCount ?? 0, data.skippedCount ?? 0), 'success');
+        } else {
+          showToast(`เปลี่ยนบทบาทสำเร็จ ${data.changedCount ?? 0} บัญชี`, 'success');
+        }
         setSelectedUsers([]);
         setBulkAction('');
         await fetchUsers();
@@ -297,6 +349,7 @@ export default function AdminUsersPage() {
       showToast('เกิดข้อผิดพลาด', 'error');
     } finally {
       setProcessingBulk(false);
+      setBulkDeleteConfirm(false);
     }
   };
 
@@ -304,8 +357,8 @@ export default function AdminUsersPage() {
   if (useRedesignedWorkspace) {
     if (loading && users.length === 0) {
       return (
-        <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-          กำลังโหลด...
+        <div className="admin-users-state" role="status">
+          กำลังโหลดรายชื่อผู้ใช้...
         </div>
       );
     }
@@ -317,7 +370,10 @@ export default function AdminUsersPage() {
         pagination={pagination}
         search={search}
         roleFilter={roleFilter}
+        statusFilter={statusFilter}
         sortBy={sortBy}
+        loading={loading}
+        loadError={loadError}
         selectedUsers={selectedUsers}
         bulkAction={bulkAction}
         bulkRole={bulkRole}
@@ -331,12 +387,13 @@ export default function AdminUsersPage() {
         newPassword={newPassword}
         showPassword={showPassword}
         resettingPassword={resettingPassword}
-        deleteConfirm={deleteConfirm}
+        lifecycleConfirm={lifecycleConfirm}
         bulkDeleteConfirm={bulkDeleteConfirm}
         getRoleStyle={getRoleStyle}
         getRoleText={getRoleText}
-        onSearchChange={(value) => { setSearch(value); setCurrentPage(1); }}
-        onRoleFilterChange={(value) => { setRoleFilter(value); setCurrentPage(1); }}
+        onSearchChange={(value) => { setSearch(value); setCurrentPage(1); setSelectedUsers([]); }}
+        onRoleFilterChange={(value) => { setRoleFilter(value); setCurrentPage(1); setSelectedUsers([]); }}
+        onStatusFilterChange={(value) => { setStatusFilter(value); setCurrentPage(1); setSelectedUsers([]); }}
         onSortByChange={setSortBy}
         onToggleSelectAll={toggleSelectAll}
         onToggleSelectUser={toggleSelectUser}
@@ -348,9 +405,10 @@ export default function AdminUsersPage() {
         onClearImportResult={() => setImportResult(null)}
         onHandleEdit={handleEdit}
         onOpenPasswordReset={(user) => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}
-        onDeleteRequest={setDeleteConfirm}
-        onPrevPage={() => setCurrentPage((p) => Math.max(1, p - 1))}
-        onNextPage={() => setCurrentPage((p) => Math.min(pagination?.totalPages || 1, p + 1))}
+        onLifecycleRequest={handleLifecycleRequest}
+        onRetry={fetchUsers}
+        onPrevPage={() => { setSelectedUsers([]); setCurrentPage((p) => Math.max(1, p - 1)); }}
+        onNextPage={() => { setSelectedUsers([]); setCurrentPage((p) => Math.min(pagination?.totalPages || 1, p + 1)); }}
         onCloseEdit={() => setEditingUser(null)}
         onEditFormChange={setEditForm}
         onSave={handleSave}
@@ -358,8 +416,8 @@ export default function AdminUsersPage() {
         onToggleShowPassword={() => setShowPassword((prev) => !prev)}
         onClosePasswordReset={() => { setPasswordResetUser(null); setNewPassword(''); setShowPassword(false); }}
         onResetPassword={handleResetPassword}
-        onConfirmDelete={confirmDeleteUser}
-        onCancelDelete={() => setDeleteConfirm(null)}
+        onConfirmLifecycle={() => lifecycleConfirm && void executeLifecycleAction(lifecycleConfirm, 'deactivate')}
+        onCancelLifecycle={() => setLifecycleConfirm(null)}
         onConfirmBulkDelete={executeBulkAction}
         onCancelBulkDelete={() => setBulkDeleteConfirm(false)}
         onImport={handleImport}
@@ -515,7 +573,8 @@ export default function AdminUsersPage() {
               >
                 <option value="">เลือกการดำเนินการ</option>
                 <option value="updateRole">เปลี่ยน Role</option>
-                <option value="delete">ลบ</option>
+                <option value="deactivate">ปิดใช้งาน</option>
+                <option value="reactivate">เปิดใช้งาน</option>
               </select>
               {bulkAction === 'updateRole' && (
                 <select
@@ -539,7 +598,7 @@ export default function AdminUsersPage() {
                 disabled={processingBulk || !bulkAction}
                 style={{
                   padding: '8px 16px',
-                  background: bulkAction === 'delete' ? '#dc2626' : '#2563eb',
+                  background: bulkAction === 'deactivate' ? '#dc2626' : '#2563eb',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -1044,17 +1103,17 @@ export default function AdminUsersPage() {
 
       <ConfirmDialog
         isOpen={!!deleteConfirm}
-        title="ลบผู้ใช้"
-        message="คุณแน่ใจหรือไม่ที่จะลบผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้"
-        confirmText="ลบผู้ใช้"
+        title="ปิดใช้งานบัญชี"
+        message={lifecycleDeactivationDialog.message}
+        confirmText="ยืนยันปิดใช้งาน"
         onConfirm={confirmDeleteUser}
         onCancel={() => setDeleteConfirm(null)}
       />
       <ConfirmDialog
         isOpen={bulkDeleteConfirm}
-        title="ลบผู้ใช้หลายรายการ"
-        message={`คุณแน่ใจหรือไม่ที่จะลบ ${selectedUsers.length} ผู้ใช้?`}
-        confirmText="ลบทั้งหมด"
+        title="ปิดใช้งานบัญชีที่เลือก"
+        message={`บัญชี ${selectedUsers.length} รายการจะเข้าสู่ระบบไม่ได้ แต่ข้อมูลที่เชื่อมกับบัญชียังคงอยู่`}
+        confirmText="ยืนยันปิดใช้งาน"
         onConfirm={executeBulkAction}
         onCancel={() => setBulkDeleteConfirm(false)}
       />
@@ -1068,7 +1127,10 @@ interface AdminUsersWorkspaceProps {
   pagination: Pagination | null;
   search: string;
   roleFilter: string;
+  statusFilter: 'all' | 'active' | 'inactive';
   sortBy: string;
+  loading: boolean;
+  loadError: string | null;
   selectedUsers: string[];
   bulkAction: string;
   bulkRole: string;
@@ -1082,12 +1144,13 @@ interface AdminUsersWorkspaceProps {
   newPassword: string;
   showPassword: boolean;
   resettingPassword: boolean;
-  deleteConfirm: string | null;
+  lifecycleConfirm: User | null;
   bulkDeleteConfirm: boolean;
   getRoleStyle: (role: string) => { background: string; color: string };
   getRoleText: (role: string) => string;
   onSearchChange: (value: string) => void;
   onRoleFilterChange: (value: string) => void;
+  onStatusFilterChange: (value: 'all' | 'active' | 'inactive') => void;
   onSortByChange: (value: string) => void;
   onToggleSelectAll: () => void;
   onToggleSelectUser: (userId: string) => void;
@@ -1099,7 +1162,8 @@ interface AdminUsersWorkspaceProps {
   onClearImportResult: () => void;
   onHandleEdit: (user: User) => void;
   onOpenPasswordReset: (user: User) => void;
-  onDeleteRequest: (userId: string) => void;
+  onLifecycleRequest: (user: User) => void;
+  onRetry: () => void;
   onPrevPage: () => void;
   onNextPage: () => void;
   onCloseEdit: () => void;
@@ -1109,8 +1173,8 @@ interface AdminUsersWorkspaceProps {
   onToggleShowPassword: () => void;
   onClosePasswordReset: () => void;
   onResetPassword: () => void;
-  onConfirmDelete: () => void;
-  onCancelDelete: () => void;
+  onConfirmLifecycle: () => void;
+  onCancelLifecycle: () => void;
   onConfirmBulkDelete: () => void;
   onCancelBulkDelete: () => void;
   onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -1122,7 +1186,10 @@ function AdminUsersWorkspace({
   pagination,
   search,
   roleFilter,
+  statusFilter,
   sortBy,
+  loading,
+  loadError,
   selectedUsers,
   bulkAction,
   bulkRole,
@@ -1136,12 +1203,13 @@ function AdminUsersWorkspace({
   newPassword,
   showPassword,
   resettingPassword,
-  deleteConfirm,
+  lifecycleConfirm,
   bulkDeleteConfirm,
   getRoleStyle,
   getRoleText,
   onSearchChange,
   onRoleFilterChange,
+  onStatusFilterChange,
   onSortByChange,
   onToggleSelectAll,
   onToggleSelectUser,
@@ -1153,7 +1221,8 @@ function AdminUsersWorkspace({
   onClearImportResult,
   onHandleEdit,
   onOpenPasswordReset,
-  onDeleteRequest,
+  onLifecycleRequest,
+  onRetry,
   onPrevPage,
   onNextPage,
   onCloseEdit,
@@ -1163,8 +1232,8 @@ function AdminUsersWorkspace({
   onToggleShowPassword,
   onClosePasswordReset,
   onResetPassword,
-  onConfirmDelete,
-  onCancelDelete,
+  onConfirmLifecycle,
+  onCancelLifecycle,
   onConfirmBulkDelete,
   onCancelBulkDelete,
   onImport,
@@ -1179,11 +1248,11 @@ function AdminUsersWorkspace({
       : '-';
 
   return (
-    <div style={{ display: 'grid', gap: '24px' }}>
+    <div className="admin-users-workspace" aria-busy={loading}>
       <AdminPageHero
         eyebrow="User Directory"
         title="ดูแลบัญชีผู้ใช้ สิทธิ์ และการดำเนินการแบบกลุ่ม"
-        description="รวมการค้นหา กรอง แก้ไขบทบาท นำเข้า-ส่งออก CSV และจัดการบัญชีสำคัญไว้ใน workspace เดียว เพื่อให้ทีมดูแลฐานผู้ใช้ได้เร็วขึ้นและสม่ำเสมอขึ้น"
+        description="ค้นหาและดูสถานะบัญชี ปรับบทบาท และปิดหรือเปิดใช้งานได้โดยไม่ลบประวัติการเรียน การชำระเงิน หรือใบรับรอง"
         actions={
           <>
             <AdminButton tone="default" onClick={onOpenImport} disabled={importing}>
@@ -1197,21 +1266,21 @@ function AdminUsersWorkspace({
             </AdminPill>
           </>
         }
-        meta="ออกแบบให้รองรับงานที่ทำซ้ำบ่อย เช่นค้นหาบัญชี, เปลี่ยน role แบบกลุ่ม, reset password และดูสถานะฐานผู้ใช้จากหน้าเดียว"
+        meta="การปิดใช้งานจะตัดสิทธิ์เข้าสู่ระบบและยกเลิกเซสชันเดิม ข้อมูลที่เชื่อมกับบัญชียังคงอยู่และเปิดใช้งานใหม่ได้"
       />
 
       {stats && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px' }}>
           {[
-            ['บัญชีทั้งหมด', stats.total, '#2563eb', 'ผู้ใช้ที่มีอยู่ในระบบ'],
-            ['Admin', stats.admins, '#dc2626', 'สิทธิ์ระดับดูแลระบบ'],
-            ['Instructors', stats.instructors, '#b45309', 'ผู้สอนที่ดูแลคอร์ส'],
-            ['Students', stats.students, '#15803d', 'ผู้เรียนที่ใช้งานอยู่'],
-          ].map(([label, value, color, note]) => (
+            ['บัญชีทั้งหมด', stats.total, 'info', 'ผู้ใช้ที่เก็บอยู่ในระบบ'],
+            ['ใช้งาน', stats.active, 'success', 'เข้าสู่ระบบและใช้บัญชีได้'],
+            ['ปิดใช้งาน', stats.inactive, 'warning', 'ข้อมูลคงอยู่ แต่เข้าสู่ระบบไม่ได้'],
+            ['Admin', stats.admins, 'default', 'สิทธิ์ระดับดูแลระบบ'],
+          ].map(([label, value, tone, note]) => (
             <AdminSurfaceCard key={String(label)} style={{ padding: '20px 22px' }}>
               <div style={summaryLabelStyle}>{label}</div>
-              <div style={{ color: String(color), fontSize: '1.65rem', fontWeight: 800, lineHeight: 1.1, marginBottom: '6px' }}>{value}</div>
-              <div style={{ color: '#94a3b8', fontSize: '0.78rem', lineHeight: 1.6 }}>{note}</div>
+              <div className={`admin-users-summary-value admin-users-summary-value--${tone}`}>{value}</div>
+              <div className="admin-users-summary-note">{note}</div>
             </AdminSurfaceCard>
           ))}
         </div>
@@ -1242,6 +1311,16 @@ function AdminUsersWorkspace({
               <option value="instructor">ผู้สอน</option>
               <option value="student">นักเรียน</option>
             </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => onStatusFilterChange(e.target.value as 'all' | 'active' | 'inactive')}
+              style={filterSelectStyle}
+              aria-label="กรองตามสถานะบัญชี"
+            >
+              <option value="all">ทุกสถานะ</option>
+              <option value="active">ใช้งาน</option>
+              <option value="inactive">ปิดใช้งาน</option>
+            </select>
             <select value={sortBy} onChange={(e) => onSortByChange(e.target.value)} style={filterSelectStyle}>
               <option value="createdAt">เรียงตามวันที่</option>
               <option value="name">เรียงตามชื่อ</option>
@@ -1253,8 +1332,8 @@ function AdminUsersWorkspace({
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '18px', background: '#f8fbff', border: '1px solid #e2e8f0' }}>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               <AdminPill tone="default">ทั้งหมด {pagination?.total ?? users.length} บัญชี</AdminPill>
-              <AdminPill tone="success">นักเรียน {stats?.students ?? 0}</AdminPill>
-              <AdminPill tone="warning">ผู้สอน {stats?.instructors ?? 0}</AdminPill>
+              <AdminPill tone="success">ใช้งาน {stats?.active ?? 0}</AdminPill>
+              <AdminPill tone="warning">ปิดใช้งาน {stats?.inactive ?? 0}</AdminPill>
             </div>
             {selectedUsers.length > 0 ? (
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -1262,7 +1341,8 @@ function AdminUsersWorkspace({
                 <select value={bulkAction} onChange={(e) => onBulkActionChange(e.target.value)} style={bulkSelectStyle}>
                   <option value="">เลือกการดำเนินการ</option>
                   <option value="updateRole">เปลี่ยน role</option>
-                  <option value="delete">ลบ</option>
+                  <option value="deactivate">ปิดใช้งาน</option>
+                  <option value="reactivate">เปิดใช้งาน</option>
                 </select>
                 {bulkAction === 'updateRole' && (
                   <select value={bulkRole} onChange={(e) => onBulkRoleChange(e.target.value)} style={bulkSelectStyle}>
@@ -1271,7 +1351,7 @@ function AdminUsersWorkspace({
                     <option value="admin">Admin</option>
                   </select>
                 )}
-                <button onClick={onHandleBulkAction} disabled={processingBulk || !bulkAction} style={{ padding: '10px 16px', background: bulkAction === 'delete' ? '#dc2626' : '#2563eb', color: 'white', border: 'none', borderRadius: '12px', cursor: processingBulk || !bulkAction ? 'not-allowed' : 'pointer', opacity: processingBulk || !bulkAction ? 0.7 : 1, fontSize: '0.875rem', fontWeight: 700 }}>
+                <button className={`admin-users-bulk-submit${bulkAction === 'deactivate' ? ' is-destructive' : ''}`} onClick={onHandleBulkAction} disabled={processingBulk || !bulkAction}>
                   {processingBulk ? 'กำลังดำเนินการ...' : 'ดำเนินการ'}
                 </button>
               </div>
@@ -1302,15 +1382,30 @@ function AdminUsersWorkspace({
           </div>
         )}
 
-        <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '18px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '820px', background: 'white' }}>
+        {loadError ? (
+          <div className="admin-users-state admin-users-state--error" role="alert">
+            <strong>โหลดรายชื่อผู้ใช้ไม่สำเร็จ</strong>
+            <span>{loadError}</span>
+            <AdminButton tone="default" onClick={onRetry}>ลองอีกครั้ง</AdminButton>
+          </div>
+        ) : null}
+        {loading && users.length > 0 ? (
+          <div className="admin-users-refreshing" role="status">กำลังอัปเดตรายชื่อ...</div>
+        ) : null}
+
+        {!loadError ? <div className="admin-users-table-wrap">
+          <table className="admin-users-table">
+            <caption className="admin-users-table-caption">
+              รายชื่อผู้ใช้ บทบาท สถานะบัญชี จำนวนคอร์ส วันที่สมัคร และการจัดการ
+            </caption>
             <thead>
               <tr style={{ background: '#f8fbff', borderBottom: '1px solid #e2e8f0' }}>
                 <th style={{ ...headerCellStyle, textAlign: 'center', width: '52px' }}>
-                  <input type="checkbox" checked={selectedUsers.length === users.length && users.length > 0} onChange={onToggleSelectAll} style={{ cursor: 'pointer' }} />
+                  <input aria-label="เลือกผู้ใช้ทั้งหมดในหน้านี้" type="checkbox" checked={selectedUsers.length === users.length && users.length > 0} onChange={onToggleSelectAll} style={{ cursor: 'pointer' }} />
                 </th>
                 <th style={headerCellStyle}>User</th>
                 <th style={{ ...headerCellStyle, textAlign: 'center' }}>Role</th>
+                <th style={{ ...headerCellStyle, textAlign: 'center' }}>สถานะ</th>
                 <th style={{ ...headerCellStyle, textAlign: 'center' }}>Enrollments</th>
                 <th style={{ ...headerCellStyle, textAlign: 'center' }}>Joined</th>
                 <th style={{ ...headerCellStyle, textAlign: 'right' }}>Actions</th>
@@ -1318,9 +1413,9 @@ function AdminUsersWorkspace({
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} style={{ borderBottom: '1px solid #edf2f7', background: selectedUsers.includes(user.id) ? '#f8fbff' : 'transparent' }}>
+                <tr key={user.id} className={user.lifecycleStatus === 'inactive' ? 'is-inactive' : undefined} style={{ borderBottom: '1px solid #edf2f7', background: selectedUsers.includes(user.id) ? '#f8fbff' : 'transparent' }}>
                   <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                    <input type="checkbox" checked={selectedUsers.includes(user.id)} onChange={() => onToggleSelectUser(user.id)} style={{ cursor: 'pointer' }} />
+                    <input aria-label={`เลือก ${user.name || user.email}`} type="checkbox" checked={selectedUsers.includes(user.id)} onChange={() => onToggleSelectUser(user.id)} style={{ cursor: 'pointer' }} />
                   </td>
                   <td style={bodyCellStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1338,28 +1433,37 @@ function AdminUsersWorkspace({
                       {getRoleText(user.role)}
                     </span>
                   </td>
+                  <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
+                    <AdminUserLifecycleBadge
+                      status={user.lifecycleStatus}
+                      detail={user.deactivatedAt ? `ตั้งแต่ ${formatDate(user.deactivatedAt)}` : undefined}
+                    />
+                  </td>
                   <td style={{ ...bodyCellStyle, textAlign: 'center', color: '#64748b' }}>{user.enrollmentCount} courses</td>
                   <td style={{ ...bodyCellStyle, textAlign: 'center', color: '#64748b', fontSize: '0.84rem' }}>{formatDate(user.createdAt)}</td>
                   <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                       <button onClick={() => onHandleEdit(user)} style={actionButtonStyle('#eff6ff', '#2563eb')}>Edit</button>
                       <button onClick={() => onOpenPasswordReset(user)} style={actionButtonStyle('#fff7ed', '#b45309')}>Password</button>
-                      <button
-                        onClick={() => onDeleteRequest(user.id)}
-                        disabled={updating === user.id}
-                        style={{ ...actionButtonStyle('#fef2f2', '#dc2626'), cursor: updating === user.id ? 'not-allowed' : 'pointer', opacity: updating === user.id ? 0.7 : 1 }}
-                      >
-                        Delete
-                      </button>
+                      <AdminUserLifecycleAction
+                        status={user.lifecycleStatus}
+                        pending={updating === user.id}
+                        onRequest={() => onLifecycleRequest(user)}
+                      />
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </div> : null}
 
-        {users.length === 0 && <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>No users found</div>}
+        {!loadError && users.length === 0 && !loading ? (
+          <div className="admin-users-state" role="status">
+            <strong>ไม่พบบัญชีที่ตรงกับตัวกรอง</strong>
+            <span>ลองเปลี่ยนคำค้นหา บทบาท หรือสถานะบัญชี</span>
+          </div>
+        ) : null}
 
         {pagination && pagination.totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '18px', borderTop: '1px solid #e2e8f0' }}>
@@ -1426,18 +1530,20 @@ function AdminUsersWorkspace({
       )}
 
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        title="Delete user"
-        message="Are you sure you want to delete this user? This action cannot be undone."
-        confirmText="Delete user"
-        onConfirm={onConfirmDelete}
-        onCancel={onCancelDelete}
+        isOpen={!!lifecycleConfirm}
+        title={lifecycleDeactivationDialog.title}
+        message={`${lifecycleConfirm?.name || lifecycleConfirm?.email || 'บัญชีนี้'}: ${lifecycleDeactivationDialog.message}`}
+        confirmText={updating === lifecycleConfirm?.id ? 'กำลังปิดใช้งาน...' : lifecycleDeactivationDialog.confirmText}
+        confirmDisabled={updating === lifecycleConfirm?.id}
+        onConfirm={onConfirmLifecycle}
+        onCancel={onCancelLifecycle}
       />
       <ConfirmDialog
         isOpen={bulkDeleteConfirm}
-        title="Delete selected users"
-        message={`Are you sure you want to delete ${selectedUsers.length} users?`}
-        confirmText="Delete all"
+        title="ปิดใช้งานบัญชีที่เลือก"
+        message={`บัญชี ${selectedUsers.length} รายการจะเข้าสู่ระบบไม่ได้และเซสชันเดิมจะสิ้นสุด แต่ข้อมูลที่เชื่อมกับบัญชียังคงอยู่`}
+        confirmText={processingBulk ? 'กำลังปิดใช้งาน...' : 'ยืนยันปิดใช้งาน'}
+        confirmDisabled={processingBulk}
         onConfirm={onConfirmBulkDelete}
         onCancel={onCancelBulkDelete}
       />

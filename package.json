@@ -18,6 +18,7 @@
     "db:preflight:oauth-accounts": "tsx scripts/check-oauth-account-duplicates.ts",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:migrate:local": "tsx src/lib/db/migrate.ts",
+    "db:rehearse:user-lifecycle": "tsx scripts/rehearse-user-lifecycle-migration.ts",
     "db:push": "drizzle-kit push",
     "db:push:local": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",

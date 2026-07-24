@@ -13,12 +13,15 @@ export const users = mysqlTable('users', {
     avatarUrl: text('avatar_url'),
     role: varchar('role', { length: 20, enum: ['student', 'instructor', 'admin'] }).default('student').notNull(),
     sessionVersion: int('session_version').default(0).notNull(),
+    deactivatedAt: datetime('deactivated_at'),
     emailVerifiedAt: datetime('email_verified_at'),
     resetToken: varchar('reset_token', { length: 255 }),
     resetExpires: datetime('reset_expires'),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
-});
+}, (table) => [
+    index('idx_users_deactivated_at').on(table.deactivatedAt),
+]);
 
 export const usersRelations = relations(users, ({ many }) => ({
     enrollments: many(enrollments),

@@ -39,6 +39,39 @@ export const updateUserSchema = z.object({
     role: z.enum(['student', 'instructor', 'admin']).optional(),
 });
 
+const adminUserIdSchema = z.string().min(1).max(36);
+const adminUserIdsSchema = z.array(adminUserIdSchema)
+    .min(1)
+    .max(100)
+    .refine((ids) => new Set(ids).size === ids.length, 'userIds ต้องไม่ซ้ำกัน');
+
+export const adminUserUpdateSchema = updateUserSchema
+    .strict()
+    .refine(
+        ({ name, role }) => name !== undefined || role !== undefined,
+        'กรุณาระบุข้อมูลที่ต้องการแก้ไข',
+    );
+
+export const adminUserLifecycleSchema = z.object({
+    action: z.enum(['deactivate', 'reactivate']),
+}).strict();
+
+export const adminUserLifecycleFilterSchema = z.enum(['all', 'active', 'inactive']);
+
+export const adminBulkUserActionSchema = z.discriminatedUnion('action', [
+    z.object({
+        action: z.enum(['delete', 'deactivate', 'reactivate']),
+        userIds: adminUserIdsSchema,
+    }).strict(),
+    z.object({
+        action: z.literal('updateRole'),
+        userIds: adminUserIdsSchema,
+        data: z.object({
+            role: z.enum(['student', 'instructor', 'admin']),
+        }).strict(),
+    }).strict(),
+]);
+
 // Payment validation
 export const updatePaymentSchema = z.object({
     status: z.enum(['pending', 'completed', 'failed', 'refunded']),

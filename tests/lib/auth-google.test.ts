@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { createGoogleProvider, isTrustedGoogleProfile, normalizeGoogleCallbackIssuer } from '@/lib/auth-google';
+import {
+    authorizeGoogleSignIn,
+    createGoogleProvider,
+    isTrustedGoogleProfile,
+    normalizeGoogleCallbackIssuer,
+} from '@/lib/auth-google';
 
 describe('Google auth policy', () => {
     it('enables account linking for the Google provider', () => {
@@ -32,5 +37,34 @@ describe('Google auth policy', () => {
 
         expect(normalizeGoogleCallbackIssuer(unrelatedUrl)).toBe(false);
         expect(unrelatedUrl.searchParams.get('iss')).toBe('accounts.google.com');
+    });
+
+    it('allows new and active Google identities but denies inactive existing users', async () => {
+        const profile = { email: 'student@example.com', email_verified: true };
+
+        await expect(authorizeGoogleSignIn(profile, undefined, async () => null)).resolves.toBe(true);
+        await expect(authorizeGoogleSignIn(profile, 'user-1', async () => ({
+            deactivatedAt: null,
+        }))).resolves.toBe(true);
+        await expect(authorizeGoogleSignIn(profile, 'user-1', async () => ({
+            deactivatedAt: new Date('2026-07-24T00:00:00.000Z'),
+        }))).resolves.toBe(false);
+    });
+
+    it('fails Google sign-in closed on untrusted profiles or account lookup failure', async () => {
+        const lookup = vi.fn().mockRejectedValue(new Error('database unavailable'));
+
+        await expect(authorizeGoogleSignIn(
+            { email: 'student@example.com', email_verified: false },
+            undefined,
+            lookup,
+        )).resolves.toBe(false);
+        expect(lookup).not.toHaveBeenCalled();
+
+        await expect(authorizeGoogleSignIn(
+            { email: 'student@example.com', email_verified: true },
+            undefined,
+            lookup,
+        )).resolves.toBe(false);
     });
 });

@@ -22,6 +22,7 @@ function createDependencies() {
             name: 'Learner',
             role: 'student',
             passwordHash: 'stored-hash',
+            deactivatedAt: null,
         }),
         comparePassword: vi.fn().mockResolvedValue(true),
     };
@@ -100,5 +101,36 @@ describe('credentials authorization rate-limit boundary', () => {
             name: 'Learner',
             role: 'student',
         });
+    });
+
+    it('returns the same denied shape for an inactive account without checking its password', async () => {
+        const dependencies = createDependencies();
+        dependencies.findUserByEmail.mockResolvedValue({
+            id: 'user-1',
+            email: 'learner@example.test',
+            name: 'Learner',
+            role: 'student',
+            passwordHash: 'stored-hash',
+            deactivatedAt: new Date('2026-07-24T00:00:00.000Z'),
+        });
+
+        await expect(authorizeCredentials(
+            { email: 'learner@example.test', password: 'Password1' },
+            request,
+            dependencies
+        )).resolves.toBeNull();
+        expect(dependencies.comparePassword).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when account state lookup is unavailable', async () => {
+        const dependencies = createDependencies();
+        dependencies.findUserByEmail.mockRejectedValue(new Error('database unavailable'));
+
+        await expect(authorizeCredentials(
+            { email: 'learner@example.test', password: 'Password1' },
+            request,
+            dependencies
+        )).resolves.toBeNull();
+        expect(dependencies.comparePassword).not.toHaveBeenCalled();
     });
 });

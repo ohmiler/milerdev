@@ -40,6 +40,7 @@ describe('shared feedback primitives', () => {
         onCancel={vi.fn()}
         confirmText={'Delete item'}
         cancelText={'Cancel'}
+        confirmDisabled
       />,
     );
 
@@ -50,6 +51,7 @@ describe('shared feedback primitives', () => {
     expect(html.match(new RegExp(`<button type=${quote}button`, 'g'))).toHaveLength(2);
     expect(html).toContain('Cancel');
     expect(html).toContain('Delete item');
+    expect(html).toContain('disabled');
   });
 
   it('renders no dialog surface while closed', () => {

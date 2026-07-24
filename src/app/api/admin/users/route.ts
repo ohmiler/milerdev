@@ -3,7 +3,8 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { enrollments, users } from '@/lib/db/schema';
-import { desc, sql, eq, like, and, or, gte, lte } from 'drizzle-orm';
+import { desc, sql, eq, like, and, or, gte, lte, isNull, isNotNull } from 'drizzle-orm';
+import { adminUserLifecycleFilterSchema } from '@/lib/validations/admin';
 
 // GET /api/admin/users - Get all users with stats and advanced filtering
 export async function GET(request: Request) {
@@ -15,6 +16,14 @@ export async function GET(request: Request) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20));
     const role = searchParams.get('role');
+    const statusResult = adminUserLifecycleFilterSchema.safeParse(searchParams.get('status') || 'all');
+    if (!statusResult.success) {
+      return NextResponse.json(
+        { error: 'ตัวกรองสถานะบัญชีไม่ถูกต้อง', code: 'INVALID_FILTER' },
+        { status: 400 },
+      );
+    }
+    const status = statusResult.data;
     const search = searchParams.get('search');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
@@ -27,6 +36,12 @@ export async function GET(request: Request) {
     
     if (role && role !== 'all') {
       conditions.push(eq(users.role, role as 'admin' | 'instructor' | 'student'));
+    }
+
+    if (status === 'active') {
+      conditions.push(isNull(users.deactivatedAt));
+    } else if (status === 'inactive') {
+      conditions.push(isNotNull(users.deactivatedAt));
     }
     
     if (search) {
@@ -77,6 +92,7 @@ export async function GET(request: Request) {
           avatarUrl: users.avatarUrl,
           emailVerifiedAt: users.emailVerifiedAt,
           createdAt: users.createdAt,
+          deactivatedAt: users.deactivatedAt,
           enrollmentCount: enrollmentCountExpression,
         })
         .from(users)
@@ -94,6 +110,8 @@ export async function GET(request: Request) {
       db
         .select({
           total: sql<number>`count(*)`,
+          active: sql<number>`sum(case when ${users.deactivatedAt} is null then 1 else 0 end)`,
+          inactive: sql<number>`sum(case when ${users.deactivatedAt} is not null then 1 else 0 end)`,
           admins: sql<number>`sum(case when role = 'admin' then 1 else 0 end)`,
           instructors: sql<number>`sum(case when role = 'instructor' then 1 else 0 end)`,
           students: sql<number>`sum(case when role = 'student' then 1 else 0 end)`,
@@ -107,6 +125,7 @@ export async function GET(request: Request) {
     const usersWithCounts = userList.map((user) => ({
       ...user,
       enrollmentCount: Number(user.enrollmentCount || 0),
+      lifecycleStatus: user.deactivatedAt === null ? 'active' : 'inactive',
     }));
 
     return NextResponse.json({
@@ -118,10 +137,12 @@ export async function GET(request: Request) {
         totalPages: Math.ceil(totalCount / limit),
       },
       stats: {
-        total: stats?.total || 0,
-        admins: stats?.admins || 0,
-        instructors: stats?.instructors || 0,
-        students: stats?.students || 0,
+        total: Number(stats?.total ?? 0),
+        active: Number(stats?.active ?? 0),
+        inactive: Number(stats?.inactive ?? 0),
+        admins: Number(stats?.admins ?? 0),
+        instructors: Number(stats?.instructors ?? 0),
+        students: Number(stats?.students ?? 0),
       },
     });
   } catch (error) {

@@ -25,6 +25,8 @@
   --admin-success-text: #15803d;
   --admin-warning-bg: #fff7ed;
   --admin-warning-text: #b45309;
+  --admin-danger-bg: #fff0f3;
+  --admin-danger-text: #c5163a;
   --admin-dark: #0f172a;
   --admin-dark-surface: linear-gradient(180deg, #081121 0%, #0f1b33 54%, #0b1220 100%);
 }
@@ -229,6 +231,157 @@
   color: var(--admin-warning-text);
 }
 
+.admin-users-workspace,
+.admin-user-detail-workspace {
+  display: grid;
+  gap: 24px;
+}
+
+.admin-users-summary-value {
+  margin-bottom: 6px;
+  color: var(--admin-text-strong);
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.admin-users-summary-value--info { color: var(--admin-accent-strong); }
+.admin-users-summary-value--success { color: var(--admin-success-text); }
+.admin-users-summary-value--warning { color: var(--admin-warning-text); }
+
+.admin-users-summary-note {
+  color: var(--admin-text-muted);
+  font-size: .78rem;
+  line-height: 1.6;
+}
+
+.admin-users-bulk-submit,
+.admin-users-lifecycle-action {
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: var(--admin-radius-md);
+  font: 700 .8rem/1.4 var(--font-ui);
+  cursor: pointer;
+}
+
+.admin-users-bulk-submit {
+  padding: 10px 16px;
+  background: var(--admin-accent-strong);
+  color: #ffffff;
+}
+
+.admin-users-bulk-submit.is-destructive,
+.admin-users-lifecycle-action--deactivate {
+  border-color: color-mix(in srgb, var(--admin-danger-text) 28%, transparent);
+  background: var(--admin-danger-bg);
+  color: var(--admin-danger-text);
+}
+
+.admin-users-lifecycle-action {
+  padding: 8px 12px;
+}
+
+.admin-users-lifecycle-action--reactivate {
+  border-color: color-mix(in srgb, var(--admin-success-text) 28%, transparent);
+  background: var(--admin-success-bg);
+  color: var(--admin-success-text);
+}
+
+.admin-users-bulk-submit:disabled,
+.admin-users-lifecycle-action:disabled,
+.admin-button:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+  transform: none;
+}
+
+.admin-users-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  border: 1px dashed var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text-soft);
+  text-align: center;
+}
+
+.admin-users-state strong {
+  color: var(--admin-text-strong);
+  font-size: 1rem;
+}
+
+.admin-users-state--error {
+  border-color: color-mix(in srgb, var(--admin-danger-text) 34%, var(--admin-border));
+  background: var(--admin-danger-bg);
+}
+
+.admin-users-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  scrollbar-gutter: stable;
+}
+
+.admin-users-table {
+  width: 100%;
+  min-width: 940px;
+  border-collapse: collapse;
+  background: var(--admin-surface);
+}
+
+.admin-users-table-caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.admin-users-refreshing {
+  margin-bottom: 10px;
+  color: var(--admin-accent-strong);
+  font-size: .78rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.admin-users-table tr.is-inactive {
+  background: color-mix(in srgb, var(--admin-warning-bg) 54%, var(--admin-surface));
+}
+
+.admin-users-status-time {
+  margin-top: 6px;
+  color: var(--admin-text-muted);
+  font-size: .7rem;
+  white-space: nowrap;
+}
+
+.admin-user-lifecycle-badge {
+  display: inline-grid;
+  justify-items: center;
+}
+
+.admin-user-lifecycle-note {
+  display: grid;
+  gap: 6px;
+  border-left: 4px solid var(--admin-warning-text);
+  background: var(--admin-warning-bg);
+  color: var(--admin-text);
+}
+
+.admin-user-lifecycle-note strong {
+  color: var(--admin-warning-text);
+}
+
+.admin-users-workspace :is(button, input, select):focus-visible,
+.admin-user-detail-workspace :is(button, input, select, a):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 @media (max-width: 1024px) {
   .admin-main-content {
     padding: 18px 16px 28px;
@@ -244,5 +397,37 @@
   .admin-section-heading {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .admin-users-workspace,
+  .admin-user-detail-workspace {
+    gap: 16px;
+  }
+
+  .admin-users-table-wrap {
+    margin-inline: -8px;
+    border-radius: var(--admin-radius-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-button,
+  .admin-users-bulk-submit,
+  .admin-users-lifecycle-action {
+    transition: none;
+  }
+
+  .admin-button:hover {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .admin-users-bulk-submit,
+  .admin-users-lifecycle-action,
+  .admin-users-state,
+  .admin-users-table-wrap,
+  .admin-user-lifecycle-note {
+    border: 2px solid CanvasText;
   }
 }

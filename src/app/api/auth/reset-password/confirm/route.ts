@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
-import { eq, and, gt, sql } from 'drizzle-orm';
+import { eq, and, gt, isNull, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
@@ -61,12 +61,13 @@ export async function POST(request: Request) {
             .where(
                 and(
                     eq(users.resetToken, tokenHash),
-                    gt(users.resetExpires, new Date())
+                    gt(users.resetExpires, new Date()),
+                    isNull(users.deactivatedAt)
                 )
             )
             .limit(1);
 
-        if (!user) {
+        if (!user || user.deactivatedAt !== null) {
             return NextResponse.json(
                 { error: 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว' },
                 { status: 400 }
@@ -88,7 +89,8 @@ export async function POST(request: Request) {
             .where(and(
                 eq(users.id, user.id),
                 eq(users.resetToken, tokenHash),
-                gt(users.resetExpires, new Date())
+                gt(users.resetExpires, new Date()),
+                isNull(users.deactivatedAt)
             ));
 
         if (updateResult[0]?.affectedRows !== 1) {
@@ -101,8 +103,8 @@ export async function POST(request: Request) {
         return NextResponse.json({
             message: 'ตั้งรหัสผ่านใหม่สำเร็จ',
         });
-    } catch (error) {
-        console.error('Reset password confirm error:', error);
+    } catch {
+        console.error('Password reset confirmation failed');
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
             { status: 500 }

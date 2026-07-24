@@ -5,7 +5,7 @@ import { db } from "./db";
 import * as schema from "./db/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { createGoogleProvider, isTrustedGoogleProfile } from "./auth-google";
+import { authorizeGoogleSignIn, createGoogleProvider } from "./auth-google";
 import { applyJwtSessionPolicy, exposeAuthorizedSession } from "./auth-session";
 import { authorizeCredentials } from "./auth-credentials";
 import { consumeAuthRateLimit } from "./auth-rate-limit";
@@ -73,9 +73,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }),
     ],
     callbacks: {
-        async signIn({ account, profile }) {
+        async signIn({ account, profile, user }) {
             if (account?.provider === "google") {
-                return isTrustedGoogleProfile(profile);
+                return authorizeGoogleSignIn(profile, user?.id, async ({ email, userId }) => {
+                    const userById = userId
+                        ? await db.query.users.findFirst({
+                            where: eq(schema.users.id, userId),
+                            columns: { deactivatedAt: true },
+                        })
+                        : null;
+                    return userById ?? db.query.users.findFirst({
+                        where: eq(schema.users.email, email),
+                        columns: { deactivatedAt: true },
+                    });
+                });
             }
 
             return true;
@@ -89,6 +100,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     columns: {
                         role: true,
                         sessionVersion: true,
+                        deactivatedAt: true,
                     },
                 }),
             });

@@ -85,6 +85,13 @@
       "when": 1784748424144,
       "tag": "0011_auth_shared_rate_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1784904788925,
+      "tag": "0012_user_lifecycle",
+      "breakpoints": true
     }
   ]
 }

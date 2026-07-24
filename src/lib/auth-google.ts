@@ -8,6 +8,15 @@ type GoogleProviderConfig = {
     clientSecret: string;
 };
 
+type ExistingGoogleUserState = {
+    deactivatedAt: Date | null;
+};
+
+type LoadExistingGoogleUser = (identity: {
+    email: string;
+    userId?: string;
+}) => Promise<ExistingGoogleUserState | null | undefined>;
+
 export function createGoogleProvider({ clientId, clientSecret }: GoogleProviderConfig) {
     return Google<GoogleProfile>({
         clientId,
@@ -24,6 +33,24 @@ export function isTrustedGoogleProfile(profile: unknown): profile is Pick<Google
     const googleProfile = profile as Partial<GoogleProfile>;
 
     return typeof googleProfile.email === 'string' && googleProfile.email_verified === true;
+}
+
+export async function authorizeGoogleSignIn(
+    profile: unknown,
+    userId: string | undefined,
+    loadExistingUser: LoadExistingGoogleUser,
+): Promise<boolean> {
+    if (!isTrustedGoogleProfile(profile)) return false;
+
+    try {
+        const existingUser = await loadExistingUser({
+            email: profile.email.toLowerCase().trim(),
+            ...(userId ? { userId } : {}),
+        });
+        return !existingUser || existingUser.deactivatedAt === null;
+    } catch {
+        return false;
+    }
 }
 
 export function normalizeGoogleCallbackIssuer(url: URL): boolean {

@@ -3,7 +3,8 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { enrollments, users } from '@/lib/db/schema';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { adminUserLifecycleFilterSchema } from '@/lib/validations/admin';
 
 // Sanitize CSV field to prevent formula injection
 function csvSafe(value: string | number | null | undefined): string {
@@ -62,10 +63,22 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
+    const statusResult = adminUserLifecycleFilterSchema.safeParse(searchParams.get('status') || 'all');
+    if (!statusResult.success) {
+      return NextResponse.json(
+        { error: 'ตัวกรองสถานะบัญชีไม่ถูกต้อง', code: 'INVALID_FILTER' },
+        { status: 400 },
+      );
+    }
 
     const conditions = [];
     if (role && role !== 'all') {
       conditions.push(eq(users.role, role as 'admin' | 'instructor' | 'student'));
+    }
+    if (statusResult.data === 'active') {
+      conditions.push(isNull(users.deactivatedAt));
+    } else if (statusResult.data === 'inactive') {
+      conditions.push(isNotNull(users.deactivatedAt));
     }
 
     const enrollmentCounts = db
@@ -77,9 +90,9 @@ export async function GET(request: Request) {
       .groupBy(enrollments.userId)
       .as('enrollment_counts');
 
-    const whereCondition = conditions.length > 0 ? conditions[0] : undefined;
+    const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
     const csvStream = buildBatchedCsvStream(
-      'ID,ชื่อ,อีเมล,บทบาท,ยืนยันอีเมล,วันที่สมัคร,จำนวนคอร์สที่ลงทะเบียน\n',
+      'ID,ชื่อ,อีเมล,บทบาท,ยืนยันอีเมล,วันที่สมัคร,จำนวนคอร์สที่ลงทะเบียน,lifecycle_status,deactivated_at\n',
       (offset, limit) =>
         db
           .select({
@@ -89,6 +102,7 @@ export async function GET(request: Request) {
             role: users.role,
             emailVerifiedAt: users.emailVerifiedAt,
             createdAt: users.createdAt,
+            deactivatedAt: users.deactivatedAt,
             enrollmentCount: sql<number>`COALESCE(${enrollmentCounts.enrollmentCount}, 0)`,
           })
           .from(users)
@@ -100,7 +114,9 @@ export async function GET(request: Request) {
       (user) => {
         const verified = user.emailVerifiedAt ? 'ใช่' : 'ไม่';
         const createdAt = user.createdAt ? new Date(user.createdAt).toISOString() : '';
-        return `${csvSafe(user.id)},${csvSafe(user.name)},${csvSafe(user.email)},${csvSafe(user.role)},${csvSafe(verified)},${csvSafe(createdAt)},${Number(user.enrollmentCount || 0)}\n`;
+        const lifecycleStatus = user.deactivatedAt === null ? 'active' : 'inactive';
+        const deactivatedAt = user.deactivatedAt ? new Date(user.deactivatedAt).toISOString() : '';
+        return `${csvSafe(user.id)},${csvSafe(user.name)},${csvSafe(user.email)},${csvSafe(user.role)},${csvSafe(verified)},${csvSafe(createdAt)},${Number(user.enrollmentCount || 0)},${lifecycleStatus},${csvSafe(deactivatedAt)}\n`;
       }
     );
 

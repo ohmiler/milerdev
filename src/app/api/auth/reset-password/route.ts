@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/email';
 import { randomBytes, createHash } from 'crypto';
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
             .limit(1);
 
         // Always return success to prevent email enumeration
-        if (!user) {
+        if (!user || user.deactivatedAt !== null) {
             return NextResponse.json({
                 message: genericMessage
             });
@@ -83,13 +83,17 @@ export async function POST(request: Request) {
         const resetExpires = new Date(now + RESET_TOKEN_TTL_MS);
 
         // Store hashed token in DB (plaintext sent to user via email)
-        await db
+        const issueResult = await db
             .update(users)
             .set({
                 resetToken: resetTokenHash,
                 resetExpires,
             })
-            .where(eq(users.id, user.id));
+            .where(and(eq(users.id, user.id), isNull(users.deactivatedAt)));
+
+        if (issueResult[0]?.affectedRows !== 1) {
+            return NextResponse.json({ message: genericMessage });
+        }
 
         // Wait for delivery so serverless runtimes do not end the request first.
         if (user.email) {
@@ -106,7 +110,10 @@ export async function POST(request: Request) {
                         resetToken: null,
                         resetExpires: null,
                     })
-                    .where(eq(users.id, user.id));
+                    .where(and(
+                        eq(users.id, user.id),
+                        eq(users.resetToken, resetTokenHash)
+                    ));
 
                 console.error('[Reset] Password reset email delivery failed');
             }
@@ -115,8 +122,8 @@ export async function POST(request: Request) {
         return NextResponse.json({
             message: genericMessage
         });
-    } catch (error) {
-        console.error('Password reset error:', error);
+    } catch {
+        console.error('Password reset request failed');
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
             { status: 500 }
