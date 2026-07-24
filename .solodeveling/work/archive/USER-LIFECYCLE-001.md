@@ -3,7 +3,7 @@ solodeveling_schema: 1
 id: USER-LIFECYCLE-001
 status: done
 level: Critical
-authority: User authorized creating and using `milerdev_lifecycle_fresh` and `milerdev_lifecycle_upgrade` on `localhost:3306` for Slice 6 on 2026-07-24 and authorized a scoped `USER-LIFECYCLE-001` commit on 2026-07-25; protected schema `milerdev`, destructive cleanup, and production release remain unauthorized.
+authority: User authorized creating and using `milerdev_lifecycle_fresh` and `milerdev_lifecycle_upgrade` on `localhost:3306` for Slice 6 on 2026-07-24, a scoped `USER-LIFECYCLE-001` source commit on 2026-07-25, destructive recreation plus migrations 0000-0012 on empty local schema `milerdev` on 2026-07-25, target-locked creation of local Admin/Student fixtures plus local server smoke on 2026-07-25, and a scoped follow-up commit of local smoke tooling plus Project Memory on 2026-07-25; fixture/disposable-schema cleanup, push, and production release remain unauthorized.
 ---
 
 # Make user deactivation reversible and data-safe
@@ -216,7 +216,13 @@ connect to MySQL, apply a migration, commit, or deploy before that checkpoint.
 Slices 1-7 are implemented and verified locally. Fresh and representative MySQL
 rehearsals, linked-data retention, idempotent inactive enforcement, and real InnoDB
 last-admin recovery passed. Full tests, Admin text, lint, build, and diff integrity
-passed. Authenticated browser viewport/keyboard checks and live provider/production
-behavior remain explicit release-environment gaps. This scoped commit was authorized;
-disposable-schema cleanup, protected schema migration, and deployment were not
-authorized or performed.
+passed. Owner-operated authenticated local smoke then confirmed active Student login,
+deactivation confirmation and retained-data messaging, immediate revocation of the
+existing session, generic credential denial while inactive, direct reactivation,
+fresh login after reactivation, session version 2, cleared reset credentials, and
+two matching lifecycle audits. Full representative responsive-width and keyboard
+checks plus live provider/production behavior remain explicit release-environment
+gaps. The scoped source commit and fresh 0000-0012 migration of empty local schema
+milerdev were authorized and completed; the later smoke tooling and memory updates
+were verified and authorized for this follow-up commit. Fixture/disposable-schema
+cleanup, push, and deployment were not authorized or performed.

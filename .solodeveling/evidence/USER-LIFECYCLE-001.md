@@ -7,12 +7,12 @@ id: USER-LIFECYCLE-001
 
 | AC | Result | Evidence | Limitation |
 | --- | --- | --- | --- |
-| AC1 | Pass | Nullable/no-default `deactivated_at` and its non-unique index are protected by schema/SQL regressions. Owner-operated fresh rehearsal applied 13 migrations and produced 29 tables plus exactly one lifecycle column/index; representative upgrade moved from 12/0/0 to 13/1/1. | Production and protected local schema `milerdev` were not migrated. |
+| AC1 | Pass | Nullable/no-default `deactivated_at` and its non-unique index are protected by schema/SQL regressions. Owner-operated fresh rehearsal applied 13 migrations and produced 29 tables plus exactly one lifecycle column/index; representative upgrade moved from 12/0/0 to 13/1/1; the recreated empty local `milerdev` schema independently reached 29/13/1/1. | Production was not migrated. |
 | AC2 | Pass | Single/bulk lifecycle and role paths use transactional locks, compare-and-set updates, atomic audits, session rotation, reset clearing, and actual changed/skipped counts. Focused service/API tests and real MySQL student deactivation plus idempotent retry passed. | External production concurrency and volume remain release observations. |
-| AC3 | Pass | Credentials, Google, JWT/session, reset request, and reset confirmation fail closed for inactive accounts; reactivation/session-version paths are covered. Full regression passed with Google/email mocked, and the migrated fixture retained inactive/reset-cleared state. | Live Google/email and deployed-session behavior were not exercised. |
+| AC3 | Pass | Credentials, Google, JWT/session, reset request, and reset confirmation fail closed for inactive accounts; reactivation/session-version paths are covered. Full regression passed with Google/email mocked. Owner-operated local smoke confirmed that deactivation revoked an existing Student session, inactive credentials received the generic denial, reactivation required and allowed a fresh login, session version reached 2, reset credentials remained clear, and lifecycle audits captured both transitions. | Live Google/email and deployed-session behavior were not exercised. |
 | AC4 | Pass | No normal Admin path deletes users. Representative OAuth, enrollment, progress, payment, notification, review, coupon usage, certificate, and audit fixtures remained after 0012 and deactivation. Public certificate route queries certificate code directly without joining/filtering user lifecycle, and production build includes `/certificate/[code]`. | A live HTTP render of the disposable certificate was not executed; evidence combines retained MySQL row, route inspection, component regression, and build. |
 | AC5 | Pass | Unit concurrency covers cross-deactivation/demotion and failure rollback. Real InnoDB rehearsal produced four Admin lifecycle audit rows across two concurrent-deactivate/recovery rounds while ending with both fake Admins active and none inactive. | Production lock timing remains unobserved. |
-| AC6 | Pass | Admin list/detail lifecycle filtering, badges, direct/bulk controls, preserved-data explanation, authoritative refresh, stale/loading/error/success/pending states, focus/reduced-motion/forced-color CSS, and disabled confirmation are covered by component/API tests; full lint/build passed. | Per the work plan, authenticated 390/768/1280/1600 browser, keyboard, hover, and focus observation remains an explicit untested environment gap because no safe authenticated browser fixture was available. |
+| AC6 | Pass | Admin list/detail lifecycle filtering, badges, direct/bulk controls, preserved-data explanation, authoritative refresh, stale/loading/error/success/pending states, focus/reduced-motion/forced-color CSS, and disabled confirmation are covered by component/API tests; full lint/build passed. Owner-operated desktop smoke observed active/inactive badges, the deactivation dialog and retained-data explanation, immediate reactivation, and authoritative list refresh. | Authenticated 390/768/1280/1600 coverage plus keyboard, hover, and focus observation remains an explicit untested environment gap. |
 | AC7 | Pass | Password reset revokes sessions without activation; export includes lifecycle state/time; duplicate import does not reactivate; focused and full regressions passed. The database fixture confirmed session increment and reset credential clearing while linked data remained. | No provider or production import/export smoke was run. |
 | AC8 | Pass | Fresh/upgrade MySQL rehearsals passed; full Vitest passed 48 files / 376 tests; admin-text, full ESLint, Next production build with 90 routes, `git diff --check`, and final status/scope review passed. Security and recovery boundaries remain recorded in WORK. | Browser checks above remain explicitly unverified. Standalone `tsc --noEmit` retains four pre-existing test typing errors, while the Next production build TypeScript gate passed. |
 
@@ -188,3 +188,40 @@ id: USER-LIFECYCLE-001
   environment configuration, but no secret value was printed or recorded; no
   protected or production database was targeted, and no commit, disposable-schema
   cleanup, or deployment occurred.
+- 2026-07-25: The owner confirmed local milerdev contained no valuable data and
+  explicitly authorized destructive recreation on localhost:3306 followed by
+  migrations 0000-0012. Preflight exposed an old 27-table/four-journal state and a
+  journal timestamp ordering hazard for incremental 0004, so no incremental mutation
+  was attempted. Owner-operated Workbench recreation reported zero tables, the
+  credential-hidden repository migrator reported completion, and sanitized
+  postflight reported milerdev, 29 tables, 13 journal rows, one nullable lifecycle
+  column, and one lifecycle index. No credential was shared or recorded; production,
+  disposable-schema cleanup, push, and deployment were not targeted.
+- 2026-07-25: The existing broad seed was not used because static inspection found
+  fixed logged passwords, unnecessary cross-domain data, mojibake content, and unsafe
+  rerun coupling. A target-locked smoke fixture runner passed 6 guard tests, forced
+  ESLint, PowerShell syntax, and missing-credential denial before the owner executed
+  it with hidden inputs. Sanitized output reported exactly two active local users in
+  `localhost:3306/milerdev`: one Admin and one Student; no email or provider path was
+  invoked. The existing workspace Next server was confirmed by process path and
+  returned HTTP 200 for `/login`. Browser discovery returned no available backend,
+  so authenticated UI interaction remains owner-operated and unverified at this
+  checkpoint.
+- 2026-07-25: Owner-operated authenticated local smoke passed end to end without
+  email or external-provider calls. The active Student logged in, Admin deactivation
+  displayed the preserved-data warning, and confirmation revoked the existing
+  Student session by redirecting it to `/login`. The same credentials then received
+  the generic Thai invalid-email-or-password response while inactive. Admin list
+  retained the Student with inactive status/date; reactivation executed directly as
+  designed, and a fresh Student login reached `/dashboard`. Final sanitized database
+  inspection showed the Admin active at session version 0 and Student active at
+  session version 2, with reset token and expiry clear for both. Two audit rows
+  recorded `lifecycle:active` to `lifecycle:inactive` and the reverse transition for
+  the Student. Full representative responsive-width and keyboard/focus observation
+  remains outstanding.
+- 2026-07-25: The owner authorized a scoped follow-up commit of the reusable local
+  smoke tooling and USER-LIFECYCLE-001 Project Memory. Immediately before staging,
+  the target guard passed 6/6 focused Vitest tests; the fixture TypeScript and test
+  passed focused ESLint; the credential-prompting runner parsed as valid PowerShell;
+  and `git diff --check` passed. No database, provider, email, push, deployment, or
+  cleanup action was part of this commit checkpoint.
