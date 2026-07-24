@@ -7,14 +7,14 @@ id: USER-LIFECYCLE-001
 
 | AC | Result | Evidence | Limitation |
 | --- | --- | --- | --- |
-| AC1 | Pass | Nullable/no-default `deactivated_at` and its non-unique index are protected by schema/SQL regressions. Owner-operated fresh rehearsal applied 13 migrations and produced 29 tables plus exactly one lifecycle column/index; representative upgrade moved from 12/0/0 to 13/1/1; the recreated empty local `milerdev` schema independently reached 29/13/1/1. | Production was not migrated. |
+| AC1 | Pass | Nullable/no-default `deactivated_at` and its non-unique index are protected by schema/SQL regressions. Fresh, representative, and recreated local schemas reached 29/13/1/1. Production moved from 29/12/0/0 to 29/13/1/1 while retaining 1,816 users, one active Admin, and zero inactive users. | Production DDL lock duration was not instrumented. |
 | AC2 | Pass | Single/bulk lifecycle and role paths use transactional locks, compare-and-set updates, atomic audits, session rotation, reset clearing, and actual changed/skipped counts. Focused service/API tests and real MySQL student deactivation plus idempotent retry passed. | External production concurrency and volume remain release observations. |
-| AC3 | Pass | Credentials, Google, JWT/session, reset request, and reset confirmation fail closed for inactive accounts; reactivation/session-version paths are covered. Full regression passed with Google/email mocked. Owner-operated local smoke confirmed that deactivation revoked an existing Student session, inactive credentials received the generic denial, reactivation required and allowed a fresh login, session version reached 2, reset credentials remained clear, and lifecycle audits captured both transitions. | Live Google/email and deployed-session behavior were not exercised. |
+| AC3 | Pass | Credentials, Google, JWT/session, reset request, and reset confirmation fail closed for inactive accounts; reactivation/session-version paths are covered. Full regression passed with Google/email mocked; local smoke covered deactivation, revocation, generic denial, reactivation, and audit transitions. Production Admin login, logout, and fresh login passed after deployment. | Live Google/email and a production inactive-account transition were not exercised. |
 | AC4 | Pass | No normal Admin path deletes users. Representative OAuth, enrollment, progress, payment, notification, review, coupon usage, certificate, and audit fixtures remained after 0012 and deactivation. Public certificate route queries certificate code directly without joining/filtering user lifecycle, and production build includes `/certificate/[code]`. | A live HTTP render of the disposable certificate was not executed; evidence combines retained MySQL row, route inspection, component regression, and build. |
 | AC5 | Pass | Unit concurrency covers cross-deactivation/demotion and failure rollback. Real InnoDB rehearsal produced four Admin lifecycle audit rows across two concurrent-deactivate/recovery rounds while ending with both fake Admins active and none inactive. | Production lock timing remains unobserved. |
-| AC6 | Pass | Admin list/detail lifecycle filtering, badges, direct/bulk controls, preserved-data explanation, authoritative refresh, stale/loading/error/success/pending states, focus/reduced-motion/forced-color CSS, and disabled confirmation are covered by component/API tests; full lint/build passed. Owner-operated desktop smoke observed active/inactive badges, the deactivation dialog and retained-data explanation, immediate reactivation, and authoritative list refresh. | Authenticated 390/768/1280/1600 coverage plus keyboard, hover, and focus observation remains an explicit untested environment gap. |
+| AC6 | Pass | Admin list/detail lifecycle filtering, badges, direct/bulk controls, preserved-data explanation, authoritative refresh, stale/loading/error/success/pending states, focus/reduced-motion/forced-color CSS, and disabled confirmation are covered by component/API tests; full lint/build passed. Local lifecycle smoke and production Admin Users loading passed. | Authenticated 390/768/1280/1600 coverage plus keyboard, hover, and focus observation remains an explicit untested environment gap. |
 | AC7 | Pass | Password reset revokes sessions without activation; export includes lifecycle state/time; duplicate import does not reactivate; focused and full regressions passed. The database fixture confirmed session increment and reset credential clearing while linked data remained. | No provider or production import/export smoke was run. |
-| AC8 | Pass | Fresh/upgrade MySQL rehearsals passed; full Vitest passed 48 files / 376 tests; admin-text, full ESLint, Next production build with 90 routes, `git diff --check`, and final status/scope review passed. Security and recovery boundaries remain recorded in WORK. | Browser checks above remain explicitly unverified. Standalone `tsc --noEmit` retains four pre-existing test typing errors, while the Next production build TypeScript gate passed. |
+| AC8 | Pass | Fresh/upgrade MySQL rehearsals passed; full Vitest passed 48 files / 376 tests; admin-text, full ESLint, Next production build with 90 routes, and diff integrity passed. Candidate `7319b91` deployed successfully after backup/restore and preflight; migration/postflight, Admin auth/Admin Users smoke, and error-log observation passed. | Browser gaps above remain explicit. Standalone `tsc --noEmit` retains four pre-existing test typing errors, while the Next production build TypeScript gate passed. |
 
 ## Observations
 
@@ -225,3 +225,25 @@ id: USER-LIFECYCLE-001
   passed focused ESLint; the credential-prompting runner parsed as valid PowerShell;
   and `git diff --check` passed. No database, provider, email, push, deployment, or
   cleanup action was part of this commit checkpoint.
+- 2026-07-25: Exact fast-forward push advanced `origin/master` from `c46528c` to
+  candidate `7319b91` with only commits `ad820df` and `7319b91`; Auto Deploy remained
+  disabled. Railway native backups were unavailable on the owner's plan, so the owner
+  exported a logical production backup and restored it into isolated local schema
+  `milerdev_prod_restore_check`. The restored schema reported 29 tables, 12 migrations,
+  zero lifecycle column/index, and matched production counts for users (1,816),
+  accounts (218), enrollments (468), lesson progress (2,108), payments (67),
+  certificates (19), and audit logs (137).
+- 2026-07-25: Production preflight reported 29 tables, 12 migrations, zero lifecycle
+  column/index, 1,816 users, one Admin, and an InnoDB users table of 0.48 MB. The owner
+  authorized manual Railway production deployment of candidate `7319b91` with
+  migration 0012 through `npm start`. Deployment `fda34b42` became Active; logs showed
+  `Running migrations...`, `Migrations complete!`, and Next.js `Ready`. Production
+  postflight reported 29 tables, 13 migrations, one lifecycle column/index, 1,816
+  users, one active Admin, and zero inactive users.
+- 2026-07-25: Owner-operated production smoke confirmed Admin login, logout and fresh
+  login, and Admin Users loading, followed by a ten-minute Railway log observation
+  with no reported error. No production account was deactivated, so live inactive
+  enforcement, Google/email lifecycle behavior, full responsive/keyboard coverage,
+  and public certificate HTTP rendering remain unverified. Auto Deploy remains
+  disabled; the owner authorized a final scoped release-memory commit/push, while
+  cleanup remains unauthorized.

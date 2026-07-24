@@ -3,7 +3,7 @@ solodeveling_schema: 1
 id: USER-LIFECYCLE-001
 status: done
 level: Critical
-authority: User authorized creating and using `milerdev_lifecycle_fresh` and `milerdev_lifecycle_upgrade` on `localhost:3306` for Slice 6 on 2026-07-24, a scoped `USER-LIFECYCLE-001` source commit on 2026-07-25, destructive recreation plus migrations 0000-0012 on empty local schema `milerdev` on 2026-07-25, target-locked creation of local Admin/Student fixtures plus local server smoke on 2026-07-25, and a scoped follow-up commit of local smoke tooling plus Project Memory on 2026-07-25; fixture/disposable-schema cleanup, push, and production release remain unauthorized.
+authority: User authorized creating and using `milerdev_lifecycle_fresh` and `milerdev_lifecycle_upgrade` on `localhost:3306` for Slice 6 on 2026-07-24, a scoped `USER-LIFECYCLE-001` source commit on 2026-07-25, destructive recreation plus migrations 0000-0012 on empty local schema `milerdev` on 2026-07-25, target-locked creation of local Admin/Student fixtures plus local server smoke on 2026-07-25, a scoped follow-up commit of local smoke tooling plus Project Memory on 2026-07-25, exact fast-forward push of `ad820df` and `7319b91` to `origin/master`, and manual Railway production deployment of candidate `7319b91` with migration 0012 through `npm start`, and a final scoped commit/push of the resulting release Project Memory; cleanup remains unauthorized.
 ---
 
 # Make user deactivation reversible and data-safe
@@ -224,5 +224,8 @@ two matching lifecycle audits. Full representative responsive-width and keyboard
 checks plus live provider/production behavior remain explicit release-environment
 gaps. The scoped source commit and fresh 0000-0012 migration of empty local schema
 milerdev were authorized and completed; the later smoke tooling and memory updates
-were verified and authorized for this follow-up commit. Fixture/disposable-schema
-cleanup, push, and deployment were not authorized or performed.
+were verified and committed. Candidate `7319b91` was pushed and manually deployed to
+Railway production after a restored logical backup and production preflight.
+Migration 0012, database postflight, Admin login/logout/fresh login, Admin Users, and
+the error-log observation passed. The final release-memory commit/push was authorized;
+cleanup remains unauthorized.
