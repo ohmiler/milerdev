@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/email';
+import { logError, logEvent } from '@/lib/error-handler';
 import { fulfillStripeCheckoutSession } from '@/lib/payment-fulfillment';
 
 export async function POST(request: Request) {
@@ -18,7 +19,9 @@ export async function POST(request: Request) {
       process.env.STRIPE_WEBHOOK_SECRET!,
     );
   } catch (error) {
-    console.error('Webhook signature verification failed:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), {
+      action: 'stripe.webhook.signature_invalid',
+    });
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
@@ -34,7 +37,9 @@ export async function POST(request: Request) {
       event: { id: event.id, type: event.type },
     });
   } catch (error) {
-    console.error('[Webhook] Unexpected fulfillment failure:', error);
+    logError(error instanceof Error ? error : new Error(String(error)), {
+      action: 'stripe.webhook.fulfillment_failed',
+    });
     return NextResponse.json(
       { error: 'Failed to process payment fulfillment' },
       { status: 500 },
@@ -42,14 +47,12 @@ export async function POST(request: Request) {
   }
 
   if (result.status === 'replayed') {
-    console.log(`[Webhook] Stripe event ${event.id} already processed, skipping`);
+    logEvent('stripe.webhook.replayed');
     return NextResponse.json({ received: true });
   }
 
   if (result.status === 'rejected') {
-    console.error(
-      `[Webhook] Fulfillment rejected (${result.code}, paymentId=${checkoutSession.metadata?.paymentId ?? 'missing'})`,
-    );
+    logEvent(`stripe.webhook.rejected.${result.code}`, 'warn');
     const shouldRetry = result.retryable && result.code !== 'SESSION_NOT_PAID';
     return shouldRetry
       ? NextResponse.json({ error: 'Payment fulfillment is not ready' }, { status: 500 })
@@ -81,9 +84,12 @@ export async function POST(request: Request) {
         courseName: enrollmentName,
         courseSlug: details.firstCourseSlug,
       }),
-    ]).catch((error) => console.error('[Webhook] Failed to send payment emails:', error));
+    ]).catch((error) => logError(
+      error instanceof Error ? error : new Error(String(error)),
+      { action: 'stripe.webhook.email_failed' },
+    ));
   }
 
-  console.log(`[Webhook] Payment ${result.payment.id} fulfilled (${result.status})`);
+  logEvent(`stripe.webhook.fulfilled.${result.status}`);
   return NextResponse.json({ received: true });
 }

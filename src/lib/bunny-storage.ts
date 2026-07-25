@@ -1,4 +1,5 @@
 import { createId } from '@paralleldrive/cuid2';
+import { logError, logEvent } from '@/lib/error-handler';
 
 function getConfig() {
     const storageApiKey = process.env.BUNNY_STORAGE_API_KEY;
@@ -50,8 +51,7 @@ export async function uploadToBunny(
     );
 
     if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[BunnyStorage] Upload error:', errorText);
+        logEvent(`bunny.upload.failed.${response.status}`, 'warn');
         throw new Error('Failed to upload to Bunny Storage');
     }
 
@@ -85,13 +85,16 @@ export async function deleteFromBunny(urlOrPath: string): Promise<boolean> {
         );
 
         if (!response.ok) {
-            console.warn('[BunnyStorage] Delete failed:', response.status, await response.text());
+            logEvent(`bunny.delete.failed.${response.status}`, 'warn');
             return false;
         }
 
         return true;
     } catch (error) {
-        console.error('[BunnyStorage] Delete error:', error);
+        logError(
+            error instanceof Error ? error : new Error(String(error)),
+            { action: 'bunny.delete.failed' }
+        );
         return false;
     }
 }

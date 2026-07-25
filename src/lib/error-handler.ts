@@ -4,10 +4,32 @@
  */
 
 type ErrorContext = {
-    userId?: string;
     action?: string;
-    metadata?: Record<string, unknown>;
 };
+
+type LogLevel = 'info' | 'warn' | 'error';
+
+function normalizeLogLabel(value: string | undefined, fallback: string): string {
+    return value && /^[a-zA-Z0-9._:-]{1,100}$/.test(value)
+        ? value
+        : fallback;
+}
+
+export function logEvent(event: string, level: LogLevel = 'info'): void {
+    const payload = JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level,
+        event: normalizeLogLabel(event, 'application.event'),
+    });
+
+    if (level === 'error') {
+        console.error(payload);
+    } else if (level === 'warn') {
+        console.warn(payload);
+    } else {
+        console.log(payload);
+    }
+}
 
 // Custom application error class
 export class AppError extends Error {
@@ -57,20 +79,21 @@ export const errors = {
 
 // Log error (can be extended to send to Sentry)
 export function logError(error: Error, context?: ErrorContext): void {
-    const timestamp = new Date().toISOString();
-    const errorInfo = {
-        timestamp,
-        message: error.message,
-        stack: error.stack,
-        ...context,
+    const productionErrorInfo = {
+        timestamp: new Date().toISOString(),
+        level: 'error',
+        event: normalizeLogLabel(context?.action, 'application.error'),
+        errorType: normalizeLogLabel(error.name, 'Error'),
     };
 
-    // Console logging in development
     if (process.env.NODE_ENV === 'development') {
-        console.error('[Error]', JSON.stringify(errorInfo, null, 2));
+        console.error('[Error]', JSON.stringify({
+            ...productionErrorInfo,
+            message: error.message,
+            stack: error.stack,
+        }, null, 2));
     } else {
-        // In production, log structured error
-        console.error(JSON.stringify(errorInfo));
+        console.error(JSON.stringify(productionErrorInfo));
     }
 
     // TODO: Add Sentry integration

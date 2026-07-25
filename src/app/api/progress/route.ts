@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { logError } from '@/lib/error-handler';
+import { logError, logEvent } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { lessonProgress, lessons, enrollments } from "@/lib/db/schema";
@@ -137,9 +137,9 @@ export async function POST(request: Request) {
             // Auto-issue certificate on course completion
             if (progressPercent === 100) {
                 try {
-                    const { certificate, isNew } = await issueCertificate(session.user.id, lesson.courseId);
+                    const { isNew } = await issueCertificate(session.user.id, lesson.courseId);
                     if (isNew) {
-                        console.log('[Certificate] Issued:', certificate.certificateCode, 'for user:', session.user.id);
+                        logEvent('certificate.issued');
                     }
                 } catch (certError) {
                     logError(certError instanceof Error ? certError : new Error(String(certError)), { action: '[Certificate] Error issuing' });

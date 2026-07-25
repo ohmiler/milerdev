@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
+import { logError, logEvent } from '@/lib/error-handler';
 
 // =====================
 // EMAIL PROVIDER (Resend for production, nodemailer for local)
@@ -101,14 +102,14 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
                     },
                 }),
             });
-            console.log('[Email/Resend] Sent to:', to, '| Subject:', subject);
+            logEvent('email.resend.sent');
             return true;
         }
 
         // Fallback to nodemailer (local dev)
         const transporter = getTransporter();
         if (!transporter) {
-            console.warn('[Email] No email provider configured, skipping email to:', to);
+            logEvent('email.provider.unavailable', 'warn');
             return false;
         }
         await transporter.sendMail({
@@ -126,10 +127,13 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
                 },
             }),
         });
-        console.log('[Email/SMTP] Sent to:', to, '| Subject:', subject);
+        logEvent('email.smtp.sent');
         return true;
     } catch (error) {
-        console.error('[Email] Failed to send to:', to, error);
+        logError(
+            error instanceof Error ? error : new Error(String(error)),
+            { action: 'email.send.failed' }
+        );
         return false;
     }
 }
