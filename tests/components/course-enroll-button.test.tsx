@@ -25,11 +25,11 @@ describe('course enrollment purchase contract', () => {
       enrollEndpoint: '/api/enroll',
       stripeEndpoint: '/api/stripe/checkout',
       couponEndpoint: '/api/coupons/validate',
+      intentEndpoint: '/api/promptpay/intents',
       slipEndpoint: '/api/slip/verify',
       slipFields: {
         file: 'slip',
-        courseId: 'courseId',
-        amount: 'amount',
+        paymentId: 'paymentId',
       },
       allowedSlipTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
       maxSlipBytes: 5 * 1024 * 1024,

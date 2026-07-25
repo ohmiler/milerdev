@@ -92,6 +92,13 @@
       "when": 1784904788925,
       "tag": "0012_user_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1784937078729,
+      "tag": "0013_course_lifecycle_payment_intent",
+      "breakpoints": true
     }
   ]
 }

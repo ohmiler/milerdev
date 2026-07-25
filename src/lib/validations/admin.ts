@@ -12,14 +12,29 @@ export const createCourseSchema = z.object({
     certificateColor: z.string().max(20).optional(),
 });
 
-export const updateCourseSchema = createCourseSchema.partial().extend({
+export const updateCourseSchema = createCourseSchema.omit({ status: true }).partial().extend({
     previewVideoUrl: z.string().max(2000).optional().nullable().or(z.literal('')),
     promoPrice: z.union([z.string(), z.number()]).optional().nullable(),
     promoStartsAt: z.string().optional().nullable(),
     promoEndsAt: z.string().optional().nullable(),
     certificateHeaderImage: z.string().max(2000).optional().nullable().or(z.literal('')),
     certificateBadge: z.string().max(50).optional().nullable(),
-});
+}).strict();
+
+export const adminCourseLifecycleSchema = z.discriminatedUnion('action', [
+    z.object({
+        action: z.literal('archive'),
+        expectedStatus: z.enum(['draft', 'published']),
+    }).strict(),
+    z.object({
+        action: z.literal('restore'),
+        expectedStatus: z.literal('archived'),
+    }).strict(),
+    z.object({
+        action: z.literal('publish'),
+        expectedStatus: z.literal('draft'),
+    }).strict(),
+]);
 
 // Lesson validation
 export const createLessonSchema = z.object({

@@ -749,7 +749,7 @@ describe('POST /api/stripe/bundle-checkout', () => {
                     innerJoin: vi.fn().mockReturnValue({
                         where: vi.fn().mockReturnValue({
                             orderBy: vi.fn().mockResolvedValue([{
-                                courseId: 'course-1', courseTitle: 'Backend Basics', courseSlug: 'backend-basics',
+                                courseId: 'course-1', courseTitle: 'Backend Basics', courseSlug: 'backend-basics', courseStatus: 'published',
                             }]),
                         }),
                     }),
@@ -765,6 +765,37 @@ describe('POST /api/stripe/bundle-checkout', () => {
         expect(createCall?.[1]).toEqual({ idempotencyKey: `checkout:${paymentId}` });
         expect(db.insert).toHaveBeenCalled();
         expect(db.update).not.toHaveBeenCalled();
+    });
+
+    it('should reject checkout when a published bundle contains an archived child', async () => {
+        vi.mocked(db.select)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    where: vi.fn().mockReturnValue({
+                        limit: vi.fn().mockResolvedValue([{
+                            id: 'bundle-1', title: 'Legacy Bundle', slug: 'legacy-bundle',
+                            status: 'published', price: '1990.00', thumbnailUrl: null,
+                        }]),
+                    }),
+                }),
+            } as never)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    innerJoin: vi.fn().mockReturnValue({
+                        where: vi.fn().mockReturnValue({
+                            orderBy: vi.fn().mockResolvedValue([{
+                                courseId: 'course-1', courseTitle: 'Archived Child', courseStatus: 'archived',
+                            }]),
+                        }),
+                    }),
+                }),
+            } as never);
+
+        const res = await callBundleCheckout({ bundleId: 'bundle-1' });
+
+        expect(res.status).toBe(409);
+        expect(mockedStripe.checkout.sessions.create).not.toHaveBeenCalled();
+        expect(db.insert).not.toHaveBeenCalled();
     });
 });
 

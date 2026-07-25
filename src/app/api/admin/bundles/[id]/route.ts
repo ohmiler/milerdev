@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
-import { createId } from '@paralleldrive/cuid2';
 import { eq, asc } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
+import { getAuditContext } from '@/lib/auditLog';
+import { BundleMutationError, updateBundleWithIntegrity } from '@/lib/bundle-mutation';
+import { adminBundleMutationSchema } from '@/lib/validations/bundle';
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -62,38 +64,35 @@ export async function PUT(request: Request, { params }: Props) {
             return NextResponse.json({ error: 'ไม่พบ Bundle' }, { status: 404 });
         }
 
-        const body = await request.json();
-        const { title, description, price, status, thumbnailUrl, slug, courseIds } = body;
-
-        await db.update(bundles).set({
-            title: title || existing.title,
-            slug: slug || existing.slug,
-            description: description !== undefined ? (description || null) : existing.description,
-            price: price !== undefined ? String(parseFloat(price) || 0) : existing.price,
-            status: status || existing.status,
-            thumbnailUrl: thumbnailUrl !== undefined ? (thumbnailUrl || null) : existing.thumbnailUrl,
-            updatedAt: new Date(),
-        }).where(eq(bundles.id, id));
-
-        // Update courses if provided
-        if (courseIds && Array.isArray(courseIds)) {
-            await db.delete(bundleCourses).where(eq(bundleCourses.bundleId, id));
-            if (courseIds.length > 0) {
-                await db.insert(bundleCourses).values(
-                    courseIds.map((courseId: string, index: number) => ({
-                        id: createId(),
-                        bundleId: id,
-                        courseId,
-                        orderIndex: index,
-                    }))
-                );
-            }
+        const parsed = adminBundleMutationSchema.safeParse(await request.json());
+        if (!parsed.success) {
+            return NextResponse.json({ error: 'Invalid bundle data' }, { status: 400 });
         }
+        const { title, description, price, status, thumbnailUrl, slug, courseIds } = parsed.data;
 
-        await logAudit({ userId: session.user.id, action: 'update', entityType: 'bundle', entityId: id, newValue: title || existing.title });
+        await updateBundleWithIntegrity({
+            actorId: session.user.id,
+            bundleId: id,
+            input: {
+                title,
+                slug: slug || existing.slug,
+                description: description || null,
+                price,
+                status,
+                thumbnailUrl: thumbnailUrl || null,
+                courseIds,
+            },
+            auditContext: await getAuditContext(),
+        });
 
         return NextResponse.json({ message: 'อัปเดต Bundle สำเร็จ' });
     } catch (error) {
+        if (error instanceof BundleMutationError) {
+            return NextResponse.json({
+                error: error.code,
+                blockingCourseIds: error.blockingCourseIds,
+            }, { status: error.status });
+        }
         console.error('Error updating bundle:', error);
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }

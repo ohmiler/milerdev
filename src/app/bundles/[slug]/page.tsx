@@ -8,6 +8,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { bundleCourses, bundles, courses, enrollments, lessons } from '@/lib/db/schema';
 import { getExcerpt } from '@/lib/sanitize';
+import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
 import { and, asc, count, eq } from 'drizzle-orm';
 import styles from './bundle-detail.module.css';
 
@@ -41,11 +42,21 @@ async function getBundle(slug: string) {
       coursePrice: courses.price,
       courseThumbnail: courses.thumbnailUrl,
       courseDescription: courses.description,
+      courseStatus: courses.status,
     })
     .from(bundleCourses)
     .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
     .where(eq(bundleCourses.bundleId, bundle.id))
     .orderBy(asc(bundleCourses.orderIndex));
+
+  try {
+    requirePublishedBundleCourses(bCourses.map((course) => ({
+      id: course.courseId,
+      status: course.courseStatus,
+    })));
+  } catch {
+    return null;
+  }
 
   const coursesWithLessons = await Promise.all(
     bCourses.map(async (course) => {

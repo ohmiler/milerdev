@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { bundles, bundleCourses, courses, enrollments, payments } from "@/lib/db/schema";
 import { eq, asc, and } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
 
 // POST /api/stripe/bundle-checkout - Create Stripe checkout session for bundle
 export async function POST(request: Request) {
@@ -43,11 +44,20 @@ export async function POST(request: Request) {
 
         // Get courses in bundle for description
         const bCourses = await db
-            .select({ courseId: bundleCourses.courseId, courseTitle: courses.title })
+            .select({ courseId: bundleCourses.courseId, courseTitle: courses.title, courseStatus: courses.status })
             .from(bundleCourses)
             .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
             .where(eq(bundleCourses.bundleId, bundleId))
             .orderBy(asc(bundleCourses.orderIndex));
+
+        try {
+            requirePublishedBundleCourses(bCourses.map((course) => ({
+                id: course.courseId,
+                status: course.courseStatus,
+            })));
+        } catch {
+            return NextResponse.json({ error: 'Bundle not available' }, { status: 409 });
+        }
 
         // Check if user is already enrolled in all courses
         const enrollmentChecks = await Promise.all(

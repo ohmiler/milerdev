@@ -2,6 +2,16 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import {
+  AdminCourseLifecycleActions,
+  AdminCourseLifecycleBadge,
+  CourseLifecycleDialog,
+} from '@/components/admin/AdminCourseLifecycleControls';
+import { showToast } from '@/components/ui/Toast';
+import { transitionAdminCourse } from '@/lib/admin-course-lifecycle-client';
+import type { CourseLifecycleAction, CourseStatus } from '@/lib/course-lifecycle';
 
 interface Course {
   id: string;
@@ -12,7 +22,7 @@ interface Course {
   promoPrice: string | number | null;
   promoStartsAt: Date | string | null;
   promoEndsAt: Date | string | null;
-  status: string;
+  status: CourseStatus;
   thumbnailUrl: string | null;
   createdAt: Date | null;
   lessonCount: number;
@@ -61,6 +71,10 @@ function getCourseHealth(course: Course) {
   const lessonCount = Number(course.lessonCount || 0);
   const thumbnail = normalizeUrl(course.thumbnailUrl);
 
+  if (course.status === 'archived') {
+    return { label: 'หยุดขายแล้ว', className: 'neutral' };
+  }
+
   if (lessonCount === 0) {
     return { label: 'เติมบทเรียน', className: 'danger' };
   }
@@ -80,6 +94,10 @@ function getPrimaryAction(course: Course) {
   const lessonCount = Number(course.lessonCount || 0);
   const thumbnail = normalizeUrl(course.thumbnailUrl);
 
+  if (course.status === 'archived') {
+    return { href: `/admin/courses/${course.id}/edit`, label: 'ตรวจคอร์ส' };
+  }
+
   if (lessonCount === 0) {
     return { href: `/admin/courses/${course.id}/lessons`, label: 'เพิ่มบทเรียน' };
   }
@@ -92,24 +110,33 @@ function getPrimaryAction(course: Course) {
 }
 
 export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
+  const router = useRouter();
+  const [courseRows, setCourseRows] = useState(courses);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [lifecycleRequest, setLifecycleRequest] = useState<{
+    course: Course;
+    action: CourseLifecycleAction;
+  } | null>(null);
+  const [pendingCourseId, setPendingCourseId] = useState<string | null>(null);
+  const [lifecycleError, setLifecycleError] = useState('');
 
-  const publishedCount = courses.filter((course) => course.status === 'published').length;
-  const draftCount = courses.filter((course) => course.status === 'draft').length;
+  const publishedCount = courseRows.filter((course) => course.status === 'published').length;
+  const draftCount = courseRows.filter((course) => course.status === 'draft').length;
+  const archivedCount = courseRows.filter((course) => course.status === 'archived').length;
 
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    return courses.filter((course) => {
+    return courseRows.filter((course) => {
       const matchesSearch = !normalizedSearch ||
         course.title.toLowerCase().includes(normalizedSearch) ||
         course.slug.toLowerCase().includes(normalizedSearch);
       const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [courses, search, statusFilter]);
+  }, [courseRows, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -123,9 +150,10 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
   }).length;
   const hasStudentsCount = filtered.filter((course) => Number(course.enrollmentCount || 0) > 0).length;
   const statusTabs = [
-    { value: 'all', label: 'ทั้งหมด', count: courses.length },
+    { value: 'all', label: 'ทั้งหมด', count: courseRows.length },
     { value: 'published', label: 'เผยแพร่', count: publishedCount },
     { value: 'draft', label: 'แบบร่าง', count: draftCount },
+    { value: 'archived', label: 'เก็บเข้าคลัง', count: archivedCount },
   ];
   const healthCards = [
     { label: 'ต้องตรวจ', value: needsAttentionCount, detail: 'ไม่มีบทเรียนหรือภาพปก', tone: 'danger' },
@@ -138,6 +166,47 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
     setSearch('');
     setStatusFilter('all');
     setCurrentPage(1);
+  };
+
+  const requestLifecycleAction = (course: Course, action: CourseLifecycleAction) => {
+    setLifecycleError('');
+    setLifecycleRequest({ course, action });
+  };
+
+  const confirmLifecycleAction = async () => {
+    if (!lifecycleRequest || pendingCourseId) return;
+    const { course, action } = lifecycleRequest;
+    setPendingCourseId(course.id);
+    setLifecycleError('');
+
+    const result = await transitionAdminCourse({
+      courseId: course.id,
+      action,
+      expectedStatus: course.status,
+    });
+
+    if (!result.ok) {
+      setLifecycleError(result.message);
+      showToast(result.message, 'error');
+      if (result.code === 'STATE_CONFLICT' || result.code === 'INVALID_RESPONSE') router.refresh();
+      setPendingCourseId(null);
+      return;
+    }
+
+    setCourseRows((current) => current.map((item) => (
+      item.id === course.id ? { ...item, status: result.course.status } : item
+    )));
+    setLifecycleRequest(null);
+    setPendingCourseId(null);
+    showToast(
+      action === 'archive'
+        ? 'เก็บคอร์สเข้าคลังแล้ว'
+        : action === 'restore'
+          ? 'นำคอร์สกลับเป็นแบบร่างแล้ว'
+          : 'เผยแพร่คอร์สแล้ว',
+      'success',
+    );
+    router.refresh();
   };
 
   return (
@@ -207,6 +276,13 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
         ))}
       </div>
 
+      {lifecycleError ? (
+        <div className="admin-catalog-lifecycle-error" role="alert">
+          <strong>เปลี่ยนสถานะไม่สำเร็จ</strong>
+          <span>{lifecycleError}</span>
+        </div>
+      ) : null}
+
       {filtered.length === 0 ? (
         <div className="admin-catalog-empty">
           <h3>{isFiltered ? 'ไม่พบคอร์สที่ตรงกับตัวกรอง' : 'ยังไม่มีคอร์ส'}</h3>
@@ -260,9 +336,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                         </div>
                       </td>
                       <td>
-                        <span className={`admin-course-status ${course.status}`}>
-                          {course.status === 'published' ? 'เผยแพร่' : 'แบบร่าง'}
-                        </span>
+                        <AdminCourseLifecycleBadge status={course.status} />
                       </td>
                       <td>
                         <div className="admin-price-cell">
@@ -277,7 +351,14 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                         <div className="admin-course-actions">
                           <Link className="primary" href={primaryAction.href}>{primaryAction.label}</Link>
                           <Link href={`/admin/courses/${course.id}/edit`}>แก้ไข</Link>
-                          <Link href={`/courses/${course.slug}`} target="_blank">ดูหน้าเว็บ</Link>
+                          {course.status === 'published'
+                            ? <Link href={`/courses/${course.slug}`} target="_blank">ดูหน้าเว็บ</Link>
+                            : null}
+                          <AdminCourseLifecycleActions
+                            status={course.status}
+                            pending={pendingCourseId === course.id}
+                            onRequest={(action) => requestLifecycleAction(course, action)}
+                          />
                         </div>
                       </td>
                     </tr>
@@ -306,7 +387,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                     </div>
                   </div>
                   <div className="admin-course-card-meta">
-                    <span className={`admin-course-status ${course.status}`}>{course.status === 'published' ? 'เผยแพร่' : 'แบบร่าง'}</span>
+                    <AdminCourseLifecycleBadge status={course.status} />
                     <span className={`admin-course-health ${health.className}`}>{health.label}</span>
                     <span>{promoActive ? formatPrice(course.promoPrice) : formatPrice(course.price)}</span>
                     <span>{Number(course.lessonCount || 0)} บทเรียน</span>
@@ -315,7 +396,14 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                   <div className="admin-course-card-actions">
                     <Link className="primary" href={primaryAction.href}>{primaryAction.label}</Link>
                     <Link href={`/admin/courses/${course.id}/edit`}>แก้ไข</Link>
-                    <Link href={`/courses/${course.slug}`} target="_blank">ดูหน้าเว็บ</Link>
+                    {course.status === 'published'
+                      ? <Link href={`/courses/${course.slug}`} target="_blank">ดูหน้าเว็บ</Link>
+                      : null}
+                    <AdminCourseLifecycleActions
+                      status={course.status}
+                      pending={pendingCourseId === course.id}
+                      onRequest={(action) => requestLifecycleAction(course, action)}
+                    />
                   </div>
                 </article>
               );
@@ -355,6 +443,20 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
           </footer>
         </>
       )}
+
+      {lifecycleRequest ? (
+        <CourseLifecycleDialog
+          isOpen
+          courseTitle={lifecycleRequest.course.title}
+          action={lifecycleRequest.action}
+          pending={pendingCourseId === lifecycleRequest.course.id}
+          error={lifecycleError}
+          onConfirm={confirmLifecycleAction}
+          onCancel={() => {
+            if (!pendingCourseId) setLifecycleRequest(null);
+          }}
+        />
+      ) : null}
 
       <style jsx>{`
         .admin-catalog {
@@ -703,6 +805,11 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
           color: #b45309;
         }
 
+        .admin-course-health.neutral {
+          background: #f1f5f9;
+          color: #475569;
+        }
+
         .admin-course-health.danger {
           background: #fff1f2;
           color: #be123c;
@@ -795,6 +902,19 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
           padding: 54px 18px;
           text-align: center;
           border-top: 1px solid var(--line);
+        }
+
+        .admin-catalog-lifecycle-error {
+          display: grid;
+          gap: 3px;
+          margin: 0 20px 18px;
+          padding: 12px 14px;
+          border: 1px solid #fecaca;
+          border-radius: 8px;
+          background: #fff1f2;
+          color: #9f1239;
+          font-size: 0.82rem;
+          line-height: 1.55;
         }
 
         .admin-catalog-empty h3 {

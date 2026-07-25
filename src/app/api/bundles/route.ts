@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
+import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
 
 // GET /api/bundles - List published bundles
 export async function GET() {
@@ -23,11 +24,21 @@ export async function GET() {
                         coursePrice: courses.price,
                         courseThumbnail: courses.thumbnailUrl,
                         courseDescription: courses.description,
+                        courseStatus: courses.status,
                     })
                     .from(bundleCourses)
                     .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
                     .where(eq(bundleCourses.bundleId, bundle.id))
                     .orderBy(asc(bundleCourses.orderIndex));
+
+                try {
+                    requirePublishedBundleCourses(bCourses.map((course) => ({
+                        id: course.courseId,
+                        status: course.courseStatus,
+                    })));
+                } catch {
+                    return null;
+                }
 
                 const totalOriginalPrice = bCourses.reduce(
                     (sum, c) => sum + parseFloat(c.coursePrice || '0'), 0
@@ -45,7 +56,7 @@ export async function GET() {
             })
         );
 
-        return NextResponse.json({ bundles: bundlesWithCourses });
+        return NextResponse.json({ bundles: bundlesWithCourses.filter(Boolean) });
     } catch (error) {
         console.error('Error fetching bundles:', error);
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });

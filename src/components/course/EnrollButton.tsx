@@ -20,11 +20,11 @@ export const COURSE_PAYMENT_CONTRACT = {
   enrollEndpoint: '/api/enroll',
   stripeEndpoint: '/api/stripe/checkout',
   couponEndpoint: '/api/coupons/validate',
+  intentEndpoint: '/api/promptpay/intents',
   slipEndpoint: '/api/slip/verify',
   slipFields: {
     file: 'slip',
-    courseId: 'courseId',
-    amount: 'amount',
+    paymentId: 'paymentId',
   },
   allowedSlipTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'] as readonly string[],
   maxSlipBytes: 5 * 1024 * 1024,
@@ -42,6 +42,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   const [slipFile, setSlipFile] = useState<File | null>(null);
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [promptPayIntent, setPromptPayIntent] = useState<{ paymentId: string; amount: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
@@ -250,6 +251,29 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     }
   };
 
+  const handlePromptPayPayment = async () => {
+    setLoading(true);
+    setVerifyError(null);
+    try {
+      const res = await fetch(COURSE_PAYMENT_CONTRACT.intentEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId, ...(appliedCoupon && { couponId: appliedCoupon.couponId }) }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.paymentId || typeof data.amount !== 'number') {
+        setModal({ isOpen: true, type: 'error', title: 'ไม่สามารถเริ่มรายการชำระเงิน', message: data.error || 'กรุณาลองใหม่' });
+        return;
+      }
+      setPromptPayIntent({ paymentId: data.paymentId, amount: data.amount });
+      setPaymentStep('transfer');
+    } catch {
+      setModal({ isOpen: true, type: 'error', title: 'ไม่สามารถเริ่มรายการชำระเงิน', message: 'ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -278,7 +302,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   };
 
   const handleSlipVerify = async () => {
-    if (!slipFile) return;
+    if (!slipFile || !promptPayIntent) return;
 
     setPaymentStep('verifying');
     setVerifyError(null);
@@ -286,8 +310,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     try {
       const formData = new FormData();
       formData.append(COURSE_PAYMENT_CONTRACT.slipFields.file, slipFile);
-      formData.append(COURSE_PAYMENT_CONTRACT.slipFields.courseId, courseId);
-      formData.append(COURSE_PAYMENT_CONTRACT.slipFields.amount, effectivePrice.toString());
+      formData.append(COURSE_PAYMENT_CONTRACT.slipFields.paymentId, promptPayIntent.paymentId);
 
       const res = await fetch(COURSE_PAYMENT_CONTRACT.slipEndpoint, {
         method: 'POST',
@@ -299,6 +322,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       if (data.success) {
         updateEnrolled(true);
         setPaymentStep('idle');
+        setPromptPayIntent(null);
         resetSlipState();
         setModal({
           isOpen: true,
@@ -454,8 +478,9 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
                   <button
                     type="button"
                     onClick={() => {
-                      setPaymentStep('transfer');
+                      void handlePromptPayPayment();
                     }}
+                    disabled={loading}
                     className={styles.methodButton}
                   >
                     <div className={`${styles.methodIcon} ${styles.transferIcon}`}>
@@ -500,7 +525,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
         isOpen={paymentStep === 'transfer' || paymentStep === 'verifying'}
         onClose={() => { if (paymentStep !== 'verifying') { setPaymentStep('idle'); resetSlipState(); } }}
         title={'โอนเงินและแนบสลิป'}
-        description={<span>ยอดที่ระบบจะตรวจสอบ <strong className={styles.dialogAmount}>฿{effectivePrice.toLocaleString()}</strong></span>}
+        description={<span>ยอดที่ระบบจะตรวจสอบ <strong className={styles.dialogAmount}>฿{(promptPayIntent?.amount ?? effectivePrice).toLocaleString()}</strong></span>}
         body={(
           <>
 
@@ -522,7 +547,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
                 </div>
                 <div className={styles.bankRow}>
                   <span>จำนวนเงิน</span>
-                  <strong className={styles.amount}>฿{effectivePrice.toLocaleString()}</strong>
+                  <strong className={styles.amount}>฿{(promptPayIntent?.amount ?? effectivePrice).toLocaleString()}</strong>
                 </div>
               </div>
             </div>
@@ -583,7 +608,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       >
         <button
           type={'button'}
-          onClick={() => { setPaymentStep('method'); resetSlipState(); }}
+          onClick={() => { setPaymentStep('method'); setPromptPayIntent(null); resetSlipState(); }}
           disabled={paymentStep === 'verifying'}
           className={styles.secondaryButton}
         >
@@ -592,7 +617,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
         <button
           type={'button'}
           onClick={handleSlipVerify}
-          disabled={!slipFile || paymentStep === 'verifying'}
+          disabled={!slipFile || !promptPayIntent || paymentStep === 'verifying'}
           className={styles.primaryButton}
         >
           {paymentStep === 'verifying' ? (

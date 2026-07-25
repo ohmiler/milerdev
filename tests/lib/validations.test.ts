@@ -75,6 +75,11 @@ describe('Admin Validation Schemas', () => {
             const result = updateCourseSchema.safeParse({ promoPrice: '990' });
             expect(result.success).toBe(true);
         });
+
+        it('should reject lifecycle status changes', () => {
+            const result = updateCourseSchema.safeParse({ status: 'archived' });
+            expect(result.success).toBe(false);
+        });
     });
 
     describe('createCouponSchema', () => {

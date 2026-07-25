@@ -175,6 +175,7 @@ export const payments = mysqlTable('payments', {
     userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
     bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
+    couponId: varchar('coupon_id', { length: 36 }),
     amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
     currency: varchar('currency', { length: 10 }).default('THB').notNull(),
     method: varchar('method', { length: 20, enum: ['stripe', 'promptpay', 'bank_transfer'] }).notNull(),
@@ -190,6 +191,7 @@ export const payments = mysqlTable('payments', {
     index('idx_payments_user_id').on(table.userId),
     index('idx_payments_created_at').on(table.createdAt),
     index('idx_payments_status').on(table.status),
+    index('idx_payments_coupon_id').on(table.couponId),
     uniqueIndex('uq_payments_promptpay_trans_ref').on(table.promptpayTransRef),
 ]);
 

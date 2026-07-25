@@ -97,6 +97,7 @@ export async function POST(request: Request) {
             id: paymentId,
             userId: session.user.id,
             courseId: course.id,
+            couponId: appliedCouponId,
             amount: priceNumber.toFixed(2),
             currency: "THB",
             method: "stripe",

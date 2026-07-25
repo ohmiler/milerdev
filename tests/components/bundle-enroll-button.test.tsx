@@ -24,11 +24,11 @@ describe('bundle enrollment purchase contract', () => {
     expect(BUNDLE_PAYMENT_CONTRACT).toEqual({
       enrollEndpoint: '/api/bundles/enroll',
       stripeEndpoint: '/api/stripe/bundle-checkout',
+      intentEndpoint: '/api/promptpay/intents',
       slipEndpoint: '/api/bundles/slip/verify',
       slipFields: {
         file: 'slip',
-        bundleId: 'bundleId',
-        amount: 'amount',
+        paymentId: 'paymentId',
       },
       allowedSlipTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
       maxSlipBytes: 5 * 1024 * 1024,

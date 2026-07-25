@@ -44,6 +44,7 @@ export default async function AdminCoursesPage() {
   const totalEnrollments = allCourses.reduce((sum, course) => sum + Number(course.enrollmentCount || 0), 0);
   const publishedCount = allCourses.filter((course) => course.status === 'published').length;
   const draftCount = allCourses.filter((course) => course.status === 'draft').length;
+  const archivedCount = allCourses.filter((course) => course.status === 'archived').length;
   const withoutLessonsCount = allCourses.filter((course) => Number(course.lessonCount || 0) === 0).length;
   const withoutThumbnailCount = allCourses.filter((course) => !course.thumbnailUrl).length;
   const averageLessonsPerCourse = allCourses.length > 0 ? (totalLessons / allCourses.length).toFixed(1) : '0.0';
@@ -76,7 +77,7 @@ export default async function AdminCoursesPage() {
     { label: 'คอร์สทั้งหมด', value: allCourses.length, detail: 'รายการใน catalog' },
     { label: 'เผยแพร่แล้ว', value: publishedCount, detail: 'พร้อมขายหรือเปิดเรียน' },
     { label: 'แบบร่าง', value: draftCount, detail: 'ยังต้องตรวจต่อ' },
-    { label: 'ไม่มีบทเรียน', value: withoutLessonsCount, detail: 'ควรแก้ก่อนเปิดขาย' },
+    { label: 'เก็บเข้าคลัง', value: archivedCount, detail: 'หยุดขายใหม่ แต่เก็บข้อมูลเดิม' },
   ];
 
   return (

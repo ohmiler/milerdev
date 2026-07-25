@@ -6,6 +6,7 @@ import { eq, and } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';
+import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
 
 // POST /api/bundles/enroll - Enroll in all courses of a bundle
 export async function POST(request: Request) {
@@ -29,13 +30,14 @@ export async function POST(request: Request) {
 
         // Get bundle
         const [bundle] = await db.select().from(bundles).where(eq(bundles.id, bundleId)).limit(1);
-        if (!bundle || bundle.status !== 'published') {
+        if (!bundle) {
             return NextResponse.json({ error: 'Bundle not found' }, { status: 404 });
         }
 
         const bundlePrice = parseFloat(bundle.price);
 
         // If paid bundle, verify payment
+        let hasAcceptedPayment = false;
         if (bundlePrice > 0 && paymentId) {
             const [payment] = await db
                 .select()
@@ -53,6 +55,7 @@ export async function POST(request: Request) {
             if (!payment) {
                 return NextResponse.json({ error: 'Valid payment required' }, { status: 402 });
             }
+            hasAcceptedPayment = true;
         } else if (bundlePrice > 0) {
             return NextResponse.json({ error: 'Payment required for this bundle' }, { status: 402 });
         }
@@ -63,6 +66,7 @@ export async function POST(request: Request) {
                 courseId: bundleCourses.courseId,
                 courseTitle: courses.title,
                 courseSlug: courses.slug,
+                courseStatus: courses.status,
             })
             .from(bundleCourses)
             .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
@@ -70,6 +74,20 @@ export async function POST(request: Request) {
 
         if (bCourses.length === 0) {
             return NextResponse.json({ error: 'Bundle has no courses' }, { status: 400 });
+        }
+
+        if (!hasAcceptedPayment) {
+            if (bundle.status !== 'published') {
+                return NextResponse.json({ error: 'Bundle not found' }, { status: 404 });
+            }
+            try {
+                requirePublishedBundleCourses(bCourses.map((course) => ({
+                    id: course.courseId,
+                    status: course.courseStatus,
+                })));
+            } catch {
+                return NextResponse.json({ error: 'Bundle not available' }, { status: 409 });
+            }
         }
 
         // Enroll in each course (skip if already enrolled)

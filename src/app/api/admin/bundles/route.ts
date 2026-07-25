@@ -4,7 +4,9 @@ import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { desc, eq, asc } from 'drizzle-orm';
-import { logAudit } from '@/lib/auditLog';
+import { getAuditContext } from '@/lib/auditLog';
+import { BundleMutationError, createBundleWithIntegrity } from '@/lib/bundle-mutation';
+import { adminBundleMutationSchema } from '@/lib/validations/bundle';
 
 // GET /api/admin/bundles - List all bundles with their courses
 export async function GET() {
@@ -69,16 +71,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = await request.json();
-        const { title, description, price, status, thumbnailUrl, slug: customSlug, courseIds } = body;
-
-        if (!title) {
-            return NextResponse.json({ error: 'กรุณาระบุชื่อ Bundle' }, { status: 400 });
+        const parsed = adminBundleMutationSchema.safeParse(await request.json());
+        if (!parsed.success) {
+            return NextResponse.json({ error: 'Invalid bundle data' }, { status: 400 });
         }
-
-        if (!courseIds || !Array.isArray(courseIds) || courseIds.length < 2) {
-            return NextResponse.json({ error: 'Bundle ต้องมีอย่างน้อย 2 คอร์ส' }, { status: 400 });
-        }
+        const { title, description, price, status, thumbnailUrl, slug: customSlug, courseIds } = parsed.data;
 
         const slug = (customSlug || title)
             .toLowerCase()
@@ -90,33 +87,32 @@ export async function POST(request: Request) {
 
         const bundleId = createId();
 
-        await db.insert(bundles).values({
-            id: bundleId,
-            title,
-            slug: slug || bundleId,
-            description: description || null,
-            price: String(parseFloat(price) || 0),
-            status: status || 'draft',
-            thumbnailUrl: thumbnailUrl || null,
+        await createBundleWithIntegrity({
+            actorId: session.user.id,
+            bundleId,
+            input: {
+                title,
+                slug: slug || bundleId,
+                description: description || null,
+                price,
+                status,
+                thumbnailUrl: thumbnailUrl || null,
+                courseIds,
+            },
+            auditContext: await getAuditContext(),
         });
-
-        // Add courses to bundle
-        await db.insert(bundleCourses).values(
-            courseIds.map((courseId: string, index: number) => ({
-                id: createId(),
-                bundleId,
-                courseId,
-                orderIndex: index,
-            }))
-        );
-
-        await logAudit({ userId: session.user.id, action: 'create', entityType: 'bundle', entityId: bundleId, newValue: title });
 
         return NextResponse.json(
             { message: 'สร้าง Bundle สำเร็จ', bundleId },
             { status: 201 }
         );
     } catch (error) {
+        if (error instanceof BundleMutationError) {
+            return NextResponse.json({
+                error: error.code,
+                blockingCourseIds: error.blockingCourseIds,
+            }, { status: error.status });
+        }
         console.error('Error creating bundle:', error);
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },

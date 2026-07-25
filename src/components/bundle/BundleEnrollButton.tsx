@@ -20,11 +20,11 @@ type PaymentStep = 'idle' | 'method' | 'transfer' | 'verifying';
 export const BUNDLE_PAYMENT_CONTRACT = {
   enrollEndpoint: '/api/bundles/enroll',
   stripeEndpoint: '/api/stripe/bundle-checkout',
+  intentEndpoint: '/api/promptpay/intents',
   slipEndpoint: '/api/bundles/slip/verify',
   slipFields: {
     file: 'slip',
-    bundleId: 'bundleId',
-    amount: 'amount',
+    paymentId: 'paymentId',
   },
   allowedSlipTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'] as readonly string[],
   maxSlipBytes: 5 * 1024 * 1024,
@@ -44,6 +44,7 @@ export default function BundleEnrollButton({
   const [slipFile, setSlipFile] = useState<File | null>(null);
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [promptPayIntent, setPromptPayIntent] = useState<{ paymentId: string; amount: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modal, setModal] = useState<{
     isOpen: boolean;
@@ -154,16 +155,38 @@ export default function BundleEnrollButton({
     reader.readAsDataURL(file);
   };
 
+  const handlePromptPayPayment = async () => {
+    setLoading(true);
+    setVerifyError(null);
+    try {
+      const res = await fetch(BUNDLE_PAYMENT_CONTRACT.intentEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bundleId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.paymentId || typeof data.amount !== 'number') {
+        setModal({ isOpen: true, type: 'error', title: 'ไม่สามารถเริ่มรายการชำระเงิน', message: data.error || 'กรุณาลองใหม่' });
+        return;
+      }
+      setPromptPayIntent({ paymentId: data.paymentId, amount: data.amount });
+      setPaymentStep('transfer');
+    } catch {
+      setModal({ isOpen: true, type: 'error', title: 'ไม่สามารถเริ่มรายการชำระเงิน', message: 'ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSlipVerify = async () => {
-    if (!slipFile) return;
+    if (!slipFile || !promptPayIntent) return;
     setPaymentStep('verifying');
     setVerifyError(null);
 
     try {
       const formData = new FormData();
       formData.append(BUNDLE_PAYMENT_CONTRACT.slipFields.file, slipFile);
-      formData.append(BUNDLE_PAYMENT_CONTRACT.slipFields.bundleId, bundleId);
-      formData.append(BUNDLE_PAYMENT_CONTRACT.slipFields.amount, price.toString());
+      formData.append(BUNDLE_PAYMENT_CONTRACT.slipFields.paymentId, promptPayIntent.paymentId);
 
       const res = await fetch(BUNDLE_PAYMENT_CONTRACT.slipEndpoint, {
         method: 'POST',
@@ -174,6 +197,7 @@ export default function BundleEnrollButton({
       if (data.success) {
         setEnrolled(true);
         setPaymentStep('idle');
+        setPromptPayIntent(null);
         resetSlipState();
         setModal({
           isOpen: true,
@@ -238,7 +262,7 @@ export default function BundleEnrollButton({
         description={<span>ยอดชำระ <strong className={styles.dialogAmount}>฿{price.toLocaleString()}</strong></span>}
         body={(
           <div className={styles.methodList} data-payment-step={'method'}>
-            <button className={styles.methodButton} type={'button'} onClick={() => setPaymentStep('transfer')}>
+            <button className={styles.methodButton} type={'button'} onClick={() => void handlePromptPayPayment()} disabled={loading}>
               <span className={`${styles.methodIcon} ${styles.transferIcon}`} aria-hidden={true}>
                 <svg viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} strokeWidth={2}>
                   <rect x={1} y={4} width={22} height={16} rx={2} />
@@ -279,7 +303,7 @@ export default function BundleEnrollButton({
         isOpen={paymentStep === 'transfer' || paymentStep === 'verifying'}
         onClose={closeTransfer}
         title={'โอนเงินและแนบสลิป'}
-        description={<span>ยอดที่ระบบจะตรวจสอบ <strong className={styles.dialogAmount}>฿{price.toLocaleString()}</strong></span>}
+        description={<span>ยอดที่ระบบจะตรวจสอบ <strong className={styles.dialogAmount}>฿{(promptPayIntent?.amount ?? price).toLocaleString()}</strong></span>}
         body={(
           <div data-payment-step={paymentStep}>
             <section className={styles.bankInfo} aria-labelledby={'bundle-bank-details'}>
@@ -288,7 +312,7 @@ export default function BundleEnrollButton({
                 <div><dt>ธนาคาร</dt><dd>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</dd></div>
                 <div><dt>เลขบัญชี</dt><dd className={styles.accountNumber}>{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</dd></div>
                 <div><dt>ชื่อบัญชี</dt><dd>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</dd></div>
-                <div><dt>จำนวนเงิน</dt><dd className={styles.amount}>฿{price.toLocaleString()}</dd></div>
+                <div><dt>จำนวนเงิน</dt><dd className={styles.amount}>฿{(promptPayIntent?.amount ?? price).toLocaleString()}</dd></div>
               </dl>
             </section>
 
@@ -327,7 +351,7 @@ export default function BundleEnrollButton({
         <button
           className={styles.secondaryButton}
           type={'button'}
-          onClick={() => { setPaymentStep('method'); resetSlipState(); }}
+          onClick={() => { setPaymentStep('method'); setPromptPayIntent(null); resetSlipState(); }}
           disabled={paymentStep === 'verifying'}
         >
           กลับ
@@ -336,7 +360,7 @@ export default function BundleEnrollButton({
           className={styles.verifyButton}
           type={'button'}
           onClick={handleSlipVerify}
-          disabled={!slipFile || paymentStep === 'verifying'}
+          disabled={!slipFile || !promptPayIntent || paymentStep === 'verifying'}
         >
           {paymentStep === 'verifying'
             ? <span className={styles.loadingContent}><span className={styles.spinner} aria-hidden={true} />กำลังตรวจสอบสลิป...</span>

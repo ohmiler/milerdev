@@ -5,8 +5,13 @@ import type { CSSProperties } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  AdminCourseLifecycleActions,
+  CourseLifecycleDialog,
+} from '@/components/admin/AdminCourseLifecycleControls';
 import { showToast } from '@/components/ui/Toast';
+import { transitionAdminCourse } from '@/lib/admin-course-lifecycle-client';
+import type { CourseLifecycleAction, CourseStatus } from '@/lib/course-lifecycle';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -19,14 +24,15 @@ export default function EditCoursePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [lifecycleAction, setLifecycleAction] = useState<CourseLifecycleAction | null>(null);
+  const [lifecyclePending, setLifecyclePending] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     description: '',
     price: '0',
-    status: 'draft',
+    status: 'draft' as CourseStatus,
     thumbnailUrl: '',
     certificateColor: '#02abff',
     certificateHeaderImage: '',
@@ -72,10 +78,12 @@ export default function EditCoursePage() {
     setSaving(true);
 
     try {
+      const { status: lifecycleStatus, ...courseDetails } = formData;
+      void lifecycleStatus;
       const res = await fetch(`/api/admin/courses/${courseId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, tagIds: selectedTagIds }),
+        body: JSON.stringify({ ...courseDetails, tagIds: selectedTagIds }),
       });
       const data = await res.json();
 
@@ -92,25 +100,37 @@ export default function EditCoursePage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!courseId) return;
-    setShowDeleteConfirm(false);
+  const handleLifecycleAction = async () => {
+    if (!courseId || !lifecycleAction || lifecyclePending) return;
+    setLifecyclePending(true);
+    setError('');
 
-    try {
-      const res = await fetch(`/api/admin/courses/${courseId}`, {
-        method: 'DELETE',
-      });
+    const result = await transitionAdminCourse({
+      courseId,
+      action: lifecycleAction,
+      expectedStatus: formData.status,
+    });
 
-      if (res.ok) {
-        showToast('ลบคอร์สสำเร็จ', 'success');
-        router.push('/admin/courses');
-      } else {
-        const data = await res.json();
-        showToast(data.error || 'ลบคอร์สไม่สำเร็จ', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+    if (!result.ok) {
+      setError(result.message);
+      showToast(result.message, 'error');
+      if (result.code === 'STATE_CONFLICT' || result.code === 'INVALID_RESPONSE') router.refresh();
+      setLifecyclePending(false);
+      return;
     }
+
+    setFormData((current) => ({ ...current, status: result.course.status }));
+    setLifecycleAction(null);
+    setLifecyclePending(false);
+    showToast(
+      lifecycleAction === 'archive'
+        ? 'เก็บคอร์สเข้าคลังแล้ว'
+        : lifecycleAction === 'restore'
+          ? 'นำคอร์สกลับเป็นแบบร่างแล้ว'
+          : 'เผยแพร่คอร์สแล้ว',
+      'success',
+    );
+    router.refresh();
   };
 
   const isFreeCourse = Number(formData.price || 0) <= 0;
@@ -120,10 +140,19 @@ export default function EditCoursePage() {
   const promoDiscount = hasPromo && Number(formData.price || 0) > 0
     ? Math.round((1 - Number(formData.promoPrice || 0) / Number(formData.price || 0)) * 100)
     : 0;
-  const statusLabel = isPublished ? 'เผยแพร่' : 'แบบร่าง';
+  const statusLabel = formData.status === 'archived'
+    ? 'เก็บเข้าคลัง'
+    : isPublished
+      ? 'เผยแพร่'
+      : 'แบบร่าง';
   const priceLabel = isFreeCourse ? 'ฟรี' : `฿${Number(formData.price || 0).toLocaleString()}`;
   const promoLabel = hasPromo ? `ลด ${promoDiscount}%` : 'ไม่มีโปรโมชัน';
   const coursePreviewUrl = `/courses/${normalizedSlug}`;
+  const statusDetail = formData.status === 'archived'
+    ? 'หยุดขายใหม่ ผู้เรียนเดิมยังเข้าเรียนได้'
+    : isPublished
+      ? 'ผู้ใช้มองเห็นและซื้อได้'
+      : 'ยังไม่เผยแพร่';
 
   const checklist = useMemo(() => [
     { label: 'ชื่อคอร์ส', ready: formData.title.trim().length > 0 },
@@ -168,14 +197,14 @@ export default function EditCoursePage() {
           </div>
           <div className="admin-edit-priority-actions">
             <Link href={`/admin/courses/${courseId}/lessons`}>จัดการบทเรียน</Link>
-            <Link href={`/courses/${normalizedSlug}`} target="_blank">ดูหน้าเว็บ</Link>
+            {isPublished ? <Link href={`/courses/${normalizedSlug}`} target="_blank">ดูหน้าเว็บ</Link> : null}
           </div>
         </aside>
       </section>
 
       <section className="admin-edit-course-metrics">
         {[
-          { label: 'สถานะ', value: statusLabel, detail: isPublished ? 'ผู้ใช้มองเห็นได้' : 'ยังไม่เผยแพร่' },
+          { label: 'สถานะ', value: statusLabel, detail: statusDetail },
           { label: 'ราคา', value: priceLabel, detail: isFreeCourse ? 'คอร์สฟรี' : 'ราคาหลักของคอร์ส' },
           { label: 'โปรโมชัน', value: promoLabel, detail: hasPromo ? 'มีราคาโปรโมชัน' : 'ใช้ราคาหลัก' },
           { label: 'ความพร้อม', value: `${readinessPercent}%`, detail: `${readyCount}/${checklist.length} รายการพร้อม` },
@@ -265,12 +294,14 @@ export default function EditCoursePage() {
                 <span>สถานะ</span>
                 <select
                   value={formData.status}
-                  onChange={(event) => setFormData({ ...formData, status: event.target.value })}
+                  disabled
+                  aria-describedby="course-status-help"
                 >
                   <option value="draft">แบบร่าง</option>
                   <option value="published">เผยแพร่</option>
+                  <option value="archived">เก็บเข้าคลัง</option>
                 </select>
-                <small>เผยแพร่เมื่อภาพปก คำอธิบาย และบทเรียนพร้อมแล้ว</small>
+                <small id="course-status-help">สถานะคอร์สจัดการแยกจากการบันทึกรายละเอียด เพื่อป้องกันการเปิดหรือปิดขายโดยไม่ตั้งใจ</small>
               </label>
             </div>
 
@@ -409,21 +440,36 @@ export default function EditCoursePage() {
                 <button type="submit" disabled={saving}>{saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}</button>
                 <Link href={`/admin/courses/${courseId}/lessons`}>จัดการบทเรียน</Link>
                 <Link href="/admin/courses">ยกเลิก</Link>
-                <button type="button" className="danger" onClick={() => setShowDeleteConfirm(true)}>ลบคอร์ส</button>
+                <div className="admin-edit-lifecycle-actions">
+                  <span>เปลี่ยนสถานะคอร์ส</span>
+                  <AdminCourseLifecycleActions
+                    status={formData.status}
+                    pending={lifecyclePending}
+                    onRequest={(action) => {
+                      setError('');
+                      setLifecycleAction(action);
+                    }}
+                  />
+                </div>
               </div>
             </section>
           </div>
         </aside>
       </form>
 
-      <ConfirmDialog
-        isOpen={showDeleteConfirm}
-        title="ลบคอร์ส"
-        message="คุณแน่ใจหรือไม่ที่จะลบคอร์สนี้? การกระทำนี้ไม่สามารถย้อนกลับได้"
-        confirmText="ลบคอร์ส"
-        onConfirm={handleDelete}
-        onCancel={() => setShowDeleteConfirm(false)}
-      />
+      {lifecycleAction ? (
+        <CourseLifecycleDialog
+          isOpen
+          courseTitle={formData.title || 'คอร์สนี้'}
+          action={lifecycleAction}
+          pending={lifecyclePending}
+          error={error}
+          onConfirm={handleLifecycleAction}
+          onCancel={() => {
+            if (!lifecyclePending) setLifecycleAction(null);
+          }}
+        />
+      ) : null}
 
       <style>{`
         .admin-edit-course-page {
@@ -805,10 +851,18 @@ export default function EditCoursePage() {
           color: #fff;
         }
 
-        .admin-edit-side-actions button.danger {
-          border-color: #ffd5d8;
-          background: #fff7f7;
-          color: #be123c;
+        .admin-edit-lifecycle-actions {
+          display: grid;
+          gap: 8px;
+          margin-top: 5px;
+          padding-top: 14px;
+          border-top: 1px solid var(--line);
+        }
+
+        .admin-edit-lifecycle-actions > span {
+          color: var(--muted);
+          font-size: 0.76rem;
+          font-weight: 800;
         }
 
         .admin-edit-side-actions button:disabled {

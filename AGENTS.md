@@ -52,6 +52,13 @@ Run the narrowest meaningful check after each implementation slice. For Standard
 - Keep server secrets out of client components and browser code.
 - Ask the user to perform production checks requiring real credentials and request only safe redacted output.
 
+## Local database
+
+- Local development uses the MySQL server managed through MySQL Workbench on `localhost:3306`; do not assume Docker or run Docker database commands.
+- The local development schema is `milerdev`.
+- Database credentials remain owner-controlled. Never read them from `.env*`, request them in chat, or print them in command output.
+- When credentials are required, provide a target-locked interactive script and ask the owner only to enter the password through hidden input.
+
 ## Implementation safety
 
 - Preserve TypeScript strictness, follow the edited file's style, and prefer `@/*` imports from `src`.
