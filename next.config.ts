@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  cacheMaxMemorySize: 0,
   turbopack: {
     root: process.cwd(),
   },
