@@ -189,9 +189,8 @@ describe('admin payment mutation boundaries', () => {
 
   it('does not allow hard deletion of an individual payment record', async () => {
     const route = await import('@/app/api/admin/payments/[id]/route');
-    const request = new Request('http://localhost/api/admin/payments/pay-1', { method: 'DELETE' });
 
-    const response = await route.DELETE(request, { params: Promise.resolve({ id: 'pay-1' }) });
+    const response = await route.DELETE();
 
     expect(response.status).toBe(405);
     expect(mocks.dbDelete).not.toHaveBeenCalled();
@@ -277,9 +276,7 @@ describe('admin payment mutation boundaries', () => {
 
   it('does not hard-delete stale pending attempts during cleanup', async () => {
     const route = await import('@/app/api/admin/payments/cleanup/route');
-    const response = await route.DELETE(new Request('http://localhost/api/admin/payments/cleanup', {
-      method: 'DELETE',
-    }));
+    const response = await route.DELETE();
 
     expect(response.status).toBe(405);
     expect(mocks.dbDelete).not.toHaveBeenCalled();

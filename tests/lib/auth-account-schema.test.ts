@@ -13,10 +13,14 @@ describe('OAuth account schema contract', () => {
         );
 
         expect(providerIdentity?.config.unique).toBe(true);
-        expect(providerIdentity?.config.columns.map((column) => column.name)).toEqual([
-            'provider',
-            'providerAccountId',
-        ]);
+        expect(
+            providerIdentity?.config.columns.every((column) => 'name' in column)
+        ).toBe(true);
+        expect(
+            providerIdentity?.config.columns.map((column) =>
+                'name' in column ? column.name : null
+            )
+        ).toEqual(['provider', 'providerAccountId']);
     });
 
     it('repairs fresh histories before adding only the unique identity index', () => {

@@ -29,7 +29,6 @@ jobs:
 
       - name: Run TypeScript type check
         run: npx tsc --noEmit
-        continue-on-error: true  # Allow build to continue even with type errors
 
   build:
     name: Build

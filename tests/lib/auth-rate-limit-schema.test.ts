@@ -15,9 +15,14 @@ describe('auth rate-limit schema contract', () => {
 
         expect(keyHash?.primary).toBe(true);
         expect(keyHash?.notNull).toBe(true);
-        expect(resetIndex?.config.columns.map((column) => column.name)).toEqual([
-            'reset_at',
-        ]);
+        expect(
+            resetIndex?.config.columns.every((column) => 'name' in column)
+        ).toBe(true);
+        expect(
+            resetIndex?.config.columns.map((column) =>
+                'name' in column ? column.name : null
+            )
+        ).toEqual(['reset_at']);
     });
 
     it('keeps migration 0011 additive and free of existing-row rewrites', () => {
