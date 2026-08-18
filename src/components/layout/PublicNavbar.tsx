@@ -6,8 +6,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { Menu, UserRoundPlus } from 'lucide-react';
+
 import { useNotifications } from '@/components/notifications/NotificationProvider';
-import { CloseIcon, LoginIcon, MenuIcon, RegisterIcon } from '@/components/ui/Icons';
+import { Button } from '@/components/ui/button';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import MobileNavPanel from './MobileNavPanel';
 import NavbarUserMenu from './NavbarUserMenu';
 import { NAV_LINKS } from './navigation-config';
@@ -29,7 +39,10 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
     const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
     const { unreadCount, notifications, markAsRead, deleteRead, setNotificationsPanelOpen } = useNotifications();
 
-    const isActive = useCallback((href: string) => pathname === href || pathname.startsWith(href + '/'), [pathname]);
+    const isActive = useCallback(
+        (href: string) => pathname === href || pathname.startsWith(href + '/'),
+        [pathname],
+    );
     const isAdmin = session?.user?.role === 'admin';
 
     const closeAllMenus = useCallback(() => {
@@ -45,14 +58,6 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
         document.addEventListener('keydown', handleEscape);
         return () => document.removeEventListener('keydown', handleEscape);
     }, [closeAllMenus]);
-
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth >= 841) setIsMenuOpen(false);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -74,26 +79,32 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
     };
 
     return (
-        <nav className="site-nav nav-public-shell" aria-label="เมนูหลัก" data-surface="public">
-            <div className="container nav-public-rail">
+        <nav
+            className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 text-slate-950 shadow-[0_1px_0_rgba(15,35,58,0.02)] backdrop-blur-xl"
+            aria-label="เมนูหลัก"
+            data-surface="public"
+        >
+            <div className="container flex h-[4.5rem] items-center gap-6">
                 <Link
                     href="/"
-                    className={`nav-brand-lockup${pathname === '/' ? ' nav-brand-lockup--active' : ''}`}
+                    className="group flex shrink-0 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-sky-200"
                     aria-label="MilerDev หน้าแรก"
                     aria-current={pathname === '/' ? 'page' : undefined}
                 >
-                    <Image src="/milerdev-logo-transparent.png" alt="MilerDev" width={36} height={36} className="nav-brand-logo" />
-                    <span className="nav-brand-copy">
-                        <strong>MilerDev</strong>
-                    </span>
+                    <Image src="/milerdev-logo-transparent.png" alt="" width={36} height={36} className="size-9 object-contain" priority />
+                    <span className="text-xl font-bold tracking-[-0.04em] transition group-hover:text-[#008bd1]">MilerDev</span>
                 </Link>
 
-                <div className="nav-public-links">
+                <div className="hidden flex-1 items-center justify-center gap-1 lg:flex">
                     {NAV_LINKS.map(({ href, label }) => (
                         <Link
                             key={href}
                             href={href}
-                            className={`nav-public-link${isActive(href) ? ' nav-public-link--active' : ''}`}
+                            className={`rounded-xl px-3.5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-sky-200 ${
+                                isActive(href)
+                                    ? 'bg-sky-50 text-[#008bd1]'
+                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
+                            }`}
                             aria-current={isActive(href) ? 'page' : undefined}
                         >
                             {label}
@@ -101,9 +112,9 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                     ))}
                 </div>
 
-                <div className="nav-public-actions">
+                <div className="ml-auto hidden items-center gap-2 lg:flex">
                     {status === 'loading' ? (
-                        <span className="nav-loading-avatar" aria-hidden="true" />
+                        <span className="size-10 animate-pulse rounded-full bg-slate-100" aria-hidden="true" />
                     ) : session ? (
                         <NavbarUserMenu
                             session={session}
@@ -130,258 +141,129 @@ export default function PublicNavbar({ onRequestLogout }: PublicNavbarProps) {
                         />
                     ) : (
                         <>
-                            <Link href="/login" className="nav-public-auth-link">
-                                <LoginIcon className="w-4 h-4" />
-                                เข้าสู่ระบบ
-                            </Link>
-                            <Link href="/register" className="nav-public-primary">
-                                <RegisterIcon className="w-4 h-4" />
-                                สมัครเรียน
-                                <span aria-hidden="true">→</span>
-                            </Link>
+                            <Button asChild variant="ghost" className="text-slate-600">
+                                <Link href="/login">เข้าสู่ระบบ</Link>
+                            </Button>
+                            <Button asChild className="shadow-[0_8px_20px_rgba(0,171,255,0.2)]">
+                                <Link href="/register">
+                                    <UserRoundPlus className="size-4" aria-hidden="true" />
+                                    สมัครเรียน
+                                </Link>
+                            </Button>
                         </>
                     )}
                 </div>
 
-                <button
-                    type="button"
-                    ref={mobileMenuTriggerRef}
-                    className="nav-mobile-btn"
-                    onClick={() => setIsMenuOpen((current) => !current)}
-                    aria-label={isMenuOpen ? 'ปิดเมนูหลัก' : 'เปิดเมนูหลัก'}
-                    aria-expanded={isMenuOpen}
-                    aria-controls="mobile-navigation"
+                <Sheet
+                    open={isMenuOpen}
+                    onOpenChange={(open) => {
+                        setIsMenuOpen(open);
+                        if (!open) {
+                            setShowUserDropdown(false);
+                            setShowNotiDropdown(false);
+                        }
+                    }}
                 >
-                    {isMenuOpen ? <CloseIcon className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
-                    <span className="nav-mobile-label">{isMenuOpen ? 'ปิด' : 'เมนู'}</span>
-                </button>
+                    <SheetTrigger asChild>
+                        <Button
+                            ref={mobileMenuTriggerRef}
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="ml-auto lg:hidden"
+                            aria-label="เปิดเมนูหลัก"
+                        >
+                            <Menu className="size-5" aria-hidden="true" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[min(92vw,25rem)] border-slate-200 bg-white p-0 sm:max-w-[25rem]">
+                        <SheetHeader className="border-b border-slate-100 px-6 py-5">
+                            <SheetTitle className="flex items-center gap-2.5 text-left">
+                                <Image src="/milerdev-logo-transparent.png" alt="" width={32} height={32} className="size-8 object-contain" />
+                                <span className="text-lg font-bold">MilerDev</span>
+                            </SheetTitle>
+                            <SheetDescription className="text-left">เลือกหน้าที่ต้องการ หรือเข้าสู่พื้นที่เรียนของคุณ</SheetDescription>
+                        </SheetHeader>
+                        <MobileNavPanel
+                            session={session}
+                            isAdmin={isAdmin}
+                            isActive={isActive}
+                            onClose={closeAllMenus}
+                            onLogout={() => requestLogout(mobileMenuTriggerRef.current)}
+                        />
+                    </SheetContent>
+                </Sheet>
             </div>
 
-            {isMenuOpen && (
-                <MobileNavPanel
-                    session={session}
-                    isAdmin={isAdmin}
-                    isActive={isActive}
-                    onClose={closeAllMenus}
-                    onLogout={() => requestLogout(mobileMenuTriggerRef.current)}
-                />
-            )}
-
             <style>{`
-                .nav-public-shell {
-                    position: sticky;
-                    top: 0;
-                    z-index: 50;
-                    background: rgba(247, 249, 251, 0.94);
-                    border-bottom: 1px solid var(--color-border);
-                    backdrop-filter: blur(18px) saturate(130%);
-                }
-                .nav-public-rail {
-                    width: min(calc(100% - 48px), 1280px);
-                    max-width: none;
-                    min-height: 72px;
-                    margin-inline: auto;
-                    padding: 0;
-                    display: flex;
-                    align-items: center;
-                    gap: 0;
-                }
-                .nav-brand-lockup {
-                    position: relative;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 11px;
-                    width: fit-content;
-                    min-height: 72px;
-                    padding-right: clamp(22px, 2.5vw, 36px);
-                    border-right: 1px solid var(--color-border);
-                    color: var(--ink);
-                    text-decoration: none;
-                }
-                .nav-brand-logo { width: 34px; height: 34px; }
-                .nav-brand-copy { display: flex; align-items: flex-start; flex-direction: column; gap: 4px; }
-                .nav-brand-copy strong { font-size: 1.14rem; font-weight: 760; line-height: 1; letter-spacing: -0.035em; transition: color 160ms ease; }
-                .nav-brand-lockup:hover .nav-brand-copy strong { color: var(--accent-strong); }
-                .nav-public-links {
-                    align-self: stretch;
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-start;
-                    gap: 2px;
-                    padding-left: clamp(12px, 1.5vw, 22px);
-                    margin-right: auto;
-                }
-                .nav-public-link {
-                    position: relative;
-                    display: inline-flex;
-                    align-items: center;
-                    min-height: 72px;
-                    padding: 2px clamp(10px, 1.1vw, 15px) 0;
-                    color: var(--ink-muted);
-                    font-size: 0.88rem;
-                    font-weight: 650;
-                    text-decoration: none;
-                    transition: color 160ms ease, background-color 160ms ease;
-                }
-                .nav-public-link:hover {
-                    color: var(--accent-strong);
-                    background: var(--accent-soft);
-                }
-                .nav-public-link--active { color: var(--ink); background: var(--color-surface); }
-                .nav-public-link::after {
-                    content: '';
-                    position: absolute;
-                    left: 12px;
-                    right: 12px;
-                    bottom: -1px;
-                    height: 3px;
-                    background: var(--accent);
-                    transform: scaleX(0);
-                    transform-origin: left;
-                    transition: transform 160ms ease-out;
-                }
-                .nav-public-link:hover::after,
-                .nav-public-link--active::after { transform: scaleX(1); }
-                .nav-public-actions {
-                    display: flex;
-                    align-items: center;
-                    justify-content: flex-end;
-                    gap: 8px;
-                    min-width: 0;
-                    min-height: 72px;
-                    padding-left: clamp(14px, 1.7vw, 24px);
-                    border-left: 1px solid var(--color-border);
-                }
-                .nav-public-auth-link,
-                .nav-public-primary {
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 7px;
-                    min-height: 44px;
-                    padding: 0 14px;
-                    font-size: 0.87rem;
-                    font-weight: 650;
-                    text-decoration: none;
-                    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
-                }
-                .nav-public-auth-link { color: var(--ink-muted); }
-                .nav-public-auth-link:hover { color: var(--ink); background: var(--color-surface); }
-                .nav-public-primary {
-                    min-width: 128px;
-                    justify-content: space-between;
-                    padding-inline: 16px 13px;
-                    border: 1px solid var(--accent);
-                    border-radius: 0;
-                    background: var(--accent);
-                    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
-                    color: var(--accent-foreground);
-                }
-                .nav-public-primary svg { display: none; }
-                .nav-public-primary span { font-size: 1rem; transition: transform 160ms ease; }
-                .nav-public-primary:hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
-                .nav-public-primary:hover span { transform: translateX(3px); }
                 .nav-user-controls { display: flex; align-items: center; gap: 4px; }
                 .nav-control-anchor { position: relative; }
                 .nav-icon-button,
-                .nav-user-button,
-                .nav-mobile-btn {
+                .nav-user-button {
                     display: inline-flex;
+                    min-height: 44px;
                     align-items: center;
                     justify-content: center;
-                    min-height: 44px;
                     border: 1px solid transparent;
-                    border-radius: 0;
+                    border-radius: 12px;
                     background: transparent;
-                    color: var(--ink-muted);
+                    color: var(--color-text-secondary);
                     cursor: pointer;
-                    transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+                    transition: 150ms ease;
                 }
-                .nav-icon-button { position: relative; width: 44px; padding: 0; }
+                .nav-icon-button { position: relative; width: 44px; }
                 .nav-user-button { gap: 4px; padding: 4px 6px; }
                 .nav-icon-button:hover,
                 .nav-icon-button--active,
                 .nav-user-button:hover,
-                .nav-user-button--active,
-                .nav-mobile-btn:hover { border-color: var(--color-border); color: var(--accent-strong); background: var(--accent-soft); }
-                .nav-user-chevron { transition: transform 160ms ease; }
+                .nav-user-button--active { border-color: var(--color-border); background: #f3f9fd; color: #008bd1; }
+                .nav-user-chevron { transition: transform 150ms ease; }
                 .nav-user-chevron--open { transform: rotate(180deg); }
-                .nav-avatar-fallback { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--accent); color: var(--ink); font-size: 0.875rem; font-weight: 700; }
-                .nav-notification-badge { position: absolute; top: 3px; right: 2px; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--danger); color: white; font-size: 0.65rem; font-weight: 700; }
-                .nav-loading-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-subtle); }
-                .nav-dropdown { position: absolute; right: 0; top: calc(100% + 14px); z-index: 100; overflow: hidden; background: var(--surface-raised); border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: 0; box-shadow: 0 18px 42px rgba(16, 32, 51, 0.13); }
+                .nav-avatar-fallback { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #00abff; color: white; font-weight: 700; }
+                .nav-notification-badge { position: absolute; top: 2px; right: 0; display: grid; min-width: 18px; height: 18px; place-items: center; border: 2px solid white; border-radius: 999px; background: #ef4444; color: white; font-size: 0.65rem; font-weight: 700; }
+                .nav-dropdown { position: absolute; right: 0; top: calc(100% + 12px); z-index: 100; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 16px; background: white; box-shadow: 0 20px 50px rgba(15, 35, 58, 0.16); }
                 .nav-notification-panel { width: min(360px, calc(100vw - 32px)); }
                 .nav-user-menu { width: 280px; }
-                .nav-dropdown-header, .nav-dropdown-footer { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--line); color: var(--ink); font-size: 0.9rem; font-weight: 700; }
-                .nav-dropdown-footer { border-top: 1px solid var(--line); border-bottom: 0; }
-                .nav-dropdown-action, .nav-dropdown-danger { padding: 0; border: 0; background: transparent; color: var(--accent-strong); font-size: 0.78rem; font-weight: 600; cursor: pointer; }
-                .nav-dropdown-danger { color: var(--danger); }
-                .nav-dropdown-empty { padding: 32px 16px; color: var(--ink-subtle); text-align: center; font-size: 0.875rem; }
+                .nav-dropdown-header, .nav-dropdown-footer { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid #eef2f6; color: #0f233a; font-size: 0.9rem; font-weight: 700; }
+                .nav-dropdown-footer { border-top: 1px solid #eef2f6; border-bottom: 0; }
+                .nav-dropdown-action, .nav-dropdown-danger { padding: 0; border: 0; background: transparent; color: #008bd1; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+                .nav-dropdown-danger { color: #dc2626; }
+                .nav-dropdown-empty { padding: 32px 16px; color: #64748b; text-align: center; font-size: 0.875rem; }
                 .nav-notification-list { max-height: 360px; overflow-y: auto; }
-                .nav-notification-item { display: flex; gap: 10px; padding: 12px 16px; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
-                .nav-notification-item:hover, .nav-notification-item--unread { background: var(--accent-soft); }
-                .nav-notification-icon { display: inline-flex; flex: 0 0 auto; color: var(--accent-strong); }
+                .nav-notification-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #eef2f6; color: #0f233a; text-decoration: none; }
+                .nav-notification-item:hover, .nav-notification-item--unread { background: #f0f9ff; }
+                .nav-notification-icon { display: inline-flex; flex: 0 0 auto; color: #008bd1; }
                 .nav-notification-copy { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
-                .nav-notification-copy strong { overflow: hidden; color: var(--ink); font-size: 0.8rem; text-overflow: ellipsis; white-space: nowrap; }
-                .nav-notification-copy span { overflow: hidden; color: var(--ink-muted); font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
-                .nav-notification-copy small { color: var(--ink-subtle); font-size: 0.68rem; }
-                .nav-notification-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--accent); flex: 0 0 auto; }
-                .nav-user-summary { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
-                .nav-user-summary > span, .nav-mobile-user-summary > span { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
-                .nav-user-summary strong, .nav-mobile-user-summary strong { overflow: hidden; color: var(--ink); font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; }
-                .nav-user-summary small, .nav-mobile-user-summary small { overflow: hidden; color: var(--ink-subtle); font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
-                .nav-menu-list { display: flex; flex-direction: column; gap: 0; padding: 8px 0; }
-                .nav-menu-link { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 9px 16px; border: 0; border-radius: 0; background: transparent; color: var(--ink-soft); font-size: 0.9rem; text-decoration: none; cursor: pointer; }
-                .nav-menu-link:hover, .nav-menu-link--active { background: var(--accent-soft); color: var(--accent-strong); }
-                .nav-menu-link--admin { color: var(--accent-strong); }
-                .nav-menu-footer { padding: 0; border-top: 1px solid var(--line); }
-                .nav-menu-action--danger:hover { background: var(--danger-soft); color: var(--danger); }
-                .nav-mobile-btn { display: none; width: auto; gap: 8px; padding: 0 12px; }
-                .nav-mobile-btn svg { width: 19px; height: 19px; }
-                .nav-mobile-label { font-size: 0.82rem; font-weight: 700; }
-                .nav-public-shell a:focus-visible,
-                .nav-public-shell button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-                .nav-public-shell .nav-dropdown:focus { outline: 2px solid var(--accent); outline-offset: 3px; }
-                .nav-public-mobile-panel { position: absolute; top: 100%; left: 0; right: 0; max-height: calc(100dvh - 68px); overflow-y: auto; overscroll-behavior: contain; background: var(--color-surface); border-bottom: 3px solid var(--accent); box-shadow: 0 22px 50px rgba(16, 32, 51, 0.14); }
-                .nav-mobile-panel-inner { display: flex; width: min(calc(100% - 36px), 1280px); margin: 0 auto; flex-direction: column; gap: 0; padding: 0 0 24px; }
-                .nav-mobile-panel-header { display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); color: var(--ink-muted); }
-                .nav-mobile-panel-header span { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; }
-                .nav-mobile-user-summary { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-                .nav-mobile-link-group { display: flex; flex-direction: column; gap: 0; }
-                .nav-mobile-link { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 12px; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink-soft); font-size: 1rem; font-weight: 600; text-decoration: none; }
-                .nav-mobile-link--primary { position: relative; min-height: 62px; padding-inline: 14px 12px; font-size: 1.08rem; font-weight: 680; }
-                .nav-mobile-link--primary::after { content: '→'; margin-left: auto; color: var(--ink-subtle); font-size: 0.95rem; transition: transform 160ms ease; }
-                .nav-mobile-link:hover, .nav-mobile-link--active { color: var(--accent-strong); }
-                .nav-mobile-link:hover { background: var(--color-surface-hover); }
-                .nav-mobile-link:hover::after { transform: translateX(3px); }
-                .nav-mobile-link--active { box-shadow: inset 3px 0 0 var(--accent); background: var(--accent-soft); color: var(--ink); }
-                .nav-mobile-link--admin { color: var(--accent-strong); }
-                .nav-mobile-divider { height: 1px; margin: 0; background: var(--line); }
-                .nav-mobile-action { width: 100%; border: 0; background: transparent; cursor: pointer; }
-                .nav-mobile-action--danger:hover { background: var(--danger-soft); color: var(--danger); }
-                .nav-mobile-auth-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 18px; }
-                .nav-mobile-auth { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 0; font-size: 0.95rem; font-weight: 700; text-decoration: none; }
-                .nav-mobile-auth--secondary { border: 1px solid var(--line); color: var(--ink-soft); }
-                .nav-mobile-auth--primary { background: var(--accent); color: var(--accent-foreground); }
-                @media (max-width: 1020px) and (min-width: 841px) {
-                    .nav-public-rail { column-gap: 16px; }
-                    .nav-public-links { gap: 16px; }
-                    .nav-public-auth-link svg { display: none; }
-                }
-                @media (max-width: 840px) {
-                    .nav-public-rail { display: flex; width: min(calc(100% - 36px), 1280px); min-height: 68px; justify-content: space-between; gap: 12px; }
-                    .nav-brand-lockup { min-height: 68px; padding-right: 0; border-right: 0; }
-                    .nav-public-links, .nav-public-actions { display: none; }
-                    .nav-mobile-btn { display: inline-flex; }
-                }
-                @media (max-width: 620px) {
-                    .nav-public-rail,
-                    .nav-mobile-panel-inner { width: min(calc(100% - 28px), 1280px); }
-                }
-                @media (min-width: 841px) { .nav-public-mobile-panel { display: none; } }
-                @media (prefers-reduced-motion: reduce) {
-                    .nav-public-shell * { transition: none !important; }
-                }
+                .nav-notification-copy strong, .nav-notification-copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .nav-notification-copy span { color: #475569; font-size: 0.75rem; }
+                .nav-notification-copy small { color: #64748b; font-size: 0.68rem; }
+                .nav-notification-dot { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: #00abff; flex: 0 0 auto; }
+                .nav-user-summary, .nav-mobile-user-summary { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid #eef2f6; }
+                .nav-user-summary > span, .nav-mobile-user-summary > span { display: flex; min-width: 0; flex-direction: column; }
+                .nav-user-summary strong, .nav-mobile-user-summary strong, .nav-user-summary small, .nav-mobile-user-summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .nav-user-summary small, .nav-mobile-user-summary small { color: #64748b; font-size: 0.78rem; }
+                .nav-menu-list { display: flex; flex-direction: column; padding: 8px; }
+                .nav-menu-link { display: flex; min-height: 44px; width: 100%; align-items: center; gap: 12px; padding: 9px 12px; border: 0; border-radius: 10px; background: transparent; color: #334155; font-size: 0.9rem; text-decoration: none; cursor: pointer; }
+                .nav-menu-link:hover, .nav-menu-link--active { background: #f0f9ff; color: #008bd1; }
+                .nav-menu-footer { padding: 8px; border-top: 1px solid #eef2f6; }
+                .nav-menu-action--danger:hover { background: #fef2f2; color: #dc2626; }
+                .nav-public-mobile-panel { flex: 1; overflow-y: auto; }
+                .nav-mobile-panel-inner { display: flex; flex-direction: column; padding: 12px 18px 24px; }
+                .nav-mobile-panel-header { display: none; }
+                .nav-mobile-link-group { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+                .nav-mobile-link { display: flex; min-height: 48px; align-items: center; gap: 12px; padding: 10px 12px; border: 0; border-radius: 12px; color: #334155; font-size: 0.95rem; font-weight: 600; text-decoration: none; }
+                .nav-mobile-link--primary { font-size: 1rem; }
+                .nav-mobile-link:hover, .nav-mobile-link--active { background: #f0f9ff; color: #008bd1; }
+                .nav-mobile-divider { height: 1px; background: #eef2f6; }
+                .nav-mobile-action { width: 100%; background: transparent; cursor: pointer; }
+                .nav-mobile-action--danger:hover { background: #fef2f2; color: #dc2626; }
+                .nav-mobile-auth-actions { display: grid; gap: 10px; padding-top: 16px; }
+                .nav-mobile-auth { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; font-weight: 700; text-decoration: none; }
+                .nav-mobile-auth--secondary { border: 1px solid #e2e8f0; color: #334155; }
+                .nav-mobile-auth--primary { background: #00abff; color: white; }
+                .nav-user-controls button:focus-visible,
+                .nav-dropdown a:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(0,171,255,.2); }
+                @media (prefers-reduced-motion: reduce) { .nav-user-controls *, .nav-dropdown * { transition: none !important; } }
             `}</style>
         </nav>
     );

@@ -67,7 +67,7 @@ export default function CourseCard({
     return (
         <Link
             href={`/courses/${slug}`}
-            className={`card course-card course-card--${variant} block group${showOriginalPrice ? ' course-card--promo' : ''}`}
+            className={`card course-card course-card--${variant} block group`}
         >
             {/* Thumbnail */}
             <div className={`course-thumbnail${thumbnailUrl ? '' : ' course-thumbnail--empty'}`}>
@@ -87,33 +87,6 @@ export default function CourseCard({
                     )}
                 </div>
 
-                {/* Discount Badge - Top Left */}
-                {showOriginalPrice && (
-                    <span className="course-discount-badge">
-                        ลด {discountPercent}%
-                    </span>
-                )}
-
-                {/* Price marker — anchored to the thumbnail boundary */}
-                {displayPrice === 0 ? (
-                    <span className="price-badge free">
-                        <span className="price-badge__label">ราคา</span>
-                        <span className="price-badge__value">ฟรี</span>
-                    </span>
-                ) : showOriginalPrice ? (
-                    <span className="price-badge promo">
-                        <span className="price-badge__label">ราคาพิเศษ</span>
-                        <span className="price-badge__prices">
-                            <span className="price-badge__was">฿{price.toLocaleString()}</span>
-                            <span className="price-badge__value">฿{displayPrice.toLocaleString()}</span>
-                        </span>
-                    </span>
-                ) : (
-                    <span className="price-badge paid">
-                        <span className="price-badge__label">ราคา</span>
-                        <span className="price-badge__value">฿{displayPrice.toLocaleString()}</span>
-                    </span>
-                )}
             </div>
 
             {/* Content */}
@@ -176,13 +149,40 @@ export default function CourseCard({
                     )}
                 </div>
 
-                <span className="cc-cta">
-                    {hasFreePreview ? 'ทดลองบทเรียนฟรี' : 'ดูรายละเอียดคอร์ส'}
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                        <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                </span>
+                <div className="course-card__footer">
+                    <div
+                        className="course-card__price"
+                        aria-label={displayPrice === 0
+                            ? 'ราคา ฟรี'
+                            : showOriginalPrice
+                                ? `ราคาพิเศษ ฿${displayPrice.toLocaleString()} จาก ฿${price.toLocaleString()} ลด ${discountPercent}%`
+                                : `ราคา ฿${displayPrice.toLocaleString()}`}
+                    >
+                        {displayPrice === 0 ? (
+                            <span className="course-card__price-free">ฟรี</span>
+                        ) : (
+                            <>
+                                <span className="course-card__price-line">
+                                    <span className="course-card__price-current">฿{displayPrice.toLocaleString()}</span>
+                                    {showOriginalPrice && (
+                                        <span className="course-card__price-original">฿{price.toLocaleString()}</span>
+                                    )}
+                                </span>
+                                {showOriginalPrice && (
+                                    <span className="course-card__price-discount">ลด {discountPercent}%</span>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    <span className="cc-cta">
+                        {hasFreePreview ? 'ทดลองฟรี' : 'ดูคอร์ส'}
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </span>
+                </div>
             </div>
         </Link>
     );

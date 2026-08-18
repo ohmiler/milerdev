@@ -29,7 +29,7 @@ describe('CourseCard decision evidence', () => {
     expect(html).toContain('1 ชม. 31 นาที');
     expect(html).toContain('มีบทเรียนทดลอง');
     expect(html).toContain('สอนโดย Miler');
-    expect(html).toContain('ทดลองบทเรียนฟรี');
+    expect(html).toContain('ทดลองฟรี');
     expect(html.match(/<a\b/g)).toHaveLength(1);
   });
 
@@ -39,7 +39,7 @@ describe('CourseCard decision evidence', () => {
     expect(html).not.toContain('course-card__duration');
     expect(html).not.toContain('course-card__preview');
     expect(html).not.toContain('สอนโดย');
-    expect(html).toContain('ดูรายละเอียดคอร์ส');
+    expect(html).toContain('ดูคอร์ส');
   });
 
   it('uses existing course data for missing media without implying a real thumbnail', () => {
@@ -55,5 +55,35 @@ describe('CourseCard decision evidence', () => {
     expect(html).toContain('COURSE / REACT');
     expect(html).toContain('React &amp; Next.js Masterclass');
     expect(html).not.toContain('course-thumbnail__placeholder');
+  });
+
+  it('keeps the regular price in the card footer instead of covering the thumbnail', () => {
+    const html = renderToStaticMarkup(<CourseCard {...baseProps} />);
+
+    expect(html).toContain('course-card__footer');
+    expect(html).toContain('aria-label="ราคา ฿1,990"');
+    expect(html).toContain('course-card__price-current">฿1,990');
+    expect(html).not.toContain('price-badge');
+  });
+
+  it('shows promotion evidence together in the footer', () => {
+    const html = renderToStaticMarkup(
+      <CourseCard
+        {...baseProps}
+        promoPrice={1490}
+        isPromoActive
+      />,
+    );
+
+    expect(html).toContain('ราคาพิเศษ ฿1,490 จาก ฿1,990 ลด 25%');
+    expect(html).toContain('course-card__price-original">฿1,990');
+    expect(html).toContain('course-card__price-discount">ลด 25%');
+  });
+
+  it('uses a restrained free-price treatment', () => {
+    const html = renderToStaticMarkup(<CourseCard {...baseProps} price={0} />);
+
+    expect(html).toContain('aria-label="ราคา ฟรี"');
+    expect(html).toContain('course-card__price-free">ฟรี');
   });
 });

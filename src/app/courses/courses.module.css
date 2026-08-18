@@ -297,7 +297,6 @@
   flex-direction: column;
   gap: 10px;
   padding-top: 14px;
-  border-top: 1px solid var(--line);
 }
 
 .catalogLayout :global(.courses-grid .course-card__facts) {

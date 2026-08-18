@@ -1,19 +1,36 @@
 export const dynamic = 'force-dynamic';
 
-import Link from 'next/link';
 import Image from 'next/image';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
+import Link from 'next/link';
+import {
+  ArrowRight,
+  Award,
+  BookOpenCheck,
+  CheckCircle2,
+  Clock3,
+  Code2,
+  Languages,
+  Lightbulb,
+  PlayCircle,
+  Rocket,
+  Sparkles,
+} from 'lucide-react';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
+
+import { HOME_FAQ_ITEMS } from '@/app/faq/faq-data';
+import TrackedAnalyticsLink from '@/components/analytics/TrackedAnalyticsLink';
 import CourseCard from '@/components/course/CourseCard';
-import ShowcaseGallery from '@/components/home/ShowcaseGallery';
-import HeroCodeEditor from '@/components/home/HeroCodeEditor';
-import LearningWorkspacePreview from '@/components/home/LearningWorkspacePreview';
+import HomeFAQ from '@/components/home/HomeFAQ';
+import StudioProofSection from '@/components/home/StudioProofSection';
+import Footer from '@/components/layout/Footer';
+import Navbar from '@/components/layout/Navbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { db } from '@/lib/db';
 import { courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
-import styles from './home.module.css';
 
-async function getFeaturedCourses() {
+async function getLatestCourses() {
   const lessonStatsSq = db
     .select({
       courseId: lessons.courseId,
@@ -79,257 +96,392 @@ async function getFeaturedCourses() {
     const promoEndOk = !row.promoEndsAt || new Date(row.promoEndsAt) >= now;
 
     return {
-      id: row.id,
-      title: row.title,
-      slug: row.slug,
-      description: row.description,
-      thumbnailUrl: row.thumbnailUrl,
-      price: row.price,
-      promoPrice: row.promoPrice,
+      ...row,
       isPromoActive: hasPromo && promoStartOk && promoEndOk,
-      status: row.status,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
       lessonCount: Number(row.lessonCount) || 0,
       totalDurationSeconds: Number(row.totalDurationSeconds) || 0,
       hasFreePreview: Number(row.freePreviewCount) > 0,
-      instructorName: row.instructorName,
       tags: tagsByCourse.get(row.id) ?? [],
     };
   });
 }
 
-const CLIENT_LOGOS = [
-  { src: '/clients/01-clients.png', alt: 'The Programmer Association' },
-  { src: '/clients/02-clients.png', alt: 'GetLinks' },
-  { src: '/clients/03-clients.png', alt: 'FutureSkill' },
-  { src: '/clients/04-clients.png', alt: 'E Plus' },
-  { src: '/clients/05-clients.png', alt: 'มหาวิทยาลัยขอนแก่น' },
-  { src: '/clients/06-clients.png', alt: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ' },
-  { src: '/clients/07-clients.png', alt: 'SkillLane' },
-  { src: '/clients/08-clients.png', alt: 'มหาวิทยาลัยเทคโนโลยีราชมงคลรัตนโกสินทร์' },
+const CONFIDENCE_POINTS = [
+  {
+    icon: Languages,
+    title: 'อธิบายเป็นภาษาไทย',
+    description: 'เห็นภาพรวมและเหตุผลก่อนลงมือเขียน',
+  },
+  {
+    icon: CheckCircle2,
+    title: 'บันทึกความคืบหน้า',
+    description: 'กลับมาเรียนต่อจากจุดล่าสุดได้',
+  },
+  {
+    icon: Clock3,
+    title: 'เรียนซ้ำได้ตลอดชีพ',
+    description: 'ทบทวนตามจังหวะของคุณได้ทุกเวลา',
+  },
+  {
+    icon: Award,
+    title: 'Certificate เมื่อเรียนจบ',
+    description: 'รับใบรับรองเมื่อผ่านเกณฑ์ของคอร์ส',
+  },
+] as const;
+
+const LEARNING_OUTCOMES = [
+  {
+    icon: Lightbulb,
+    index: '01',
+    title: 'เข้าใจเหตุผล',
+    description: 'เริ่มจากปัญหาและเป้าหมายของงาน เพื่อให้รู้ว่าเครื่องมือแต่ละชิ้นมีไว้ทำอะไร',
+    tone: 'bg-amber-50 text-amber-600',
+  },
+  {
+    icon: Code2,
+    index: '02',
+    title: 'สร้างด้วยตัวเอง',
+    description: 'เรียนแนวคิดผ่านโค้ด ตัวอย่าง และการลงมือทำ โดยไม่หยุดอยู่ที่การจำ syntax',
+    tone: 'bg-sky-50 text-sky-600',
+  },
+  {
+    icon: Rocket,
+    index: '03',
+    title: 'ต่อยอดเป็นผลงาน',
+    description: 'เชื่อมบทเรียนเป็นโปรเจกต์ที่อธิบายได้ ทดสอบได้ และนำไปพัฒนาต่อได้',
+    tone: 'bg-emerald-50 text-emerald-600',
+  },
 ] as const;
 
 export default async function HomePage() {
-  const featuredCourses = await getFeaturedCourses();
-  const featuredLessonCount = featuredCourses.reduce((total, course) => total + course.lessonCount, 0);
-  const featuredPreviewCount = featuredCourses.filter((course) => course.hasFreePreview).length;
+  const latestCourses = await getLatestCourses();
 
   return (
     <>
       <Navbar />
 
-      <main className={styles.page}>
-        <section className={styles.hero} aria-labelledby="home-hero-title">
-          <div className={[styles.shell, styles.heroLayout].join(' ')}>
-            <div className={styles.heroCopy} data-hero-copy>
-              <p className={styles.heroKicker}>คอร์สออนไลน์สำหรับคนที่อยากเขียนโค้ดเป็นงานจริง</p>
-              <h1 id="home-hero-title" className={styles.heroTitle}>
-                เลือกเส้นทางให้ชัด
-                <span>แล้วลงมือสร้างจริง</span>
+      <main className="overflow-hidden bg-white text-slate-950">
+        <section
+          data-home-section="hero"
+          className="relative isolate border-b border-slate-100 bg-[radial-gradient(circle_at_78%_12%,rgba(0,171,255,0.16),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]"
+          aria-labelledby="home-hero-title"
+        >
+          <div
+            className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(15,35,58,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(15,35,58,0.025)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]"
+            aria-hidden="true"
+          />
+          <div className="container grid items-center gap-12 py-14 sm:py-16 lg:min-h-[clamp(42rem,86svh,48rem)] lg:grid-cols-[0.92fr_1.08fr] lg:gap-16 lg:py-20">
+            <div className="max-w-2xl">
+              <Badge className="mb-5 rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-semibold text-sky-700 shadow-none">
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                เริ่มต้นเส้นทาง Developer กับ MilerDev
+              </Badge>
+              <h1
+                id="home-hero-title"
+                className="max-w-[13ch] text-balance text-[clamp(2.7rem,6vw,5.25rem)] font-bold leading-[1.04] tracking-[-0.055em] text-slate-950"
+              >
+                เรียนให้เข้าใจ สร้างได้จริง{' '}
+                <span className="text-[#00abff]">เติบโตเป็น Developer</span>
               </h1>
-              <p className={styles.heroLead}>
-                ดูหัวข้อ ราคา จำนวนบทเรียน และบททดลองก่อนสมัคร
-                แล้วเรียนตามลำดับพร้อมกลับมาทำโปรเจกต์ต่อจากจุดเดิมได้ทุกเมื่อ
+              <p className="mt-6 max-w-xl text-pretty text-base leading-8 text-slate-600 sm:text-lg">
+                คอร์สภาษาไทยที่พาคุณเห็นภาพรวม เข้าใจเหตุผล และลงมือทำทีละขั้น
+                ตั้งแต่พื้นฐานจนเป็นผลงานที่นำไปต่อยอดได้จริง
               </p>
 
-              <div className={styles.heroActions}>
-                <Link href="/courses" className={styles.primaryAction}>
-                  ดูคอร์สทั้งหมด
-                  <span aria-hidden="true">→</span>
-                </Link>
-                <Link href="#featured-courses" className={styles.secondaryAction}>ดูคอร์สแนะนำ</Link>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-13 rounded-xl px-6 shadow-[0_12px_28px_rgba(0,171,255,0.24)]"
+                >
+                  <TrackedAnalyticsLink
+                    href="/courses"
+                    analyticsEvent={{ eventName: 'home_primary_cta_clicked', placement: 'hero' }}
+                  >
+                    ดูคอร์สทั้งหมด
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </TrackedAnalyticsLink>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="h-13 rounded-xl border-slate-200 bg-white/80 px-6"
+                >
+                  <Link href="/courses?preview=free">
+                    <PlayCircle className="size-4 text-[#00abff]" aria-hidden="true" />
+                    ทดลองบทเรียนฟรี
+                  </Link>
+                </Button>
               </div>
             </div>
 
-            <div className={styles.heroStage} data-hero-editor>
-              <div className={styles.codeEvidence}>
-                <HeroCodeEditor />
-              </div>
-            </div>
+            <div className="relative mx-auto w-full max-w-[42rem] lg:mx-0">
+              <div className="absolute -left-8 top-12 size-24 rounded-full bg-sky-200/50 blur-2xl" aria-hidden="true" />
+              <div className="absolute -right-8 bottom-10 size-32 rounded-full bg-blue-200/50 blur-3xl" aria-hidden="true" />
+              <Card className="relative gap-0 overflow-visible rounded-[2rem] border border-white/90 bg-white/80 p-3 shadow-[0_28px_80px_rgba(15,35,58,0.16)] ring-1 ring-slate-950/5 backdrop-blur">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-[1.45rem] bg-slate-100">
+                  <Image
+                    src="/images/milerdev-learner-hero-v1.png"
+                    alt="ผู้เรียนกำลังลงมือพัฒนาโปรเจกต์ด้วยแล็ปท็อป"
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 54vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/70 to-transparent" />
+                  <div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 text-white">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-200">
+                        Project-based learning
+                      </p>
+                      <p className="mt-1 max-w-sm text-lg font-semibold">
+                        เรียนจากโจทย์จริง แล้วลงมือสร้างไปพร้อมกัน
+                      </p>
+                    </div>
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-[#00abff] shadow-lg">
+                      <PlayCircle className="size-6" aria-hidden="true" />
+                    </span>
+                  </div>
+                </div>
+              </Card>
 
+              <Card className="absolute -left-3 top-7 hidden w-40 gap-3 rounded-2xl bg-white p-4 shadow-xl sm:flex lg:-left-8">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+                  <span>ความคืบหน้า</span>
+                  <CheckCircle2 className="size-4 text-emerald-500" aria-hidden="true" />
+                </div>
+                <strong className="text-2xl text-slate-950">75%</strong>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <span className="block h-full w-3/4 rounded-full bg-[#00abff]" />
+                </div>
+              </Card>
+
+              <Card className="absolute -right-2 -bottom-5 hidden w-56 gap-2 rounded-2xl bg-white p-4 shadow-xl sm:flex lg:-right-6">
+                <div className="flex items-center gap-2">
+                  <span className="grid size-9 place-items-center rounded-xl bg-sky-50 text-[#00abff]">
+                    <BookOpenCheck className="size-4" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="text-xs text-slate-500">บทเรียนถัดไป</p>
+                    <p className="font-semibold text-slate-950">สร้าง Feature แรก</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
           </div>
         </section>
 
         <section
-          className={styles.courseEvidence}
-          aria-labelledby="course-evidence-title"
-          data-source="featured-courses"
+          data-home-section="confidence"
+          className="border-b border-slate-100 bg-white"
+          aria-label="สิ่งที่ผู้เรียนได้รับจาก MilerDev"
         >
-          <div className={[styles.shell, styles.courseEvidenceInner].join(' ')}>
-            <header className={styles.courseEvidenceIntro}>
-              <p>BEFORE YOU ENROLL</p>
-              <h2 id="course-evidence-title">ข้อมูลคอร์สที่ใช้ตัดสินใจก่อนสมัคร</h2>
-            </header>
-
-            {featuredCourses.length > 0 ? (
-              <dl className={styles.courseEvidenceFacts}>
+          <div className="container grid gap-6 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8 lg:py-9">
+            {CONFIDENCE_POINTS.map(({ icon: Icon, title, description }) => (
+              <div key={title} className="flex items-start gap-3">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-sky-50 text-[#008bd1]">
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
                 <div>
-                  <dt>คอร์สแนะนำบนหน้านี้</dt>
-                  <dd>{featuredCourses.length}</dd>
+                  <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
+                  <p className="mt-1 text-xs leading-6 text-slate-500">{description}</p>
                 </div>
-                <div>
-                  <dt>บทเรียนในชุดแนะนำ</dt>
-                  <dd>{featuredLessonCount}</dd>
-                </div>
-                <div>
-                  <dt>คอร์สที่มีบททดลอง</dt>
-                  <dd>{featuredPreviewCount}</dd>
-                </div>
-              </dl>
-            ) : (
-              <p className={styles.courseEvidenceFallback}>
-                ดูหัวข้อ ราคา ผู้สอน และสถานะบททดลองจากหน้ารวมคอร์สก่อนเลือกจุดเริ่มต้น
-              </p>
-            )}
-
-            <Link href="/courses" className={styles.courseEvidenceLink}>
-              เปรียบเทียบทุกคอร์ส
-              <span aria-hidden="true">→</span>
-            </Link>
+              </div>
+            ))}
           </div>
         </section>
 
-        <section id="featured-courses" className={[styles.section, styles.courseSection].join(' ')} aria-labelledby="featured-courses-title">
-          <div className={styles.shell}>
-            <div className={styles.sectionIntro}>
+        <section
+          data-home-section="outcomes"
+          className="bg-[#f7fbfe] py-16 sm:py-20 lg:py-24"
+          aria-labelledby="outcomes-title"
+        >
+          <div className="container">
+            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end lg:gap-16">
               <div>
-                <p className={styles.sectionLabel}>เริ่มจากสิ่งที่คุณอยากสร้าง</p>
-                <h2 id="featured-courses-title" className={styles.sectionTitle}>เลือกคอร์สแรกจากข้อมูลจริง</h2>
+                <Badge variant="secondary" className="rounded-full px-3 py-1 text-[#008bd1]">
+                  ผลลัพธ์ที่ออกแบบไว้ในทุกบทเรียน
+                </Badge>
+                <h2
+                  id="outcomes-title"
+                  className="mt-4 max-w-xl text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl lg:text-5xl"
+                >
+                  เข้าใจให้ชัด ก่อนสร้างและต่อยอดด้วยตัวเอง
+                </h2>
               </div>
               <div>
-                <p className={styles.sectionCopy}>
-                  เปรียบเทียบเนื้อหา เวลาเรียน ราคา ผู้สอน และบททดลอง
-                  เพื่อเลือกเส้นทางที่เหมาะกับพื้นฐานและงานที่คุณอยากทำต่อ
+                <p className="max-w-2xl text-pretty leading-8 text-slate-600">
+                  MilerDev ไม่ได้พาคุณทำตามวิดีโอให้จบเท่านั้น
+                  แต่จัดลำดับเนื้อหาให้เห็นความสัมพันธ์ระหว่างแนวคิด โค้ด และผลลัพธ์จริง
                 </p>
-                <Link href="/courses" className={styles.sectionLink}>ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link>
+                <Link
+                  href="/about"
+                  className="mt-5 inline-flex items-center gap-2 font-semibold text-[#008bd1] hover:text-[#0075b3]"
+                >
+                  ดูวิธีเรียนแบบ MilerDev
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
               </div>
             </div>
 
-            {featuredCourses.length > 0 ? (
-              <div className={styles.courseGrid} data-count={Math.min(featuredCourses.length, 4)}>
-                {featuredCourses.map((course) => (
-                  <CourseCard
+            <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12">
+              {LEARNING_OUTCOMES.map(({ icon: Icon, index, title, description, tone }) => (
+                <Card
+                  key={title}
+                  className="gap-6 rounded-[1.5rem] border border-slate-100 bg-white p-6 shadow-[0_12px_36px_rgba(15,35,58,0.06)] ring-0 sm:p-7"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`grid size-12 place-items-center rounded-2xl ${tone}`}>
+                      <Icon className="size-5" aria-hidden="true" />
+                    </span>
+                    <span className="font-mono text-xs font-bold tracking-[0.16em] text-slate-300">{index}</span>
+                  </div>
+                  <CardContent className="p-0">
+                    <h3 className="text-xl font-semibold">{title}</h3>
+                    <p className="mt-3 leading-7 text-slate-600">{description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="latest-courses"
+          data-home-section="courses"
+          className="bg-white py-16 sm:py-20 lg:py-24"
+          aria-labelledby="latest-courses-title"
+        >
+          <div className="container">
+            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-sm font-semibold text-[#008bd1]">คอร์สล่าสุดจาก MilerDev</p>
+                <h2
+                  id="latest-courses-title"
+                  className="mt-2 text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl"
+                >
+                  เลือกจากเนื้อหา ราคา และบททดลองจริง
+                </h2>
+              </div>
+              <Button asChild variant="outline" className="w-fit">
+                <Link href="/courses">
+                  ดูคอร์สทั้งหมด
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            </div>
+
+            {latestCourses.length > 0 ? (
+              <div
+                data-count={latestCourses.length}
+                data-home-course-track
+                role="region"
+                aria-label="รายการคอร์สล่าสุด"
+                tabIndex={0}
+                className="-mx-4 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-5 outline-none focus-visible:ring-4 focus-visible:ring-sky-200 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4"
+              >
+                {latestCourses.map((course) => (
+                  <div
                     key={course.id}
-                    id={course.id}
-                    title={course.title}
-                    slug={course.slug}
-                    description={course.description}
-                    thumbnailUrl={course.thumbnailUrl}
-                    price={parseFloat(course.price)}
-                    promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
-                    isPromoActive={course.isPromoActive}
-                    instructorName={course.instructorName}
-                    lessonCount={course.lessonCount}
-                    totalDurationSeconds={course.totalDurationSeconds}
-                    hasFreePreview={course.hasFreePreview}
-                    tags={course.tags}
-                    variant="featured"
-                  />
+                    className="w-[82vw] max-w-[21rem] shrink-0 snap-start sm:w-auto sm:max-w-none"
+                  >
+                    <CourseCard
+                      id={course.id}
+                      title={course.title}
+                      slug={course.slug}
+                      description={course.description}
+                      thumbnailUrl={course.thumbnailUrl}
+                      price={parseFloat(course.price)}
+                      promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
+                      isPromoActive={course.isPromoActive}
+                      instructorName={course.instructorName}
+                      lessonCount={course.lessonCount}
+                      totalDurationSeconds={course.totalDurationSeconds}
+                      hasFreePreview={course.hasFreePreview}
+                      tags={course.tags}
+                      variant="featured"
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
-              <div className={styles.emptyState}>
-                <h3>กำลังเตรียมคอร์สชุดถัดไป</h3>
-                <p>ระหว่างนี้คุณสามารถบอกหัวข้อหรือทักษะที่อยากเรียน เพื่อช่วยให้เราวางเนื้อหาที่ตรงกับการนำไปใช้จริง</p>
-                <Link href="/contact" className={styles.emptyAction}>เสนอหัวข้อที่อยากเรียน</Link>
-              </div>
+              <Card className="mt-10 items-center rounded-[1.5rem] bg-slate-50 p-10 text-center ring-0">
+                <h3 className="text-xl font-semibold">กำลังเตรียมคอร์สชุดถัดไป</h3>
+                <p className="max-w-lg text-slate-600">
+                  บอกหัวข้อที่คุณอยากเรียนได้ เรายินดีนำไปวางแผนเป็นเนื้อหาที่ใช้ได้จริง
+                </p>
+                <Button asChild variant="outline">
+                  <Link href="/contact">เสนอหัวข้อที่อยากเรียน</Link>
+                </Button>
+              </Card>
             )}
           </div>
         </section>
 
-        <section className={[styles.section, styles.workspaceSection].join(' ')} aria-labelledby="learning-workspace-title">
-          <div className={styles.shell}>
-            <header className={styles.workspaceIntro}>
-              <div>
-                <p className={styles.sectionLabel}>หลังเลือกคอร์ส พื้นที่เรียนช่วยให้ไปต่อได้</p>
-                <h2 id="learning-workspace-title" className={styles.workspaceTitle}>
-                  กลับมาเรียนต่อได้ทันที <span>จากจุดที่คุณหยุดไว้</span>
-                </h2>
-              </div>
-              <div className={styles.workspaceStory}>
-                <p>
-                  ระบบเก็บลำดับบทเรียนและความคืบหน้าของคุณไว้
-                  จึงกลับมาดูวิดีโอ ทบทวนโค้ด และทำโปรเจกต์ต่อได้โดยไม่ต้องเริ่มใหม่
-                </p>
-                <ul aria-label="สิ่งที่มีในพื้นที่เรียน MilerDev">
-                  <li><span>01</span> เรียนตามลำดับ พร้อมลงมือทำทีละขั้น</li>
-                  <li><span>02</span> ระบบจำบทที่เรียนจบและจุดล่าสุด</li>
-                  <li><span>03</span> รับใบรับรองเมื่อเรียนครบตามเงื่อนไข</li>
-                </ul>
-              </div>
-            </header>
+        <StudioProofSection />
 
-            <LearningWorkspacePreview />
-          </div>
-        </section>
-
-        <section className={[styles.section, styles.proofSection].join(' ')} aria-labelledby="teaching-proof-title">
-          <div className={styles.shell}>
-            <div className={styles.proofLead}>
-              <div>
-                <p className={styles.sectionLabel}>จากประสบการณ์จริง สู่โครงสร้างบทเรียน</p>
-                <h2 id="teaching-proof-title" className={styles.proofTitle}>เปลี่ยนสิ่งที่อธิบายในห้องเรียน ให้เป็นลำดับที่กลับมาทบทวนได้</h2>
-              </div>
-              <p className={styles.sectionCopy}>
-                ประสบการณ์สอน Web Development, AI และเส้นทางอาชีพ Developer ช่วยให้เห็นว่าผู้เรียนติดตรงไหน
-                ก่อนนำมาเรียงใหม่เป็นภาพรวม เหตุผล และขั้นลงมือทำ
+        <section
+          data-home-section="faq"
+          className="bg-[#f7fbfe] py-16 sm:py-20 lg:py-24"
+          aria-labelledby="home-faq-title"
+        >
+          <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-16">
+            <div className="max-w-lg lg:sticky lg:top-28">
+              <p className="text-sm font-semibold text-[#008bd1]">คำถามก่อนเริ่มเรียน</p>
+              <h2
+                id="home-faq-title"
+                className="mt-3 text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl"
+              >
+                ข้อมูลที่ควรรู้ก่อนเลือกคอร์ส
+              </h2>
+              <p className="mt-4 leading-8 text-slate-600">
+                ตรวจพื้นฐาน ระยะเวลาการเข้าถึง Certificate และขั้นตอนชำระเงินให้ครบก่อนตัดสินใจ
               </p>
+              <Link
+                href="/faq"
+                className="mt-6 inline-flex items-center gap-2 font-semibold text-[#008bd1] hover:text-[#0075b3]"
+              >
+                ดูคำถามทั้งหมด
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
             </div>
-
-            <div className={styles.proofFeature}>
-              <figure className={styles.proofImage}>
-                <Image
-                  src="/showcase/06-showcase-1024x768.webp"
-                  alt="เบื้องหลังพื้นที่บันทึกบทเรียนออนไลน์ของ MilerDev"
-                  width={1024}
-                  height={768}
-                  sizes="(max-width: 820px) 100vw, 56vw"
-                />
-                <figcaption>ONLINE CLASSROOM / เบื้องหลังการบันทึกบทเรียน</figcaption>
-              </figure>
-
-              <div className={styles.proofNote}>
-                <span>FROM FIELD TO LESSON</span>
-                <strong>เห็นภาพรวม เข้าใจเหตุผล แล้วลงมือทำตามได้</strong>
-                <ul className={styles.proofSteps} aria-label="ลำดับการเปลี่ยนประสบการณ์สอนเป็นบทเรียน">
-                  <li><span>01</span> ภาพรวมของสิ่งที่จะสร้าง</li>
-                  <li><span>02</span> เหตุผลที่โค้ดทำงาน</li>
-                  <li><span>03</span> ขั้นลงมือทำที่กลับมาทบทวนได้</li>
-                </ul>
-              </div>
-            </div>
-
-            <ul className={styles.clientCloud} aria-label="องค์กรและสถาบันที่เคยร่วมงานกับ MilerDev">
-              {CLIENT_LOGOS.map((logo) => (
-                <li key={logo.src} className={styles.clientLogo}>
-                  <span className={styles.clientMedia}>
-                    <Image
-                      src={logo.src}
-                      alt=""
-                      width={160}
-                      height={160}
-                      sizes="(max-width: 720px) 56px, 72px"
-                    />
-                  </span>
-                  <span className={styles.clientName}>{logo.alt}</span>
-                </li>
-              ))}
-            </ul>
+            <HomeFAQ items={HOME_FAQ_ITEMS} />
           </div>
         </section>
 
-        <ShowcaseGallery />
-
-        <section className={styles.closing} aria-labelledby="home-closing-title">
-          <div className={[styles.shell, styles.closingInner].join(' ')}>
-            <div className={styles.closingCopy}>
-              <h2 id="home-closing-title">เลือกคอร์สแรก แล้วเริ่มสร้างงานของคุณ</h2>
-              <p>ดูเนื้อหา ราคา และบททดลองให้ครบก่อนตัดสินใจ หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน</p>
-            </div>
-            <div className={styles.closingActions}>
-              <Link href="/courses" className={styles.primaryAction}>ดูคอร์สและราคา <span aria-hidden="true">→</span></Link>
-              <Link href="/register" className={styles.secondaryAction}>สร้างบัญชีเพื่อเริ่มเรียน</Link>
+        <section data-home-section="final-cta" className="bg-white py-16 sm:py-20 lg:py-24">
+          <div className="container">
+            <div className="grid gap-8 rounded-[2rem] bg-slate-950 px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-sky-300">
+                  <Rocket className="size-4" aria-hidden="true" />
+                  พร้อมเริ่มเส้นทางของคุณแล้วหรือยัง
+                </div>
+                <h2 className="mt-3 max-w-2xl text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl">
+                  เลือกคอร์สแรก แล้วเริ่มสร้างงานของคุณ
+                </h2>
+                <p className="mt-3 max-w-2xl leading-7 text-slate-300">
+                  ดูเนื้อหา ราคา และบททดลองให้ครบก่อนตัดสินใจ
+                  หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <Button asChild size="lg">
+                  <Link href="/courses">
+                    ดูคอร์สทั้งหมด
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link href="/register">สมัครสมาชิกฟรี</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>

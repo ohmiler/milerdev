@@ -4,6 +4,7 @@ import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
 import ThemeSurface from "@/components/theme/ThemeSurface";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -103,6 +104,7 @@ export default function RootLayout({
             <ThemeSurface theme="light" surface="public">
               {children}
             </ThemeSurface>
+            <Toaster position="top-center" richColors closeButton />
           </NotificationProvider>
         </SessionProvider>
       </body>

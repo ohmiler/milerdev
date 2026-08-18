@@ -33,7 +33,7 @@ const accentSurfaceFiles = [
   'src/app/blog/blog-index.module.css',
   'src/app/courses/courses.module.css',
   'src/app/faq/faq.module.css',
-  'src/app/home.module.css',
+  'src/app/page.tsx',
   'src/components/account/LearnerAccount.module.css',
   'src/components/blog/BlogControls.module.css',
   'src/components/bundle/BundleEnrollButton.module.css',
@@ -62,11 +62,15 @@ describe('MilerDev brand color contract', () => {
   });
 
   it('uses MilerDev blue for the Home primary action', () => {
-    const home = readSource('src/app/home.module.css');
-    const primaryAction = home.match(/\.primaryAction\s*\{[^}]+\}/)?.[0] ?? '';
+    const globals = readSource('src/app/globals.css');
+    const home = readSource('src/app/page.tsx');
+    const button = readSource('src/components/ui/button.tsx');
 
-    expect(primaryAction).toContain('background: var(--home-blue);');
-    expect(primaryAction).toContain('color: var(--home-on-blue);');
+    expect(home).toContain("eventName: 'home_primary_cta_clicked'");
+    expect(home).toContain('ดูคอร์สทั้งหมด');
+    expect(button).toContain('bg-primary');
+    expect(globals).toContain('--primary: var(--color-accent);');
+    expect(globals).toContain('--primary-foreground: var(--color-on-accent);');
   });
 
   it('does not pair white text directly with exact accent surfaces in scoped learner UI', () => {
