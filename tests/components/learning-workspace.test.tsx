@@ -5,33 +5,44 @@ import { describe, expect, it } from 'vitest';
 const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), 'utf8');
 
 describe('adaptive learning workspace contracts', () => {
-  it('uses one adaptive theme without hidden legacy presentation', () => {
+  it('uses a light full-width shell with dark styling limited to the media player', () => {
     const workspace = readSource('src/components/course/LearnPageClient.tsx');
     const navbar = readSource('src/components/course/LearningNavbar.tsx');
+    const curriculum = readSource('src/components/course/LearningCurriculum.tsx');
 
     expect(workspace).toContain('data-theme="light"');
-    expect(workspace).not.toContain('legacy-learning-header');
-    expect(workspace).not.toContain('LEARNING_THEME_KEY');
-    expect(workspace).not.toContain('localStorage');
-    expect(workspace).not.toContain('onMouseOver');
-    expect(workspace).not.toMatch(/style=\{\{[^}]*#/);
-    expect(navbar).not.toContain('onToggleTheme');
-    expect(navbar).not.toContain("theme: 'dark' | 'light'");
+    expect(workspace).toContain("lg:grid-cols-[minmax(0,1fr)_22.5rem]");
+    expect(workspace).not.toContain('max-w-[1600px]');
+    expect(workspace).toContain('bg-slate-950');
+    expect(navbar).toContain('bg-background/95');
+    expect(curriculum).toContain('bg-background');
+    expect(navbar).not.toContain('bg-slate-950');
+    expect(curriculum).not.toContain('bg-slate-950');
   });
 
-  it('keeps data-driven progress while using shadcn primitives and semantic states', () => {
+  it('uses shadcn overlays and one shared curriculum for desktop and mobile', () => {
     const workspace = readSource('src/components/course/LearnPageClient.tsx');
-    const navbar = readSource('src/components/course/LearningNavbar.tsx');
+    const curriculum = readSource('src/components/course/LearningCurriculum.tsx');
 
-    expect(workspace).toContain("import { Progress } from '@/components/ui/progress';");
-    expect(workspace).toContain("import { Card, CardContent } from '@/components/ui/card';");
-    expect(workspace).toContain('role="status"');
-    expect(workspace).toContain('aria-label="ลำดับบทเรียน"');
-    expect(workspace.match(/<Progress[^>]*value=\{progressPercent\}/g)).toHaveLength(2);
-    expect(navbar).toContain('<Progress className="w-24 bg-white/10" value={progressPercent}');
+    expect(workspace).toContain("from '@/components/ui/sheet'");
+    expect(workspace).toContain("from '@/components/ui/alert-dialog'");
+    expect(workspace.match(/\{curriculum\}/g)).toHaveLength(2);
+    expect(curriculum).toContain("import { Progress } from '@/components/ui/progress';");
+    expect(curriculum.match(/<Progress/g)).toHaveLength(1);
   });
 
-  it('removes legacy learning selectors while retaining sanitized rich-content styling', () => {
+  it('keeps completion one-way and removes automatic or global lesson navigation', () => {
+    const workspace = readSource('src/components/course/LearnPageClient.tsx');
+
+    expect(workspace).toContain('completed: true');
+    expect(workspace).not.toContain('completed: false');
+    expect(workspace).not.toContain('autoAdvanceCountdown');
+    expect(workspace).not.toContain("e.key === 'ArrowLeft'");
+    expect(workspace).not.toContain("e.key === 'ArrowRight'");
+    expect(workspace).not.toContain('useRouter');
+  });
+
+  it('retains sanitized rich-content styling without legacy learning selectors', () => {
     const styles = readSource('src/app/globals.css');
     const workspace = readSource('src/components/course/LearnPageClient.tsx');
     const navbar = readSource('src/components/course/LearningNavbar.tsx');

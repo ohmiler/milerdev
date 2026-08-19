@@ -2,9 +2,46 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LearnLoading() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100" aria-busy="true" aria-label="กำลังเตรียมพื้นที่การเรียน">
-      <header className="grid min-h-16 gap-4 border-b border-white/10 px-4 py-3 md:grid-cols-[18rem_minmax(0,1fr)_8rem] md:items-center"><div className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-md bg-primary text-xs font-bold">MD</span><span><strong className="block text-sm">MilerDev Learning</strong><small className="text-slate-400">กำลังเปิดบทเรียน</small></span></div><div className="hidden md:block"><span className="text-xs text-slate-400">พื้นที่การเรียน</span><Skeleton className="mt-2 h-3 w-52 bg-white/10" /></div><Skeleton className="h-9 w-full bg-white/10" /></header>
-      <div className="grid min-h-[calc(100vh-4rem)] md:grid-cols-[18rem_minmax(0,1fr)]"><aside className="hidden border-r border-white/10 p-4 md:block"><p className="text-xs text-slate-400">บทเรียนในคอร์ส</p><strong className="mt-1 block">ลำดับการเรียน</strong><div className="mt-5 grid gap-3">{[1,2,3,4].map(number=><div className="flex gap-3 rounded-lg border border-white/10 p-3" key={number}><span className="text-xs text-slate-500">{String(number).padStart(2,'0')}</span><div className="grid flex-1 gap-2"><Skeleton className="h-4 w-full bg-white/10" /><Skeleton className="h-3 w-20 bg-white/10" /></div></div>)}</div></aside><section className="p-4 sm:p-6 lg:p-8"><div className="mb-5 flex items-end justify-between"><div><span className="text-xs text-slate-400">บทเรียนปัจจุบัน</span><Skeleton className="mt-2 h-8 w-80 max-w-full bg-white/10" /></div><span className="text-sm text-slate-500">-- / --</span></div><Skeleton className="aspect-video w-full rounded-xl bg-white/10" /><div className="mt-6 grid gap-5 rounded-xl border border-white/10 p-5 sm:grid-cols-[minmax(0,1fr)_10rem]"><div className="grid gap-3"><Skeleton className="h-4 w-24 bg-white/10" /><Skeleton className="h-6 w-72 max-w-full bg-white/10" /><Skeleton className="h-4 w-full bg-white/10" /></div><Skeleton className="h-10 w-full bg-white/10" /></div></section></div>
+    <main className="min-h-screen bg-[var(--academy-canvas)] text-foreground" aria-busy="true" aria-label="กำลังเตรียมพื้นที่การเรียน">
+      <header className="flex h-16 items-center gap-3 border-b bg-background px-4 sm:px-5">
+        <Skeleton className="size-8 rounded-lg" />
+        <Skeleton className="hidden size-8 rounded-lg sm:block" />
+        <div className="h-6 w-px bg-border" />
+        <div className="grid flex-1 gap-1.5">
+          <Skeleton className="hidden h-3 w-40 sm:block" />
+          <Skeleton className="h-4 w-56 max-w-[55vw]" />
+        </div>
+        <Skeleton className="h-8 w-20" />
+      </header>
+
+      <div className="grid min-h-[calc(100dvh-4rem)] lg:grid-cols-[minmax(0,1fr)_22.5rem]">
+        <section className="min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+          <div className="mx-auto w-full max-w-6xl">
+            <div className="mb-6 grid gap-3">
+              <Skeleton className="h-6 w-28 rounded-full" />
+              <Skeleton className="h-9 w-[min(32rem,80vw)]" />
+              <Skeleton className="h-4 w-52" />
+            </div>
+            <Skeleton className="aspect-video w-full rounded-2xl bg-slate-900/15" />
+            <div className="mt-6 flex items-center gap-4 rounded-2xl border bg-background p-5">
+              <Skeleton className="size-10 shrink-0 rounded-full" />
+              <div className="grid flex-1 gap-2"><Skeleton className="h-5 w-44" /><Skeleton className="h-4 w-72 max-w-full" /></div>
+              <Skeleton className="hidden h-10 w-44 sm:block" />
+            </div>
+            <div className="mt-6 rounded-2xl border bg-background p-6">
+              <Skeleton className="h-6 w-40" />
+              <div className="mt-6 grid gap-3"><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-11/12" /><Skeleton className="h-4 w-4/5" /></div>
+            </div>
+          </div>
+        </section>
+
+        <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] border-l bg-background p-5 lg:block">
+          <div className="flex gap-3"><Skeleton className="size-9 rounded-full" /><div className="grid flex-1 gap-2"><Skeleton className="h-3 w-24" /><Skeleton className="h-5 w-full" /></div></div>
+          <div className="mt-5 rounded-xl border p-4"><Skeleton className="h-4 w-full" /><Skeleton className="mt-3 h-2 w-full" /></div>
+          <Skeleton className="mt-4 h-10 w-full" />
+          <div className="mt-6 grid gap-3">{[1, 2, 3, 4, 5].map((number) => <Skeleton className="h-16 w-full rounded-xl" key={number} />)}</div>
+        </aside>
+      </div>
       <span className="sr-only" role="status">กำลังโหลดบทเรียน กรุณารอสักครู่</span>
     </main>
   );

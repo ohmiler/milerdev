@@ -1,85 +1,84 @@
 'use client';
 
 import Link from 'next/link';
-import { MenuIcon, PanelLeftIcon, PanelRightIcon } from '@/components/ui/Icons';
+import { ArrowLeft, ListVideo, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 
 export interface LearningNavbarProps {
-    courseSlug: string;
-    courseTitle: string;
-    lessonTitle: string;
-    currentIndex: number;
-    totalCount: number;
-    progressPercent: number;
-    isEnrolled: boolean;
-    sidebarCollapsed: boolean;
-    onToggleSidebar: () => void;
-    onOpenSidebar: () => void;
+  courseSlug: string;
+  courseTitle: string;
+  lessonTitle: string;
+  currentIndex: number;
+  totalCount: number;
+  progressPercent: number;
+  isEnrolled: boolean;
+  sidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
+  onOpenSidebar: () => void;
 }
 
 export default function LearningNavbar({
-    courseSlug,
-    courseTitle,
-    lessonTitle,
-    currentIndex,
-    totalCount,
-    progressPercent,
-    isEnrolled,
-    sidebarCollapsed,
-    onToggleSidebar,
-    onOpenSidebar,
+  courseSlug,
+  courseTitle,
+  lessonTitle,
+  currentIndex,
+  totalCount,
+  progressPercent,
+  isEnrolled,
+  sidebarCollapsed,
+  onToggleSidebar,
+  onOpenSidebar,
 }: LearningNavbarProps) {
-    return (
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950 text-slate-100" data-surface="learning" aria-label="แถบควบคุมการเรียน">
-            <div className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-5 lg:grid-cols-[16rem_minmax(0,1fr)_14rem_auto]">
-                <Link href={`/courses/${courseSlug}`} className="flex min-w-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400" aria-label={`ออกจากหน้าเรียนและกลับไปยังคอร์ส ${courseTitle}`}>
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground" aria-hidden="true">MD</span>
-                    <span className="hidden min-w-0 sm:block">
-                        <strong className="block truncate text-sm">MilerDev Learning</strong>
-                        <small className="text-xs text-slate-400">ออกจากหน้าเรียน</small>
-                    </span>
-                </Link>
+  return (
+    <header className="sticky top-0 z-40 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85" data-surface="learning" aria-label="แถบควบคุมการเรียน">
+      <div className="flex h-full items-center gap-3 px-3 sm:px-5">
+        <Button asChild size="icon-sm" variant="ghost">
+          <Link href={`/courses/${courseSlug}`} aria-label={`ออกจากบทเรียนและกลับไปยังคอร์ส ${courseTitle}`}>
+            <ArrowLeft className="size-4" />
+          </Link>
+        </Button>
 
-                <div className="min-w-0">
-                    <span className="hidden text-[10px] uppercase tracking-[0.18em] text-slate-500 lg:block">Learning workspace · {courseTitle}</span>
-                    <strong className="block truncate text-sm">{lessonTitle}</strong>
-                </div>
+        <Link href={`/courses/${courseSlug}`} className="hidden items-center gap-2 sm:flex" aria-label={`กลับไปยังคอร์ส ${courseTitle}`}>
+          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-[11px] font-bold text-primary-foreground" aria-hidden="true">MD</span>
+          <span className="font-heading text-sm font-semibold">MilerDev</span>
+        </Link>
 
-                <div className="hidden items-center gap-3 lg:flex" aria-label={isEnrolled ? `ความคืบหน้า ${progressPercent}%` : 'กำลังดูบทเรียนทดลอง'}>
-                    <span className="whitespace-nowrap text-xs text-slate-400">{isEnrolled ? `${progressPercent}%` : 'Preview'}</span>
-                    {isEnrolled && (
-                        <Progress className="w-24 bg-white/10" value={progressPercent} aria-hidden="true" />
-                    )}
-                    <span className="whitespace-nowrap font-mono text-xs text-slate-400">{String(currentIndex + 1).padStart(2, '0')} / {String(totalCount).padStart(2, '0')}</span>
-                </div>
+        <div className="mx-1 h-6 w-px bg-border sm:mx-2" aria-hidden="true" />
 
-                <div>
-                    <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost"
-                        className="hidden text-slate-300 hover:bg-white/10 hover:text-white lg:inline-flex"
-                        onClick={onToggleSidebar}
-                        aria-label={sidebarCollapsed ? 'แสดงรายการบทเรียน' : 'ซ่อนรายการบทเรียน'}
-                        title={sidebarCollapsed ? 'แสดงรายการบทเรียน' : 'ซ่อนรายการบทเรียน'}
-                        aria-pressed={sidebarCollapsed}
-                    >
-                        {sidebarCollapsed ? <PanelLeftIcon /> : <PanelRightIcon />}
-                    </Button>
-                    <Button
-                        type="button"
-                        size="icon-sm"
-                        variant="ghost"
-                        className="text-slate-300 hover:bg-white/10 hover:text-white lg:hidden"
-                        onClick={onOpenSidebar}
-                        aria-label="เปิดรายการบทเรียน"
-                        title="เปิดรายการบทเรียน"
-                    >
-                        <MenuIcon />
-                    </Button>
-                </div>
-            </div>
-        </header>
-    );
+        <div className="min-w-0 flex-1">
+          <p className="hidden truncate text-xs text-muted-foreground sm:block">{courseTitle}</p>
+          <strong className="block truncate text-sm font-semibold">{lessonTitle}</strong>
+        </div>
+
+        <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex" aria-label={isEnrolled ? `ความคืบหน้า ${progressPercent}%` : 'บทเรียนทดลอง'}>
+          <span>{isEnrolled ? `${progressPercent}%` : 'ทดลองเรียน'}</span>
+          <span className="tabular-nums">{currentIndex + 1} / {totalCount}</span>
+        </div>
+
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          className="hidden lg:inline-flex"
+          onClick={onToggleSidebar}
+          aria-label={sidebarCollapsed ? 'แสดงรายการบทเรียน' : 'ซ่อนรายการบทเรียน'}
+          title={sidebarCollapsed ? 'แสดงรายการบทเรียน' : 'ซ่อนรายการบทเรียน'}
+          aria-pressed={sidebarCollapsed}
+        >
+          {sidebarCollapsed ? <PanelRightOpen className="size-4" /> : <PanelRightClose className="size-4" />}
+        </Button>
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="outline"
+          className="lg:hidden"
+          onClick={onOpenSidebar}
+          aria-label="เปิดรายการบทเรียน"
+          title="เปิดรายการบทเรียน"
+        >
+          <ListVideo className="size-4" />
+        </Button>
+      </div>
+    </header>
+  );
 }
