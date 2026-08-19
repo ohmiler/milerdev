@@ -174,6 +174,7 @@ export default async function LessonPage({ params }: Props) {
       nextLesson={nextLesson}
       currentIndex={currentIndex ?? 0}
       isEnrolled={isEnrolled ?? false}
+      canTrackProgress={Boolean(userId)}
       completedLessonIds={completedLessonIds ?? []}
     />
   );

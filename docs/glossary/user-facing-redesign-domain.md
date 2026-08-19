@@ -175,7 +175,19 @@ The default public, dashboard, account, editorial, and status presentation. It u
 
 ### Focus learning surface
 
-The learning workspace treatment: a light reading shell with dark video and lesson-navigation regions. It uses the same semantic status, typography, focus, and accent contracts as academy-light. It is not a separate brand or a site-wide dark mode.
+The learning workspace treatment: a light reading shell and light curriculum rail with dark styling reserved for the video player. It uses the same semantic status, typography, focus, and accent contracts as academy-light. It is not a separate brand or a site-wide dark mode.
+
+### Curriculum rail
+
+The ordered, searchable lesson navigation for a Course. It is persistently visible on desktop when expanded and presented through a shadcn Sheet on smaller screens. Both presentations share the same component, progress state, access rules, search, and pagination behavior.
+
+### Review mode
+
+The Learning workspace state shown after every lesson is complete. A learner may revisit any accessible lesson and move with the normal previous/next navigation. Review mode does not introduce a separate completion CTA or prevent replaying content.
+
+### Lesson completion
+
+The learner-visible state recorded for one Lesson. The Learning workspace may set completion manually or when a video ends, but it does not offer an undo action. Completion is therefore one-way in this UI while completed lessons remain available for review. Server authorization and progress calculation remain authoritative.
 
 ## UI language
 
