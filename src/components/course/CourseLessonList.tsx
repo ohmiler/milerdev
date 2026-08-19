@@ -4,6 +4,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface Lesson {
   id: string;
@@ -23,7 +25,7 @@ const INITIAL_SHOW = 10;
 
 function LockIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <svg className="size-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
     </svg>
   );
@@ -57,34 +59,31 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
   };
 
   if (lessons.length === 0) {
-    return <div className="course-lessons-empty"><p>กำลังเตรียมเนื้อหา โปรดกลับมาตรวจสอบอีกครั้ง</p></div>;
+    return <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground"><p>กำลังเตรียมเนื้อหา โปรดกลับมาตรวจสอบอีกครั้ง</p></div>;
   }
 
   return (
-    <div className="course-lessons">
-      <ol className="course-lessons__list">
+    <div>
+      <ol className="divide-y rounded-xl border bg-card">
         {visibleLessons.map((lesson, index) => {
-          const canAccess = Boolean(lesson.isFreePreview || isEnrolled);
           const duration = formatDuration(lesson.videoDuration);
           return (
             <li key={lesson.id}>
               <button
                 type="button"
-                className={`course-lesson-row ${canAccess ? 'is-accessible' : 'is-locked'}`}
+                className="grid min-h-16 w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 onClick={() => handleLessonClick(lesson)}
                 aria-label={`${lesson.title}, ${lesson.isFreePreview ? 'ดูฟรี' : isEnrolled ? 'เปิดบทเรียน' : 'ต้องสมัครเรียนก่อน'}`}
               >
-                <span className="course-lesson-row__index">{String(index + 1).padStart(2, '0')}</span>
-                <span className="course-lesson-row__content">
-                  <strong>{lesson.title}</strong>
-                  {duration && <span>{duration}</span>}
+                <span className="text-center font-mono text-xs text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
+                <span className="min-w-0"><strong className="line-clamp-2 block text-sm leading-5">{lesson.title}</strong>{duration && <span className="mt-1 block text-xs text-muted-foreground">{duration}</span>}
                 </span>
                 {lesson.isFreePreview ? (
-                  <span className="course-lesson-row__status is-preview">ดูฟรี</span>
+                  <Badge variant="secondary">ดูฟรี</Badge>
                 ) : isEnrolled ? (
-                  <span className="course-lesson-row__status">เปิดบทเรียน</span>
+                  <Badge>เปิดบทเรียน</Badge>
                 ) : (
-                  <span className="course-lesson-row__status is-locked"><LockIcon /> ล็อก</span>
+                  <Badge className="gap-1" variant="outline"><LockIcon /> ล็อก</Badge>
                 )}
               </button>
             </li>
@@ -93,9 +92,9 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
       </ol>
 
       {hasMore && (
-        <button type="button" className="course-lessons__toggle" onClick={() => setShowAll((current) => !current)} aria-expanded={showAll}>
+        <Button type="button" variant="outline" className="mt-4 w-full" onClick={() => setShowAll((current) => !current)} aria-expanded={showAll}>
           {showAll ? 'ย่อรายการบทเรียน' : `ดูอีก ${lessons.length - INITIAL_SHOW} บทเรียน`}
-        </button>
+        </Button>
       )}
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} type="warning" title="สมัครเรียนเพื่อเปิดบทนี้" buttonText="รับทราบ">

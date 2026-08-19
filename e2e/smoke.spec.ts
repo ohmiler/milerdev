@@ -7,12 +7,12 @@ test.describe('Public Pages', () => {
   test('homepage loads', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/Miler/i);
-    await expect(page.locator('nav')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'เมนูหลัก' })).toBeVisible();
   });
 
   test('courses page loads', async ({ page }) => {
     await page.goto('/courses');
-    await expect(page.locator('nav')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'เมนูหลัก' })).toBeVisible();
     // Should have some content (heading or course cards)
     await expect(page.locator('main')).toBeVisible();
   });
@@ -39,23 +39,23 @@ test.describe('Public Pages', () => {
 
   test('about page loads', async ({ page }) => {
     await page.goto('/about');
-    await expect(page.locator('nav')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'เมนูหลัก' })).toBeVisible();
     await expect(page.locator('main')).toBeVisible();
   });
 
   test('blog page loads', async ({ page }) => {
     await page.goto('/blog');
-    await expect(page.locator('nav')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'เมนูหลัก' })).toBeVisible();
   });
 
   test('faq page loads', async ({ page }) => {
     await page.goto('/faq');
-    await expect(page.locator('nav')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'เมนูหลัก' })).toBeVisible();
   });
 
   test('contact page loads', async ({ page }) => {
     await page.goto('/contact');
-    await expect(page.locator('nav')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'เมนูหลัก' })).toBeVisible();
   });
 
   test('terms page loads', async ({ page }) => {

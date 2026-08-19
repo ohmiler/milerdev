@@ -17,7 +17,7 @@ const quote = String.fromCharCode(34);
 describe('learner account contracts', () => {
   it('renders a shared, named account index with one current route and a Dashboard return path', () => {
     const html = renderToStaticMarkup(
-      <LearnerAccountShell current="payments" eyebrow="Records" title="Payments" description="Description">
+      <LearnerAccountShell current="payments" title="Payments" description="Description">
         <div>Account content</div>
       </LearnerAccountShell>,
     );
@@ -93,5 +93,27 @@ describe('learner account contracts', () => {
     expect(source).toContain("method: 'POST'");
     expect(source).toContain('currentPassword, newPassword');
     expect(source).toContain('disabled={isDisabled}');
+  });
+
+  it('uses Thai-first task labels across learner account surfaces', () => {
+    const sources = [
+      'src/components/account/LearnerAccountShell.tsx',
+      'src/app/dashboard/page.tsx',
+      'src/app/dashboard/payments/PaymentsClient.tsx',
+      'src/app/dashboard/certificates/CertificatesClient.tsx',
+      'src/app/profile/page.tsx',
+      'src/app/settings/page.tsx',
+    ].map((path) => readFileSync(path, 'utf8')).join('\n');
+
+    for (const legacyLabel of [
+      'ACCOUNT INDEX',
+      'Learning dashboard',
+      'Payment ledger',
+      'Verified credentials',
+      'Account identity',
+      'Editable information',
+    ]) {
+      expect(sources).not.toContain(legacyLabel);
+    }
   });
 });

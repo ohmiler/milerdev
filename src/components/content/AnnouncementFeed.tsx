@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import styles from './public-content.module.css';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface Announcement {
   id: string;
@@ -40,69 +44,33 @@ interface AnnouncementFeedViewProps {
 export function AnnouncementFeedView({ status, announcements, onRetry }: AnnouncementFeedViewProps) {
   if (status === 'loading') {
     return (
-      <div className={styles.feedState} aria-live="polite" aria-busy="true">
-        <span className={styles.loadingMark} aria-hidden="true" />
-        <div>
-          <p className={styles.stateCode}>SYNCING PUBLIC NOTICE</p>
-          <h2>กำลังตรวจสอบประกาศล่าสุด</h2>
-          <p>ระบบกำลังโหลดข่าวสารที่เกี่ยวข้องกับบัญชีของคุณ</p>
-        </div>
-      </div>
+      <Card aria-live="polite" aria-busy="true"><CardContent className="space-y-4 pt-6"><p className="sr-only">กำลังตรวจสอบประกาศล่าสุด</p><Skeleton className="h-3 w-40" /><Skeleton className="h-7 w-3/4" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-2/3" /></CardContent></Card>
     );
   }
 
   if (status === 'error') {
     return (
-      <div className={styles.feedState} role="alert">
-        <span className={styles.stateSymbol} aria-hidden="true">!</span>
-        <div>
-          <p className={styles.stateCode}>CONNECTION INTERRUPTED</p>
-          <h2>โหลดประกาศไม่สำเร็จ</h2>
-          <p>ยังแสดงข่าวสารล่าสุดไม่ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่</p>
-          <button type="button" onClick={onRetry}>ลองอีกครั้ง <span aria-hidden="true">↻</span></button>
-        </div>
-      </div>
+      <Alert variant="destructive"><span aria-hidden="true">!</span><AlertTitle>โหลดประกาศไม่สำเร็จ</AlertTitle><AlertDescription>ยังแสดงข่าวสารล่าสุดไม่ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่</AlertDescription><Button className="mt-4" variant="outline" type="button" onClick={onRetry}>ลองอีกครั้ง ↻</Button></Alert>
     );
   }
 
   if (announcements.length === 0) {
     return (
-      <div className={styles.feedState} aria-live="polite">
-        <span className={styles.stateSymbol} aria-hidden="true">—</span>
-        <div>
-          <p className={styles.stateCode}>NOTICE QUEUE / CLEAR</p>
-          <h2>ยังไม่มีประกาศที่ต้องติดตาม</h2>
-          <p>เมื่อมีข่าวสารใหม่จากทีม MilerDev ประกาศจะแสดงที่หน้านี้</p>
-        </div>
-      </div>
+      <Card className="items-center py-10 text-center" aria-live="polite"><CardContent><h2 className="text-2xl font-semibold">ยังไม่มีประกาศที่ต้องติดตาม</h2><p className="mt-2 text-sm text-muted-foreground">เมื่อมีข่าวสารใหม่จากทีม MilerDev ประกาศจะแสดงที่หน้านี้</p></CardContent></Card>
     );
   }
 
   return (
-    <div className={styles.announcementList} aria-live="polite">
+    <div className="space-y-5" aria-live="polite">
       {announcements.map((announcement, index) => {
         const config = typeConfig[announcement.type] || typeConfig.info;
         return (
-          <article
-            className={styles.announcement}
+          <Card
             data-announcement-type={announcement.type}
             key={announcement.id}
           >
-            <div className={styles.announcementRail}>
-              <span>{String(index + 1).padStart(2, '0')}</span>
-              <i aria-hidden="true" />
-            </div>
-            <div className={styles.announcementBody}>
-              <header className={styles.announcementMeta}>
-                <span className={styles.typeCode}>{config.code}</span>
-                <strong>{config.label}</strong>
-                <time dateTime={announcement.createdAt}>{formatDate(announcement.createdAt)}</time>
-                {announcement.creatorName && <span>โดย {announcement.creatorName}</span>}
-              </header>
-              <h2>{announcement.title}</h2>
-              <div className={styles.announcementContent}>{announcement.content}</div>
-            </div>
-          </article>
+            <CardHeader><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-primary">{String(index + 1).padStart(2, '0')}</span><Badge variant={announcement.type === 'error' ? 'destructive' : 'secondary'}>{config.code} · {config.label}</Badge><time className="text-xs text-muted-foreground" dateTime={announcement.createdAt}>{formatDate(announcement.createdAt)}</time>{announcement.creatorName ? <span className="text-xs text-muted-foreground">โดย {announcement.creatorName}</span> : null}</div><CardTitle className="mt-3 text-xl sm:text-2xl">{announcement.title}</CardTitle></CardHeader><CardContent><div className="whitespace-pre-line text-sm leading-7 text-muted-foreground">{announcement.content}</div></CardContent>
+          </Card>
         );
       })}
     </div>

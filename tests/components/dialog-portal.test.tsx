@@ -42,7 +42,7 @@ describe('DialogShell portal boundary', () => {
 
     expect(portalSpy).toHaveBeenCalledOnce();
     expect(portalSpy).toHaveBeenCalledWith(expect.anything(), body);
-    expect(html).toContain('role=' + quote + 'dialog' + quote);
+    expect(html).toBe('');
   });
 
   it('keeps a named inline fallback when no DOM exists', () => {

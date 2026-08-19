@@ -4,9 +4,15 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LessonList from './LessonList';
-import LearningNavbar, { LEARNING_THEME_KEY } from './LearningNavbar';
+import LearningNavbar from './LearningNavbar';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
 import { sanitizeRichContent } from '@/lib/sanitize';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 interface Lesson {
   id: string;
@@ -55,7 +61,6 @@ export default function LearnPageClient({
   const [lockedMessage, setLockedMessage] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [learningTheme, setLearningTheme] = useState<'dark' | 'light'>('dark');
   const [lessonSearch, setLessonSearch] = useState('');
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
   const [markingComplete, setMarkingComplete] = useState(false);
@@ -71,11 +76,6 @@ export default function LearnPageClient({
   const lastSyncRef = useRef(0);
   const isPlayingRef = useRef(false);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    const savedTheme = window.localStorage.getItem(LEARNING_THEME_KEY);
-    if (savedTheme === 'light' || savedTheme === 'dark') setLearningTheme(savedTheme);
-  }, []);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -99,14 +99,6 @@ export default function LearnPageClient({
       sidebarReturnFocusRef.current?.focus();
     };
   }, [sidebarOpen]);
-
-  const toggleLearningTheme = useCallback(() => {
-    setLearningTheme(current => {
-      const nextTheme = current === 'dark' ? 'light' : 'dark';
-      window.localStorage.setItem(LEARNING_THEME_KEY, nextTheme);
-      return nextTheme;
-    });
-  }, []);
 
   const syncWatchTime = useCallback(async () => {
     const currentWatchTime = Math.floor(watchTimeRef.current);
@@ -272,27 +264,10 @@ export default function LearnPageClient({
   };
 
   return (
-    <div className="theme-surface learning-surface" data-theme={learningTheme} data-surface="learning">
+    <div className="min-h-screen bg-muted/20 text-foreground" data-theme="light" data-surface="learning">
       {/* Completion Celebration Toast */}
       {showCelebration && (
-        <div style={{
-          position: 'fixed',
-          top: '72px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 200,
-          background: 'linear-gradient(135deg, #16a34a, #15803d)',
-          color: 'white',
-          padding: '14px 28px',
-          borderRadius: '12px',
-          boxShadow: '0 8px 32px rgba(22,163,74,0.45)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          fontSize: '0.9375rem',
-          fontWeight: 600,
-          pointerEvents: 'none',
-        }}>
+        <div className="fixed left-1/2 top-20 z-[70] -translate-x-1/2 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg" role="status">
           🎉 ยินดีด้วย! คุณเรียนจบคอร์สนี้แล้ว!
         </div>
       )}
@@ -311,206 +286,45 @@ export default function LearnPageClient({
           setSidebarCollapsed(false);
           setSidebarOpen(true);
         }}
-        theme={learningTheme}
-        onToggleTheme={toggleLearningTheme}
       />
 
-      {/* Legacy header is retained temporarily for markup-safe migration and hidden from the rendered shell. */}
-      <header className="legacy-learning-header" aria-hidden="true" style={{ display: 'none',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        background: '#1e293b',
-        borderBottom: '1px solid #334155',
-        padding: '12px 24px',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link
-            href={`/courses/${course.slug}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              color: '#94a3b8',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            กลับ
-          </Link>
-          <span style={{ color: '#475569' }}>|</span>
-          <span style={{ color: 'white', fontWeight: 500 }}>{course.title}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {isEnrolled && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.75rem',
-                color: progressPercent === 100 ? '#4ade80' : '#94a3b8',
-              }}>
-                <div style={{
-                  width: '80px',
-                  height: '6px',
-                  background: '#334155',
-                  borderRadius: '3px',
-                  overflow: 'hidden',
-                }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${progressPercent}%`,
-                    background: progressPercent === 100 ? '#4ade80' : 'var(--accent)',
-                    borderRadius: '3px',
-                    transition: 'width 0.4s ease',
-                  }} />
-                </div>
-                <span style={{ fontWeight: 600, minWidth: '30px' }}>{progressPercent}%</span>
-              </div>
-            )}
-            <div style={{
-              color: '#94a3b8',
-              fontSize: '0.8125rem',
-              background: '#334155',
-              padding: '3px 10px',
-              borderRadius: '6px',
-              fontWeight: 500,
-            }}>
-              {currentIndex + 1} / {allLessons.length}
-            </div>
-          {/* Desktop sidebar toggle */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex"
-            title={sidebarCollapsed ? 'แสดงรายการบทเรียน' : 'ซ่อนรายการบทเรียน'}
-            style={{
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              background: '#334155',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              {sidebarCollapsed ? (
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              ) : (
-                <path d="M9 3h6v18H9zM3 6h6M3 12h6M3 18h6" />
-              )}
-            </svg>
-            {sidebarCollapsed ? 'เนื้อหา' : ''}
-          </button>
-          {/* Mobile sidebar toggle */}
-          <button
-            onClick={() => {
-              setSidebarCollapsed(false);
-              setSidebarOpen(true);
-            }}
-            className="flex lg:hidden"
-            style={{
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              background: '#334155',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            เนื้อหา
-          </button>
-        </div>
-      </header>
 
-      <div className="learning-content-layout" style={{ display: 'flex', minHeight: 'calc(100vh - 56px)' }}>
+      <div className={cn('mx-auto grid max-w-[1600px]', sidebarCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(0,1fr)_20rem]')}>
         {/* Video Area */}
-        <main className="learning-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <header className="learning-stage-header">
-            <p>บทเรียนปัจจุบัน</p>
-            <div>
-              <h1>{currentLesson.title}</h1>
-              <span>{String(currentIndex + 1).padStart(2, '0')} / {String(allLessons.length).padStart(2, '0')}</span>
+        <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <header className="mb-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">บทเรียนปัจจุบัน</p>
+            <div className="mt-2 flex items-start justify-between gap-4">
+              <h1 className="max-w-4xl text-2xl font-bold tracking-tight sm:text-3xl">{currentLesson.title}</h1>
+              <Badge variant="outline">{String(currentIndex + 1).padStart(2, '0')} / {String(allLessons.length).padStart(2, '0')}</Badge>
             </div>
-            <small>{isEnrolled ? course.title : `บททดลองจาก ${course.title}`}</small>
+            <small className="mt-2 block text-sm text-muted-foreground">{isEnrolled ? course.title : `บททดลองจาก ${course.title}`}</small>
           </header>
 
           {/* Video Player or Locked Message */}
-          <div className="learning-video" style={{ width: '100%', aspectRatio: '16/9', background: '#000', position: 'relative', flexShrink: 0 }}>
+          <div className="relative aspect-video overflow-hidden rounded-xl bg-black shadow-lg [&_iframe]:h-full [&_iframe]:w-full">
             {lockedMessage ? (
-              <div className="learning-locked" style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                color: 'white',
-                padding: '40px',
-                textAlign: 'center',
-              }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: '#334155',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '24px',
-                }}>
+              <div className="flex h-full flex-col items-center justify-center p-6 text-center text-slate-100">
+                <div className="mb-4 flex size-16 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="#f59e0b">
                     <path d="M12 2C9.24 2 7 4.24 7 7v3H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V12c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v3H9V7c0-1.66 1.34-3 3-3zm0 10c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
                   </svg>
                 </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '12px' }}>
+                <h2 className="text-2xl font-semibold">
                   🔒 บทเรียนนี้ต้องลงทะเบียน
                 </h2>
-                <p style={{ color: '#94a3b8', marginBottom: '24px', maxWidth: '400px' }}>
+                <p className="mt-3 max-w-lg text-sm leading-6 text-slate-400">
                   {lockedMessage}
                 </p>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
                     onClick={() => setLockedMessage(null)}
-                    style={{
-                      padding: '12px 24px',
-                      background: '#334155',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: 500,
-                    }}
                   >
                     กลับไปดูบทเรียนปัจจุบัน
-                  </button>
-                  <Link
-                    href={`/courses/${course.slug}`}
-                    style={{
-                      padding: '12px 24px',
-                      background: 'var(--accent)',
-                      color: 'var(--accent-foreground)',
-                      textDecoration: 'none',
-                      borderRadius: '8px',
-                      fontWeight: 500,
-                    }}
-                  >
-                    ลงทะเบียนเรียน
-                  </Link>
+                  </Button>
+                  <Button asChild><Link href={`/courses/${course.slug}`}>ลงทะเบียนเรียน</Link></Button>
                 </div>
               </div>
             ) : currentLesson.videoUrl ? (
@@ -522,14 +336,7 @@ export default function LearnPageClient({
                 onEnded={handleEnded}
               />
             ) : (
-              <div className="learning-video-empty" style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#64748b',
-              }}>
+              <div className="flex h-full items-center justify-center text-sm text-slate-400">
                 ไม่มีวิดีโอสำหรับบทเรียนนี้
               </div>
             )}
@@ -537,155 +344,117 @@ export default function LearnPageClient({
 
           {/* Auto-advance banner */}
           {autoAdvanceCountdown !== null && nextLesson && (
-            <div className="learning-auto-advance" style={{
-              background: '#1e293b',
-              borderBottom: '1px solid #334155',
-              padding: '10px 24px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-              flexShrink: 0,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.875rem', minWidth: 0 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" style={{ flexShrink: 0 }}>
+            <Card className="mt-4 border-primary/30 bg-primary/5"><CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-2 text-sm">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
                 <span>บทถัดไป:</span>
-                <span style={{ color: 'white', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextLesson.title}</span>
-                <span style={{ color: 'var(--accent)', fontWeight: 700, flexShrink: 0 }}>({autoAdvanceCountdown}s)</span>
+                <strong>{nextLesson.title}</strong>
+                <span className="shrink-0 text-primary">({autoAdvanceCountdown}s)</span>
               </div>
-              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                <button
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
                   onClick={() => {
                     if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
                     if (autoAdvanceIntervalRef.current) clearInterval(autoAdvanceIntervalRef.current);
                     setAutoAdvanceCountdown(null);
                   }}
-                  style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #475569', color: '#94a3b8', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}
                 >
                   ยกเลิก
-                </button>
-                <Link
-                  href={`/courses/${course.slug}/learn/${nextLesson.id}`}
-                  style={{ padding: '5px 12px', background: 'var(--accent)', color: 'var(--accent-foreground)', borderRadius: '6px', textDecoration: 'none', fontSize: '0.8125rem', fontWeight: 700 }}
-                >
-                  ไปเลย
-                </Link>
+                </Button>
+                <Button asChild size="sm"><Link href={`/courses/${course.slug}/learn/${nextLesson.id}`}>ไปเลย</Link></Button>
               </div>
-            </div>
+            </CardContent></Card>
           )}
 
-          <section className="learning-stage-summary" aria-label="สถานะและการเรียนต่อ">
-            <div className="learning-stage-progress">
+          <Card className="mt-6" aria-label="สถานะและการเรียนต่อ"><CardContent className="grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_minmax(16rem,.8fr)]">
+            <div className="grid content-start gap-3">
               <div>
-                <span>{isEnrolled ? 'ความคืบหน้าคอร์ส' : 'สถานะการเข้าถึง'}</span>
-                <strong>{isEnrolled ? `เรียนจบแล้ว ${progressPercent}%` : 'บทเรียนทดลองฟรี'}</strong>
+                <span className="text-xs text-muted-foreground">{isEnrolled ? 'ความคืบหน้าคอร์ส' : 'สถานะการเข้าถึง'}</span>
+                <strong className="mt-1 block text-lg">{isEnrolled ? `เรียนจบแล้ว ${progressPercent}%` : 'บทเรียนทดลองฟรี'}</strong>
               </div>
               {isEnrolled ? (
                 <>
-                  <div className="learning-stage-progress__track" aria-hidden="true">
-                    <span style={{ width: `${progressPercent}%` }} />
-                  </div>
-                  <p>ระบบบันทึกความคืบหน้าเพื่อให้กลับมาเรียนต่อได้</p>
+                  <Progress value={progressPercent} aria-hidden="true" />
+                  <p className="text-sm text-muted-foreground">ระบบบันทึกความคืบหน้าเพื่อให้กลับมาเรียนต่อได้</p>
                 </>
               ) : (
-                <p>ดูบทนี้ได้โดยไม่ต้องลงทะเบียน ส่วนบทที่ล็อกยังคงต้องสมัครเรียนก่อน</p>
+                <p className="text-sm leading-6 text-muted-foreground">ดูบทนี้ได้โดยไม่ต้องลงทะเบียน ส่วนบทที่ล็อกยังคงต้องสมัครเรียนก่อน</p>
               )}
             </div>
 
-            <div className="learning-stage-actions">
+            <div className="grid content-start gap-3">
               {isEnrolled && (
-                <button
+                <Button
                   type="button"
-                  className={`learning-complete${isCurrentCompleted ? ' is-complete' : ''}`}
+                  variant={isCurrentCompleted ? 'outline' : 'default'}
                   onClick={handleMarkComplete}
                   disabled={markingComplete}
                 >
                   {markingComplete ? 'กำลังบันทึก...' : isCurrentCompleted ? '✓ เรียนจบแล้ว' : 'ทำเครื่องหมายว่าเรียนจบ'}
-                </button>
+                </Button>
               )}
-              <span>Next action</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">ขั้นตอนถัดไป</span>
               {nextLesson && (isEnrolled || nextLesson.isFreePreview) ? (
-                <Link className="learning-next-action" href={`/courses/${course.slug}/learn/${nextLesson.id}`}>
-                  <span>เรียนบทถัดไป</span>
-                  <strong>{nextLesson.title}</strong>
+                <Link className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 rounded-lg border p-4 transition hover:border-primary/40 hover:bg-muted/40" href={`/courses/${course.slug}/learn/${nextLesson.id}`}>
+                  <span className="text-xs text-muted-foreground">เรียนบทถัดไป</span>
+                  <strong className="col-start-1 mt-1 truncate">{nextLesson.title}</strong>
                   <span aria-hidden="true">→</span>
                 </Link>
               ) : nextLesson ? (
-                <button type="button" className="learning-next-action is-locked" onClick={() => handleLockedClick(nextLesson.id)}>
-                  <span>บทถัดไป</span>
-                  <strong>{nextLesson.title}</strong>
+                <button type="button" className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 rounded-lg border p-4 text-left text-muted-foreground" onClick={() => handleLockedClick(nextLesson.id)}>
+                  <span className="text-xs">บทถัดไป</span>
+                  <strong className="col-start-1 mt-1 truncate">{nextLesson.title}</strong>
                   <span aria-hidden="true">ล็อก</span>
                 </button>
               ) : (
-                <Link className="learning-next-action" href="/dashboard">
-                  <span>เรียนครบทุกบทแล้ว</span>
-                  <strong>กลับไปแดชบอร์ด</strong>
+                <Link className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 rounded-lg border p-4 transition hover:border-primary/40 hover:bg-muted/40" href="/dashboard">
+                  <span className="text-xs text-muted-foreground">เรียนครบทุกบทแล้ว</span>
+                  <strong className="col-start-1 mt-1">กลับไปแดชบอร์ด</strong>
                   <span aria-hidden="true">→</span>
                 </Link>
               )}
             </div>
-          </section>
+          </CardContent></Card>
 
           {/* Lesson Info */}
-          <section className="learning-lesson" style={{ padding: '20px 24px', flex: 1, overflowY: 'auto', background: '#0f172a' }}>
-            <div className="learning-reading-head">
-              <p>Lesson notes</p>
-              <h2>เนื้อหาบทเรียน</h2>
+          <Card className="mt-6"><CardContent className="p-6 sm:p-8">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">เนื้อหาประกอบ</p>
+              <h2 className="mt-2 text-2xl font-bold">เนื้อหาบทเรียน</h2>
             </div>
 
-            <div className="learning-lesson__meta" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
               {formatDuration(currentLesson.videoDuration) && (
-                <div style={{ color: '#64748b', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div className="flex items-center gap-1 rounded-full bg-muted px-3 py-1">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                   </svg>
                   {formatDuration(currentLesson.videoDuration)}
                 </div>
               )}
-              <div style={{ color: '#475569', fontSize: '0.8125rem' }}>บทที่ {currentIndex + 1} จาก {allLessons.length}</div>
+              <div className="rounded-full bg-muted px-3 py-1">บทที่ {currentIndex + 1} จาก {allLessons.length}</div>
             </div>
 
             {currentLesson.content ? (
               <div
-                className="lesson-content"
-                style={{
-                  color: '#cbd5e1',
-                  lineHeight: 1.8,
-                  marginTop: '16px',
-                  marginBottom: '24px',
-                  padding: '24px',
-                  background: '#1e293b',
-                  borderRadius: '12px',
-                }}
+                className="lesson-content mt-8"
                 dangerouslySetInnerHTML={{ __html: sanitizeRichContent(currentLesson.content ?? '') }}
               />
             ) : (
-              <p className="learning-content-empty">บทเรียนนี้ไม่มีเนื้อหาเพิ่มเติม</p>
+              <p className="mt-8 rounded-lg border border-dashed p-6 text-muted-foreground">บทเรียนนี้ไม่มีเนื้อหาเพิ่มเติม</p>
             )}
 
             {/* Navigation */}
-            <div className="learning-lesson__navigation" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid #1e293b' }}>
+            <div className="mt-10 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t pt-6">
               {prevLesson ? (
                 <Link
                   href={`/courses/${course.slug}/learn/${prevLesson.id}`}
-                  style={{
-                    padding: '10px 18px',
-                    background: '#1e293b',
-                    color: '#cbd5e1',
-                    textDecoration: 'none',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    border: '1px solid #334155',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseOver={(e) => (e.currentTarget.style.background = '#334155')}
-                  onMouseOut={(e) => (e.currentTarget.style.background = '#1e293b')}
+                  className="inline-flex h-10 w-fit items-center gap-2 rounded-lg border bg-background px-4 text-sm font-semibold hover:bg-muted"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -695,35 +464,15 @@ export default function LearnPageClient({
               ) : (
                 <div />
               )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#334155', fontSize: '0.75rem' }}>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
-                <span className="hidden sm:inline" style={{ color: '#475569' }}>← → เปลี่ยนบท</span>
+                <span className="hidden sm:inline">← → เปลี่ยนบท</span>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
               </div>
               {nextLesson && (isEnrolled || nextLesson.isFreePreview) ? (
                 <Link
                   href={`/courses/${course.slug}/learn/${nextLesson.id}`}
-                  style={{
-                    padding: '10px 18px',
-                    background: 'var(--accent)',
-                    color: 'var(--accent-foreground)',
-                    textDecoration: 'none',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'var(--accent-strong)';
-                    e.currentTarget.style.color = 'var(--accent-strong-foreground)';
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'var(--accent)';
-                    e.currentTarget.style.color = 'var(--accent-foreground)';
-                  }}
+                  className="ml-auto inline-flex h-10 w-fit items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   บทถัดไป
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -733,19 +482,7 @@ export default function LearnPageClient({
               ) : nextLesson ? (
                 <button
                   onClick={() => handleLockedClick(nextLesson.id)}
-                  style={{
-                    padding: '10px 18px',
-                    background: '#1e293b',
-                    color: '#64748b',
-                    border: '1px solid #334155',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    fontWeight: 500,
-                  }}
+                  className="ml-auto inline-flex h-10 w-fit items-center gap-2 rounded-lg bg-muted px-4 text-sm font-semibold text-muted-foreground"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C9.24 2 7 4.24 7 7v3H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V12c0-1.1-.9-2-2-2h-1V7c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v3H9V7c0-1.66 1.34-3 3-3z"/>
@@ -754,92 +491,47 @@ export default function LearnPageClient({
                 </button>
               ) : null}
             </div>
-          </section>
+          </CardContent></Card>
         </main>
 
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div
-            className="sidebar-overlay open"
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
             onClick={() => setSidebarOpen(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.5)',
-              zIndex: 99,
-            }}
           />
         )}
 
         {/* Sidebar */}
         <aside 
-          className={`learn-sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'is-collapsed' : ''}`}
+          className={cn('fixed inset-y-0 right-0 z-50 flex w-[min(22rem,90vw)] translate-x-full flex-col border-l border-white/10 bg-slate-950 text-slate-100 transition-transform lg:static lg:z-auto lg:w-auto lg:translate-x-0', sidebarOpen && 'translate-x-0', sidebarCollapsed && 'lg:hidden')}
           aria-label="ลำดับบทเรียน"
-          style={{
-            width: sidebarCollapsed ? '0px' : '320px',
-            minWidth: sidebarCollapsed ? '0px' : '320px',
-            background: 'var(--surface)',
-            borderLeft: sidebarCollapsed ? 'none' : '1px solid var(--line)',
-            overflow: 'hidden',
-            flexShrink: 0,
-            transition: 'width 0.3s ease, min-width 0.3s ease',
-            display: 'flex',
-            flexDirection: 'column',
-            position: 'sticky',
-            top: '56px',
-            height: 'calc(100vh - 56px)',
-          }}
         >
           {/* Mobile Close Button */}
-          <div className="learn-sidebar__mobile-header flex lg:hidden" style={{
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '16px',
-            borderBottom: '1px solid var(--line)',
-          }}>
-            <span style={{ color: 'white', fontWeight: 600 }}>เนื้อหาคอร์ส</span>
-            <button
+          <div className="flex min-h-14 items-center justify-between border-b border-white/10 px-4 lg:hidden">
+            <span>เนื้อหาคอร์ส</span>
+            <Button
               ref={sidebarCloseRef}
               type="button"
               onClick={() => setSidebarOpen(false)}
               aria-label="ปิดรายการบทเรียน"
-              style={{
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--surface-subtle)',
-                color: 'var(--ink)',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-              }}
+              size="icon-sm"
+              variant="ghost"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
+            </Button>
           </div>
 
           {/* Sticky Header: Title + Progress + Search */}
-          <div className="learn-sidebar__head" style={{
-            padding: '12px 16px',
-            borderBottom: '1px solid var(--line)',
-            flexShrink: 0,
-            background: 'var(--surface)',
-          }}>
-            <p className="learn-sidebar__eyebrow">Course index</p>
-            <div className="learn-sidebar__title" style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '8px',
-            }}>
-              <h2>ลำดับการเรียน</h2>
-              <span>{allLessons.length} บท</span>
+          <div className="border-b border-white/10 p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">บทเรียนทั้งหมด</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <h2 className="mr-auto font-semibold">ลำดับการเรียน</h2>
+              <span className="text-xs text-slate-400">{allLessons.length} บท</span>
               {isEnrolled && (
-                <span style={{ fontSize: '0.6875rem', color: progressPercent === 100 ? 'var(--success)' : 'var(--ink-subtle)' }}>
+                <span className={cn('text-xs text-slate-400', progressPercent === 100 && 'text-emerald-400')}>
                   {completedCount}/{totalCount} ({progressPercent}%)
                 </span>
               )}
@@ -847,45 +539,21 @@ export default function LearnPageClient({
 
             {/* Progress Bar */}
             {isEnrolled && (
-              <div style={{
-                height: '3px',
-                background: 'var(--line)',
-                borderRadius: '2px',
-                overflow: 'hidden',
-                marginBottom: '10px',
-              }}>
-                <div style={{
-                  height: '100%',
-                  width: `${progressPercent}%`,
-                  background: progressPercent === 100 ? 'var(--success)' : 'var(--accent)',
-                  borderRadius: '2px',
-                  transition: 'width 0.3s ease',
-                }} />
-              </div>
+              <Progress className="mt-4 bg-white/10" value={progressPercent} />
             )}
 
             {/* Search */}
-            <input className="learn-sidebar__search"
+            <Input className="mt-4 border-white/10 bg-white/5 text-slate-100 placeholder:text-slate-500"
               type="text"
               aria-label="ค้นหาบทเรียน"
               value={lessonSearch}
               onChange={(e) => setLessonSearch(e.target.value)}
               placeholder="ค้นหาบทเรียน..."
-              style={{
-                width: '100%',
-                padding: '7px 10px',
-                background: '#0f172a',
-                border: '1px solid #334155',
-                borderRadius: '6px',
-                color: 'white',
-                fontSize: '0.8125rem',
-                outline: 'none',
-              }}
             />
           </div>
 
           {/* Scrollable Lesson List */}
-          <div className="learn-sidebar__list" style={{ flex: 1, overflowY: 'auto', padding: '8px 16px' }}>
+          <div className="min-h-0 flex-1 overflow-y-auto p-3">
             <LessonList 
               lessons={allLessons} 
               courseSlug={course.slug}

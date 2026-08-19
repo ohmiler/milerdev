@@ -82,3 +82,23 @@ export const FAQ_CATEGORIES: FAQCategory[] = [
     ],
   },
 ];
+
+const HOME_FAQ_QUESTIONS = [
+  'ต้องมีพื้นฐานการเขียนโปรแกรมก่อนไหม?',
+  'เรียนได้ตลอดชีพหรือมีกำหนดเวลา?',
+  'มีใบรับรอง (Certificate) ให้ไหม?',
+  'ชำระเงินได้ช่องทางไหนบ้าง?',
+  'ชำระเงินแล้วได้เรียนเลยไหม?',
+] as const;
+
+export const HOME_FAQ_ITEMS: FAQItem[] = HOME_FAQ_QUESTIONS.map((question) => {
+  const item = FAQ_CATEGORIES
+    .flatMap((category) => category.items)
+    .find((candidate) => candidate.q === question);
+
+  if (!item) {
+    throw new Error(`Missing canonical Home FAQ item: ${question}`);
+  }
+
+  return item;
+});

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import LegalDocument, { LegalSection } from '@/components/content/LegalDocument';
-import styles from '@/components/content/public-content.module.css';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 
@@ -26,9 +25,8 @@ export default function TermsPage() {
   return (
     <>
       <Navbar />
-      <main className={styles.page}>
+      <main className="bg-[var(--academy-canvas)]">
         <LegalDocument
-          eyebrow="Terms / Service agreement"
           title="เงื่อนไขการใช้งาน"
           lede="ข้อตกลงเกี่ยวกับบัญชี การเข้าถึงบทเรียน การชำระเงิน ใบรับรอง และขอบเขตการใช้บริการ MilerDev"
           updatedLabel="อัปเดตล่าสุด: 1 มกราคม 2568"

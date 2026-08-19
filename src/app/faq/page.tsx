@@ -3,7 +3,9 @@ import FAQAccordion from '@/components/faq/FAQAccordion';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import { FAQ_CATEGORIES } from './faq-data';
-import styles from './faq.module.css';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 const questionCount = FAQ_CATEGORIES.reduce((total, category) => total + category.items.length, 0);
 
@@ -11,57 +13,44 @@ export default function FAQPage() {
   return (
     <>
       <Navbar />
-      <main className={styles.page}>
-        <header className={styles.hero}>
-          <div className={`container ${styles.heroGrid}`}>
-            <div className={styles.heroCopy}>
-              <p className={styles.meta}>Help desk / 04</p>
-              <h1>คำตอบที่ช่วยให้ไปต่อได้</h1>
-              <p>รวมข้อมูลเรื่องการเริ่มเรียน คอร์ส การชำระเงิน และบัญชี เพื่อให้คุณตัดสินใจหรือแก้ปัญหาได้จากจุดเดียว</p>
+      <main className="bg-[var(--academy-canvas)]">
+        <header className="border-b bg-[radial-gradient(circle_at_15%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
+          <div className="container grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16">
+            <div>
+              <h1 className="text-4xl leading-[1.15] font-semibold tracking-[-.04em] sm:text-5xl lg:text-6xl">คำตอบที่ช่วยให้ไปต่อได้</h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">รวมข้อมูลเรื่องการเริ่มเรียน คอร์ส การชำระเงิน และบัญชี เพื่อให้คุณตัดสินใจหรือแก้ปัญหาได้จากจุดเดียว</p>
             </div>
-            <dl className={styles.heroEvidence} aria-label={'ภาพรวมคำถามที่พบบ่อย'}>
-              <div><dt>คำถาม</dt><dd>{questionCount}</dd></div>
-              <div><dt>หมวด</dt><dd>{FAQ_CATEGORIES.length}</dd></div>
-              <div><dt>ทางเลือกถัดไป</dt><dd><Link href={'/contact'}>ติดต่อทีม</Link></dd></div>
-            </dl>
+            <Card><CardContent className="grid grid-cols-3 gap-3 pt-6 text-center"><div><dt className="text-xs text-muted-foreground">คำถาม</dt><dd className="mt-2 text-2xl font-semibold">{questionCount}</dd></div><div><dt className="text-xs text-muted-foreground">หมวด</dt><dd className="mt-2 text-2xl font-semibold">{FAQ_CATEGORIES.length}</dd></div><div><dt className="text-xs text-muted-foreground">ทางเลือกถัดไป</dt><dd className="mt-2"><Button size="sm" variant="outline" asChild><Link href="/contact">ติดต่อทีม</Link></Button></dd></div></CardContent></Card>
           </div>
         </header>
 
-        <section className={styles.body} aria-labelledby={'faq-index-title'}>
-          <div className={`container ${styles.layout}`}>
-            <aside className={styles.index}>
-              <p className={styles.sectionLabel}>Question index</p>
-              <h2 id={'faq-index-title'}>เลือกหัวข้อ</h2>
-              <nav aria-label={'หมวดคำถาม'}>
+        <section className="py-14 sm:py-20" aria-labelledby="faq-index-title">
+          <div className="container grid gap-10 lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-14">
+            <aside className="top-24 lg:sticky">
+              <h2 id="faq-index-title" className="text-2xl font-semibold">เลือกหัวข้อ</h2>
+              <nav className="mt-5 space-y-1" aria-label="หมวดคำถาม">
                 {FAQ_CATEGORIES.map((category, index) => (
-                  <a href={`#faq-category-${index + 1}`} key={category.title}>
-                    <span>{String(index + 1).padStart(2, '0')}</span>
+                  <a className="block rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground" href={`#faq-category-${index + 1}`} key={category.title}>
                     {category.title}
                   </a>
                 ))}
               </nav>
             </aside>
 
-            <div className={styles.categories}>
+            <div className="space-y-12">
               {FAQ_CATEGORIES.map((category, index) => (
-                <section id={`faq-category-${index + 1}`} className={styles.category} aria-labelledby={`faq-category-title-${index + 1}`} key={category.title}>
-                  <div className={styles.categoryHead}>
-                    <span>{String(index + 1).padStart(2, '0')}</span>
+                <section id={`faq-category-${index + 1}`} className="scroll-mt-24" aria-labelledby={`faq-category-title-${index + 1}`} key={category.title}>
+                  <div className="mb-5">
                     <div>
-                      <p>{category.items.length} คำถาม</p>
-                      <h2 id={`faq-category-title-${index + 1}`}>{category.title}</h2>
+                      <Badge variant="secondary">{category.items.length} คำถาม</Badge>
+                      <h2 id={`faq-category-title-${index + 1}`} className="mt-2 text-2xl font-semibold sm:text-3xl">{category.title}</h2>
                     </div>
                   </div>
                   <FAQAccordion categoryIndex={index} items={category.items} />
                 </section>
               ))}
 
-              <section className={styles.contactCta} aria-labelledby={'faq-contact-title'}>
-                <p className={styles.sectionLabel}>Still need help?</p>
-                <h2 id={'faq-contact-title'}>ยังไม่เจอคำตอบที่ตรงกับเรื่องของคุณ</h2>
-                <p>ส่งรายละเอียดให้ทีม MilerDev พร้อมข้อมูลที่จำเป็น เราจะตอบกลับผ่านอีเมลที่คุณระบุ</p>
-                <Link href={'/contact'}>ติดต่อทีม MilerDev <span aria-hidden={true}>→</span></Link>
-              </section>
+              <Card className="bg-[var(--academy-navy)] text-white" aria-labelledby="faq-contact-title"><CardContent className="pt-6"><h2 id="faq-contact-title" className="text-2xl font-semibold">ยังไม่เจอคำตอบที่ตรงกับเรื่องของคุณ</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">ส่งรายละเอียดให้ทีม MilerDev พร้อมข้อมูลที่จำเป็น เราจะตอบกลับผ่านอีเมลที่คุณระบุ</p><Button className="mt-6" asChild><Link href="/contact">ติดต่อทีม MilerDev →</Link></Button></CardContent></Card>
             </div>
           </div>
         </section>

@@ -3,7 +3,10 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import RefreshAccessButton from './RefreshAccessButton';
-import styles from './proof.module.css';
+import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface ReceiptItem {
   id: string;
@@ -51,53 +54,49 @@ export default function TransactionReceipt({
   return (
     <>
       <Navbar />
-      <main className={styles.proofPage}>
-        <div className={`container ${styles.proofContainer}`}>
-          <header className={styles.proofHeader}>
+      <main className="min-h-screen bg-muted/20 py-10 sm:py-14">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <header className="grid gap-6 border-b pb-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
             <div>
-              <p className={styles.eyebrow}>Transaction proof</p>
-              <h1>{accessReady ? 'ชำระเงินแล้ว พร้อมเริ่มเรียน' : 'กำลังยืนยันสิทธิ์การเรียน'}</h1>
-              <p className={styles.lead}>
+              <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">{accessReady ? 'ชำระเงินแล้ว พร้อมเริ่มเรียน' : 'กำลังยืนยันสิทธิ์การเรียน'}</h1>
+              <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">
                 {accessReady
                   ? 'รายการนี้ผ่านการยืนยันและสิทธิ์เรียนถูกเพิ่มในบัญชีของคุณแล้ว'
                   : 'ระบบได้รับรายการแล้ว แต่สิทธิ์เรียนยังไม่พร้อม กรุณาตรวจสอบสถานะอีกครั้งก่อนเริ่มเรียน'}
               </p>
             </div>
-            <div className={styles.proofReference}>
-              <span>ORDER REFERENCE</span>
-              <strong>{formatOrderId(orderId)}</strong>
-            </div>
+            <Card><CardContent className="grid gap-1 p-4 lg:text-right"><span className="text-xs font-semibold text-muted-foreground">เลขอ้างอิง</span><strong className="break-all font-mono text-sm text-primary">{formatOrderId(orderId)}</strong></CardContent></Card>
           </header>
 
-          <div className={styles.receiptLayout}>
-            <article className={styles.receipt} aria-labelledby="receipt-product-title">
-              <div className={styles.receiptTopline}>
+          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <Card className="overflow-hidden" aria-labelledby="receipt-product-title">
+              <div className="flex justify-between gap-4 border-b px-6 py-4 text-sm font-semibold text-muted-foreground">
                 <span>รายการสั่งซื้อ</span>
-                <span>{kind === 'bundle' ? `${items.length} COURSES` : '1 COURSE'}</span>
+                <span>{kind === 'bundle' ? `${items.length} คอร์ส` : '1 คอร์ส'}</span>
               </div>
 
-              <div className={styles.receiptProduct}>
-                <div className={styles.receiptMedia}>
+              <div className="grid border-b sm:grid-cols-[14rem_minmax(0,1fr)]">
+                <div className="relative min-h-52 bg-slate-950">
                   {thumbnailUrl ? (
                     <Image src={thumbnailUrl} alt="" fill sizes="(max-width: 680px) 100vw, 220px" />
                   ) : (
-                    <div className={styles.receiptFallback} aria-hidden="true">MD</div>
+                    <div className="flex h-full min-h-52 items-center justify-center text-4xl font-bold text-white" aria-hidden="true">MD</div>
                   )}
                 </div>
-                <div className={styles.receiptProductCopy}>
-                  <p>{kindLabel}</p>
-                  <h2 id="receipt-product-title">{title}</h2>
-                  <strong>{formatAmount(amount)}</strong>
+                <div className="flex flex-col justify-center p-6 sm:p-8">
+                  <p className="text-sm font-semibold text-muted-foreground">{kindLabel}</p>
+                  <h2 className="mt-3 text-2xl font-semibold tracking-tight" id="receipt-product-title">{title}</h2>
+                  <strong className="mt-6 text-xl text-primary">{formatAmount(amount)}</strong>
                 </div>
               </div>
 
               {items.length > 0 && (
-                <div className={styles.receiptItems}>
-                  <p className={styles.sectionLabel}>Included courses</p>
-                  <ol>
+                <div className="border-b p-6">
+                  <p className="mb-3 text-sm font-semibold text-primary">คอร์สในชุดนี้</p>
+                  <ol className="divide-y border-y">
                     {items.map((item, index) => (
-                      <li key={item.id}>
-                        <span>{String(index + 1).padStart(2, '0')}</span>
+                      <li className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3 py-3 text-sm" key={item.id}>
+                        <span className="text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
                         {item.href ? <Link href={item.href}>{item.title}</Link> : <span>{item.title}</span>}
                       </li>
                     ))}
@@ -105,43 +104,41 @@ export default function TransactionReceipt({
                 </div>
               )}
 
-              <dl className={styles.receiptFacts}>
+              <dl className="grid bg-muted/40 sm:grid-cols-3 [&_div]:p-5 [&_dt]:text-xs [&_dt]:text-muted-foreground [&_dd]:mt-2 [&_dd]:break-words [&_dd]:font-semibold">
                 <div><dt>ยอดรายการ</dt><dd>{formatAmount(amount)}</dd></div>
                 <div><dt>สถานะสิทธิ์</dt><dd>{accessReady ? 'พร้อมเรียน' : 'กำลังยืนยัน'}</dd></div>
                 <div><dt>เลขอ้างอิง</dt><dd>{formatOrderId(orderId)}</dd></div>
               </dl>
-            </article>
+            </Card>
 
-            <aside className={styles.receiptAside} aria-label="ขั้นตอนถัดไป">
+            <Card className="h-fit overflow-hidden lg:sticky lg:top-24" aria-label="ขั้นตอนถัดไป">
+              <CardHeader className={cn(accessReady ? 'bg-emerald-500/10' : 'bg-amber-500/10')}>
               <div
-                className={`${styles.accessState} ${accessReady ? styles.accessReady : styles.accessPending}`}
+                className="grid gap-3"
                 data-access={accessReady ? 'ready' : 'pending'}
                 role="status"
               >
-                <span className={styles.accessMarker} aria-hidden="true">{accessReady ? '✓' : '…'}</span>
-                <p>{accessReady ? 'LEARNING ACCESS READY' : 'ACCESS VERIFICATION'}</p>
-                <h2>{accessReady ? 'คอร์สอยู่ในบัญชีแล้ว' : 'ยังไม่ควรเริ่มเรียน'}</h2>
-                <p>
+                <Badge variant="outline" className="w-fit">{accessReady ? '✓ พร้อมเข้าเรียน' : '… กำลังตรวจสอบสิทธิ์'}</Badge>
+                <CardTitle>{accessReady ? 'คอร์สอยู่ในบัญชีแล้ว' : 'ยังไม่ควรเริ่มเรียน'}</CardTitle>
+                <p className="text-sm leading-6 text-muted-foreground">
                   {accessReady
                     ? 'เปิดบทเรียนได้ทันที หรือกลับไปดูภาพรวมการเรียนทั้งหมดใน Dashboard'
                     : 'อย่าชำระเงินซ้ำ ระบบอาจใช้เวลาสั้น ๆ ในการยืนยันและเพิ่มสิทธิ์เรียน'}
                 </p>
               </div>
+              </CardHeader>
 
-              <div className={styles.receiptActions}>
+              <CardContent className="grid gap-3 p-6">
                 {accessReady && primaryHref && primaryLabel ? (
-                  <Link className={styles.primaryAction} href={primaryHref}>{primaryLabel}<span aria-hidden="true">→</span></Link>
+                  <Link className={buttonVariants()} href={primaryHref}>{primaryLabel}<span aria-hidden="true">→</span></Link>
                 ) : (
-                  <RefreshAccessButton className={styles.primaryAction} />
+                  <RefreshAccessButton className={buttonVariants()} />
                 )}
-                <Link className={styles.secondaryAction} href="/dashboard">ไปยัง Dashboard</Link>
-              </div>
+                <Link className={buttonVariants({ variant: 'outline' })} href="/dashboard">ไปยัง Dashboard</Link>
+              </CardContent>
 
-              <div className={styles.receiptHelp}>
-                <p>ต้องการความช่วยเหลือเกี่ยวกับรายการนี้?</p>
-                <a href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
-              </div>
-            </aside>
+              <CardFooter className="block border-t text-sm text-muted-foreground"><p>ต้องการความช่วยเหลือเกี่ยวกับรายการนี้?</p><a className="font-medium text-primary" href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a></CardFooter>
+            </Card>
           </div>
         </div>
       </main>

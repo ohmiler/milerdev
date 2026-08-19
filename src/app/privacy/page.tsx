@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import LegalDocument, { LegalSection } from '@/components/content/LegalDocument';
-import styles from '@/components/content/public-content.module.css';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 
@@ -26,9 +25,8 @@ export default function PrivacyPage() {
   return (
     <>
       <Navbar />
-      <main className={styles.page}>
+      <main className="bg-[var(--academy-canvas)]">
         <LegalDocument
-          eyebrow="Privacy / Public policy"
           title="นโยบายความเป็นส่วนตัว"
           lede="ข้อมูลเกี่ยวกับสิ่งที่ MilerDev เก็บ เหตุผลที่ใช้ข้อมูล ผู้ให้บริการที่เกี่ยวข้อง และช่องทางสำหรับใช้สิทธิ์ของคุณ"
           updatedLabel="อัปเดตล่าสุด: 1 มกราคม 2568"

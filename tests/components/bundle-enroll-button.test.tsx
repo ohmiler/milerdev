@@ -63,4 +63,14 @@ describe('bundle enrollment purchase contract', () => {
     expect(html).toContain('ลงทะเบียนครบแล้ว');
     expect(html).not.toContain('<button');
   });
+
+  it('disables enrollment when any bundled course is not ready', () => {
+    const html = renderToStaticMarkup(
+      <BundleEnrollButton bundleId={'bundle-1'} bundleSlug={'full-stack'} price={2490} available={false} />,
+    );
+
+    expect(html).toContain('Bundle นี้กำลังเตรียมเนื้อหา');
+    expect(html).toContain('disabled');
+    expect(html).not.toContain('ซื้อ Bundle');
+  });
 });

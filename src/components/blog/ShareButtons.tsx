@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import styles from './BlogControls.module.css';
+import { Button } from '@/components/ui/button';
 
 interface ShareButtonsProps {
   url: string;
@@ -42,8 +42,8 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
   };
 
   return (
-    <div className={styles.share}>
-      <span className={styles.shareLabel}>แชร์บทความ</span>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="mr-1 text-sm font-semibold">แชร์บทความ</span>
       {shareLinks.map((item) => (
         <a
           key={item.label}
@@ -51,17 +51,19 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
           target={'_blank'}
           rel={'noopener noreferrer'}
           title={`แชร์ไปยัง ${item.label}`}
-          className={styles.shareLink}
+          className="inline-flex h-9 items-center gap-2 rounded-lg border bg-background px-3 text-xs font-medium hover:bg-muted [&_svg]:size-3.5"
         >
           {item.icon}
           {item.label}
         </a>
       ))}
-      <button
+      <Button
         type={'button'}
+        variant="outline"
+        size="sm"
         onClick={handleCopy}
         title={'คัดลอกลิงก์'}
-        className={styles.copyLink}
+        className="gap-2"
         data-copied={copied || undefined}
         aria-live={'polite'}
       >
@@ -76,7 +78,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
             คัดลอกลิงก์
           </>
         )}
-      </button>
+      </Button>
     </div>
   );
 }

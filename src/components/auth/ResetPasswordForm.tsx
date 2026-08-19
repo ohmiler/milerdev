@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { FormButton, FormInput } from '@/components/ui/FormControls';
 import { PasswordIcon } from './AuthIcons';
-import styles from './auth.module.css';
+import { Button } from '@/components/ui/button';
+import { AuthError, AuthField, AuthFootnote, PasswordField, RecoveryState } from './AuthFormLayout';
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -49,38 +50,22 @@ export default function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <section className={styles.recoveryState} data-tone={'error'} aria-labelledby={'reset-missing-title'}>
-        <div className={styles.stateMark} aria-hidden={'true'}>ERR</div>
-        <h2 id={'reset-missing-title'}>ลิงก์ไม่ถูกต้อง</h2>
-        <p>ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้อง กรุณาขอลิงก์ใหม่</p>
-        <div className={styles.recoveryActions}>
-          <Link href={'/forgot-password'} className={styles.recoveryLink}>ขอลิงก์รีเซ็ตใหม่</Link>
-          <Link href={'/login'} className={styles.recoveryLink}>กลับไปหน้าเข้าสู่ระบบ</Link>
-        </div>
-      </section>
+      <RecoveryState tone="error" title="ลิงก์ไม่ถูกต้อง" actions={<><Button asChild><Link href={'/forgot-password'}>ขอลิงก์รีเซ็ตใหม่</Link></Button><Button variant="outline" asChild><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></Button></>}><p>ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้อง กรุณาขอลิงก์ใหม่</p></RecoveryState>
     );
   }
 
   if (success) {
     return (
-      <section className={styles.recoveryState} data-tone={'success'} aria-labelledby={'reset-success-title'}>
-        <div className={styles.stateMark} aria-hidden={'true'}>OK</div>
-        <h2 id={'reset-success-title'}>ตั้งรหัสผ่านใหม่สำเร็จ!</h2>
-        <p>คุณสามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้แล้ว</p>
-        <div className={styles.recoveryActions}>
-          <Link href={'/login'} className={styles.recoveryLink}>ไปหน้าเข้าสู่ระบบ</Link>
-        </div>
-      </section>
+      <RecoveryState tone="success" title="ตั้งรหัสผ่านใหม่สำเร็จ!" actions={<Button asChild><Link href={'/login'}>ไปหน้าเข้าสู่ระบบ</Link></Button>}><p>คุณสามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้แล้ว</p></RecoveryState>
     );
   }
 
   return (
     <>
-      {error && <div className={styles.alert} role={'alert'}>{error}</div>}
-      <form onSubmit={handleSubmit} className={styles.form} aria-busy={loading}>
-        <div className={styles.field}>
-          <label htmlFor={'reset-password'}>รหัสผ่านใหม่</label>
-          <div className={styles.passwordField}>
+      {error && <AuthError>{error}</AuthError>}
+      <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
+        <AuthField htmlFor="reset-password" label="รหัสผ่านใหม่" help="อย่างน้อย 8 ตัวอักษร มีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข">
+          <PasswordField action={<button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'} aria-pressed={showPassword}><PasswordIcon visible={showPassword} /></button>}>
             <FormInput
               id={'reset-password'}
               name={'password'}
@@ -93,20 +78,10 @@ export default function ResetPasswordForm() {
               placeholder={'••••••••'}
               aria-describedby={'reset-password-help'}
             />
-            <button
-              type={'button'}
-              onClick={() => setShowPassword((visible) => !visible)}
-              aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
-              aria-pressed={showPassword}
-            >
-              <PasswordIcon visible={showPassword} />
-            </button>
-          </div>
-          <p id={'reset-password-help'} className={styles.helper}>อย่างน้อย 8 ตัวอักษร มีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข</p>
-        </div>
+          </PasswordField>
+        </AuthField>
 
-        <div className={styles.field}>
-          <label htmlFor={'reset-confirm-password'}>ยืนยันรหัสผ่านใหม่</label>
+        <AuthField htmlFor="reset-confirm-password" label="ยืนยันรหัสผ่านใหม่">
           <FormInput
             id={'reset-confirm-password'}
             name={'confirmPassword'}
@@ -118,13 +93,13 @@ export default function ResetPasswordForm() {
             autoComplete={'new-password'}
             placeholder={'••••••••'}
           />
-        </div>
+        </AuthField>
 
         <FormButton type={'submit'} block pending={loading} disabled={loading}>
           {loading ? 'กำลังบันทึก...' : 'ตั้งรหัสผ่านใหม่'}
         </FormButton>
       </form>
-      <p className={styles.switchLink}><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></p>
+      <AuthFootnote><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></AuthFootnote>
     </>
   );
 }

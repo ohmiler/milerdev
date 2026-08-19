@@ -9,11 +9,14 @@ import ShareButtons from '@/components/blog/ShareButtons';
 import TableOfContents from '@/components/blog/TableOfContents';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { getProcessedBlogContent } from '@/lib/sanitize';
 import { and, eq, ne, sql } from 'drizzle-orm';
-import styles from './blog-article.module.css';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
 
@@ -221,81 +224,78 @@ export default async function BlogPostPage({ params }: Props) {
       <script type={'application/ld+json'} dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ReadingProgress />
       <Navbar />
-      <main className={styles.page}>
-        <header className={styles.hero}>
-          <div className={styles.heroShell}>
-            <nav className={styles.breadcrumb} aria-label={'เส้นทางนำทาง'}>
+      <main className="bg-[var(--academy-canvas)]">
+        <header className="border-b bg-[radial-gradient(circle_at_84%_8%,var(--color-accent-soft),transparent_32%),var(--academy-canvas)] py-12 sm:py-16 lg:py-20">
+          <div className="container">
+            <nav className="mb-8 flex min-w-0 items-center gap-2 overflow-hidden text-xs text-muted-foreground [&_a]:shrink-0 [&_a]:hover:text-foreground [&>span:last-child]:truncate" aria-label="เส้นทางนำทาง">
               <Link href={'/'}>หน้าแรก</Link><span aria-hidden={true}>/</span>
               <Link href={'/blog'}>บทความ</Link><span aria-hidden={true}>/</span>
               <span>{post.title.slice(0, 40)}{post.title.length > 40 ? '…' : ''}</span>
             </nav>
 
-            <div className={styles.heroGrid}>
-              <div className={styles.heroCopy}>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,.75fr)] lg:items-end lg:gap-16">
+              <div>
                 {post.tags.length > 0 ? (
-                  <nav className={styles.tags} aria-label={'หัวข้อของบทความ'}>
-                    {post.tags.map((tag) => <Link key={tag.id} href={`/blog?tag=${tag.slug}`}>{tag.name}</Link>)}
+                  <nav className="mb-5 flex flex-wrap gap-2" aria-label="หัวข้อของบทความ">
+                    {post.tags.map((tag) => <Badge key={tag.id} variant="secondary" asChild><Link href={`/blog?tag=${tag.slug}`}>{tag.name}</Link></Badge>)}
                   </nav>
                 ) : null}
-                <p className={styles.eyebrow}>MILERDEV JOURNAL / ARTICLE</p>
-                <h1>{post.title}</h1>
-                {post.excerpt ? <p className={styles.lede}>{post.excerpt}</p> : null}
+                <h1 className="mt-4 max-w-4xl text-4xl leading-[1.16] font-semibold tracking-[-.04em] text-balance sm:text-5xl lg:text-6xl">{post.title}</h1>
+                {post.excerpt ? <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">{post.excerpt}</p> : null}
               </div>
 
-              <aside className={styles.articleEvidence} aria-label={'ข้อมูลบทความ'}>
-                <div className={styles.authorRow}>
-                  <span className={styles.avatar} aria-hidden={!avatarUrl}>
-                    {avatarUrl ? <img src={avatarUrl} alt={post.author?.name || 'MilerDev'} /> : 'MD'}
+              <Card className="bg-card/85 backdrop-blur" aria-label="ข้อมูลบทความ">
+                <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-sm font-semibold text-primary-foreground" aria-hidden={!avatarUrl}>
+                    {avatarUrl ? <img className="size-full object-cover" src={avatarUrl} alt={post.author?.name || 'MilerDev'} /> : 'MD'}
                   </span>
-                  <div><span>ผู้เขียน</span><strong>{post.author?.name || 'MilerDev'}</strong></div>
+                  <div><span className="block text-xs text-muted-foreground">ผู้เขียน</span><strong className="text-sm">{post.author?.name || 'MilerDev'}</strong></div>
                 </div>
-                <dl>
-                  <div><dt>เผยแพร่</dt><dd>{formatDate(post.publishedAt) || '—'}</dd></div>
-                  <div><dt>เวลาอ่าน</dt><dd>{readingTime} นาที</dd></div>
-                  <div><dt>ยอดอ่าน</dt><dd>{(post.viewCount ?? 0).toLocaleString()} ครั้ง</dd></div>
+                <Separator className="my-5" />
+                <dl className="space-y-3 text-sm">
+                  <div className="flex justify-between gap-4"><dt className="text-muted-foreground">เผยแพร่</dt><dd>{formatDate(post.publishedAt) || '—'}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-muted-foreground">เวลาอ่าน</dt><dd>{readingTime} นาที</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-muted-foreground">ยอดอ่าน</dt><dd>{(post.viewCount ?? 0).toLocaleString()} ครั้ง</dd></div>
                 </dl>
-              </aside>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </header>
 
         {thumbnailUrl ? (
-          <figure className={styles.heroImage}>
-            <img src={thumbnailUrl} alt={post.title} />
+          <figure className="container mt-8 sm:mt-10">
+            <img className="aspect-[16/7] w-full rounded-3xl object-cover shadow-[var(--academy-shadow-card)]" src={thumbnailUrl} alt={post.title} />
           </figure>
         ) : null}
 
-        <section className={styles.readingArea} aria-label={'เนื้อหาบทความ'}>
-          <div className={styles.readingGrid}>
-            <article className={styles.article}>
+        <section className="py-12 sm:py-16 lg:py-20" aria-label="เนื้อหาบทความ">
+          <div className="container grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-16">
+            <article className="min-w-0">
               {post.content ? (
                 <div
-                  className={`rich-content ${styles.prose}`}
+                  className="rich-content mx-auto max-w-3xl"
                   dangerouslySetInnerHTML={{ __html: processedContent }}
                 />
               ) : null}
               <CodeCopyButton />
 
               {relatedPosts.length > 0 ? (
-                <section className={styles.related} aria-labelledby={'related-articles-title'}>
-                  <div className={styles.sectionHeading}>
-                    <p className={styles.eyebrow}>CONTINUE READING</p>
-                    <h2 id={'related-articles-title'}>บทความที่เกี่ยวข้อง</h2>
+                <section className="mt-14 border-t pt-10" aria-labelledby="related-articles-title">
+                  <div className="mb-6">
+                    <h2 id="related-articles-title" className="text-2xl font-semibold sm:text-3xl">บทความที่เกี่ยวข้อง</h2>
                   </div>
-                  <ol>
+                  <ol className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {relatedPosts.map((relatedPost, index) => {
                       const relatedImage = normalizeUrl(relatedPost.thumbnailUrl);
                       return (
                         <li key={relatedPost.id}>
-                          <Link href={`/blog/${relatedPost.slug}`}>
-                            <figure className={styles.relatedImage}>
-                              {relatedImage ? <img src={relatedImage} alt={relatedPost.title} /> : <span aria-hidden={true}>MD</span>}
+                          <Link href={`/blog/${relatedPost.slug}`} className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+                            <Card className="h-full gap-0 overflow-hidden py-0"><figure className="aspect-[16/9] overflow-hidden bg-[var(--academy-navy)]">
+                              {relatedImage ? <img className="size-full object-cover transition-transform group-hover:scale-[1.03]" src={relatedImage} alt={relatedPost.title} /> : <span className="flex size-full items-center justify-center text-2xl font-semibold text-primary" aria-hidden="true">MD</span>}
                             </figure>
-                            <div>
-                              <span className={styles.relatedIndex}>{String(index + 1).padStart(2, '0')}</span>
-                              <h3>{relatedPost.title}</h3>
-                              <p>{formatDate(relatedPost.publishedAt)}</p>
-                            </div>
+                            <CardContent className="pt-5"><span className="font-mono text-xs text-primary">{String(index + 1).padStart(2, '0')}</span><h3 className="mt-2 line-clamp-2 font-semibold group-hover:text-primary">{relatedPost.title}</h3><p className="mt-3 text-xs text-muted-foreground">{formatDate(relatedPost.publishedAt)}</p></CardContent></Card>
                           </Link>
                         </li>
                       );
@@ -304,13 +304,13 @@ export default async function BlogPostPage({ params }: Props) {
                 </section>
               ) : null}
 
-              <footer className={styles.articleFooter}>
+              <footer className="mt-10 flex flex-col gap-5 border-t pt-8 sm:flex-row sm:items-center sm:justify-between">
                 <ShareButtons url={`https://milerdev.com/blog/${post.slug}`} title={post.title} />
-                <Link href={'/blog'}>← กลับไปบทความทั้งหมด</Link>
+                <Button variant="outline" asChild><Link href="/blog">← กลับไปบทความทั้งหมด</Link></Button>
               </footer>
             </article>
 
-            <aside className={styles.tocRail} aria-label={'สารบัญบทความ'}>
+            <aside className="sticky top-24 hidden rounded-2xl border bg-card p-5 lg:block" aria-label="สารบัญบทความ">
               <TableOfContents contentHtml={processedContent} />
             </aside>
           </div>

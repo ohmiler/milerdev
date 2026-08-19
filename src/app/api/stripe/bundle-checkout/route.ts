@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { bundles, bundleCourses, courses, enrollments, payments } from "@/lib/db/schema";
-import { eq, asc, and } from "drizzle-orm";
+import { bundles, bundleCourses, courses, enrollments, lessons, payments } from "@/lib/db/schema";
+import { eq, asc, and, count, inArray } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
-import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
+import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
 
 // POST /api/stripe/bundle-checkout - Create Stripe checkout session for bundle
 export async function POST(request: Request) {
@@ -57,6 +57,23 @@ export async function POST(request: Request) {
             })));
         } catch {
             return NextResponse.json({ error: 'Bundle not available' }, { status: 409 });
+        }
+
+        const lessonCountRows = await db.select({
+            courseId: lessons.courseId,
+            lessonCount: count(lessons.id),
+        }).from(lessons)
+            .where(inArray(lessons.courseId, bCourses.map((course) => course.courseId)))
+            .groupBy(lessons.courseId);
+        const lessonCounts = new Map(lessonCountRows.map((row) => [row.courseId, row.lessonCount]));
+        try {
+            requireReadyBundleCourses(bCourses.map((course) => ({
+                id: course.courseId,
+                status: course.courseStatus,
+                lessonCount: lessonCounts.get(course.courseId) ?? 0,
+            })));
+        } catch {
+            return NextResponse.json({ error: 'BUNDLE_NOT_READY' }, { status: 409 });
         }
 
         // Check if user is already enrolled in all courses

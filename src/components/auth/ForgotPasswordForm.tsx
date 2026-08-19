@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { FormButton, FormInput } from '@/components/ui/FormControls';
-import styles from './auth.module.css';
+import { Button } from '@/components/ui/button';
+import { AuthError, AuthField, AuthFootnote, RecoveryState } from './AuthFormLayout';
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -38,34 +39,18 @@ export default function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <section className={styles.recoveryState} data-tone={'success'} aria-labelledby={'forgot-success-title'}>
-        <div className={styles.stateMark} aria-hidden={'true'}>OK</div>
-        <h2 id={'forgot-success-title'}>ส่งลิงก์รีเซ็ตแล้ว!</h2>
+      <RecoveryState tone="success" title="ส่งลิงก์รีเซ็ตแล้ว!" actions={<><Button type={'button'} variant="outline" onClick={() => { setSent(false); setEmail(''); }}>ลองใหม่อีกครั้ง</Button><Button asChild><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></Button></>}>
         <p>หากอีเมล <strong>{email}</strong> มีในระบบ คุณจะได้รับลิงก์สำหรับตั้งรหัสผ่านใหม่ภายในไม่กี่นาที</p>
         <p>ไม่ได้รับอีเมล? ตรวจสอบโฟลเดอร์สแปม แล้วลองส่งใหม่ได้</p>
-        <div className={styles.recoveryActions}>
-          <button
-            type={'button'}
-            className={styles.retryButton}
-            onClick={() => {
-              setSent(false);
-              setEmail('');
-            }}
-          >
-            ลองใหม่อีกครั้ง
-          </button>
-          <Link href={'/login'} className={styles.recoveryLink}>กลับไปหน้าเข้าสู่ระบบ</Link>
-        </div>
-      </section>
+      </RecoveryState>
     );
   }
 
   return (
     <>
-      {error && <div className={styles.alert} role={'alert'}>{error}</div>}
-      <form onSubmit={handleSubmit} className={styles.form} aria-busy={loading}>
-        <div className={styles.field}>
-          <label htmlFor={'forgot-email'}>อีเมล</label>
+      {error && <AuthError>{error}</AuthError>}
+      <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
+        <AuthField htmlFor="forgot-email" label="อีเมล">
           <FormInput
             id={'forgot-email'}
             name={'email'}
@@ -76,12 +61,12 @@ export default function ForgotPasswordForm() {
             autoComplete={'email'}
             placeholder={'your@email.com'}
           />
-        </div>
+        </AuthField>
         <FormButton type={'submit'} block pending={loading} disabled={loading}>
           {loading ? 'กำลังส่ง...' : 'ส่งลิงก์รีเซ็ตรหัสผ่าน'}
         </FormButton>
       </form>
-      <p className={styles.switchLink}><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></p>
+      <AuthFootnote><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></AuthFootnote>
     </>
   );
 }

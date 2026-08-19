@@ -1,82 +1,29 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import styles from './loading.module.css';
-
-function Skeleton({ className = '' }: { className?: string }) {
-  return <span className={`${styles.skeleton} ${className}`} />;
-}
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardLoading() {
   return (
     <>
       <Navbar />
-      <main
-        className={styles.main}
-        aria-busy="true"
-        aria-label="กำลังโหลดแดชบอร์ดการเรียน"
-      >
-        <p className={styles.visuallyHidden}>กำลังโหลดแดชบอร์ดการเรียน กรุณารอสักครู่</p>
-        <div className="container" aria-hidden="true">
-          <header className={styles.header} data-dashboard-loading="header">
-            <div className={styles.headerCopy}>
-              <Skeleton className={styles.eyebrow} />
-              <Skeleton className={styles.title} />
-              <Skeleton className={styles.description} />
-            </div>
-            <div className={styles.navigation} data-dashboard-loading="account-navigation">
-              <Skeleton className={styles.navItem} />
-              <Skeleton className={styles.navItem} />
-              <Skeleton className={`${styles.navItem} ${styles.navItemShort}`} />
-            </div>
+      <main className="min-h-screen bg-muted/20 py-10 sm:py-14" aria-busy="true" aria-label="กำลังโหลดแดชบอร์ดการเรียน">
+        <p className="sr-only">กำลังโหลดแดชบอร์ดการเรียน กรุณารอสักครู่</p>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-hidden="true">
+          <header className="flex flex-col gap-6 border-b pb-8 lg:flex-row lg:items-end lg:justify-between" data-dashboard-loading="header">
+            <div className="grid flex-1 gap-3"><Skeleton className="h-4 w-32" /><Skeleton className="h-10 w-80 max-w-full" /><Skeleton className="h-5 w-[32rem] max-w-full" /></div>
+            <div className="flex gap-2" data-dashboard-loading="account-navigation"><Skeleton className="h-9 w-28" /><Skeleton className="h-9 w-28" /><Skeleton className="h-9 w-24" /></div>
           </header>
-
-          <section className={styles.stats}>
-            {[1, 2, 3, 4].map((item) => (
-              <div className={styles.stat} data-dashboard-loading-stat="true" key={item}>
-                <Skeleton className={styles.statLabel} />
-                <Skeleton className={styles.statValue} />
-              </div>
-            ))}
+          <section className="my-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => <Card data-dashboard-loading-stat="true" key={item}><CardContent className="grid gap-3 p-5"><Skeleton className="h-4 w-20" /><Skeleton className="h-9 w-14" /></CardContent></Card>)}
           </section>
-
-          <section className={styles.continueSection} data-dashboard-loading="continuation">
-            <div className={styles.sectionHead}>
-              <div className={styles.sectionHeading}>
-                <Skeleton className={styles.sectionLabel} />
-                <Skeleton className={styles.sectionTitle} />
-              </div>
-              <Skeleton className={styles.sectionMeta} />
-            </div>
-            <div className={styles.continueFeature}>
-              <div className={styles.media} />
-              <div className={styles.featureContent}>
-                <Skeleton className={styles.status} />
-                <Skeleton className={styles.featureTitle} />
-                <Skeleton className={styles.progress} />
-                <Skeleton className={styles.featureAction} />
-              </div>
-            </div>
+          <section className="mt-10" data-dashboard-loading="continuation">
+            <div className="mb-5 flex items-end justify-between"><div className="grid gap-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-8 w-56" /></div><Skeleton className="h-4 w-28" /></div>
+            <Card className="overflow-hidden"><div className="grid lg:grid-cols-2"><Skeleton className="min-h-64 rounded-none" /><CardContent className="grid content-center gap-5 p-7"><Skeleton className="h-6 w-28" /><Skeleton className="h-8 w-72 max-w-full" /><Skeleton className="h-2 w-full" /><Skeleton className="h-5 w-40" /></CardContent></div></Card>
           </section>
-
-          <section data-dashboard-loading="course-index">
-            <div className={styles.sectionHead}>
-              <div className={styles.sectionHeading}>
-                <Skeleton className={styles.sectionLabel} />
-                <Skeleton className={styles.sectionTitle} />
-              </div>
-              <Skeleton className={styles.sectionMeta} />
-            </div>
-            <div className={styles.courseList}>
-              {[1, 2, 3].map((item) => (
-                <div className={styles.courseRow} key={item}>
-                  <Skeleton className={styles.index} />
-                  <Skeleton className={styles.courseTitle} />
-                  <Skeleton className={styles.courseProgress} />
-                  <Skeleton className={styles.courseStatus} />
-                  <Skeleton className={styles.courseAction} />
-                </div>
-              ))}
-            </div>
+          <section className="mt-12" data-dashboard-loading="course-index">
+            <div className="mb-5 flex items-end justify-between"><div className="grid gap-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-8 w-40" /></div><Skeleton className="h-9 w-32" /></div>
+            <div className="grid gap-3">{[1, 2, 3].map((item) => <Card key={item}><CardContent className="grid gap-3 p-5 sm:grid-cols-[2.5rem_minmax(0,1fr)_12rem_auto]"><Skeleton className="h-5 w-6" /><Skeleton className="h-5 w-64 max-w-full" /><Skeleton className="h-2 w-full" /><Skeleton className="h-6 w-16" /></CardContent></Card>)}</div>
           </section>
         </div>
       </main>

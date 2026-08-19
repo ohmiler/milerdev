@@ -1,6 +1,50 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { buttonVariants } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+
+const reviewStyles = {
+  section: 'mt-8',
+  summary: 'mb-6 grid gap-6 rounded-xl border bg-card p-6 md:grid-cols-[12rem_minmax(0,1fr)]',
+  average: 'grid content-center justify-items-center gap-2 border-b pb-5 md:border-b-0 md:border-r md:pb-0 md:pr-6',
+  score: 'text-4xl font-bold tracking-tight',
+  total: 'text-sm text-muted-foreground',
+  distribution: 'grid gap-2',
+  distributionRow: 'grid grid-cols-[1rem_1rem_minmax(0,1fr)_2rem] items-center gap-2 text-sm data-[muted=true]:opacity-40',
+  distributionLabel: 'text-right',
+  distributionStar: 'size-4 text-amber-400',
+  distributionCount: 'text-right text-muted-foreground',
+  actions: 'mb-5 flex flex-wrap items-center justify-between gap-3',
+  actionControls: 'flex flex-wrap gap-2',
+  select: 'h-9 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
+  filterClear: buttonVariants({ variant: 'ghost', size: 'sm' }),
+  writeButton: buttonVariants(),
+  form: 'mb-6 grid gap-5 rounded-xl border bg-card p-5',
+  field: 'grid gap-2',
+  label: 'text-sm font-medium',
+  error: 'rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive',
+  submit: buttonVariants({ className: 'w-fit' }),
+  success: 'mb-5 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700',
+  empty: 'grid justify-items-center gap-3 rounded-xl border border-dashed p-8 text-center text-muted-foreground',
+  emptyIcon: 'size-10',
+  emptyButton: 'mt-2',
+  list: 'grid gap-3',
+  row: 'rounded-xl border bg-card p-5',
+  rowHeader: 'flex flex-wrap items-start justify-between gap-3',
+  identity: 'flex items-center gap-3',
+  avatar: 'flex size-10 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary',
+  nameLine: 'flex flex-wrap items-center gap-2',
+  name: 'font-semibold',
+  verified: 'rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700',
+  date: 'mt-1 text-xs text-muted-foreground',
+  comment: 'mt-4 leading-7 text-muted-foreground',
+  pagination: 'mt-6 flex items-center justify-center gap-3',
+  pageButton: buttonVariants({ variant: 'outline', size: 'sm' }),
+  pageStatus: 'text-sm text-muted-foreground',
+};
 
 interface Review {
   id: string;
@@ -38,17 +82,14 @@ function StarRating({ rating, size = 16, interactive = false, onChange }: {
   const [hover, setHover] = useState(0);
 
   return (
-    <div style={{ display: 'flex', gap: '2px' }}>
+    <div className="flex gap-0.5 text-muted-foreground">
       {[1, 2, 3, 4, 5].map(star => (
         <svg
           key={star}
-          style={{
-            width: size,
-            height: size,
-            cursor: interactive ? 'pointer' : 'default',
-            color: star <= (hover || rating) ? '#f59e0b' : '#d1d5db',
-            transition: 'color 0.1s',
-          }}
+          className="text-muted-foreground transition data-[active=true]:text-amber-400 data-[interactive=true]:cursor-pointer"
+          data-active={star <= (hover || rating)}
+          data-interactive={interactive}
+          style={{ width: size, height: size }}
           fill="currentColor"
           viewBox="0 0 24 24"
           onClick={() => interactive && onChange?.(star)}
@@ -65,20 +106,8 @@ function StarRating({ rating, size = 16, interactive = false, onChange }: {
 function ReviewBar({ count, total }: { count: number; total: number }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
-    <div style={{
-      flex: 1,
-      height: '8px',
-      background: '#e2e8f0',
-      borderRadius: '4px',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        height: '100%',
-        width: `${pct}%`,
-        background: '#f59e0b',
-        borderRadius: '4px',
-        transition: 'width 0.3s',
-      }} />
+    <div className="h-2 overflow-hidden rounded-full bg-muted">
+      <div className="h-full rounded-full bg-amber-400" style={{ width: pct + '%' }} />
     </div>
   );
 }
@@ -165,64 +194,40 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
   };
 
   return (
-    <section className="course-reviews" aria-labelledby="course-reviews-title">
-      <h2 id="course-reviews-title" style={{
-        fontSize: '1.5rem',
-        fontWeight: 600,
-        marginBottom: '24px',
-        color: '#1e293b',
-      }}>
+    <section className={reviewStyles.section} aria-labelledby="course-reviews-title">
+      <h2 className="mb-5 text-2xl font-bold tracking-tight" id="course-reviews-title">
         รีวิวจากผู้เรียน
       </h2>
 
       {/* Stats Summary */}
       {stats && stats.totalReviews > 0 && (
-        <div className="course-reviews__summary" style={{
-          display: 'flex',
-          gap: '32px',
-          marginBottom: '32px',
-          padding: '24px',
-          background: '#f8fafc',
-          borderRadius: '12px',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-        }}>
+        <div className={reviewStyles.summary}>
           {/* Average */}
-          <div style={{ textAlign: 'center', minWidth: '120px' }}>
-            <div style={{ fontSize: '3rem', fontWeight: 700, color: '#1e293b', lineHeight: 1 }}>
+          <div className={reviewStyles.average}>
+            <div className={reviewStyles.score}>
               {stats.avgRating.toFixed(1)}
             </div>
             <StarRating rating={Math.round(stats.avgRating)} size={20} />
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginTop: '4px' }}>
+            <div className={reviewStyles.total}>
               {stats.totalReviews} รีวิว
             </div>
           </div>
 
           {/* Distribution */}
-          <div style={{ flex: 1, minWidth: '200px' }}>
+          <div className={reviewStyles.distribution}>
             {[5, 4, 3, 2, 1].map(star => (
               <button
                 key={star}
                 onClick={() => setFilterRating(filterRating === star ? null : star)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  padding: '3px 0',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  opacity: filterRating && filterRating !== star ? 0.4 : 1,
-                  transition: 'opacity 0.15s',
-                }}
+                className={reviewStyles.distributionRow}
+                data-muted={Boolean(filterRating && filterRating !== star)}
               >
-                <span style={{ fontSize: '0.8125rem', color: '#64748b', width: '12px' }}>{star}</span>
-                <svg style={{ width: 14, height: 14, color: '#f59e0b' }} fill="currentColor" viewBox="0 0 24 24">
+                <span className={reviewStyles.distributionLabel}>{star}</span>
+                <svg className={reviewStyles.distributionStar} fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                 </svg>
                 <ReviewBar count={stats.distribution[star] || 0} total={stats.totalReviews} />
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8', width: '28px', textAlign: 'right' }}>
+                <span className={reviewStyles.distributionCount}>
                   {stats.distribution[star] || 0}
                 </span>
               </button>
@@ -232,25 +237,12 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
       )}
 
       {/* Actions */}
-      <div className="course-reviews__actions" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-        gap: '12px',
-      }}>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div className={reviewStyles.actions}>
+        <div className={reviewStyles.actionControls}>
           <select
             value={sort}
             onChange={(e) => { setSort(e.target.value); setCurrentPage(1); }}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              background: 'white',
-              fontSize: '0.875rem',
-            }}
+            className={reviewStyles.select}
           >
             <option value="latest">ล่าสุด</option>
             <option value="highest">คะแนนสูงสุด</option>
@@ -259,15 +251,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
           {filterRating && (
             <button
               onClick={() => setFilterRating(null)}
-              style={{
-                padding: '6px 12px',
-                background: 'var(--accent-soft)',
-                color: 'var(--accent-strong)',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '0.8125rem',
-                cursor: 'pointer',
-              }}
+              className={reviewStyles.filterClear}
             >
               ล้างตัวกรอง ({filterRating} ดาว) ✕
             </button>
@@ -277,16 +261,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
         {isEnrolled && !submitSuccess && (
           <button
             onClick={() => setShowForm(!showForm)}
-            style={{
-              padding: '10px 20px',
-              background: 'var(--accent)',
-              color: 'var(--accent-foreground)',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}
+            className={reviewStyles.writeButton}
           >
             {showForm ? 'ยกเลิก' : 'เขียนรีวิว'}
           </button>
@@ -295,57 +270,33 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
 
       {/* Review Form */}
       {showForm && (
-        <div style={{
-          padding: '24px',
-          background: 'white',
-          border: '1px solid #e2e8f0',
-          borderRadius: '12px',
-          marginBottom: '24px',
-        }}>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+        <div className={reviewStyles.form}>
+          <div className={reviewStyles.field}>
+            <label className={reviewStyles.label}>
               คะแนน *
             </label>
             <StarRating rating={formRating} size={32} interactive onChange={setFormRating} />
           </div>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, color: '#1e293b' }}>
+          <div className={reviewStyles.field}>
+            <label className={reviewStyles.label}>
               ความคิดเห็น
             </label>
-            <textarea
+            <Textarea
               value={formComment}
               onChange={(e) => setFormComment(e.target.value)}
               placeholder="แชร์ประสบการณ์การเรียนของคุณ..."
               rows={4}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '0.9375rem',
-                resize: 'vertical',
-                lineHeight: 1.6,
-              }}
             />
           </div>
           {submitError && (
-            <div style={{ color: '#dc2626', fontSize: '0.875rem', marginBottom: '12px' }}>
+            <div className={reviewStyles.error} role="alert">
               {submitError}
             </div>
           )}
           <button
             onClick={handleSubmit}
             disabled={submitting || formRating === 0}
-            style={{
-              padding: '10px 24px',
-              background: submitting ? '#94a3b8' : 'var(--accent)',
-              color: submitting ? 'var(--ink)' : 'var(--accent-foreground)',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 500,
-              cursor: submitting ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem',
-            }}
+            className={reviewStyles.submit}
           >
             {submitting ? 'กำลังส่ง...' : 'ส่งรีวิว'}
           </button>
@@ -353,102 +304,52 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
       )}
 
       {submitSuccess && (
-        <div style={{
-          padding: '16px 20px',
-          background: '#dcfce7',
-          color: '#16a34a',
-          borderRadius: '8px',
-          marginBottom: '24px',
-          fontSize: '0.875rem',
-        }}>
+        <div className={reviewStyles.success} role="status">
           ขอบคุณสำหรับรีวิวของคุณ!
         </div>
       )}
 
       {/* Reviews List */}
       {loading && reviews.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-          กำลังโหลดรีวิว...
+        <div className="grid gap-3" role="status" aria-label="กำลังโหลดรีวิว">
+          <Skeleton className="h-24 w-full" /><Skeleton className="h-24 w-full" />
         </div>
       ) : reviews.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '48px 20px',
-          color: '#64748b',
-          background: '#f8fafc',
-          borderRadius: '12px',
-        }}>
-          <svg style={{ width: 48, height: 48, margin: '0 auto 12px', color: '#cbd5e1' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={reviewStyles.empty}>
+          <svg className={reviewStyles.emptyIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
           <p>{filterRating ? 'ไม่พบรีวิวที่ตรงกับตัวกรอง' : 'ยังไม่มีรีวิว'}</p>
           {isEnrolled && !submitSuccess && (
             <button
               onClick={() => setShowForm(true)}
-              style={{
-                marginTop: '16px',
-                padding: '10px 20px',
-                background: 'var(--accent)',
-                color: 'var(--accent-foreground)',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-              }}
+              className={cn(reviewStyles.writeButton, reviewStyles.emptyButton)}
             >
               เป็นคนแรกที่รีวิว
             </button>
           )}
         </div>
       ) : (
-        <div className="course-reviews__list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className={reviewStyles.list}>
           {reviews.map(review => (
-            <article className="course-review-row" key={review.id} style={{
-              padding: '20px',
-              background: 'white',
-              border: '1px solid #e2e8f0',
-              borderRadius: '12px',
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '12px',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: 'var(--accent)',
-                    color: 'var(--accent-foreground)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                  }}>
+            <article className={reviewStyles.row} key={review.id}>
+              <div className={reviewStyles.rowHeader}>
+                <div className={reviewStyles.identity}>
+                  <div className={reviewStyles.avatar}>
                     {review.displayName?.charAt(0)?.toUpperCase() || '?'}
                   </div>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontWeight: 600, color: '#1e293b' }}>
+                    <div className={reviewStyles.nameLine}>
+                      <span className={reviewStyles.name}>
                         {review.displayName}
                       </span>
                       {review.isVerified && (
-                        <span style={{
-                          padding: '2px 8px',
-                          background: '#dcfce7',
-                          color: '#16a34a',
-                          borderRadius: '50px',
-                          fontSize: '0.6875rem',
-                          fontWeight: 500,
-                        }}>
+                        <span className={reviewStyles.verified}>
                           ผู้เรียนจริง
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <div className={reviewStyles.date}>
                       {formatDate(review.createdAt)}
                     </div>
                   </div>
@@ -456,13 +357,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
                 <StarRating rating={review.rating} size={16} />
               </div>
               {review.comment && (
-                <p style={{
-                  color: '#334155',
-                  lineHeight: 1.7,
-                  fontSize: '0.9375rem',
-                  margin: 0,
-                  whiteSpace: 'pre-line',
-                }}>
+                <p className={reviewStyles.comment}>
                   {review.comment}
                 </p>
               )}
@@ -473,43 +368,21 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '8px',
-          marginTop: '24px',
-        }}>
+        <div className={reviewStyles.pagination}>
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            style={{
-              padding: '8px 16px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              background: 'white',
-              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-              opacity: currentPage === 1 ? 0.5 : 1,
-              fontSize: '0.875rem',
-            }}
+            className={reviewStyles.pageButton}
           >
             ก่อนหน้า
           </button>
-          <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
+          <span className={reviewStyles.pageStatus}>
             หน้า {currentPage} จาก {pagination.totalPages}
           </span>
           <button
             onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
             disabled={currentPage === pagination.totalPages}
-            style={{
-              padding: '8px 16px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              background: 'white',
-              cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
-              opacity: currentPage === pagination.totalPages ? 0.5 : 1,
-              fontSize: '0.875rem',
-            }}
+            className={reviewStyles.pageButton}
           >
             ถัดไป
           </button>

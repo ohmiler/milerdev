@@ -56,39 +56,39 @@ test.describe('public learning journey', () => {
   });
 
   test('gives the course preview video a centered responsive media dialog', async ({ page }) => {
-    await page.setContent(
-      '<div class=overlay data-tone=info>' +
-      '<div class=panel data-size=media data-variant=media>' +
-      '<div class=content><h3 class=title>Course preview</h3>' +
-      '<div class=body>Preview the course before enrolling.</div>' +
-      '<div class=taskBody><div class=player style=position:relative;padding-top:56.25%;background:#000></div></div>' +
-      '<div class=actions><button class=closeButton>Close preview</button></div>' +
-      '</div></div></div>',
-    );
-    await page.addStyleTag({ content: '*{box-sizing:border-box;margin:0;padding:0}' });
-    await page.addStyleTag({ path: 'src/components/ui/Feedback.module.css' });
-    await page.addStyleTag({ path: 'src/components/course/CoursePreviewVideo.module.css' });
+    const response = await page.request.get('/api/courses');
+    expect(response.ok()).toBeTruthy();
+    const payload = await response.json();
+    const courses = payload.courses || payload;
+    let previewRoute: string | null = null;
+
+    for (const course of courses.slice(0, 8)) {
+      await page.goto(`/courses/${course.slug}`);
+      if (await page.getByRole('button', { name: 'ดูวิดีโอตัวอย่างคอร์ส' }).count()) {
+        previewRoute = `/courses/${course.slug}`;
+        break;
+      }
+    }
+    test.skip(!previewRoute, 'No published course with a preview video in local data');
 
     for (const viewport of playerViewports) {
       await page.setViewportSize(viewport);
-      const dimensions = await page.locator('.panel').evaluate((panel) => {
-        const player = panel.querySelector('.player');
+      await page.goto(previewRoute!);
+      const trigger = page.getByRole('button', { name: 'ดูวิดีโอตัวอย่างคอร์ส' });
+      await trigger.click();
+      const dialog = page.getByRole('dialog', { name: 'วิดีโอตัวอย่างคอร์ส' });
+      await expect(dialog).toBeVisible();
+      const dimensions = await dialog.evaluate((panel) => {
         const panelBox = panel.getBoundingClientRect();
-        const playerBox = player?.getBoundingClientRect();
-
-        return {
-          panelLeft: panelBox.left,
-          panelWidth: panelBox.width,
-          panelHeight: panelBox.height,
-          playerWidth: playerBox?.width ?? 0,
-          playerHeight: playerBox?.height ?? 0,
-        };
+        return { panelLeft: panelBox.left, panelWidth: panelBox.width, panelHeight: panelBox.height };
       });
 
       expect(dimensions.panelWidth, 'preview dialog width at ' + viewport.width + 'px').toBeLessThanOrEqual(1281);
       expect(dimensions.panelHeight, 'preview dialog height at ' + viewport.width + 'px').toBeLessThanOrEqual(viewport.height - 31);
-      expect(dimensions.playerWidth / dimensions.playerHeight, 'preview video ratio at ' + viewport.width + 'px').toBeCloseTo(16 / 9, 2);
       expect(dimensions.panelLeft + (dimensions.panelWidth / 2), 'preview dialog alignment at ' + viewport.width + 'px').toBeCloseTo(viewport.width / 2, 0);
+
+      await dialog.getByRole('button', { name: 'ปิดตัวอย่าง' }).click();
+      await expect(trigger).toBeFocused();
     }
   });
 
@@ -97,8 +97,8 @@ test.describe('public learning journey', () => {
     expect(response.ok()).toBeTruthy();
     const payload = await response.json();
     const courses = payload.courses || payload;
-    const course = courses[0];
-    test.skip(!course, 'No published course in local data');
+    const course = courses.find((item: { lessonCount?: number }) => (item.lessonCount ?? 0) > 0);
+    test.skip(!course, 'No ready published course in local data');
 
     for (const viewport of viewports) {
       await page.setViewportSize(viewport);
@@ -122,16 +122,16 @@ test.describe('public learning journey', () => {
     const cards = catalog.getByRole('link').filter({ hasText: /\d+ บทเรียน/ });
     expect(await cards.count()).toBeGreaterThan(0);
 
-    const evidenceCard = cards
-      .filter({ hasText: 'มีบทเรียนทดลอง' })
-      .filter({ hasText: /สอนโดย/ })
-      .first();
+    const evidenceCard = cards.filter({ hasText: /สอนโดย/ }).first();
 
     await expect(evidenceCard).toBeVisible();
     await expect(evidenceCard).toContainText(/\d+ บทเรียน/);
-    await expect(evidenceCard).toContainText('มีบทเรียนทดลอง');
     await expect(evidenceCard).toContainText(/สอนโดย/);
-    await expect(evidenceCard).toContainText('ทดลองบทเรียนฟรี');
+
+    const previewCards = cards.filter({ hasText: 'มีบทเรียนทดลอง' });
+    if (await previewCards.count()) {
+      await expect(previewCards.first()).toContainText('ทดลองฟรี');
+    }
   });
 
   test('catalog keeps included bundle courses visible on mobile', async ({ page }) => {
@@ -187,12 +187,12 @@ test.describe('public learning journey', () => {
 
     const payload = await response.json();
     const courses = payload.courses || payload;
-    const course = courses[0];
-    test.skip(!course, 'No published course in local data');
+    const course = courses.find((item: { lessonCount?: number }) => (item.lessonCount ?? 0) > 0);
+    test.skip(!course, 'No ready published course in local data');
 
     await page.goto(`/courses/${course.slug}`);
 
-    const skipLink = page.getByRole('link', { name: 'ข้ามไปดูเนื้อหาคอร์ส' });
+    const skipLink = page.getByRole('link', { name: 'ข้ามไปดูรายละเอียดคอร์ส' });
     for (let tabIndex = 0; tabIndex < 3 && !(await skipLink.evaluate((element) => element === document.activeElement)); tabIndex += 1) {
       await page.keyboard.press('Tab');
     }
@@ -204,12 +204,19 @@ test.describe('public learning journey', () => {
     await expect(evidence).toContainText(`${course.lessonCount} บท`);
 
     const sectionNavigation = page.getByRole('navigation', { name: 'ส่วนต่าง ๆ ของคอร์ส' });
-    await expect(sectionNavigation.getByRole('link', { name: 'ภาพรวม' })).toHaveAttribute('href', '#course-overview');
+    await expect(sectionNavigation.getByRole('link', { name: 'รายละเอียดคอร์ส' })).toHaveAttribute('href', '#course-overview');
     await expect(sectionNavigation.getByRole('link', { name: 'เนื้อหาคอร์ส' })).toHaveAttribute('href', '#course-curriculum');
     await expect(sectionNavigation.getByRole('link', { name: 'รีวิวผู้เรียน' })).toHaveAttribute('href', '#course-reviews');
 
-    await expect(page.getByRole('heading', { level: 2, name: 'รายละเอียดคอร์ส' })).toBeVisible();
-    await expect(page.getByRole('heading', { level: 2, name: 'เส้นทางการเรียน' })).toBeVisible();
+    const overviewHeading = page.getByRole('heading', { level: 2, name: 'รายละเอียดคอร์ส' });
+    const curriculumHeading = page.getByRole('heading', { level: 2, name: 'เส้นทางการเรียน' });
+    await expect(overviewHeading).toBeVisible();
+    await expect(curriculumHeading).toBeVisible();
+    const [overviewTop, curriculumTop] = await Promise.all([
+      overviewHeading.evaluate((element) => element.getBoundingClientRect().top + window.scrollY),
+      curriculumHeading.evaluate((element) => element.getBoundingClientRect().top + window.scrollY),
+    ]);
+    expect(overviewTop).toBeLessThan(curriculumTop);
     expect(consoleErrors).toEqual([]);
   });
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   requirePublishedBundleCourses,
+  requireReadyBundleCourses,
 } from '@/lib/bundle-commerce';
 
 describe('bundle commerce integrity', () => {
@@ -20,5 +21,22 @@ describe('bundle commerce integrity', () => {
     expect(() => requirePublishedBundleCourses(rows)).toThrowError(
       expect.objectContaining({ code }),
     );
+  });
+
+  it('accepts enrollment only when every published child has lessons', () => {
+    expect(requireReadyBundleCourses([
+      { id: 'course-b', status: 'published', lessonCount: 2 },
+      { id: 'course-a', status: 'published', lessonCount: 1 },
+    ])).toEqual(['course-a', 'course-b']);
+  });
+
+  it('reports every child that has no lessons', () => {
+    expect(() => requireReadyBundleCourses([
+      { id: 'course-a', status: 'published', lessonCount: 0 },
+      { id: 'course-b', status: 'published', lessonCount: 3 },
+    ])).toThrowError(expect.objectContaining({
+      code: 'BUNDLE_CHILD_NOT_READY',
+      blockingCourseIds: ['course-a'],
+    }));
   });
 });

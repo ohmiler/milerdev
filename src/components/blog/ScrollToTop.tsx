@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import styles from './BlogControls.module.css';
+import { ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false);
@@ -15,18 +16,17 @@ export default function ScrollToTop() {
   if (!visible) return null;
 
   return (
-    <button
+    <Button
       type={'button'}
-      className={styles.scrollTop}
+      size="icon"
+      className="fixed right-5 bottom-5 z-40 rounded-full shadow-lg"
       onClick={() => {
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
       }}
       aria-label={'กลับขึ้นด้านบน'}
     >
-      <svg viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} strokeWidth={2.5} aria-hidden={true}>
-        <polyline points={'18 15 12 9 6 15'} />
-      </svg>
-    </button>
+      <ChevronUp aria-hidden="true" />
+    </Button>
   );
 }

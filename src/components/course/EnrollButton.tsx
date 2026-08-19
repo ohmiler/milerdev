@@ -5,7 +5,52 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import DialogShell from '@/components/ui/DialogShell';
 import Modal from '@/components/ui/Modal';
-import styles from './EnrollButton.module.css';
+import { buttonVariants } from '@/components/ui/button';
+import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
+
+const styles = {
+  primaryButton: buttonVariants({ className: 'w-full' }),
+  successButton: 'bg-emerald-600 text-white hover:bg-emerald-700',
+  discountSummary: 'grid gap-1 rounded-lg bg-primary/5 p-4',
+  originalPrice: 'text-sm text-muted-foreground line-through',
+  effectivePrice: 'text-2xl text-primary',
+  couponSaving: 'text-sm text-muted-foreground',
+  dialogAmount: 'text-foreground',
+  couponPanel: 'grid gap-2 rounded-lg border bg-muted/30 p-4',
+  fieldLabel: 'text-sm font-medium text-foreground',
+  couponApplied: 'flex items-center justify-between gap-3',
+  couponCode: 'font-mono font-semibold text-primary',
+  couponDescription: 'ml-2 text-sm text-muted-foreground',
+  textButton: buttonVariants({ variant: 'ghost', size: 'sm' }),
+  dangerText: 'text-destructive hover:text-destructive',
+  couponInputRow: 'flex gap-2',
+  couponInput: 'h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
+  compactButton: buttonVariants({ variant: 'outline', size: 'sm' }),
+  errorText: 'text-sm text-destructive',
+  methodList: 'grid gap-3',
+  methodButton: 'flex w-full items-center gap-4 rounded-lg border bg-background p-4 text-left transition hover:border-primary/50 hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-50',
+  methodIcon: 'flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary',
+  transferIcon: 'bg-emerald-500/10 text-emerald-700',
+  methodTitle: 'font-semibold text-foreground',
+  methodDescription: 'mt-1 text-sm text-muted-foreground',
+  secondaryButton: buttonVariants({ variant: 'outline' }),
+  bankInfo: 'rounded-lg border bg-muted/30 p-4',
+  bankInfoLabel: 'mb-3 font-semibold text-foreground',
+  bankRows: 'grid gap-2 text-sm',
+  bankRow: 'flex items-center justify-between gap-4',
+  accountNumber: 'font-mono tracking-wide',
+  amount: 'text-lg text-primary',
+  uploadField: 'grid gap-2',
+  uploadButton: 'flex w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center transition hover:border-primary/50 hover:bg-primary/5',
+  uploadTitle: 'font-medium text-foreground',
+  uploadHint: 'mt-1 text-sm text-muted-foreground',
+  slipPreview: 'relative overflow-hidden rounded-lg border bg-muted',
+  removePreviewButton: 'absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-background/90 text-lg shadow-sm hover:bg-background',
+  hiddenInput: 'hidden',
+  errorPanel: 'grid gap-1 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive',
+  loadingContent: 'inline-flex items-center gap-2',
+  spinner: 'size-4 animate-spin rounded-full border-2 border-current border-t-transparent',
+};
 
 interface EnrollButtonProps {
   courseId: string;
@@ -66,6 +111,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     if (status === 'loading') return;
     
     if (!session) {
+      updateEnrolled(false);
       setChecking(false);
       return;
     }
@@ -75,7 +121,10 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       .then((data) => {
         updateEnrolled(data.enrolled);
       })
-      .catch(console.error)
+      .catch((error) => {
+        console.error(error);
+        updateEnrolled(false);
+      })
       .finally(() => setChecking(false));
   }, [session, status, courseId, updateEnrolled]);
 
@@ -87,6 +136,11 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
 
     // ถ้าคอร์สมีราคา → แสดงตัวเลือกช่องทางชำระเงิน
     if (price > 0) {
+      trackClientAnalyticsEvent({
+        eventName: 'checkout_opened',
+        courseId,
+        placement: 'course_detail',
+      });
       setPaymentStep('method');
       return;
     }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import styles from '@/components/account/LearnerAccount.module.css';
+import { learnerAccountStyles as styles } from '@/components/account/learner-account-styles';
 
 interface Payment {
   id: string;
@@ -92,7 +92,7 @@ export default function PaymentsClient() {
     return (
       <section className={styles.state} aria-live="polite" aria-busy="true">
         <div className={styles.stateInner}>
-          <p className={styles.stateCode}>SYNCING PAYMENT RECORDS</p>
+          <p className={styles.stateCode}>กำลังโหลดรายการชำระเงิน</p>
           <h2>กำลังโหลดรายการชำระเงิน</h2>
           <div className={styles.loadingBar} aria-hidden="true" />
         </div>
@@ -104,7 +104,7 @@ export default function PaymentsClient() {
     return (
       <section className={styles.state} role="alert">
         <div className={styles.stateInner}>
-          <p className={styles.stateCode}>PAYMENT RECORDS UNAVAILABLE</p>
+          <p className={styles.stateCode}>ไม่สามารถโหลดรายการชำระเงิน</p>
           <h2>ยังดึงรายการชำระเงินไม่ได้</h2>
           <p>ตรวจสอบการเชื่อมต่อหรือสถานะการเข้าสู่ระบบ แล้วลองโหลดข้อมูลอีกครั้ง</p>
           <button className={styles.primaryAction} type="button" onClick={retry}>ลองใหม่</button>
@@ -117,7 +117,7 @@ export default function PaymentsClient() {
     return (
       <section className={styles.state}>
         <div className={styles.stateInner}>
-          <p className={styles.stateCode}>NO PAYMENT RECORDS</p>
+          <p className={styles.stateCode}>ยังไม่มีรายการชำระเงิน</p>
           <h2>ยังไม่มีประวัติการชำระเงิน</h2>
           <p>เมื่อคุณชำระเงินสำหรับคอร์สหรือชุดคอร์ส รายการและสถานะจะปรากฏที่นี่</p>
           <Link className={styles.primaryAction} href="/courses">เลือกคอร์สเรียน</Link>
@@ -137,7 +137,7 @@ export default function PaymentsClient() {
       <section aria-labelledby="payment-records-title">
         <div className={styles.sectionHead}>
           <div>
-            <p className={styles.sectionLabel}>Payment ledger</p>
+            <p className={styles.sectionLabel}>ประวัติการชำระเงิน</p>
             <h2 id="payment-records-title">รายการล่าสุด</h2>
           </div>
           <p className={styles.sectionNote}>{payments.length} รายการ</p>

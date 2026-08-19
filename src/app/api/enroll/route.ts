@@ -10,6 +10,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 import { safeInsertEnrollment } from "@/lib/db/safe-insert";
+import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/course-availability";
 
 // Validation schema
 const enrollSchema = z.object({
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
         // Check if course exists
         const course = await db.query.courses.findFirst({
             where: eq(courses.id, courseId),
+            with: { lessons: { columns: { id: true } } },
         });
 
         if (!course || course.status !== 'published') {
@@ -75,6 +77,15 @@ export async function POST(request: Request) {
         const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
         const isPromoActive = hasPromo && promoStartOk && promoEndOk;
         const coursePrice = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
+
+        const isPaidFulfillmentAttempt = coursePrice > 0 && Boolean(paymentId);
+        if (!isPaidFulfillmentAttempt) {
+            try {
+                requireCourseHasLessons(course.lessons.length);
+            } catch {
+                return NextResponse.json({ error: COURSE_NOT_READY }, { status: 409 });
+            }
+        }
 
         // If course is paid, verify payment
         if (coursePrice > 0 && paymentId) {

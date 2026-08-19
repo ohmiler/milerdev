@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import styles from './BlogControls.module.css';
+import { ChevronDown, List } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface TocItem {
   id: string;
@@ -63,34 +65,26 @@ export default function TableOfContents({ contentHtml }: Props) {
   if (isMobile === null || isMobile || items.length < 2) return null;
 
   return (
-    <div className={styles.toc} data-open={open || undefined}>
-      <button
+    <div data-open={open || undefined}>
+      <Button
         type={'button'}
-        className={styles.tocToggle}
+        variant="ghost"
+        className="w-full justify-between px-2"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-controls={'blog-toc-items'}
       >
-        <span>
-          <svg viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} strokeWidth={2} aria-hidden={true}>
-            <line x1={3} y1={6} x2={21} y2={6} />
-            <line x1={3} y1={12} x2={15} y2={12} />
-            <line x1={3} y1={18} x2={18} y2={18} />
-          </svg>
-          สารบัญบทความ
-        </span>
-        <svg className={styles.tocChevron} viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} strokeWidth={2} aria-hidden={true}>
-          <polyline points={'6 9 12 15 18 9'} />
-        </svg>
-      </button>
+        <span className="inline-flex items-center gap-2"><List />สารบัญบทความ</span>
+        <ChevronDown className={cn('transition-transform', open && 'rotate-180')} aria-hidden="true" />
+      </Button>
 
       {open ? (
-        <nav id={'blog-toc-items'} className={styles.tocItems} aria-label={'หัวข้อในบทความ'}>
+        <nav id="blog-toc-items" className="mt-3 space-y-1 border-t pt-3" aria-label="หัวข้อในบทความ">
           {items.map((item) => (
             <a
               key={item.id}
               href={`#${item.id}`}
-              className={styles.tocLink}
+              className={cn('block rounded-lg px-3 py-2 text-sm leading-5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground', activeId === item.id && 'bg-primary/10 font-semibold text-primary')}
               data-active={activeId === item.id || undefined}
               aria-current={activeId === item.id ? 'location' : undefined}
               onClick={(event) => {

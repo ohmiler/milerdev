@@ -16,7 +16,7 @@ const inserted: Record<string, unknown>[] = [];
 
 function queryChain(result: unknown[]) {
   const chain: Record<string, unknown> = {};
-  for (const method of ['from', 'innerJoin', 'where', 'orderBy']) {
+  for (const method of ['from', 'innerJoin', 'where', 'orderBy', 'groupBy']) {
     chain[method] = vi.fn(() => chain);
   }
   chain.limit = vi.fn(() => Promise.resolve(result));
@@ -67,6 +67,7 @@ describe('PromptPay intent creation boundary', () => {
         id: 'course-1', title: 'Course', price: '990.00', promoPrice: null,
         promoStartsAt: null, promoEndsAt: null, status: 'published',
       }],
+      [{ lessonCount: 1 }],
       [],
     );
     const { POST } = await import('@/app/api/promptpay/intents/route');
@@ -98,6 +99,22 @@ describe('PromptPay intent creation boundary', () => {
     expect(inserted).toHaveLength(0);
   });
 
+  it('does not create an intent for a course with no lessons', async () => {
+    selectQueue.push(
+      [{
+        id: 'course-1', title: 'Course', price: '990.00', promoPrice: null,
+        promoStartsAt: null, promoEndsAt: null, status: 'published',
+      }],
+      [{ lessonCount: 0 }],
+    );
+    const { POST } = await import('@/app/api/promptpay/intents/route');
+    const response = await POST(request({ courseId: 'course-1' }));
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ error: 'COURSE_NOT_READY' });
+    expect(inserted).toHaveLength(0);
+  });
+
   it('rejects a bundle before payment creation when any locked child is not published', async () => {
     selectQueue.push([
       { id: 'course-1', status: 'published' },
@@ -107,6 +124,22 @@ describe('PromptPay intent creation boundary', () => {
     const response = await POST(request({ bundleId: 'bundle-1' }));
 
     expect(response.status).toBe(409);
+    expect(inserted).toHaveLength(0);
+  });
+
+  it('rejects a bundle when any published child has no lessons', async () => {
+    selectQueue.push(
+      [
+        { id: 'course-1', status: 'published' },
+        { id: 'course-2', status: 'published' },
+      ],
+      [{ courseId: 'course-1', lessonCount: 2 }],
+    );
+    const { POST } = await import('@/app/api/promptpay/intents/route');
+    const response = await POST(request({ bundleId: 'bundle-1' }));
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ error: 'BUNDLE_NOT_READY' });
     expect(inserted).toHaveLength(0);
   });
 

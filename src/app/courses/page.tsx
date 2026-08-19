@@ -3,10 +3,14 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
 import { and, asc, count, desc, eq, gt, like, sql } from 'drizzle-orm';
-import styles from './courses.module.css';
 
 export const revalidate = 300;
 
@@ -317,63 +321,62 @@ export default async function CoursesPage({ searchParams }: Props) {
 
   const { courses: courseList, pagination } = coursesData;
 
+  const selectClass = 'h-11 w-full rounded-xl border border-input bg-background px-3.5 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/30';
+
   return (
     <>
       <Navbar />
-      <main className={styles.page}>
-        <header className={styles.hero}>
-          <div className={'container'}>
-            <p className={styles.eyebrow}>COURSE DIRECTORY / {String(pagination.total).padStart(2, '0')}</p>
-            <div className={styles.heroGrid}>
-              <h1>เลือกคอร์สที่พาไปถึงงานชิ้นถัดไป</h1>
-              <p className={styles.heroLede}>เปรียบเทียบหัวข้อ ราคา และบทเรียนที่เปิดให้ทดลอง แล้วเลือกจุดเริ่มต้นที่ตรงกับทักษะที่คุณอยากพัฒนาจริง</p>
+      <main key={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort })} className="bg-[var(--academy-canvas)]">
+        <header className="border-b bg-[radial-gradient(circle_at_12%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
+          <div className="container">
+            <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16">
+              <h1 className="max-w-4xl text-4xl leading-[1.15] font-semibold tracking-[-.04em] text-balance sm:text-5xl lg:text-6xl">เลือกคอร์สที่พาไปถึงงานชิ้นถัดไป</h1>
+              <p className="max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">เปรียบเทียบหัวข้อ ราคา และบทเรียนที่เปิดให้ทดลอง แล้วเลือกจุดเริ่มต้นที่ตรงกับทักษะที่คุณอยากพัฒนาจริง</p>
             </div>
           </div>
         </header>
-        <section id="course-catalog" className={styles.catalog} aria-labelledby="courses-catalog-title">
-          <div className={'container ' + styles.catalogLayout}>
-            <header className={styles.sectionHeader}>
-              <p>01 / Course catalog</p>
-              <div><h2 id="courses-catalog-title">คอร์สทั้งหมด</h2><p>ใช้ตัวกรองเพื่อย่อรายการ แล้วดูรายละเอียดจริงของแต่ละคอร์สก่อนตัดสินใจ</p></div>
-              <span aria-live="polite">พบ {pagination.total} คอร์ส</span>
+
+        <section id="course-catalog" className="py-14 sm:py-20" aria-labelledby="courses-catalog-title">
+          <div className="container">
+            <header className="mb-8 grid gap-4 border-b pb-7 md:grid-cols-[1fr_auto] md:items-end">
+              <div><h2 id="courses-catalog-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">คอร์สทั้งหมด</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">ใช้ตัวกรองเพื่อย่อรายการ แล้วดูรายละเอียดจริงของแต่ละคอร์สก่อนตัดสินใจ</p></div>
+              <Badge variant="secondary" aria-live="polite">พบ {pagination.total} คอร์ส</Badge>
             </header>
-            <aside className={styles.filterPanel} aria-label="ตัวกรองคอร์ส">
-                <div className={styles.filterIntro}><span>Filter desk</span><strong>คัดให้เหลือสิ่งที่ใช่</strong></div>
-                <form method="GET" action="/courses" className={styles.filterForm}>
-                  <div className={styles.searchField}><label htmlFor="course-search">ค้นหาจากชื่อคอร์ส</label><input id="course-search" type="search" name="search" defaultValue={search} placeholder="เช่น JavaScript, React" /></div>
-                  <div className={styles.filterField}><label htmlFor="course-price">ราคา</label><select id="course-price" name="price" defaultValue={priceFilter}><option value="all">ทุกราคา</option><option value="free">ฟรี</option><option value="paid">มีค่าใช้จ่าย</option></select></div>
-                  <div className={styles.filterField}><label htmlFor="course-tag">หัวข้อ</label><select id="course-tag" name="tag" defaultValue={tagFilter}><option value="all">ทุกหัวข้อ</option>{allTags.map((tag) => <option key={tag.id} value={tag.slug}>{tag.name}</option>)}</select></div>
-                  <div className={styles.filterField}><label htmlFor="course-sort">เรียงตาม</label><select id="course-sort" name="sort" defaultValue={sort}><option value="newest">ใหม่ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="price-low">ราคาต่ำไปสูง</option><option value="price-high">ราคาสูงไปต่ำ</option></select></div>
-                  <div className={styles.filterActions}><button type='submit'>แสดงผลลัพธ์</button>{hasActiveFilters && <Link href='/courses'>ล้างตัวกรอง</Link>}</div>
+
+            <Card className="mb-10 shadow-[var(--academy-shadow-card)]" aria-label="ตัวกรองคอร์ส">
+              <CardHeader><CardTitle>คัดให้เหลือสิ่งที่ใช่</CardTitle></CardHeader>
+              <CardContent>
+                <form method="GET" action="/courses" className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.5fr)_repeat(3,minmax(9rem,.65fr))_auto] xl:items-end">
+                  <div className="space-y-2"><Label htmlFor="course-search">ค้นหาจากชื่อคอร์ส</Label><Input id="course-search" type="search" name="search" defaultValue={search} placeholder="เช่น JavaScript, React" /></div>
+                  <div className="space-y-2"><Label htmlFor="course-price">ราคา</Label><select className={selectClass} id="course-price" name="price" defaultValue={priceFilter}><option value="all">ทุกราคา</option><option value="free">ฟรี</option><option value="paid">มีค่าใช้จ่าย</option></select></div>
+                  <div className="space-y-2"><Label htmlFor="course-tag">หัวข้อ</Label><select className={selectClass} id="course-tag" name="tag" defaultValue={tagFilter}><option value="all">ทุกหัวข้อ</option>{allTags.map((tag) => <option key={tag.id} value={tag.slug}>{tag.name}</option>)}</select></div>
+                  <div className="space-y-2"><Label htmlFor="course-sort">เรียงตาม</Label><select className={selectClass} id="course-sort" name="sort" defaultValue={sort}><option value="newest">ใหม่ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="price-low">ราคาต่ำไปสูง</option><option value="price-high">ราคาสูงไปต่ำ</option></select></div>
+                  <div className="flex gap-2"><Button type="submit">แสดงผลลัพธ์</Button>{hasActiveFilters ? <Button variant="outline" asChild><Link href="/courses">ล้าง</Link></Button> : null}</div>
                 </form>
-            </aside>
-            <div className={styles.resultsHeader}><p>{search ? 'ผลการค้นหาสำหรับ “' + search + '”' : 'หลักสูตรที่เปิดให้เรียน'}</p><span>หน้า {pagination.page} / {Math.max(1, pagination.totalPages)}</span></div>
-        {courseList.length === 0 ? <div className="courses-empty"><p className="courses-empty__code">No matching courses</p><h3>ไม่พบคอร์สตามเงื่อนไขนี้</h3><p>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</p><Link href="/courses">ดูคอร์สทั้งหมด</Link></div> : <><div className="courses-grid">{courseList.map(course => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} price={parseFloat(course.price || '0')} promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null} isPromoActive={course.isPromoActive} instructorName={course.instructor?.name || null} lessonCount={course.lessonCount} totalDurationSeconds={course.totalDurationSeconds} hasFreePreview={course.hasFreePreview} tags={course.tags} />)}</div>{pagination.totalPages > 1 && <nav className="courses-pagination" aria-label="หน้ารายการคอร์ส">{currentPage > 1 && <Link className="courses-pagination__direction" href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:currentPage-1})}>← ก่อนหน้า</Link>}<div className="courses-pagination__pages">{Array.from({length:Math.min(5,pagination.totalPages)},(_,index)=>{let pageNumber;if(pagination.totalPages<=5)pageNumber=index+1;else if(currentPage<=3)pageNumber=index+1;else if(currentPage>=pagination.totalPages-2)pageNumber=pagination.totalPages-4+index;else pageNumber=currentPage-2+index;const isActive=currentPage===pageNumber;return <Link key={pageNumber} href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:pageNumber})} className={isActive?'is-active':''} aria-current={isActive?'page':undefined}>{pageNumber}</Link>})}</div>{currentPage < pagination.totalPages && <Link className="courses-pagination__direction" href={buildCoursesQuery({search,price:priceFilter,tag:tagFilter,sort,page:currentPage+1})}>ถัดไป →</Link>}</nav>}</>}</div></section>
-        {bundlesList.length > 0 && (
-          <section className={styles.bundles} aria-labelledby="courses-bundles-title">
+              </CardContent>
+            </Card>
+
+            <div className="mb-6 flex items-center justify-between gap-4"><p className="font-semibold">{search ? `ผลการค้นหาสำหรับ “${search}”` : 'หลักสูตรที่เปิดให้เรียน'}</p><span className="text-sm text-muted-foreground">หน้า {pagination.page} / {Math.max(1, pagination.totalPages)}</span></div>
+
+            {courseList.length === 0 ? (
+              <Card className="items-center py-14 text-center"><CardContent><h3 className="text-2xl font-semibold">ไม่พบคอร์สตามเงื่อนไขนี้</h3><p className="mt-2 text-muted-foreground">ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</p><Button className="mt-6" asChild><Link href="/courses">ดูคอร์สทั้งหมด</Link></Button></CardContent></Card>
+            ) : (
+              <>
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{courseList.map((course) => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} price={parseFloat(course.price || '0')} promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null} isPromoActive={course.isPromoActive} instructorName={course.instructor?.name || null} lessonCount={course.lessonCount} totalDurationSeconds={course.totalDurationSeconds} hasFreePreview={course.hasFreePreview} tags={course.tags} />)}</div>
+                {pagination.totalPages > 1 ? <nav className="mt-10 flex flex-wrap items-center justify-center gap-2" aria-label="หน้ารายการคอร์ส">{currentPage > 1 ? <Button variant="outline" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: currentPage - 1 })}>← ก่อนหน้า</Link></Button> : null}{Array.from({ length: Math.min(5, pagination.totalPages) }, (_, index) => { let pageNumber; if (pagination.totalPages <= 5) pageNumber = index + 1; else if (currentPage <= 3) pageNumber = index + 1; else if (currentPage >= pagination.totalPages - 2) pageNumber = pagination.totalPages - 4 + index; else pageNumber = currentPage - 2 + index; const isActive = currentPage === pageNumber; return <Button key={pageNumber} variant={isActive ? 'default' : 'outline'} size="icon-sm" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: pageNumber })} aria-current={isActive ? 'page' : undefined}>{pageNumber}</Link></Button>; })}{currentPage < pagination.totalPages ? <Button variant="outline" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: currentPage + 1 })}>ถัดไป →</Link></Button> : null}</nav> : null}
+              </>
+            )}
+          </div>
+        </section>
+
+        {bundlesList.length > 0 ? (
+          <section className="border-t bg-background py-14 sm:py-20" aria-labelledby="courses-bundles-title">
             <div className="container">
-              <header className={styles.sectionHeader}>
-                <p>02 / Learning paths</p>
-                <div><h2 id="courses-bundles-title">ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด</h2><p>รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div>
-                <span>{bundlesList.length} เส้นทาง</span>
-              </header>
-              <div className={styles.bundleList}>
-                {bundlesList.map((bundle) => (
-                  <Link key={bundle.id} href={'/bundles/' + bundle.slug} className={styles.bundle}>
-                    <div className={styles.bundleMeta}>Bundle · {bundle.courseCount} คอร์ส</div>
-                    <div className={styles.bundleContent}><h3>{bundle.title}</h3>{bundle.description && <p>{bundle.description.slice(0, 120)}{bundle.description.length > 120 ? '…' : ''}</p>}</div>
-                    <div className={styles.bundleCourses}>
-                      {bundle.courses.slice(0, 2).map((course, index) => <span key={bundle.id + '-' + index}>{course.courseTitle}</span>)}
-                      {bundle.courses.length > 2 && <span>+{bundle.courses.length - 2} คอร์ส</span>}
-                    </div>
-                    <div className={styles.bundlePrice}><span>฿{parseFloat(bundle.price).toLocaleString()}</span><s>฿{bundle.totalOriginalPrice.toLocaleString()}</s>{bundle.discount > 0 && <small>ประหยัด {bundle.discount}%</small>}</div>
-                    <span className={styles.bundleAction}>ดูรายละเอียด <span aria-hidden="true">→</span></span>
-                  </Link>
-                ))}
-              </div>
+              <header className="mb-8 grid gap-4 md:grid-cols-[1fr_auto] md:items-end"><div><h2 id="courses-bundles-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div><Badge variant="secondary">{bundlesList.length} เส้นทาง</Badge></header>
+              <div className="grid gap-5 lg:grid-cols-2">{bundlesList.map((bundle) => <Link key={bundle.id} href={`/bundles/${bundle.slug}`} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"><Card className="h-full transition-shadow group-hover:shadow-[var(--academy-shadow-card-hover)]"><CardHeader><div className="flex items-center justify-between gap-3"><Badge>Bundle · {bundle.courseCount} คอร์ส</Badge>{bundle.discount > 0 ? <Badge variant="destructive">ประหยัด {bundle.discount}%</Badge> : null}</div><CardTitle className="mt-3 text-2xl group-hover:text-primary">{bundle.title}</CardTitle>{bundle.description ? <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{bundle.description}</p> : null}</CardHeader><CardContent><div className="space-y-2 border-y py-4 text-sm">{bundle.courses.slice(0, 2).map((course, index) => <p key={`${bundle.id}-${index}`}>{String(index + 1).padStart(2, '0')} · {course.courseTitle}</p>)}{bundle.courses.length > 2 ? <p className="text-muted-foreground">+{bundle.courses.length - 2} คอร์ส</p> : null}</div><div className="mt-5 flex items-end justify-between gap-4"><div><strong className="text-2xl">฿{parseFloat(bundle.price).toLocaleString()}</strong><s className="ml-2 text-sm text-muted-foreground">฿{bundle.totalOriginalPrice.toLocaleString()}</s></div><span className="text-sm font-semibold text-primary">ดูรายละเอียด →</span></div></CardContent></Card></Link>)}</div>
             </div>
           </section>
-        )}
+        ) : null}
       </main>
       <Footer />
     </>

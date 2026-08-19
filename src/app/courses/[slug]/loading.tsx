@@ -1,43 +1,32 @@
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import styles from './course-detail.module.css';
-
-function Skeleton({ className = '' }: { className?: string }) {
-  return <span className={`${styles.skeleton} ${className}`} aria-hidden="true" />;
-}
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CourseDetailLoading() {
   return (
     <>
       <Navbar />
-      <main className={styles.page} aria-busy="true" aria-label="กำลังโหลดรายละเอียดคอร์ส">
-        <header className={styles.hero}>
-          <div className={styles.heroGrid}>
-            <div className={`${styles.heroContent} ${styles.loadingHero}`}>
-              <Skeleton className={styles.loadingBreadcrumb} />
-              <div className={styles.loadingTags}><Skeleton /><Skeleton /></div>
-              <Skeleton className={styles.loadingTitle} />
-              <Skeleton className={styles.loadingLede} />
-              <div className={styles.loadingFacts}><Skeleton /><Skeleton /><Skeleton /><Skeleton /></div>
+      <main className="min-h-screen bg-background" aria-busy="true" aria-label="กำลังโหลดรายละเอียดคอร์ส">
+        <header className="border-b bg-muted/30">
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:px-8 lg:py-16">
+            <div className="grid content-center gap-5">
+              <Skeleton className="h-4 w-64 max-w-full" />
+              <div className="flex gap-2"><Skeleton className="h-6 w-20 rounded-full" /><Skeleton className="h-6 w-24 rounded-full" /></div>
+              <Skeleton className="h-12 w-[42rem] max-w-full" />
+              <Skeleton className="h-6 w-[34rem] max-w-full" />
+              <div className="flex flex-wrap gap-8">{[1, 2, 3].map((item) => <Skeleton className="h-10 w-24" key={item} />)}</div>
             </div>
-            <aside className={styles.enrollment} aria-hidden="true">
-              <div className={`${styles.enrollPanel} ${styles.loadingPanel}`}>
-                <Skeleton className={styles.loadingMedia} />
-                <div><Skeleton className={styles.loadingPrice} /><Skeleton className={styles.loadingButton} /><Skeleton className={styles.loadingCopy} /></div>
-              </div>
-            </aside>
+            <Card className="overflow-hidden">
+              <Skeleton className="aspect-video w-full rounded-none" />
+              <CardContent className="grid gap-4 p-6"><Skeleton className="h-5 w-32" /><Skeleton className="h-9 w-28" /><Skeleton className="h-10 w-full" /><Skeleton className="h-4 w-full" /></CardContent>
+            </Card>
           </div>
         </header>
-        <section className={styles.body}>
-          <div className={styles.bodyGrid}>
-            <div className={`${styles.readingColumn} ${styles.loadingBody}`}>
-              <Skeleton className={styles.loadingSectionTitle} />
-              <Skeleton className={styles.loadingCopy} />
-              <Skeleton className={`${styles.loadingCopy} ${styles.loadingCopyShort}`} />
-              <Skeleton className={styles.loadingSectionTitle} />
-              {[1, 2, 3, 4].map((item) => <Skeleton key={item} className={styles.loadingLesson} />)}
-            </div>
-          </div>
+        <div className="border-b"><div className="mx-auto flex max-w-5xl gap-6 px-4 py-4 sm:px-6 lg:px-8">{[1, 2, 3, 4].map((item) => <Skeleton className="h-4 w-24" key={item} />)}</div></div>
+        <section className="mx-auto max-w-5xl space-y-12 px-4 py-12 sm:px-6 lg:px-8">
+          <div className="space-y-5"><Skeleton className="h-4 w-24" /><Skeleton className="h-8 w-56" /><Skeleton className="h-20 w-full" /><Skeleton className="h-20 w-5/6" /></div>
+          <div className="space-y-4"><Skeleton className="h-8 w-52" />{[1, 2, 3, 4].map((item) => <Skeleton className="h-16 w-full" key={item} />)}</div>
         </section>
       </main>
       <Footer />
