@@ -10,7 +10,6 @@ describe('PublicPageHeader', () => {
     const html = renderToStaticMarkup(
       <PublicPageHeader
         variant={variant}
-        eyebrow={eyebrow}
         title={title}
         description="ข้อความอธิบายหน้าสำหรับผู้เยี่ยมชม"
       />,
@@ -20,7 +19,7 @@ describe('PublicPageHeader', () => {
     expect(html).toContain('data-public-header=');
     expect(html).toContain('data-variant=');
     expect(html).toContain('<h1');
-    expect(html).toContain(eyebrow);
+    expect(html).not.toContain(eyebrow);
     expect(html).toContain(title);
     expect(html).toContain('ข้อความอธิบายหน้าสำหรับผู้เยี่ยมชม');
   });

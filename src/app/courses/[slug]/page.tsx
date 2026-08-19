@@ -240,7 +240,6 @@ export default async function CourseDetailPage({ params }: Props) {
                   </div>
                 )}
 
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Course brief</p>
                 <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-balance sm:text-5xl">{course.title}</h1>
                 {course.description && (
                   <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground text-pretty">{getExcerpt(course.description, 200)}</p>
@@ -300,8 +299,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
           <article className="mx-auto max-w-5xl space-y-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
             <section id="course-overview" className="scroll-mt-24" aria-labelledby="course-overview-title">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Overview</p>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight" id="course-overview-title">รายละเอียดคอร์ส</h2>
+              <h2 className="text-3xl font-bold tracking-tight" id="course-overview-title">รายละเอียดคอร์ส</h2>
               {course.description ? (
                 <div className="rich-content mt-6 max-w-3xl" dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }} />
               ) : (
@@ -314,8 +312,7 @@ export default async function CourseDetailPage({ params }: Props) {
             <section id="course-curriculum" className="scroll-mt-24" aria-labelledby="course-curriculum-title">
               <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Curriculum</p>
-                  <h2 className="mt-2 text-3xl font-bold tracking-tight" id="course-curriculum-title">เส้นทางการเรียน</h2>
+                  <h2 className="text-3xl font-bold tracking-tight" id="course-curriculum-title">เส้นทางการเรียน</h2>
                 </div>
                 {courseReady && (
                   <p className="text-sm text-muted-foreground">
@@ -330,8 +327,7 @@ export default async function CourseDetailPage({ params }: Props) {
               <>
                 <Separator />
                 <section id="course-instructor" className="scroll-mt-24" aria-labelledby="course-instructor-title">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Instructor</p>
-                  <h2 className="mt-2 text-3xl font-bold tracking-tight" id="course-instructor-title">รู้จักผู้สอน</h2>
+                  <h2 className="text-3xl font-bold tracking-tight" id="course-instructor-title">รู้จักผู้สอน</h2>
                   <Card className="mt-6 shadow-none"><CardContent className="flex items-center gap-4 p-5">
                     {instructorAvatarUrl ? (
                       <img src={instructorAvatarUrl} alt="" className="size-14 rounded-full object-cover" />
@@ -350,7 +346,6 @@ export default async function CourseDetailPage({ params }: Props) {
             <Separator />
 
             <section id="course-reviews" className="scroll-mt-24" aria-labelledby="course-reviews-title">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Learner reviews</p>
               <h2 id="course-reviews-title" className="sr-only">รีวิวผู้เรียน</h2>
               <div className="mt-5"><CourseReviewsWrapper courseSlug={course.slug} /></div>
             </section>

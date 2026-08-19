@@ -329,7 +329,6 @@ export default async function CoursesPage({ searchParams }: Props) {
       <main key={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort })} className="bg-[var(--academy-canvas)]">
         <header className="border-b bg-[radial-gradient(circle_at_12%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
           <div className="container">
-            <p className="mb-5 font-mono text-xs font-semibold tracking-[.18em] text-primary uppercase">Course directory / {String(pagination.total).padStart(2, '0')}</p>
             <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16">
               <h1 className="max-w-4xl text-4xl leading-[1.15] font-semibold tracking-[-.04em] text-balance sm:text-5xl lg:text-6xl">เลือกคอร์สที่พาไปถึงงานชิ้นถัดไป</h1>
               <p className="max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">เปรียบเทียบหัวข้อ ราคา และบทเรียนที่เปิดให้ทดลอง แล้วเลือกจุดเริ่มต้นที่ตรงกับทักษะที่คุณอยากพัฒนาจริง</p>
@@ -339,14 +338,13 @@ export default async function CoursesPage({ searchParams }: Props) {
 
         <section id="course-catalog" className="py-14 sm:py-20" aria-labelledby="courses-catalog-title">
           <div className="container">
-            <header className="mb-8 grid gap-4 border-b pb-7 md:grid-cols-[9rem_1fr_auto] md:items-end">
-              <p className="font-mono text-xs tracking-[.14em] text-primary uppercase">01 / Course catalog</p>
+            <header className="mb-8 grid gap-4 border-b pb-7 md:grid-cols-[1fr_auto] md:items-end">
               <div><h2 id="courses-catalog-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">คอร์สทั้งหมด</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">ใช้ตัวกรองเพื่อย่อรายการ แล้วดูรายละเอียดจริงของแต่ละคอร์สก่อนตัดสินใจ</p></div>
               <Badge variant="secondary" aria-live="polite">พบ {pagination.total} คอร์ส</Badge>
             </header>
 
             <Card className="mb-10 shadow-[var(--academy-shadow-card)]" aria-label="ตัวกรองคอร์ส">
-              <CardHeader><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Filter desk</p><CardTitle>คัดให้เหลือสิ่งที่ใช่</CardTitle></CardHeader>
+              <CardHeader><CardTitle>คัดให้เหลือสิ่งที่ใช่</CardTitle></CardHeader>
               <CardContent>
                 <form method="GET" action="/courses" className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.5fr)_repeat(3,minmax(9rem,.65fr))_auto] xl:items-end">
                   <div className="space-y-2"><Label htmlFor="course-search">ค้นหาจากชื่อคอร์ส</Label><Input id="course-search" type="search" name="search" defaultValue={search} placeholder="เช่น JavaScript, React" /></div>
@@ -361,7 +359,7 @@ export default async function CoursesPage({ searchParams }: Props) {
             <div className="mb-6 flex items-center justify-between gap-4"><p className="font-semibold">{search ? `ผลการค้นหาสำหรับ “${search}”` : 'หลักสูตรที่เปิดให้เรียน'}</p><span className="text-sm text-muted-foreground">หน้า {pagination.page} / {Math.max(1, pagination.totalPages)}</span></div>
 
             {courseList.length === 0 ? (
-              <Card className="items-center py-14 text-center"><CardContent><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">No matching courses</p><h3 className="mt-3 text-2xl font-semibold">ไม่พบคอร์สตามเงื่อนไขนี้</h3><p className="mt-2 text-muted-foreground">ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</p><Button className="mt-6" asChild><Link href="/courses">ดูคอร์สทั้งหมด</Link></Button></CardContent></Card>
+              <Card className="items-center py-14 text-center"><CardContent><h3 className="text-2xl font-semibold">ไม่พบคอร์สตามเงื่อนไขนี้</h3><p className="mt-2 text-muted-foreground">ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</p><Button className="mt-6" asChild><Link href="/courses">ดูคอร์สทั้งหมด</Link></Button></CardContent></Card>
             ) : (
               <>
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{courseList.map((course) => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} price={parseFloat(course.price || '0')} promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null} isPromoActive={course.isPromoActive} instructorName={course.instructor?.name || null} lessonCount={course.lessonCount} totalDurationSeconds={course.totalDurationSeconds} hasFreePreview={course.hasFreePreview} tags={course.tags} />)}</div>
@@ -374,7 +372,7 @@ export default async function CoursesPage({ searchParams }: Props) {
         {bundlesList.length > 0 ? (
           <section className="border-t bg-background py-14 sm:py-20" aria-labelledby="courses-bundles-title">
             <div className="container">
-              <header className="mb-8 grid gap-4 md:grid-cols-[9rem_1fr_auto] md:items-end"><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">02 / Learning paths</p><div><h2 id="courses-bundles-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div><Badge variant="secondary">{bundlesList.length} เส้นทาง</Badge></header>
+              <header className="mb-8 grid gap-4 md:grid-cols-[1fr_auto] md:items-end"><div><h2 id="courses-bundles-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div><Badge variant="secondary">{bundlesList.length} เส้นทาง</Badge></header>
               <div className="grid gap-5 lg:grid-cols-2">{bundlesList.map((bundle) => <Link key={bundle.id} href={`/bundles/${bundle.slug}`} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"><Card className="h-full transition-shadow group-hover:shadow-[var(--academy-shadow-card-hover)]"><CardHeader><div className="flex items-center justify-between gap-3"><Badge>Bundle · {bundle.courseCount} คอร์ส</Badge>{bundle.discount > 0 ? <Badge variant="destructive">ประหยัด {bundle.discount}%</Badge> : null}</div><CardTitle className="mt-3 text-2xl group-hover:text-primary">{bundle.title}</CardTitle>{bundle.description ? <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{bundle.description}</p> : null}</CardHeader><CardContent><div className="space-y-2 border-y py-4 text-sm">{bundle.courses.slice(0, 2).map((course, index) => <p key={`${bundle.id}-${index}`}>{String(index + 1).padStart(2, '0')} · {course.courseTitle}</p>)}{bundle.courses.length > 2 ? <p className="text-muted-foreground">+{bundle.courses.length - 2} คอร์ส</p> : null}</div><div className="mt-5 flex items-end justify-between gap-4"><div><strong className="text-2xl">฿{parseFloat(bundle.price).toLocaleString()}</strong><s className="ml-2 text-sm text-muted-foreground">฿{bundle.totalOriginalPrice.toLocaleString()}</s></div><span className="text-sm font-semibold text-primary">ดูรายละเอียด →</span></div></CardContent></Card></Link>)}</div>
             </div>
           </section>

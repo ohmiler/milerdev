@@ -97,8 +97,7 @@ export default async function CertificatePage({ params }: Props) {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <header className="mb-10 grid gap-6 border-b pb-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Credential verification</p>
-              <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">ตรวจสอบใบรับรอง</h1>
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">ตรวจสอบใบรับรอง</h1>
               <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">เอกสารสาธารณะสำหรับยืนยันผู้เรียน หลักสูตร วันที่สำเร็จ และสถานะใบรับรองจาก MilerDev</p>
             </div>
             <Alert

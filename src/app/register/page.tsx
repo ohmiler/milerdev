@@ -6,7 +6,6 @@ export default function RegisterPage() {
     <AuthShell
       pageId={'register'}
       variant={'register'}
-      panelMeta={'Create account'}
       panelTitle={'สมัครสมาชิก'}
       panelDescription={'กรอกข้อมูลสำหรับบัญชีผู้เรียน หรือสมัครด้วย Google'}
     >

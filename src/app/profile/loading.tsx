@@ -6,7 +6,6 @@ export default function ProfileLoading() {
   return (
     <LearnerAccountShell
       current="profile"
-      eyebrow="ข้อมูลผู้เรียน"
       title="โปรไฟล์ของฉัน"
       description="ข้อมูลระบุตัวตนสำหรับบัญชีผู้เรียนและชื่อที่ใช้ในประสบการณ์เรียนของคุณ"
     >

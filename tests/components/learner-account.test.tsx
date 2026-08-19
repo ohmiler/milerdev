@@ -17,7 +17,7 @@ const quote = String.fromCharCode(34);
 describe('learner account contracts', () => {
   it('renders a shared, named account index with one current route and a Dashboard return path', () => {
     const html = renderToStaticMarkup(
-      <LearnerAccountShell current="payments" eyebrow="Records" title="Payments" description="Description">
+      <LearnerAccountShell current="payments" title="Payments" description="Description">
         <div>Account content</div>
       </LearnerAccountShell>,
     );

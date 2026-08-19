@@ -11,7 +11,6 @@ export default function UserCertificatesPage() {
   return (
     <LearnerAccountShell
       current="certificates"
-      eyebrow="ใบรับรองการเรียน"
       title="ใบรับรองของฉัน"
       description="หลักฐานการเรียนจบที่ตรวจสอบได้ เปิดดูใบรับรองฉบับเต็มหรือคัดลอกลิงก์เพื่อแชร์ผลงานของคุณ"
     >

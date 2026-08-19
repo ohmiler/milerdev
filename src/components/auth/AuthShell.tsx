@@ -9,10 +9,8 @@ type EvidenceItem = { label: string; text: string };
 
 type AuthShellProps = {
   pageId: string;
-  panelMeta: string;
   panelTitle: string;
   panelDescription: string;
-  contextMeta?: string;
   contextTitle?: ReactNode;
   contextDescription?: string;
   evidence?: EvidenceItem[];
@@ -22,10 +20,8 @@ type AuthShellProps = {
 
 export default function AuthShell({
   pageId,
-  panelMeta,
   panelTitle,
   panelDescription,
-  contextMeta,
   contextTitle,
   contextDescription,
   evidence = [],
@@ -45,7 +41,6 @@ export default function AuthShell({
             <CardHeader className="gap-6 p-7 sm:p-10">
               <div className="flex items-center gap-3"><Image src="/milerdev-logo-transparent.png" alt="" width={44} height={44} priority /><span className="font-heading text-lg font-semibold">MilerDev Learning</span></div>
               <div>
-                <p className="mb-3 font-mono text-xs tracking-[.16em] text-primary uppercase">{contextMeta}</p>
                 <h2 id={contextTitleId} className="font-heading text-3xl font-medium leading-tight text-white sm:text-4xl">{contextTitle}</h2>
                 <CardDescription className="mt-4 text-base leading-7 text-white/70">{contextDescription}</CardDescription>
               </div>
@@ -64,8 +59,7 @@ export default function AuthShell({
 
           <Card className={cn('justify-center border-border/70 bg-white shadow-[var(--academy-shadow-card)]', showContextPanel && 'order-1 border-0 lg:order-2')} aria-labelledby={titleId}>
             <CardHeader className="p-7 pb-3 sm:p-10 sm:pb-4">
-              <p className="font-mono text-xs tracking-[.16em] text-primary uppercase">{panelMeta}</p>
-              <h1 id={titleId} className="mt-2 font-heading text-3xl font-medium leading-tight sm:text-4xl">{panelTitle}</h1>
+              <h1 id={titleId} className="font-heading text-3xl font-medium leading-tight sm:text-4xl">{panelTitle}</h1>
               <CardDescription className="mt-2 text-base leading-7">{panelDescription}</CardDescription>
             </CardHeader>
             <CardContent className="px-7 pb-8 sm:px-10 sm:pb-10">{children}</CardContent>

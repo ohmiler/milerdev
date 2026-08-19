@@ -64,8 +64,8 @@ export default function CourseCard({
         <div className="relative aspect-[16/9] overflow-hidden bg-[var(--academy-navy)] md:aspect-auto md:min-h-52">
           {thumbnailUrl ? <img src={thumbnailUrl} alt={title} className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" /> : (
             <div className="flex size-full min-h-52 flex-col justify-between bg-[radial-gradient(circle_at_75%_20%,rgba(0,171,255,.35),transparent_35%),var(--academy-navy)] p-6 text-white" aria-hidden="true">
-              <span className="font-mono text-[.65rem] tracking-[.16em] text-white/60 uppercase">COURSE / {(tags?.[0]?.name ?? 'MilerDev').toUpperCase()}</span>
-              <div><strong className="block text-2xl">MilerDev</strong><small className="font-mono tracking-[.12em] text-primary uppercase">Learning module</small></div>
+              <span className="text-sm font-medium text-white/65">{tags?.[0]?.name ?? 'คอร์สออนไลน์ภาษาไทย'}</span>
+              <strong className="block max-w-[14rem] text-2xl leading-tight">{title}</strong>
             </div>
           )}
           {hasFreePreview ? <Badge className="absolute top-4 left-4 gap-1.5 bg-background/95 text-foreground shadow-sm"><PlayCircle />มีบทเรียนทดลอง</Badge> : null}

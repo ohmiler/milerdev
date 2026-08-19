@@ -198,8 +198,7 @@ export default async function BundleDetailPage({ params }: Props) {
             <div className="min-w-0">
               <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">COURSE SEQUENCE</p>
-                  <h2 className="mt-2 text-3xl font-bold tracking-tight">เส้นทางการเรียนในชุดนี้</h2>
+                  <h2 className="text-3xl font-bold tracking-tight">เส้นทางการเรียนในชุดนี้</h2>
                 </div>
                 <p className="max-w-md text-sm leading-6 text-muted-foreground">เรียงตามลำดับที่วางไว้ เปิดดูรายละเอียดแต่ละคอร์สได้ก่อนตัดสินใจ</p>
               </div>
@@ -219,8 +218,8 @@ export default async function BundleDetailPage({ params }: Props) {
                           <Badge>{String(index + 1).padStart(2, '0')}</Badge>
                         </div>
                         <div className="p-5">
-                          <div className="mb-3 flex flex-wrap justify-between gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            <span>COURSE {String(index + 1).padStart(2, '0')}</span>
+                          <div className="mb-3 flex flex-wrap justify-between gap-2 text-xs font-semibold text-muted-foreground">
+                            <span>คอร์สที่ {index + 1}</span>
                             <span>{course.lessonCount} บทเรียน</span>
                           </div>
                           <h3 className="text-xl font-semibold tracking-tight">{course.courseTitle}</h3>
@@ -242,7 +241,6 @@ export default async function BundleDetailPage({ params }: Props) {
             <aside className="lg:sticky lg:top-24 lg:self-start" aria-label={'สรุปและสมัครชุดคอร์ส'}>
               <Card className="shadow-lg">
                 <CardHeader>
-                  <Badge variant="outline" className="w-fit">BUNDLE SUMMARY</Badge>
                   <CardTitle className="text-2xl">เริ่มเส้นทางนี้</CardTitle>
                 </CardHeader>
 

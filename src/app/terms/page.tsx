@@ -27,7 +27,6 @@ export default function TermsPage() {
       <Navbar />
       <main className="bg-[var(--academy-canvas)]">
         <LegalDocument
-          eyebrow="Terms / Service agreement"
           title="เงื่อนไขการใช้งาน"
           lede="ข้อตกลงเกี่ยวกับบัญชี การเข้าถึงบทเรียน การชำระเงิน ใบรับรอง และขอบเขตการใช้บริการ MilerDev"
           updatedLabel="อัปเดตล่าสุด: 1 มกราคม 2568"

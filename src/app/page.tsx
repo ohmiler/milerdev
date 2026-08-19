@@ -13,7 +13,6 @@ import {
   Lightbulb,
   PlayCircle,
   Rocket,
-  Sparkles,
 } from 'lucide-react';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 
@@ -24,7 +23,6 @@ import HomeFAQ from '@/components/home/HomeFAQ';
 import StudioProofSection from '@/components/home/StudioProofSection';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { db } from '@/lib/db';
@@ -132,21 +130,18 @@ const CONFIDENCE_POINTS = [
 const LEARNING_OUTCOMES = [
   {
     icon: Lightbulb,
-    index: '01',
     title: 'เข้าใจเหตุผล',
     description: 'เริ่มจากปัญหาและเป้าหมายของงาน เพื่อให้รู้ว่าเครื่องมือแต่ละชิ้นมีไว้ทำอะไร',
     tone: 'bg-amber-50 text-amber-600',
   },
   {
     icon: Code2,
-    index: '02',
     title: 'สร้างด้วยตัวเอง',
     description: 'เรียนแนวคิดผ่านโค้ด ตัวอย่าง และการลงมือทำ โดยไม่หยุดอยู่ที่การจำ syntax',
     tone: 'bg-sky-50 text-sky-600',
   },
   {
     icon: Rocket,
-    index: '03',
     title: 'ต่อยอดเป็นผลงาน',
     description: 'เชื่อมบทเรียนเป็นโปรเจกต์ที่อธิบายได้ ทดสอบได้ และนำไปพัฒนาต่อได้',
     tone: 'bg-emerald-50 text-emerald-600',
@@ -172,10 +167,6 @@ export default async function HomePage() {
           />
           <div className="container grid items-center gap-12 py-14 sm:py-16 lg:min-h-[clamp(42rem,86svh,48rem)] lg:grid-cols-[0.92fr_1.08fr] lg:gap-16 lg:py-20">
             <div className="max-w-2xl">
-              <Badge className="mb-5 rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-xs font-semibold text-sky-700 shadow-none">
-                <Sparkles className="size-3.5" aria-hidden="true" />
-                เริ่มต้นเส้นทาง Developer กับ MilerDev
-              </Badge>
               <h1
                 id="home-hero-title"
                 className="max-w-[13ch] text-balance text-[clamp(2.7rem,6vw,5.25rem)] font-bold leading-[1.04] tracking-[-0.055em] text-slate-950"
@@ -232,10 +223,7 @@ export default async function HomePage() {
                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/70 to-transparent" />
                   <div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 text-white">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-200">
-                        Project-based learning
-                      </p>
-                      <p className="mt-1 max-w-sm text-lg font-semibold">
+                      <p className="max-w-sm text-lg font-semibold">
                         เรียนจากโจทย์จริง แล้วลงมือสร้างไปพร้อมกัน
                       </p>
                     </div>
@@ -300,12 +288,9 @@ export default async function HomePage() {
           <div className="container">
             <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end lg:gap-16">
               <div>
-                <Badge variant="secondary" className="rounded-full px-3 py-1 text-[#008bd1]">
-                  ผลลัพธ์ที่ออกแบบไว้ในทุกบทเรียน
-                </Badge>
                 <h2
                   id="outcomes-title"
-                  className="mt-4 max-w-xl text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl lg:text-5xl"
+                  className="max-w-xl text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl lg:text-5xl"
                 >
                   เข้าใจให้ชัด ก่อนสร้างและต่อยอดด้วยตัวเอง
                 </h2>
@@ -326,16 +311,15 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12">
-              {LEARNING_OUTCOMES.map(({ icon: Icon, index, title, description, tone }) => (
+              {LEARNING_OUTCOMES.map(({ icon: Icon, title, description, tone }) => (
                 <Card
                   key={title}
                   className="gap-6 rounded-[1.5rem] border border-slate-100 bg-white p-6 shadow-[0_12px_36px_rgba(15,35,58,0.06)] ring-0 sm:p-7"
                 >
-                  <div className="flex items-center justify-between">
+                  <div>
                     <span className={`grid size-12 place-items-center rounded-2xl ${tone}`}>
                       <Icon className="size-5" aria-hidden="true" />
                     </span>
-                    <span className="font-mono text-xs font-bold tracking-[0.16em] text-slate-300">{index}</span>
                   </div>
                   <CardContent className="p-0">
                     <h3 className="text-xl font-semibold">{title}</h3>

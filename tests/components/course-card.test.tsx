@@ -50,9 +50,10 @@ describe('CourseCard decision evidence', () => {
       />,
     );
 
-    expect(html).toContain('COURSE / REACT');
-    expect(html).toContain('Learning module');
+    expect(html).toContain('>React</span>');
     expect(html).toContain('React &amp; Next.js Masterclass');
+    expect(html).not.toContain('COURSE /');
+    expect(html).not.toContain('Learning module');
     expect(html).not.toContain('<img');
   });
 

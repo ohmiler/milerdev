@@ -58,22 +58,21 @@ export default function TransactionReceipt({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <header className="grid gap-6 border-b pb-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Transaction proof</p>
-              <h1 className="mt-3 max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">{accessReady ? 'ชำระเงินแล้ว พร้อมเริ่มเรียน' : 'กำลังยืนยันสิทธิ์การเรียน'}</h1>
+              <h1 className="max-w-3xl text-4xl font-bold tracking-tight sm:text-5xl">{accessReady ? 'ชำระเงินแล้ว พร้อมเริ่มเรียน' : 'กำลังยืนยันสิทธิ์การเรียน'}</h1>
               <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">
                 {accessReady
                   ? 'รายการนี้ผ่านการยืนยันและสิทธิ์เรียนถูกเพิ่มในบัญชีของคุณแล้ว'
                   : 'ระบบได้รับรายการแล้ว แต่สิทธิ์เรียนยังไม่พร้อม กรุณาตรวจสอบสถานะอีกครั้งก่อนเริ่มเรียน'}
               </p>
             </div>
-            <Card><CardContent className="grid gap-1 p-4 lg:text-right"><span className="text-xs font-semibold text-muted-foreground">ORDER REFERENCE</span><strong className="break-all font-mono text-sm text-primary">{formatOrderId(orderId)}</strong></CardContent></Card>
+            <Card><CardContent className="grid gap-1 p-4 lg:text-right"><span className="text-xs font-semibold text-muted-foreground">เลขอ้างอิง</span><strong className="break-all font-mono text-sm text-primary">{formatOrderId(orderId)}</strong></CardContent></Card>
           </header>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <Card className="overflow-hidden" aria-labelledby="receipt-product-title">
-              <div className="flex justify-between gap-4 border-b px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="flex justify-between gap-4 border-b px-6 py-4 text-sm font-semibold text-muted-foreground">
                 <span>รายการสั่งซื้อ</span>
-                <span>{kind === 'bundle' ? `${items.length} COURSES` : '1 COURSE'}</span>
+                <span>{kind === 'bundle' ? `${items.length} คอร์ส` : '1 คอร์ส'}</span>
               </div>
 
               <div className="grid border-b sm:grid-cols-[14rem_minmax(0,1fr)]">
@@ -85,7 +84,7 @@ export default function TransactionReceipt({
                   )}
                 </div>
                 <div className="flex flex-col justify-center p-6 sm:p-8">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{kindLabel}</p>
+                  <p className="text-sm font-semibold text-muted-foreground">{kindLabel}</p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-tight" id="receipt-product-title">{title}</h2>
                   <strong className="mt-6 text-xl text-primary">{formatAmount(amount)}</strong>
                 </div>
@@ -93,7 +92,7 @@ export default function TransactionReceipt({
 
               {items.length > 0 && (
                 <div className="border-b p-6">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Included courses</p>
+                  <p className="mb-3 text-sm font-semibold text-primary">คอร์สในชุดนี้</p>
                   <ol className="divide-y border-y">
                     {items.map((item, index) => (
                       <li className="grid grid-cols-[2rem_minmax(0,1fr)] gap-3 py-3 text-sm" key={item.id}>
@@ -119,7 +118,7 @@ export default function TransactionReceipt({
                 data-access={accessReady ? 'ready' : 'pending'}
                 role="status"
               >
-                <Badge variant="outline" className="w-fit">{accessReady ? '✓ LEARNING ACCESS READY' : '… ACCESS VERIFICATION'}</Badge>
+                <Badge variant="outline" className="w-fit">{accessReady ? '✓ พร้อมเข้าเรียน' : '… กำลังตรวจสอบสิทธิ์'}</Badge>
                 <CardTitle>{accessReady ? 'คอร์สอยู่ในบัญชีแล้ว' : 'ยังไม่ควรเริ่มเรียน'}</CardTitle>
                 <p className="text-sm leading-6 text-muted-foreground">
                   {accessReady

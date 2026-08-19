@@ -11,7 +11,6 @@ export default function UserPaymentsPage() {
   return (
     <LearnerAccountShell
       current="payments"
-      eyebrow="ประวัติการชำระเงิน"
       title="ประวัติการชำระเงิน"
       description="ติดตามยอดชำระ วิธีชำระ และสถานะของทุกรายการที่เชื่อมกับบัญชีผู้เรียนของคุณ"
     >

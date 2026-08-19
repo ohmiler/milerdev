@@ -135,8 +135,7 @@ export default async function DashboardPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <header className="flex flex-col gap-6 border-b pb-8 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">แดชบอร์ดการเรียน</p>
-              <h1 className="mt-3 text-4xl font-bold tracking-tight">สวัสดี, {session.user.name || 'นักเรียน'}</h1>
+              <h1 className="text-4xl font-bold tracking-tight">สวัสดี, {session.user.name || 'นักเรียน'}</h1>
               <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">กลับมาเรียนต่อจากคอร์สล่าสุด หรือตรวจสอบความคืบหน้าทั้งหมดของคุณ</p>
             </div>
             <nav className="flex flex-wrap gap-2" aria-label="เมนูบัญชีผู้เรียน">
@@ -171,7 +170,7 @@ export default async function DashboardPage() {
               </section>
 
               <section className="mt-12" aria-labelledby="dashboard-courses-title">
-                <div className="mb-5 flex items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">เส้นทางการเรียน</p><h2 className="mt-2 text-2xl font-bold" id="dashboard-courses-title">คอร์สของฉัน</h2></div><Button asChild variant="outline"><Link href="/courses">ดูคอร์สเพิ่มเติม</Link></Button></div>
+                <div className="mb-5 flex items-end justify-between gap-3"><h2 className="text-2xl font-bold" id="dashboard-courses-title">คอร์สของฉัน</h2><Button asChild variant="outline"><Link href="/courses">ดูคอร์สเพิ่มเติม</Link></Button></div>
                 {remainingEnrollments.length > 0 ? <div className="grid gap-3">{remainingEnrollments.map((enrollment, index) => (
                   <Link key={enrollment.id} href={enrollment.continuationLessonId ? `/courses/${enrollment.course.slug}/learn/${enrollment.continuationLessonId}` : `/courses/${enrollment.course.slug}/learn`} className="grid gap-3 rounded-xl border bg-card p-5 transition hover:border-primary/40 sm:grid-cols-[2.5rem_minmax(0,1fr)_12rem_auto] sm:items-center">
                     <span className="text-xs font-semibold text-muted-foreground">{String(index + 2).padStart(2, '0')}</span>
@@ -183,7 +182,7 @@ export default async function DashboardPage() {
               </section>
             </>
           ) : (
-            <Card className="py-10 text-center" aria-labelledby="dashboard-empty-title"><CardContent className="mx-auto max-w-xl"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">No enrolled courses</p><h2 className="mt-3 text-2xl font-bold" id="dashboard-empty-title">เริ่มจากคอร์สที่ตรงกับสิ่งที่คุณอยากสร้าง</h2><p className="mt-3 text-muted-foreground">ดูผลลัพธ์ เนื้อหา และระดับราคาของแต่ละคอร์สก่อนเลือกเส้นทางแรก</p><Button asChild className="mt-6"><Link href="/courses">ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link></Button></CardContent></Card>
+            <Card className="py-10 text-center" aria-labelledby="dashboard-empty-title"><CardContent className="mx-auto max-w-xl"><h2 className="text-2xl font-bold" id="dashboard-empty-title">เริ่มจากคอร์สที่ตรงกับสิ่งที่คุณอยากสร้าง</h2><p className="mt-3 text-muted-foreground">ดูผลลัพธ์ เนื้อหา และระดับราคาของแต่ละคอร์สก่อนเลือกเส้นทางแรก</p><Button asChild className="mt-6"><Link href="/courses">ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link></Button></CardContent></Card>
           )}
         </div>
       </main>

@@ -22,12 +22,7 @@ export default function HomeFAQ({ items }: HomeFAQProps) {
       {items.map((item, index) => (
         <AccordionItem key={item.q} value={`home-faq-${index + 1}`}>
           <AccordionTrigger className="p-5 text-base leading-7 font-semibold text-slate-950 no-underline hover:no-underline sm:p-6">
-            <span className="flex items-start gap-4">
-              <span className="mt-0.5 font-mono text-xs font-bold tracking-[0.12em] text-[#008bd1]">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <span>{item.q}</span>
-            </span>
+            <span>{item.q}</span>
           </AccordionTrigger>
           <AccordionContent className="px-2 pb-2 text-sm leading-7 text-slate-600 sm:px-3 sm:text-base">
             <p>{item.a}</p>

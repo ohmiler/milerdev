@@ -44,7 +44,6 @@ export default function AboutPage() {
       <main className="bg-[var(--academy-canvas)]">
         <PublicPageHeader
           variant="story"
-          eyebrow="About / MilerDev"
           title="พื้นที่เรียนโค้ดสำหรับคนที่อยากสร้างจริง"
           description="MilerDev คือ coding learning studio ภาษาไทย เราออกแบบคอร์สและบทเรียนให้ผู้เรียนเข้าใจแนวคิดผ่านการเขียนโค้ดและสร้างโปรเจกต์ด้วยตัวเอง"
         />
@@ -53,11 +52,9 @@ export default function AboutPage() {
           <div className="container grid gap-8 lg:grid-cols-[.7fr_1.3fr] lg:items-center lg:gap-16">
             <div className="relative mx-auto flex aspect-square w-full max-w-sm items-center justify-center overflow-hidden rounded-3xl bg-[radial-gradient(circle_at_50%_35%,rgba(0,171,255,.3),transparent_40%),var(--academy-navy)] p-8 shadow-[var(--academy-shadow-card)]" aria-hidden="true">
               <Image src={'/milerdev-logo-transparent.png'} alt={''} width={280} height={280} priority />
-              <span className="absolute right-6 bottom-6 font-mono text-xs tracking-[.16em] text-primary">CODE / BUILD / EXPLAIN</span>
             </div>
             <div>
-              <p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Why we teach</p>
-              <h2 id="about-manifesto-title" className="mt-4 text-3xl leading-tight font-semibold tracking-[-.03em] text-balance sm:text-4xl">การเรียนเขียนโปรแกรมควรพาคุณไปไกลกว่าการทำตาม</h2>
+              <h2 id="about-manifesto-title" className="text-3xl leading-tight font-semibold tracking-[-.03em] text-balance sm:text-4xl">การเรียนเขียนโปรแกรมควรพาคุณไปไกลกว่าการทำตาม</h2>
               <div className="mt-6 max-w-2xl space-y-4 text-base leading-8 text-muted-foreground"><p>เป้าหมายของเราไม่ใช่การรวบรวมวิดีโอให้ได้มากที่สุด แต่คือการจัดลำดับความรู้ให้ผู้เรียนเห็นความสัมพันธ์ระหว่างแนวคิด โค้ด และผลลัพธ์ที่เกิดขึ้นจริง</p><p>เมื่อจบบทเรียน ผู้เรียนควรอธิบายสิ่งที่ตัวเองสร้างได้ แก้ปัญหาต่อได้ และรู้ว่าควรพัฒนาทักษะส่วนไหนเป็นลำดับถัดไป</p></div>
             </div>
           </div>
@@ -70,8 +67,8 @@ export default function AboutPage() {
               <p className="leading-7 text-muted-foreground">ทุกคอร์สเดินจากความเข้าใจ ไปสู่การลงมือเขียน และจบด้วยสิ่งที่ตรวจสอบได้</p>
             </div>
             <ol className="grid gap-5 md:grid-cols-3">
-              {learningMethod.map((item, index) => (
-                <li key={item.title}><Card className="h-full"><CardHeader><span className="font-mono text-xs text-primary">{String(index + 1).padStart(2, '0')}</span><CardTitle className="mt-3 text-xl">{item.title}</CardTitle></CardHeader><CardContent><p className="text-sm leading-7 text-muted-foreground">{item.description}</p></CardContent></Card></li>
+              {learningMethod.map((item) => (
+                <li key={item.title}><Card className="h-full"><CardHeader><CardTitle className="text-xl">{item.title}</CardTitle></CardHeader><CardContent><p className="text-sm leading-7 text-muted-foreground">{item.description}</p></CardContent></Card></li>
               ))}
             </ol>
           </div>
@@ -80,8 +77,7 @@ export default function AboutPage() {
         <section className="py-14 sm:py-20" aria-labelledby="about-principles-title">
           <div className="container grid gap-8 lg:grid-cols-[.7fr_1.3fr] lg:gap-16">
             <div>
-              <p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Studio principles</p>
-              <h2 id="about-principles-title" className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-4xl">หลักที่ใช้ตัดสินใจทุกบทเรียน</h2>
+              <h2 id="about-principles-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">หลักที่ใช้ตัดสินใจทุกบทเรียน</h2>
             </div>
             <dl className="divide-y border-y">
               {principles.map(([title, description]) => (
@@ -104,7 +100,6 @@ export default function AboutPage() {
               {[1, 5, 9].map((number) => (
                 <figure key={number} className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                   <Image className="aspect-[4/3] w-full object-cover" src={`/showcase/${String(number).padStart(2, '0')}-showcase-1024x768.webp`} alt={`บรรยากาศงานบรรยายของ MilerDev ภาพที่ ${number}`} width={1024} height={768} sizes={'(max-width: 640px) 100vw, 33vw'} />
-                  <figcaption className="p-4 font-mono text-xs tracking-[.12em] text-white/55 uppercase">Field note / {String(number).padStart(2, '0')}</figcaption>
                 </figure>
               ))}
             </div>

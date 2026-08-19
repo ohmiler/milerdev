@@ -17,7 +17,6 @@ export default function FAQPage() {
         <header className="border-b bg-[radial-gradient(circle_at_15%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
           <div className="container grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16">
             <div>
-              <p className="mb-5 font-mono text-xs tracking-[.16em] text-primary uppercase">Help desk / 04</p>
               <h1 className="text-4xl leading-[1.15] font-semibold tracking-[-.04em] sm:text-5xl lg:text-6xl">คำตอบที่ช่วยให้ไปต่อได้</h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">รวมข้อมูลเรื่องการเริ่มเรียน คอร์ส การชำระเงิน และบัญชี เพื่อให้คุณตัดสินใจหรือแก้ปัญหาได้จากจุดเดียว</p>
             </div>
@@ -28,12 +27,10 @@ export default function FAQPage() {
         <section className="py-14 sm:py-20" aria-labelledby="faq-index-title">
           <div className="container grid gap-10 lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-14">
             <aside className="top-24 lg:sticky">
-              <p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Question index</p>
-              <h2 id="faq-index-title" className="mt-2 text-2xl font-semibold">เลือกหัวข้อ</h2>
+              <h2 id="faq-index-title" className="text-2xl font-semibold">เลือกหัวข้อ</h2>
               <nav className="mt-5 space-y-1" aria-label="หมวดคำถาม">
                 {FAQ_CATEGORIES.map((category, index) => (
-                  <a className="flex gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground" href={`#faq-category-${index + 1}`} key={category.title}>
-                    <span className="font-mono text-xs text-primary">{String(index + 1).padStart(2, '0')}</span>
+                  <a className="block rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground" href={`#faq-category-${index + 1}`} key={category.title}>
                     {category.title}
                   </a>
                 ))}
@@ -43,8 +40,7 @@ export default function FAQPage() {
             <div className="space-y-12">
               {FAQ_CATEGORIES.map((category, index) => (
                 <section id={`faq-category-${index + 1}`} className="scroll-mt-24" aria-labelledby={`faq-category-title-${index + 1}`} key={category.title}>
-                  <div className="mb-5 flex items-end justify-between gap-4">
-                    <span className="font-mono text-sm text-primary">{String(index + 1).padStart(2, '0')}</span>
+                  <div className="mb-5">
                     <div>
                       <Badge variant="secondary">{category.items.length} คำถาม</Badge>
                       <h2 id={`faq-category-title-${index + 1}`} className="mt-2 text-2xl font-semibold sm:text-3xl">{category.title}</h2>
@@ -54,7 +50,7 @@ export default function FAQPage() {
                 </section>
               ))}
 
-              <Card className="bg-[var(--academy-navy)] text-white" aria-labelledby="faq-contact-title"><CardContent className="pt-6"><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Still need help?</p><h2 id="faq-contact-title" className="mt-3 text-2xl font-semibold">ยังไม่เจอคำตอบที่ตรงกับเรื่องของคุณ</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">ส่งรายละเอียดให้ทีม MilerDev พร้อมข้อมูลที่จำเป็น เราจะตอบกลับผ่านอีเมลที่คุณระบุ</p><Button className="mt-6" asChild><Link href="/contact">ติดต่อทีม MilerDev →</Link></Button></CardContent></Card>
+              <Card className="bg-[var(--academy-navy)] text-white" aria-labelledby="faq-contact-title"><CardContent className="pt-6"><h2 id="faq-contact-title" className="text-2xl font-semibold">ยังไม่เจอคำตอบที่ตรงกับเรื่องของคุณ</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">ส่งรายละเอียดให้ทีม MilerDev พร้อมข้อมูลที่จำเป็น เราจะตอบกลับผ่านอีเมลที่คุณระบุ</p><Button className="mt-6" asChild><Link href="/contact">ติดต่อทีม MilerDev →</Link></Button></CardContent></Card>
             </div>
           </div>
         </section>

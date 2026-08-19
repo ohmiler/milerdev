@@ -1,13 +1,12 @@
 import { cn } from '@/lib/utils';
 
 interface PublicPageHeaderProps {
-  eyebrow: string;
   title: string;
   description: string;
   variant: 'story' | 'task';
 }
 
-export default function PublicPageHeader({ eyebrow, title, description, variant }: PublicPageHeaderProps) {
+export default function PublicPageHeader({ title, description, variant }: PublicPageHeaderProps) {
   return (
     <header
       data-public-header=""
@@ -18,7 +17,6 @@ export default function PublicPageHeader({ eyebrow, title, description, variant 
       )}
     >
       <div className="container">
-        <p className="mb-5 font-mono text-xs font-semibold tracking-[0.18em] text-primary uppercase">{eyebrow}</p>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,.75fr)] lg:items-end lg:gap-16">
           <h1 className="max-w-4xl text-4xl leading-[1.18] font-semibold tracking-[-0.035em] text-balance sm:text-5xl lg:text-6xl">{title}</h1>
           <p className="max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">{description}</p>

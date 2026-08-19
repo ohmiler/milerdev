@@ -6,7 +6,6 @@ export default function SettingsLoading() {
   return (
     <LearnerAccountShell
       current="settings"
-      eyebrow="จัดการบัญชี"
       title="ตั้งค่าบัญชี"
       description="จัดการข้อมูลที่แสดงในบัญชีและควบคุมความปลอดภัยของการเข้าสู่ระบบ"
     >

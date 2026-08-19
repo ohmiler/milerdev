@@ -11,7 +11,6 @@ export default function ContactPage() {
       <main className="bg-[var(--academy-canvas)]">
         <PublicPageHeader
           variant="task"
-          eyebrow="Contact / MilerDev"
           title="บอกเราได้ว่าคุณกำลังติดเรื่องไหน"
           description="สอบถามเรื่องคอร์ส การเรียน การชำระเงิน หรือเสนอความร่วมมือ ส่งรายละเอียดมาให้ครบเพื่อให้ทีมตอบกลับได้ตรงประเด็น"
         />
@@ -19,7 +18,7 @@ export default function ContactPage() {
         <section className="py-14 sm:py-20" aria-labelledby="contact-form-title">
           <div className="container grid gap-6 lg:grid-cols-[.7fr_1.3fr] lg:gap-8">
             <Card className="h-fit bg-[var(--academy-navy)] text-white shadow-[var(--academy-shadow-card)]" aria-label="ข้อมูลการติดต่อ">
-              <CardHeader><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Contact desk</p><CardTitle className="text-2xl text-white">ช่องทางติดต่อ</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-2xl text-white">ช่องทางติดต่อ</CardTitle></CardHeader>
               <CardContent><dl className="divide-y divide-white/10 border-y border-white/10">{[
                 ['อีเมล', <a key="email" className="text-primary hover:underline" href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>],
                 ['เวลาทำการ', <>จันทร์ถึงศุกร์<br />09:00 ถึง 18:00 น.</>],
@@ -28,7 +27,7 @@ export default function ContactPage() {
             </Card>
 
             <Card className="shadow-[var(--academy-shadow-card)]">
-              <CardHeader><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Send a message</p><CardTitle id="contact-form-title" className="text-2xl sm:text-3xl">ส่งรายละเอียดให้ทีม MilerDev</CardTitle><p className="text-sm leading-6 text-muted-foreground">กรอกข้อมูลที่จำเป็น ทีมจะใช้ข้อมูลนี้เพื่อตอบกลับคำถามของคุณเท่านั้น</p></CardHeader>
+              <CardHeader><CardTitle id="contact-form-title" className="text-2xl sm:text-3xl">ส่งรายละเอียดให้ทีม MilerDev</CardTitle><p className="text-sm leading-6 text-muted-foreground">กรอกข้อมูลที่จำเป็น ทีมจะใช้ข้อมูลนี้เพื่อตอบกลับคำถามของคุณเท่านั้น</p></CardHeader>
               <CardContent><ContactForm /></CardContent>
             </Card>
           </div>

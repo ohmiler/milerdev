@@ -240,7 +240,6 @@ export default async function BlogPostPage({ params }: Props) {
                     {post.tags.map((tag) => <Badge key={tag.id} variant="secondary" asChild><Link href={`/blog?tag=${tag.slug}`}>{tag.name}</Link></Badge>)}
                   </nav>
                 ) : null}
-                <p className="font-mono text-xs tracking-[.16em] text-primary uppercase">MilerDev journal / Article</p>
                 <h1 className="mt-4 max-w-4xl text-4xl leading-[1.16] font-semibold tracking-[-.04em] text-balance sm:text-5xl lg:text-6xl">{post.title}</h1>
                 {post.excerpt ? <p className="mt-6 max-w-3xl text-base leading-8 text-muted-foreground sm:text-lg">{post.excerpt}</p> : null}
               </div>
@@ -285,8 +284,7 @@ export default async function BlogPostPage({ params }: Props) {
               {relatedPosts.length > 0 ? (
                 <section className="mt-14 border-t pt-10" aria-labelledby="related-articles-title">
                   <div className="mb-6">
-                    <p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Continue reading</p>
-                    <h2 id="related-articles-title" className="mt-2 text-2xl font-semibold sm:text-3xl">บทความที่เกี่ยวข้อง</h2>
+                    <h2 id="related-articles-title" className="text-2xl font-semibold sm:text-3xl">บทความที่เกี่ยวข้อง</h2>
                   </div>
                   <ol className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {relatedPosts.map((relatedPost, index) => {

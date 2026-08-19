@@ -56,7 +56,7 @@ export function AnnouncementFeedView({ status, announcements, onRetry }: Announc
 
   if (announcements.length === 0) {
     return (
-      <Card className="items-center py-10 text-center" aria-live="polite"><CardContent><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Notice queue / Clear</p><h2 className="mt-3 text-2xl font-semibold">ยังไม่มีประกาศที่ต้องติดตาม</h2><p className="mt-2 text-sm text-muted-foreground">เมื่อมีข่าวสารใหม่จากทีม MilerDev ประกาศจะแสดงที่หน้านี้</p></CardContent></Card>
+      <Card className="items-center py-10 text-center" aria-live="polite"><CardContent><h2 className="text-2xl font-semibold">ยังไม่มีประกาศที่ต้องติดตาม</h2><p className="mt-2 text-sm text-muted-foreground">เมื่อมีข่าวสารใหม่จากทีม MilerDev ประกาศจะแสดงที่หน้านี้</p></CardContent></Card>
     );
   }
 

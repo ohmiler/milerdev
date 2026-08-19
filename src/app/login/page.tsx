@@ -6,7 +6,6 @@ export default function LoginPage() {
   return (
     <AuthShell
       pageId={'login'}
-      panelMeta={'Account access'}
       panelTitle={'เข้าสู่ระบบ'}
       panelDescription={'ใช้บัญชี MilerDev เพื่อกลับไปเรียนต่อ'}
     >
