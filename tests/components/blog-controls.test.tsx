@@ -18,7 +18,7 @@ describe('Blog reading controls', () => {
     expect(html).toContain('facebook.com/sharer/sharer.php');
     expect(html).toContain('twitter.com/intent/tweet');
     expect(html).toContain('social-plugins.line.me/lineit/share');
-    expect(html).toContain(`<button type=${quote}button${quote}`);
+    expect(html).toMatch(new RegExp(`<button[^>]*type=${quote}button${quote}`));
     expect(html).toContain('คัดลอกลิงก์');
   });
 

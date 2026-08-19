@@ -7,7 +7,7 @@ import CertificateCard from '@/components/certificate/CertificateCard';
 import { db } from '@/lib/db';
 import { certificates, courses } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import styles from '@/components/proof/proof.module.css';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,25 +93,22 @@ export default async function CertificatePage({ params }: Props) {
   return (
     <>
       <Navbar />
-      <main className={styles.publicCertificatePage}>
-        <div className={`container ${styles.publicCertificateContainer}`}>
-          <header className={styles.publicCertificateHeader}>
+      <main className="min-h-screen bg-muted/20 py-10 sm:py-14">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <header className="mb-10 grid gap-6 border-b pb-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
             <div>
-              <p className={styles.eyebrow}>Credential verification</p>
-              <h1>ตรวจสอบใบรับรอง</h1>
-              <p>เอกสารสาธารณะสำหรับยืนยันผู้เรียน หลักสูตร วันที่สำเร็จ และสถานะใบรับรองจาก MilerDev</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Credential verification</p>
+              <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">ตรวจสอบใบรับรอง</h1>
+              <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">เอกสารสาธารณะสำหรับยืนยันผู้เรียน หลักสูตร วันที่สำเร็จ และสถานะใบรับรองจาก MilerDev</p>
             </div>
-            <div
-              className={`${styles.verificationState} ${isRevoked ? styles.verificationRevoked : styles.verificationValid}`}
+            <Alert
+              variant={isRevoked ? 'destructive' : 'default'}
+              className={isRevoked ? undefined : 'border-emerald-500/40 bg-emerald-500/5 text-emerald-800'}
               data-verification-status={isRevoked ? 'revoked' : 'valid'}
-              role="status"
             >
-              <span aria-hidden="true">{isRevoked ? '×' : '✓'}</span>
-              <div>
-                <p>{isRevoked ? 'REVOKED CREDENTIAL' : 'VERIFIED CREDENTIAL'}</p>
-                <strong>{isRevoked ? 'ใบรับรองนี้ถูกเพิกถอนแล้ว' : 'ใบรับรองนี้ตรวจสอบได้'}</strong>
-              </div>
-            </div>
+              <AlertTitle>{isRevoked ? '× REVOKED CREDENTIAL' : '✓ VERIFIED CREDENTIAL'}</AlertTitle>
+              <AlertDescription>{isRevoked ? 'ใบรับรองนี้ถูกเพิกถอนแล้ว' : 'ใบรับรองนี้ตรวจสอบได้'}</AlertDescription>
+            </Alert>
           </header>
           <CertificateCard cert={cert} />
         </div>

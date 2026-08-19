@@ -9,6 +9,10 @@ import { db } from '@/lib/db';
 import { enrollments, courses, lessons, lessonProgress, certificates, payments } from '@/lib/db/schema';
 import { selectContinuationLesson, sortCoursesByLearningActivity } from '@/lib/learning-continuation';
 import { eq, desc, count, and, inArray, isNull } from 'drizzle-orm';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 export const metadata: Metadata = {
     title: 'แดชบอร์ด',
@@ -127,68 +131,59 @@ export default async function DashboardPage() {
   return (
     <>
       <Navbar />
-      <main className="learner-dashboard">
-        <div className="container">
-          <header className="learner-dashboard__header">
+      <main className="min-h-screen bg-muted/20 py-10 sm:py-14">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <header className="flex flex-col gap-6 border-b pb-8 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="learner-dashboard__meta">Learning dashboard</p>
-              <h1>สวัสดี, {session.user.name || 'นักเรียน'}</h1>
-              <p>กลับมาเรียนต่อจากคอร์สล่าสุด หรือตรวจสอบความคืบหน้าทั้งหมดของคุณ</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">แดชบอร์ดการเรียน</p>
+              <h1 className="mt-3 text-4xl font-bold tracking-tight">สวัสดี, {session.user.name || 'นักเรียน'}</h1>
+              <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">กลับมาเรียนต่อจากคอร์สล่าสุด หรือตรวจสอบความคืบหน้าทั้งหมดของคุณ</p>
             </div>
-            <nav className="learner-dashboard__nav" aria-label="เมนูบัญชีผู้เรียน">
-              <Link href="/dashboard/certificates">ใบรับรอง <span>{certificateCount}</span></Link>
-              <Link href="/dashboard/payments">การชำระเงิน <span>{totalPayments}</span></Link>
-              <Link href="/settings">ตั้งค่าบัญชี</Link>
+            <nav className="flex flex-wrap gap-2" aria-label="เมนูบัญชีผู้เรียน">
+              <Button asChild variant="outline"><Link href="/dashboard/certificates">ใบรับรอง <Badge variant="secondary">{certificateCount}</Badge></Link></Button>
+              <Button asChild variant="outline"><Link href="/dashboard/payments">การชำระเงิน <Badge variant="secondary">{totalPayments}</Badge></Link></Button>
+              <Button asChild variant="outline"><Link href="/settings">ตั้งค่าบัญชี</Link></Button>
             </nav>
           </header>
 
-          <section className="learner-dashboard__stats" aria-label="สรุปการเรียน">
-            <div><span>คอร์สทั้งหมด</span><strong>{userEnrollments.length}</strong></div>
-            <div><span>กำลังเรียน</span><strong>{activeCourses}</strong></div>
-            <div><span>เรียนจบแล้ว</span><strong>{completedCourses}</strong></div>
-            <div><span>ใบรับรอง</span><strong>{certificateCount}</strong></div>
+          <section className="my-8 grid grid-cols-2 gap-3 lg:grid-cols-4 [&_div]:rounded-xl [&_div]:border [&_div]:bg-card [&_div]:p-5 [&_span]:block [&_span]:text-sm [&_span]:text-muted-foreground [&_strong]:mt-2 [&_strong]:block [&_strong]:text-3xl" aria-label="สรุปการเรียน">
+            <div><span>คอร์สทั้งหมด</span><strong>{userEnrollments.length}</strong></div><div><span>กำลังเรียน</span><strong>{activeCourses}</strong></div><div><span>เรียนจบแล้ว</span><strong>{completedCourses}</strong></div><div><span>ใบรับรอง</span><strong>{certificateCount}</strong></div>
           </section>
 
           {primaryEnrollment ? (
             <>
-              <section className="dashboard-continue" aria-labelledby="dashboard-continue-title">
-                <div className="dashboard-section-head">
+              <section className="mt-10" aria-labelledby="dashboard-continue-title">
+                <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
                   <div><p>Next action</p><h2 id="dashboard-continue-title">{primaryEnrollment.completedAt ? 'ทบทวนคอร์สล่าสุด' : 'เรียนต่อจากคอร์สล่าสุด'}</h2></div>
                   <span>{primaryEnrollment.completedLessons} / {primaryEnrollment.course.lessonCount} บทเรียน</span>
                 </div>
-                <Link href={primaryEnrollment.continuationLessonId ? `/courses/${primaryEnrollment.course.slug}/learn/${primaryEnrollment.continuationLessonId}` : `/courses/${primaryEnrollment.course.slug}/learn`} className="dashboard-continue__course">
-                  <div className="dashboard-continue__image">
-                    {primaryEnrollment.course.thumbnailUrl ? <Image src={primaryEnrollment.course.thumbnailUrl.startsWith('http') ? primaryEnrollment.course.thumbnailUrl : `https://${primaryEnrollment.course.thumbnailUrl}`} alt={primaryEnrollment.course.title} fill priority sizes="(max-width: 900px) 100vw, 48vw" /> : <div className="dashboard-course-fallback"><span>MD</span><small>Learning</small></div>}
+                <Card className="overflow-hidden"><Link href={primaryEnrollment.continuationLessonId ? `/courses/${primaryEnrollment.course.slug}/learn/${primaryEnrollment.continuationLessonId}` : `/courses/${primaryEnrollment.course.slug}/learn`} className="grid lg:grid-cols-2">
+                  <div className="relative min-h-64 bg-slate-950">
+                    {primaryEnrollment.course.thumbnailUrl ? <Image className="object-cover" src={primaryEnrollment.course.thumbnailUrl.startsWith('http') ? primaryEnrollment.course.thumbnailUrl : `https://${primaryEnrollment.course.thumbnailUrl}`} alt={primaryEnrollment.course.title} fill priority sizes="(max-width: 900px) 100vw, 48vw" /> : <div className="flex h-full min-h-64 flex-col items-center justify-center text-white"><span className="text-4xl font-bold">MD</span><small>Learning</small></div>}
                   </div>
-                  <div className="dashboard-continue__content">
-                    <div className="dashboard-course-status">{primaryEnrollment.progressPercent === 100 ? 'เรียนจบแล้ว' : 'กำลังเรียน'} · {primaryEnrollment.progressPercent}%</div>
-                    <h3>{primaryEnrollment.course.title}</h3>
-                    <div className="dashboard-progress" aria-label={`ความคืบหน้า ${primaryEnrollment.progressPercent}%`}><span style={{ width: `${primaryEnrollment.progressPercent}%` }} /></div>
-                    <div className="dashboard-continue__action"><span>{primaryEnrollment.completedAt ? 'เปิดคอร์สอีกครั้ง' : 'ไปยังบทเรียนถัดไป'}</span><span aria-hidden="true">→</span></div>
-                  </div>
-                </Link>
+                  <CardContent className="flex flex-col justify-center p-7">
+                    <Badge className="w-fit">{primaryEnrollment.progressPercent === 100 ? 'เรียนจบแล้ว' : 'กำลังเรียน'} · {primaryEnrollment.progressPercent}%</Badge>
+                    <h3 className="mt-4 text-2xl font-semibold tracking-tight">{primaryEnrollment.course.title}</h3>
+                    <Progress className="mt-6" value={primaryEnrollment.progressPercent} aria-label={`ความคืบหน้า ${primaryEnrollment.progressPercent}%`} />
+                    <div className="mt-6 flex items-center justify-between font-semibold text-primary"><span>{primaryEnrollment.completedAt ? 'เปิดคอร์สอีกครั้ง' : 'ไปยังบทเรียนถัดไป'}</span><span aria-hidden="true">→</span></div>
+                  </CardContent>
+                </Link></Card>
               </section>
 
-              <section className="dashboard-courses" aria-labelledby="dashboard-courses-title">
-                <div className="dashboard-section-head"><div><p>Course index</p><h2 id="dashboard-courses-title">คอร์สของฉัน</h2></div><Link href="/courses">ดูคอร์สเพิ่มเติม</Link></div>
-                {remainingEnrollments.length > 0 ? <div className="dashboard-course-list">{remainingEnrollments.map((enrollment, index) => (
-                  <Link key={enrollment.id} href={enrollment.continuationLessonId ? `/courses/${enrollment.course.slug}/learn/${enrollment.continuationLessonId}` : `/courses/${enrollment.course.slug}/learn`} className="dashboard-course-row">
-                    <span className="dashboard-course-row__index">{String(index + 2).padStart(2, '0')}</span>
-                    <div className="dashboard-course-row__title"><strong>{enrollment.course.title}</strong><span>{enrollment.completedLessons} / {enrollment.course.lessonCount} บทเรียน</span></div>
-                    <div className="dashboard-progress" aria-label={`ความคืบหน้า ${enrollment.progressPercent}%`}><span style={{ width: `${enrollment.progressPercent}%` }} /></div>
-                    <span className={`dashboard-course-row__status${enrollment.progressPercent === 100 ? ' is-complete' : ''}`}>{enrollment.progressPercent === 100 ? 'เรียนจบแล้ว' : `${enrollment.progressPercent}%`}</span>
-                    <span className="dashboard-course-row__action">{enrollment.progressPercent === 100 ? 'ทบทวน' : 'เรียนต่อ'} →</span>
+              <section className="mt-12" aria-labelledby="dashboard-courses-title">
+                <div className="mb-5 flex items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">เส้นทางการเรียน</p><h2 className="mt-2 text-2xl font-bold" id="dashboard-courses-title">คอร์สของฉัน</h2></div><Button asChild variant="outline"><Link href="/courses">ดูคอร์สเพิ่มเติม</Link></Button></div>
+                {remainingEnrollments.length > 0 ? <div className="grid gap-3">{remainingEnrollments.map((enrollment, index) => (
+                  <Link key={enrollment.id} href={enrollment.continuationLessonId ? `/courses/${enrollment.course.slug}/learn/${enrollment.continuationLessonId}` : `/courses/${enrollment.course.slug}/learn`} className="grid gap-3 rounded-xl border bg-card p-5 transition hover:border-primary/40 sm:grid-cols-[2.5rem_minmax(0,1fr)_12rem_auto] sm:items-center">
+                    <span className="text-xs font-semibold text-muted-foreground">{String(index + 2).padStart(2, '0')}</span>
+                    <div><strong className="block">{enrollment.course.title}</strong><span className="text-sm text-muted-foreground">{enrollment.completedLessons} / {enrollment.course.lessonCount} บทเรียน</span></div>
+                    <Progress value={enrollment.progressPercent} aria-label={`ความคืบหน้า ${enrollment.progressPercent}%`} />
+                    <Badge variant={enrollment.progressPercent === 100 ? 'default' : 'secondary'}>{enrollment.progressPercent === 100 ? 'เรียนจบแล้ว' : `${enrollment.progressPercent}%`}</Badge>
                   </Link>
-                ))}</div> : <p className="dashboard-course-list__empty">คอร์สที่ลงทะเบียนทั้งหมดแสดงอยู่ด้านบนแล้ว</p>}
+                ))}</div> : <p className="rounded-xl border border-dashed p-6 text-muted-foreground">คอร์สที่ลงทะเบียนทั้งหมดแสดงอยู่ด้านบนแล้ว</p>}
               </section>
             </>
           ) : (
-            <section className="dashboard-empty" aria-labelledby="dashboard-empty-title">
-              <p className="learner-dashboard__meta">No enrolled courses</p>
-              <h2 id="dashboard-empty-title">เริ่มจากคอร์สที่ตรงกับสิ่งที่คุณอยากสร้าง</h2>
-              <p>ดูผลลัพธ์ เนื้อหา และระดับราคาของแต่ละคอร์สก่อนเลือกเส้นทางแรก</p>
-              <Link href="/courses">ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link>
-            </section>
+            <Card className="py-10 text-center" aria-labelledby="dashboard-empty-title"><CardContent className="mx-auto max-w-xl"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">No enrolled courses</p><h2 className="mt-3 text-2xl font-bold" id="dashboard-empty-title">เริ่มจากคอร์สที่ตรงกับสิ่งที่คุณอยากสร้าง</h2><p className="mt-3 text-muted-foreground">ดูผลลัพธ์ เนื้อหา และระดับราคาของแต่ละคอร์สก่อนเลือกเส้นทางแรก</p><Button asChild className="mt-6"><Link href="/courses">ดูคอร์สทั้งหมด <span aria-hidden="true">→</span></Link></Button></CardContent></Card>
           )}
         </div>
       </main>

@@ -1,70 +1,10 @@
-import styles from './loading.module.css';
-
-function Skeleton({ className = '' }: { className?: string }) {
-  return <span className={styles.skeleton + ' ' + className} aria-hidden="true" />;
-}
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LearnLoading() {
   return (
-    <main className={styles.workspace} aria-busy="true" aria-label="กำลังเตรียมพื้นที่การเรียน">
-      <header className={styles.navbar}>
-        <div className={styles.brand}>
-          <span className={styles.mark}>MD</span>
-          <span className={styles.brandCopy}>
-            <strong>MilerDev Learning</strong>
-            <small>กำลังเปิดบทเรียน</small>
-          </span>
-        </div>
-        <div className={styles.context}>
-          <span>LEARNING WORKSPACE</span>
-          <Skeleton className={styles.contextLine} />
-        </div>
-        <Skeleton className={styles.navAction} />
-      </header>
-
-      <div className={styles.layout}>
-        <aside className={styles.sidebar} aria-label="กำลังโหลดลำดับการเรียน">
-          <div className={styles.sidebarHead}>
-            <span>COURSE INDEX</span>
-            <strong>ลำดับการเรียน</strong>
-          </div>
-          <div className={styles.lessonList}>
-            {[1, 2, 3, 4].map((number) => (
-              <div className={styles.lesson} key={number}>
-                <span className={styles.lessonNumber}>{String(number).padStart(2, '0')}</span>
-                <span className={styles.lessonCopy}>
-                  <Skeleton className={styles.lessonTitle} />
-                  <Skeleton className={styles.lessonMeta} />
-                </span>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <section className={styles.stage} aria-label="กำลังโหลดบทเรียน">
-          <header className={styles.stageHead}>
-            <div>
-              <span>บทเรียนปัจจุบัน</span>
-              <Skeleton className={styles.heading} />
-            </div>
-            <span className={styles.counter}>-- / --</span>
-          </header>
-
-          <div className={styles.video}>
-            <span className={styles.play} aria-hidden="true">▶</span>
-            <span className={styles.loadingLabel}>กำลังเตรียมวิดีโอและเนื้อหา</span>
-          </div>
-
-          <div className={styles.summary}>
-            <div>
-              <span>LESSON STATUS</span>
-              <Skeleton className={styles.summaryTitle} />
-              <Skeleton className={styles.summaryLine} />
-            </div>
-            <Skeleton className={styles.nextAction} />
-          </div>
-        </section>
-      </div>
+    <main className="min-h-screen bg-slate-950 text-slate-100" aria-busy="true" aria-label="กำลังเตรียมพื้นที่การเรียน">
+      <header className="grid min-h-16 gap-4 border-b border-white/10 px-4 py-3 md:grid-cols-[18rem_minmax(0,1fr)_8rem] md:items-center"><div className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-md bg-primary text-xs font-bold">MD</span><span><strong className="block text-sm">MilerDev Learning</strong><small className="text-slate-400">กำลังเปิดบทเรียน</small></span></div><div className="hidden md:block"><span className="text-[10px] uppercase tracking-wider text-slate-400">LEARNING WORKSPACE</span><Skeleton className="mt-2 h-3 w-52 bg-white/10" /></div><Skeleton className="h-9 w-full bg-white/10" /></header>
+      <div className="grid min-h-[calc(100vh-4rem)] md:grid-cols-[18rem_minmax(0,1fr)]"><aside className="hidden border-r border-white/10 p-4 md:block"><p className="text-[10px] uppercase tracking-wider text-slate-400">COURSE INDEX</p><strong className="mt-1 block">ลำดับการเรียน</strong><div className="mt-5 grid gap-3">{[1,2,3,4].map(number=><div className="flex gap-3 rounded-lg border border-white/10 p-3" key={number}><span className="text-xs text-slate-500">{String(number).padStart(2,'0')}</span><div className="grid flex-1 gap-2"><Skeleton className="h-4 w-full bg-white/10" /><Skeleton className="h-3 w-20 bg-white/10" /></div></div>)}</div></aside><section className="p-4 sm:p-6 lg:p-8"><div className="mb-5 flex items-end justify-between"><div><span className="text-xs text-slate-400">บทเรียนปัจจุบัน</span><Skeleton className="mt-2 h-8 w-80 max-w-full bg-white/10" /></div><span className="text-sm text-slate-500">-- / --</span></div><Skeleton className="aspect-video w-full rounded-xl bg-white/10" /><div className="mt-6 grid gap-5 rounded-xl border border-white/10 p-5 sm:grid-cols-[minmax(0,1fr)_10rem]"><div className="grid gap-3"><Skeleton className="h-4 w-24 bg-white/10" /><Skeleton className="h-6 w-72 max-w-full bg-white/10" /><Skeleton className="h-4 w-full bg-white/10" /></div><Skeleton className="h-10 w-full bg-white/10" /></div></section></div>
       <span className="sr-only" role="status">กำลังโหลดบทเรียน กรุณารอสักครู่</span>
     </main>
   );

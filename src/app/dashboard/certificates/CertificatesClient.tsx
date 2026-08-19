@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import styles from '@/components/account/LearnerAccount.module.css';
+import { learnerAccountStyles as styles } from '@/components/account/learner-account-styles';
 
 interface Certificate {
   id: string;
@@ -65,7 +65,7 @@ export default function CertificatesClient() {
     return (
       <section className={styles.state} aria-live="polite" aria-busy="true">
         <div className={styles.stateInner}>
-          <p className={styles.stateCode}>SYNCING CREDENTIALS</p>
+          <p className={styles.stateCode}>กำลังโหลดใบรับรอง</p>
           <h2>กำลังโหลดใบรับรอง</h2>
           <div className={styles.loadingBar} aria-hidden="true" />
         </div>
@@ -77,7 +77,7 @@ export default function CertificatesClient() {
     return (
       <section className={styles.state} role="alert">
         <div className={styles.stateInner}>
-          <p className={styles.stateCode}>CREDENTIALS UNAVAILABLE</p>
+          <p className={styles.stateCode}>ไม่สามารถโหลดใบรับรอง</p>
           <h2>ยังดึงใบรับรองไม่ได้</h2>
           <p>ตรวจสอบการเชื่อมต่อหรือสถานะการเข้าสู่ระบบ แล้วลองโหลดข้อมูลอีกครั้ง</p>
           <button className={styles.primaryAction} type="button" onClick={retry}>ลองใหม่</button>
@@ -90,7 +90,7 @@ export default function CertificatesClient() {
     return (
       <section className={styles.state}>
         <div className={styles.stateInner}>
-          <p className={styles.stateCode}>NO CREDENTIALS YET</p>
+          <p className={styles.stateCode}>ยังไม่มีใบรับรอง</p>
           <h2>ยังไม่มีใบรับรอง</h2>
           <p>เรียนบทเรียนให้ครบตามเงื่อนไขของคอร์ส แล้วใบรับรองที่ออกให้จะถูกรวมไว้ที่นี่</p>
           <Link className={styles.primaryAction} href="/courses">เลือกคอร์สเรียน</Link>
@@ -103,7 +103,7 @@ export default function CertificatesClient() {
     <section aria-labelledby="certificate-records-title">
       <div className={styles.sectionHead}>
         <div>
-          <p className={styles.sectionLabel}>Verified credentials</p>
+          <p className={styles.sectionLabel}>ใบรับรองที่ตรวจสอบได้</p>
           <h2 id="certificate-records-title">ใบรับรองทั้งหมด</h2>
         </div>
         <p className={styles.sectionNote}>{certificates.length} ใบ</p>

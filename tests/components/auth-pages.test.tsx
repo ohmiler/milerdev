@@ -4,6 +4,20 @@ import { describe, expect, it } from 'vitest';
 const readSource = (path: string) => readFileSync(path, 'utf8');
 
 describe('account journey UI contracts', () => {
+  it('keeps Login and Register form-only while reserving context panels for recovery', () => {
+    const shell = readSource('src/components/auth/AuthShell.tsx');
+    const login = readSource('src/app/login/page.tsx');
+    const register = readSource('src/app/register/page.tsx');
+
+    expect(shell).toContain("const showContextPanel = variant === 'recovery';");
+    expect(shell).toContain("showContextPanel ? 'grid max-w-6xl");
+    expect(shell).toContain("variant === 'register' && 'max-w-2xl'");
+    expect(login).not.toContain('contextMeta=');
+    expect(login).not.toContain('evidence=');
+    expect(register).not.toContain('contextMeta=');
+    expect(register).not.toContain('evidence=');
+  });
+
   it('keeps Login server-owned with a Suspense-contained client form island', () => {
     const page = readSource('src/app/login/page.tsx');
     const form = readSource('src/components/auth/LoginForm.tsx');

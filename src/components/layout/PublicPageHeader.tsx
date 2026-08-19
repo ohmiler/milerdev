@@ -1,4 +1,4 @@
-import styles from './PublicPageHeader.module.css';
+import { cn } from '@/lib/utils';
 
 interface PublicPageHeaderProps {
   eyebrow: string;
@@ -7,19 +7,21 @@ interface PublicPageHeaderProps {
   variant: 'story' | 'task';
 }
 
-export default function PublicPageHeader({
-  eyebrow,
-  title,
-  description,
-  variant,
-}: PublicPageHeaderProps) {
+export default function PublicPageHeader({ eyebrow, title, description, variant }: PublicPageHeaderProps) {
   return (
-    <header className={styles.header} data-public-header="" data-variant={variant}>
-      <div className={['container', styles.inner].join(' ')}>
-        <p className={styles.eyebrow}>{eyebrow}</p>
-        <div className={styles.grid}>
-          <h1>{title}</h1>
-          <p className={styles.description}>{description}</p>
+    <header
+      data-public-header=""
+      data-variant={variant}
+      className={cn(
+        'border-b bg-[var(--academy-canvas)] py-16 sm:py-20 lg:py-24',
+        variant === 'story' && 'bg-[radial-gradient(circle_at_15%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)]',
+      )}
+    >
+      <div className="container">
+        <p className="mb-5 font-mono text-xs font-semibold tracking-[0.18em] text-primary uppercase">{eyebrow}</p>
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,.75fr)] lg:items-end lg:gap-16">
+          <h1 className="max-w-4xl text-4xl leading-[1.18] font-semibold tracking-[-0.035em] text-balance sm:text-5xl lg:text-6xl">{title}</h1>
+          <p className="max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">{description}</p>
         </div>
       </div>
     </header>

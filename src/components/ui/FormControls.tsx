@@ -1,11 +1,13 @@
 import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
-import styles from './FormControls.module.css';
+import { LoaderCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 type FormSurface = 'public' | 'workspace';
 type FormButtonVariant = 'primary' | 'secondary';
-
-const joinClasses = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ');
 
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
   surface?: FormSurface;
@@ -29,9 +31,9 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(function F
   ref,
 ) {
   return (
-    <input
+    <Input
       ref={ref}
-      className={joinClasses(styles.control, surface === 'workspace' && styles.workspaceControl, className)}
+      className={cn(surface === 'workspace' && 'bg-card', className)}
       data-invalid={invalid || undefined}
       aria-invalid={invalid || ariaInvalid || undefined}
       {...props}
@@ -44,9 +46,9 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(f
   ref,
 ) {
   return (
-    <textarea
+    <Textarea
       ref={ref}
-      className={joinClasses(styles.control, styles.textarea, surface === 'workspace' && styles.workspaceControl, className)}
+      className={cn(surface === 'workspace' && 'bg-card', className)}
       data-invalid={invalid || undefined}
       aria-invalid={invalid || ariaInvalid || undefined}
       {...props}
@@ -67,18 +69,20 @@ export const FormButton = forwardRef<HTMLButtonElement, FormButtonProps>(functio
   ref,
 ) {
   return (
-    <button
+    <Button
       ref={ref}
-      className={joinClasses(
-        styles.button,
-        variant === 'primary' ? styles.primaryButton : styles.secondaryButton,
-        surface === 'workspace' && styles.workspaceButton,
-        block && styles.blockButton,
+      variant={variant === 'primary' ? 'default' : 'outline'}
+      className={cn(
+        surface === 'workspace' && variant === 'secondary' && 'bg-card',
+        block && 'w-full',
         className,
       )}
       data-pending={pending || undefined}
       aria-busy={pending || ariaBusy || undefined}
       {...props}
-    />
+    >
+      {pending ? <LoaderCircle className="animate-spin motion-reduce:animate-none" aria-hidden="true" /> : null}
+      {props.children}
+    </Button>
   );
 });

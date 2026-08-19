@@ -1,8 +1,17 @@
 import Link from 'next/link';
-import styles from './Footer.module.css';
+import { Separator } from '@/components/ui/separator';
+
+function FacebookIcon() {
+  return <svg className="size-4" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 22v-9h3l.5-3.5h-3.5V7.25c0-1 .28-1.75 1.75-1.75H17V2.4c-.3-.04-1.35-.15-2.57-.15-2.55 0-4.3 1.56-4.3 4.42V9.5H7.25V13h2.88v9h3.37Z" /></svg>;
+}
+
+function YouTubeIcon() {
+  return <svg className="size-4" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12s0-3.25-.42-4.82a2.7 2.7 0 0 0-1.9-1.91C18.1 4.85 12 4.85 12 4.85s-6.1 0-7.68.42a2.7 2.7 0 0 0-1.9 1.91A19 19 0 0 0 2 12c0 1.58.14 3.25.42 4.82a2.7 2.7 0 0 0 1.9 1.91c1.58.42 7.68.42 7.68.42s6.1 0 7.68-.42a2.7 2.7 0 0 0 1.9-1.91A19 19 0 0 0 22 12Zm-12 3.1V8.9l5.2 3.1-5.2 3.1Z" /></svg>;
+}
 
 const quickLinks = [
   { href: '/courses', label: 'คอร์สทั้งหมด' },
+  { href: '/blog', label: 'บทความ' },
   { href: '/about', label: 'เกี่ยวกับเรา' },
   { href: '/contact', label: 'ติดต่อ' },
 ];
@@ -13,95 +22,49 @@ const supportLinks = [
   { href: '/privacy', label: 'นโยบายความเป็นส่วนตัว' },
 ];
 
+const linkClass = 'text-sm leading-6 text-muted-foreground transition-colors hover:text-foreground focus-visible:rounded focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30';
+
 export default function Footer() {
   return (
-    <footer className={styles.footer}>
-      <div className={styles.inner}>
-        <div className={styles.main}>
-          <div className={styles.brandPanel}>
-            <Link href="/" className={styles.brandLink} aria-label="MilerDev หน้าแรก">
-              <img src="/milerdev-logo-transparent.png" alt="" width={54} height={54} />
+    <footer className="border-t bg-[var(--academy-canvas)]">
+      <div className="container py-12 sm:py-16">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(10rem,.6fr))] lg:gap-12">
+          <div className="max-w-xl">
+            <Link href="/" className="inline-flex items-center gap-3 rounded-lg font-heading text-xl font-semibold focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30" aria-label="MilerDev หน้าแรก">
+              <img src="/milerdev-logo-transparent.png" alt="" width={48} height={48} />
               <span>MilerDev</span>
             </Link>
-            <p className={styles.brandCopy}>
-              พื้นที่เรียนออนไลน์สำหรับพัฒนาทักษะการเขียนโปรแกรม
-              จากความเข้าใจพื้นฐานไปสู่โปรเจกต์ที่คุณนำไปต่อยอดได้จริง
-            </p>
-
-            <div className={styles.socials} aria-label="ช่องทางติดตาม MilerDev">
-              <a
-                href="https://www.facebook.com/milerdevpro"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.social}
-                aria-label="ติดตาม MilerDev บน Facebook"
-              >
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                Facebook
-              </a>
-              <a
-                href="https://www.youtube.com/channel/UCeKE6wQHTt5JpS9_RsH4hrg"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.social}
-                aria-label="ติดตาม MilerDev บน YouTube"
-              >
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814C22.996 7.137 22.243 6.384 21.376 6.05zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                </svg>
-                YouTube
-              </a>
-              <a
-                href="https://discord.gg/9Y5ZckGD2B"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.social}
-                aria-label="เข้าร่วมชุมชน MilerDev บน Discord"
-              >
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8.25 7.25A9.8 9.8 0 0 1 12 6.5c1.32 0 2.58.26 3.75.75" />
-                  <path d="M7.2 18.2c-1.65-.45-2.7-1.08-3.45-1.8.18-3.65 1.18-6.72 2.9-9.2A8.2 8.2 0 0 1 9 6.35l.55 1.1a9.8 9.8 0 0 1 4.9 0l.55-1.1c.82.18 1.6.47 2.35.85 1.72 2.48 2.72 5.55 2.9 9.2-.75.72-1.8 1.35-3.45 1.8l-.85-1.15c.82-.25 1.55-.6 2.18-1.02-1.45.68-3.52 1.12-6.13 1.12s-4.68-.44-6.13-1.12c.63.42 1.36.77 2.18 1.02L7.2 18.2Z" />
-                  <path d="M9 13.25h.01M15 13.25h.01" />
-                </svg>
-                Discord
-              </a>
+            <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">พื้นที่เรียนออนไลน์สำหรับพัฒนาทักษะการเขียนโปรแกรม จากความเข้าใจพื้นฐานไปสู่โปรเจกต์ที่นำไปต่อยอดได้จริง</p>
+            <div className="mt-6 flex flex-wrap gap-3" aria-label="ช่องทางติดตาม MilerDev">
+              <a href="https://www.facebook.com/milerdevpro" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-medium hover:bg-muted"><FacebookIcon />Facebook</a>
+              <a href="https://www.youtube.com/channel/UCeKE6wQHTt5JpS9_RsH4hrg" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-medium hover:bg-muted"><YouTubeIcon />YouTube</a>
+              <a href="https://discord.gg/9Y5ZckGD2B" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-xl border bg-background px-3 text-sm font-medium hover:bg-muted">Discord</a>
             </div>
-
           </div>
 
-          <nav className={styles.column} aria-labelledby="footer-explore">
-            <h2 id="footer-explore">สำรวจ MilerDev</h2>
-            <ul>
-              {quickLinks.map((link) => (
-                <li key={link.href}><Link href={link.href}>{link.label}</Link></li>
-              ))}
-            </ul>
+          <nav aria-labelledby="footer-explore">
+            <h2 id="footer-explore" className="mb-4 text-sm font-semibold">สำรวจ MilerDev</h2>
+            <ul className="space-y-3">{quickLinks.map((link) => <li key={link.href}><Link className={linkClass} href={link.href}>{link.label}</Link></li>)}</ul>
           </nav>
 
-          <nav className={styles.column} aria-labelledby="footer-support">
-            <h2 id="footer-support">ข้อมูลและความช่วยเหลือ</h2>
-            <ul>
-              {supportLinks.map((link) => (
-                <li key={link.href}><Link href={link.href}>{link.label}</Link></li>
-              ))}
-            </ul>
+          <nav aria-labelledby="footer-support">
+            <h2 id="footer-support" className="mb-4 text-sm font-semibold">ข้อมูลและความช่วยเหลือ</h2>
+            <ul className="space-y-3">{supportLinks.map((link) => <li key={link.href}><Link className={linkClass} href={link.href}>{link.label}</Link></li>)}</ul>
           </nav>
 
-          <div className={styles.contact}>
-            <h2>คุยกับเรา</h2>
-            <div className={styles.contactBody}>
-              <a href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
-              <address>กรุงเทพมหานคร, ประเทศไทย</address>
-              <p>จันทร์–ศุกร์ / 09:00–18:00 น.</p>
+          <div>
+            <h2 className="mb-4 text-sm font-semibold">คุยกับเรา</h2>
+            <div className="space-y-3 text-sm leading-6 text-muted-foreground">
+              <a className={linkClass} href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
+              <address className="not-italic">กรุงเทพมหานคร, ประเทศไทย</address>
+              <p>จันทร์–ศุกร์<br />09:00–18:00 น.</p>
             </div>
           </div>
         </div>
-
-        <div className={styles.bottom}>
+        <Separator className="my-10" />
+        <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 MilerDev. สงวนลิขสิทธิ์ทั้งหมด</p>
-          <p className={styles.signature}>เรียนให้เข้าใจ แล้วสร้างในแบบของคุณ</p>
+          <p>เรียนให้เข้าใจ แล้วสร้างในแบบของคุณ</p>
         </div>
       </div>
     </footer>

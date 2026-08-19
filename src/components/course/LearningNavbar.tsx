@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { MenuIcon, PanelLeftIcon, PanelRightIcon } from '@/components/ui/Icons';
-
-export const LEARNING_THEME_KEY = 'milerdev-learning-theme';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 
 export interface LearningNavbarProps {
     courseSlug: string;
@@ -16,8 +16,6 @@ export interface LearningNavbarProps {
     sidebarCollapsed: boolean;
     onToggleSidebar: () => void;
     onOpenSidebar: () => void;
-    theme: 'dark' | 'light';
-    onToggleTheme: () => void;
 }
 
 export default function LearningNavbar({
@@ -33,52 +31,53 @@ export default function LearningNavbar({
     onOpenSidebar,
 }: LearningNavbarProps) {
     return (
-        <header className="nav-learning-shell" data-surface="learning" aria-label="แถบควบคุมการเรียน">
-            <div className="nav-learning-rail">
-                <Link href={`/courses/${courseSlug}`} className="nav-learning-exit" aria-label={`ออกจากหน้าเรียนและกลับไปยังคอร์ส ${courseTitle}`}>
-                    <span className="nav-learning-mark" aria-hidden="true">MD</span>
-                    <span className="nav-learning-brand">
-                        <strong>MilerDev Learning</strong>
-                        <small>ออกจากหน้าเรียน</small>
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950 text-slate-100" data-surface="learning" aria-label="แถบควบคุมการเรียน">
+            <div className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 sm:px-5 lg:grid-cols-[16rem_minmax(0,1fr)_14rem_auto]">
+                <Link href={`/courses/${courseSlug}`} className="flex min-w-0 items-center gap-3 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400" aria-label={`ออกจากหน้าเรียนและกลับไปยังคอร์ส ${courseTitle}`}>
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground" aria-hidden="true">MD</span>
+                    <span className="hidden min-w-0 sm:block">
+                        <strong className="block truncate text-sm">MilerDev Learning</strong>
+                        <small className="text-xs text-slate-400">ออกจากหน้าเรียน</small>
                     </span>
                 </Link>
 
-                <div className="nav-learning-context">
-                    <span className="nav-learning-kicker">Learning workspace</span>
-                    <span className="nav-learning-course">{courseTitle}</span>
-                    <strong className="nav-learning-lesson">{lessonTitle}</strong>
+                <div className="min-w-0">
+                    <span className="hidden text-[10px] uppercase tracking-[0.18em] text-slate-500 lg:block">Learning workspace · {courseTitle}</span>
+                    <strong className="block truncate text-sm">{lessonTitle}</strong>
                 </div>
 
-                <div className="nav-learning-progress" aria-label={isEnrolled ? `ความคืบหน้า ${progressPercent}%` : 'กำลังดูบทเรียนทดลอง'}>
-                    <span className="nav-learning-access">{isEnrolled ? `เรียนแล้ว ${progressPercent}%` : 'Preview'}</span>
+                <div className="hidden items-center gap-3 lg:flex" aria-label={isEnrolled ? `ความคืบหน้า ${progressPercent}%` : 'กำลังดูบทเรียนทดลอง'}>
+                    <span className="whitespace-nowrap text-xs text-slate-400">{isEnrolled ? `${progressPercent}%` : 'Preview'}</span>
                     {isEnrolled && (
-                        <div className="nav-learning-progress-track" aria-hidden="true">
-                            <span style={{ width: `${progressPercent}%` }} />
-                        </div>
+                        <Progress className="w-24 bg-white/10" value={progressPercent} aria-hidden="true" />
                     )}
-                    <span className="nav-learning-progress-label">{String(currentIndex + 1).padStart(2, '0')} / {String(totalCount).padStart(2, '0')}</span>
+                    <span className="whitespace-nowrap font-mono text-xs text-slate-400">{String(currentIndex + 1).padStart(2, '0')} / {String(totalCount).padStart(2, '0')}</span>
                 </div>
 
-                <div className="nav-learning-controls">
-                    <button
+                <div>
+                    <Button
                         type="button"
-                        className="nav-learning-shell__control nav-learning-rail-toggle hidden lg:inline-flex"
+                        size="icon-sm"
+                        variant="ghost"
+                        className="hidden text-slate-300 hover:bg-white/10 hover:text-white lg:inline-flex"
                         onClick={onToggleSidebar}
                         aria-label={sidebarCollapsed ? 'แสดงรายการบทเรียน' : 'ซ่อนรายการบทเรียน'}
                         title={sidebarCollapsed ? 'แสดงรายการบทเรียน' : 'ซ่อนรายการบทเรียน'}
                         aria-pressed={sidebarCollapsed}
                     >
                         {sidebarCollapsed ? <PanelLeftIcon /> : <PanelRightIcon />}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="button"
-                        className="nav-learning-shell__control nav-learning-rail-toggle inline-flex lg:hidden"
+                        size="icon-sm"
+                        variant="ghost"
+                        className="text-slate-300 hover:bg-white/10 hover:text-white lg:hidden"
                         onClick={onOpenSidebar}
                         aria-label="เปิดรายการบทเรียน"
                         title="เปิดรายการบทเรียน"
                     >
                         <MenuIcon />
-                    </button>
+                    </Button>
                 </div>
             </div>
         </header>

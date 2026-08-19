@@ -1,0 +1,61 @@
+.certificateDocument {
+  --certificate-primary: #00abff;
+  --certificate-secondary: #005a86;
+  --certificate-accent: #33bcff;
+  --certificate-light: #e6f7ff;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--certificate-primary);
+  background: #fff;
+  color: #111820;
+}
+.certificateMasthead {
+  position: relative;
+  min-height: 230px;
+  overflow: hidden;
+  padding: 30px 36px 34px;
+  background: linear-gradient(135deg, var(--certificate-secondary), var(--certificate-primary));
+  color: #fff;
+}
+.certificateHeaderImage { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; }
+.certificateMasthead::after { position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(8, 11, 15, .78), rgba(8, 11, 15, .18)); content: ''; }
+.certificateBrand,
+.certificateHeading,
+.certificateSerial { position: relative; z-index: 2; }
+.certificateBrand { display: flex; align-items: center; gap: 10px; font-size: .8125rem; font-weight: 750; }
+.certificateBrand img { width: 34px; height: 34px; object-fit: contain; background: #fff; }
+.certificateHeading { margin-top: 46px; }
+.certificateHeading p { margin: 0 0 6px; color: rgba(255, 255, 255, .74); font: 700 .6875rem/1.4 var(--font-code); letter-spacing: .12em; text-transform: uppercase; }
+.certificateHeading strong { display: block; max-width: 20ch; margin: 0; color: #fff; font-size: clamp(1.45rem, 3vw, 2.4rem); line-height: 1.25; letter-spacing: -.02em; }
+.certificateSerial { position: absolute; right: 36px; bottom: 34px; font: 700 .6875rem/1.4 var(--font-code); letter-spacing: .08em; }
+.certificateBody { padding: 54px 56px 48px; text-align: center; }
+.certificateIntro { margin: 0 0 8px; color: #7a8995; font-size: .8125rem; }
+.certificateBody h2 { margin: 0 0 34px; font-size: clamp(2rem, 5vw, 3.8rem); line-height: 1.15; letter-spacing: -.04em; text-wrap: balance; }
+.certificateBody h3 { max-width: 28ch; margin: 0 auto 34px; color: var(--certificate-secondary); font-size: clamp(1.35rem, 3vw, 2rem); line-height: 1.35; text-wrap: balance; }
+.certificateRule { width: 84px; height: 3px; margin: 0 auto 34px; background: var(--certificate-primary); }
+.certificateDetails { display: grid; grid-template-columns: repeat(3, 1fr); max-width: 720px; margin: 0 auto; border-top: 1px solid #d8e1e8; border-left: 1px solid #d8e1e8; }
+.certificateDetails div { padding: 18px 14px; border-right: 1px solid #d8e1e8; border-bottom: 1px solid #d8e1e8; }
+.certificateDetails dt { margin-bottom: 6px; color: #7a8995; font-size: .6875rem; }
+.certificateDetails dd { margin: 0; font-size: .8125rem; font-weight: 750; }
+.certificateFooter { display: flex; justify-content: space-between; gap: 24px; padding: 22px 36px; border-top: 1px solid #d8e1e8; background: var(--certificate-light); }
+.certificateFooter > div { display: grid; gap: 4px; }
+.certificateFooter > div:last-child { text-align: right; }
+.certificateFooter span { color: #52616d; font: 700 .625rem/1.4 var(--font-code); letter-spacing: .08em; }
+.certificateFooter strong { color: var(--certificate-secondary); font: 700 .8125rem/1.4 var(--font-code); overflow-wrap: anywhere; }
+.certificateRevoked { border-color: #b42318; }
+.certificateRevoked::after { position: absolute; inset: 0; z-index: 5; border: 10px solid rgba(180, 35, 24, .16); pointer-events: none; content: ''; }
+.revokedWatermark { position: absolute; top: 48%; left: 50%; z-index: 6; width: 120%; transform: translate(-50%, -50%) rotate(-16deg); border-block: 4px solid rgba(180, 35, 24, .72); color: rgba(180, 35, 24, .72); font: 900 clamp(1.5rem, 6vw, 4rem)/1.4 var(--font-code); letter-spacing: .06em; text-align: center; pointer-events: none; }
+
+@media (max-width: 760px) {
+  .certificateMasthead { min-height: 250px; padding: 26px 24px; }
+  .certificateHeading { margin-top: 40px; }
+  .certificateSerial { right: 24px; bottom: 24px; }
+  .certificateBody { padding: 42px 22px 36px; }
+  .certificateDetails { grid-template-columns: 1fr; }
+  .certificateFooter { align-items: flex-start; flex-direction: column; padding: 20px 22px; }
+  .certificateFooter > div:last-child { text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revokedWatermark { transform: translate(-50%, -50%) rotate(-16deg); }
+}

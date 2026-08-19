@@ -149,9 +149,17 @@ Dashboard, course workspace, progress, certificates, payment history, notificati
 
 Routes under `/admin`. Explicitly out of scope for the current redesign phase.
 
-### First-release redesign surface
+### Completed non-admin redesign surface
 
-Home, public navigation/footer, course and bundle discovery/detail, authentication presentation, checkout/payment feedback, and payment-success presentation. The dashboard, learning workspace, account area, and admin surface are not included in this release.
+Every user-facing route outside `/admin`: public acquisition, conversion, dashboard, learning workspace, notifications, certificate and payment records, profile, settings, and shared application status pages. Work ships in slices, but a route is complete only when its representative states share the MilerDev visual language and preserve its domain behavior.
+
+### Academy-light surface
+
+The default public, dashboard, account, editorial, and status presentation. It uses white and soft neutral canvases, navy text, MilerDev blue actions, rounded surfaces, restrained shadows, generous whitespace, and Thai-first task language.
+
+### Focus learning surface
+
+The learning workspace treatment: a light reading shell with dark video and lesson-navigation regions. It uses the same semantic status, typography, focus, and accent contracts as academy-light. It is not a separate brand or a site-wide dark mode.
 
 ## UI language
 
@@ -174,6 +182,26 @@ A design value named by purpose, such as background, surface, foreground, muted,
 ### Migrated route
 
 A route whose representative states use the new design foundation, preserve business behavior, pass relevant checks, and no longer depend on unintended legacy styling.
+
+### Shadcn-first composition
+
+A user-facing composition built from source-owned shadcn/ui primitives and Tailwind utilities. It does not mean that every domain pattern is a generic primitive, but it does mean that the pattern does not rebuild an existing accessible Button, form control, Dialog, Sheet, Alert, Card, Tabs, Separator, Badge, Skeleton, or toast foundation.
+
+### Legacy CSS debt
+
+Route- or component-specific styling that predates the accepted shared primitive and token system. A stylesheet is not legacy merely because it is CSS; generated rich content, third-party media, print/export, and shared theme rules may remain when they have a documented responsibility that cannot be owned by a primitive or local utility composition.
+
+### Meaningful skeleton
+
+A non-interactive placeholder matching the geometry of a predictable unresolved data region. It is used for initial data loading, is not shown for static content, and is replaced by a distinct error, empty, success, or resolved state. User-facing skeletons use the shared shadcn `Skeleton` primitive.
+
+### Mutation pending state
+
+The disabled in-progress state of a user action such as submitting a form, creating a checkout, verifying a payment, downloading a certificate, or saving a profile. It uses a pending Button label or spinner rather than a page skeleton and does not imply that the operation succeeded.
+
+### Static content surface
+
+A route whose main content is available without a user- or database-dependent initial fetch, such as About, the Contact shell, FAQ shell, Privacy, or Terms. Static content surfaces do not receive decorative route skeletons.
 
 ## Measurement language
 
@@ -213,4 +241,6 @@ The existing `analytics_enabled` application setting. Collection remains off unl
 - Brand direction: light-first MilerDev academy using white, navy, and `#00abff`, with soft rounded surfaces and authentic learner imagery.
 - Primary public action: browse courses; secondary action: try a free lesson.
 - Evidence: verified learner reviews and real MilerDev teaching/showcase material only.
-- Deferred surfaces: authenticated learner workspace, account management, analytics reporting, and admin redesign.
+- Primary interface language: Thai. Short English eyebrows and established developer terms are supporting language only.
+- Home composition and copy are frozen under ADR 0002; shared-system changes must preserve its accepted journey and spacing rhythm.
+- Deferred surfaces: analytics reporting UI and admin redesign.

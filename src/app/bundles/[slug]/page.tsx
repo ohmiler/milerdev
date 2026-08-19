@@ -10,7 +10,9 @@ import { bundleCourses, bundles, courses, enrollments, lessons } from '@/lib/db/
 import { getExcerpt } from '@/lib/sanitize';
 import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
 import { and, asc, count, eq } from 'drizzle-orm';
-import styles from './bundle-detail.module.css';
+import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -149,10 +151,11 @@ export default async function BundleDetailPage({ params }: Props) {
   return (
     <>
       <Navbar />
-      <main className={styles.page}>
-        <header className={styles.hero}>
-          <div className={styles.shell}>
-            <nav className={styles.breadcrumb} aria-label={'เส้นทางนำทาง'}>
+      <main className="min-h-screen bg-background text-foreground">
+        <AnalyticsViewEvent event={{ eventName: 'bundle_viewed', bundleId: bundle.id, placement: 'bundle_detail' }} />
+        <header className="border-b bg-muted/30">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+            <nav className="mb-10 flex flex-wrap items-center gap-2 text-sm text-muted-foreground [&_a:hover]:text-foreground" aria-label={'เส้นทางนำทาง'}>
               <Link href={'/'}>หน้าแรก</Link>
               <span aria-hidden={true}>/</span>
               <Link href={'/courses'}>คอร์สทั้งหมด</Link>
@@ -160,27 +163,27 @@ export default async function BundleDetailPage({ params }: Props) {
               <span>ชุดคอร์ส</span>
             </nav>
 
-            <div className={styles.heroGrid}>
-              <div className={styles.heroCopy}>
-                <p className={styles.eyebrow}>LEARNING PATH / {String(bundle.courseCount).padStart(2, '0')} COURSES</p>
-                <h1>{bundle.title}</h1>
-                {bundle.description ? <p className={styles.lede}>{bundle.description}</p> : null}
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-end">
+              <div>
+                <Badge variant="outline">LEARNING PATH / {String(bundle.courseCount).padStart(2, '0')} COURSES</Badge>
+                <h1 className="mt-5 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">{bundle.title}</h1>
+                {bundle.description ? <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">{bundle.description}</p> : null}
               </div>
 
-              <div className={styles.heroEvidence} aria-label={'ข้อมูลชุดคอร์ส'}>
-                <div>
+              <div className="grid grid-cols-2 gap-3" aria-label={'ข้อมูลชุดคอร์ส'}>
+                <div className="rounded-lg border bg-background p-4">
                   <span>คอร์ส</span>
                   <strong>{bundle.courseCount}</strong>
                 </div>
-                <div>
+                <div className="rounded-lg border bg-background p-4">
                   <span>บทเรียน</span>
                   <strong>{totalLessons}</strong>
                 </div>
-                <div>
+                <div className="rounded-lg border bg-background p-4">
                   <span>ราคาชุด</span>
                   <strong>{bundlePrice === 0 ? 'ฟรี' : `฿${bundlePrice.toLocaleString()}`}</strong>
                 </div>
-                <div>
+                <div className="rounded-lg border bg-background p-4">
                   <span>ส่วนลด</span>
                   <strong>{bundle.discount > 0 ? `${bundle.discount}%` : '—'}</strong>
                 </div>
@@ -189,68 +192,72 @@ export default async function BundleDetailPage({ params }: Props) {
           </div>
         </header>
 
-        <section className={styles.body}>
-          <div className={`${styles.shell} ${styles.bodyGrid}`}>
-            <div className={styles.courseColumn}>
-              <div className={styles.sectionHeading}>
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_23rem]">
+            <div className="min-w-0">
+              <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className={styles.eyebrow}>COURSE SEQUENCE</p>
-                  <h2>เส้นทางการเรียนในชุดนี้</h2>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">COURSE SEQUENCE</p>
+                  <h2 className="mt-2 text-3xl font-bold tracking-tight">เส้นทางการเรียนในชุดนี้</h2>
                 </div>
-                <p>เรียงตามลำดับที่วางไว้ เปิดดูรายละเอียดแต่ละคอร์สได้ก่อนตัดสินใจ</p>
+                <p className="max-w-md text-sm leading-6 text-muted-foreground">เรียงตามลำดับที่วางไว้ เปิดดูรายละเอียดแต่ละคอร์สได้ก่อนตัดสินใจ</p>
               </div>
 
-              <ol className={styles.courseList}>
+              <ol className="grid gap-5">
                 {bundle.courses.map((course, index) => {
                   const thumbnail = normalizeUrl(course.courseThumbnail);
                   return (
                     <li key={course.courseId}>
-                      <Link className={styles.courseCard} href={`/courses/${course.courseSlug}`}>
+                      <Card className="overflow-hidden transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
+                      <Link className="grid sm:grid-cols-[12rem_minmax(0,1fr)]" href={`/courses/${course.courseSlug}`}>
                         <div
-                          className={styles.courseMedia}
+                          className="flex min-h-40 items-start bg-slate-900 bg-cover bg-center p-4"
                           style={thumbnail ? { backgroundImage: `url(${thumbnail})` } : undefined}
                           aria-hidden={true}
                         >
-                          <span>{String(index + 1).padStart(2, '0')}</span>
+                          <Badge>{String(index + 1).padStart(2, '0')}</Badge>
                         </div>
-                        <div className={styles.courseCopy}>
-                          <div className={styles.courseMeta}>
+                        <div className="p-5">
+                          <div className="mb-3 flex flex-wrap justify-between gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                             <span>COURSE {String(index + 1).padStart(2, '0')}</span>
                             <span>{course.lessonCount} บทเรียน</span>
                           </div>
-                          <h3>{course.courseTitle}</h3>
+                          <h3 className="text-xl font-semibold tracking-tight">{course.courseTitle}</h3>
                           {course.courseDescription ? (
-                            <p>{getExcerpt(course.courseDescription, 120)}</p>
+                            <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{getExcerpt(course.courseDescription, 120)}</p>
                           ) : null}
-                          <div className={styles.courseFooter}>
+                          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
                             <span>ราคาปกติ ฿{parseFloat(course.coursePrice).toLocaleString()}</span>
                             <strong>ดูรายละเอียด <span aria-hidden={true}>→</span></strong>
                           </div>
                         </div>
-                      </Link>
+                      </Link></Card>
                     </li>
                   );
                 })}
               </ol>
             </div>
 
-            <aside className={styles.purchaseRail} aria-label={'สรุปและสมัครชุดคอร์ส'}>
-              <div className={styles.purchasePanel}>
-                <p className={styles.eyebrow}>BUNDLE SUMMARY</p>
-                <h2>เริ่มเส้นทางนี้</h2>
+            <aside className="lg:sticky lg:top-24 lg:self-start" aria-label={'สรุปและสมัครชุดคอร์ส'}>
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <Badge variant="outline" className="w-fit">BUNDLE SUMMARY</Badge>
+                  <CardTitle className="text-2xl">เริ่มเส้นทางนี้</CardTitle>
+                </CardHeader>
 
-                <div className={styles.priceBlock}>
-                  <span>ราคาชุดคอร์ส</span>
-                  <strong>{bundlePrice === 0 ? 'ฟรี' : `฿${bundlePrice.toLocaleString()}`}</strong>
+                <CardContent className="space-y-6">
+                <div className="rounded-lg bg-muted p-5">
+                  <span className="text-sm text-muted-foreground">ราคาชุดคอร์ส</span>
+                  <strong className="mt-1 block text-3xl tracking-tight">{bundlePrice === 0 ? 'ฟรี' : `฿${bundlePrice.toLocaleString()}`}</strong>
                   {bundle.totalOriginalPrice > bundlePrice ? (
-                    <p>
-                      <span>จาก ฿{bundle.totalOriginalPrice.toLocaleString()}</span>
-                      <b>ประหยัด ฿{savings.toLocaleString()} ({bundle.discount}%)</b>
+                    <p className="mt-2 grid gap-1 text-sm">
+                      <span className="text-muted-foreground line-through">จาก ฿{bundle.totalOriginalPrice.toLocaleString()}</span>
+                      <b className="text-primary">ประหยัด ฿{savings.toLocaleString()} ({bundle.discount}%)</b>
                     </p>
                   ) : null}
                 </div>
 
-                <dl className={styles.bundleFacts}>
+                <dl className="grid gap-3 text-sm [&_div]:flex [&_div]:justify-between [&_div]:gap-4 [&_dt]:text-muted-foreground [&_dd]:font-medium">
                   <div><dt>คอร์สทั้งหมด</dt><dd>{bundle.courseCount} คอร์ส</dd></div>
                   <div><dt>เนื้อหาทั้งหมด</dt><dd>{totalLessons} บทเรียน</dd></div>
                   <div><dt>Certificate</dt><dd>ทุกคอร์ส</dd></div>
@@ -263,9 +270,9 @@ export default async function BundleDetailPage({ params }: Props) {
                   bundleSlug={bundle.slug}
                   allEnrolled={allEnrolled}
                 />
-
-                <p className={styles.purchaseNote}>ตรวจสอบคอร์สและยอดชำระก่อนยืนยัน ระบบจะเปิดสิทธิ์หลังการชำระเงินได้รับการตรวจสอบแล้ว</p>
-              </div>
+                </CardContent>
+                <CardFooter><p className="text-xs leading-5 text-muted-foreground">ตรวจสอบคอร์สและยอดชำระก่อนยืนยัน ระบบจะเปิดสิทธิ์หลังการชำระเงินได้รับการตรวจสอบแล้ว</p></CardFooter>
+              </Card>
             </aside>
           </div>
         </section>

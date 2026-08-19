@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
-import styles from '@/components/account/LearnerAccount.module.css';
+import { learnerAccountStyles as styles } from '@/components/account/learner-account-styles';
 import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
 
 export const metadata: Metadata = {
@@ -29,12 +29,12 @@ export default async function SettingsPage() {
   return (
     <LearnerAccountShell
       current="settings"
-      eyebrow="Account controls"
+      eyebrow="จัดการบัญชี"
       title="ตั้งค่าบัญชี"
       description="จัดการข้อมูลที่แสดงในบัญชีและควบคุมความปลอดภัยของการเข้าสู่ระบบ"
     >
       <section className={styles.settingsSection} aria-labelledby="account-settings-title">
-        <p className={styles.sectionLabel}>Account</p>
+        <p className={styles.sectionLabel}>บัญชี</p>
         <h2 id="account-settings-title">ข้อมูลบัญชี</h2>
         <Link className={styles.settingRow} href="/profile">
           <span className={styles.settingCopy}>
@@ -46,7 +46,7 @@ export default async function SettingsPage() {
       </section>
 
       <section className={styles.settingsSection} aria-labelledby="security-settings-title">
-        <p className={styles.sectionLabel}>Security</p>
+        <p className={styles.sectionLabel}>ความปลอดภัย</p>
         <h2 id="security-settings-title">การเข้าสู่ระบบ</h2>
         <ChangePasswordForm hasPassword={Boolean(user?.passwordHash)} />
       </section>

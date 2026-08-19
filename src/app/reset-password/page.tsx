@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import AuthShell from '@/components/auth/AuthShell';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
-import styles from '@/components/auth/auth.module.css';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ResetPasswordPage() {
   return (
@@ -20,7 +20,7 @@ export default function ResetPasswordPage() {
         { label: 'Return safely', text: 'กลับไปเข้าสู่ระบบอีกครั้ง' },
       ]}
     >
-      <Suspense fallback={<p className={styles.skeleton} aria-live={'polite'}>กำลังตรวจสอบลิงก์...</p>}>
+      <Suspense fallback={<div className="space-y-4" aria-label="กำลังตรวจสอบลิงก์"><Skeleton className="h-5 w-36" /><Skeleton className="h-11 w-full" /><Skeleton className="h-11 w-full" /></div>}>
         <ResetPasswordForm />
       </Suspense>
     </AuthShell>

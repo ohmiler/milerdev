@@ -22,9 +22,9 @@ describe('studio and support page contracts', () => {
 
     expect(html.match(new RegExp(`<button[^>]*type=${quote}button${quote}`, 'g'))).toHaveLength(2);
     expect(html.match(new RegExp(`aria-expanded=${quote}false${quote}`, 'g'))).toHaveLength(2);
-    expect(html.match(/aria-controls=/g)).toHaveLength(2);
-    expect(html.match(new RegExp(`role=${quote}region${quote}`, 'g'))).toHaveLength(2);
-    expect(html.match(/ hidden=/g)).toHaveLength(2);
+    expect(html.match(/data-slot="accordion-item"/g)).toHaveLength(2);
+    expect(html.match(/data-slot="accordion-trigger"/g)).toHaveLength(2);
+    expect(html).not.toContain(FAQ_CATEGORIES[0].items[0].a);
   });
 
   it('retains Contact field names, limits, and an explicit submit task', () => {

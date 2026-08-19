@@ -7,7 +7,8 @@ import type {
   CourseStatus,
 } from '@/lib/course-lifecycle';
 import DialogShell from '@/components/ui/DialogShell';
-import feedbackStyles from '@/components/ui/Feedback.module.css';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import styles from './AdminCourseLifecycleControls.module.css';
 
 type LifecyclePresentation = {
@@ -150,7 +151,7 @@ export function CourseLifecycleDialog({
       <button
         ref={cancelButtonRef}
         type="button"
-        className={`${feedbackStyles.button} ${feedbackStyles.buttonSecondary}`}
+        className={buttonVariants({ variant: 'outline' })}
         onClick={onCancel}
         disabled={pending}
       >
@@ -158,9 +159,7 @@ export function CourseLifecycleDialog({
       </button>
       <button
         type="button"
-        className={`${feedbackStyles.button} ${
-          destructive ? feedbackStyles.buttonDestructive : feedbackStyles.buttonPrimary
-        }`}
+        className={cn(buttonVariants({ variant: destructive ? 'destructive' : 'default' }))}
         onClick={onConfirm}
         disabled={pending}
       >

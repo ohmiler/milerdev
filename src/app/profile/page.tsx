@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users, enrollments } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
-import styles from '@/components/account/LearnerAccount.module.css';
+import { learnerAccountStyles as styles } from '@/components/account/learner-account-styles';
 import ProfileForm from './ProfileForm';
 
 export const metadata: Metadata = {
@@ -48,7 +48,7 @@ export default async function ProfilePage() {
   return (
     <LearnerAccountShell
       current="profile"
-      eyebrow="Learner identity"
+      eyebrow="ข้อมูลผู้เรียน"
       title="โปรไฟล์ของฉัน"
       description="ข้อมูลระบุตัวตนสำหรับบัญชีผู้เรียนและชื่อที่ใช้ในประสบการณ์เรียนของคุณ"
     >
@@ -64,7 +64,7 @@ export default async function ProfilePage() {
             )}
           </div>
           <div className={styles.profileIdentity}>
-            <p className={styles.sectionLabel}>Account identity</p>
+            <p className={styles.sectionLabel}>ข้อมูลโปรไฟล์</p>
             <h2 id="profile-identity-title">{user.name || 'ไม่ระบุชื่อ'}</h2>
             <p>{user.email}</p>
           </div>
@@ -78,7 +78,7 @@ export default async function ProfilePage() {
       </section>
 
       <section className={styles.formSection} aria-labelledby="edit-profile-title">
-        <p className={styles.sectionLabel}>Editable information</p>
+        <p className={styles.sectionLabel}>ข้อมูลที่แก้ไขได้</p>
         <h2 id="edit-profile-title">แก้ไขข้อมูล</h2>
         <ProfileForm user={user} />
       </section>

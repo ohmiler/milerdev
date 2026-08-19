@@ -94,4 +94,26 @@ describe('learner account contracts', () => {
     expect(source).toContain('currentPassword, newPassword');
     expect(source).toContain('disabled={isDisabled}');
   });
+
+  it('uses Thai-first task labels across learner account surfaces', () => {
+    const sources = [
+      'src/components/account/LearnerAccountShell.tsx',
+      'src/app/dashboard/page.tsx',
+      'src/app/dashboard/payments/PaymentsClient.tsx',
+      'src/app/dashboard/certificates/CertificatesClient.tsx',
+      'src/app/profile/page.tsx',
+      'src/app/settings/page.tsx',
+    ].map((path) => readFileSync(path, 'utf8')).join('\n');
+
+    for (const legacyLabel of [
+      'ACCOUNT INDEX',
+      'Learning dashboard',
+      'Payment ledger',
+      'Verified credentials',
+      'Account identity',
+      'Editable information',
+    ]) {
+      expect(sources).not.toContain(legacyLabel);
+    }
+  });
 });

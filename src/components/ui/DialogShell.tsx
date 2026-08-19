@@ -1,9 +1,16 @@
 'use client';
 
-import type { MouseEvent, ReactNode, RefObject } from 'react';
-import { useEffect, useId, useRef } from 'react';
+import { useId, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import styles from './Feedback.module.css';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 type DialogRole = 'dialog' | 'alertdialog';
 type FeedbackTone = 'success' | 'error' | 'info' | 'warning';
@@ -26,24 +33,12 @@ interface DialogShellProps {
   size?: 'default' | 'wide' | 'media';
 }
 
-const focusableSelector = [
-  'button:not(:disabled)',
-  'a[href]',
-  'input:not(:disabled)',
-  'select:not(:disabled)',
-  'textarea:not(:disabled)',
-  'iframe',
-  '[tabindex]',
-].join(',');
-
-function focusableElements(container: HTMLElement) {
-  return Array.from(container.querySelectorAll<HTMLElement>(focusableSelector))
-    .filter((element) => (
-      element.tabIndex >= 0
-      && !element.hasAttribute('hidden')
-      && element.getClientRects().length > 0
-    ));
-}
+const toneClasses: Record<FeedbackTone, string> = {
+  success: 'bg-emerald-50 text-emerald-700',
+  error: 'bg-destructive/10 text-destructive',
+  info: 'bg-primary/10 text-primary',
+  warning: 'bg-amber-50 text-amber-700',
+};
 
 export default function DialogShell({
   isOpen,
@@ -62,108 +57,65 @@ export default function DialogShell({
   icon,
   size = 'default',
 }: DialogShellProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const onCloseRef = useRef(onClose);
   const titleId = useId();
   const descriptionId = useId();
-
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const previousFocus = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    const explicitReturnTarget = returnFocusRef?.current;
-    const previousOverflow = document.body.style.overflow;
-    const panel = panelRef.current;
-    document.body.style.overflow = 'hidden';
-
-    const animationFrame = window.requestAnimationFrame(() => {
-      const firstControl = panel ? focusableElements(panel)[0] : null;
-      (initialFocusRef?.current ?? firstControl ?? panel)?.focus();
-    });
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onCloseRef.current();
-        return;
-      }
-
-      if (event.key !== 'Tab' || !panel) return;
-
-      const controls = focusableElements(panel);
-      if (controls.length === 0) {
-        event.preventDefault();
-        panel.focus();
-        return;
-      }
-
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.cancelAnimationFrame(animationFrame);
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      const returnTarget = explicitReturnTarget ?? previousFocus;
-      if (returnTarget?.isConnected) returnTarget.focus();
-    };
-  }, [initialFocusRef, isOpen, returnFocusRef]);
-
   if (!isOpen) return null;
 
-  const handleBackdrop = (event: MouseEvent<HTMLDivElement>) => {
-    if (dismissOnBackdrop && event.target === event.currentTarget) {
-      event.preventDefault();
-      onClose();
-    }
-  };
+  if (typeof document === 'undefined') {
+    return (
+      <div role={role} aria-label={title ? undefined : label} aria-labelledby={title ? titleId : undefined} aria-describedby={descriptionId} aria-modal="true" data-tone={tone} data-variant={variant} data-size={size}>
+        {title ? <h3 id={titleId}>{title}</h3> : null}
+        <div id={descriptionId}>{description}</div>
+        {body}
+        {children}
+      </div>
+    );
+  }
 
   const dialog = (
-    <div
-      className={styles.overlay}
-      data-tone={tone}
-      onMouseDown={handleBackdrop}
-    >
-      <div
-        ref={panelRef}
-        className={styles.panel}
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent
         role={role}
-        aria-modal={true}
-        aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : label}
+        aria-labelledby={title ? titleId : undefined}
         aria-describedby={descriptionId}
         data-tone={tone}
         data-variant={variant}
         data-size={size}
-        tabIndex={-1}
+        className={cn(
+          'max-h-[calc(100vh-2rem)] overflow-y-auto',
+          size === 'wide' && 'sm:max-w-2xl',
+          size === 'media' && 'bg-slate-950 p-3 text-white sm:max-w-5xl',
+          variant === 'destructive' && 'ring-destructive/20',
+        )}
+        onPointerDownOutside={(event) => { if (!dismissOnBackdrop) event.preventDefault(); }}
+        onOpenAutoFocus={(event) => {
+          if (!initialFocusRef?.current) return;
+          event.preventDefault();
+          initialFocusRef.current.focus();
+        }}
+        onCloseAutoFocus={(event) => {
+          if (!returnFocusRef?.current) return;
+          event.preventDefault();
+          returnFocusRef.current.focus();
+        }}
       >
-        <div className={styles.content}>
-          {icon ? <div className={styles.icon} aria-hidden={true}>{icon}</div> : null}
-          {title ? <h3 className={styles.title} id={titleId}>{title}</h3> : null}
-          <div className={styles.body} id={descriptionId}>{description}</div>
-          {body ? <div className={styles.taskBody}>{body}</div> : null}
-          {children ? <div className={styles.actions}>{children}</div> : null}
-        </div>
-      </div>
-    </div>
+        <DialogHeader className={cn(icon && 'items-center text-center sm:items-start sm:text-left')}>
+          {icon ? (
+            <div className={cn('flex size-12 items-center justify-center rounded-full [&_svg]:size-6', toneClasses[tone])} aria-hidden="true">
+              {icon}
+            </div>
+          ) : null}
+          {title ? <DialogTitle id={titleId} className="text-xl leading-snug">{title}</DialogTitle> : null}
+          <DialogDescription asChild>
+            <div id={descriptionId} className="text-pretty leading-6">{description}</div>
+          </DialogDescription>
+        </DialogHeader>
+        {body ? <div className="rounded-2xl border bg-muted/35 p-4">{body}</div> : null}
+        {children ? <DialogFooter>{children}</DialogFooter> : null}
+      </DialogContent>
+    </Dialog>
   );
 
-  return typeof document === 'undefined'
-    ? dialog
-    : createPortal(dialog, document.body);
+  return createPortal(dialog, document.body);
 }

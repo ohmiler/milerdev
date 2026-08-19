@@ -1,9 +1,19 @@
 'use client';
 
-import type { RefObject } from 'react';
-import { useRef } from 'react';
-import DialogShell from './DialogShell';
-import styles from './Feedback.module.css';
+import { useId, type RefObject } from 'react';
+import { AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -17,56 +27,46 @@ interface ConfirmDialogProps {
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
-function DestructiveIcon() {
-  return (
-    <svg className={styles.iconSvg} fill={'none'} stroke={'currentColor'} viewBox={'0 0 24 24'}>
-      <path strokeLinecap={'round'} strokeLinejoin={'round'} strokeWidth={2} d={'M12 9v4m0 4h.01M10.3 4.7L2.8 18a2 2 0 001.7 3h15a2 2 0 001.7-3L13.7 4.7a2 2 0 00-3.4 0z'} />
-    </svg>
-  );
-}
-
 export default function ConfirmDialog({
   isOpen,
   title,
   message,
   onConfirm,
   onCancel,
-  confirmText = '\u0e22\u0e37\u0e19\u0e22\u0e31\u0e19',
-  cancelText = '\u0e22\u0e01\u0e40\u0e25\u0e34\u0e01',
+  confirmText = 'ยืนยัน',
+  cancelText = 'ยกเลิก',
   confirmDisabled = false,
   returnFocusRef,
 }: ConfirmDialogProps) {
-  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+  if (!isOpen) return null;
+
+  if (typeof document === 'undefined') {
+    return <div role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} data-tone="error" data-variant="destructive"><h3 id={titleId}>{title}</h3><p id={descriptionId}>{message}</p><Button type="button" variant="outline" onClick={onCancel}>{cancelText}</Button><Button type="button" variant="destructive" onClick={onConfirm} disabled={confirmDisabled}>{confirmText}</Button></div>;
+  }
 
   return (
-    <DialogShell
-      isOpen={isOpen}
-      onClose={onCancel}
-      title={title}
-      description={message}
-      role={'alertdialog'}
-      tone={'error'}
-      variant={'destructive'}
-      initialFocusRef={cancelButtonRef}
-      returnFocusRef={returnFocusRef}
-      icon={<DestructiveIcon />}
-    >
-      <button
-        ref={cancelButtonRef}
-        type={'button'}
-        className={`${styles.button} ${styles.buttonSecondary}`}
-        onClick={onCancel}
+    <AlertDialog open={isOpen} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <AlertDialogContent
+        data-tone="error"
+        data-variant="destructive"
+        onCloseAutoFocus={(event) => {
+          if (!returnFocusRef?.current) return;
+          event.preventDefault();
+          returnFocusRef.current.focus();
+        }}
       >
-        {cancelText}
-      </button>
-      <button
-        type={'button'}
-        className={`${styles.button} ${styles.buttonDestructive}`}
-        onClick={onConfirm}
-        disabled={confirmDisabled}
-      >
-        {confirmText}
-      </button>
-    </DialogShell>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive"><AlertTriangle /></AlertDialogMedia>
+          <AlertDialogTitle id={titleId}>{title}</AlertDialogTitle>
+          <AlertDialogDescription id={descriptionId}>{message}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onClick={onConfirm} disabled={confirmDisabled}>{confirmText}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

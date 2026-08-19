@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FormButton, FormInput } from '@/components/ui/FormControls';
-import styles from '@/components/account/LearnerAccount.module.css';
+import { learnerAccountStyles as styles } from '@/components/account/learner-account-styles';
 
 interface PasswordStrength {
   score: number;

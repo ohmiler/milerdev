@@ -4,7 +4,8 @@ import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { toPng } from 'html-to-image';
-import styles from '@/components/proof/proof.module.css';
+import styles from './CertificateArtifact.module.css';
+import { Button } from '@/components/ui/button';
 
 interface CertificateData {
   certificateCode: string;
@@ -194,16 +195,16 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
         </footer>
       </div>
 
-      <div className={styles.certificateActions} aria-label="เครื่องมือใบรับรอง">
-        <button className={styles.primaryAction} type="button" onClick={handleDownload} disabled={downloading}>
+      <div className="mt-6 flex flex-wrap justify-center gap-3" aria-label="เครื่องมือใบรับรอง">
+        <Button type="button" onClick={handleDownload} disabled={downloading}>
           {downloading ? 'กำลังสร้างไฟล์...' : 'ดาวน์โหลด PNG'}
-        </button>
-        <button className={styles.secondaryAction} type="button" onClick={handleShare}>คัดลอกลิงก์</button>
-        {cert.courseSlug && <Link className={styles.secondaryAction} href={`/courses/${cert.courseSlug}`}>ดูรายละเอียดคอร์ส</Link>}
+        </Button>
+        <Button variant="outline" type="button" onClick={handleShare}>คัดลอกลิงก์</Button>
+        {cert.courseSlug && <Button asChild variant="outline"><Link href={`/courses/${cert.courseSlug}`}>ดูรายละเอียดคอร์ส</Link></Button>}
       </div>
 
       <p
-        className={`${styles.certificateFeedback} ${feedback?.tone === 'error' ? styles.feedbackError : ''}`}
+        className={`mt-3 min-h-6 text-center text-sm font-medium ${feedback?.tone === 'error' ? 'text-destructive' : 'text-emerald-700'}`}
         role={feedback?.tone === 'error' ? 'alert' : 'status'}
         aria-live="polite"
       >

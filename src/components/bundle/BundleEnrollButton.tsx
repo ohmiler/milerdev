@@ -6,7 +6,37 @@ import { useSession } from 'next-auth/react';
 import { useRef, useState } from 'react';
 import DialogShell from '@/components/ui/DialogShell';
 import Modal from '@/components/ui/Modal';
-import styles from './BundleEnrollButton.module.css';
+import { buttonVariants } from '@/components/ui/button';
+import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
+
+const styles = {
+  primaryButton: buttonVariants({ className: 'w-full' }),
+  successButton: 'bg-emerald-600 text-white hover:bg-emerald-700',
+  loadingContent: 'inline-flex items-center gap-2',
+  spinner: 'size-4 animate-spin rounded-full border-2 border-current border-t-transparent',
+  dialogAmount: 'text-foreground',
+  methodList: 'grid gap-3',
+  methodButton: 'flex w-full items-center gap-4 rounded-lg border bg-background p-4 text-left transition hover:border-primary/50 hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-50',
+  methodIcon: 'flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary',
+  transferIcon: 'bg-emerald-500/10 text-emerald-700',
+  methodTitle: 'block font-semibold text-foreground',
+  methodDescription: 'mt-1 block text-sm text-muted-foreground',
+  secondaryButton: buttonVariants({ variant: 'outline' }),
+  bankInfo: 'rounded-lg border bg-muted/30 p-4',
+  bankRows: 'mt-3 grid gap-2 text-sm [&_div]:flex [&_div]:justify-between [&_div]:gap-4 [&_dt]:text-muted-foreground',
+  accountNumber: 'font-mono tracking-wide',
+  amount: 'text-lg text-primary',
+  uploadField: 'grid gap-2',
+  fieldLabel: 'text-sm font-medium text-foreground',
+  uploadButton: 'flex w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center transition hover:border-primary/50 hover:bg-primary/5',
+  uploadTitle: 'font-medium text-foreground',
+  uploadHint: 'mt-1 text-sm text-muted-foreground',
+  slipPreview: 'relative overflow-hidden rounded-lg border bg-muted',
+  removePreviewButton: 'absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-background/90 text-lg shadow-sm hover:bg-background',
+  hiddenInput: 'hidden',
+  errorPanel: 'grid gap-1 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive',
+  verifyButton: buttonVariants({ className: 'w-full' }),
+};
 
 interface BundleEnrollButtonProps {
   bundleId: string;
@@ -60,6 +90,11 @@ export default function BundleEnrollButton({
     }
 
     if (price > 0) {
+      trackClientAnalyticsEvent({
+        eventName: 'checkout_opened',
+        bundleId,
+        placement: 'bundle_detail',
+      });
       setPaymentStep('method');
       return;
     }

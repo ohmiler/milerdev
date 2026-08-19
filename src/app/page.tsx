@@ -400,7 +400,6 @@ export default async function HomePage() {
                       totalDurationSeconds={course.totalDurationSeconds}
                       hasFreePreview={course.hasFreePreview}
                       tags={course.tags}
-                      variant="featured"
                     />
                   </div>
                 ))}

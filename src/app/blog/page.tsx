@@ -2,10 +2,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';
-import styles from './blog-index.module.css';
 
 export const revalidate = 300;
 
@@ -162,12 +166,12 @@ function getPageNumbers(totalPages: number, currentPage: number): (number | '...
 
 function PostImage({ post, featured = false }: { post: BlogPostItem; featured?: boolean }) {
   const imageUrl = normalizeUrl(post.thumbnailUrl);
-  if (imageUrl) return <img src={imageUrl} alt={post.title} />;
+  if (imageUrl) return <img src={imageUrl} alt={post.title} className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />;
 
   return (
-    <div className={styles.imageFallback} aria-hidden={true}>
-      <span>MD</span>
-      {featured ? <small>Journal</small> : null}
+    <div className="flex size-full min-h-40 flex-col justify-between bg-[radial-gradient(circle_at_75%_20%,rgba(0,171,255,.35),transparent_35%),var(--academy-navy)] p-5 text-white" aria-hidden={true}>
+      <span className="text-2xl font-semibold">MD</span>
+      {featured ? <small className="font-mono tracking-[.14em] text-primary uppercase">Journal</small> : null}
     </div>
   );
 }
@@ -191,134 +195,26 @@ export default async function BlogPage({ searchParams }: Props) {
   return (
     <>
       <Navbar />
-      <main className={styles.page}>
-        <header className={styles.hero}>
-          <div className={styles.shell}>
-            <p className={styles.eyebrow}>MILERDEV JOURNAL / {String(pagination.total).padStart(2, '0')}</p>
-            <div className={styles.heroGrid}>
-              <h1>อ่านแนวคิด แล้วกลับไปเขียนโค้ด</h1>
-              <p>บทความภาษาไทยสำหรับนักพัฒนาที่ต้องการเข้าใจเครื่องมือ วิธีคิด และการสร้างซอฟต์แวร์จากงานจริง</p>
-            </div>
-          </div>
+      <main className="bg-[var(--academy-canvas)]">
+        <header className="border-b bg-[radial-gradient(circle_at_82%_12%,var(--color-accent-soft),transparent_32%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
+          <div className="container"><p className="mb-5 font-mono text-xs font-semibold tracking-[.18em] text-primary uppercase">MilerDev journal / {String(pagination.total).padStart(2, '0')}</p><div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16"><h1 className="text-4xl leading-[1.15] font-semibold tracking-[-.04em] text-balance sm:text-5xl lg:text-6xl">อ่านแนวคิด แล้วกลับไปเขียนโค้ด</h1><p className="max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">บทความภาษาไทยสำหรับนักพัฒนาที่ต้องการเข้าใจเครื่องมือ วิธีคิด และการสร้างซอฟต์แวร์จากงานจริง</p></div></div>
         </header>
 
-        <section className={styles.catalog} aria-labelledby={'blog-catalog-title'}>
-          <div className={styles.shell}>
-            <div className={styles.catalogHeading}>
-              <div>
-                <p className={styles.eyebrow}>ARTICLE INDEX</p>
-                <h2 id={'blog-catalog-title'}>{search || tagFilter !== 'all' ? 'ผลลัพธ์ที่กรองแล้ว' : 'บทความทั้งหมด'}</h2>
-              </div>
-              <p aria-live={'polite'}>{pagination.total} รายการ</p>
-            </div>
+        <section className="py-14 sm:py-20" aria-labelledby="blog-catalog-title">
+          <div className="container">
+            <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b pb-7"><div><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">Article index</p><h2 id="blog-catalog-title" className="mt-2 text-3xl font-semibold tracking-[-.03em] sm:text-4xl">{search || tagFilter !== 'all' ? 'ผลลัพธ์ที่กรองแล้ว' : 'บทความทั้งหมด'}</h2></div><Badge variant="secondary" aria-live="polite">{pagination.total} รายการ</Badge></header>
 
-            <form method={'GET'} action={'/blog'} className={styles.filter} role={'search'}>
-              <div className={styles.searchField}>
-                <label htmlFor={'blog-search'}>ค้นหาบทความ</label>
-                <input
-                  id={'blog-search'}
-                  type={'search'}
-                  name={'search'}
-                  defaultValue={search}
-                  placeholder={'ค้นหาจากชื่อบทความ'}
-                />
-              </div>
-              {tagFilter !== 'all' ? <input type={'hidden'} name={'tag'} value={tagFilter} /> : null}
-              <button type={'submit'}>แสดงผลลัพธ์</button>
-              <Link href={'/blog'}>ล้างตัวกรอง</Link>
-            </form>
+            <Card className="mb-6 shadow-[var(--academy-shadow-card)]"><CardContent className="pt-6"><form method="GET" action="/blog" className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end" role="search"><div className="space-y-2"><Label htmlFor="blog-search">ค้นหาบทความ</Label><Input id="blog-search" type="search" name="search" defaultValue={search} placeholder="ค้นหาจากชื่อบทความ" /></div>{tagFilter !== 'all' ? <input type="hidden" name="tag" value={tagFilter} /> : null}<Button type="submit">แสดงผลลัพธ์</Button><Button variant="outline" asChild><Link href="/blog">ล้างตัวกรอง</Link></Button></form></CardContent></Card>
 
-            {allTags.length > 0 ? (
-              <nav className={styles.topics} aria-label={'หัวข้อบทความ'}>
-                {topicItems.map((tag) => {
-                  const isActive = tagFilter === tag.slug;
-                  return (
-                    <Link
-                      key={tag.id}
-                      href={buildBlogQuery({ search, tag: tag.slug, page: 1 })}
-                      data-active={isActive || undefined}
-                      aria-current={isActive ? 'page' : undefined}
-                    >
-                      {tag.name}
-                    </Link>
-                  );
-                })}
-              </nav>
-            ) : null}
+            {allTags.length > 0 ? <nav className="mb-10 flex flex-wrap gap-2" aria-label="หัวข้อบทความ">{topicItems.map((tag) => { const isActive = tagFilter === tag.slug; return <Button key={tag.id} variant={isActive ? 'default' : 'outline'} size="sm" asChild><Link href={buildBlogQuery({ search, tag: tag.slug, page: 1 })} aria-current={isActive ? 'page' : undefined}>{tag.name}</Link></Button>; })}</nav> : null}
 
-            {posts.length === 0 ? (
-              <div className={styles.empty}>
-                <p className={styles.eyebrow}>NO MATCHING ARTICLES</p>
-                <h3>ไม่พบบทความตามเงื่อนไขนี้</h3>
-                <p>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อใหม่</p>
-                <Link href={'/blog'}>ดูบทความทั้งหมด</Link>
-              </div>
-            ) : (
+            {posts.length === 0 ? <Card className="items-center py-14 text-center"><CardContent><p className="font-mono text-xs tracking-[.14em] text-primary uppercase">No matching articles</p><h3 className="mt-3 text-2xl font-semibold">ไม่พบบทความตามเงื่อนไขนี้</h3><p className="mt-2 text-muted-foreground">ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อใหม่</p><Button className="mt-6" asChild><Link href="/blog">ดูบทความทั้งหมด</Link></Button></CardContent></Card> : (
               <>
-                {featuredPost ? (
-                  <Link href={`/blog/${featuredPost.slug}`} className={styles.feature}>
-                    <article>
-                      <figure className={styles.featureImage}><PostImage post={featuredPost} featured={true} /></figure>
-                      <div className={styles.featureContent}>
-                        <div className={styles.tags}>{featuredPost.tags.slice(0, 3).map((tag) => <span key={tag.id}>{tag.name}</span>)}</div>
-                        <p className={styles.date}>LATEST / {formatDate(featuredPost.publishedAt)}</p>
-                        <h2>{featuredPost.title}</h2>
-                        {featuredPost.excerpt ? <p className={styles.excerpt}>{featuredPost.excerpt}</p> : null}
-                        <div className={styles.articleFooter}>
-                          <span>{featuredPost.authorName ? `โดย ${featuredPost.authorName}` : 'MilerDev'}</span>
-                          <strong>อ่านบทความ <span aria-hidden={true}>→</span></strong>
-                        </div>
-                      </div>
-                    </article>
-                  </Link>
-                ) : null}
+                {featuredPost ? <Link href={`/blog/${featuredPost.slug}`} className="group mb-8 block rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"><Card className="gap-0 overflow-hidden py-0 md:grid md:grid-cols-[1.1fr_.9fr]"><figure className="aspect-[16/9] overflow-hidden md:aspect-auto md:min-h-96"><PostImage post={featuredPost} featured /></figure><div className="flex flex-col justify-center p-6 sm:p-9"><div className="mb-5 flex flex-wrap gap-2">{featuredPost.tags.slice(0, 3).map((tag) => <Badge key={tag.id} variant="secondary">{tag.name}</Badge>)}</div><p className="font-mono text-xs tracking-[.12em] text-primary uppercase">Latest / {formatDate(featuredPost.publishedAt)}</p><h2 className="mt-3 text-3xl leading-tight font-semibold tracking-[-.03em] group-hover:text-primary">{featuredPost.title}</h2>{featuredPost.excerpt ? <p className="mt-4 line-clamp-3 leading-7 text-muted-foreground">{featuredPost.excerpt}</p> : null}<div className="mt-7 flex items-center justify-between gap-4 border-t pt-5 text-sm"><span className="text-muted-foreground">{featuredPost.authorName ? `โดย ${featuredPost.authorName}` : 'MilerDev'}</span><strong className="text-primary">อ่านบทความ →</strong></div></div></Card></Link> : null}
 
-                {articlePosts.length > 0 ? (
-                  <ol className={styles.articleList}>
-                    {articlePosts.map((post, index) => {
-                      const itemNumber = (featuredPost ? index + 2 : index + 1) + (currentPage - 1) * pagination.limit;
-                      return (
-                        <li key={post.id}>
-                          <Link href={`/blog/${post.slug}`} className={styles.articleRow}>
-                            <span className={styles.articleIndex}>{String(itemNumber).padStart(2, '0')}</span>
-                            <figure className={styles.rowImage}><PostImage post={post} /></figure>
-                            <div className={styles.rowContent}>
-                              <div className={styles.tags}>{post.tags.slice(0, 2).map((tag) => <span key={tag.id}>{tag.name}</span>)}</div>
-                              <h2>{post.title}</h2>
-                              {post.excerpt ? <p>{post.excerpt}</p> : null}
-                              <div className={styles.articleFooter}>
-                                <span>{post.authorName ? `โดย ${post.authorName}` : 'MilerDev'} / {formatDate(post.publishedAt)}</span>
-                                <strong>อ่านบทความ <span aria-hidden={true}>→</span></strong>
-                              </div>
-                            </div>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                ) : null}
+                {articlePosts.length > 0 ? <ol className="grid gap-5 lg:grid-cols-2">{articlePosts.map((post, index) => { const itemNumber = (featuredPost ? index + 2 : index + 1) + (currentPage - 1) * pagination.limit; return <li key={post.id}><Link href={`/blog/${post.slug}`} className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"><Card className="h-full gap-0 overflow-hidden py-0 sm:grid sm:grid-cols-[11rem_1fr]"><figure className="aspect-[16/9] overflow-hidden sm:aspect-auto"><PostImage post={post} /></figure><div className="p-5"><div className="flex items-start justify-between gap-3"><div className="flex flex-wrap gap-2">{post.tags.slice(0, 2).map((tag) => <Badge key={tag.id} variant="secondary">{tag.name}</Badge>)}</div><span className="font-mono text-xs text-muted-foreground">{String(itemNumber).padStart(2, '0')}</span></div><h2 className="mt-4 text-xl leading-snug font-semibold group-hover:text-primary">{post.title}</h2>{post.excerpt ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{post.excerpt}</p> : null}<p className="mt-4 text-xs text-muted-foreground">{post.authorName ? `โดย ${post.authorName}` : 'MilerDev'} / {formatDate(post.publishedAt)}</p></div></Card></Link></li>; })}</ol> : null}
 
-                {pagination.totalPages > 1 ? (
-                  <nav className={styles.pagination} aria-label={'หน้ารายการบทความ'}>
-                    {currentPage > 1 ? <Link href={buildBlogQuery({ search, tag: tagFilter, page: currentPage - 1 })}>← ก่อนหน้า</Link> : <span />}
-                    <div>
-                      {getPageNumbers(pagination.totalPages, currentPage).map((pageNumber, index) => pageNumber === '...'
-                        ? <span key={`dots-${index}`} aria-hidden={true}>…</span>
-                        : (
-                          <Link
-                            key={pageNumber}
-                            href={buildBlogQuery({ search, tag: tagFilter, page: pageNumber })}
-                            data-active={currentPage === pageNumber || undefined}
-                            aria-current={currentPage === pageNumber ? 'page' : undefined}
-                            aria-label={`หน้า ${pageNumber}`}
-                          >
-                            {pageNumber}
-                          </Link>
-                        ))}
-                    </div>
-                    {currentPage < pagination.totalPages ? <Link href={buildBlogQuery({ search, tag: tagFilter, page: currentPage + 1 })}>ถัดไป →</Link> : <span />}
-                  </nav>
-                ) : null}
+                {pagination.totalPages > 1 ? <nav className="mt-10 flex flex-wrap items-center justify-center gap-2" aria-label="หน้ารายการบทความ">{currentPage > 1 ? <Button variant="outline" asChild><Link href={buildBlogQuery({ search, tag: tagFilter, page: currentPage - 1 })}>← ก่อนหน้า</Link></Button> : null}{getPageNumbers(pagination.totalPages, currentPage).map((pageNumber, index) => pageNumber === '...' ? <span key={`dots-${index}`} className="px-2" aria-hidden="true">…</span> : <Button key={pageNumber} variant={currentPage === pageNumber ? 'default' : 'outline'} size="icon-sm" asChild><Link href={buildBlogQuery({ search, tag: tagFilter, page: pageNumber })} aria-current={currentPage === pageNumber ? 'page' : undefined}>{pageNumber}</Link></Button>)}{currentPage < pagination.totalPages ? <Button variant="outline" asChild><Link href={buildBlogQuery({ search, tag: tagFilter, page: currentPage + 1 })}>ถัดไป →</Link></Button> : null}</nav> : null}
               </>
             )}
           </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import styles from './BlogControls.module.css';
 
 export default function ReadingProgress() {
   const [progress, setProgress] = useState(0);
@@ -20,14 +19,14 @@ export default function ReadingProgress() {
 
   return (
     <div
-      className={styles.readingProgress}
+      className="fixed inset-x-0 top-0 z-[70] h-1 bg-transparent"
       role={'progressbar'}
       aria-label={'ความคืบหน้าการอ่าน'}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(progress)}
     >
-      <div style={{ width: `${progress}%` }} />
+      <div className="h-full bg-primary transition-[width] duration-100 motion-reduce:transition-none" style={{ width: `${progress}%` }} />
     </div>
   );
 }

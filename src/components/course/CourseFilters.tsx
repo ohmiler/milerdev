@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface CourseFiltersProps {
   totalCourses: number;
@@ -38,73 +40,36 @@ export default function CourseFilters({ totalCourses }: CourseFiltersProps) {
   const hasFilters = search || priceFilter !== 'all' || sortBy !== 'newest';
 
   return (
-    <div style={{ marginBottom: '32px' }}>
+    <div className="rounded-xl border bg-card p-4">
       {/* Search Bar */}
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{
-          position: 'relative',
-          maxWidth: '500px',
-        }}>
+      <div>
+        <div className="relative">
           <svg
-            style={{
-              position: 'absolute',
-              left: '16px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '20px',
-              height: '20px',
-              color: '#94a3b8',
-            }}
+            className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input
+          <Input
             type="text"
             placeholder="ค้นหาคอร์ส..."
             value={search}
             onChange={handleSearchChange}
-            style={{
-              width: '100%',
-              padding: '14px 16px 14px 48px',
-              fontSize: '1rem',
-              border: '2px solid #e2e8f0',
-              borderRadius: '12px',
-              outline: 'none',
-              transition: 'border-color 0.2s',
-              background: 'white',
-            }}
-            onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-            onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+            className="pl-9"
           />
         </div>
       </div>
 
       {/* Filters Row */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '12px',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
           {/* Price Filter */}
           <select
             value={priceFilter}
             onChange={(e) => setPriceFilter(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              fontSize: '0.875rem',
-              border: '2px solid #e2e8f0',
-              borderRadius: '8px',
-              background: 'white',
-              cursor: 'pointer',
-              outline: 'none',
-              color: '#1e293b',
-            }}
+            className="h-9 rounded-md border bg-background px-3 text-sm"
           >
             <option value="all">ราคาทั้งหมด</option>
             <option value="free">ฟรี</option>
@@ -115,16 +80,7 @@ export default function CourseFilters({ totalCourses }: CourseFiltersProps) {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            style={{
-              padding: '10px 16px',
-              fontSize: '0.875rem',
-              border: '2px solid #e2e8f0',
-              borderRadius: '8px',
-              background: 'white',
-              cursor: 'pointer',
-              outline: 'none',
-              color: '#1e293b',
-            }}
+            className="h-9 rounded-md border bg-background px-3 text-sm"
           >
             <option value="newest">ใหม่ล่าสุด</option>
             <option value="oldest">เก่าที่สุด</option>
@@ -134,33 +90,23 @@ export default function CourseFilters({ totalCourses }: CourseFiltersProps) {
 
           {/* Clear Filters */}
           {hasFilters && (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={clearFilters}
-              style={{
-                padding: '10px 16px',
-                fontSize: '0.875rem',
-                background: '#fee2e2',
-                color: '#dc2626',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M6 18L18 6M6 6l12 12" />
               </svg>
               ล้างตัวกรอง
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Results Count */}
-        <div style={{ color: '#64748b', fontSize: '0.875rem' }}>
-          พบ <strong style={{ color: '#1e293b' }}>{totalCourses}</strong> คอร์ส
+        <div className="text-sm text-muted-foreground">
+          พบ <strong>{totalCourses}</strong> คอร์ส
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ describe('shared feedback primitives', () => {
     expect(html).toContain('aria-labelledby=');
     expect(html).toContain('aria-describedby=');
     expect(html).toContain(`data-tone=${quote}warning${quote}`);
-    expect(html).toContain(`<button type=${quote}button${quote}`);
+    expect(html).toMatch(new RegExp(`<button[^>]*type=${quote}button${quote}`));
     expect(html).toContain('Acknowledge');
   });
 
@@ -48,7 +48,7 @@ describe('shared feedback primitives', () => {
     expect(html).toContain(`aria-modal=${quote}true${quote}`);
     expect(html).toContain(`data-tone=${quote}error${quote}`);
     expect(html).toContain(`data-variant=${quote}destructive${quote}`);
-    expect(html.match(new RegExp(`<button type=${quote}button`, 'g'))).toHaveLength(2);
+    expect(html.match(new RegExp(`<button[^>]*type=${quote}button`, 'g'))).toHaveLength(2);
     expect(html).toContain('Cancel');
     expect(html).toContain('Delete item');
     expect(html).toContain('disabled');
