@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { bundles, bundleCourses, courses, payments } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { bundles, bundleCourses, courses, lessons, payments } from '@/lib/db/schema';
+import { eq, and, count, inArray } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';
-import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
+import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
 
 // POST /api/bundles/enroll - Enroll in all courses of a bundle
 export async function POST(request: Request) {
@@ -87,6 +87,23 @@ export async function POST(request: Request) {
                 })));
             } catch {
                 return NextResponse.json({ error: 'Bundle not available' }, { status: 409 });
+            }
+
+            const lessonCountRows = await db.select({
+                courseId: lessons.courseId,
+                lessonCount: count(lessons.id),
+            }).from(lessons)
+                .where(inArray(lessons.courseId, bCourses.map((course) => course.courseId)))
+                .groupBy(lessons.courseId);
+            const lessonCounts = new Map(lessonCountRows.map((row) => [row.courseId, row.lessonCount]));
+            try {
+                requireReadyBundleCourses(bCourses.map((course) => ({
+                    id: course.courseId,
+                    status: course.courseStatus,
+                    lessonCount: lessonCounts.get(course.courseId) ?? 0,
+                })));
+            } catch {
+                return NextResponse.json({ error: 'BUNDLE_NOT_READY' }, { status: 409 });
             }
         }
 

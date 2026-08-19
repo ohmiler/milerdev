@@ -76,7 +76,7 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
                 aria-label={`${lesson.title}, ${lesson.isFreePreview ? 'ดูฟรี' : isEnrolled ? 'เปิดบทเรียน' : 'ต้องสมัครเรียนก่อน'}`}
               >
                 <span className="text-center font-mono text-xs text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
-                <span className="min-w-0"><strong className="block truncate text-sm">{lesson.title}</strong>{duration && <span className="mt-1 block text-xs text-muted-foreground">{duration}</span>}
+                <span className="min-w-0"><strong className="line-clamp-2 block text-sm leading-5">{lesson.title}</strong>{duration && <span className="mt-1 block text-xs text-muted-foreground">{duration}</span>}
                 </span>
                 {lesson.isFreePreview ? (
                   <Badge variant="secondary">ดูฟรี</Badge>

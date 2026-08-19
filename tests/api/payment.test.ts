@@ -173,6 +173,7 @@ const publishedCourse = {
     status: 'published',
     description: 'A test course',
     thumbnailUrl: null,
+    lessons: [{ id: 'lesson-1' }],
 };
 
 const promoCourse = {
@@ -239,6 +240,17 @@ describe('POST /api/stripe/checkout', () => {
         vi.mocked(db.query.courses.findFirst).mockResolvedValue(null as never);
         const res = await callCheckout({ courseId: 'nonexistent' });
         expect(res.status).toBe(404);
+    });
+
+    it('should reject checkout for a published course with no lessons', async () => {
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, lessons: [] } as never);
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never);
+
+        const res = await callCheckout({ courseId: 'course-1' });
+
+        expect(res.status).toBe(409);
+        await expect(res.json()).resolves.toEqual({ error: 'COURSE_NOT_READY' });
+        expect(mockedStripe.checkout.sessions.create).not.toHaveBeenCalled();
     });
 
     it('should create checkout session for published course', async () => {
@@ -651,6 +663,16 @@ describe('POST /api/enroll', () => {
         expect(res.status).toBe(201);
     });
 
+    it('should still fulfill a completed payment if the course later has no lessons', async () => {
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue({ ...publishedCourse, lessons: [] } as never);
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never);
+        vi.mocked(db.query.payments.findFirst).mockResolvedValue({ id: 'pay-1', status: 'completed' } as never);
+
+        const res = await callEnroll({ courseId: 'course-1', paymentId: 'pay-1' });
+
+        expect(res.status).toBe(201);
+    });
+
     it('should reject paid course with invalid paymentId', async () => {
         vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
         vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never);
@@ -672,6 +694,45 @@ describe('POST /api/enroll', () => {
     it('should reject missing courseId', async () => {
         const res = await callEnroll({});
         expect(res.status).toBe(400);
+    });
+});
+
+// ============================================================
+// DIRECT FREE ENROLLMENT READINESS
+// ============================================================
+describe('POST /api/enrollments', () => {
+    beforeEach(() => {
+        resetMocks();
+        mockedAuth.mockResolvedValue(studentSession as never);
+    });
+
+    it('should reject a free published course with no lessons', async () => {
+        vi.mocked(db.select)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    where: vi.fn().mockReturnValue({
+                        limit: vi.fn().mockResolvedValue([{ ...publishedCourse, price: '0', lessons: undefined }]),
+                    }),
+                }),
+            } as never)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    where: vi.fn().mockReturnValue({
+                        limit: vi.fn().mockResolvedValue([]),
+                    }),
+                }),
+            } as never)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    where: vi.fn().mockResolvedValue([{ lessonCount: 0 }]),
+                }),
+            } as never);
+
+        const mod = await import('@/app/api/enrollments/route');
+        const res = await mod.POST(makeJsonRequest('http://localhost:3000/api/enrollments', { courseId: 'course-1' }));
+
+        expect(res.status).toBe(409);
+        await expect(res.json()).resolves.toEqual({ error: 'COURSE_NOT_READY' });
     });
 });
 
@@ -754,6 +815,13 @@ describe('POST /api/stripe/bundle-checkout', () => {
                         }),
                     }),
                 }),
+            } as never)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    where: vi.fn().mockReturnValue({
+                        groupBy: vi.fn().mockResolvedValue([{ courseId: 'course-1', lessonCount: 1 }]),
+                    }),
+                }),
             } as never);
 
         const res = await callBundleCheckout({ bundleId: 'bundle-1' });
@@ -765,6 +833,45 @@ describe('POST /api/stripe/bundle-checkout', () => {
         expect(createCall?.[1]).toEqual({ idempotencyKey: `checkout:${paymentId}` });
         expect(db.insert).toHaveBeenCalled();
         expect(db.update).not.toHaveBeenCalled();
+    });
+
+    it('should reject checkout when a published child has no lessons', async () => {
+        vi.mocked(db.select)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    where: vi.fn().mockReturnValue({
+                        limit: vi.fn().mockResolvedValue([{
+                            id: 'bundle-1', title: 'Backend Bundle', slug: 'backend-bundle',
+                            status: 'published', price: '1990.00', thumbnailUrl: null,
+                        }]),
+                    }),
+                }),
+            } as never)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    innerJoin: vi.fn().mockReturnValue({
+                        where: vi.fn().mockReturnValue({
+                            orderBy: vi.fn().mockResolvedValue([{
+                                courseId: 'course-1', courseTitle: 'Backend Basics', courseSlug: 'backend-basics', courseStatus: 'published',
+                            }]),
+                        }),
+                    }),
+                }),
+            } as never)
+            .mockReturnValueOnce({
+                from: vi.fn().mockReturnValue({
+                    where: vi.fn().mockReturnValue({
+                        groupBy: vi.fn().mockResolvedValue([]),
+                    }),
+                }),
+            } as never);
+
+        const res = await callBundleCheckout({ bundleId: 'bundle-1' });
+
+        expect(res.status).toBe(409);
+        await expect(res.json()).resolves.toEqual({ error: 'BUNDLE_NOT_READY' });
+        expect(mockedStripe.checkout.sessions.create).not.toHaveBeenCalled();
+        expect(db.insert).not.toHaveBeenCalled();
     });
 
     it('should reject checkout when a published bundle contains an archived child', async () => {

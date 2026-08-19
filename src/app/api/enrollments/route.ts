@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { enrollments, courses } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { enrollments, courses, lessons } from '@/lib/db/schema';
+import { eq, and, count, desc } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';
+import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/course-availability';
 
 // GET /api/enrollments - Get user's enrollments
 export async function GET() {
@@ -88,6 +89,16 @@ export async function POST(request: Request) {
         { error: 'คุณลงทะเบียนคอร์สนี้แล้ว', enrollment: existingEnrollment },
         { status: 400 }
       );
+    }
+
+    const [lessonResult] = await db
+      .select({ lessonCount: count(lessons.id) })
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId));
+    try {
+      requireCourseHasLessons(lessonResult?.lessonCount ?? 0);
+    } catch {
+      return NextResponse.json({ error: COURSE_NOT_READY }, { status: 409 });
     }
 
     // Check if course is free or paid

@@ -7,7 +7,8 @@ export type BundleCourseStatusRecord = {
 
 export type BundleCommerceErrorCode =
   | 'BUNDLE_HAS_NO_COURSES'
-  | 'BUNDLE_CHILD_NOT_PUBLISHED';
+  | 'BUNDLE_CHILD_NOT_PUBLISHED'
+  | 'BUNDLE_CHILD_NOT_READY';
 
 export class BundleCommerceError extends Error {
   constructor(
@@ -36,6 +37,23 @@ export function requirePublishedBundleCourses(
       'BUNDLE_CHILD_NOT_PUBLISHED',
       blockingCourseIds,
     );
+  }
+
+  return rows.map((course) => course.id).sort();
+}
+
+export function requireReadyBundleCourses(
+  rows: Array<BundleCourseStatusRecord & { lessonCount: number }>,
+): string[] {
+  requirePublishedBundleCourses(rows);
+
+  const blockingCourseIds = rows
+    .filter((course) => !Number.isFinite(course.lessonCount) || course.lessonCount <= 0)
+    .map((course) => course.id)
+    .sort();
+
+  if (blockingCourseIds.length > 0) {
+    throw new BundleCommerceError('BUNDLE_CHILD_NOT_READY', blockingCourseIds);
   }
 
   return rows.map((course) => course.id).sort();

@@ -6,6 +6,7 @@ import { courses, payments, coupons, couponUsages, enrollments } from "@/lib/db/
 import { eq, and, count } from "drizzle-orm";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/course-availability";
 
 // POST /api/stripe/checkout - Create Stripe checkout session
 export async function POST(request: Request) {
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
         // Get course details
         const course = await db.query.courses.findFirst({
             where: eq(courses.id, courseId),
+            with: { lessons: { columns: { id: true } } },
         });
 
         if (!course || course.status !== 'published') {
@@ -43,6 +45,12 @@ export async function POST(request: Request) {
                 { error: "คุณลงทะเบียนคอร์สนี้แล้ว" },
                 { status: 400 }
             );
+        }
+
+        try {
+            requireCourseHasLessons(course.lessons.length);
+        } catch {
+            return NextResponse.json({ error: COURSE_NOT_READY }, { status: 409 });
         }
 
         const originalPrice = parseFloat(course.price.toString());

@@ -128,6 +128,7 @@ export default async function BundleDetailPage({ params }: Props) {
   const bundlePrice = parseFloat(bundle.price);
   const savings = bundle.totalOriginalPrice - bundlePrice;
   const totalLessons = bundle.courses.reduce((sum, course) => sum + course.lessonCount, 0);
+  const bundleReady = bundle.courses.length > 0 && bundle.courses.every((course) => course.lessonCount > 0);
 
   let allEnrolled = false;
   const session = await auth();
@@ -269,6 +270,7 @@ export default async function BundleDetailPage({ params }: Props) {
                   price={bundlePrice}
                   bundleSlug={bundle.slug}
                   allEnrolled={allEnrolled}
+                  available={bundleReady}
                 />
                 </CardContent>
                 <CardFooter><p className="text-xs leading-5 text-muted-foreground">ตรวจสอบคอร์สและยอดชำระก่อนยืนยัน ระบบจะเปิดสิทธิ์หลังการชำระเงินได้รับการตรวจสอบแล้ว</p></CardFooter>

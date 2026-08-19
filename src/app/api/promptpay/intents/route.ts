@@ -1,9 +1,10 @@
-import { and, asc, count, eq } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/lib/auth';
-import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
+import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
+import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/course-availability';
 import { calculateDiscount, validateCouponEligibility } from '@/lib/coupon';
 import { db } from '@/lib/db';
 import {
@@ -13,6 +14,7 @@ import {
   couponUsages,
   courses,
   enrollments,
+  lessons,
   payments,
 } from '@/lib/db/schema';
 import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/promptpay-intent';
@@ -57,6 +59,15 @@ export async function POST(request: Request) {
           .where(eq(courses.id, parsed.data.courseId))
           .for('update');
         if (!course || course.status !== 'published') unavailable('COURSE_NOT_AVAILABLE', 404);
+
+        const [lessonResult] = await tx.select({ lessonCount: count(lessons.id) })
+          .from(lessons)
+          .where(eq(lessons.courseId, course.id));
+        try {
+          requireCourseHasLessons(lessonResult?.lessonCount ?? 0);
+        } catch {
+          unavailable(COURSE_NOT_READY);
+        }
 
         const [existingEnrollment] = await tx.select({ id: enrollments.id })
           .from(enrollments)
@@ -128,6 +139,22 @@ export async function POST(request: Request) {
         requirePublishedBundleCourses(includedCourses);
       } catch {
         unavailable('BUNDLE_NOT_AVAILABLE');
+      }
+
+      const lessonCountRows = await tx.select({
+        courseId: lessons.courseId,
+        lessonCount: count(lessons.id),
+      }).from(lessons)
+        .where(inArray(lessons.courseId, includedCourses.map((course) => course.id)))
+        .groupBy(lessons.courseId);
+      const lessonCounts = new Map(lessonCountRows.map((row) => [row.courseId, row.lessonCount]));
+      try {
+        requireReadyBundleCourses(includedCourses.map((course) => ({
+          ...course,
+          lessonCount: lessonCounts.get(course.id) ?? 0,
+        })));
+      } catch {
+        unavailable('BUNDLE_NOT_READY');
       }
 
       const [bundle] = await tx.select().from(bundles)

@@ -43,6 +43,7 @@ interface BundleEnrollButtonProps {
   price: number;
   bundleSlug: string;
   allEnrolled?: boolean;
+  available?: boolean;
 }
 
 type PaymentStep = 'idle' | 'method' | 'transfer' | 'verifying';
@@ -65,6 +66,7 @@ export default function BundleEnrollButton({
   price,
   bundleSlug,
   allEnrolled = false,
+  available = true,
 }: BundleEnrollButtonProps) {
   const router = useRouter();
   const session = useSession()?.data;
@@ -277,6 +279,16 @@ export default function BundleEnrollButton({
         </svg>
         ลงทะเบียนครบแล้ว — เข้าเรียน
       </Link>
+    );
+  }
+
+  if (!available) {
+    return (
+      <div className="grid gap-2 rounded-xl border border-dashed bg-muted/30 p-4">
+        <strong>Bundle นี้กำลังเตรียมเนื้อหา</strong>
+        <p className="text-sm leading-6 text-muted-foreground">จะเปิดรับสมัครเมื่อทุกคอร์สใน Bundle มีบทเรียนพร้อมแล้ว</p>
+        <button className={styles.primaryButton} type="button" disabled>ยังไม่เปิดรับสมัคร</button>
+      </div>
     );
   }
 

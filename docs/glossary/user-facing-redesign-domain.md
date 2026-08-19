@@ -1,7 +1,7 @@
 # User-facing redesign domain model and glossary
 
 - Status: Living document
-- Last updated: 2026-08-19
+- Last updated: 2026-08-20
 - Source of truth for persisted fields: `src/lib/db/schema.ts`
 
 This document gives design and engineering a shared language. It describes current domain boundaries; it does not replace the database schema or authorization code.
@@ -140,6 +140,22 @@ Home, shared navigation/footer, course catalog, course detail, bundle detail, bl
 ### Conversion surface
 
 Authentication, coupon, enrollment, payment-method selection, PromptPay/slip, Stripe redirect, and success/recovery UI. It is high risk because it touches money and access.
+
+### Course decision journey
+
+The ordered Course Detail experience that helps a visitor understand course value and fit, inspect curriculum and credible evidence, sample available content, and then choose an enrollment or purchase action. For an enrolled learner, the journey changes priority to continuing learning.
+
+### Decision evidence
+
+Authoritative course information that reduces uncertainty, such as lesson count, known duration, real preview availability, attached instructor, active promotion, and current learner reviews. Missing evidence is omitted or represented honestly; the UI does not manufacture it.
+
+### Course value and fit
+
+Author-authored information describing expected learning outcomes, intended audience, and prerequisites. These are proposed structured Course fields, not facts that can currently be inferred safely from the general description.
+
+### Media and action card
+
+The primary Course Detail pattern combining real course media or preview with price, promotion truth, enrollment state, the primary action, and concise access/payment context. It replaces separate competing purchase and summary rails.
 
 ### Learner surface
 

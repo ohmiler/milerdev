@@ -111,6 +111,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     if (status === 'loading') return;
     
     if (!session) {
+      updateEnrolled(false);
       setChecking(false);
       return;
     }
@@ -120,7 +121,10 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       .then((data) => {
         updateEnrolled(data.enrolled);
       })
-      .catch(console.error)
+      .catch((error) => {
+        console.error(error);
+        updateEnrolled(false);
+      })
       .finally(() => setChecking(false));
   }, [session, status, courseId, updateEnrolled]);
 
