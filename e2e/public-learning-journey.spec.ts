@@ -204,9 +204,12 @@ test.describe('public learning journey', () => {
     await expect(evidence).toContainText(`${course.lessonCount} บท`);
 
     const sectionNavigation = page.getByRole('navigation', { name: 'ส่วนต่าง ๆ ของคอร์ส' });
-    await expect(sectionNavigation.getByRole('link', { name: 'รายละเอียดคอร์ส' })).toHaveAttribute('href', '#course-overview');
-    await expect(sectionNavigation.getByRole('link', { name: 'เนื้อหาคอร์ส' })).toHaveAttribute('href', '#course-curriculum');
-    await expect(sectionNavigation.getByRole('link', { name: 'รีวิวผู้เรียน' })).toHaveAttribute('href', '#course-reviews');
+    await expect(sectionNavigation.getByRole('tab', { name: 'รายละเอียดคอร์ส' })).toBeVisible();
+    const curriculumTab = sectionNavigation.getByRole('tab', { name: 'เนื้อหาคอร์ส' });
+    await expect(curriculumTab).toBeVisible();
+    await expect(sectionNavigation.getByRole('tab', { name: 'รีวิวผู้เรียน' })).toBeVisible();
+    await curriculumTab.click();
+    await expect(page).toHaveURL(/#course-curriculum$/);
 
     const overviewHeading = page.getByRole('heading', { level: 2, name: 'รายละเอียดคอร์ส' });
     const curriculumHeading = page.getByRole('heading', { level: 2, name: 'เส้นทางการเรียน' });

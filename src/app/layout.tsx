@@ -76,6 +76,7 @@ export default function RootLayout({
   return (
     <html
       lang="th"
+      data-scroll-behavior="smooth"
       className={`${inter.variable} ${prompt.variable}`}
       suppressHydrationWarning
     >

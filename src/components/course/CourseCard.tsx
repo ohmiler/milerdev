@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen, Clock3, PlayCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { getExcerpt } from '@/lib/sanitize';
+import CourseArtwork from '@/components/course/CourseArtwork';
 
 interface Tag { id: string; name: string; slug: string }
 interface CourseCardProps {
@@ -62,12 +63,9 @@ export default function CourseCard({
     <Link href={`/courses/${slug}`} className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
       <Card className="h-full gap-0 overflow-hidden py-0 transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-[var(--academy-shadow-card-hover)] motion-reduce:transform-none">
         <div className="relative aspect-[16/9] overflow-hidden bg-[var(--academy-navy)] md:aspect-auto md:min-h-52">
-          {thumbnailUrl ? <img src={thumbnailUrl} alt={title} className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" /> : (
-            <div className="flex size-full min-h-52 flex-col justify-between bg-[radial-gradient(circle_at_75%_20%,rgba(0,171,255,.35),transparent_35%),var(--academy-navy)] p-6 text-white" aria-hidden="true">
-              <span className="text-sm font-medium text-white/65">{tags?.[0]?.name ?? 'คอร์สออนไลน์ภาษาไทย'}</span>
-              <strong className="block max-w-[14rem] text-2xl leading-tight">{title}</strong>
-            </div>
-          )}
+          {thumbnailUrl
+            ? <img src={thumbnailUrl} alt={title} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
+            : <CourseArtwork title={title} slug={slug} tags={tags} />}
           {hasFreePreview ? <Badge className="absolute top-4 left-4 gap-1.5 bg-background/95 text-foreground shadow-sm"><PlayCircle />มีบทเรียนทดลอง</Badge> : null}
         </div>
 

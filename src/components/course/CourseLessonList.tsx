@@ -64,7 +64,7 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
 
   return (
     <div>
-      <ol className="divide-y rounded-xl border bg-card">
+      <ol className="divide-y bg-card">
         {visibleLessons.map((lesson, index) => {
           const duration = formatDuration(lesson.videoDuration);
           return (

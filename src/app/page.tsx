@@ -20,6 +20,7 @@ import { HOME_FAQ_ITEMS } from '@/app/faq/faq-data';
 import TrackedAnalyticsLink from '@/components/analytics/TrackedAnalyticsLink';
 import CourseCard from '@/components/course/CourseCard';
 import HomeFAQ from '@/components/home/HomeFAQ';
+import HomeAnimations from '@/components/home/HomeAnimations';
 import StudioProofSection from '@/components/home/StudioProofSection';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
@@ -156,6 +157,7 @@ export default async function HomePage() {
       <Navbar />
 
       <main className="overflow-hidden bg-white text-slate-950">
+        <HomeAnimations />
         <section
           data-home-section="hero"
           className="relative isolate border-b border-slate-100 bg-[radial-gradient(circle_at_78%_12%,rgba(0,171,255,0.16),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]"
@@ -166,7 +168,7 @@ export default async function HomePage() {
             aria-hidden="true"
           />
           <div className="container grid items-center gap-12 py-14 sm:py-16 lg:min-h-[clamp(42rem,86svh,48rem)] lg:grid-cols-[0.92fr_1.08fr] lg:gap-16 lg:py-20">
-            <div className="max-w-2xl">
+            <div className="max-w-2xl" data-reveal>
               <h1
                 id="home-hero-title"
                 className="max-w-[13ch] text-balance text-[clamp(2.7rem,6vw,5.25rem)] font-bold leading-[1.04] tracking-[-0.055em] text-slate-950"
@@ -207,7 +209,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="relative mx-auto w-full max-w-[42rem] lg:mx-0">
+            <div className="relative mx-auto w-full max-w-[42rem] lg:mx-0" data-reveal data-delay="90">
               <div className="absolute -left-8 top-12 size-24 rounded-full bg-sky-200/50 blur-2xl" aria-hidden="true" />
               <div className="absolute -right-8 bottom-10 size-32 rounded-full bg-blue-200/50 blur-3xl" aria-hidden="true" />
               <Card className="relative gap-0 overflow-visible rounded-[2rem] border border-white/90 bg-white/80 p-3 shadow-[0_28px_80px_rgba(15,35,58,0.16)] ring-1 ring-slate-950/5 backdrop-blur">
@@ -266,8 +268,8 @@ export default async function HomePage() {
           aria-label="สิ่งที่ผู้เรียนได้รับจาก MilerDev"
         >
           <div className="container grid gap-6 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8 lg:py-9">
-            {CONFIDENCE_POINTS.map(({ icon: Icon, title, description }) => (
-              <div key={title} className="flex items-start gap-3">
+            {CONFIDENCE_POINTS.map(({ icon: Icon, title, description }, index) => (
+              <div key={title} className="flex items-start gap-3" data-reveal data-delay={String(index * 45)}>
                 <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-sky-50 text-[#008bd1]">
                   <Icon className="size-5" aria-hidden="true" />
                 </span>
@@ -286,7 +288,7 @@ export default async function HomePage() {
           aria-labelledby="outcomes-title"
         >
           <div className="container">
-            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end lg:gap-16">
+            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end lg:gap-16" data-reveal>
               <div>
                 <h2
                   id="outcomes-title"
@@ -311,9 +313,10 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12">
-              {LEARNING_OUTCOMES.map(({ icon: Icon, title, description, tone }) => (
+              {LEARNING_OUTCOMES.map(({ icon: Icon, title, description, tone }, index) => (
                 <Card
                   key={title}
+                  data-reveal data-delay={String(index * 55)}
                   className="gap-6 rounded-[1.5rem] border border-slate-100 bg-white p-6 shadow-[0_12px_36px_rgba(15,35,58,0.06)] ring-0 sm:p-7"
                 >
                   <div>
@@ -338,7 +341,7 @@ export default async function HomePage() {
           aria-labelledby="latest-courses-title"
         >
           <div className="container">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end" data-reveal>
               <div>
                 <p className="text-sm font-semibold text-[#008bd1]">คอร์สล่าสุดจาก MilerDev</p>
                 <h2
@@ -365,9 +368,11 @@ export default async function HomePage() {
                 tabIndex={0}
                 className="-mx-4 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-5 outline-none focus-visible:ring-4 focus-visible:ring-sky-200 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4"
               >
-                {latestCourses.map((course) => (
+                {latestCourses.map((course, index) => (
                   <div
                     key={course.id}
+                    data-reveal
+                    data-delay={String(index * 45)}
                     className="w-[82vw] max-w-[21rem] shrink-0 snap-start sm:w-auto sm:max-w-none"
                   >
                     <CourseCard
@@ -410,7 +415,7 @@ export default async function HomePage() {
           aria-labelledby="home-faq-title"
         >
           <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-16">
-            <div className="max-w-lg lg:sticky lg:top-28">
+            <div className="max-w-lg lg:sticky lg:top-28" data-reveal>
               <p className="text-sm font-semibold text-[#008bd1]">คำถามก่อนเริ่มเรียน</p>
               <h2
                 id="home-faq-title"
@@ -429,13 +434,13 @@ export default async function HomePage() {
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </div>
-            <HomeFAQ items={HOME_FAQ_ITEMS} />
+            <div data-reveal data-delay="80"><HomeFAQ items={HOME_FAQ_ITEMS} /></div>
           </div>
         </section>
 
         <section data-home-section="final-cta" className="bg-white py-16 sm:py-20 lg:py-24">
           <div className="container">
-            <div className="grid gap-8 rounded-[2rem] bg-slate-950 px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14">
+            <div className="grid gap-8 rounded-[2rem] bg-slate-950 px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14" data-reveal>
               <div>
                 <div className="flex items-center gap-2 text-sm font-semibold text-sky-300">
                   <Rocket className="size-4" aria-hidden="true" />

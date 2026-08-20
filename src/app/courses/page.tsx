@@ -3,11 +3,10 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CourseCard from '@/components/course/CourseCard';
+import CourseCatalogFilters from '@/components/course/CourseCatalogFilters';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
 import { and, asc, count, desc, eq, gt, like, sql } from 'drizzle-orm';
@@ -321,8 +320,6 @@ export default async function CoursesPage({ searchParams }: Props) {
 
   const { courses: courseList, pagination } = coursesData;
 
-  const selectClass = 'h-11 w-full rounded-xl border border-input bg-background px-3.5 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/30';
-
   return (
     <>
       <Navbar />
@@ -343,18 +340,15 @@ export default async function CoursesPage({ searchParams }: Props) {
               <Badge variant="secondary" aria-live="polite">พบ {pagination.total} คอร์ส</Badge>
             </header>
 
-            <Card className="mb-10 shadow-[var(--academy-shadow-card)]" aria-label="ตัวกรองคอร์ส">
-              <CardHeader><CardTitle>คัดให้เหลือสิ่งที่ใช่</CardTitle></CardHeader>
-              <CardContent>
-                <form method="GET" action="/courses" className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.5fr)_repeat(3,minmax(9rem,.65fr))_auto] xl:items-end">
-                  <div className="space-y-2"><Label htmlFor="course-search">ค้นหาจากชื่อคอร์ส</Label><Input id="course-search" type="search" name="search" defaultValue={search} placeholder="เช่น JavaScript, React" /></div>
-                  <div className="space-y-2"><Label htmlFor="course-price">ราคา</Label><select className={selectClass} id="course-price" name="price" defaultValue={priceFilter}><option value="all">ทุกราคา</option><option value="free">ฟรี</option><option value="paid">มีค่าใช้จ่าย</option></select></div>
-                  <div className="space-y-2"><Label htmlFor="course-tag">หัวข้อ</Label><select className={selectClass} id="course-tag" name="tag" defaultValue={tagFilter}><option value="all">ทุกหัวข้อ</option>{allTags.map((tag) => <option key={tag.id} value={tag.slug}>{tag.name}</option>)}</select></div>
-                  <div className="space-y-2"><Label htmlFor="course-sort">เรียงตาม</Label><select className={selectClass} id="course-sort" name="sort" defaultValue={sort}><option value="newest">ใหม่ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="price-low">ราคาต่ำไปสูง</option><option value="price-high">ราคาสูงไปต่ำ</option></select></div>
-                  <div className="flex gap-2"><Button type="submit">แสดงผลลัพธ์</Button>{hasActiveFilters ? <Button variant="outline" asChild><Link href="/courses">ล้าง</Link></Button> : null}</div>
-                </form>
-              </CardContent>
-            </Card>
+            <CourseCatalogFilters
+              tags={allTags}
+              search={search}
+              priceFilter={priceFilter}
+              tagFilter={tagFilter}
+              sort={sort}
+              totalCourses={pagination.total}
+              hasActiveFilters={hasActiveFilters}
+            />
 
             <div className="mb-6 flex items-center justify-between gap-4"><p className="font-semibold">{search ? `ผลการค้นหาสำหรับ “${search}”` : 'หลักสูตรที่เปิดให้เรียน'}</p><span className="text-sm text-muted-foreground">หน้า {pagination.page} / {Math.max(1, pagination.totalPages)}</span></div>
 

@@ -5,6 +5,8 @@ import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
+import CourseArtwork from '@/components/course/CourseArtwork';
+import CourseSectionNav from '@/components/course/CourseSectionNav';
 import CourseReviewsWrapper from '@/components/course/CourseReviewsWrapper';
 import CoursePreviewVideo from '@/components/course/CoursePreviewVideo';
 import { db } from '@/lib/db';
@@ -15,6 +17,7 @@ import { getExcerpt, getSanitizedRichContentCached } from '@/lib/sanitize';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
 
@@ -159,6 +162,13 @@ export default async function CourseDetailPage({ params }: Props) {
     ? `โปรโมชั่น ลด ${promoDiscount}%${course.promoEndsAt ? ` ถึง ${new Date(course.promoEndsAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}`
     : null;
 
+  const courseSectionItems = [
+    { id: 'course-overview', label: 'รายละเอียดคอร์ส' },
+    { id: 'course-curriculum', label: 'เนื้อหาคอร์ส' },
+    ...(instructorName ? [{ id: 'course-instructor', label: 'ผู้สอน' }] : []),
+    { id: 'course-reviews', label: 'รีวิวผู้เรียน' },
+  ];
+
   const courseJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Course',
@@ -219,8 +229,8 @@ export default async function CourseDetailPage({ params }: Props) {
         <main className="min-h-screen bg-background text-foreground">
           <AnalyticsViewEvent event={{ eventName: 'course_viewed', courseId: course.id, placement: 'course_detail' }} />
 
-          <header className="border-b bg-muted/30">
-            <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:px-8 lg:py-16">
+          <header className="bg-[radial-gradient(circle_at_12%_8%,var(--color-accent-soft),transparent_36%),linear-gradient(180deg,var(--academy-canvas),var(--background))]">
+            <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:gap-14 lg:px-8 lg:py-20">
               <div className="min-w-0 self-center">
                 <nav className="mb-7 flex flex-wrap items-center gap-2 text-sm text-muted-foreground [&_a:hover]:text-foreground" aria-label="เส้นทางนำทาง">
                   <Link href="/">หน้าแรก</Link>
@@ -246,27 +256,22 @@ export default async function CourseDetailPage({ params }: Props) {
                 )}
 
                 <section className="mt-8" aria-label="ข้อมูลประกอบการตัดสินใจ">
-                  <dl className="flex flex-wrap gap-x-8 gap-y-4 text-sm">
-                    {courseReady && <div><dt className="text-muted-foreground">บทเรียน</dt><dd className="mt-1 font-semibold">{course.lessons.length} บท</dd></div>}
-                    {totalSeconds > 0 && <div><dt className="text-muted-foreground">เวลาวิดีโอ</dt><dd className="mt-1 font-semibold">{durationText}</dd></div>}
-                    {freePreviewCount > 0 && <div><dt className="text-muted-foreground">ทดลองเรียน</dt><dd className="mt-1 font-semibold">{freePreviewCount} บทฟรี</dd></div>}
-                    {instructorName && <div><dt className="text-muted-foreground">ผู้สอน</dt><dd className="mt-1 font-semibold">{instructorName}</dd></div>}
+                  <dl className="flex w-fit max-w-full divide-x overflow-x-auto rounded-2xl border bg-background/80 text-sm shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {courseReady && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">บทเรียน</dt><dd className="mt-1 font-semibold">{course.lessons.length} บท</dd></div>}
+                    {totalSeconds > 0 && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">เวลาวิดีโอ</dt><dd className="mt-1 font-semibold">{durationText}</dd></div>}
+                    {freePreviewCount > 0 && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">ทดลองเรียน</dt><dd className="mt-1 font-semibold">{freePreviewCount} บทฟรี</dd></div>}
+                    {instructorName && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">ผู้สอน</dt><dd className="mt-1 font-semibold">{instructorName}</dd></div>}
                   </dl>
                 </section>
               </div>
 
               <aside className="lg:sticky lg:top-24 lg:self-start" aria-label="ตัวอย่างและการสมัครเรียน">
-                <Card className="overflow-hidden shadow-lg">
+                <Card className="overflow-hidden border-white/80 shadow-[var(--academy-shadow-float)] ring-1 ring-foreground/5">
                   <div className="relative bg-muted">
                     {normalizeUrl(course.thumbnailUrl) ? (
                       <img src={normalizeUrl(course.thumbnailUrl)!} alt={course.title} className="aspect-video w-full object-cover" />
                     ) : (
-                      <div className="flex aspect-video items-center justify-center bg-slate-950 text-white/60">
-                        <svg className="size-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
+                      <div className="aspect-video overflow-hidden"><CourseArtwork title={course.title} slug={course.slug} tags={course.tags} /></div>
                     )}
                     {signedPreviewVideoUrl && <CoursePreviewVideo previewVideoUrl={signedPreviewVideoUrl} />}
                   </div>
@@ -288,14 +293,7 @@ export default async function CourseDetailPage({ params }: Props) {
             </div>
           </header>
 
-          <nav className="border-b bg-background" aria-label="ส่วนต่าง ๆ ของคอร์ส">
-            <div className="mx-auto flex max-w-5xl gap-6 overflow-x-auto px-4 py-4 text-sm font-medium sm:px-6 lg:px-8 [&_a]:whitespace-nowrap [&_a:hover]:text-primary">
-              <a href="#course-overview">รายละเอียดคอร์ส</a>
-              <a href="#course-curriculum">เนื้อหาคอร์ส</a>
-              {instructorName && <a href="#course-instructor">ผู้สอน</a>}
-              <a href="#course-reviews">รีวิวผู้เรียน</a>
-            </div>
-          </nav>
+          <CourseSectionNav items={courseSectionItems} />
 
           <article className="mx-auto max-w-5xl space-y-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
             <section id="course-overview" className="scroll-mt-24" aria-labelledby="course-overview-title">
@@ -320,7 +318,16 @@ export default async function CourseDetailPage({ params }: Props) {
                   </p>
                 )}
               </div>
-              <CourseDetailClient courseId={course.id} courseSlug={course.slug} lessons={course.lessons} />
+              <Accordion type="single" collapsible defaultValue="course-lessons" className="border-border/80 bg-card">
+                <AccordionItem value="course-lessons" className="border-0 data-open:bg-transparent">
+                  <AccordionTrigger className="border-0 border-b px-5 py-4 text-base font-semibold no-underline hover:no-underline sm:px-6">
+                    รายการบทเรียนทั้งหมด
+                  </AccordionTrigger>
+                  <AccordionContent className="-mx-4 pb-0">
+                    <CourseDetailClient courseId={course.id} courseSlug={course.slug} lessons={course.lessons} />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </section>
 
             {instructorName && (
@@ -328,14 +335,14 @@ export default async function CourseDetailPage({ params }: Props) {
                 <Separator />
                 <section id="course-instructor" className="scroll-mt-24" aria-labelledby="course-instructor-title">
                   <h2 className="text-3xl font-bold tracking-tight" id="course-instructor-title">รู้จักผู้สอน</h2>
-                  <Card className="mt-6 shadow-none"><CardContent className="flex items-center gap-4 p-5">
+                  <Card className="mt-6 border-border/80 shadow-[var(--academy-shadow-card)]"><CardContent className="flex items-center gap-5 p-6">
                     {instructorAvatarUrl ? (
-                      <img src={instructorAvatarUrl} alt="" className="size-14 rounded-full object-cover" />
+                      <img src={instructorAvatarUrl} alt="" className="size-16 rounded-2xl object-cover ring-4 ring-primary/10" />
                     ) : (
-                      <span className="flex size-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground" aria-hidden="true">{instructorName.charAt(0)}</span>
+                      <span className="flex size-16 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground ring-4 ring-primary/10" aria-hidden="true">{instructorName.charAt(0)}</span>
                     )}
                     <div className="grid gap-1">
-                      <span className="text-sm text-muted-foreground">ผู้สอนคอร์สนี้</span>
+                      <span className="text-sm text-muted-foreground">ผู้สอนและดูแลเนื้อหาคอร์สนี้</span>
                       <strong className="text-lg">{instructorName}</strong>
                     </div>
                   </CardContent></Card>
