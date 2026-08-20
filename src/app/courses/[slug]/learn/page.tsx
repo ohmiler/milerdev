@@ -9,7 +9,7 @@ import EmptyCourseWorkspace from './EmptyCourseWorkspace';
 
 export const metadata: Metadata = {
   title: 'เริ่มเรียน',
-  robots: { index: false },
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = 'force-dynamic';

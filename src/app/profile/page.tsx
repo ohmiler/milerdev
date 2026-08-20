@@ -12,6 +12,7 @@ import ProfileForm from './ProfileForm';
 export const metadata: Metadata = {
   title: 'โปรไฟล์',
   description: 'จัดการข้อมูลส่วนตัวและดูสถิติการเรียนของคุณ',
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = 'force-dynamic';

@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${lessonTitle} - ${courseTitle}`,
-    robots: { index: false },
+    robots: { index: false, follow: false },
   };
 }
 

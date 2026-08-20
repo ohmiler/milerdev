@@ -6,12 +6,18 @@ import { FAQ_CATEGORIES } from './faq-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { buildFaqPageJsonLd, serializeJsonLd } from '@/lib/seo';
 
 const questionCount = FAQ_CATEGORIES.reduce((total, category) => total + category.items.length, 0);
+const faqJsonLd = buildFaqPageJsonLd(FAQ_CATEGORIES.flatMap((category) => category.items));
 
 export default function FAQPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd) }}
+      />
       <Navbar />
       <main className="bg-[var(--academy-canvas)]">
         <header className="border-b bg-[radial-gradient(circle_at_15%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">

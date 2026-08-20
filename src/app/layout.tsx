@@ -6,6 +6,8 @@ import NotificationProvider from "@/components/notifications/NotificationProvide
 import ThemeSurface from "@/components/theme/ThemeSurface";
 import { Toaster } from "@/components/ui/sonner";
 
+import { buildSiteJsonLd, serializeJsonLd, SITE_URL } from "@/lib/seo";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -19,41 +21,42 @@ const prompt = Prompt({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
-const siteDescription = 'แพลตฟอร์มเรียนออนไลน์ที่จะช่วยให้คุณพัฒนาทักษะการเขียนโปรแกรม และก้าวสู่การเป็นนักพัฒนามืออาชีพ';
+const siteDescription = 'เรียนเขียนโปรแกรมออนไลน์ภาษาไทยกับ MilerDev เข้าใจแนวคิด ลงมือสร้างโปรเจกต์จริง ดูเนื้อหา ราคา และบททดลองฟรีก่อนสมัคร เรียนต่อได้ทุกเวลา';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "MilerDev - เรียน Coding ออนไลน์",
+    default: "คอร์สเขียนโปรแกรมออนไลน์ภาษาไทย | MilerDev",
     template: "%s | MilerDev",
   },
   description: siteDescription,
-  keywords: ['เรียน coding', 'คอร์สออนไลน์', 'web development', 'programming', 'MilerDev', 'เขียนโปรแกรม'],
+  keywords: ['เรียนเขียนโปรแกรม', 'คอร์สเขียนโปรแกรมออนไลน์', 'เรียน coding', 'web development', 'MilerDev'],
   authors: [{ name: 'MilerDev' }],
   creator: 'MilerDev',
+  publisher: 'MilerDev',
+  category: 'education',
   openGraph: {
     type: 'website',
     locale: 'th_TH',
-    url: siteUrl,
+    url: '/',
     siteName: 'MilerDev',
-    title: 'MilerDev - เรียน Coding ออนไลน์',
+    title: 'คอร์สเขียนโปรแกรมออนไลน์ภาษาไทย | MilerDev',
     description: siteDescription,
     images: [{
-      url: `${siteUrl}/og-image.png`,
+      url: '/og-image.png',
       width: 1200,
       height: 630,
-      alt: 'MilerDev - เรียน Coding ออนไลน์',
+      alt: 'MilerDev คอร์สเขียนโปรแกรมออนไลน์ภาษาไทย',
     }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MilerDev - เรียน Coding ออนไลน์',
+    title: 'คอร์สเขียนโปรแกรมออนไลน์ภาษาไทย | MilerDev',
     description: siteDescription,
-    images: [`${siteUrl}/og-image.png`],
+    images: ['/og-image.png'],
   },
   alternates: {
-    canonical: siteUrl,
+    canonical: '/',
   },
   robots: {
     index: true,
@@ -84,20 +87,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: 'MilerDev',
-              url: siteUrl,
-              potentialAction: {
-                '@type': 'SearchAction',
-                target: {
-                  '@type': 'EntryPoint',
-                  urlTemplate: `${siteUrl}/courses?search={search_term_string}`,
-                },
-                'query-input': 'required name=search_term_string',
-              },
-            }),
+            __html: serializeJsonLd(buildSiteJsonLd()),
           }}
         />
         <SessionProvider>

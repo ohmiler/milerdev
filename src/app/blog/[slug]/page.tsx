@@ -16,9 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { getProcessedBlogContent } from '@/lib/sanitize';
+import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
 import { and, eq, ne, sql } from 'drizzle-orm';
-
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
 
 function getReadingTime(html: string): number {
   const text = html.replace(/<[^>]*>/g, ' ');
@@ -195,33 +194,35 @@ export default async function BlogPostPage({ params }: Props) {
     '@type': 'Article',
     headline: post.title,
     description: post.excerpt || 'บทความจาก MilerDev',
-    url: `${siteUrl}/blog/${post.slug}`,
+    url: absoluteUrl(`/blog/${post.slug}`),
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': absoluteUrl(`/blog/${post.slug}`),
+    },
+    inLanguage: 'th-TH',
     ...(thumbnailUrl && { image: thumbnailUrl }),
     ...(post.publishedAt && { datePublished: new Date(post.publishedAt).toISOString() }),
     ...(post.updatedAt && { dateModified: new Date(post.updatedAt).toISOString() }),
-    author: { '@type': 'Person', name: post.author?.name || 'MilerDev' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'MilerDev',
-      url: siteUrl,
-      logo: { '@type': 'ImageObject', url: `${siteUrl}/milerdev-logo-transparent.png` },
-    },
+    author: post.author?.name
+      ? { '@type': 'Person', name: post.author.name }
+      : { '@id': `${SITE_URL}/#organization` },
+    publisher: { '@id': `${SITE_URL}/#organization` },
   };
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'หน้าแรก', item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: 'บทความ', item: `${siteUrl}/blog` },
-      { '@type': 'ListItem', position: 3, name: post.title, item: `${siteUrl}/blog/${post.slug}` },
+      { '@type': 'ListItem', position: 1, name: 'หน้าแรก', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'บทความ', item: absoluteUrl('/blog') },
+      { '@type': 'ListItem', position: 3, name: post.title, item: absoluteUrl(`/blog/${post.slug}`) },
     ],
   };
 
   return (
     <>
-      <script type={'application/ld+json'} dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type={'application/ld+json'} dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type={'application/ld+json'} dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }} />
+      <script type={'application/ld+json'} dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <ReadingProgress />
       <Navbar />
       <main className="bg-[var(--academy-canvas)]">

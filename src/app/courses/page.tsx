@@ -90,7 +90,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const hasFacets = !!search || price !== 'all' || tag !== 'all' || sort !== 'newest' || page > 1;
 
   return {
-    title: search ? `ผลการค้นหา "${search}"` : 'คอร์สทั้งหมด',
+    title: search ? `ผลการค้นหา "${search}"` : 'คอร์สเขียนโปรแกรมออนไลน์ภาษาไทย',
     alternates: { canonical: '/courses' },
     robots: hasFacets ? { index: false, follow: true } : { index: true, follow: true },
   };

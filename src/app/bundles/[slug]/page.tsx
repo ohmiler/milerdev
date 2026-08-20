@@ -9,6 +9,7 @@ import { db } from '@/lib/db';
 import { bundleCourses, bundles, courses, enrollments, lessons } from '@/lib/db/schema';
 import { getExcerpt } from '@/lib/sanitize';
 import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
+import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
 import { and, asc, count, eq } from 'drizzle-orm';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Badge } from '@/components/ui/badge';
@@ -129,6 +130,42 @@ export default async function BundleDetailPage({ params }: Props) {
   const savings = bundle.totalOriginalPrice - bundlePrice;
   const totalLessons = bundle.courses.reduce((sum, course) => sum + course.lessonCount, 0);
   const bundleReady = bundle.courses.length > 0 && bundle.courses.every((course) => course.lessonCount > 0);
+  const bundleDescription = bundle.description
+    ? getExcerpt(bundle.description, 160)
+    : `รวม ${bundle.courseCount} คอร์สในราคาพิเศษ ลด ${bundle.discount}%`;
+  const bundleThumbnailUrl = normalizeUrl(bundle.thumbnailUrl);
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: bundle.title,
+    description: bundleDescription,
+    url: absoluteUrl(`/bundles/${slug}`),
+    inLanguage: 'th-TH',
+    category: 'ชุดคอร์สออนไลน์',
+    ...(bundleThumbnailUrl && { image: bundleThumbnailUrl }),
+    brand: { '@id': `${SITE_URL}/#organization` },
+    offers: {
+      '@type': 'Offer',
+      price: bundle.price,
+      priceCurrency: 'THB',
+      availability: bundleReady ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: absoluteUrl(`/bundles/${slug}`),
+    },
+    hasPart: bundle.courses.map((course) => ({
+      '@type': 'Course',
+      name: course.courseTitle,
+      url: absoluteUrl(`/courses/${course.courseSlug}`),
+    })),
+  };
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'หน้าแรก', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'คอร์สทั้งหมด', item: absoluteUrl('/courses') },
+      { '@type': 'ListItem', position: 3, name: bundle.title, item: absoluteUrl(`/bundles/${slug}`) },
+    ],
+  };
 
   let allEnrolled = false;
   const session = await auth();
@@ -151,6 +188,8 @@ export default async function BundleDetailPage({ params }: Props) {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <Navbar />
       <main className="min-h-screen bg-background text-foreground">
         <AnalyticsViewEvent event={{ eventName: 'bundle_viewed', bundleId: bundle.id, placement: 'bundle_detail' }} />

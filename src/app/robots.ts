@@ -1,6 +1,5 @@
 import { MetadataRoute } from 'next';
-
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
+import { SITE_URL } from '@/lib/seo';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,20 +8,21 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/admin/',
-          '/api/',
-          '/dashboard/',
-          '/settings/',
-          '/profile/',
+          '/admin',
+          '/api',
+          '/dashboard',
+          '/settings',
+          '/profile',
           '/login',
           '/register',
           '/forgot-password',
           '/reset-password',
           '/courses/*/learn',
-          '/courses/*/learn/',
+          '/courses/*/payment-success',
+          '/bundles/*/payment-success',
         ],
       },
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

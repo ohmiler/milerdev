@@ -1,9 +1,14 @@
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import ToastContainer from '@/components/ui/Toast';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import './admin-theme.css';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({
   children,

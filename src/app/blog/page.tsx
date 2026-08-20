@@ -76,7 +76,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const hasFacets = !!search || tag !== 'all' || page > 1;
 
   return {
-    title: search ? `ผลการค้นหา ${search}` : 'บทความ',
+    title: search ? `ผลการค้นหา ${search}` : 'บทความเขียนโปรแกรมและ Web Development',
     alternates: { canonical: '/blog' },
     robots: hasFacets ? { index: false, follow: true } : { index: true, follow: true },
   };

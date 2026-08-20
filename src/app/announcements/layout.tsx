@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
     title: 'ประกาศ',
     description: 'ข่าวสารและประกาศล่าสุดจากทีมงาน MilerDev',
+    robots: { index: false, follow: true },
     alternates: {
         canonical: '/announcements',
     },

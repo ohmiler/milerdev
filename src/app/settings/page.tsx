@@ -12,6 +12,7 @@ import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
 export const metadata: Metadata = {
   title: 'ตั้งค่า',
   description: 'จัดการการตั้งค่าบัญชีและความปลอดภัยของคุณ',
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = 'force-dynamic';

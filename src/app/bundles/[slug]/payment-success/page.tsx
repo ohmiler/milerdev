@@ -13,6 +13,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'สถานะการชำระเงินชุดคอร์ส',
   description: 'ตรวจสอบรายการชำระเงินและสิทธิ์เข้าเรียนในชุดคอร์สของคุณ',
+  robots: { index: false, follow: false },
 };
 
 function normalizeUrl(url: string | null): string | null {

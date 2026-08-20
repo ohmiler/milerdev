@@ -14,12 +14,11 @@ import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc, and } from 'drizzle-orm';
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny';
 import { getExcerpt, getSanitizedRichContentCached } from '@/lib/sanitize';
+import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://milerdev.com';
 
 function normalizeUrl(url: string | null): string | null {
     if (!url || url.trim() === '') return null;
@@ -174,19 +173,19 @@ export default async function CourseDetailPage({ params }: Props) {
     '@type': 'Course',
     name: course.title,
     description: course.description ? getExcerpt(course.description, 160) : 'เรียนออนไลน์กับ MilerDev',
-    url: `${siteUrl}/courses/${slug}`,
+    url: absoluteUrl(`/courses/${slug}`),
+    inLanguage: 'th-TH',
+    isAccessibleForFree: displayPrice === 0,
     ...(normalizeUrl(course.thumbnailUrl) && { image: normalizeUrl(course.thumbnailUrl) }),
     provider: {
-      '@type': 'Organization',
-      name: 'MilerDev',
-      sameAs: siteUrl,
+      '@id': `${SITE_URL}/#organization`,
     },
     offers: {
       '@type': 'Offer',
       price: displayPrice,
       priceCurrency: 'THB',
       availability: courseReady ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      url: `${siteUrl}/courses/${slug}`,
+      url: absoluteUrl(`/courses/${slug}`),
     },
     hasCourseInstance: {
       '@type': 'CourseInstance',
@@ -201,27 +200,27 @@ export default async function CourseDetailPage({ params }: Props) {
         '@type': 'ListItem',
         position: 1,
         name: 'หน้าแรก',
-        item: siteUrl,
+        item: SITE_URL,
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'คอร์สทั้งหมด',
-        item: `${siteUrl}/courses`,
+        item: absoluteUrl('/courses'),
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: course.title,
-        item: `${siteUrl}/courses/${slug}`,
+        item: absoluteUrl(`/courses/${slug}`),
       },
     ],
   };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(courseJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <a className="sr-only z-50 rounded-md bg-background px-4 py-2 focus:not-sr-only focus:fixed focus:left-4 focus:top-4" href="#course-overview">ข้ามไปดูรายละเอียดคอร์ส</a>
       <Navbar />
 
