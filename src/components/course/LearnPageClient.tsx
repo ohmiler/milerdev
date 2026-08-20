@@ -225,9 +225,9 @@ export default function LearnPageClient({
         onOpenSidebar={() => setMobileCurriculumOpen(true)}
       />
 
-      <div className={cn('grid min-h-[calc(100dvh-4rem)]', !curriculumCollapsed && 'lg:grid-cols-[minmax(0,1fr)_22.5rem]')}>
-        <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-          <div className="mx-auto w-full max-w-6xl">
+      <div className={cn('grid min-h-[calc(100dvh-4rem)]', !curriculumCollapsed && 'lg:grid-cols-[22.5rem_minmax(0,1fr)]')}>
+        <main className="min-w-0 px-4 py-6 sm:px-6 lg:order-2 lg:px-8 lg:py-10">
+          <div className={cn('w-full max-w-6xl', curriculumCollapsed ? 'mx-auto' : 'mx-auto min-[1800px]:-translate-x-20 min-[2400px]:-translate-x-40')}>
             <header className="mb-6">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">บทที่ {currentIndex + 1} จาก {totalCount}</Badge>
@@ -319,14 +319,14 @@ export default function LearnPageClient({
         </main>
 
         {!curriculumCollapsed && (
-          <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] min-h-0 border-l bg-background lg:block" aria-label="ลำดับบทเรียน">
+          <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] min-h-0 border-r bg-background lg:order-1 lg:block" aria-label="ลำดับบทเรียน">
             {curriculum}
           </aside>
         )}
       </div>
 
       <Sheet open={mobileCurriculumOpen} onOpenChange={setMobileCurriculumOpen}>
-        <SheetContent side="right" className="!w-[min(92vw,25rem)] p-0 sm:!max-w-[25rem]">
+        <SheetContent side="left" className="!w-[min(92vw,25rem)] p-0 sm:!max-w-[25rem]">
           <SheetHeader className="sr-only">
             <SheetTitle>ลำดับบทเรียน</SheetTitle>
             <SheetDescription>ค้นหาและเลือกบทเรียนในคอร์สนี้</SheetDescription>

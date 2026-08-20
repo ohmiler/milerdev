@@ -181,6 +181,18 @@ The learning workspace treatment: a light reading shell and light curriculum rai
 
 The ordered, searchable lesson navigation for a Course. It is persistently visible on desktop when expanded and presented through a shadcn Sheet on smaller screens. Both presentations share the same component, progress state, access rules, search, and pagination behavior.
 
+### Curriculum control
+
+The workspace-header action that expands, collapses, or opens the Curriculum rail. It sits on the leading edge beside the rail it controls. Desktop uses the persistent-rail state; smaller screens use the same control position to open the curriculum Sheet.
+
+### Course exit
+
+The workspace-header action that returns the learner to the current Course. It sits on the trailing edge, separate from curriculum navigation, and does not change enrollment, progress, or player state before navigation.
+
+### Lesson canvas
+
+The readable-width stack containing the lesson heading, optional player, completion status, rich content, and previous/next navigation. When an expanded Curriculum rail and surplus viewport width coexist, the canvas shifts progressively toward the rail while retaining breathing room. At ordinary widths or with the rail collapsed, it centers within the available workspace. Its maximum width remains stable in every state.
+
 ### Review mode
 
 The Learning workspace state shown after every lesson is complete. A learner may revisit any accessible lesson and move with the normal previous/next navigation. Review mode does not introduce a separate completion CTA or prevent replaying content.

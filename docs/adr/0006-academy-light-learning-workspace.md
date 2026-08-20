@@ -15,6 +15,8 @@ The Learning workspace uses the academy-light design system for the header, cont
 
 - Desktop uses a full-width two-column workspace: a flexible lesson area and a collapsible 22.5rem curriculum rail.
 - Smaller screens open the same curriculum component in a shadcn Sheet.
+- The curriculum control occupies the leading edge of the workspace header, adjacent to the curriculum rail. The course exit occupies the trailing edge so the two actions are spatially distinct.
+- The lesson canvas keeps its existing readable maximum width. On wide and ultra-wide screens it shifts progressively toward the curriculum rail while the rail is expanded; at ordinary widths, or whenever the rail is collapsed, it remains centered.
 - The main lesson sequence is title, optional player, completion status, optional rich content, and one previous/next navigation row.
 - Lessons without video omit the player. Lessons without video or rich content show an honest empty state.
 - Locked lesson selection opens a shadcn AlertDialog and never replaces the current lesson player.
@@ -34,6 +36,6 @@ The Learning workspace uses the academy-light design system for the header, cont
 
 ## Consequences
 
-The workspace now shares the visual language of the rest of MilerDev while preserving a focused media surface. Desktop learners can keep curriculum context visible, and mobile learners use an accessible modal navigation pattern. Removing duplicate actions and automatic navigation gives the learner a single predictable way to continue.
+The workspace now shares the visual language of the rest of MilerDev while preserving a focused media surface. Desktop learners can keep curriculum context visible, and mobile learners use an accessible modal navigation pattern. Pairing the curriculum control with its rail reduces pointer travel and makes the rail's ownership legible. Biasing the lesson canvas toward the rail only when surplus width exists reduces the visual gap without pinning content to the rail or enlarging the player; full centering resumes when the learner hides the rail. Removing duplicate actions and automatic navigation gives the learner a single predictable way to continue.
 
 The curriculum is intentionally flat because the current domain has ordered lessons but no module or section model. Introducing grouped modules requires a separate domain and migration decision.

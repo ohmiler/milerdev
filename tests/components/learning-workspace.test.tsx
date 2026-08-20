@@ -11,7 +11,7 @@ describe('adaptive learning workspace contracts', () => {
     const curriculum = readSource('src/components/course/LearningCurriculum.tsx');
 
     expect(workspace).toContain('data-theme="light"');
-    expect(workspace).toContain("lg:grid-cols-[minmax(0,1fr)_22.5rem]");
+    expect(workspace).toContain("lg:grid-cols-[22.5rem_minmax(0,1fr)]");
     expect(workspace).not.toContain('max-w-[1600px]');
     expect(workspace).toContain('bg-slate-950');
     expect(navbar).toContain('bg-background/95');
@@ -27,8 +27,54 @@ describe('adaptive learning workspace contracts', () => {
     expect(workspace).toContain("from '@/components/ui/sheet'");
     expect(workspace).toContain("from '@/components/ui/alert-dialog'");
     expect(workspace.match(/\{curriculum\}/g)).toHaveLength(2);
+    expect(workspace).toContain('side="left"');
     expect(curriculum).toContain("import { Progress } from '@/components/ui/progress';");
     expect(curriculum.match(/<Progress/g)).toHaveLength(1);
+  });
+
+  it('places the lesson curriculum on the left across desktop and mobile layouts', () => {
+    const workspace = readSource('src/components/course/LearnPageClient.tsx');
+    const navbar = readSource('src/components/course/LearningNavbar.tsx');
+
+    expect(workspace).toContain('lg:order-2');
+    expect(workspace).toContain('border-r');
+    expect(workspace).toContain('lg:order-1');
+    expect(navbar).toContain('PanelLeftOpen');
+    expect(navbar).toContain('PanelLeftClose');
+    expect(navbar).not.toContain('PanelRightOpen');
+    expect(navbar).not.toContain('PanelRightClose');
+  });
+
+  it('pairs workspace controls with their surfaces and keeps the lesson canvas readable', () => {
+    const workspace = readSource('src/components/course/LearnPageClient.tsx');
+    const navbar = readSource('src/components/course/LearningNavbar.tsx');
+    const curriculumControlPosition = navbar.indexOf('data-learning-control="curriculum"');
+    const brandPosition = navbar.indexOf('MilerDev');
+    const courseExitPosition = navbar.indexOf('data-learning-control="course-exit"');
+
+    expect(curriculumControlPosition).toBeGreaterThan(-1);
+    expect(curriculumControlPosition).toBeLessThan(brandPosition);
+    expect(courseExitPosition).toBeGreaterThan(brandPosition);
+    expect(workspace).toContain("'w-full max-w-6xl'");
+    expect(workspace).toContain("curriculumCollapsed ? 'mx-auto' : 'mx-auto min-[1800px]:-translate-x-20 min-[2400px]:-translate-x-40'");
+    expect(navbar).toContain('กลับหน้าคอร์ส');
+  });
+
+  it('keeps the loading skeleton aligned with the resolved workspace geometry', () => {
+    const loading = readSource('src/app/courses/[slug]/learn/[lessonId]/loading.tsx');
+    const curriculumControlPosition = loading.indexOf('data-learning-loading="curriculum-control"');
+    const brandPosition = loading.indexOf('data-learning-loading="brand"');
+    const courseExitPosition = loading.indexOf('data-learning-loading="course-exit"');
+
+    expect(loading).toContain('lg:grid-cols-[22.5rem_minmax(0,1fr)]');
+    expect(loading).not.toContain('lg:grid-cols-[minmax(0,1fr)_22.5rem]');
+    expect(loading).toContain('lg:order-2');
+    expect(loading).toContain('border-r');
+    expect(loading).toContain('lg:order-1');
+    expect(loading).toContain('min-[1800px]:-translate-x-20 min-[2400px]:-translate-x-40');
+    expect(curriculumControlPosition).toBeGreaterThan(-1);
+    expect(curriculumControlPosition).toBeLessThan(brandPosition);
+    expect(courseExitPosition).toBeGreaterThan(brandPosition);
   });
 
   it('keeps completion one-way and removes automatic or global lesson navigation', () => {
