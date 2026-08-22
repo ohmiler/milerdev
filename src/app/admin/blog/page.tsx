@@ -1,7 +1,21 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { ExternalLink, FileText, Plus, Search } from 'lucide-react';
+
+import {
+  AdminEmptyState,
+  AdminLoadingState,
+  AdminPageHeader,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 interface BlogPost {
   id: string;
@@ -18,7 +32,7 @@ interface BlogPost {
 function normalizeUrl(url: string | null): string | null {
   if (!url || url.trim() === '') return null;
   if (url.startsWith('http')) return url;
-  return `https://${url}`;
+  return 'https://' + url;
 }
 
 export default function AdminBlogPage() {
@@ -31,273 +45,195 @@ export default function AdminBlogPage() {
   const loadPosts = useCallback(() => {
     setLoading(true);
     fetch('/api/admin/blog?limit=100')
-      .then(res => res.json())
-      .then(data => setPosts(data.posts || []))
+      .then((response) => response.json())
+      .then((data) => setPosts(data.posts || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { loadPosts(); }, [loadPosts]);
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
 
   const handleToggleStatus = async (post: BlogPost) => {
     const newStatus = post.status === 'published' ? 'draft' : 'published';
     setTogglingId(post.id);
     try {
-      const res = await fetch(`/api/admin/blog/${post.id}`, {
+      const res = await fetch('/api/admin/blog/' + post.id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) {
-        setPosts(prev => prev.map(p => p.id === post.id ? { ...p, status: newStatus } : p));
+        setPosts((current) =>
+          current.map((candidate) => (candidate.id === post.id ? { ...candidate, status: newStatus } : candidate)),
+        );
       }
     } finally {
       setTogglingId(null);
     }
   };
 
-  const filtered = posts.filter(p => {
-    const matchStatus = statusFilter === 'all' || p.status === statusFilter;
-    const matchSearch = !search || p.title.toLowerCase().includes(search.toLowerCase()) || p.slug.includes(search.toLowerCase());
+  const filtered = posts.filter((post) => {
+    const matchStatus = statusFilter === 'all' || post.status === statusFilter;
+    const query = search.toLowerCase();
+    const matchSearch = !search || post.title.toLowerCase().includes(query) || post.slug.includes(query);
     return matchStatus && matchSearch;
   });
 
-  const publishedCount = posts.filter(p => p.status === 'published').length;
-  const draftCount = posts.filter(p => p.status === 'draft').length;
+  const publishedCount = posts.filter((post) => post.status === 'published').length;
+  const draftCount = posts.filter((post) => post.status === 'draft').length;
+  const filters = [
+    { value: 'all', label: 'ทั้งหมด', count: posts.length },
+    { value: 'published', label: 'เผยแพร่', count: publishedCount },
+    { value: 'draft', label: 'แบบร่าง', count: draftCount },
+  ];
 
   return (
-    <div>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-      }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)' }}>
-          จัดการบทความ ({posts.length})
-        </h1>
-        <Link
-          href="/admin/blog/new"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '12px 20px',
-            background: 'var(--primary)',
-            color: 'var(--primary-foreground)',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            fontWeight: 500,
-          }}
-        >
-          + เขียนบทความใหม่
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Editorial"
+        title="จัดการบทความ"
+        description="ค้นหา ตรวจสถานะ และเปิดหน้าแก้ไขบทความจาก editorial workspace เดียว"
+        actions={
+          <Button asChild>
+            <Link href="/admin/blog/new">
+              <Plus aria-hidden />
+              เขียนบทความใหม่
+            </Link>
+          </Button>
+        }
+      />
 
-      {/* Toolbar: Filter + Search */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-      <div style={{
-        display: 'flex',
-        gap: '4px',
-        background: 'var(--muted)',
-        borderRadius: '8px',
-        padding: '4px',
-        flexShrink: 0,
-      }}>
-        {[
-          { value: 'all', label: 'ทั้งหมด', count: posts.length },
-          { value: 'published', label: 'เผยแพร่', count: publishedCount },
-          { value: 'draft', label: 'แบบร่าง', count: draftCount },
-        ].map(tab => (
-          <button
-            key={tab.value}
-            onClick={() => setStatusFilter(tab.value)}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '6px',
-              border: 'none',
-              fontSize: '0.8125rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              background: statusFilter === tab.value ? 'white' : 'transparent',
-              color: statusFilter === tab.value ? 'var(--foreground)' : 'var(--muted-foreground)',
-            }}
-          >
-            {tab.label} ({tab.count})
-          </button>
-        ))}
-      </div>
-
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="ค้นหาชื่อบทความหรือ slug..."
-          style={{
-            flex: 1,
-            minWidth: '200px',
-            padding: '8px 14px',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            fontSize: '0.875rem',
-            background: 'var(--card)',
-            color: 'var(--foreground)',
-          }}
-        />
-      </div>
-
-      {/* Posts List */}
-      <div style={{
-        background: 'var(--card)',
-        borderRadius: '12px',
-        overflow: 'hidden',
-      }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
-            กำลังโหลด...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
-            {posts.length === 0 ? (
-              <div>
-                <p style={{ marginBottom: '12px' }}>ยังไม่มีบทความ</p>
-                <Link
-                  href="/admin/blog/new"
-                  style={{
-                    padding: '10px 20px',
-                    background: 'var(--primary)',
-                    color: 'var(--primary-foreground)',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  เขียนบทความแรก
-                </Link>
-              </div>
-            ) : (
-              <p>ไม่พบบทความที่ตรงกับตัวกรอง</p>
-            )}
-          </div>
-        ) : (
-          <div>
-            {filtered.map(post => (
-              <div
-                key={post.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                  padding: '16px 20px',
-                  borderBottom: '1px solid var(--muted)',
-                }}
+      <AdminSection
+        title="รายการบทความ"
+        description="สวิตช์สถานะใช้เผยแพร่หรือถอดบทความกลับเป็นแบบร่างได้ทันที"
+        actions={<AdminStatusBadge tone="info">{posts.length.toLocaleString('th-TH')} บทความ</AdminStatusBadge>}
+      >
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="flex flex-wrap gap-1 rounded-xl bg-muted p-1">
+            {filters.map((filter) => (
+              <Button
+                key={filter.value}
+                type="button"
+                variant={statusFilter === filter.value ? 'secondary' : 'ghost'}
+                size="sm"
+                className={cn(statusFilter === filter.value && 'bg-card shadow-xs')}
+                onClick={() => setStatusFilter(filter.value)}
               >
-                {/* Thumbnail */}
-                <div style={{
-                  width: '100px',
-                  height: '60px',
-                  borderRadius: '8px',
-                  background: 'var(--primary)',
-                  flexShrink: 0,
-                  overflow: 'hidden',
-                }}>
-                  {normalizeUrl(post.thumbnailUrl) && (
-                    <img
-                      src={normalizeUrl(post.thumbnailUrl)!}
-                      alt={post.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  )}
-                </div>
-
-                {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {post.title}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>/blog/{post.slug}</span>
-                    {post.authorName && <span>โดย {post.authorName}</span>}
-                    <span>
-                      {post.status === 'published' && post.publishedAt
-                        ? `เผยแพร่ ${new Date(post.publishedAt).toLocaleDateString('th-TH')}`
-                        : post.createdAt
-                        ? `สร้าง ${new Date(post.createdAt).toLocaleDateString('th-TH')}`
-                        : ''}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Quick toggle status */}
-                <button
-                  onClick={() => handleToggleStatus(post)}
-                  disabled={togglingId === post.id}
-                  title={post.status === 'published' ? 'คลิกเพื่อเปลี่ยนเป็นแบบร่าง' : 'คลิกเพื่อเผยแพร่'}
-                  style={{
-                    padding: '4px 12px',
-                    borderRadius: '50px',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    border: '1px solid',
-                    cursor: togglingId === post.id ? 'wait' : 'pointer',
-                    background: post.status === 'published' ? 'var(--color-success-soft)' : 'var(--color-warning-soft)',
-                    borderColor: post.status === 'published' ? 'var(--color-success-soft)' : 'var(--color-warning-soft)',
-                    color: post.status === 'published' ? 'var(--color-success-strong)' : 'var(--color-warning-strong)',
-                    flexShrink: 0,
-                    transition: 'all 0.15s',
-                    opacity: togglingId === post.id ? 0.6 : 1,
-                  }}
-                >
-                  {togglingId === post.id ? '...' : post.status === 'published' ? '✓ เผยแพร่' : 'แบบร่าง'}
-                </button>
-
-                {/* Actions */}
-                <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                  {post.status === 'published' && (
-                    <Link
-                      href={`/blog/${post.slug}`}
-                      target="_blank"
-                      title="ดูบนเว็บ"
-                      style={{
-                        padding: '7px 10px',
-                        background: 'var(--color-success-soft)',
-                        color: 'var(--color-success-strong)',
-                        border: '1px solid var(--color-success-soft)',
-                        borderRadius: '6px',
-                        textDecoration: 'none',
-                        fontSize: '0.8125rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                      }}
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                        <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                      </svg>
-                      ดู
-                    </Link>
-                  )}
-                  <Link
-                    href={`/admin/blog/${post.id}/edit`}
-                    style={{
-                      padding: '7px 14px',
-                      background: 'var(--secondary)',
-                      color: 'var(--primary)',
-                      border: '1px solid var(--secondary)',
-                      borderRadius: '6px',
-                      textDecoration: 'none',
-                      fontSize: '0.8125rem',
-                    }}
-                  >
-                    แก้ไข
-                  </Link>
-                </div>
-              </div>
+                {filter.label}
+                <span className="text-xs text-muted-foreground">{filter.count.toLocaleString('th-TH')}</span>
+              </Button>
             ))}
           </div>
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="ค้นหาชื่อบทความหรือ slug"
+              className="pl-9"
+              aria-label="ค้นหาบทความ"
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <AdminLoadingState title="กำลังโหลดบทความ" />
+        ) : filtered.length === 0 ? (
+          <AdminEmptyState
+            title={posts.length === 0 ? 'ยังไม่มีบทความ' : 'ไม่พบบทความ'}
+            description={
+              posts.length === 0
+                ? 'เริ่มเขียนบทความแรกเพื่อสร้างเนื้อหาสำหรับเว็บไซต์'
+                : 'ลองเปลี่ยนสถานะหรือคำค้นหา'
+            }
+            icon={<FileText />}
+            action={
+              posts.length === 0 ? (
+                <Button variant="outline" asChild>
+                  <Link href="/admin/blog/new">
+                    <Plus aria-hidden />
+                    เขียนบทความแรก
+                  </Link>
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="divide-y divide-border">
+            {filtered.map((post) => {
+              const thumbnailUrl = normalizeUrl(post.thumbnailUrl);
+              const published = post.status === 'published';
+
+              return (
+                <article
+                  key={post.id}
+                  className="grid gap-4 py-4 first:pt-0 last:pb-0 md:grid-cols-[112px_minmax(0,1fr)_auto] md:items-center"
+                >
+                  <div className="relative aspect-[5/3] overflow-hidden rounded-lg bg-muted">
+                    {thumbnailUrl ? (
+                      <Image
+                        src={thumbnailUrl}
+                        alt={post.title}
+                        fill
+                        unoptimized
+                        sizes="112px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="grid size-full place-items-center">
+                        <FileText className="size-7 text-muted-foreground" aria-hidden />
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <h2 className="truncate font-medium text-foreground">{post.title}</h2>
+                    {post.excerpt ? <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{post.excerpt}</p> : null}
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span className="max-w-52 truncate">/blog/{post.slug}</span>
+                      {post.authorName ? <span>โดย {post.authorName}</span> : null}
+                      <span>
+                        {published && post.publishedAt
+                          ? 'เผยแพร่ ' + new Date(post.publishedAt).toLocaleDateString('th-TH')
+                          : post.createdAt
+                            ? 'สร้าง ' + new Date(post.createdAt).toLocaleDateString('th-TH')
+                            : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                    <div className="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+                      <Switch
+                        checked={published}
+                        disabled={togglingId === post.id}
+                        onCheckedChange={() => handleToggleStatus(post)}
+                        aria-label={(published ? 'ถอดจากเผยแพร่ ' : 'เผยแพร่ ') + post.title}
+                      />
+                      <AdminStatusBadge tone={published ? 'success' : 'warning'}>
+                        {togglingId === post.id ? 'กำลังเปลี่ยน...' : published ? 'เผยแพร่' : 'แบบร่าง'}
+                      </AdminStatusBadge>
+                    </div>
+                    {published ? (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={'/blog/' + post.slug} target="_blank">
+                          <ExternalLink aria-hidden />
+                          ดู
+                        </Link>
+                      </Button>
+                    ) : null}
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={'/admin/blog/' + post.id + '/edit'}>แก้ไข</Link>
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         )}
-      </div>
+      </AdminSection>
     </div>
   );
 }

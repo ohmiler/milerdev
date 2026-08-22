@@ -1,7 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useEffect, useState } from 'react';
+import { Pencil, Plus, Tag as TagIcon, Trash2 } from 'lucide-react';
+
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
+import {
+  AdminEmptyState,
+  AdminLoadingState,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { showToast } from '@/components/ui/Toast';
 
 interface Tag {
@@ -19,6 +31,7 @@ export default function AdminTagsPage() {
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
   const [editName, setEditName] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -74,8 +87,9 @@ export default function AdminTagsPage() {
       return;
     }
 
+    setUpdating(true);
     try {
-      const res = await fetch(`/api/admin/tags/${id}`, {
+      const res = await fetch('/api/admin/tags/' + id, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: editName }),
@@ -92,21 +106,20 @@ export default function AdminTagsPage() {
       }
     } catch {
       showToast('เกิดข้อผิดพลาดในการอัพเดทแท็ก', 'error');
+    } finally {
+      setUpdating(false);
     }
   };
 
   const confirmDeleteTag = async () => {
     if (!deleteConfirm) return;
     const id = deleteConfirm;
-    setDeleteConfirm(null);
-
     setDeleting(id);
-    try {
-      const res = await fetch(`/api/admin/tags/${id}`, {
-        method: 'DELETE',
-      });
 
+    try {
+      const res = await fetch('/api/admin/tags/' + id, { method: 'DELETE' });
       if (res.ok) {
+        setDeleteConfirm(null);
         await fetchTags();
         showToast('ลบแท็กสำเร็จ', 'success');
       } else {
@@ -125,208 +138,150 @@ export default function AdminTagsPage() {
     setEditName(tag.name);
   };
 
+  const deleteTarget = tagsList.find((tag) => tag.id === deleteConfirm);
+
   return (
-    <div>
-      {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>
-          จัดการแท็ก
-        </h1>
-        <p style={{ color: 'var(--muted-foreground)' }}>สร้างและจัดการแท็กสำหรับจัดหมวดหมู่คอร์ส</p>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Taxonomy"
+        title="จัดการแท็ก"
+        description="สร้างชื่อเรียกที่สม่ำเสมอสำหรับจัดหมวดหมู่และช่วยให้ผู้ดูแลค้นหาคอร์สได้เร็วขึ้น"
+        meta={tagsList.length > 0 ? 'มีแท็กในระบบ ' + tagsList.length.toLocaleString('th-TH') + ' รายการ' : undefined}
+      />
 
-      {/* Create New Tag */}
-      <div style={{
-        background: 'var(--card)',
-        borderRadius: '12px',
-        padding: '20px',
-        marginBottom: '24px',
-      }}>
-        <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '16px' }}>
-          สร้างแท็กใหม่
-        </h2>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <input
-            type="text"
+      <AdminSection
+        title="สร้างแท็กใหม่"
+        description="ใช้ชื่อสั้น อ่านง่าย และหลีกเลี่ยงแท็กที่มีความหมายซ้ำกัน"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Input
             value={newTagName}
-            onChange={(e) => setNewTagName(e.target.value)}
-            placeholder="ชื่อแท็ก เช่น JavaScript, Python..."
-            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            style={{
-              flex: 1,
-              padding: '12px 16px',
-              border: '1px solid var(--border)',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
+            onChange={(event) => setNewTagName(event.target.value)}
+            placeholder="เช่น JavaScript, Python"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') handleCreate();
             }}
+            aria-label="ชื่อแท็กใหม่"
           />
-          <button
-            onClick={handleCreate}
-            disabled={creating}
-            style={{
-              padding: '12px 24px',
-              background: 'var(--primary)',
-              color: 'var(--primary-foreground)',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 500,
-              cursor: creating ? 'not-allowed' : 'pointer',
-              opacity: creating ? 0.7 : 1,
-            }}
-          >
-            {creating ? 'กำลังสร้าง...' : '+ สร้างแท็ก'}
-          </button>
+          <Button onClick={handleCreate} disabled={creating} className="sm:shrink-0">
+            {creating ? (
+              <AdminPendingLabel>กำลังสร้าง...</AdminPendingLabel>
+            ) : (
+              <>
+                <Plus aria-hidden />
+                สร้างแท็ก
+              </>
+            )}
+          </Button>
         </div>
-      </div>
+      </AdminSection>
 
-      {/* Tags List */}
-      <div style={{
-        background: 'var(--card)',
-        borderRadius: '12px',
-        overflow: 'hidden',
-      }}>
-        <div style={{
-          padding: '16px 20px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)' }}>
-            รายการแท็ก ({tagsList.length})
-          </h2>
-        </div>
-
+      <AdminSection
+        title="รายการแท็ก"
+        description="จำนวนคอร์สช่วยบอกผลกระทบก่อนแก้ไขหรือลบแท็ก"
+        actions={<AdminStatusBadge tone="info">{tagsList.length.toLocaleString('th-TH')} แท็ก</AdminStatusBadge>}
+      >
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
-            กำลังโหลด...
-          </div>
+          <AdminLoadingState title="กำลังโหลดแท็ก" />
         ) : tagsList.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
-            ยังไม่มีแท็ก สร้างแท็กใหม่ด้านบน
-          </div>
+          <AdminEmptyState
+            title="ยังไม่มีแท็ก"
+            description="เพิ่มแท็กจากช่องด้านบนเพื่อเริ่มจัดกลุ่มคอร์ส"
+            icon={<TagIcon />}
+          />
         ) : (
-          <div style={{ padding: '8px' }}>
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '8px',
-            }}>
-              {tagsList.map((tag) => (
-                <div
-                  key={tag.id}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '8px 16px',
-                    background: 'var(--muted)',
-                    borderRadius: '50px',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {editing === tag.id ? (
-                    <>
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleUpdate(tag.id)}
-                        style={{
-                          padding: '4px 8px',
-                          border: '1px solid var(--border)',
-                          borderRadius: '4px',
-                          fontSize: '0.875rem',
-                          width: '120px',
-                        }}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => handleUpdate(tag.id)}
-                        style={{
-                          padding: '4px 8px',
-                          background: 'var(--color-success-strong)',
-                          color: 'var(--primary-foreground)',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        บันทึก
-                      </button>
-                      <button
-                        onClick={() => { setEditing(null); setEditName(''); }}
-                        style={{
-                          padding: '4px 8px',
-                          background: 'var(--muted-foreground)',
-                          color: 'var(--primary-foreground)',
-                          border: 'none',
-                          borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {tagsList.map((tag) => (
+              <div
+                key={tag.id}
+                className="rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/25"
+              >
+                {editing === tag.id ? (
+                  <div className="space-y-3">
+                    <Input
+                      value={editName}
+                      onChange={(event) => setEditName(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') handleUpdate(tag.id);
+                        if (event.key === 'Escape') {
+                          setEditing(null);
+                          setEditName('');
+                        }
+                      }}
+                      aria-label={'แก้ไขชื่อแท็ก ' + tag.name}
+                      autoFocus
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={updating}
+                        onClick={() => {
+                          setEditing(null);
+                          setEditName('');
                         }}
                       >
                         ยกเลิก
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span style={{ color: 'var(--foreground)', fontWeight: 500 }}>{tag.name}</span>
-                      <span style={{
-                        background: 'var(--border)',
-                        padding: '2px 8px',
-                        borderRadius: '50px',
-                        fontSize: '0.625rem',
-                        color: 'var(--muted-foreground)',
-                      }}>
-                        {tag.courseCount} คอร์ส
-                      </span>
-                      <button
-                        onClick={() => startEdit(tag)}
-                        style={{
-                          padding: '4px',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--muted-foreground)',
-                          cursor: 'pointer',
-                          fontSize: '0.75rem',
-                        }}
-                        title="แก้ไข"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(tag.id)}
+                      </Button>
+                      <Button size="sm" disabled={updating} onClick={() => handleUpdate(tag.id)}>
+                        {updating ? <AdminPendingLabel>กำลังบันทึก...</AdminPendingLabel> : 'บันทึก'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground">{tag.name}</p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">slug: {tag.slug}</p>
+                      <AdminStatusBadge className="mt-3">
+                        {tag.courseCount.toLocaleString('th-TH')} คอร์ส
+                      </AdminStatusBadge>
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <Button variant="ghost" size="icon-sm" title="แก้ไขแท็ก" onClick={() => startEdit(tag)}>
+                        <Pencil aria-hidden />
+                        <span className="sr-only">แก้ไข {tag.name}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        title="ลบแท็ก"
+                        className="text-destructive hover:text-destructive"
                         disabled={deleting === tag.id}
-                        style={{
-                          padding: '4px',
-                          background: 'transparent',
-                          border: 'none',
-                          color: 'var(--color-error-strong)',
-                          cursor: deleting === tag.id ? 'not-allowed' : 'pointer',
-                          opacity: deleting === tag.id ? 0.5 : 1,
-                          fontSize: '0.75rem',
-                        }}
-                        title="ลบ"
+                        onClick={() => setDeleteConfirm(tag.id)}
                       >
-                        🗑️
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
+                        <Trash2 aria-hidden />
+                        <span className="sr-only">ลบ {tag.name}</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
-      </div>
-      <ConfirmDialog
-        isOpen={!!deleteConfirm}
+      </AdminSection>
+
+      <AdminConfirmActionDialog
+        open={Boolean(deleteConfirm)}
         title="ลบแท็ก"
-        message="คุณแน่ใจหรือไม่ที่จะลบแท็กนี้?"
-        confirmText="ลบแท็ก"
+        description={
+          deleteTarget?.courseCount
+            ? 'แท็กนี้ถูกใช้กับคอร์สอยู่ โปรดตรวจสอบการจัดหมวดหมู่หลังลบ'
+            : 'แท็กจะถูกลบออกจากระบบและไม่สามารถเรียกคืนได้'
+        }
+        target={
+          deleteTarget
+            ? deleteTarget.name + ' · ' + deleteTarget.courseCount.toLocaleString('th-TH') + ' คอร์ส'
+            : undefined
+        }
+        confirmLabel="ลบแท็ก"
+        pendingLabel="กำลังลบ"
+        pending={Boolean(deleting)}
         onConfirm={confirmDeleteTag}
-        onCancel={() => setDeleteConfirm(null)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
       />
     </div>
   );

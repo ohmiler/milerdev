@@ -1,9 +1,25 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
+import { Copy, ExternalLink, File, FileImage, FileText, Film, HardDrive, Search, Trash2, Upload } from 'lucide-react';
+
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
+import {
+  AdminEmptyState,
+  AdminLoadingState,
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { showToast } from '@/components/ui/Toast';
-import { AdminButton, AdminPageHero, AdminRailCard, AdminSurfaceCard } from '@/components/admin/ui/AdminPrimitives';
+import { cn } from '@/lib/utils';
 
 interface MediaFile {
   id: string;
@@ -31,6 +47,13 @@ interface Pagination {
   totalPages: number;
 }
 
+function MediaTypeIcon({ type, className }: { type: string; className?: string }) {
+  if (type === 'image') return <FileImage aria-hidden className={className} />;
+  if (type === 'video') return <Film aria-hidden className={className} />;
+  if (type === 'document') return <FileText aria-hidden className={className} />;
+  return <File aria-hidden className={className} />;
+}
+
 export default function AdminMediaPage() {
   const [mediaList, setMediaList] = useState<MediaFile[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -42,8 +65,8 @@ export default function AdminMediaPage() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<MediaFile | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchMedia = async () => {
     setLoading(true);
@@ -53,7 +76,7 @@ export default function AdminMediaPage() {
         type: typeFilter,
         search,
       });
-      const res = await fetch(`/api/admin/media?${params}`);
+      const res = await fetch('/api/admin/media?' + params);
       const data = await res.json();
       setMediaList(data.media || []);
       setStats(data.stats || null);
@@ -70,8 +93,8 @@ export default function AdminMediaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, typeFilter]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
@@ -97,28 +120,21 @@ export default function AdminMediaPage() {
       showToast('เกิดข้อผิดพลาดในการอัพโหลด', 'error');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   const confirmDeleteMedia = async () => {
     if (!deleteConfirm) return;
     const id = deleteConfirm;
-    setDeleteConfirm(null);
-
     setDeleting(id);
-    try {
-      const res = await fetch(`/api/admin/media/${id}`, {
-        method: 'DELETE',
-      });
 
+    try {
+      const res = await fetch('/api/admin/media/' + id, { method: 'DELETE' });
       if (res.ok) {
+        setDeleteConfirm(null);
         await fetchMedia();
-        if (selectedMedia?.id === id) {
-          setSelectedMedia(null);
-        }
+        if (selectedMedia?.id === id) setSelectedMedia(null);
         showToast('ลบไฟล์สำเร็จ', 'success');
       } else {
         const data = await res.json();
@@ -134,373 +150,287 @@ export default function AdminMediaPage() {
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
-    const k = 1024;
+    const unit = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const index = Math.floor(Math.log(bytes) / Math.log(unit));
+    return parseFloat((bytes / Math.pow(unit, index)).toFixed(2)) + ' ' + sizes[index];
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('th-TH', {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('th-TH', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     showToast('คัดลอก URL แล้ว', 'success');
   };
 
+  const deleteTarget = mediaList.find((file) => file.id === deleteConfirm) ?? selectedMedia;
+
   return (
-    <div>
-      <AdminPageHero
+    <div className="space-y-6">
+      <AdminPageHeader
         eyebrow="Media Library"
         title="จัดการไฟล์สื่อ"
-        description="อัปโหลด คัดแยก และตรวจไฟล์ภาพหรือสื่อที่ใช้กับคอร์สจากจุดเดียว เพื่อให้ asset workflow ชัดและหยิบใช้ต่อได้เร็วขึ้น"
-        meta={<><strong>โฟกัสตอนนี้:</strong> เลือกไฟล์ที่ต้องการใช้งานบ่อย ตรวจขนาด และลิงก์ให้พร้อมก่อนนำไปวางในคอร์ส</>}
+        description="อัปโหลด ค้นหา และตรวจรายละเอียดไฟล์ที่ใช้กับคอร์สจากจุดเดียว"
+        meta="รองรับการอัปโหลดรูปภาพหลายไฟล์พร้อมกัน"
         actions={
           <>
             <input
-              type="file"
               ref={fileInputRef}
-              onChange={handleUpload}
+              type="file"
               accept="image/*"
               multiple
-              style={{ display: 'none' }}
+              className="sr-only"
+              onChange={handleUpload}
             />
-            <AdminButton type="button" tone="info" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-              {uploading ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปภาพ'}
-            </AdminButton>
+            <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              {uploading ? (
+                <AdminPendingLabel>กำลังอัปโหลด...</AdminPendingLabel>
+              ) : (
+                <>
+                  <Upload aria-hidden />
+                  อัปโหลดรูปภาพ
+                </>
+              )}
+            </Button>
           </>
         }
       />
 
-      {/* Stats */}
-      {stats && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px',
-        }}>
-          <AdminSurfaceCard style={{ padding: '16px' }}>
-            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ไฟล์ทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>{stats.total}</div>
-          </AdminSurfaceCard>
-          <AdminSurfaceCard style={{ padding: '16px' }}>
-            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>รูปภาพ</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>{stats.images}</div>
-          </AdminSurfaceCard>
-          <AdminSurfaceCard style={{ padding: '16px' }}>
-            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>พื้นที่ใช้งาน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success-strong)' }}>{formatFileSize(stats.totalSize)}</div>
-          </AdminSurfaceCard>
+      {stats ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <AdminMetricCard
+            label="ไฟล์ทั้งหมด"
+            value={stats.total.toLocaleString('th-TH')}
+            detail={'ใช้พื้นที่ ' + formatFileSize(stats.totalSize)}
+            icon={<HardDrive />}
+          />
+          <AdminMetricCard label="รูปภาพ" value={stats.images.toLocaleString('th-TH')} icon={<FileImage />} tone="info" />
+          <AdminMetricCard label="วิดีโอ" value={stats.videos.toLocaleString('th-TH')} icon={<Film />} tone="warning" />
+          <AdminMetricCard label="เอกสาร" value={stats.documents.toLocaleString('th-TH')} icon={<FileText />} />
         </div>
-      )}
+      ) : null}
 
-      {/* Filters */}
-      <AdminSurfaceCard style={{ marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <select
-          value={typeFilter}
-          onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
-          style={{
-            padding: '10px 16px',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            background: 'var(--card)',
-            fontSize: '0.875rem',
-          }}
-        >
-          <option value="all">ทุกประเภท</option>
-          <option value="image">รูปภาพ</option>
-          <option value="video">วิดีโอ</option>
-          <option value="document">เอกสาร</option>
-        </select>
-        <input
-          type="text"
-          placeholder="ค้นหาชื่อไฟล์..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && fetchMedia()}
-          style={{
-            padding: '10px 16px',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            background: 'var(--card)',
-            fontSize: '0.875rem',
-            minWidth: '200px',
-          }}
-        />
-        <button
-          onClick={fetchMedia}
-          style={{
-            padding: '10px 20px',
-            background: 'var(--muted)',
-            color: 'var(--muted-foreground)',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-          }}
-        >
-          ค้นหา
-        </button>
-      </AdminSurfaceCard>
+      <AdminSection
+        title="คลังไฟล์"
+        description="เลือกไฟล์เพื่อดู URL ขนาด และข้อมูลสำหรับใช้งานต่อ"
+        actions={
+          pagination ? (
+            <AdminStatusBadge tone="info">{pagination.total.toLocaleString('th-TH')} ไฟล์</AdminStatusBadge>
+          ) : undefined
+        }
+      >
+        <div className="mb-5 grid gap-3 md:grid-cols-[180px_minmax(220px,1fr)_auto]">
+          <NativeSelect
+            value={typeFilter}
+            onChange={(event) => {
+              setTypeFilter(event.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="กรองประเภทไฟล์"
+          >
+            <option value="all">ทุกประเภท</option>
+            <option value="image">รูปภาพ</option>
+            <option value="video">วิดีโอ</option>
+            <option value="document">เอกสาร</option>
+          </NativeSelect>
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  setCurrentPage(1);
+                  fetchMedia();
+                }
+              }}
+              placeholder="ค้นหาชื่อไฟล์"
+              className="pl-9"
+              aria-label="ค้นหาชื่อไฟล์"
+            />
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setCurrentPage(1);
+              fetchMedia();
+            }}
+          >
+            ค้นหา
+          </Button>
+        </div>
 
-      {/* Content */}
-      <div style={{ display: 'flex', gap: '24px' }}>
-        {/* Media Grid */}
-        <div style={{ flex: 1 }}>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
-              กำลังโหลด...
-            </div>
-          ) : mediaList.length === 0 ? (
-            <AdminSurfaceCard style={{ padding: '60px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📷</div>
-              <div>ยังไม่มีไฟล์ กดปุ่มด้านบนเพื่ออัปโหลด</div>
-            </AdminSurfaceCard>
-          ) : (
-            <>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-                gap: '16px',
-              }}>
+        {loading && mediaList.length === 0 ? (
+          <AdminLoadingState title="กำลังโหลดไฟล์สื่อ" />
+        ) : mediaList.length === 0 ? (
+          <AdminEmptyState
+            title="ยังไม่มีไฟล์ที่ตรงกับเงื่อนไข"
+            description="อัปโหลดรูปภาพใหม่ หรือลองเปลี่ยนประเภทและคำค้นหา"
+            icon={<FileImage />}
+            action={
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Upload aria-hidden />
+                อัปโหลดรูปภาพ
+              </Button>
+            }
+          />
+        ) : (
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
                 {mediaList.map((file) => (
-                  <div
+                  <button
                     key={file.id}
+                    type="button"
                     onClick={() => setSelectedMedia(file)}
-                    style={{
-                      background: 'var(--card)',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      border: selectedMedia?.id === file.id ? '2px solid var(--primary)' : '2px solid transparent',
-                      transition: 'all 0.2s',
-                    }}
+                    className={cn(
+                      'group overflow-hidden rounded-xl border bg-card text-left transition-all hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      selectedMedia?.id === file.id ? 'border-primary ring-2 ring-primary/15' : 'border-border',
+                    )}
                   >
-                    <div style={{
-                      aspectRatio: '1',
-                      background: 'var(--muted)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
-                    }}>
+                    <span className="relative grid aspect-square place-items-center overflow-hidden bg-muted">
                       {file.type === 'image' ? (
-                        <img
+                        <Image
                           src={file.url}
                           alt={file.originalName}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
+                          fill
+                          unoptimized
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 180px"
+                          className="object-cover transition-transform duration-200 group-hover:scale-[1.02]"
                         />
                       ) : (
-                        <span style={{ fontSize: '2rem' }}>📄</span>
+                        <MediaTypeIcon type={file.type} className="size-9 text-muted-foreground" />
                       )}
-                    </div>
-                    <div style={{ padding: '12px' }}>
-                      <div style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--foreground)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {file.originalName}
-                      </div>
-                      <div style={{ fontSize: '0.625rem', color: 'var(--muted-foreground)', marginTop: '4px' }}>
-                        {formatFileSize(file.size)}
-                      </div>
-                    </div>
-                  </div>
+                    </span>
+                    <span className="block p-3">
+                      <span className="block truncate text-xs font-medium text-foreground">{file.originalName}</span>
+                      <span className="mt-1 block text-[11px] text-muted-foreground">{formatFileSize(file.size)}</span>
+                    </span>
+                  </button>
                 ))}
               </div>
 
-              {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginTop: '24px',
-                }}>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    style={{
-                      padding: '8px 16px',
-                      border: '1px solid var(--border)',
-                      borderRadius: '6px',
-                      background: 'var(--card)',
-                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                      opacity: currentPage === 1 ? 0.5 : 1,
-                    }}
-                  >
-                    ก่อนหน้า
-                  </button>
-                  <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
-                    หน้า {currentPage} จาก {pagination.totalPages}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
-                    disabled={currentPage === pagination.totalPages}
-                    style={{
-                      padding: '8px 16px',
-                      border: '1px solid var(--border)',
-                      borderRadius: '6px',
-                      background: 'var(--card)',
-                      cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
-                      opacity: currentPage === pagination.totalPages ? 0.5 : 1,
-                    }}
-                  >
-                    ถัดไป
-                  </button>
+              {pagination && pagination.totalPages > 1 ? (
+                <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    หน้า {currentPage.toLocaleString('th-TH')} จาก {pagination.totalPages.toLocaleString('th-TH')}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === 1 || loading}
+                      onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    >
+                      ก่อนหน้า
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === pagination.totalPages || loading}
+                      onClick={() => setCurrentPage((page) => Math.min(pagination.totalPages, page + 1))}
+                    >
+                      ถัดไป
+                    </Button>
+                  </div>
                 </div>
-              )}
-            </>
-          )}
-        </div>
+              ) : null}
+            </div>
 
-        {/* Preview Panel */}
-        {selectedMedia && (
-          <AdminRailCard style={{ width: '320px', overflow: 'hidden', flexShrink: 0 }}>
-            <div style={{
-              aspectRatio: '16/9',
-              background: 'var(--muted)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-            }}>
-              {selectedMedia.type === 'image' ? (
-                <img
-                  src={selectedMedia.url}
-                  alt={selectedMedia.originalName}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    objectFit: 'contain',
-                  }}
-                />
-              ) : (
-                <span style={{ fontSize: '3rem' }}>📄</span>
-              )}
-            </div>
-            <div style={{ padding: '20px' }}>
-              <h3 style={{
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                color: 'var(--foreground)',
-                marginBottom: '16px',
-                wordBreak: 'break-all',
-              }}>
-                {selectedMedia.originalName}
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                  <span style={{ color: 'var(--muted-foreground)' }}>ขนาด</span>
-                  <span style={{ color: 'var(--foreground)' }}>{formatFileSize(selectedMedia.size)}</span>
+            {selectedMedia ? (
+              <Card className="h-fit rounded-xl shadow-none xl:sticky xl:top-6">
+                <div className="relative grid aspect-video place-items-center overflow-hidden bg-muted">
+                  {selectedMedia.type === 'image' ? (
+                    <Image
+                      src={selectedMedia.url}
+                      alt={selectedMedia.originalName}
+                      fill
+                      unoptimized
+                      sizes="320px"
+                      className="object-contain"
+                    />
+                  ) : (
+                    <MediaTypeIcon type={selectedMedia.type} className="size-12 text-muted-foreground" />
+                  )}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                  <span style={{ color: 'var(--muted-foreground)' }}>ประเภท</span>
-                  <span style={{ color: 'var(--foreground)' }}>{selectedMedia.mimeType}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                  <span style={{ color: 'var(--muted-foreground)' }}>อัพโหลดเมื่อ</span>
-                  <span style={{ color: 'var(--foreground)' }}>{formatDate(selectedMedia.createdAt)}</span>
-                </div>
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'block', marginBottom: '4px' }}>
-                  URL
-                </label>
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                }}>
-                  <input
-                    type="text"
-                    value={selectedMedia.url}
-                    readOnly
-                    style={{
-                      flex: 1,
-                      padding: '8px 12px',
-                      border: '1px solid var(--border)',
-                      borderRadius: '6px',
-                      fontSize: '0.75rem',
-                      background: 'var(--muted)',
-                    }}
-                  />
-                  <button
-                    onClick={() => copyToClipboard(selectedMedia.url)}
-                    style={{
-                      padding: '8px 12px',
-                      background: 'var(--muted)',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                    }}
+                <CardHeader>
+                  <CardTitle className="break-all text-sm">{selectedMedia.originalName}</CardTitle>
+                  <CardDescription>{selectedMedia.mimeType}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs">
+                    <dt className="text-muted-foreground">ขนาด</dt>
+                    <dd className="text-right text-foreground">{formatFileSize(selectedMedia.size)}</dd>
+                    <dt className="text-muted-foreground">อัปโหลดเมื่อ</dt>
+                    <dd className="text-right text-foreground">{formatDate(selectedMedia.createdAt)}</dd>
+                    <dt className="text-muted-foreground">ชื่อไฟล์</dt>
+                    <dd className="truncate text-right text-foreground" title={selectedMedia.filename}>
+                      {selectedMedia.filename}
+                    </dd>
+                  </dl>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">URL</p>
+                    <Input value={selectedMedia.url} readOnly className="text-xs" aria-label="URL ของไฟล์" />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="outline" size="sm" onClick={() => copyToClipboard(selectedMedia.url)}>
+                        <Copy aria-hidden />
+                        คัดลอก
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={selectedMedia.url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink aria-hidden />
+                          เปิดดู
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    disabled={deleting === selectedMedia.id}
+                    onClick={() => setDeleteConfirm(selectedMedia.id)}
                   >
-                    คัดลอก
-                  </button>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <a
-                  href={selectedMedia.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    background: 'var(--muted)',
-                    color: 'var(--muted-foreground)',
-                    textAlign: 'center',
-                    borderRadius: '8px',
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  เปิดดู
-                </a>
-                <button
-                  onClick={() => setDeleteConfirm(selectedMedia.id)}
-                  disabled={deleting === selectedMedia.id}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    background: 'var(--color-error-soft)',
-                    color: 'var(--color-error-strong)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: deleting === selectedMedia.id ? 'not-allowed' : 'pointer',
-                    opacity: deleting === selectedMedia.id ? 0.7 : 1,
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {deleting === selectedMedia.id ? 'กำลังลบ...' : 'ลบ'}
-                </button>
-              </div>
-            </div>
-          </AdminRailCard>
+                    <Trash2 aria-hidden />
+                    ลบไฟล์
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="h-fit rounded-xl border-dashed bg-muted/20 shadow-none">
+                <CardContent className="grid min-h-56 place-items-center text-center">
+                  <div>
+                    <FileImage className="mx-auto size-8 text-muted-foreground" aria-hidden />
+                    <p className="mt-3 text-sm font-medium text-foreground">เลือกไฟล์เพื่อดูรายละเอียด</p>
+                    <p className="mt-1 text-xs text-muted-foreground">URL และข้อมูลไฟล์จะแสดงที่นี่</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         )}
-      </div>
-      <ConfirmDialog
-        isOpen={!!deleteConfirm}
+      </AdminSection>
+
+      <AdminConfirmActionDialog
+        open={Boolean(deleteConfirm)}
         title="ลบไฟล์"
-        message="คุณแน่ใจหรือไม่ที่จะลบไฟล์นี้?"
-        confirmText="ลบไฟล์"
+        description="ไฟล์จะถูกลบออกจากคลัง หากมีหน้าอื่นอ้างถึง URL นี้ ลิงก์หรือรูปภาพอาจไม่แสดง"
+        target={deleteTarget ? deleteTarget.originalName + ' · ' + formatFileSize(deleteTarget.size) : undefined}
+        confirmLabel="ลบไฟล์"
+        pendingLabel="กำลังลบ"
+        pending={Boolean(deleting)}
         onConfirm={confirmDeleteMedia}
-        onCancel={() => setDeleteConfirm(null)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
       />
     </div>
   );

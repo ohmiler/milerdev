@@ -1,7 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useEffect, useState } from 'react';
+import { Eye, EyeOff, Import, MessageSquareText, Search, ShieldCheck, Star, Trash2 } from 'lucide-react';
+
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
+import {
+  AdminEmptyState,
+  AdminLoadingState,
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { showToast } from '@/components/ui/Toast';
 
 interface Review {
@@ -38,6 +63,28 @@ interface Pagination {
   totalPages: number;
 }
 
+interface WpReview {
+  course_id: string;
+  display_name: string;
+  comment: string;
+  created_at: string;
+  rating: string;
+}
+
+function RatingStars({ rating }: { rating: number }) {
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-label={rating + ' จาก 5 ดาว'}>
+      {[1, 2, 3, 4, 5].map((score) => (
+        <Star
+          key={score}
+          aria-hidden
+          className={score <= rating ? 'size-3.5 fill-amber-500 text-amber-500' : 'size-3.5 text-border'}
+        />
+      ))}
+    </span>
+  );
+}
+
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -52,15 +99,12 @@ export default function AdminReviewsPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  // Import modal
   const [showImport, setShowImport] = useState(false);
   const [importJson, setImportJson] = useState('');
   const [importing, setImporting] = useState(false);
-
-  // WordPress import
   const [wpStep, setWpStep] = useState<'paste' | 'map' | 'done'>('paste');
-  interface WpReview { course_id: string; display_name: string; comment: string; created_at: string; rating: string; }
   const [wpReviews, setWpReviews] = useState<WpReview[]>([]);
   const [wpCourseIds, setWpCourseIds] = useState<string[]>([]);
   const [courseMapping, setCourseMapping] = useState<Record<string, string>>({});
@@ -79,7 +123,7 @@ export default function AdminReviewsPage() {
         ...(ratingFilter !== 'all' && { rating: ratingFilter }),
         ...(searchDebounce && { search: searchDebounce }),
       });
-      const res = await fetch(`/api/admin/reviews?${params}`);
+      const res = await fetch('/api/admin/reviews?' + params);
       const data = await res.json();
       setReviews(data.reviews || []);
       setCourses(data.courses || []);
@@ -99,7 +143,7 @@ export default function AdminReviewsPage() {
 
   const toggleHidden = async (id: string, isHidden: boolean) => {
     try {
-      const res = await fetch(`/api/admin/reviews/${id}`, {
+      const res = await fetch('/api/admin/reviews/' + id, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isHidden: !isHidden }),
@@ -113,11 +157,14 @@ export default function AdminReviewsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    setDeleteConfirm(null);
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    const id = deleteConfirm;
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
+      const res = await fetch('/api/admin/reviews/' + id, { method: 'DELETE' });
       if (res.ok) {
+        setDeleteConfirm(null);
         showToast('ลบรีวิวสำเร็จ', 'success');
         await fetchReviews();
       } else {
@@ -126,6 +173,8 @@ export default function AdminReviewsPage() {
       }
     } catch {
       showToast('เกิดข้อผิดพลาด', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -133,21 +182,18 @@ export default function AdminReviewsPage() {
     try {
       const parsed = JSON.parse(importJson);
 
-      // Detect phpMyAdmin format
       if (Array.isArray(parsed) && parsed.some((item: { type?: string }) => item.type === 'table')) {
         const tableObj = parsed.find((item: { type?: string }) => item.type === 'table');
         if (tableObj?.data && Array.isArray(tableObj.data)) {
-          const reviews = tableObj.data as WpReview[];
-          setWpReviews(reviews);
-          const uniqueIds = [...new Set(reviews.map((r: WpReview) => r.course_id))];
-          setWpCourseIds(uniqueIds);
+          const parsedReviews = tableObj.data as WpReview[];
+          setWpReviews(parsedReviews);
+          setWpCourseIds([...new Set(parsedReviews.map((review) => review.course_id))]);
           setCourseMapping({});
           setWpStep('map');
           return;
         }
       }
 
-      // Direct array format
       const reviewsData = Array.isArray(parsed) ? parsed : parsed.reviews;
       if (Array.isArray(reviewsData) && reviewsData.length > 0 && reviewsData[0].courseId) {
         handleDirectImport(reviewsData);
@@ -170,7 +216,7 @@ export default function AdminReviewsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(`นำเข้า ${data.imported} รีวิว (ข้าม ${data.skipped})`, 'success');
+        showToast('นำเข้า ' + data.imported + ' รีวิว (ข้าม ' + data.skipped + ')', 'success');
         setShowImport(false);
         setImportJson('');
         setWpStep('paste');
@@ -186,481 +232,359 @@ export default function AdminReviewsPage() {
   };
 
   const handleWpImport = async () => {
-    // Check all courses are mapped
-    const unmapped = wpCourseIds.filter(id => !courseMapping[id]);
+    const unmapped = wpCourseIds.filter((id) => !courseMapping[id]);
     if (unmapped.length > 0) {
-      showToast(`กรุณาเลือกคอร์สให้ครบทุก ID`, 'error');
+      showToast('กรุณาเลือกคอร์สให้ครบทุก ID', 'error');
       return;
     }
 
     const converted = wpReviews
-      .filter(r => courseMapping[r.course_id])
-      .map(r => ({
-        courseId: courseMapping[r.course_id],
-        rating: parseInt(r.rating) || 5,
-        comment: r.comment || null,
-        displayName: r.display_name || 'ผู้ใช้',
+      .filter((review) => courseMapping[review.course_id])
+      .map((review) => ({
+        courseId: courseMapping[review.course_id],
+        rating: parseInt(review.rating) || 5,
+        comment: review.comment || null,
+        displayName: review.display_name || 'ผู้ใช้',
         isVerified: true,
-        createdAt: r.created_at ? r.created_at.replace(' ', 'T') + 'Z' : new Date().toISOString(),
+        createdAt: review.created_at ? review.created_at.replace(' ', 'T') + 'Z' : new Date().toISOString(),
       }));
 
     await handleDirectImport(converted);
   };
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('th-TH', {
-    year: 'numeric', month: 'short', day: 'numeric',
-  });
+  const closeImport = () => {
+    if (importing) return;
+    setShowImport(false);
+    setImportJson('');
+    setWpStep('paste');
+    setWpReviews([]);
+    setWpCourseIds([]);
+    setCourseMapping({});
+  };
 
-  const renderStars = (rating: number) => (
-    <div style={{ display: 'flex', gap: '1px' }}>
-      {[1, 2, 3, 4, 5].map(s => (
-        <svg key={s} style={{ width: 14, height: 14, color: s <= rating ? 'var(--color-warning-strong)' : 'var(--border)' }} fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
-      ))}
-    </div>
-  );
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
 
-  if (loading && reviews.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>กำลังโหลด...</div>;
-  }
+  const deleteTarget = reviews.find((review) => review.id === deleteConfirm);
 
   return (
-    <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>จัดการรีวิว</h1>
-          <p style={{ color: 'var(--muted-foreground)' }}>จัดการรีวิวคอร์สจากผู้เรียน</p>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Moderation"
+        title="จัดการรีวิว"
+        description="ตรวจสอบเสียงตอบรับจากผู้เรียน ซ่อนเนื้อหาที่ไม่เหมาะสม และนำเข้าประวัติจากระบบเดิม"
+        actions={
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <Import aria-hidden />
+            นำเข้ารีวิว
+          </Button>
+        }
+      />
+
+      {stats ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <AdminMetricCard label="รีวิวทั้งหมด" value={stats.total.toLocaleString('th-TH')} icon={<MessageSquareText />} />
+          <AdminMetricCard
+            label="คะแนนเฉลี่ย"
+            value={stats.avgRating || '-'}
+            detail="คะแนนเต็ม 5"
+            icon={<Star />}
+            tone="warning"
+          />
+          <AdminMetricCard
+            label="ผู้เรียนจริง"
+            value={stats.verified.toLocaleString('th-TH')}
+            icon={<ShieldCheck />}
+            tone="success"
+          />
+          <AdminMetricCard
+            label="ซ่อนอยู่"
+            value={stats.hidden.toLocaleString('th-TH')}
+            icon={<EyeOff />}
+            tone={stats.hidden > 0 ? 'warning' : 'neutral'}
+          />
         </div>
-        <button
-          onClick={() => setShowImport(!showImport)}
-          style={{
-            padding: '10px 20px',
-            background: 'var(--primary)',
-            color: 'var(--primary-foreground)',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 500,
-            fontSize: '0.875rem',
-          }}
-        >
-          นำเข้ารีวิว (JSON)
-        </button>
-      </div>
+      ) : null}
 
-      {/* Stats */}
-      {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
-            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>รีวิวทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>{stats.total}</div>
+      <AdminSection
+        title="รีวิวทั้งหมด"
+        description="ค้นหาจากชื่อหรืออีเมล แล้วกรองตามคอร์สและคะแนน"
+        actions={
+          pagination ? (
+            <AdminStatusBadge tone="info">{pagination.total.toLocaleString('th-TH')} รายการ</AdminStatusBadge>
+          ) : undefined
+        }
+      >
+        <div className="mb-5 grid gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(180px,280px)_140px]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="ค้นหาชื่อหรืออีเมล"
+              className="pl-9"
+              aria-label="ค้นหารีวิว"
+            />
           </div>
-          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
-            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>คะแนนเฉลี่ย</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-warning-strong)' }}>{stats.avgRating || '-'}</div>
-          </div>
-          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
-            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ผู้เรียนจริง</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success-strong)' }}>{stats.verified}</div>
-          </div>
-          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
-            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ซ่อนอยู่</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-error-strong)' }}>{stats.hidden}</div>
-          </div>
+          <NativeSelect
+            value={courseFilter}
+            onChange={(event) => {
+              setCourseFilter(event.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="กรองตามคอร์ส"
+          >
+            <option value="all">ทุกคอร์ส</option>
+            {courses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.title}
+              </option>
+            ))}
+          </NativeSelect>
+          <NativeSelect
+            value={ratingFilter}
+            onChange={(event) => {
+              setRatingFilter(event.target.value);
+              setCurrentPage(1);
+            }}
+            aria-label="กรองตามคะแนน"
+          >
+            <option value="all">ทุกคะแนน</option>
+            {[5, 4, 3, 2, 1].map((rating) => (
+              <option key={rating} value={rating}>
+                {rating} ดาว
+              </option>
+            ))}
+          </NativeSelect>
         </div>
-      )}
 
-      {/* Import Modal */}
-      {showImport && (
-        <div style={{
-          background: 'var(--card)',
-          padding: '24px',
-          borderRadius: '12px',
-          marginBottom: '24px',
-        }}>
-          {wpStep === 'paste' && (
-            <>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '12px' }}>นำเข้ารีวิว</h3>
-              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '12px' }}>
-                รองรับ JSON จาก phpMyAdmin (WordPress) หรือ JSON แบบ [{`{ "courseId": "...", "rating": 5, "comment": "..." }`}]
-              </p>
-              <textarea
-                value={importJson}
-                onChange={(e) => setImportJson(e.target.value)}
-                placeholder="วาง JSON ที่นี่..."
-                rows={8}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  fontSize: '0.8125rem',
-                  fontFamily: 'monospace',
-                  resize: 'vertical',
-                  marginBottom: '12px',
-                }}
-              />
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={handleParseJson}
-                  disabled={importing || !importJson.trim()}
-                  style={{
-                    padding: '10px 20px',
-                    background: importing ? 'var(--muted-foreground)' : 'var(--color-success-strong)',
-                    color: 'var(--primary-foreground)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: importing ? 'not-allowed' : 'pointer',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {importing ? 'กำลังนำเข้า...' : 'ถัดไป'}
-                </button>
-                <button
-                  onClick={() => { setShowImport(false); setImportJson(''); setWpStep('paste'); }}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'var(--muted)',
-                    color: 'var(--muted-foreground)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  ยกเลิก
-                </button>
-              </div>
-            </>
-          )}
-
-          {wpStep === 'map' && (
-            <>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px' }}>
-                จับคู่คอร์ส WordPress → คอร์สใหม่
-              </h3>
-              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '16px' }}>
-                พบ {wpReviews.length} รีวิว จาก {wpCourseIds.length} คอร์ส — เลือกคอร์สที่ตรงกัน
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                {wpCourseIds.map(wpId => {
-                  const reviewCount = wpReviews.filter(r => r.course_id === wpId).length;
-                  const sampleComment = wpReviews.find(r => r.course_id === wpId)?.comment || '';
-                  return (
-                    <div key={wpId} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '16px',
-                      padding: '12px 16px',
-                      background: 'var(--muted)',
-                      borderRadius: '8px',
-                      flexWrap: 'wrap',
-                    }}>
-                      <div style={{ minWidth: '200px' }}>
-                        <div style={{ fontWeight: 600, color: 'var(--foreground)', fontSize: '0.875rem' }}>
-                          WordPress ID: {wpId}
-                        </div>
-                        <div style={{ color: 'var(--muted-foreground)', fontSize: '0.75rem' }}>
-                          {reviewCount} รีวิว • &ldquo;{sampleComment.slice(0, 60)}...&rdquo;
-                        </div>
+        {loading && reviews.length === 0 ? (
+          <AdminLoadingState title="กำลังโหลดรีวิว" />
+        ) : reviews.length === 0 ? (
+          <AdminEmptyState
+            title="ไม่พบรีวิว"
+            description="ลองเปลี่ยนคำค้นหา คอร์ส หรือคะแนนที่ใช้กรอง"
+            icon={<MessageSquareText />}
+          />
+        ) : (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ผู้รีวิว</TableHead>
+                  <TableHead>คอร์ส</TableHead>
+                  <TableHead>คะแนน</TableHead>
+                  <TableHead className="min-w-64">ความคิดเห็น</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead>วันที่</TableHead>
+                  <TableHead className="text-right">การทำงาน</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {reviews.map((review) => (
+                  <TableRow key={review.id} className={review.isHidden ? 'bg-muted/30 opacity-70' : undefined}>
+                    <TableCell>
+                      <p className="font-medium text-foreground">
+                        {review.displayName || review.userName || 'ไม่ระบุชื่อ'}
+                      </p>
+                      <p className="mt-1 max-w-44 truncate text-xs text-muted-foreground">
+                        {review.userEmail || (review.userId ? 'สมาชิกในระบบ' : 'นำเข้าจากระบบเดิม')}
+                      </p>
+                    </TableCell>
+                    <TableCell className="max-w-52">
+                      <span className="line-clamp-2">{review.courseTitle || 'ไม่พบชื่อคอร์ส'}</span>
+                    </TableCell>
+                    <TableCell>
+                      <RatingStars rating={review.rating} />
+                    </TableCell>
+                    <TableCell>
+                      <p className="line-clamp-3 text-sm leading-5 text-muted-foreground">
+                        {review.comment || 'ไม่มีความคิดเห็น'}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1.5">
+                        {review.isVerified ? <AdminStatusBadge tone="success">ผู้เรียนจริง</AdminStatusBadge> : null}
+                        {review.isHidden ? (
+                          <AdminStatusBadge tone="warning">ซ่อนอยู่</AdminStatusBadge>
+                        ) : (
+                          <AdminStatusBadge tone="neutral">แสดงอยู่</AdminStatusBadge>
+                        )}
                       </div>
-                      <div style={{ fontSize: '1.25rem', color: 'var(--muted-foreground)' }}>→</div>
-                      <select
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(review.createdAt)}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          title={review.isHidden ? 'แสดงรีวิว' : 'ซ่อนรีวิว'}
+                          onClick={() => toggleHidden(review.id, review.isHidden)}
+                        >
+                          {review.isHidden ? <Eye aria-hidden /> : <EyeOff aria-hidden />}
+                          <span className="sr-only">{review.isHidden ? 'แสดงรีวิว' : 'ซ่อนรีวิว'}</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-destructive hover:text-destructive"
+                          title="ลบรีวิว"
+                          onClick={() => setDeleteConfirm(review.id)}
+                        >
+                          <Trash2 aria-hidden />
+                          <span className="sr-only">ลบรีวิว</span>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {pagination && pagination.totalPages > 1 ? (
+              <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-muted-foreground">
+                  หน้า {currentPage.toLocaleString('th-TH')} จาก {pagination.totalPages.toLocaleString('th-TH')} ·{' '}
+                  {pagination.total.toLocaleString('th-TH')} รายการ
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === 1 || loading}
+                    onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  >
+                    ก่อนหน้า
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage === pagination.totalPages || loading}
+                    onClick={() => setCurrentPage((page) => Math.min(pagination.totalPages, page + 1))}
+                  >
+                    ถัดไป
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
+      </AdminSection>
+
+      <Dialog
+        open={showImport}
+        onOpenChange={(open) => {
+          if (open) setShowImport(true);
+          else closeImport();
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>นำเข้ารีวิว</DialogTitle>
+            <DialogDescription>
+              รองรับ JSON แบบตรงและ phpMyAdmin export ระบบจะให้จับคู่ Course ID ก่อนนำเข้าข้อมูล WordPress
+            </DialogDescription>
+          </DialogHeader>
+
+          {wpStep === 'paste' ? (
+            <FieldGroup className="my-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="review-import-json">ข้อมูล JSON</FieldLabel>
+                <Textarea
+                  id="review-import-json"
+                  value={importJson}
+                  onChange={(event) => setImportJson(event.target.value)}
+                  rows={14}
+                  className="font-mono text-xs"
+                  placeholder="วาง JSON ที่นี่"
+                />
+                <FieldDescription>ตรวจสอบว่าไม่มีข้อมูลส่วนบุคคลที่ไม่จำเป็นก่อนนำเข้า</FieldDescription>
+              </Field>
+            </FieldGroup>
+          ) : (
+            <div className="my-2 space-y-4">
+              <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+                พบ {wpReviews.length.toLocaleString('th-TH')} รีวิว จาก {wpCourseIds.length.toLocaleString('th-TH')} Course ID
+              </div>
+              <div className="space-y-3">
+                {wpCourseIds.map((wpId) => {
+                  const count = wpReviews.filter((review) => review.course_id === wpId).length;
+                  return (
+                    <Field key={wpId}>
+                      <FieldLabel htmlFor={'review-map-' + wpId}>
+                        WordPress Course ID: {wpId} · {count.toLocaleString('th-TH')} รีวิว
+                      </FieldLabel>
+                      <NativeSelect
+                        id={'review-map-' + wpId}
                         value={courseMapping[wpId] || ''}
-                        onChange={(e) => setCourseMapping(prev => ({ ...prev, [wpId]: e.target.value }))}
-                        style={{
-                          flex: 1,
-                          minWidth: '200px',
-                          padding: '10px 16px',
-                          border: '1px solid var(--border)',
-                          borderRadius: '8px',
-                          background: 'var(--card)',
-                          fontSize: '0.875rem',
-                        }}
+                        onChange={(event) =>
+                          setCourseMapping((mapping) => ({ ...mapping, [wpId]: event.target.value }))
+                        }
                       >
-                        <option value="">-- เลือกคอร์ส --</option>
-                        {courses.map(c => (
-                          <option key={c.id} value={c.id}>{c.title}</option>
+                        <option value="">เลือกคอร์สปลายทาง</option>
+                        {courses.map((course) => (
+                          <option key={course.id} value={course.id}>
+                            {course.title}
+                          </option>
                         ))}
-                      </select>
-                    </div>
+                      </NativeSelect>
+                    </Field>
                   );
                 })}
               </div>
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={handleWpImport}
-                  disabled={importing || wpCourseIds.some(id => !courseMapping[id])}
-                  style={{
-                    padding: '10px 20px',
-                    background: importing || wpCourseIds.some(id => !courseMapping[id]) ? 'var(--muted-foreground)' : 'var(--color-success-strong)',
-                    color: 'var(--primary-foreground)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: importing ? 'not-allowed' : 'pointer',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {importing ? 'กำลังนำเข้า...' : `นำเข้า ${wpReviews.length} รีวิว`}
-                </button>
-                <button
-                  onClick={() => setWpStep('paste')}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'var(--muted)',
-                    color: 'var(--muted-foreground)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  กลับ
-                </button>
-                <button
-                  onClick={() => { setShowImport(false); setImportJson(''); setWpStep('paste'); }}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'var(--muted)',
-                    color: 'var(--muted-foreground)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  ยกเลิก
-                </button>
-              </div>
-            </>
+            </div>
           )}
-        </div>
-      )}
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '350px' }}>
-          <svg
-            style={{
-              position: 'absolute',
-              left: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '18px',
-              height: '18px',
-              color: 'var(--muted-foreground)',
-            }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="ค้นหาชื่อ, คอร์ส, ความคิดเห็น..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            style={{
-              width: '100%',
-              padding: '10px 12px 10px 40px',
-              border: '1px solid var(--border)',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              background: 'var(--card)',
-            }}
-          />
-        </div>
-        <select
-          value={courseFilter}
-          onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
-          style={{ padding: '10px 16px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--card)', fontSize: '0.875rem' }}
-        >
-          <option value="all">คอร์สทั้งหมด</option>
-          {courses.map(c => (
-            <option key={c.id} value={c.id}>{c.title}</option>
-          ))}
-        </select>
-        <select
-          value={ratingFilter}
-          onChange={(e) => { setRatingFilter(e.target.value); setCurrentPage(1); }}
-          style={{ padding: '10px 16px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--card)', fontSize: '0.875rem' }}
-        >
-          <option value="all">คะแนนทั้งหมด</option>
-          <option value="5">5 ดาว</option>
-          <option value="4">4 ดาว</option>
-          <option value="3">3 ดาว</option>
-          <option value="2">2 ดาว</option>
-          <option value="1">1 ดาว</option>
-        </select>
-      </div>
-
-      {/* Reviews Table */}
-      <div style={{ background: 'var(--card)', borderRadius: '12px', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: 'var(--muted)', borderBottom: '2px solid var(--border)' }}>
-                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>ผู้รีวิว</th>
-                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>คอร์ส</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>คะแนน</th>
-                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem', minWidth: '200px' }}>ความคิดเห็น</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>สถานะ</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>วันที่</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {reviews.map(review => (
-                <tr key={review.id} style={{ borderBottom: '1px solid var(--border)', opacity: review.isHidden ? 0.5 : 1 }}>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--foreground)', marginBottom: '2px' }}>
-                      {review.displayName || review.userName || 'ไม่ระบุ'}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                      {review.userEmail || '-'}
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px', fontSize: '0.875rem', color: 'var(--foreground)' }}>
-                    {review.courseTitle || '-'}
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    {renderStars(review.rating)}
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{
-                      fontSize: '0.8125rem',
-                      color: 'var(--foreground)',
-                      maxWidth: '300px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {review.comment || '-'}
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                      {review.isVerified && (
-                        <span style={{ padding: '2px 8px', background: 'var(--color-success-soft)', color: 'var(--color-success-strong)', borderRadius: '50px', fontSize: '0.6875rem' }}>
-                          ผู้เรียนจริง
-                        </span>
-                      )}
-                      {review.isHidden && (
-                        <span style={{ padding: '2px 8px', background: 'var(--color-error-soft)', color: 'var(--color-error-strong)', borderRadius: '50px', fontSize: '0.6875rem' }}>
-                          ซ่อน
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }}>
-                    {formatDate(review.createdAt)}
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                      <button
-                        onClick={() => toggleHidden(review.id, review.isHidden)}
-                        title={review.isHidden ? 'แสดง' : 'ซ่อน'}
-                        style={{
-                          padding: '6px 10px',
-                          background: review.isHidden ? 'var(--color-success-soft)' : 'var(--color-warning-soft)',
-                          color: review.isHidden ? 'var(--color-success-strong)' : 'var(--color-warning-strong)',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {review.isHidden ? 'แสดง' : 'ซ่อน'}
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(review.id)}
-                        title="ลบ"
-                        style={{
-                          padding: '6px 10px',
-                          background: 'var(--color-error-soft)',
-                          color: 'var(--color-error-strong)',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        ลบ
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {reviews.length === 0 && (
-                <tr>
-                  <td colSpan={7} style={{ padding: '60px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
-                    ยังไม่มีรีวิว
-                  </td>
-                </tr>
+          <DialogFooter>
+            {wpStep === 'map' ? (
+              <Button variant="outline" disabled={importing} onClick={() => setWpStep('paste')}>
+                ย้อนกลับ
+              </Button>
+            ) : null}
+            <Button variant="outline" disabled={importing} onClick={closeImport}>
+              ยกเลิก
+            </Button>
+            <Button
+              disabled={importing || (wpStep === 'paste' && !importJson.trim())}
+              onClick={wpStep === 'paste' ? handleParseJson : handleWpImport}
+            >
+              {importing ? (
+                <AdminPendingLabel>กำลังนำเข้า...</AdminPendingLabel>
+              ) : wpStep === 'paste' ? (
+                'ตรวจสอบข้อมูล'
+              ) : (
+                'นำเข้ารีวิว'
               )}
-            </tbody>
-          </table>
-        </div>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '16px',
-            borderTop: '1px solid var(--border)',
-          }}>
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              style={{
-                padding: '8px 16px',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                background: 'var(--card)',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                opacity: currentPage === 1 ? 0.5 : 1,
-                fontSize: '0.875rem',
-              }}
-            >
-              ก่อนหน้า
-            </button>
-            <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
-              หน้า {currentPage} จาก {pagination.totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
-              disabled={currentPage === pagination.totalPages}
-              style={{
-                padding: '8px 16px',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                background: 'var(--card)',
-                cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
-                opacity: currentPage === pagination.totalPages ? 0.5 : 1,
-                fontSize: '0.875rem',
-              }}
-            >
-              ถัดไป
-            </button>
-          </div>
-        )}
-      </div>
-
-      <ConfirmDialog
-        isOpen={!!deleteConfirm}
+      <AdminConfirmActionDialog
+        open={Boolean(deleteConfirm)}
         title="ลบรีวิว"
-        message="คุณแน่ใจหรือไม่ที่จะลบรีวิวนี้? การกระทำนี้ไม่สามารถย้อนกลับได้"
-        confirmText="ลบ"
-        onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
-        onCancel={() => setDeleteConfirm(null)}
+        description="รีวิวจะถูกลบถาวร หากเพียงต้องการหยุดแสดงควรใช้คำสั่งซ่อนแทน"
+        target={
+          deleteTarget
+            ? (deleteTarget.displayName || deleteTarget.userName || 'ไม่ระบุชื่อ') +
+              ' · ' +
+              (deleteTarget.courseTitle || 'ไม่พบชื่อคอร์ส')
+            : undefined
+        }
+        confirmLabel="ลบรีวิว"
+        pendingLabel="กำลังลบ"
+        pending={deleting}
+        onConfirm={handleDelete}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
       />
     </div>
   );
