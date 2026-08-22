@@ -34,7 +34,7 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
       </div>
 
       <nav aria-label="เมนูผู้ดูแลระบบ" className="flex-1 space-y-5 overflow-y-auto p-3">
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1">
           {adminPrimaryLinks.map((link) => (
             <Link key={link.href} href={link.href} className={linkClass(isAdminNavActive(pathname, link))}>
               <AdminNavIcon name={link.icon} />

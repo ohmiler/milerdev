@@ -1,7 +1,11 @@
+import { CircleAlert, Inbox } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 export type AdminTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
@@ -89,11 +93,11 @@ export function AdminSection({
   return (
     <Card className={cn('gap-4 rounded-xl shadow-none', className)}>
       <CardHeader className="border-b border-border pb-4">
-        <div>
+        <div className="min-w-0">
           <CardTitle>{title}</CardTitle>
           {description ? <CardDescription className="mt-1.5 leading-5">{description}</CardDescription> : null}
         </div>
-        {actions ? <div className="flex flex-wrap items-center justify-end gap-2">{actions}</div> : null}
+        {actions ? <CardAction className="flex flex-wrap items-center justify-end gap-2">{actions}</CardAction> : null}
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
@@ -121,20 +125,71 @@ export function AdminEmptyState({
   title,
   description,
   action,
+  icon,
   tone = 'neutral',
 }: {
   title: ReactNode;
   description: ReactNode;
   action?: ReactNode;
+  icon?: ReactNode;
   tone?: AdminTone;
 }) {
   return (
-    <div className={cn('grid min-h-44 place-items-center rounded-xl border border-dashed p-6 text-center', toneClasses[tone])}>
-      <div className="max-w-md">
-        <h2 className="font-heading text-base font-semibold">{title}</h2>
-        <p className="mt-2 text-sm leading-6 opacity-80">{description}</p>
-        {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
-      </div>
-    </div>
+    <Empty className={cn('min-h-44 border', toneClasses[tone])}>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">{icon ?? <Inbox aria-hidden />}</EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription className="text-current/80">{description}</EmptyDescription>
+      </EmptyHeader>
+      {action ? <EmptyContent>{action}</EmptyContent> : null}
+    </Empty>
+  );
+}
+
+export function AdminLoadingState({
+  title = 'กำลังโหลดข้อมูล',
+  description = 'โปรดรอสักครู่ ระบบกำลังเตรียมข้อมูลล่าสุด',
+}: {
+  title?: ReactNode;
+  description?: ReactNode;
+}) {
+  return (
+    <Empty className="min-h-44 border bg-muted/30">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Spinner aria-hidden />
+        </EmptyMedia>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription>{description}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
+}
+
+export function AdminErrorState({
+  title = 'ไม่สามารถโหลดข้อมูลได้',
+  description,
+  action,
+}: {
+  title?: ReactNode;
+  description: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <Alert variant="destructive">
+      <CircleAlert aria-hidden />
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>{description}</AlertDescription>
+      {action ? <AlertAction>{action}</AlertAction> : null}
+    </Alert>
+  );
+}
+
+export function AdminPendingLabel({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <Spinner data-icon="inline-start" aria-hidden />
+      {children}
+    </>
   );
 }
