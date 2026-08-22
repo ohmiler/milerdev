@@ -20,6 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 interface Lesson {
@@ -128,8 +129,10 @@ function SortableItem({
   return (
     <article ref={setNodeRef} style={style} className={isEditing ? 'admin-lesson-row editing' : 'admin-lesson-row'}>
       <div className="admin-lesson-row-main">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           className="admin-lesson-drag"
           aria-label="ลากเพื่อจัดลำดับบทเรียน"
           disabled={disabledDrag}
@@ -139,7 +142,7 @@ function SortableItem({
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 6a2 2 0 11-4 0 2 2 0 014 0zM8 12a2 2 0 11-4 0 2 2 0 014 0zM8 18a2 2 0 11-4 0 2 2 0 014 0zM16 6a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 11-4 0 2 2 0 014 0zM16 18a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-        </button>
+        </Button>
 
         <div className={health.className === 'ready' ? 'admin-lesson-index ready' : 'admin-lesson-index'}>
           {String(index + 1).padStart(2, '0')}
@@ -159,11 +162,11 @@ function SortableItem({
         </div>
 
         <div className="admin-lesson-actions">
-          <button type="button" onClick={() => onEditVideo(isEditing ? null : lesson.id)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => onEditVideo(isEditing ? null : lesson.id)}>
             {lesson.videoUrl ? 'แก้วิดีโอ' : 'เพิ่มวิดีโอ'}
-          </button>
+          </Button>
           <Link href={`/admin/lessons/${lesson.id}/edit`}>แก้ไข</Link>
-          <button type="button" className="danger" onClick={() => onDelete(lesson.id)}>ลบ</button>
+          <Button type="button" variant="destructive" size="sm" onClick={() => onDelete(lesson.id)}>ลบ</Button>
         </div>
       </div>
 
@@ -191,10 +194,10 @@ function SortableItem({
             />
           </label>
           <div className="admin-lesson-video-actions">
-            <button type="button" onClick={handleSave} disabled={isSaving}>
+            <Button type="button" size="sm" onClick={handleSave} disabled={isSaving}>
               {isSaving ? 'กำลังบันทึก...' : 'บันทึกวิดีโอ'}
-            </button>
-            <button type="button" onClick={() => onEditVideo(null)}>ยกเลิก</button>
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => onEditVideo(null)}>ยกเลิก</Button>
           </div>
         </div>
       ) : null}

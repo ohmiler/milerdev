@@ -171,9 +171,9 @@ describe('Admin operations UI', () => {
     expect(themeSource).toContain('.admin-route-surface :where(tbody tr:hover)');
     expect(themeSource).toContain('@media (max-width: 720px)');
 
-    const primitiveSource = source('src/components/admin/ui/AdminPrimitives.tsx');
-    expect(primitiveSource).toContain('border-b border-border pb-5');
-    expect(primitiveSource).not.toContain('bg-gradient');
+    const operationsSource = source('src/components/admin/ui/AdminOperations.tsx');
+    expect(operationsSource).toContain('border-b border-border pb-5');
+    expect(operationsSource).not.toContain('bg-gradient');
 
     const usersSource = source('src/app/admin/users/page.tsx');
     expect(usersSource).toContain('AdminMetricCard');

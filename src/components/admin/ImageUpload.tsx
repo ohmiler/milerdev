@@ -1,6 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import Image from 'next/image';
+import { useRef, useState } from 'react';
+import { ImageIcon, RefreshCw, Trash2, UploadCloud } from 'lucide-react';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 
 interface ImageUploadProps {
   value: string;
@@ -27,7 +35,6 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
         method: 'POST',
         body: formData,
       });
-
       const data = await res.json();
 
       if (res.ok && data.url) {
@@ -42,16 +49,16 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) handleUpload(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
+    const file = event.dataTransfer.files?.[0];
     if (file) handleUpload(file);
   };
 
@@ -61,126 +68,82 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
   };
 
   return (
-    <div>
-      <input
+    <div className="space-y-3">
+      <Input
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={handleFileSelect}
-        style={{ display: 'none' }}
+        className="sr-only"
+        tabIndex={-1}
       />
 
       {value ? (
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img
-            src={value}
-            alt="Preview"
-            style={{
-              maxWidth: '300px',
-              maxHeight: '180px',
-              borderRadius: '8px',
-              objectFit: 'cover',
-              border: '1px solid var(--border)',
-            }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-          <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                padding: '6px 12px',
-                background: 'var(--muted)',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                fontSize: '0.813rem',
-                color: 'var(--muted-foreground)',
-                cursor: 'pointer',
-              }}
-            >
+        <div className="space-y-3">
+          <div className="relative aspect-video max-w-md overflow-hidden rounded-xl border border-border bg-muted">
+            <Image src={value} alt="ตัวอย่างรูปภาพ" fill unoptimized sizes="448px" className="object-cover" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+              <RefreshCw aria-hidden />
               เปลี่ยนรูป
-            </button>
-            <button
-              type="button"
-              onClick={handleRemove}
-              style={{
-                padding: '6px 12px',
-                background: 'var(--color-error-soft)',
-                border: '1px solid var(--color-error-soft)',
-                borderRadius: '6px',
-                fontSize: '0.813rem',
-                color: 'var(--color-error-strong)',
-                cursor: 'pointer',
-              }}
-            >
+            </Button>
+            <Button type="button" variant="destructive" size="sm" onClick={handleRemove}>
+              <Trash2 aria-hidden />
               ลบรูป
-            </button>
+            </Button>
           </div>
-          <div style={{ marginTop: '6px' }}>
-            <input
-              type="text"
-              value={value}
-              readOnly
-              style={{
-                width: '100%',
-                padding: '6px 10px',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                fontSize: '0.75rem',
-                color: 'var(--muted-foreground)',
-                background: 'var(--muted)',
-              }}
-            />
-          </div>
+          <Input value={value} readOnly className="text-xs text-muted-foreground" aria-label="URL รูปภาพ" />
         </div>
       ) : (
         <div
-          onClick={() => !uploading && fileInputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          role="button"
+          tabIndex={uploading ? -1 : 0}
+          aria-disabled={uploading}
+          className={cn(
+            'grid min-h-44 cursor-pointer place-items-center rounded-xl border-2 border-dashed border-border bg-muted/20 p-6 text-center transition-colors outline-none hover:border-primary/40 hover:bg-muted/35 focus-visible:ring-2 focus-visible:ring-ring',
+            dragOver && 'border-primary bg-primary/5 ring-2 ring-primary/15',
+            uploading && 'cursor-wait opacity-70',
+          )}
+          onClick={() => {
+            if (!uploading) fileInputRef.current?.click();
+          }}
+          onKeyDown={(event) => {
+            if (!uploading && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (!uploading) setDragOver(true);
+          }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          style={{
-            border: `2px dashed ${dragOver ? 'var(--primary)' : 'var(--border)'}`,
-            borderRadius: '18px',
-            padding: '38px 24px',
-            textAlign: 'center',
-            cursor: uploading ? 'wait' : 'pointer',
-            background: dragOver ? 'var(--secondary)' : 'var(--card)',
-            transition: 'all 0.2s',
-            outline: dragOver ? '3px solid color-mix(in oklch, var(--ring) 24%, transparent)' : 'none',
-          }}
         >
           {uploading ? (
             <div>
-              <div className="admin-upload-spinner" style={{
-                width: '32px',
-                height: '32px',
-                border: '3px solid var(--border)',
-                borderTop: '3px solid var(--primary)',
-                borderRadius: '50%',
-                margin: '0 auto 12px',
-              }} />
-              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', margin: 0 }}>กำลังอัปโหลด...</p>
+              <Spinner className="mx-auto size-7" aria-hidden />
+              <p className="mt-3 text-sm font-medium text-foreground">กำลังอัปโหลด...</p>
+              <p className="mt-1 text-xs text-muted-foreground">โปรดรอจนกว่าการอัปโหลดจะเสร็จ</p>
             </div>
           ) : (
             <div>
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
-              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', margin: '0 0 4px' }}>
-                คลิกหรือลากไฟล์มาวาง
-              </p>
-              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.75rem', margin: 0 }}>
-                JPG, PNG, WEBP, GIF (สูงสุด 10MB)
-              </p>
+              <span className="mx-auto grid size-10 place-items-center rounded-lg border border-border bg-card">
+                {dragOver ? <ImageIcon className="size-5 text-primary" aria-hidden /> : <UploadCloud className="size-5 text-muted-foreground" aria-hidden />}
+              </span>
+              <p className="mt-3 text-sm font-medium text-foreground">คลิกหรือลากไฟล์มาวาง</p>
+              <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WEBP, GIF สูงสุด 10MB</p>
             </div>
           )}
         </div>
       )}
 
-      {error && (
-        <p style={{ color: 'var(--color-error-strong)', fontSize: '0.813rem', marginTop: '8px' }}>{error}</p>
-      )}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

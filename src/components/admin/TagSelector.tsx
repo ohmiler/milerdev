@@ -1,252 +1,115 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import { ChevronDown, Tags, X } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Tag {
-    id: string;
-    name: string;
-    slug: string;
+  id: string;
+  name: string;
+  slug: string;
 }
 
 interface TagSelectorProps {
-    selectedTagIds: string[];
-    onChange: (tagIds: string[]) => void;
+  selectedTagIds: string[];
+  onChange: (tagIds: string[]) => void;
 }
 
 export default function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
-    const [allTags, setAllTags] = useState<Tag[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isOpen, setIsOpen] = useState(false);
-    const [search, setSearch] = useState('');
-    const dropdownRef = useRef<HTMLDivElement>(null);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetch('/api/admin/tags')
-            .then(res => res.json())
-            .then(data => setAllTags(data.tags || []))
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, []);
+  useEffect(() => {
+    fetch('/api/admin/tags')
+      .then((response) => response.json())
+      .then((data) => setAllTags(data.tags || []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const toggleTag = (tagId: string) => {
-        if (selectedTagIds.includes(tagId)) {
-            onChange(selectedTagIds.filter(id => id !== tagId));
-        } else {
-            onChange([...selectedTagIds, tagId]);
-        }
-    };
-
-    const removeTag = (tagId: string) => {
-        onChange(selectedTagIds.filter(id => id !== tagId));
-    };
-
-    const selectedTags = allTags.filter(t => selectedTagIds.includes(t.id));
-    const filteredTags = allTags.filter(t =>
-        t.name.toLowerCase().includes(search.toLowerCase())
-    );
-
-    if (loading) {
-        return (
-            <div style={{
-                padding: '12px 16px',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                color: 'var(--muted-foreground)',
-                fontSize: '0.875rem',
-            }}>
-                กำลังโหลดแท็ก...
-            </div>
-        );
+  const toggleTag = (tagId: string) => {
+    if (selectedTagIds.includes(tagId)) {
+      onChange(selectedTagIds.filter((id) => id !== tagId));
+    } else {
+      onChange([...selectedTagIds, tagId]);
     }
+  };
 
+  const selectedTags = allTags.filter((tag) => selectedTagIds.includes(tag.id));
+
+  if (loading) {
     return (
-        <div ref={dropdownRef} style={{ position: 'relative' }}>
-            {/* Selected tags + trigger */}
-            <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setIsOpen(!isOpen)}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setIsOpen(!isOpen);
-                    }
-                }}
-                style={{
-                    width: '100%',
-                    minHeight: '48px',
-                    padding: '8px 12px',
-                    border: '1px solid',
-                    borderColor: isOpen ? 'var(--primary)' : 'var(--border)',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '6px',
-                    alignItems: 'center',
-                    textAlign: 'left',
-                    background: isOpen ? 'var(--secondary)' : 'var(--card)',
-                    transition: 'border-color 0.15s, box-shadow 0.15s',
-                    outline: isOpen ? '3px solid color-mix(in oklch, var(--ring) 30%, transparent)' : 'none',
-                }}
-            >
-                {selectedTags.length > 0 ? (
-                    selectedTags.map(tag => (
-                        <span
-                            key={tag.id}
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '4px 10px',
-                                background: 'var(--secondary)',
-                                color: 'var(--primary)',
-                                borderRadius: '8px',
-                                fontSize: '0.8125rem',
-                                fontWeight: 500,
-                            }}
-                        >
-                            {tag.name}
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); removeTag(tag.id); }}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--primary)',
-                                    cursor: 'pointer',
-                                    padding: '0 2px',
-                                    fontSize: '1rem',
-                                    lineHeight: 1,
-                                }}
-                            >
-                                &times;
-                            </button>
-                        </span>
-                    ))
-                ) : (
-                    <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
-                        คลิกเพื่อเลือกแท็ก...
-                    </span>
-                )}
-            </div>
-
-            {/* Dropdown */}
-            {isOpen && (
-                <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: '4px',
-                    background: 'var(--card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    zIndex: 1000,
-                    maxHeight: '240px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}>
-                    {/* Search */}
-                    <div style={{ padding: '8px', borderBottom: '1px solid var(--muted)' }}>
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="ค้นหาแท็ก..."
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid var(--border)',
-                                borderRadius: '6px',
-                                fontSize: '0.875rem',
-                                outline: 'none',
-                            }}
-                            autoFocus
-                        />
-                    </div>
-
-                    {/* Tag list */}
-                    <div style={{ overflowY: 'auto', maxHeight: '180px' }}>
-                        {filteredTags.length === 0 ? (
-                            <div style={{
-                                padding: '16px',
-                                textAlign: 'center',
-                                color: 'var(--muted-foreground)',
-                                fontSize: '0.875rem',
-                            }}>
-                                {allTags.length === 0 ? 'ยังไม่มีแท็ก — ไปสร้างที่หน้าจัดการแท็กก่อน' : 'ไม่พบแท็กที่ค้นหา'}
-                            </div>
-                        ) : (
-                            filteredTags.map(tag => {
-                                const isSelected = selectedTagIds.includes(tag.id);
-                                return (
-                                    <button
-                                        type="button"
-                                        key={tag.id}
-                                        onClick={(e) => { e.stopPropagation(); toggleTag(tag.id); }}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 16px',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '10px',
-                                            background: isSelected ? 'var(--secondary)' : 'transparent',
-                                            border: 'none',
-                                            textAlign: 'left',
-                                            transition: 'background 0.1s',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--muted)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            (e.currentTarget as HTMLButtonElement).style.background = isSelected ? 'var(--secondary)' : 'transparent';
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: '18px',
-                                            height: '18px',
-                                            borderRadius: '4px',
-                                            border: '2px solid',
-                                            borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
-                                            background: isSelected ? 'var(--primary)' : 'white',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                        }}>
-                                            {isSelected && (
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polyline points="20 6 9 17 4 12" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                        <span style={{
-                                            fontSize: '0.875rem',
-                                            color: isSelected ? 'var(--primary)' : 'var(--foreground)',
-                                            fontWeight: isSelected ? 500 : 400,
-                                        }}>
-                                            {tag.name}
-                                        </span>
-                                    </button>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
-            )}
-        </div>
+      <div className="flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm text-muted-foreground">
+        <Spinner aria-hidden />
+        กำลังโหลดแท็ก
+      </div>
     );
+  }
+
+  return (
+    <div className="space-y-3">
+      {selectedTags.length > 0 ? (
+        <div className="flex flex-wrap gap-2" aria-label="แท็กที่เลือก">
+          {selectedTags.map((tag) => (
+            <span
+              key={tag.id}
+              className="inline-flex items-center gap-1 rounded-lg border border-primary/15 bg-secondary py-1 pr-1 pl-2.5 text-xs font-medium text-secondary-foreground"
+            >
+              {tag.name}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => toggleTag(tag.id)}
+              >
+                <X aria-hidden />
+                <span className="sr-only">นำแท็ก {tag.name} ออก</span>
+              </Button>
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">ยังไม่ได้เลือกแท็ก</p>
+      )}
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" variant="outline" className="w-full justify-between">
+            <span className="inline-flex items-center gap-2">
+              <Tags aria-hidden />
+              เลือกแท็ก
+            </span>
+            <ChevronDown aria-hidden />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="max-h-72">
+          <DropdownMenuLabel>
+            {allTags.length > 0 ? allTags.length.toLocaleString('th-TH') + ' แท็กในระบบ' : 'ยังไม่มีแท็กในระบบ'}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {allTags.map((tag) => (
+            <DropdownMenuCheckboxItem
+              key={tag.id}
+              checked={selectedTagIds.includes(tag.id)}
+              onCheckedChange={() => toggleTag(tag.id)}
+              onSelect={(event) => event.preventDefault()}
+            >
+              <span className="truncate">{tag.name}</span>
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
 }

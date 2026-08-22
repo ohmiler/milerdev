@@ -1,6 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { Palette } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const PRESET_COLORS = [
   { color: '#2563eb', label: 'น้ำเงิน' },
@@ -25,110 +31,77 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
   const displayColor = value || '#2563eb';
 
   return (
-    <div>
-      {/* Main color display + picker */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-        <div style={{ position: 'relative' }}>
-          <div
-            onClick={() => setShowPicker(!showPicker)}
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: displayColor,
-              cursor: 'pointer',
-              border: '3px solid var(--border)',
-              outline: showPicker ? '3px solid color-mix(in oklch, var(--ring) 24%, transparent)' : 'none',
-            }}
-          />
-          {showPicker && (
-            <div style={{
-              position: 'absolute',
-              top: '56px',
-              left: 0,
-              zIndex: 100,
-              background: 'var(--card)',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '1px solid var(--border)',
-            }}>
-              <input
-                type="color"
-                value={displayColor}
-                onChange={(e) => onChange(e.target.value)}
-                style={{
-                  width: '200px',
-                  height: '150px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  padding: 0,
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPicker(false)}
-                style={{
-                  marginTop: '8px',
-                  width: '100%',
-                  padding: '8px',
-                  background: 'var(--muted)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}
-              >
-                ตกลง
-              </button>
-            </div>
-          )}
-        </div>
-        <input
-          type="text"
+    <div className="space-y-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Button
+          type="button"
+          variant="outline"
+          className="size-12 shrink-0 p-0"
+          style={{ backgroundColor: displayColor }}
+          onClick={() => setShowPicker(true)}
+          aria-label="เปิดตัวเลือกสี"
+        >
+          <Palette className="size-4 text-white drop-shadow-sm" aria-hidden />
+        </Button>
+        <Input
           value={displayColor}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) onChange(v);
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            if (/^#[0-9A-Fa-f]{0,6}$/.test(nextValue)) onChange(nextValue);
           }}
           placeholder="#2563eb"
-          style={{
-            width: '100px',
-            padding: '10px 12px',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            fontFamily: 'monospace',
-            fontSize: '0.9375rem',
-          }}
+          className="w-32 font-mono"
+          aria-label="รหัสสี Hex"
         />
-        <span style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>คลิกสีเพื่อเปิด color picker หรือพิมพ์ hex code</span>
+        <p className="text-xs leading-5 text-muted-foreground">คลิกตัวอย่างสีเพื่อเปิด color picker หรือพิมพ์ hex code</p>
       </div>
 
-      {/* Preset swatches */}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap gap-2" aria-label="สีสำเร็จรูป">
         {PRESET_COLORS.map(({ color, label }) => (
-          <button
+          <Button
             key={color}
             type="button"
-            onClick={() => onChange(color)}
+            variant="outline"
+            size="icon-sm"
             title={label}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: color,
-              border: value === color ? '3px solid var(--foreground)' : '2px solid var(--border)',
-              cursor: 'pointer',
-              transition: 'transform 0.15s',
-              transform: value === color ? 'scale(1.15)' : 'scale(1)',
-            }}
+            aria-label={label}
+            aria-pressed={displayColor.toLowerCase() === color.toLowerCase()}
+            className={cn(
+              'rounded-lg border-2 p-0',
+              displayColor.toLowerCase() === color.toLowerCase() && 'ring-2 ring-ring ring-offset-2',
+            )}
+            style={{ backgroundColor: color }}
+            onClick={() => onChange(color)}
           />
         ))}
       </div>
-      <p style={{ marginTop: '8px', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
-        เลือกสีด่วนจากด้านบน หรือกำหนดสีเองได้อิสระ — สีนี้จะใช้เป็นธีมใบรับรองของคอร์สนี้
+      <p className="text-xs leading-5 text-muted-foreground">
+        สีนี้จะใช้เป็นธีมใบรับรองของคอร์ส สามารถเลือกสีด่วนหรือกำหนดเองได้
       </p>
+
+      <Dialog open={showPicker} onOpenChange={setShowPicker}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>กำหนดสีใบรับรอง</DialogTitle>
+            <DialogDescription>เลือกสีจากเครื่องมือของระบบ แล้วตรวจรหัส Hex ก่อนยืนยัน</DialogDescription>
+          </DialogHeader>
+          <div className="my-4 space-y-3">
+            <Input
+              type="color"
+              value={displayColor}
+              onChange={(event) => onChange(event.target.value)}
+              className="h-44 w-full cursor-pointer p-2"
+              aria-label="เลือกสีใบรับรอง"
+            />
+            <Input value={displayColor} readOnly className="font-mono" aria-label="รหัสสีที่เลือก" />
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={() => setShowPicker(false)}>
+              ใช้สีนี้
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
