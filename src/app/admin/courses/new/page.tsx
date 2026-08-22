@@ -1,17 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { ArrowLeft, BookOpen, Save } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
 import {
-  AdminButton,
-  AdminPageHero,
-  AdminPill,
-  AdminRailCard,
-  AdminSectionHeading,
-  AdminSurfaceCard,
-} from '@/components/admin/ui/AdminPrimitives';
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -22,7 +29,6 @@ export default function NewCoursePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -35,40 +41,29 @@ export default function NewCoursePage() {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
-  const generateSlug = (title: string) =>
-    title
-      .toLowerCase()
-      .replace(/[^a-z0-9ก-๙\s-]+/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .substring(0, 100);
+  const generateSlug = (title: string) => title
+    .toLowerCase()
+    .replace(/[^a-z0-9ก-๙\s-]+/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .substring(0, 100);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      const res = await fetch('/api/admin/courses', {
+      const response = await fetch('/api/admin/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          tagIds: selectedTagIds,
-          certificateColor: formData.certificateColor,
-        }),
+        body: JSON.stringify({ ...formData, tagIds: selectedTagIds, certificateColor: formData.certificateColor }),
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        router.push('/admin/courses');
-      } else {
-        setError(data.error || 'เกิดข้อผิดพลาด');
-      }
-    } catch {
-      setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'สร้างคอร์สไม่สำเร็จ');
+      router.push('/admin/courses');
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : 'สร้างคอร์สไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setLoading(false);
     }
@@ -78,262 +73,113 @@ export default function NewCoursePage() {
   const isFreeCourse = Number(formData.price || 0) <= 0;
   const isPublished = formData.status === 'published';
   const statusLabel = isPublished ? 'เผยแพร่' : 'แบบร่าง';
-  const priceLabel = isFreeCourse ? 'ฟรี' : `฿${Number(formData.price || 0).toLocaleString()}`;
-  const coursePreviewUrl = `/courses/${normalizedSlug || 'your-course-slug'}`;
-  const topPriorityAction =
-    formData.title.trim().length === 0
-      ? 'เริ่มจากตั้งชื่อคอร์สเพื่อให้ระบบช่วยสร้าง URL และโครงข้อมูลตั้งต้นให้ก่อน'
-      : !formData.thumbnailUrl
-        ? 'เพิ่มภาพปกเพื่อให้หน้าคอร์สดูพร้อมใช้งานและนำไปจัดวางต่อได้ทันที'
-        : !formData.description.trim().length
-          ? 'เติมคำอธิบายคอร์สเพื่อให้หน้าขายมีบริบทครบขึ้นก่อนกดสร้าง'
-          : 'ข้อมูลตั้งต้นพร้อมแล้ว สามารถสร้างคอร์สและไปเพิ่มบทเรียนต่อได้ทันที';
-
-  const setupHighlights = [
-    {
-      label: 'สถานะเริ่มต้น',
-      value: statusLabel,
-      tone: isPublished ? 'green' : 'amber',
-      detail: isPublished ? 'คอร์สจะพร้อมแสดงทันทีหลังสร้าง' : 'เหมาะกับการเตรียมข้อมูลและตรวจสอบก่อนเปิดขาย',
-    },
-    {
-      label: 'รูปแบบราคา',
-      value: priceLabel,
-      tone: isFreeCourse ? 'green' : 'blue',
-      detail: isFreeCourse ? 'ใช้ราคา 0 เพื่อเริ่มเป็นคอร์สฟรี' : 'สามารถตั้งโปรโมชันภายหลังในหน้าจัดการคอร์สได้',
-    },
-  ];
+  const priceLabel = isFreeCourse ? 'ฟรี' : new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(Number(formData.price || 0));
+  const readyItems = [Boolean(formData.title.trim()), Boolean(formData.description.trim()), Boolean(formData.thumbnailUrl)];
+  const readiness = Math.round((readyItems.filter(Boolean).length / readyItems.length) * 100);
 
   return (
-    <div className="new-course-page-shell">
-      <AdminPageHero
-        eyebrow="Create New Course"
+    <div className="mx-auto grid w-full max-w-7xl gap-6">
+      <AdminPageHeader
+        eyebrow="Course setup"
         title="สร้างคอร์สใหม่"
-        description={
-          <>
-            สร้างคอร์สใหม่และกำหนดข้อมูลตั้งต้นที่สำคัญเพื่อให้หน้าขายและหน้าจัดการคอร์สมีบริบทครบขึ้นตั้งแต่เริ่มต้น
-            ไม่ต้องกังวลว่าต้องกรอกข้อมูลทุกอย่างให้สมบูรณ์ในครั้งแรก เพราะสามารถกลับมาแก้ไขและเพิ่มข้อมูลได้ตลอดเวลาหลังจากสร้างคอร์สแล้ว
-          </>
-        }
-        actions={
-          <>
-            <AdminButton href="#course-setup-form" tone="dark">เริ่มกรอกข้อมูล</AdminButton>
-            <AdminPill tone={isPublished ? 'success' : 'warning'}>{statusLabel}</AdminPill>
-            <AdminPill tone={isFreeCourse ? 'success' : 'info'}>{priceLabel}</AdminPill>
-          </>
-        }
-        meta={<><strong>โฟกัสตอนนี้:</strong> {topPriorityAction}</>}
-      >
-        <div className="new-course-back-link-wrap">
-          <Link href="/admin/courses" className="new-course-back-link">
-            ← กลับไปรายการคอร์ส
-          </Link>
-        </div>
-      </AdminPageHero>
+        description="กำหนดข้อมูลหลัก ราคา สถานะ และภาพลักษณ์ก่อนเพิ่มบทเรียนในขั้นถัดไป"
+        actions={<Button asChild variant="outline"><Link href="/admin/courses"><ArrowLeft data-icon="inline-start" aria-hidden />กลับไปรายการคอร์ส</Link></Button>}
+        meta="แนะนำให้เริ่มเป็นแบบร่าง แล้วตรวจบทเรียนและหน้าขายก่อนเผยแพร่"
+      />
 
-      {error && <div className="new-course-error">{error}</div>}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <AdminMetricCard label="สถานะเริ่มต้น" value={statusLabel} tone={isPublished ? 'success' : 'warning'} detail={isPublished ? 'จะแสดงต่อผู้ใช้ทันทีหลังสร้าง' : 'ตรวจสอบและแก้ไขต่อได้'} />
+        <AdminMetricCard label="รูปแบบราคา" value={priceLabel} tone={isFreeCourse ? 'success' : 'info'} detail={isFreeCourse ? 'ราคา 0 บาท' : 'ราคาหลักของคอร์ส'} />
+        <AdminMetricCard label="ความพร้อมเบื้องต้น" value={`${readiness}%`} tone={readiness === 100 ? 'success' : 'neutral'} detail="ชื่อ คำอธิบาย และภาพปก" />
+      </div>
 
-      <form id="course-setup-form" onSubmit={handleSubmit} className="new-course-form-grid">
-        <div className="new-course-main-column">
-          <AdminSurfaceCard className="new-course-section-card">
-            <AdminSectionHeading
-              title="ตัวตนและบริบทของคอร์ส"
-              description="เริ่มจากข้อมูลพื้นฐานที่ใช้ทั้งในหน้าขาย การค้นหา และการจัดการต่อในระบบ"
-            />
+      {error ? <Alert variant="destructive"><AlertTitle>สร้างคอร์สไม่สำเร็จ</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
 
-            <div className="new-course-field-grid">
-              <div>
-                <label className="new-course-label">ชื่อคอร์ส *</label>
-                <input
-                  className="new-course-input"
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => {
-                    const newTitle = e.target.value;
-                    setFormData((prev) => ({
-                      ...prev,
-                      title: newTitle,
-                      ...(!slugManuallyEdited ? { slug: generateSlug(newTitle) } : {}),
-                    }));
-                  }}
-                  required
-                  placeholder="เช่น JavaScript for Beginners"
-                />
-                <div className="new-course-help-text">
-                  ตั้งชื่อให้ชัดพอที่จะใช้ได้ทั้งในหน้าขาย การจัดการภายใน และการค้นหาในระบบ
-                </div>
-              </div>
-
-              <div>
-                <label className="new-course-label">Slug (URL)</label>
-                <div className="new-course-slug-row">
-                  <span className="new-course-slug-prefix">/courses/</span>
-                  <input
-                    className="new-course-input"
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => {
-                      setSlugManuallyEdited(true);
-                      setFormData((prev) => ({ ...prev, slug: e.target.value }));
+      <form id="course-setup-form" onSubmit={handleSubmit} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid gap-6">
+          <AdminSection title="ตัวตนและบริบทของคอร์ส" description="ข้อมูลที่ใช้บนหน้าขาย การค้นหา และในระบบผู้ดูแล">
+            <FieldGroup>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="course-title">ชื่อคอร์ส *</FieldLabel>
+                  <Input
+                    id="course-title"
+                    value={formData.title}
+                    onChange={(event) => {
+                      const title = event.target.value;
+                      setFormData((previous) => ({ ...previous, title, ...(!slugManuallyEdited ? { slug: generateSlug(title) } : {}) }));
                     }}
-                    placeholder="auto-generated-from-title"
+                    required
+                    placeholder="เช่น JavaScript for Beginners"
                   />
-                  {slugManuallyEdited && (
-                    <button
-                      type="button"
-                      className="new-course-reset-button"
-                      onClick={() => {
-                        setSlugManuallyEdited(false);
-                        setFormData((prev) => ({ ...prev, slug: generateSlug(prev.title) }));
-                      }}
-                    >
-                      รีเซ็ต
-                    </button>
-                  )}
-                </div>
-                <div className="new-course-help-text">
-                  URL นี้ใช้สำหรับหน้าคอร์สจริงบนเว็บ ควรสั้น อ่านง่าย และเปลี่ยนให้น้อยที่สุดเมื่อเริ่มมีการแชร์แล้ว
-                </div>
+                  <FieldDescription>ใช้ชื่อที่สื่อผลลัพธ์ของคอร์สได้ชัดเจน</FieldDescription>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="course-slug">Slug (URL)</FieldLabel>
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 text-sm text-muted-foreground">/courses/</span>
+                    <Input id="course-slug" value={formData.slug} onChange={(event) => { setSlugManuallyEdited(true); setFormData((previous) => ({ ...previous, slug: event.target.value })); }} placeholder="course-slug" />
+                    {slugManuallyEdited ? <Button type="button" variant="outline" size="sm" onClick={() => { setSlugManuallyEdited(false); setFormData((previous) => ({ ...previous, slug: generateSlug(previous.title) })); }}>รีเซ็ต</Button> : null}
+                  </div>
+                  <FieldDescription>ตัวอย่าง: /courses/{normalizedSlug || 'course-slug'}</FieldDescription>
+                </Field>
               </div>
+              <Field>
+                <FieldLabel>คำอธิบาย</FieldLabel>
+                <RichTextEditor content={formData.description} onChange={(description) => setFormData((previous) => ({ ...previous, description }))} />
+              </Field>
+              <Field>
+                <FieldLabel>แท็ก</FieldLabel>
+                <TagSelector selectedTagIds={selectedTagIds} onChange={setSelectedTagIds} />
+              </Field>
+            </FieldGroup>
+          </AdminSection>
+
+          <AdminSection title="ราคาและการมองเห็น" description="กำหนดราคาหลักและสถานะเริ่มต้นของคอร์ส">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field>
+                <FieldLabel htmlFor="course-price">ราคา (บาท)</FieldLabel>
+                <Input id="course-price" type="number" min="0" value={formData.price} onChange={(event) => setFormData((previous) => ({ ...previous, price: event.target.value }))} placeholder="0" />
+                <FieldDescription>ใช้ 0 สำหรับคอร์สฟรี</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="course-status">สถานะเริ่มต้น</FieldLabel>
+                <NativeSelect id="course-status" className="w-full" value={formData.status} onChange={(event) => setFormData((previous) => ({ ...previous, status: event.target.value }))}>
+                  <NativeSelectOption value="draft">แบบร่าง</NativeSelectOption>
+                  <NativeSelectOption value="published">เผยแพร่</NativeSelectOption>
+                </NativeSelect>
+                <FieldDescription>การเผยแพร่ทันทีจะทำให้ผู้ใช้มองเห็นและซื้อคอร์สได้</FieldDescription>
+              </Field>
             </div>
+          </AdminSection>
 
-            <div className="new-course-field-stack">
-              <label className="new-course-label">คำอธิบาย</label>
-              <RichTextEditor
-                content={formData.description}
-                onChange={(html) => setFormData((prev) => ({ ...prev, description: html }))}
-              />
+          <AdminSection title="ภาพลักษณ์และใบรับรอง" description="เพิ่มภาพปกและเลือกสีหลักของใบรับรอง">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Field><FieldLabel>รูปภาพปก</FieldLabel><ImageUpload value={formData.thumbnailUrl} onChange={(thumbnailUrl) => setFormData((previous) => ({ ...previous, thumbnailUrl }))} folder="courses" /></Field>
+              <Field><FieldLabel>สีใบรับรอง</FieldLabel><CertificateColorPicker value={formData.certificateColor} onChange={(certificateColor) => setFormData((previous) => ({ ...previous, certificateColor }))} /></Field>
             </div>
-
-            <div className="new-course-field-stack">
-              <label className="new-course-label">แท็ก</label>
-              <TagSelector selectedTagIds={selectedTagIds} onChange={setSelectedTagIds} />
-            </div>
-          </AdminSurfaceCard>
-
-          <AdminSurfaceCard className="new-course-section-card">
-            <AdminSectionHeading
-              title="รูปแบบการขายและการมองเห็น"
-              description="กำหนดว่าคอร์สนี้จะเริ่มเป็นแบบร่างหรือเผยแพร่ทันที และอยู่ในรูปแบบฟรีหรือเสียเงิน"
-            />
-
-            <div className="new-course-field-grid">
-              <div>
-                <label className="new-course-label">ราคา (บาท)</label>
-                <input
-                  className="new-course-input"
-                  type="number"
-                  min="0"
-                  value={formData.price}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, price: e.target.value }))}
-                  placeholder="0 = ฟรี"
-                />
-                <div className="new-course-help-text">
-                  ใส่ `0` หากต้องการทำเป็นคอร์สฟรี และสามารถตั้งโปรโมชันเพิ่มภายหลังได้
-                </div>
-              </div>
-
-              <div>
-                <label className="new-course-label">สถานะ</label>
-                <select
-                  className="new-course-input"
-                  value={formData.status}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
-                >
-                  <option value="draft">แบบร่าง</option>
-                  <option value="published">เผยแพร่</option>
-                </select>
-                <div className="new-course-help-text">
-                  ถ้ายังไม่พร้อมเปิดขาย แนะนำให้เริ่มเป็นแบบร่างก่อนแล้วค่อยกลับมาเผยแพร่ภายหลัง
-                </div>
-              </div>
-            </div>
-
-            <div className="new-course-field-grid">
-              {setupHighlights.map((item) => (
-                <div key={item.label} className="new-course-mini-card">
-                  <div className="new-course-mini-label">{item.label}</div>
-                  <div className={`new-course-mini-value tone-${item.tone}`}>{item.value}</div>
-                  <div className="new-course-mini-detail">{item.detail}</div>
-                </div>
-              ))}
-            </div>
-          </AdminSurfaceCard>
-
-          <section className="new-course-section-card">
-            <div className="new-course-section-head">
-              <h2>ภาพลักษณ์และความพร้อมของหน้าเว็บ</h2>
-              <p>เพิ่มภาพปกและเลือกสี certificate เพื่อให้หน้าคอร์สดูพร้อมใช้งานตั้งแต่การเปิดดูครั้งแรก</p>
-            </div>
-
-            <div className="new-course-visual-grid">
-              <div>
-                <label className="new-course-label">รูปภาพปก</label>
-                <ImageUpload
-                  value={formData.thumbnailUrl}
-                  onChange={(url) => setFormData((prev) => ({ ...prev, thumbnailUrl: url }))}
-                  folder="courses"
-                />
-              </div>
-
-              <div>
-                <label className="new-course-label">สีใบรับรอง (Certificate)</label>
-                <CertificateColorPicker
-                  value={formData.certificateColor}
-                  onChange={(color) => setFormData((prev) => ({ ...prev, certificateColor: color }))}
-                />
-              </div>
-            </div>
-          </section>
+          </AdminSection>
         </div>
 
-        <aside className="new-course-aside">
-          <div className="new-course-sticky">
-            <AdminRailCard className="new-course-side-card">
-              <AdminSectionHeading
-                title="พร้อมสร้างคอร์ส"
-                description="สรุปเฉพาะค่าที่ส่งผลกับ flow ตอนนี้ เพื่อให้เช็กและบันทึกได้จากจุดเดียว"
-              />
-
-              <div className="new-course-side-highlight">
-                <div className="new-course-side-highlight-kicker">Next Move</div>
-                <div className="new-course-side-highlight-text">{topPriorityAction}</div>
+        <aside className="lg:sticky lg:top-24">
+          <Card>
+            <CardHeader><CardTitle>พร้อมสร้างคอร์ส</CardTitle><CardDescription>ตรวจข้อมูลสำคัญก่อนบันทึก แล้วไปเพิ่มบทเรียนต่อได้ทันที</CardDescription></CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="grid gap-3 rounded-xl border bg-muted/30 p-4 text-sm">
+                <div className="flex justify-between gap-3"><span className="text-muted-foreground">สถานะ</span><AdminStatusBadge tone={isPublished ? 'success' : 'warning'}>{statusLabel}</AdminStatusBadge></div>
+                <div className="flex justify-between gap-3"><span className="text-muted-foreground">ราคา</span><strong>{priceLabel}</strong></div>
+                <div className="flex justify-between gap-3"><span className="text-muted-foreground">URL</span><span className="max-w-44 truncate font-mono text-xs">/courses/{normalizedSlug || 'course-slug'}</span></div>
               </div>
-
-              <div className="new-course-side-meta">
-                <div className="new-course-side-meta-row">
-                  <span>สถานะเริ่มต้น</span>
-                  <strong className={isPublished ? 'tone-green' : 'tone-amber'}>{statusLabel}</strong>
-                </div>
-                <div className="new-course-side-meta-row">
-                  <span>รูปแบบราคา</span>
-                  <strong className={isFreeCourse ? 'tone-green' : 'tone-blue'}>{priceLabel}</strong>
-                </div>
-                <div className="new-course-side-meta-row is-column">
-                  <span>URL Preview</span>
-                  <strong>{coursePreviewUrl}</strong>
-                  <small>
-                    {slugManuallyEdited
-                      ? 'กำหนด slug เองอยู่ สามารถปรับได้ก่อนบันทึก'
-                      : 'ระบบจะ generate จากชื่อคอร์สให้อัตโนมัติ'}
-                  </small>
-                </div>
-              </div>
-
-              <div className="new-course-submit-wrap">
-                <button className="new-course-primary-submit" type="submit" disabled={loading}>
-                  {loading ? 'กำลังสร้าง...' : 'สร้างคอร์ส'}
-                </button>
-                <Link className="new-course-secondary-link" href="/admin/courses">
-                  ยกเลิก
-                </Link>
-              </div>
-            </AdminRailCard>
-          </div>
+              {isPublished ? <Alert><AlertTitle>เผยแพร่ทันที</AlertTitle><AlertDescription>ตรวจชื่อ ราคา และภาพปกให้พร้อมก่อนสร้าง</AlertDescription></Alert> : null}
+              <Button type="submit" disabled={loading} size="lg">
+                {loading ? <AdminPendingLabel>กำลังสร้างคอร์ส</AdminPendingLabel> : <><Save data-icon="inline-start" aria-hidden />สร้างคอร์ส</>}
+              </Button>
+              <Button asChild variant="outline"><Link href="/admin/courses">ยกเลิก</Link></Button>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground"><BookOpen className="size-4" aria-hidden />บทเรียนเพิ่มได้หลังสร้างคอร์ส</div>
+            </CardContent>
+          </Card>
         </aside>
       </form>
-
-
     </div>
   );
 }

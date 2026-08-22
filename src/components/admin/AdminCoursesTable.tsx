@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { showToast } from '@/components/ui/Toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { transitionAdminCourse } from '@/lib/admin-course-lifecycle-client';
@@ -419,17 +420,16 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
             <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4 text-sm text-muted-foreground">
               <div className="flex flex-wrap items-center gap-2">
                 <label htmlFor="admin-courses-per-page">แสดง</label>
-                <select
+                <NativeSelect
                   id="admin-courses-per-page"
-                  className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
                   value={perPage}
                   onChange={(event) => {
                     setPerPage(Number(event.target.value));
                     setCurrentPage(1);
                   }}
                 >
-                  {PER_PAGE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
+                  {PER_PAGE_OPTIONS.map((option) => <NativeSelectOption key={option} value={option}>{option}</NativeSelectOption>)}
+                </NativeSelect>
                 <span className="tabular-nums">
                   {(safeCurrentPage - 1) * perPage + 1}-{Math.min(safeCurrentPage * perPage, filtered.length)} จาก {filtered.length}
                 </span>

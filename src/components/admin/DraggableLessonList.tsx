@@ -20,6 +20,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import { Input } from '@/components/ui/input';
+
 interface Lesson {
   id: string;
   title: string;
@@ -169,7 +171,7 @@ function SortableItem({
         <div className="admin-lesson-video-editor">
           <label>
             <span>Video source</span>
-            <input
+            <Input
               type="text"
               value={videoUrl}
               onChange={(event) => setVideoUrl(event.target.value)}
@@ -179,7 +181,7 @@ function SortableItem({
           </label>
           <label>
             <span>Duration</span>
-            <input
+            <Input
               type="text"
               value={videoDuration}
               onChange={(event) => {
@@ -344,7 +346,7 @@ export default function DraggableLessonList({
       <div className="admin-lesson-toolbar">
         <label className="admin-lesson-search">
           <span>ค้นหาบทเรียน</span>
-          <input
+          <Input
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
