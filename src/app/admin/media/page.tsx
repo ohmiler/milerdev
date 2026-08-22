@@ -188,16 +188,16 @@ export default function AdminMediaPage() {
           marginBottom: '24px',
         }}>
           <AdminSurfaceCard style={{ padding: '16px' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ไฟล์ทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.total}</div>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ไฟล์ทั้งหมด</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>{stats.total}</div>
           </AdminSurfaceCard>
           <AdminSurfaceCard style={{ padding: '16px' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>รูปภาพ</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2563eb' }}>{stats.images}</div>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>รูปภาพ</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>{stats.images}</div>
           </AdminSurfaceCard>
           <AdminSurfaceCard style={{ padding: '16px' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>พื้นที่ใช้งาน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{formatFileSize(stats.totalSize)}</div>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>พื้นที่ใช้งาน</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success-strong)' }}>{formatFileSize(stats.totalSize)}</div>
           </AdminSurfaceCard>
         </div>
       )}
@@ -209,9 +209,9 @@ export default function AdminMediaPage() {
           onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
           style={{
             padding: '10px 16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
-            background: 'white',
+            background: 'var(--card)',
             fontSize: '0.875rem',
           }}
         >
@@ -228,9 +228,9 @@ export default function AdminMediaPage() {
           onKeyDown={(e) => e.key === 'Enter' && fetchMedia()}
           style={{
             padding: '10px 16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
-            background: 'white',
+            background: 'var(--card)',
             fontSize: '0.875rem',
             minWidth: '200px',
           }}
@@ -239,8 +239,8 @@ export default function AdminMediaPage() {
           onClick={fetchMedia}
           style={{
             padding: '10px 20px',
-            background: '#f1f5f9',
-            color: '#475569',
+            background: 'var(--muted)',
+            color: 'var(--muted-foreground)',
             border: 'none',
             borderRadius: '8px',
             cursor: 'pointer',
@@ -255,11 +255,11 @@ export default function AdminMediaPage() {
         {/* Media Grid */}
         <div style={{ flex: 1 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+            <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
               กำลังโหลด...
             </div>
           ) : mediaList.length === 0 ? (
-            <AdminSurfaceCard style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>
+            <AdminSurfaceCard style={{ padding: '60px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
               <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📷</div>
               <div>ยังไม่มีไฟล์ กดปุ่มด้านบนเพื่ออัปโหลด</div>
             </AdminSurfaceCard>
@@ -275,18 +275,17 @@ export default function AdminMediaPage() {
                     key={file.id}
                     onClick={() => setSelectedMedia(file)}
                     style={{
-                      background: 'white',
+                      background: 'var(--card)',
                       borderRadius: '12px',
                       overflow: 'hidden',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                       cursor: 'pointer',
-                      border: selectedMedia?.id === file.id ? '2px solid #2563eb' : '2px solid transparent',
+                      border: selectedMedia?.id === file.id ? '2px solid var(--primary)' : '2px solid transparent',
                       transition: 'all 0.2s',
                     }}
                   >
                     <div style={{
                       aspectRatio: '1',
-                      background: '#f1f5f9',
+                      background: 'var(--muted)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -309,14 +308,14 @@ export default function AdminMediaPage() {
                     <div style={{ padding: '12px' }}>
                       <div style={{
                         fontSize: '0.75rem',
-                        color: '#1e293b',
+                        color: 'var(--foreground)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
                       }}>
                         {file.originalName}
                       </div>
-                      <div style={{ fontSize: '0.625rem', color: '#94a3b8', marginTop: '4px' }}>
+                      <div style={{ fontSize: '0.625rem', color: 'var(--muted-foreground)', marginTop: '4px' }}>
                         {formatFileSize(file.size)}
                       </div>
                     </div>
@@ -338,16 +337,16 @@ export default function AdminMediaPage() {
                     disabled={currentPage === 1}
                     style={{
                       padding: '8px 16px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       borderRadius: '6px',
-                      background: 'white',
+                      background: 'var(--card)',
                       cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                       opacity: currentPage === 1 ? 0.5 : 1,
                     }}
                   >
                     ก่อนหน้า
                   </button>
-                  <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                  <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                     หน้า {currentPage} จาก {pagination.totalPages}
                   </span>
                   <button
@@ -355,9 +354,9 @@ export default function AdminMediaPage() {
                     disabled={currentPage === pagination.totalPages}
                     style={{
                       padding: '8px 16px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       borderRadius: '6px',
-                      background: 'white',
+                      background: 'var(--card)',
                       cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
                       opacity: currentPage === pagination.totalPages ? 0.5 : 1,
                     }}
@@ -375,7 +374,7 @@ export default function AdminMediaPage() {
           <AdminRailCard style={{ width: '320px', overflow: 'hidden', flexShrink: 0 }}>
             <div style={{
               aspectRatio: '16/9',
-              background: '#f1f5f9',
+              background: 'var(--muted)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -399,7 +398,7 @@ export default function AdminMediaPage() {
               <h3 style={{
                 fontSize: '0.875rem',
                 fontWeight: 600,
-                color: '#1e293b',
+                color: 'var(--foreground)',
                 marginBottom: '16px',
                 wordBreak: 'break-all',
               }}>
@@ -407,20 +406,20 @@ export default function AdminMediaPage() {
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                  <span style={{ color: '#64748b' }}>ขนาด</span>
-                  <span style={{ color: '#1e293b' }}>{formatFileSize(selectedMedia.size)}</span>
+                  <span style={{ color: 'var(--muted-foreground)' }}>ขนาด</span>
+                  <span style={{ color: 'var(--foreground)' }}>{formatFileSize(selectedMedia.size)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                  <span style={{ color: '#64748b' }}>ประเภท</span>
-                  <span style={{ color: '#1e293b' }}>{selectedMedia.mimeType}</span>
+                  <span style={{ color: 'var(--muted-foreground)' }}>ประเภท</span>
+                  <span style={{ color: 'var(--foreground)' }}>{selectedMedia.mimeType}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                  <span style={{ color: '#64748b' }}>อัพโหลดเมื่อ</span>
-                  <span style={{ color: '#1e293b' }}>{formatDate(selectedMedia.createdAt)}</span>
+                  <span style={{ color: 'var(--muted-foreground)' }}>อัพโหลดเมื่อ</span>
+                  <span style={{ color: 'var(--foreground)' }}>{formatDate(selectedMedia.createdAt)}</span>
                 </div>
               </div>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '0.75rem', color: '#64748b', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'block', marginBottom: '4px' }}>
                   URL
                 </label>
                 <div style={{
@@ -434,17 +433,17 @@ export default function AdminMediaPage() {
                     style={{
                       flex: 1,
                       padding: '8px 12px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       borderRadius: '6px',
                       fontSize: '0.75rem',
-                      background: '#f8fafc',
+                      background: 'var(--muted)',
                     }}
                   />
                   <button
                     onClick={() => copyToClipboard(selectedMedia.url)}
                     style={{
                       padding: '8px 12px',
-                      background: '#f1f5f9',
+                      background: 'var(--muted)',
                       border: 'none',
                       borderRadius: '6px',
                       cursor: 'pointer',
@@ -463,8 +462,8 @@ export default function AdminMediaPage() {
                   style={{
                     flex: 1,
                     padding: '10px',
-                    background: '#f1f5f9',
-                    color: '#475569',
+                    background: 'var(--muted)',
+                    color: 'var(--muted-foreground)',
                     textAlign: 'center',
                     borderRadius: '8px',
                     textDecoration: 'none',
@@ -479,8 +478,8 @@ export default function AdminMediaPage() {
                   style={{
                     flex: 1,
                     padding: '10px',
-                    background: '#fef2f2',
-                    color: '#dc2626',
+                    background: 'var(--color-error-soft)',
+                    color: 'var(--color-error-strong)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: deleting === selectedMedia.id ? 'not-allowed' : 'pointer',

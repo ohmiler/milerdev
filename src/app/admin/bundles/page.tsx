@@ -156,15 +156,15 @@ export default function AdminBundlesPage() {
     };
 
     const cardStyle: React.CSSProperties = {
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--border)',
         padding: '24px',
     };
 
     const btnPrimary: React.CSSProperties = {
-        background: '#2563eb',
-        color: 'white',
+        background: 'var(--primary)',
+        color: 'var(--primary-foreground)',
         border: 'none',
         padding: '10px 20px',
         borderRadius: '8px',
@@ -174,9 +174,9 @@ export default function AdminBundlesPage() {
     };
 
     const btnSecondary: React.CSSProperties = {
-        background: '#f1f5f9',
-        color: '#475569',
-        border: '1px solid #e2e8f0',
+        background: 'var(--muted)',
+        color: 'var(--muted-foreground)',
+        border: '1px solid var(--border)',
         padding: '10px 20px',
         borderRadius: '8px',
         fontWeight: 500,
@@ -187,7 +187,7 @@ export default function AdminBundlesPage() {
     const inputStyle: React.CSSProperties = {
         width: '100%',
         padding: '10px 14px',
-        border: '1px solid #d1d5db',
+        border: '1px solid var(--border)',
         borderRadius: '8px',
         fontSize: '0.9375rem',
         outline: 'none',
@@ -199,10 +199,10 @@ export default function AdminBundlesPage() {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
                         จัดการ Bundle
                     </h1>
-                    <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '0.875rem' }}>
+                    <p style={{ color: 'var(--muted-foreground)', margin: '4px 0 0', fontSize: '0.875rem' }}>
                         รวมหลายคอร์สเป็นชุดราคาพิเศษ
                     </p>
                 </div>
@@ -216,12 +216,12 @@ export default function AdminBundlesPage() {
             {/* Form */}
             {showForm && (
                 <div style={{ ...cardStyle, marginBottom: '24px' }}>
-                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '20px', color: '#1e293b' }}>
+                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '20px', color: 'var(--foreground)' }}>
                         {editingId ? 'แก้ไข Bundle' : 'สร้าง Bundle ใหม่'}
                     </h2>
 
                     {error && (
-                        <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>
+                        <div style={{ background: 'var(--color-error-soft)', color: 'var(--color-error-strong)', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>
                             {error}
                         </div>
                     )}
@@ -229,7 +229,7 @@ export default function AdminBundlesPage() {
                     <form onSubmit={handleSubmit}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
                                     ชื่อ Bundle *
                                 </label>
                                 <input
@@ -241,7 +241,7 @@ export default function AdminBundlesPage() {
                                 />
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
                                     Slug
                                 </label>
                                 <input
@@ -254,7 +254,7 @@ export default function AdminBundlesPage() {
                         </div>
 
                         <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
                                 รายละเอียด
                             </label>
                             <textarea
@@ -267,7 +267,7 @@ export default function AdminBundlesPage() {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
                                     ราคา Bundle (บาท) *
                                 </label>
                                 <input
@@ -281,13 +281,13 @@ export default function AdminBundlesPage() {
                                     step="0.01"
                                 />
                                 {selectedCoursesTotal > 0 && parseFloat(form.price) > 0 && (
-                                    <p style={{ margin: '6px 0 0', fontSize: '0.8125rem', color: discountPercent > 0 ? '#16a34a' : '#dc2626' }}>
+                                    <p style={{ margin: '6px 0 0', fontSize: '0.8125rem', color: discountPercent > 0 ? 'var(--color-success-strong)' : 'var(--color-error-strong)' }}>
                                         ราคารวมปกติ: ฿{selectedCoursesTotal.toLocaleString()} → ลด {discountPercent}%
                                     </p>
                                 )}
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
                                     สถานะ
                                 </label>
                                 <select
@@ -303,7 +303,7 @@ export default function AdminBundlesPage() {
                         </div>
 
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
                                 รูปปก Bundle (แนะนำ 1200 × 630 px)
                             </label>
                             <ImageUpload
@@ -315,11 +315,11 @@ export default function AdminBundlesPage() {
 
                         {/* Course Picker */}
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151', fontSize: '0.875rem' }}>
+                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
                                 เลือกคอร์สใน Bundle * (อย่างน้อย 2 คอร์ส)
                             </label>
                             <div style={{
-                                border: '1px solid #e2e8f0',
+                                border: '1px solid var(--border)',
                                 borderRadius: '8px',
                                 maxHeight: '300px',
                                 overflowY: 'auto',
@@ -335,9 +335,9 @@ export default function AdminBundlesPage() {
                                                 alignItems: 'center',
                                                 justifyContent: 'space-between',
                                                 padding: '12px 16px',
-                                                borderBottom: '1px solid #f1f5f9',
+                                                borderBottom: '1px solid var(--muted)',
                                                 cursor: 'pointer',
-                                                background: isSelected ? '#eff6ff' : 'white',
+                                                background: isSelected ? 'var(--secondary)' : 'white',
                                                 transition: 'background 0.15s',
                                             }}
                                         >
@@ -346,36 +346,36 @@ export default function AdminBundlesPage() {
                                                     width: '20px',
                                                     height: '20px',
                                                     borderRadius: '4px',
-                                                    border: isSelected ? '2px solid #2563eb' : '2px solid #d1d5db',
-                                                    background: isSelected ? '#2563eb' : 'white',
+                                                    border: isSelected ? '2px solid var(--primary)' : '2px solid var(--border)',
+                                                    background: isSelected ? 'var(--primary)' : 'white',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
                                                     flexShrink: 0,
                                                 }}>
                                                     {isSelected && (
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary-foreground)" strokeWidth="3">
                                                             <polyline points="20 6 9 17 4 12" />
                                                         </svg>
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <div style={{ fontWeight: 500, color: '#1e293b', fontSize: '0.9375rem' }}>
+                                                    <div style={{ fontWeight: 500, color: 'var(--foreground)', fontSize: '0.9375rem' }}>
                                                         {course.title}
                                                     </div>
-                                                    <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                                                    <div style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
                                                         {course.status === 'published' ? '✅ เผยแพร่' : '📝 แบบร่าง'}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem' }}>
+                                            <span style={{ fontWeight: 600, color: 'var(--foreground)', fontSize: '0.875rem' }}>
                                                 ฿{parseFloat(course.price).toLocaleString()}
                                             </span>
                                         </div>
                                     );
                                 })}
                             </div>
-                            <p style={{ margin: '6px 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
+                            <p style={{ margin: '6px 0 0', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
                                 เลือกแล้ว {form.courseIds.length} คอร์ส | ราคารวมปกติ: ฿{selectedCoursesTotal.toLocaleString()}
                             </p>
                         </div>
@@ -398,12 +398,12 @@ export default function AdminBundlesPage() {
 
             {/* Bundle List */}
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>กำลังโหลด...</div>
+                <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted-foreground)' }}>กำลังโหลด...</div>
             ) : bundlesList.length === 0 ? (
                 <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 24px' }}>
                     <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📦</div>
-                    <h3 style={{ fontWeight: 600, color: '#1e293b', margin: '0 0 8px' }}>ยังไม่มี Bundle</h3>
-                    <p style={{ color: '#64748b', margin: '0 0 20px', fontSize: '0.9375rem' }}>สร้าง Bundle แรกเพื่อขายคอร์สรวมในราคาพิเศษ</p>
+                    <h3 style={{ fontWeight: 600, color: 'var(--foreground)', margin: '0 0 8px' }}>ยังไม่มี Bundle</h3>
+                    <p style={{ color: 'var(--muted-foreground)', margin: '0 0 20px', fontSize: '0.9375rem' }}>สร้าง Bundle แรกเพื่อขายคอร์สรวมในราคาพิเศษ</p>
                     {!showForm && <button onClick={handleNew} style={btnPrimary}>+ สร้าง Bundle ใหม่</button>}
                 </div>
             ) : (
@@ -413,7 +413,7 @@ export default function AdminBundlesPage() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>
+                                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>
                                             {bundle.title}
                                         </h3>
                                         <span style={{
@@ -422,17 +422,17 @@ export default function AdminBundlesPage() {
                                             fontSize: '0.75rem',
                                             fontWeight: 600,
                                             ...(bundle.status === 'published'
-                                                ? { background: '#dcfce7', color: '#16a34a' }
+                                                ? { background: 'var(--color-success-soft)', color: 'var(--color-success-strong)' }
                                                 : bundle.status === 'archived'
-                                                    ? { background: '#f1f5f9', color: '#64748b' }
-                                                    : { background: '#fef3c7', color: '#b45309' }),
+                                                    ? { background: 'var(--muted)', color: 'var(--muted-foreground)' }
+                                                    : { background: 'var(--color-warning-soft)', color: 'var(--color-warning-strong)' }),
                                         }}>
                                             {bundle.status === 'published' ? 'เผยแพร่' : bundle.status === 'archived' ? 'เก็บถาวร' : 'แบบร่าง'}
                                         </span>
                                     </div>
 
                                     {bundle.description && (
-                                        <p style={{ color: '#64748b', fontSize: '0.875rem', margin: '0 0 12px', lineHeight: 1.5 }}>
+                                        <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', margin: '0 0 12px', lineHeight: 1.5 }}>
                                             {bundle.description}
                                         </p>
                                     )}
@@ -441,8 +441,8 @@ export default function AdminBundlesPage() {
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
                                         {bundle.courses.map((c) => (
                                             <span key={c.courseId} style={{
-                                                background: '#eff6ff',
-                                                color: '#2563eb',
+                                                background: 'var(--secondary)',
+                                                color: 'var(--primary)',
                                                 padding: '4px 10px',
                                                 borderRadius: '6px',
                                                 fontSize: '0.8125rem',
@@ -455,18 +455,18 @@ export default function AdminBundlesPage() {
 
                                     {/* Pricing */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9375rem' }}>
-                                        <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '1.125rem' }}>
+                                        <span style={{ fontWeight: 700, color: 'var(--foreground)', fontSize: '1.125rem' }}>
                                             ฿{parseFloat(bundle.price).toLocaleString()}
                                         </span>
-                                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.875rem' }}>
+                                        <span style={{ textDecoration: 'line-through', color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                                             ฿{bundle.totalOriginalPrice.toLocaleString()}
                                         </span>
                                         {bundle.discount > 0 && (
-                                            <span style={{ background: '#dcfce7', color: '#16a34a', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8125rem', fontWeight: 600 }}>
+                                            <span style={{ background: 'var(--color-success-soft)', color: 'var(--color-success-strong)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8125rem', fontWeight: 600 }}>
                                                 ลด {bundle.discount}%
                                             </span>
                                         )}
-                                        <span style={{ color: '#64748b', fontSize: '0.8125rem' }}>
+                                        <span style={{ color: 'var(--muted-foreground)', fontSize: '0.8125rem' }}>
                                             • {bundle.courseCount} คอร์ส
                                         </span>
                                     </div>
@@ -492,7 +492,7 @@ export default function AdminBundlesPage() {
                                         disabled={deleting === bundle.id}
                                         style={{
                                             ...btnSecondary,
-                                            color: '#dc2626',
+                                            color: 'var(--color-error-strong)',
                                             fontSize: '0.8125rem',
                                             padding: '8px 14px',
                                             opacity: deleting === bundle.id ? 0.5 : 1,

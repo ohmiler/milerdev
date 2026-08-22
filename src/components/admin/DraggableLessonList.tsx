@@ -318,13 +318,13 @@ export default function DraggableLessonList({
             gap: 8px;
             place-items: center;
             padding: 58px 18px;
-            color: #64758b;
+            color: var(--muted-foreground);
             text-align: center;
           }
 
           .admin-lesson-empty h3 {
             margin: 0;
-            color: #102033;
+            color: var(--foreground);
           }
 
           .admin-lesson-empty p {
@@ -438,12 +438,12 @@ export default function DraggableLessonList({
 
       <style jsx global>{`
         .admin-lesson-list-shell {
-          --brand: #02abff;
-          --brand-dark: #0089d6;
-          --brand-soft: #eefaff;
-          --ink: #102033;
-          --muted: #64758b;
-          --line: #dbe8f2;
+          --brand: var(--primary);
+          --brand-dark: var(--primary);
+          --brand-soft: var(--secondary);
+          --ink: var(--foreground);
+          --muted: var(--muted-foreground);
+          --line: var(--border);
           position: relative;
         }
 
@@ -458,10 +458,10 @@ export default function DraggableLessonList({
           align-items: center;
           border-radius: 8px;
           background: var(--brand);
-          color: #fff;
+          color: var(--card);
           font-size: 0.8rem;
           font-weight: 800;
-          box-shadow: 0 10px 24px rgba(2, 171, 255, 0.22);
+          box-shadow: none;
         }
 
         .admin-lesson-toolbar {
@@ -471,7 +471,7 @@ export default function DraggableLessonList({
           align-items: end;
           padding: 18px 20px;
           border-bottom: 1px solid var(--line);
-          background: #f7fbff;
+          background: var(--muted);
         }
 
         .admin-lesson-search {
@@ -490,7 +490,7 @@ export default function DraggableLessonList({
           padding: 0 14px;
           border: 1px solid var(--line);
           border-radius: 8px;
-          background: #fff;
+          background: var(--card);
           color: var(--ink);
           font-size: 0.9rem;
         }
@@ -498,7 +498,7 @@ export default function DraggableLessonList({
         .admin-lesson-search input:focus {
           outline: none;
           border-color: var(--brand);
-          box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.2);
+          box-shadow: var(--focus-ring);
         }
 
         .admin-lesson-tabs {
@@ -507,7 +507,7 @@ export default function DraggableLessonList({
           padding: 4px;
           border: 1px solid var(--line);
           border-radius: 8px;
-          background: #fff;
+          background: var(--card);
           flex-wrap: wrap;
         }
 
@@ -527,7 +527,7 @@ export default function DraggableLessonList({
 
         .admin-lesson-tabs button[aria-pressed="true"] {
           background: var(--brand);
-          color: #fff;
+          color: var(--card);
         }
 
         .admin-lesson-tabs span {
@@ -540,7 +540,7 @@ export default function DraggableLessonList({
           padding: 0 14px;
           border: 1px solid var(--line);
           border-radius: 8px;
-          background: #fff;
+          background: var(--card);
           color: var(--brand-dark);
           cursor: pointer;
           font-weight: 800;
@@ -551,7 +551,7 @@ export default function DraggableLessonList({
           gap: 10px;
           padding: 16px 20px;
           border-bottom: 1px solid var(--line);
-          background: #fff;
+          background: var(--card);
         }
 
         .admin-lesson-progress > div:first-child,
@@ -572,7 +572,7 @@ export default function DraggableLessonList({
           height: 8px;
           overflow: hidden;
           border-radius: 999px;
-          background: #e8f1f8;
+          background: var(--border);
         }
 
         .admin-lesson-progress-track span {
@@ -595,12 +595,12 @@ export default function DraggableLessonList({
 
         .admin-lesson-row {
           display: grid;
-          background: #fff;
-          border-bottom: 1px solid #e8f1f8;
+          background: var(--card);
+          border-bottom: 1px solid var(--border);
         }
 
         .admin-lesson-row.editing {
-          background: #fbfdff;
+          background: var(--muted);
         }
 
         .admin-lesson-row-main {
@@ -618,8 +618,8 @@ export default function DraggableLessonList({
           height: 34px;
           border: 1px solid var(--line);
           border-radius: 8px;
-          background: #f7fbff;
-          color: #91a1b5;
+          background: var(--muted);
+          color: var(--muted-foreground);
           cursor: grab;
         }
 
@@ -639,15 +639,15 @@ export default function DraggableLessonList({
           width: 42px;
           height: 42px;
           border-radius: 999px;
-          background: #fff7ed;
-          color: #b45309;
+          background: var(--color-warning-soft);
+          color: var(--color-warning-strong);
           font-weight: 900;
           font-size: 0.78rem;
         }
 
         .admin-lesson-index.ready {
-          background: #eefbf3;
-          color: #0f7a4b;
+          background: var(--color-success-soft);
+          color: var(--color-success-strong);
         }
 
         .admin-lesson-title-block {
@@ -685,18 +685,18 @@ export default function DraggableLessonList({
         }
 
         .admin-lesson-health.ready {
-          background: #eefbf3;
-          color: #0f7a4b;
+          background: var(--color-success-soft);
+          color: var(--color-success-strong);
         }
 
         .admin-lesson-health.warning {
-          background: #fff7ed;
-          color: #b45309;
+          background: var(--color-warning-soft);
+          color: var(--color-warning-strong);
         }
 
         .admin-lesson-health.danger {
-          background: #fff1f2;
-          color: #be123c;
+          background: var(--color-error-soft);
+          color: var(--color-error-strong);
         }
 
         .admin-lesson-meta {
@@ -713,12 +713,12 @@ export default function DraggableLessonList({
           min-height: 24px;
           padding: 0 8px;
           border-radius: 999px;
-          background: #f7fbff;
+          background: var(--muted);
         }
 
         .admin-lesson-meta span.preview {
           background: var(--brand-soft);
-          color: #075b8d;
+          color: var(--primary);
           font-weight: 800;
         }
 
@@ -739,7 +739,7 @@ export default function DraggableLessonList({
           padding: 0 10px;
           border: 1px solid var(--line);
           border-radius: 8px;
-          background: #fff;
+          background: var(--card);
           color: var(--ink);
           cursor: pointer;
           font-size: 0.74rem;
@@ -751,13 +751,13 @@ export default function DraggableLessonList({
         .admin-lesson-video-actions button:first-child {
           border-color: var(--brand);
           background: var(--brand);
-          color: #fff;
+          color: var(--card);
         }
 
         .admin-lesson-actions button.danger {
-          border-color: #ffd5d8;
-          background: #fff7f7;
-          color: #be123c;
+          border-color: var(--color-error);
+          background: var(--color-error-soft);
+          color: var(--color-error-strong);
         }
 
         .admin-lesson-video-editor {
@@ -766,8 +766,8 @@ export default function DraggableLessonList({
           gap: 12px;
           align-items: end;
           padding: 14px 20px 16px 118px;
-          border-top: 1px solid #e8f1f8;
-          background: #f7fbff;
+          border-top: 1px solid var(--border);
+          background: var(--muted);
         }
 
         .admin-lesson-video-editor label {
@@ -784,14 +784,14 @@ export default function DraggableLessonList({
           padding: 0 12px;
           border: 1px solid var(--line);
           border-radius: 8px;
-          background: #fff;
+          background: var(--card);
           color: var(--ink);
         }
 
         .admin-lesson-video-editor input:focus {
           outline: none;
           border-color: var(--brand);
-          box-shadow: 0 0 0 3px rgba(2, 171, 255, 0.2);
+          box-shadow: var(--focus-ring);
         }
 
         .admin-lesson-video-actions {

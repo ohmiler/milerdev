@@ -94,17 +94,17 @@ export default function AdminSettingsPage() {
     return (
       <div key={setting.key} style={{
         padding: '16px 20px',
-        borderBottom: '1px solid #f1f5f9',
+        borderBottom: '1px solid var(--muted)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         gap: '20px',
       }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 500, color: '#1e293b', marginBottom: '4px' }}>
+          <div style={{ fontWeight: 500, color: 'var(--foreground)', marginBottom: '4px' }}>
             {setting.description || setting.key}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
             {setting.key}
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function AdminSettingsPage() {
                 onChange={(e) => handleChange(setting.key, e.target.checked ? 'true' : 'false')}
                 style={{ width: '18px', height: '18px', cursor: 'pointer' }}
               />
-              <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
                 {setting.value === 'true' ? 'เปิด' : 'ปิด'}
               </span>
             </label>
@@ -128,7 +128,7 @@ export default function AdminSettingsPage() {
               onChange={(e) => handleChange(setting.key, e.target.value)}
               style={{
                 padding: '8px 12px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 fontSize: '0.875rem',
                 width: isNumber ? '100px' : '250px',
@@ -140,8 +140,8 @@ export default function AdminSettingsPage() {
             disabled={saving === setting.key}
             style={{
               padding: '8px 16px',
-              background: '#2563eb',
-              color: 'white',
+              background: 'var(--primary)',
+              color: 'var(--primary-foreground)',
               border: 'none',
               borderRadius: '6px',
               fontSize: '0.875rem',
@@ -159,7 +159,7 @@ export default function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+      <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
         กำลังโหลด...
       </div>
     );
@@ -171,10 +171,10 @@ export default function AdminSettingsPage() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>
           ตั้งค่าระบบ
         </h1>
-        <p style={{ color: '#64748b' }}>จัดการการตั้งค่าทั่วไปของระบบ</p>
+        <p style={{ color: 'var(--muted-foreground)' }}>จัดการการตั้งค่าทั่วไปของระบบ</p>
       </div>
 
       {/* Tabs */}
@@ -182,7 +182,7 @@ export default function AdminSettingsPage() {
         display: 'flex',
         gap: '4px',
         marginBottom: '24px',
-        background: '#f1f5f9',
+        background: 'var(--muted)',
         padding: '4px',
         borderRadius: '10px',
         width: 'fit-content',
@@ -196,10 +196,9 @@ export default function AdminSettingsPage() {
               border: 'none',
               borderRadius: '8px',
               background: activeTab === tab.id ? 'white' : 'transparent',
-              color: activeTab === tab.id ? '#1e293b' : '#64748b',
+              color: activeTab === tab.id ? 'var(--foreground)' : 'var(--muted-foreground)',
               fontWeight: activeTab === tab.id ? 600 : 400,
               cursor: 'pointer',
-              boxShadow: activeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
             }}
           >
             {tab.label}
@@ -209,13 +208,12 @@ export default function AdminSettingsPage() {
 
       {/* Settings List */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
       }}>
         {currentSettings.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             ไม่มีการตั้งค่าในหมวดนี้
           </div>
         ) : (
@@ -227,11 +225,11 @@ export default function AdminSettingsPage() {
       <div style={{
         marginTop: '24px',
         padding: '16px',
-        background: '#f0f9ff',
-        border: '1px solid #bae6fd',
+        background: 'var(--secondary)',
+        border: '1px solid var(--secondary)',
         borderRadius: '8px',
         fontSize: '0.875rem',
-        color: '#0369a1',
+        color: 'var(--primary)',
       }}>
         💡 การเปลี่ยนแปลงจะถูกบันทึกทันทีเมื่อกดปุ่ม &quot;บันทึก&quot; และจะมีการบันทึก log การเปลี่ยนแปลงทุกครั้ง
       </div>

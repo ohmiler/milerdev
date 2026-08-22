@@ -73,7 +73,7 @@ export default function AdminBlogPage() {
         alignItems: 'center',
         marginBottom: '24px',
       }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)' }}>
           จัดการบทความ ({posts.length})
         </h1>
         <Link
@@ -83,8 +83,8 @@ export default function AdminBlogPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '12px 20px',
-            background: '#2563eb',
-            color: 'white',
+            background: 'var(--primary)',
+            color: 'var(--primary-foreground)',
             borderRadius: '8px',
             textDecoration: 'none',
             fontWeight: 500,
@@ -99,7 +99,7 @@ export default function AdminBlogPage() {
       <div style={{
         display: 'flex',
         gap: '4px',
-        background: '#f1f5f9',
+        background: 'var(--muted)',
         borderRadius: '8px',
         padding: '4px',
         flexShrink: 0,
@@ -120,8 +120,7 @@ export default function AdminBlogPage() {
               fontWeight: 500,
               cursor: 'pointer',
               background: statusFilter === tab.value ? 'white' : 'transparent',
-              color: statusFilter === tab.value ? '#1e293b' : '#64748b',
-              boxShadow: statusFilter === tab.value ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+              color: statusFilter === tab.value ? 'var(--foreground)' : 'var(--muted-foreground)',
             }}
           >
             {tab.label} ({tab.count})
@@ -138,28 +137,27 @@ export default function AdminBlogPage() {
             flex: 1,
             minWidth: '200px',
             padding: '8px 14px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
             fontSize: '0.875rem',
-            background: 'white',
-            color: '#1e293b',
+            background: 'var(--card)',
+            color: 'var(--foreground)',
           }}
         />
       </div>
 
       {/* Posts List */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
       }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             กำลังโหลด...
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             {posts.length === 0 ? (
               <div>
                 <p style={{ marginBottom: '12px' }}>ยังไม่มีบทความ</p>
@@ -167,8 +165,8 @@ export default function AdminBlogPage() {
                   href="/admin/blog/new"
                   style={{
                     padding: '10px 20px',
-                    background: '#2563eb',
-                    color: 'white',
+                    background: 'var(--primary)',
+                    color: 'var(--primary-foreground)',
                     borderRadius: '8px',
                     textDecoration: 'none',
                     fontSize: '0.875rem',
@@ -191,7 +189,7 @@ export default function AdminBlogPage() {
                   alignItems: 'center',
                   gap: '16px',
                   padding: '16px 20px',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: '1px solid var(--muted)',
                 }}
               >
                 {/* Thumbnail */}
@@ -199,7 +197,7 @@ export default function AdminBlogPage() {
                   width: '100px',
                   height: '60px',
                   borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                  background: 'var(--primary)',
                   flexShrink: 0,
                   overflow: 'hidden',
                 }}>
@@ -214,10 +212,10 @@ export default function AdminBlogPage() {
 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {post.title}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>/blog/{post.slug}</span>
                     {post.authorName && <span>โดย {post.authorName}</span>}
                     <span>
@@ -242,9 +240,9 @@ export default function AdminBlogPage() {
                     fontWeight: 500,
                     border: '1px solid',
                     cursor: togglingId === post.id ? 'wait' : 'pointer',
-                    background: post.status === 'published' ? '#dcfce7' : '#fef3c7',
-                    borderColor: post.status === 'published' ? '#86efac' : '#fcd34d',
-                    color: post.status === 'published' ? '#16a34a' : '#d97706',
+                    background: post.status === 'published' ? 'var(--color-success-soft)' : 'var(--color-warning-soft)',
+                    borderColor: post.status === 'published' ? 'var(--color-success-soft)' : 'var(--color-warning-soft)',
+                    color: post.status === 'published' ? 'var(--color-success-strong)' : 'var(--color-warning-strong)',
                     flexShrink: 0,
                     transition: 'all 0.15s',
                     opacity: togglingId === post.id ? 0.6 : 1,
@@ -262,9 +260,9 @@ export default function AdminBlogPage() {
                       title="ดูบนเว็บ"
                       style={{
                         padding: '7px 10px',
-                        background: '#f0fdf4',
-                        color: '#16a34a',
-                        border: '1px solid #bbf7d0',
+                        background: 'var(--color-success-soft)',
+                        color: 'var(--color-success-strong)',
+                        border: '1px solid var(--color-success-soft)',
                         borderRadius: '6px',
                         textDecoration: 'none',
                         fontSize: '0.8125rem',
@@ -284,9 +282,9 @@ export default function AdminBlogPage() {
                     href={`/admin/blog/${post.id}/edit`}
                     style={{
                       padding: '7px 14px',
-                      background: '#eff6ff',
-                      color: '#2563eb',
-                      border: '1px solid #bfdbfe',
+                      background: 'var(--secondary)',
+                      color: 'var(--primary)',
+                      border: '1px solid var(--secondary)',
                       borderRadius: '6px',
                       textDecoration: 'none',
                       fontSize: '0.8125rem',

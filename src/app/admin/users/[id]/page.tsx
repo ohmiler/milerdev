@@ -7,6 +7,7 @@ import {
   AdminPageHero,
   AdminSurfaceCard,
 } from '@/components/admin/ui/AdminPrimitives';
+import { AdminMetricCard } from '@/components/admin/ui/AdminOperations';
 import {
   AdminUserLifecycleAction,
   AdminUserLifecycleBadge,
@@ -173,10 +174,10 @@ export default function AdminUserDetailPage() {
   };
 
   const getProgressColor = (percent: number | null) => {
-    if (!percent || percent === 0) return '#94a3b8';
-    if (percent === 100) return '#16a34a';
-    if (percent >= 50) return '#f59e0b';
-    return '#3b82f6';
+    if (!percent || percent === 0) return 'var(--muted-foreground)';
+    if (percent === 100) return 'var(--color-success-strong)';
+    if (percent >= 50) return 'var(--color-warning-strong)';
+    return 'var(--primary)';
   };
 
   const completedCount = enrollments.filter(e => e.completedAt).length;
@@ -185,7 +186,7 @@ export default function AdminUserDetailPage() {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <div style={{ color: '#64748b', fontSize: '1rem' }}>กำลังโหลด...</div>
+        <div style={{ color: 'var(--muted-foreground)', fontSize: '1rem' }}>กำลังโหลด...</div>
       </div>
     );
   }
@@ -222,74 +223,59 @@ export default function AdminUserDetailPage() {
       ) : null}
 
       {/* Stats */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: '16px',
-        marginBottom: '24px',
-      }}>
-        <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '4px' }}>คอร์สที่ลงทะเบียน</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#2563eb' }}>{enrollments.length}</div>
-        </div>
-        <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '4px' }}>เรียนจบ</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a' }}>{completedCount}</div>
-        </div>
-        <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '4px' }}>กำลังเรียน</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#f59e0b' }}>{inProgressCount}</div>
-        </div>
-      </div>
+      <section className="grid gap-3 sm:grid-cols-3" aria-label="สรุปการเรียนของผู้ใช้">
+        <AdminMetricCard label="คอร์สที่ลงทะเบียน" value={enrollments.length} detail="สิทธิ์เรียนที่ยังอยู่ในบัญชี" tone="info" />
+        <AdminMetricCard label="เรียนจบ" value={completedCount} detail="คอร์สที่มีวันเรียนจบแล้ว" tone="success" />
+        <AdminMetricCard label="กำลังเรียน" value={inProgressCount} detail="เริ่มเรียนแล้วแต่ยังไม่จบ" tone="warning" />
+      </section>
 
       {/* Enrollments Table */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
       }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>
             คอร์สที่ลงทะเบียน ({enrollments.length})
           </h2>
         </div>
 
         {enrollments.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', color: '#94a3b8' }}>
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
             ยังไม่มีคอร์สที่ลงทะเบียน
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
               <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                  <th style={{ padding: '14px 24px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>
+                <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
+                  <th style={{ padding: '14px 24px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.8rem' }}>
                     คอร์ส
                   </th>
-                  <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>
+                  <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.8rem' }}>
                     ความคืบหน้า
                   </th>
-                  <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>
+                  <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.8rem' }}>
                     วันที่ลงทะเบียน
                   </th>
-                  <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>
+                  <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.8rem' }}>
                     สถานะ
                   </th>
-                  <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.8rem' }}>
+                  <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.8rem' }}>
                     การดำเนินการ
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {enrollments.map((enrollment) => (
-                  <tr key={enrollment.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <tr key={enrollment.id} style={{ borderBottom: '1px solid var(--muted)' }}>
                     <td style={{ padding: '16px 24px' }}>
-                      <div style={{ fontWeight: 500, color: '#1e293b' }}>
+                      <div style={{ fontWeight: 500, color: 'var(--foreground)' }}>
                         {enrollment.courseTitle || 'คอร์สที่ถูกลบ'}
                       </div>
                       {enrollment.coursePrice && (
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginTop: '2px' }}>
                           {parseFloat(enrollment.coursePrice) === 0 ? 'ฟรี' : `฿${parseFloat(enrollment.coursePrice).toLocaleString()}`}
                         </div>
                       )}
@@ -299,7 +285,7 @@ export default function AdminUserDetailPage() {
                         <div style={{
                           width: '60px',
                           height: '6px',
-                          background: '#e2e8f0',
+                          background: 'var(--border)',
                           borderRadius: '3px',
                           overflow: 'hidden',
                         }}>
@@ -311,12 +297,12 @@ export default function AdminUserDetailPage() {
                             transition: 'width 0.3s',
                           }} />
                         </div>
-                        <span style={{ fontSize: '0.8rem', color: '#64748b', minWidth: '32px' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--muted-foreground)', minWidth: '32px' }}>
                           {enrollment.progressPercent || 0}%
                         </span>
                       </div>
                     </td>
-                    <td style={{ padding: '16px', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
+                    <td style={{ padding: '16px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.8rem' }}>
                       {formatDate(enrollment.enrolledAt)}
                     </td>
                     <td style={{ padding: '16px', textAlign: 'center' }}>
@@ -326,8 +312,8 @@ export default function AdminUserDetailPage() {
                           borderRadius: '50px',
                           fontSize: '0.7rem',
                           fontWeight: 600,
-                          background: '#f0fdf4',
-                          color: '#16a34a',
+                          background: 'var(--color-success-soft)',
+                          color: 'var(--color-success-strong)',
                         }}>
                           เรียนจบ
                         </span>
@@ -337,8 +323,8 @@ export default function AdminUserDetailPage() {
                           borderRadius: '50px',
                           fontSize: '0.7rem',
                           fontWeight: 600,
-                          background: '#fffbeb',
-                          color: '#d97706',
+                          background: 'var(--color-warning-soft)',
+                          color: 'var(--color-warning-strong)',
                         }}>
                           กำลังเรียน
                         </span>
@@ -348,8 +334,8 @@ export default function AdminUserDetailPage() {
                           borderRadius: '50px',
                           fontSize: '0.7rem',
                           fontWeight: 600,
-                          background: '#f1f5f9',
-                          color: '#94a3b8',
+                          background: 'var(--muted)',
+                          color: 'var(--muted-foreground)',
                         }}>
                           ยังไม่เริ่ม
                         </span>
@@ -360,8 +346,8 @@ export default function AdminUserDetailPage() {
                         onClick={() => setDeleteConfirm(enrollment.id)}
                         style={{
                           padding: '6px 12px',
-                          background: '#fef2f2',
-                          color: '#dc2626',
+                          background: 'var(--color-error-soft)',
+                          color: 'var(--color-error-strong)',
                           border: 'none',
                           borderRadius: '6px',
                           fontSize: '0.75rem',
@@ -381,26 +367,25 @@ export default function AdminUserDetailPage() {
 
       {/* Manual Enroll Section */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
         marginTop: '24px',
       }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>
             จัดการคอร์ส
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '4px' }}>
+          <p style={{ color: 'var(--muted-foreground)', fontSize: '0.8rem', marginTop: '4px' }}>
             เลือกคอร์สจากด้านซ้ายเพื่อเพิ่มให้ผู้ใช้ หรือกดลบจากด้านขวาเพื่อถอนออก
           </p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0', minHeight: '360px' }}>
           {/* Available Courses (Left) */}
-          <div style={{ borderRight: '1px solid #e2e8f0' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>คอร์สทั้งหมด ({availableCourses.length})</div>
+          <div style={{ borderRight: '1px solid var(--border)' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--muted)', background: 'var(--muted)' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: '8px' }}>คอร์สทั้งหมด ({availableCourses.length})</div>
               <input
                 type="text"
                 placeholder="ค้นหาคอร์ส..."
@@ -409,7 +394,7 @@ export default function AdminUserDetailPage() {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   borderRadius: '6px',
                   fontSize: '0.8125rem',
                   outline: 'none',
@@ -446,29 +431,29 @@ export default function AdminUserDetailPage() {
                     }}
                     style={{
                       padding: '10px 16px',
-                      borderBottom: '1px solid #f1f5f9',
+                      borderBottom: '1px solid var(--muted)',
                       cursor: enrolling ? 'wait' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       transition: 'background 0.15s',
                       fontSize: '0.8125rem',
-                      color: '#1e293b',
+                      color: 'var(--foreground)',
                     }}
-                    onMouseOver={(e) => (e.currentTarget.style.background = '#f0f9ff')}
+                    onMouseOver={(e) => (e.currentTarget.style.background = 'var(--secondary)')}
                     onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <div>
                       <div style={{ fontWeight: 500 }}>{course.title}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--muted-foreground)', marginTop: '2px' }}>
                         {parseFloat(course.price || '0') === 0 ? 'ฟรี' : `฿${parseFloat(course.price || '0').toLocaleString()}`}
                       </div>
                     </div>
-                    <span style={{ color: '#16a34a', fontSize: '1.1rem', fontWeight: 700 }}>+</span>
+                    <span style={{ color: 'var(--color-success-strong)', fontSize: '1.1rem', fontWeight: 700 }}>+</span>
                   </div>
                 ))}
               {availableCourses.filter(c => c.title.toLowerCase().includes(searchAvailable.toLowerCase())).length === 0 && (
-                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8125rem' }}>
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.8125rem' }}>
                   ไม่มีคอร์สที่สามารถเพิ่มได้
                 </div>
               )}
@@ -477,18 +462,18 @@ export default function AdminUserDetailPage() {
 
           {/* Arrow Icons (Center) */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 12px', gap: '8px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#64748b', fontSize: '1rem' }}>→</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'var(--muted-foreground)', fontSize: '1rem' }}>→</span>
             </div>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#64748b', fontSize: '1rem' }}>←</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'var(--muted-foreground)', fontSize: '1rem' }}>←</span>
             </div>
           </div>
 
           {/* Enrolled Courses (Right) */}
-          <div style={{ borderLeft: '1px solid #e2e8f0' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>คอร์สที่ลงทะเบียน ({enrollments.length})</div>
+          <div style={{ borderLeft: '1px solid var(--border)' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--muted)', background: 'var(--muted)' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: '8px' }}>คอร์สที่ลงทะเบียน ({enrollments.length})</div>
               <input
                 type="text"
                 placeholder="ค้นหาคอร์สที่ลงทะเบียน..."
@@ -497,7 +482,7 @@ export default function AdminUserDetailPage() {
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   borderRadius: '6px',
                   fontSize: '0.8125rem',
                   outline: 'none',
@@ -513,29 +498,29 @@ export default function AdminUserDetailPage() {
                     onClick={() => setDeleteConfirm(enrollment.id)}
                     style={{
                       padding: '10px 16px',
-                      borderBottom: '1px solid #f1f5f9',
+                      borderBottom: '1px solid var(--muted)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       transition: 'background 0.15s',
                       fontSize: '0.8125rem',
-                      color: '#1e293b',
+                      color: 'var(--foreground)',
                     }}
-                    onMouseOver={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                    onMouseOver={(e) => (e.currentTarget.style.background = 'var(--color-error-soft)')}
                     onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
                     <div>
                       <div style={{ fontWeight: 500 }}>{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '2px' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--muted-foreground)', marginTop: '2px' }}>
                         {enrollment.progressPercent || 0}% • {enrollment.completedAt ? 'เรียนจบ' : 'กำลังเรียน'}
                       </div>
                     </div>
-                    <span style={{ color: '#dc2626', fontSize: '1.1rem', fontWeight: 700 }}>−</span>
+                    <span style={{ color: 'var(--color-error-strong)', fontSize: '1.1rem', fontWeight: 700 }}>−</span>
                   </div>
                 ))}
               {enrollments.filter(e => (e.courseTitle || '').toLowerCase().includes(searchEnrolled.toLowerCase())).length === 0 && (
-                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8125rem' }}>
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.8125rem' }}>
                   ยังไม่มีคอร์สที่ลงทะเบียน
                 </div>
               )}

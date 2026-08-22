@@ -214,7 +214,7 @@ export default function AdminReviewsPage() {
   const renderStars = (rating: number) => (
     <div style={{ display: 'flex', gap: '1px' }}>
       {[1, 2, 3, 4, 5].map(s => (
-        <svg key={s} style={{ width: 14, height: 14, color: s <= rating ? '#f59e0b' : '#d1d5db' }} fill="currentColor" viewBox="0 0 24 24">
+        <svg key={s} style={{ width: 14, height: 14, color: s <= rating ? 'var(--color-warning-strong)' : 'var(--border)' }} fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       ))}
@@ -222,7 +222,7 @@ export default function AdminReviewsPage() {
   );
 
   if (loading && reviews.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>กำลังโหลด...</div>;
+    return <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>กำลังโหลด...</div>;
   }
 
   return (
@@ -230,15 +230,15 @@ export default function AdminReviewsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>จัดการรีวิว</h1>
-          <p style={{ color: '#64748b' }}>จัดการรีวิวคอร์สจากผู้เรียน</p>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>จัดการรีวิว</h1>
+          <p style={{ color: 'var(--muted-foreground)' }}>จัดการรีวิวคอร์สจากผู้เรียน</p>
         </div>
         <button
           onClick={() => setShowImport(!showImport)}
           style={{
             padding: '10px 20px',
-            background: '#2563eb',
-            color: 'white',
+            background: 'var(--primary)',
+            color: 'var(--primary-foreground)',
             border: 'none',
             borderRadius: '8px',
             cursor: 'pointer',
@@ -253,21 +253,21 @@ export default function AdminReviewsPage() {
       {/* Stats */}
       {stats && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>รีวิวทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.total}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>รีวิวทั้งหมด</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>{stats.total}</div>
           </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>คะแนนเฉลี่ย</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f59e0b' }}>{stats.avgRating || '-'}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>คะแนนเฉลี่ย</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-warning-strong)' }}>{stats.avgRating || '-'}</div>
           </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ผู้เรียนจริง</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{stats.verified}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ผู้เรียนจริง</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success-strong)' }}>{stats.verified}</div>
           </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ซ่อนอยู่</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#dc2626' }}>{stats.hidden}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ซ่อนอยู่</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-error-strong)' }}>{stats.hidden}</div>
           </div>
         </div>
       )}
@@ -275,16 +275,15 @@ export default function AdminReviewsPage() {
       {/* Import Modal */}
       {showImport && (
         <div style={{
-          background: 'white',
+          background: 'var(--card)',
           padding: '24px',
           borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           marginBottom: '24px',
         }}>
           {wpStep === 'paste' && (
             <>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '12px' }}>นำเข้ารีวิว</h3>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '12px' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '12px' }}>นำเข้ารีวิว</h3>
+              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '12px' }}>
                 รองรับ JSON จาก phpMyAdmin (WordPress) หรือ JSON แบบ [{`{ "courseId": "...", "rating": 5, "comment": "..." }`}]
               </p>
               <textarea
@@ -295,7 +294,7 @@ export default function AdminReviewsPage() {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
                   fontSize: '0.8125rem',
                   fontFamily: 'monospace',
@@ -309,8 +308,8 @@ export default function AdminReviewsPage() {
                   disabled={importing || !importJson.trim()}
                   style={{
                     padding: '10px 20px',
-                    background: importing ? '#94a3b8' : '#16a34a',
-                    color: 'white',
+                    background: importing ? 'var(--muted-foreground)' : 'var(--color-success-strong)',
+                    color: 'var(--primary-foreground)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: importing ? 'not-allowed' : 'pointer',
@@ -323,8 +322,8 @@ export default function AdminReviewsPage() {
                   onClick={() => { setShowImport(false); setImportJson(''); setWpStep('paste'); }}
                   style={{
                     padding: '10px 20px',
-                    background: '#f1f5f9',
-                    color: '#64748b',
+                    background: 'var(--muted)',
+                    color: 'var(--muted-foreground)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
@@ -339,10 +338,10 @@ export default function AdminReviewsPage() {
 
           {wpStep === 'map' && (
             <>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px' }}>
                 จับคู่คอร์ส WordPress → คอร์สใหม่
               </h3>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '16px' }}>
+              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '16px' }}>
                 พบ {wpReviews.length} รีวิว จาก {wpCourseIds.length} คอร์ส — เลือกคอร์สที่ตรงกัน
               </p>
 
@@ -356,19 +355,19 @@ export default function AdminReviewsPage() {
                       alignItems: 'center',
                       gap: '16px',
                       padding: '12px 16px',
-                      background: '#f8fafc',
+                      background: 'var(--muted)',
                       borderRadius: '8px',
                       flexWrap: 'wrap',
                     }}>
                       <div style={{ minWidth: '200px' }}>
-                        <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--foreground)', fontSize: '0.875rem' }}>
                           WordPress ID: {wpId}
                         </div>
-                        <div style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                        <div style={{ color: 'var(--muted-foreground)', fontSize: '0.75rem' }}>
                           {reviewCount} รีวิว • &ldquo;{sampleComment.slice(0, 60)}...&rdquo;
                         </div>
                       </div>
-                      <div style={{ fontSize: '1.25rem', color: '#94a3b8' }}>→</div>
+                      <div style={{ fontSize: '1.25rem', color: 'var(--muted-foreground)' }}>→</div>
                       <select
                         value={courseMapping[wpId] || ''}
                         onChange={(e) => setCourseMapping(prev => ({ ...prev, [wpId]: e.target.value }))}
@@ -376,9 +375,9 @@ export default function AdminReviewsPage() {
                           flex: 1,
                           minWidth: '200px',
                           padding: '10px 16px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid var(--border)',
                           borderRadius: '8px',
-                          background: 'white',
+                          background: 'var(--card)',
                           fontSize: '0.875rem',
                         }}
                       >
@@ -398,8 +397,8 @@ export default function AdminReviewsPage() {
                   disabled={importing || wpCourseIds.some(id => !courseMapping[id])}
                   style={{
                     padding: '10px 20px',
-                    background: importing || wpCourseIds.some(id => !courseMapping[id]) ? '#94a3b8' : '#16a34a',
-                    color: 'white',
+                    background: importing || wpCourseIds.some(id => !courseMapping[id]) ? 'var(--muted-foreground)' : 'var(--color-success-strong)',
+                    color: 'var(--primary-foreground)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: importing ? 'not-allowed' : 'pointer',
@@ -412,8 +411,8 @@ export default function AdminReviewsPage() {
                   onClick={() => setWpStep('paste')}
                   style={{
                     padding: '10px 20px',
-                    background: '#f1f5f9',
-                    color: '#64748b',
+                    background: 'var(--muted)',
+                    color: 'var(--muted-foreground)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
@@ -426,8 +425,8 @@ export default function AdminReviewsPage() {
                   onClick={() => { setShowImport(false); setImportJson(''); setWpStep('paste'); }}
                   style={{
                     padding: '10px 20px',
-                    background: '#f1f5f9',
-                    color: '#64748b',
+                    background: 'var(--muted)',
+                    color: 'var(--muted-foreground)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
@@ -453,7 +452,7 @@ export default function AdminReviewsPage() {
               transform: 'translateY(-50%)',
               width: '18px',
               height: '18px',
-              color: '#94a3b8',
+              color: 'var(--muted-foreground)',
             }}
             fill="none"
             stroke="currentColor"
@@ -469,17 +468,17 @@ export default function AdminReviewsPage() {
             style={{
               width: '100%',
               padding: '10px 12px 10px 40px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--border)',
               borderRadius: '8px',
               fontSize: '0.875rem',
-              background: 'white',
+              background: 'var(--card)',
             }}
           />
         </div>
         <select
           value={courseFilter}
           onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
-          style={{ padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', fontSize: '0.875rem' }}
+          style={{ padding: '10px 16px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--card)', fontSize: '0.875rem' }}
         >
           <option value="all">คอร์สทั้งหมด</option>
           {courses.map(c => (
@@ -489,7 +488,7 @@ export default function AdminReviewsPage() {
         <select
           value={ratingFilter}
           onChange={(e) => { setRatingFilter(e.target.value); setCurrentPage(1); }}
-          style={{ padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', fontSize: '0.875rem' }}
+          style={{ padding: '10px 16px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--card)', fontSize: '0.875rem' }}
         >
           <option value="all">คะแนนทั้งหมด</option>
           <option value="5">5 ดาว</option>
@@ -501,32 +500,32 @@ export default function AdminReviewsPage() {
       </div>
 
       {/* Reviews Table */}
-      <div style={{ background: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--card)', borderRadius: '12px', overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>ผู้รีวิว</th>
-                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>คอร์ส</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>คะแนน</th>
-                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem', minWidth: '200px' }}>ความคิดเห็น</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>สถานะ</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>วันที่</th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}></th>
+              <tr style={{ background: 'var(--muted)', borderBottom: '2px solid var(--border)' }}>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>ผู้รีวิว</th>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>คอร์ส</th>
+                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>คะแนน</th>
+                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem', minWidth: '200px' }}>ความคิดเห็น</th>
+                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>สถานะ</th>
+                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>วันที่</th>
+                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}></th>
               </tr>
             </thead>
             <tbody>
               {reviews.map(review => (
-                <tr key={review.id} style={{ borderBottom: '1px solid #e2e8f0', opacity: review.isHidden ? 0.5 : 1 }}>
+                <tr key={review.id} style={{ borderBottom: '1px solid var(--border)', opacity: review.isHidden ? 0.5 : 1 }}>
                   <td style={{ padding: '16px' }}>
-                    <div style={{ fontWeight: 500, color: '#1e293b', marginBottom: '2px' }}>
+                    <div style={{ fontWeight: 500, color: 'var(--foreground)', marginBottom: '2px' }}>
                       {review.displayName || review.userName || 'ไม่ระบุ'}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                       {review.userEmail || '-'}
                     </div>
                   </td>
-                  <td style={{ padding: '16px', fontSize: '0.875rem', color: '#1e293b' }}>
+                  <td style={{ padding: '16px', fontSize: '0.875rem', color: 'var(--foreground)' }}>
                     {review.courseTitle || '-'}
                   </td>
                   <td style={{ padding: '16px', textAlign: 'center' }}>
@@ -535,7 +534,7 @@ export default function AdminReviewsPage() {
                   <td style={{ padding: '16px' }}>
                     <div style={{
                       fontSize: '0.8125rem',
-                      color: '#334155',
+                      color: 'var(--foreground)',
                       maxWidth: '300px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -547,18 +546,18 @@ export default function AdminReviewsPage() {
                   <td style={{ padding: '16px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
                       {review.isVerified && (
-                        <span style={{ padding: '2px 8px', background: '#dcfce7', color: '#16a34a', borderRadius: '50px', fontSize: '0.6875rem' }}>
+                        <span style={{ padding: '2px 8px', background: 'var(--color-success-soft)', color: 'var(--color-success-strong)', borderRadius: '50px', fontSize: '0.6875rem' }}>
                           ผู้เรียนจริง
                         </span>
                       )}
                       {review.isHidden && (
-                        <span style={{ padding: '2px 8px', background: '#fef2f2', color: '#dc2626', borderRadius: '50px', fontSize: '0.6875rem' }}>
+                        <span style={{ padding: '2px 8px', background: 'var(--color-error-soft)', color: 'var(--color-error-strong)', borderRadius: '50px', fontSize: '0.6875rem' }}>
                           ซ่อน
                         </span>
                       )}
                     </div>
                   </td>
-                  <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.8125rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }}>
                     {formatDate(review.createdAt)}
                   </td>
                   <td style={{ padding: '16px', textAlign: 'center' }}>
@@ -568,8 +567,8 @@ export default function AdminReviewsPage() {
                         title={review.isHidden ? 'แสดง' : 'ซ่อน'}
                         style={{
                           padding: '6px 10px',
-                          background: review.isHidden ? '#dcfce7' : '#fef3c7',
-                          color: review.isHidden ? '#16a34a' : '#d97706',
+                          background: review.isHidden ? 'var(--color-success-soft)' : 'var(--color-warning-soft)',
+                          color: review.isHidden ? 'var(--color-success-strong)' : 'var(--color-warning-strong)',
                           border: 'none',
                           borderRadius: '6px',
                           fontSize: '0.75rem',
@@ -583,8 +582,8 @@ export default function AdminReviewsPage() {
                         title="ลบ"
                         style={{
                           padding: '6px 10px',
-                          background: '#fef2f2',
-                          color: '#dc2626',
+                          background: 'var(--color-error-soft)',
+                          color: 'var(--color-error-strong)',
                           border: 'none',
                           borderRadius: '6px',
                           fontSize: '0.75rem',
@@ -599,7 +598,7 @@ export default function AdminReviewsPage() {
               ))}
               {reviews.length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>
+                  <td colSpan={7} style={{ padding: '60px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
                     ยังไม่มีรีวิว
                   </td>
                 </tr>
@@ -616,16 +615,16 @@ export default function AdminReviewsPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '16px',
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid var(--border)',
           }}>
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               style={{
                 padding: '8px 16px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
-                background: 'white',
+                background: 'var(--card)',
                 cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                 opacity: currentPage === 1 ? 0.5 : 1,
                 fontSize: '0.875rem',
@@ -633,7 +632,7 @@ export default function AdminReviewsPage() {
             >
               ก่อนหน้า
             </button>
-            <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
+            <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
               หน้า {currentPage} จาก {pagination.totalPages}
             </span>
             <button
@@ -641,9 +640,9 @@ export default function AdminReviewsPage() {
               disabled={currentPage === pagination.totalPages}
               style={{
                 padding: '8px 16px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
-                background: 'white',
+                background: 'var(--card)',
                 cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
                 opacity: currentPage === pagination.totalPages ? 0.5 : 1,
                 fontSize: '0.875rem',

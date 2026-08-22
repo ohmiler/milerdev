@@ -154,22 +154,22 @@ export default function ReconciliationPage() {
     };
 
     const statusColors: Record<string, { bg: string; text: string }> = {
-        verifying: { bg: '#fef3c7', text: '#92400e' },
-        failed: { bg: '#fee2e2', text: '#991b1b' },
-        pending: { bg: '#e0e7ff', text: '#3730a3' },
-        completed: { bg: '#d1fae5', text: '#065f46' },
+        verifying: { bg: 'var(--color-warning-soft)', text: 'var(--color-warning-strong)' },
+        failed: { bg: 'var(--color-error-soft)', text: 'var(--color-error-strong)' },
+        pending: { bg: 'var(--secondary)', text: 'var(--primary)' },
+        completed: { bg: 'var(--color-success-soft)', text: 'var(--color-success-strong)' },
     };
 
-    const getStatusStyle = (status: string) => statusColors[status] || { bg: '#f1f5f9', text: '#475569' };
+    const getStatusStyle = (status: string) => statusColors[status] || { bg: 'var(--muted)', text: 'var(--muted-foreground)' };
 
     return (
         <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)', margin: 0 }}>
                         Payment Reconciliation
                     </h1>
-                    <p style={{ color: '#64748b', margin: '4px 0 0' }}>
+                    <p style={{ color: 'var(--muted-foreground)', margin: '4px 0 0' }}>
                         จัดการรายการชำระเงินที่ค้าง/ล้มเหลว
                     </p>
                 </div>
@@ -177,8 +177,8 @@ export default function ReconciliationPage() {
                     onClick={fetchData}
                     style={{
                         padding: '8px 16px',
-                        background: '#f1f5f9',
-                        border: '1px solid #e2e8f0',
+                        background: 'var(--muted)',
+                        border: '1px solid var(--border)',
                         borderRadius: '8px',
                         cursor: 'pointer',
                         fontSize: '0.875rem',
@@ -191,23 +191,23 @@ export default function ReconciliationPage() {
             {/* Summary Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
                 {([
-                    { key: 'verifying' as StatusFilter, label: 'รอตรวจสอบ', icon: '⏳', color: '#f59e0b' },
-                    { key: 'failed' as StatusFilter, label: 'ล้มเหลว', icon: '❌', color: '#ef4444' },
-                    { key: 'pending' as StatusFilter, label: 'รอดำเนินการ', icon: '🕐', color: '#6366f1' },
+                    { key: 'verifying' as StatusFilter, label: 'รอตรวจสอบ', icon: '⏳', color: 'var(--color-warning-strong)' },
+                    { key: 'failed' as StatusFilter, label: 'ล้มเหลว', icon: '❌', color: 'var(--color-error-strong)' },
+                    { key: 'pending' as StatusFilter, label: 'รอดำเนินการ', icon: '🕐', color: 'var(--primary)' },
                 ]).map(card => (
                     <button
                         key={card.key}
                         onClick={() => setStatusFilter(card.key)}
                         style={{
                             padding: '20px',
-                            background: statusFilter === card.key ? '#f8fafc' : 'white',
-                            border: statusFilter === card.key ? `2px solid ${card.color}` : '1px solid #e2e8f0',
+                            background: statusFilter === card.key ? 'var(--muted)' : 'white',
+                            border: statusFilter === card.key ? `2px solid ${card.color}` : '1px solid var(--border)',
                             borderRadius: '12px',
                             cursor: 'pointer',
                             textAlign: 'left',
                         }}
                     >
-                        <div style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '4px' }}>
                             {card.icon} {card.label}
                         </div>
                         <div style={{ fontSize: '1.75rem', fontWeight: 700, color: card.color }}>
@@ -220,13 +220,13 @@ export default function ReconciliationPage() {
             {/* Filters */}
             <div style={{
                 display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px',
-                padding: '12px 16px', background: '#f8fafc', borderRadius: '8px',
+                padding: '12px 16px', background: 'var(--muted)', borderRadius: '8px',
             }}>
-                <label style={{ fontSize: '0.875rem', color: '#64748b' }}>ย้อนหลัง:</label>
+                <label style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>ย้อนหลัง:</label>
                 <select
                     value={daysBack}
                     onChange={(e) => setDaysBack(Number(e.target.value))}
-                    style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.875rem' }}
+                    style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.875rem' }}
                 >
                     <option value={7}>7 วัน</option>
                     <option value={14}>14 วัน</option>
@@ -241,8 +241,8 @@ export default function ReconciliationPage() {
                         style={{
                             marginLeft: 'auto',
                             padding: '6px 16px',
-                            background: '#ef4444',
-                            color: 'white',
+                            background: 'var(--color-error-strong)',
+                            color: 'var(--primary-foreground)',
                             border: 'none',
                             borderRadius: '6px',
                             cursor: 'pointer',
@@ -260,8 +260,8 @@ export default function ReconciliationPage() {
                     padding: '12px 16px',
                     marginBottom: '16px',
                     borderRadius: '8px',
-                    background: message.type === 'success' ? '#d1fae5' : '#fee2e2',
-                    color: message.type === 'success' ? '#065f46' : '#991b1b',
+                    background: message.type === 'success' ? 'var(--color-success-soft)' : 'var(--color-error-soft)',
+                    color: message.type === 'success' ? 'var(--color-success-strong)' : 'var(--color-error-strong)',
                     fontSize: '0.875rem',
                 }}>
                     {message.text}
@@ -270,16 +270,16 @@ export default function ReconciliationPage() {
 
             {/* Table */}
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>กำลังโหลด...</div>
+                <div style={{ textAlign: 'center', padding: '48px', color: 'var(--muted-foreground)' }}>กำลังโหลด...</div>
             ) : payments.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>
+                <div style={{ textAlign: 'center', padding: '48px', color: 'var(--muted-foreground)' }}>
                     ไม่พบรายการ {statusFilter === 'verifying' ? 'รอตรวจสอบ' : statusFilter === 'failed' ? 'ล้มเหลว' : 'รอดำเนินการ'}
                 </div>
             ) : (
-                <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '12px' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                         <thead>
-                            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                            <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
                                 {statusFilter === 'verifying' && (
                                     <th style={{ padding: '12px 16px', textAlign: 'left' }}>
                                         <input
@@ -289,20 +289,20 @@ export default function ReconciliationPage() {
                                         />
                                     </th>
                                 )}
-                                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>วันที่</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>ผู้ชำระ</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>รายการ</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b', fontWeight: 600 }}>จำนวน</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>สถานะ</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>Retry</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>จัดการ</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--muted-foreground)', fontWeight: 600 }}>วันที่</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--muted-foreground)', fontWeight: 600 }}>ผู้ชำระ</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--muted-foreground)', fontWeight: 600 }}>รายการ</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--muted-foreground)', fontWeight: 600 }}>จำนวน</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--muted-foreground)', fontWeight: 600 }}>สถานะ</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--muted-foreground)', fontWeight: 600 }}>Retry</th>
+                                <th style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--muted-foreground)', fontWeight: 600 }}>จัดการ</th>
                             </tr>
                         </thead>
                         <tbody>
                             {payments.map((p) => {
                                 const statusStyle = getStatusStyle(p.status);
                                 return (
-                                    <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                    <tr key={p.id} style={{ borderBottom: '1px solid var(--muted)' }}>
                                         {statusFilter === 'verifying' && (
                                             <td style={{ padding: '12px 16px' }}>
                                                 <input
@@ -316,14 +316,14 @@ export default function ReconciliationPage() {
                                             {formatDate(p.createdAt)}
                                         </td>
                                         <td style={{ padding: '12px 16px' }}>
-                                            <div style={{ fontWeight: 500, color: '#1e293b' }}>{p.userName || '-'}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{p.userEmail || '-'}</div>
+                                            <div style={{ fontWeight: 500, color: 'var(--foreground)' }}>{p.userName || '-'}</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{p.userEmail || '-'}</div>
                                         </td>
                                         <td style={{ padding: '12px 16px' }}>
-                                            <div style={{ fontWeight: 500, color: '#1e293b' }}>
+                                            <div style={{ fontWeight: 500, color: 'var(--foreground)' }}>
                                                 {p.itemTitle || p.courseTitle || p.bundleTitle || '-'}
                                             </div>
-                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                                                 {p.bundleId ? 'Bundle' : 'Course'} • ID: {p.id.slice(0, 8)}...
                                             </div>
                                         </td>
@@ -343,7 +343,7 @@ export default function ReconciliationPage() {
                                                 {p.status}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b' }}>
+                                        <td style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--muted-foreground)' }}>
                                             {p.retryCount || 0}
                                         </td>
                                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
@@ -355,8 +355,8 @@ export default function ReconciliationPage() {
                                                             disabled={actionLoading === p.id}
                                                             style={{
                                                                 padding: '4px 12px',
-                                                                background: '#10b981',
-                                                                color: 'white',
+                                                                background: 'var(--color-success-strong)',
+                                                                color: 'var(--primary-foreground)',
                                                                 border: 'none',
                                                                 borderRadius: '6px',
                                                                 cursor: actionLoading === p.id ? 'not-allowed' : 'pointer',
@@ -371,8 +371,8 @@ export default function ReconciliationPage() {
                                                             disabled={actionLoading === p.id}
                                                             style={{
                                                                 padding: '4px 12px',
-                                                                background: '#ef4444',
-                                                                color: 'white',
+                                                                background: 'var(--color-error-strong)',
+                                                                color: 'var(--primary-foreground)',
                                                                 border: 'none',
                                                                 borderRadius: '6px',
                                                                 cursor: actionLoading === p.id ? 'not-allowed' : 'pointer',

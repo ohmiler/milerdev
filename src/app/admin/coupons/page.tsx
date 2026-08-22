@@ -149,30 +149,30 @@ export default function AdminCouponsPage() {
   const isExpired = (d: string | null) => d && new Date(d) < new Date();
 
   const inputStyle = {
-    width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0',
+    width: '100%', padding: '10px 12px', border: '1px solid var(--border)',
     borderRadius: '8px', fontSize: '0.9375rem',
   };
-  const labelStyle = { display: 'block' as const, fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' };
+  const labelStyle = { display: 'block' as const, fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' };
 
   return (
     <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>จัดการคูปอง / โค้ดส่วนลด</h1>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>จัดการคูปอง / โค้ดส่วนลด</h1>
         <button onClick={handleCreate} style={{
-          padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none',
+          padding: '10px 20px', background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none',
           borderRadius: '8px', fontWeight: 600, cursor: 'pointer',
         }}>+ สร้างคูปอง</button>
       </div>
 
       {/* Form Modal */}
       {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '560px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', color: '#1e293b' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'color-mix(in oklch, var(--foreground) 48%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div style={{ background: 'var(--card)', borderRadius: '16px', padding: '32px', maxWidth: '560px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', color: 'var(--foreground)' }}>
               {editingId ? 'แก้ไขคูปอง' : 'สร้างคูปองใหม่'}
             </h2>
 
-            {error && <div style={{ background: '#fef2f2', color: '#dc2626', padding: '10px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>{error}</div>}
+            {error && <div style={{ background: 'var(--color-error-soft)', color: 'var(--color-error-strong)', padding: '10px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>{error}</div>}
 
             <form onSubmit={handleSubmit}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
@@ -244,8 +244,8 @@ export default function AdminCouponsPage() {
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowForm(false)} style={{ padding: '10px 20px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>ยกเลิก</button>
-                <button type="submit" disabled={saving} style={{ padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+                <button type="button" onClick={() => setShowForm(false)} style={{ padding: '10px 20px', background: 'var(--muted)', color: 'var(--muted-foreground)', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>ยกเลิก</button>
+                <button type="submit" disabled={saving} style={{ padding: '10px 20px', background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1 }}>
                   {saving ? 'กำลังบันทึก...' : editingId ? 'อัพเดท' : 'สร้างคูปอง'}
                 </button>
               </div>
@@ -256,60 +256,60 @@ export default function AdminCouponsPage() {
 
       {/* Coupons Table */}
       {loading ? (
-        <p style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>กำลังโหลด...</p>
+        <p style={{ textAlign: 'center', padding: '40px', color: 'var(--muted-foreground)' }}>กำลังโหลด...</p>
       ) : couponsList.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <p style={{ fontSize: '1.125rem', color: '#64748b', marginBottom: '8px' }}>ยังไม่มีคูปอง</p>
-          <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>สร้างคูปองเพื่อเริ่มให้ส่วนลด</p>
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--muted)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <p style={{ fontSize: '1.125rem', color: 'var(--muted-foreground)', marginBottom: '8px' }}>ยังไม่มีคูปอง</p>
+          <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>สร้างคูปองเพื่อเริ่มให้ส่วนลด</p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9375rem' }}>
             <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>รหัส</th>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>ส่วนลด</th>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>คอร์ส</th>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>ใช้แล้ว</th>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>สถานะ</th>
-                <th style={{ textAlign: 'right', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>จัดการ</th>
+              <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--muted-foreground)', fontWeight: 600 }}>รหัส</th>
+                <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--muted-foreground)', fontWeight: 600 }}>ส่วนลด</th>
+                <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--muted-foreground)', fontWeight: 600 }}>คอร์ส</th>
+                <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--muted-foreground)', fontWeight: 600 }}>ใช้แล้ว</th>
+                <th style={{ textAlign: 'left', padding: '12px 8px', color: 'var(--muted-foreground)', fontWeight: 600 }}>สถานะ</th>
+                <th style={{ textAlign: 'right', padding: '12px 8px', color: 'var(--muted-foreground)', fontWeight: 600 }}>จัดการ</th>
               </tr>
             </thead>
             <tbody>
               {couponsList.map(c => {
                 const expired = isExpired(c.expiresAt);
                 return (
-                  <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9', opacity: expired || !c.isActive ? 0.6 : 1 }}>
+                  <tr key={c.id} style={{ borderBottom: '1px solid var(--muted)', opacity: expired || !c.isActive ? 0.6 : 1 }}>
                     <td style={{ padding: '12px 8px' }}>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#2563eb', background: '#eff6ff', padding: '2px 8px', borderRadius: '4px' }}>{c.code}</span>
-                      {c.description && <div style={{ fontSize: '0.8125rem', color: '#94a3b8', marginTop: '2px' }}>{c.description}</div>}
+                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: 'var(--primary)', background: 'var(--secondary)', padding: '2px 8px', borderRadius: '4px' }}>{c.code}</span>
+                      {c.description && <div style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)', marginTop: '2px' }}>{c.description}</div>}
                     </td>
-                    <td style={{ padding: '12px 8px', fontWeight: 600, color: '#16a34a' }}>
+                    <td style={{ padding: '12px 8px', fontWeight: 600, color: 'var(--color-success-strong)' }}>
                       {formatDiscount(c.discountType, c.discountValue)}
-                      {c.maxDiscount && <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>สูงสุด ฿{parseFloat(c.maxDiscount).toLocaleString()}</div>}
+                      {c.maxDiscount && <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', fontWeight: 400 }}>สูงสุด ฿{parseFloat(c.maxDiscount).toLocaleString()}</div>}
                     </td>
                     <td style={{ padding: '12px 8px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.courseTitle || <span style={{ color: '#94a3b8' }}>ทุกคอร์ส</span>}
+                      {c.courseTitle || <span style={{ color: 'var(--muted-foreground)' }}>ทุกคอร์ส</span>}
                     </td>
-                    <td style={{ padding: '12px 8px', color: '#64748b' }}>
+                    <td style={{ padding: '12px 8px', color: 'var(--muted-foreground)' }}>
                       {c.usageCount || 0}{c.usageLimit ? `/${c.usageLimit}` : ''}
                     </td>
                     <td style={{ padding: '12px 8px' }}>
                       {expired ? (
-                        <span style={{ background: '#fef2f2', color: '#dc2626', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>หมดอายุ</span>
+                        <span style={{ background: 'var(--color-error-soft)', color: 'var(--color-error-strong)', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>หมดอายุ</span>
                       ) : c.isActive ? (
-                        <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>ใช้งาน</span>
+                        <span style={{ background: 'var(--color-success-soft)', color: 'var(--color-success-strong)', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>ใช้งาน</span>
                       ) : (
-                        <span style={{ background: '#f8fafc', color: '#94a3b8', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>ปิดใช้งาน</span>
+                        <span style={{ background: 'var(--muted)', color: 'var(--muted-foreground)', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>ปิดใช้งาน</span>
                       )}
                     </td>
                     <td style={{ padding: '12px 8px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                        <button onClick={() => handleEdit(c)} style={{ padding: '6px 10px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>แก้ไข</button>
-                        <button onClick={() => handleToggle(c.id, !!c.isActive)} style={{ padding: '6px 10px', background: c.isActive ? '#fef2f2' : '#f0fdf4', color: c.isActive ? '#dc2626' : '#16a34a', border: `1px solid ${c.isActive ? '#fecaca' : '#bbf7d0'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>
+                        <button onClick={() => handleEdit(c)} style={{ padding: '6px 10px', background: 'var(--secondary)', color: 'var(--primary)', border: '1px solid var(--secondary)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>แก้ไข</button>
+                        <button onClick={() => handleToggle(c.id, !!c.isActive)} style={{ padding: '6px 10px', background: c.isActive ? 'var(--color-error-soft)' : 'var(--color-success-soft)', color: c.isActive ? 'var(--color-error-strong)' : 'var(--color-success-strong)', border: `1px solid ${c.isActive ? 'var(--color-error-soft)' : 'var(--color-success-soft)'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>
                           {c.isActive ? 'ปิด' : 'เปิด'}
                         </button>
-                        <button onClick={() => handleDelete(c.id)} style={{ padding: '6px 10px', background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>ลบ</button>
+                        <button onClick={() => handleDelete(c.id)} style={{ padding: '6px 10px', background: 'var(--muted)', color: 'var(--muted-foreground)', border: '1px solid var(--border)', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>ลบ</button>
                       </div>
                     </td>
                   </tr>

@@ -32,9 +32,9 @@ const MenuButton = ({
     title={title}
     style={{
       padding: '6px 10px',
-      background: active ? 'linear-gradient(180deg, #2563eb, #1d4ed8)' : '#ffffff',
-      color: active ? 'white' : '#475569',
-      border: '1px solid ' + (active ? '#2563eb' : '#dbe5f4'),
+      background: active ? 'var(--primary)' : 'var(--card)',
+      color: active ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+      border: '1px solid ' + (active ? 'var(--primary)' : 'var(--border)'),
       borderRadius: '8px',
       cursor: 'pointer',
       fontSize: '0.8rem',
@@ -83,7 +83,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           'outline: none',
           'font-size: 0.95rem',
           'line-height: 1.7',
-          'color: #1e293b',
+          'color: var(--foreground)',
         ].join(';'),
       },
       handleKeyDown(view, event) {
@@ -209,11 +209,10 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
 
   return (
     <div style={{
-      border: '1px solid #dbe5f4',
+      border: '1px solid var(--border)',
       borderRadius: '14px',
       overflow: 'hidden',
-      background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.84)',
+      background: 'var(--card)',
     }}>
       {/* Toolbar */}
       <div style={{
@@ -221,8 +220,8 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         flexWrap: 'wrap',
         gap: '4px',
         padding: '10px 12px',
-        borderBottom: '1px solid #e2e8f0',
-        background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--muted)',
       }}>
         <MenuButton
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -246,7 +245,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           <s>S</s>
         </MenuButton>
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div style={{ width: '1px', background: 'var(--border)', margin: '0 4px' }} />
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -263,7 +262,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           H3
         </MenuButton>
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div style={{ width: '1px', background: 'var(--border)', margin: '0 4px' }} />
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -280,7 +279,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           1. List
         </MenuButton>
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div style={{ width: '1px', background: 'var(--border)', margin: '0 4px' }} />
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleCode().run()}
@@ -305,11 +304,11 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
               }}
               style={{
                 padding: '4px 8px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 fontSize: '0.8rem',
-                color: '#475569',
-                background: 'white',
+                color: 'var(--muted-foreground)',
+                background: 'var(--card)',
                 cursor: 'pointer',
                 height: '32px',
               }}
@@ -334,7 +333,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           </>
         )}
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div style={{ width: '1px', background: 'var(--border)', margin: '0 4px' }} />
 
         <MenuButton
           onClick={setLink}
@@ -352,7 +351,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           </MenuButton>
         )}
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div style={{ width: '1px', background: 'var(--border)', margin: '0 4px' }} />
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -405,16 +404,16 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           display: list-item;
         }
         .tiptap code {
-          background: #f1f5f9;
+          background: var(--muted);
           padding: 2px 6px;
           border-radius: 4px;
           font-size: 0.9em;
-          color: #e11d48;
+          color: var(--color-error-strong);
           font-family: 'Fira Code', monospace;
         }
         .tiptap pre {
-          background: #1e293b;
-          color: #e2e8f0;
+          background: var(--foreground);
+          color: var(--border);
           padding: 40px 16px 16px;
           border-radius: 8px;
           overflow-x: auto;
@@ -431,9 +430,9 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           padding: 5px 12px;
           font-size: 0.65rem;
           font-family: monospace;
-          color: #64748b;
-          background: rgba(255,255,255,0.05);
-          border-bottom: 1px solid rgba(255,255,255,0.08);
+          color: var(--muted-foreground);
+          background: color-mix(in oklch, var(--background) 6%, transparent);
+          border-bottom: 1px solid color-mix(in oklch, var(--background) 10%, transparent);
           border-radius: 8px 8px 0 0;
           letter-spacing: 0.05em;
           pointer-events: none;
@@ -446,20 +445,20 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           font-size: inherit;
         }
         .tiptap a {
-          color: #2563eb;
+          color: var(--primary);
           text-decoration: underline;
           cursor: pointer;
         }
         .tiptap blockquote {
-          border-left: 3px solid #3b82f6;
+          border-left: 3px solid var(--primary);
           padding-left: 16px;
           margin: 0.75em 0;
-          color: #64748b;
+          color: var(--muted-foreground);
           font-style: italic;
         }
         .tiptap hr {
           border: none;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid var(--border);
           margin: 1em 0;
         }
         /* Syntax Highlighting (lowlight / highlight.js classes) */

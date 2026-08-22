@@ -111,7 +111,7 @@ export default function EditBlogPostPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+      <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
         กำลังโหลด...
       </div>
     );
@@ -122,10 +122,10 @@ export default function EditBlogPostPage() {
       {/* Page Header */}
       <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <Link href="/admin/blog" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
+          <Link href="/admin/blog" style={{ color: 'var(--muted-foreground)', textDecoration: 'none', fontSize: '0.875rem' }}>
             ← กลับไปรายการบทความ
           </Link>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginTop: '8px' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginTop: '8px' }}>
             แก้ไขบทความ
           </h1>
         </div>
@@ -137,9 +137,9 @@ export default function EditBlogPostPage() {
               target="_blank"
               style={{
                 padding: '10px 16px',
-                background: '#f0fdf4',
-                color: '#16a34a',
-                border: '1px solid #bbf7d0',
+                background: 'var(--color-success-soft)',
+                color: 'var(--color-success-strong)',
+                border: '1px solid var(--color-success-soft)',
                 borderRadius: '8px',
                 fontSize: '0.9375rem',
                 textDecoration: 'none',
@@ -161,9 +161,9 @@ export default function EditBlogPostPage() {
             onClick={() => setShowDeleteConfirm(true)}
             style={{
               padding: '10px 20px',
-              background: '#fef2f2',
-              color: '#dc2626',
-              border: '1px solid #fecaca',
+              background: 'var(--color-error-soft)',
+              color: 'var(--color-error-strong)',
+              border: '1px solid var(--color-error-soft)',
               borderRadius: '8px',
               fontSize: '0.9375rem',
               fontWeight: 500,
@@ -176,8 +176,8 @@ export default function EditBlogPostPage() {
             href="/admin/blog"
             style={{
               padding: '10px 20px',
-              background: '#f1f5f9',
-              color: '#475569',
+              background: 'var(--muted)',
+              color: 'var(--muted-foreground)',
               borderRadius: '8px',
               fontSize: '0.9375rem',
               textDecoration: 'none',
@@ -192,8 +192,8 @@ export default function EditBlogPostPage() {
             disabled={saving}
             style={{
               padding: '10px 24px',
-              background: '#2563eb',
-              color: 'white',
+              background: 'var(--primary)',
+              color: 'var(--primary-foreground)',
               border: 'none',
               borderRadius: '8px',
               fontSize: '0.9375rem',
@@ -209,9 +209,9 @@ export default function EditBlogPostPage() {
 
       {error && (
         <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#dc2626',
+          background: 'var(--color-error-soft)',
+          border: '1px solid var(--color-error-soft)',
+          color: 'var(--color-error-strong)',
           padding: '12px 16px',
           borderRadius: '8px',
           marginBottom: '20px',
@@ -225,8 +225,8 @@ export default function EditBlogPostPage() {
         {/* Left: Main content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Title + Slug */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+          <div style={{ background: 'var(--card)', borderRadius: '12px', padding: '24px' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: 'var(--foreground)' }}>
               ชื่อบทความ *
             </label>
             <input
@@ -237,7 +237,7 @@ export default function EditBlogPostPage() {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '8px',
                 fontSize: '1.0625rem',
                 boxSizing: 'border-box',
@@ -246,11 +246,11 @@ export default function EditBlogPostPage() {
 
             {/* Slug */}
             <div style={{ marginTop: '16px' }}>
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+              <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
                 Slug (URL)
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#94a3b8', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>/blog/</span>
+                <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', whiteSpace: 'nowrap' }}>/blog/</span>
                 <input
                   type="text"
                   value={formData.slug}
@@ -258,10 +258,10 @@ export default function EditBlogPostPage() {
                   style={{
                     flex: 1,
                     padding: '8px 12px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
                     fontSize: '0.875rem',
-                    color: '#475569',
+                    color: 'var(--muted-foreground)',
                     boxSizing: 'border-box',
                   }}
                 />
@@ -270,8 +270,8 @@ export default function EditBlogPostPage() {
           </div>
 
           {/* Excerpt */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#374151' }}>
+          <div style={{ background: 'var(--card)', borderRadius: '12px', padding: '24px' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: 'var(--foreground)' }}>
               เนื้อหาย่อ (Excerpt)
             </label>
             <textarea
@@ -282,7 +282,7 @@ export default function EditBlogPostPage() {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '8px',
                 fontSize: '0.9375rem',
                 resize: 'vertical',
@@ -293,8 +293,8 @@ export default function EditBlogPostPage() {
           </div>
 
           {/* Content */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <label style={{ display: 'block', fontWeight: 600, marginBottom: '12px', color: '#374151' }}>
+          <div style={{ background: 'var(--card)', borderRadius: '12px', padding: '24px' }}>
+            <label style={{ display: 'block', fontWeight: 600, marginBottom: '12px', color: 'var(--foreground)' }}>
               เนื้อหา
             </label>
             <RichTextEditor
@@ -307,11 +307,11 @@ export default function EditBlogPostPage() {
         {/* Right: Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Publish settings */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
+          <div style={{ background: 'var(--card)', borderRadius: '12px', padding: '20px' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '16px' }}>
               การเผยแพร่
             </h3>
-            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
+            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: 'var(--foreground)', fontSize: '0.875rem' }}>
               สถานะ
             </label>
             <select
@@ -320,10 +320,10 @@ export default function EditBlogPostPage() {
               style={{
                 width: '100%',
                 padding: '10px 12px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '8px',
                 fontSize: '0.9375rem',
-                background: 'white',
+                background: 'var(--card)',
                 boxSizing: 'border-box',
               }}
             >
@@ -333,8 +333,8 @@ export default function EditBlogPostPage() {
           </div>
 
           {/* Tags */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
+          <div style={{ background: 'var(--card)', borderRadius: '12px', padding: '20px' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '16px' }}>
               แท็ก
             </h3>
             <TagSelector
@@ -344,8 +344,8 @@ export default function EditBlogPostPage() {
           </div>
 
           {/* Thumbnail */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
+          <div style={{ background: 'var(--card)', borderRadius: '12px', padding: '20px' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '16px' }}>
               รูปภาพปก
             </h3>
             <ImageUpload

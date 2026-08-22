@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   AdminPageHero,
   AdminPill,
@@ -140,15 +141,15 @@ export default function AdminPaymentsPage() {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'pending':
-        return { background: '#fff7ed', color: '#b45309' };
+        return { background: 'var(--color-warning-soft)', color: 'var(--color-warning-strong)' };
       case 'completed':
-        return { background: '#eefbf3', color: '#15803d' };
+        return { background: 'var(--color-success-soft)', color: 'var(--color-success-strong)' };
       case 'failed':
-        return { background: '#fef2f2', color: '#dc2626' };
+        return { background: 'var(--color-error-soft)', color: 'var(--color-error-strong)' };
       case 'refunded':
-        return { background: '#eff6ff', color: '#1d4ed8' };
+        return { background: 'var(--secondary)', color: 'var(--primary)' };
       default:
-        return { background: '#f8fafc', color: '#475569' };
+        return { background: 'var(--muted)', color: 'var(--muted-foreground)' };
     }
   };
 
@@ -188,25 +189,25 @@ export default function AdminPaymentsPage() {
           label: 'ธุรกรรมทั้งหมด',
           value: stats.total,
           note: 'ภาพรวมรายการที่อยู่ในระบบ',
-          color: '#0f172a',
+          color: 'var(--foreground)',
         },
         {
           label: 'สำเร็จแล้ว',
           value: stats.completed,
           note: 'พร้อมใช้งานตาม entitlement',
-          color: '#15803d',
+          color: 'var(--color-success-strong)',
         },
         {
           label: 'รอดำเนินการ',
           value: stats.pending,
           note: 'ควรติดตามเพื่อปิดงานให้ครบ',
-          color: '#b45309',
+          color: 'var(--color-warning-strong)',
         },
         {
           label: 'รายได้รวม',
           value: formatCurrency(stats.totalRevenue),
           note: 'ธุรกรรมสำเร็จที่ปิดยอดแล้ว',
-          color: '#2563eb',
+          color: 'var(--primary)',
         },
       ]
     : [];
@@ -236,7 +237,7 @@ export default function AdminPaymentsPage() {
             <AdminSurfaceCard key={card.label} style={{ padding: '20px 22px' }}>
               <div
                 style={{
-                  color: '#64748b',
+                  color: 'var(--muted-foreground)',
                   fontSize: '0.78rem',
                   marginBottom: '8px',
                   fontWeight: 700,
@@ -249,7 +250,7 @@ export default function AdminPaymentsPage() {
               <div style={{ color: card.color, fontSize: '1.65rem', fontWeight: 800, lineHeight: 1.1, marginBottom: '6px' }}>
                 {card.value}
               </div>
-              <div style={{ color: '#94a3b8', fontSize: '0.78rem', lineHeight: 1.6 }}>{card.note}</div>
+              <div style={{ color: 'var(--muted-foreground)', fontSize: '0.78rem', lineHeight: 1.6 }}>{card.note}</div>
             </AdminSurfaceCard>
           ))}
         </div>
@@ -272,7 +273,7 @@ export default function AdminPaymentsPage() {
                   transform: 'translateY(-50%)',
                   width: '18px',
                   height: '18px',
-                  color: '#94a3b8',
+                  color: 'var(--muted-foreground)',
                 }}
                 fill="none"
                 stroke="currentColor"
@@ -291,11 +292,11 @@ export default function AdminPaymentsPage() {
                 style={{
                   width: '100%',
                   padding: '12px 14px 12px 42px',
-                  border: '1px solid #dbe5f0',
+                  border: '1px solid var(--border)',
                   borderRadius: '14px',
                   fontSize: '0.9rem',
-                  background: '#f8fbff',
-                  color: '#0f172a',
+                  background: 'var(--muted)',
+                  color: 'var(--foreground)',
                 }}
               />
             </div>
@@ -308,11 +309,11 @@ export default function AdminPaymentsPage() {
               }}
               style={{
                 padding: '12px 14px',
-                border: '1px solid #dbe5f0',
+                border: '1px solid var(--border)',
                 borderRadius: '14px',
-                background: '#f8fbff',
+                background: 'var(--muted)',
                 fontSize: '0.875rem',
-                color: '#334155',
+                color: 'var(--foreground)',
               }}
             >
               <option value="all">ทุกสถานะ</option>
@@ -330,11 +331,11 @@ export default function AdminPaymentsPage() {
               }}
               style={{
                 padding: '12px 14px',
-                border: '1px solid #dbe5f0',
+                border: '1px solid var(--border)',
                 borderRadius: '14px',
-                background: '#f8fbff',
+                background: 'var(--muted)',
                 fontSize: '0.875rem',
-                color: '#334155',
+                color: 'var(--foreground)',
               }}
             >
               <option value="all">ทุกช่องทาง</option>
@@ -352,15 +353,15 @@ export default function AdminPaymentsPage() {
         </div>
 
         {loading && payments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '72px 24px', color: '#64748b' }}>กำลังโหลดรายการชำระเงิน...</div>
+          <div style={{ textAlign: 'center', padding: '72px 24px', color: 'var(--muted-foreground)' }}>กำลังโหลดรายการชำระเงิน...</div>
         ) : payments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '72px 24px', color: '#64748b' }}>ไม่พบรายการที่ตรงกับตัวกรองตอนนี้</div>
+          <div style={{ textAlign: 'center', padding: '72px 24px', color: 'var(--muted-foreground)' }}>ไม่พบรายการที่ตรงกับตัวกรองตอนนี้</div>
         ) : (
           <>
-            <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '18px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px', background: 'white' }}>
+            <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '18px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px', background: 'var(--card)' }}>
                 <thead>
-                  <tr style={{ background: '#f8fbff', borderBottom: '1px solid #e2e8f0' }}>
+                  <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
                     <th style={headerCellStyle}>ผู้ชำระเงิน</th>
                     <th style={headerCellStyle}>รายการ</th>
                     <th style={{ ...headerCellStyle, textAlign: 'center' }}>จำนวน</th>
@@ -371,20 +372,27 @@ export default function AdminPaymentsPage() {
                 </thead>
                 <tbody>
                   {payments.map((payment) => (
-                    <tr key={payment.id} style={{ borderBottom: '1px solid #edf2f7' }}>
+                    <tr key={payment.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={bodyCellStyle}>
-                        <div
-                          onClick={() => payment.userId && (window.location.href = `/admin/users/${payment.userId}`)}
-                          style={{ cursor: payment.userId ? 'pointer' : 'default' }}
-                        >
-                          <div style={{ fontWeight: 700, color: payment.userId ? '#2563eb' : '#0f172a', marginBottom: '5px', fontSize: '0.94rem' }}>
+                        <div>
+                          {payment.userId ? (
+                            <Link
+                              href={`/admin/users/${payment.userId}`}
+                              className="block rounded-sm font-bold text-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+                              style={{ marginBottom: '5px', fontSize: '0.94rem' }}
+                            >
+                              {payment.userName || 'ไม่ระบุชื่อ'}
+                            </Link>
+                          ) : (
+                            <div style={{ fontWeight: 700, color: 'var(--foreground)', marginBottom: '5px', fontSize: '0.94rem' }}>
                             {payment.userName || 'ไม่ระบุชื่อ'}
-                          </div>
-                          <div style={{ fontSize: '0.84rem', color: '#64748b' }}>{payment.userEmail || '-'}</div>
+                            </div>
+                          )}
+                          <div style={{ fontSize: '0.84rem', color: 'var(--muted-foreground)' }}>{payment.userEmail || '-'}</div>
                         </div>
                       </td>
                       <td style={bodyCellStyle}>
-                        <div style={{ color: '#0f172a', fontSize: '0.9rem', fontWeight: 600 }}>
+                        <div style={{ color: 'var(--foreground)', fontSize: '0.9rem', fontWeight: 600 }}>
                           {payment.bundleTitle || payment.courseTitle || payment.itemTitle || '-'}
                         </div>
                         {payment.slipUrl && (
@@ -395,7 +403,7 @@ export default function AdminPaymentsPage() {
                               rel="noopener noreferrer"
                               style={{
                                 fontSize: '0.76rem',
-                                color: '#2563eb',
+                                color: 'var(--primary)',
                                 textDecoration: 'none',
                                 display: 'inline-block',
                                 marginTop: '6px',
@@ -405,14 +413,14 @@ export default function AdminPaymentsPage() {
                               ดูสลิป
                             </a>
                           ) : (
-                            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '6px' }}>
-                              Ref: <span style={{ fontFamily: 'monospace', color: '#475569', userSelect: 'all' }}>{payment.slipUrl}</span>
+                            <div style={{ fontSize: '0.76rem', color: 'var(--muted-foreground)', marginTop: '6px' }}>
+                              Ref: <span style={{ fontFamily: 'monospace', color: 'var(--muted-foreground)', userSelect: 'all' }}>{payment.slipUrl}</span>
                             </div>
                           )
                         )}
                       </td>
                       <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                        <div style={{ fontWeight: 800, color: '#0f172a' }}>{formatCurrency(payment.amount)}</div>
+                        <div style={{ fontWeight: 800, color: 'var(--foreground)' }}>{formatCurrency(payment.amount)}</div>
                       </td>
                       <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
                         <span
@@ -421,8 +429,8 @@ export default function AdminPaymentsPage() {
                             borderRadius: '50px',
                             fontSize: '0.76rem',
                             fontWeight: 700,
-                            background: '#f8fafc',
-                            color: '#475569',
+                            background: 'var(--muted)',
+                            color: 'var(--muted-foreground)',
                           }}
                         >
                           {getMethodText(payment.method)}
@@ -438,7 +446,7 @@ export default function AdminPaymentsPage() {
                             borderRadius: '10px',
                             fontSize: '0.76rem',
                             fontWeight: 700,
-                            border: '1px solid #dbe5f0',
+                            border: '1px solid var(--border)',
                             cursor: updatingStatus === payment.id ? 'wait' : 'pointer',
                             opacity: updatingStatus === payment.id ? 0.5 : 1,
                             ...getStatusStyle(payment.status),
@@ -454,7 +462,7 @@ export default function AdminPaymentsPage() {
                             && <option value="failed">ล้มเหลว</option>}
                         </select>
                       </td>
-                      <td style={{ ...bodyCellStyle, textAlign: 'center', fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6 }}>
+                      <td style={{ ...bodyCellStyle, textAlign: 'center', fontSize: '0.82rem', color: 'var(--muted-foreground)', lineHeight: 1.6 }}>
                         {formatDate(payment.createdAt)}
                       </td>
                     </tr>
@@ -471,7 +479,7 @@ export default function AdminPaymentsPage() {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '18px',
-                  borderTop: '1px solid #e2e8f0',
+                  borderTop: '1px solid var(--border)',
                 }}
               >
                 <button
@@ -481,7 +489,7 @@ export default function AdminPaymentsPage() {
                 >
                   ก่อนหน้า
                 </button>
-                <span style={{ color: '#64748b', fontSize: '0.84rem' }}>
+                <span style={{ color: 'var(--muted-foreground)', fontSize: '0.84rem' }}>
                   หน้า {currentPage} จาก {pagination.totalPages}
                 </span>
                 <button
@@ -505,7 +513,7 @@ const headerCellStyle: CSSProperties = {
   padding: '15px 18px',
   textAlign: 'left',
   fontWeight: 700,
-  color: '#64748b',
+  color: 'var(--muted-foreground)',
   fontSize: '0.79rem',
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
@@ -518,9 +526,9 @@ const bodyCellStyle: CSSProperties = {
 
 const paginationButtonStyle = (disabled: boolean): CSSProperties => ({
   padding: '9px 16px',
-  border: '1px solid #dbe5f0',
+  border: '1px solid var(--border)',
   borderRadius: '10px',
-  background: '#fff',
+  background: 'var(--card)',
   cursor: disabled ? 'not-allowed' : 'pointer',
   opacity: disabled ? 0.5 : 1,
 });

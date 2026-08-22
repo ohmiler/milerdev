@@ -84,10 +84,10 @@ export default function AdminAuditLogsPage() {
 
   const getActionStyle = (action: string) => {
     switch (action) {
-      case 'create': return { background: '#dcfce7', color: '#16a34a' };
-      case 'update': return { background: '#dbeafe', color: '#2563eb' };
-      case 'delete': return { background: '#fef2f2', color: '#dc2626' };
-      default: return { background: '#f1f5f9', color: '#64748b' };
+      case 'create': return { background: 'var(--color-success-soft)', color: 'var(--color-success-strong)' };
+      case 'update': return { background: 'var(--secondary)', color: 'var(--primary)' };
+      case 'delete': return { background: 'var(--color-error-soft)', color: 'var(--color-error-strong)' };
+      default: return { background: 'var(--muted)', color: 'var(--muted-foreground)' };
     }
   };
 
@@ -121,7 +121,7 @@ export default function AdminAuditLogsPage() {
 
   if (loading && logs.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+      <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
         กำลังโหลด...
       </div>
     );
@@ -131,10 +131,10 @@ export default function AdminAuditLogsPage() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>
           บันทึกการใช้งาน
         </h1>
-        <p style={{ color: '#64748b' }}>ติดตามการเปลี่ยนแปลงและกิจกรรมในระบบ</p>
+        <p style={{ color: 'var(--muted-foreground)' }}>ติดตามการเปลี่ยนแปลงและกิจกรรมในระบบ</p>
       </div>
 
       {/* Filters */}
@@ -154,7 +154,7 @@ export default function AdminAuditLogsPage() {
               transform: 'translateY(-50%)',
               width: '18px',
               height: '18px',
-              color: '#94a3b8',
+              color: 'var(--muted-foreground)',
             }}
             fill="none"
             stroke="currentColor"
@@ -170,10 +170,10 @@ export default function AdminAuditLogsPage() {
             style={{
               width: '100%',
               padding: '10px 12px 10px 40px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--border)',
               borderRadius: '8px',
               fontSize: '0.875rem',
-              background: 'white',
+              background: 'var(--card)',
             }}
           />
         </div>
@@ -182,9 +182,9 @@ export default function AdminAuditLogsPage() {
           onChange={(e) => { setEntityTypeFilter(e.target.value); setCurrentPage(1); }}
           style={{
             padding: '10px 16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
-            background: 'white',
+            background: 'var(--card)',
             fontSize: '0.875rem',
           }}
         >
@@ -198,9 +198,9 @@ export default function AdminAuditLogsPage() {
           onChange={(e) => { setActionFilter(e.target.value); setCurrentPage(1); }}
           style={{
             padding: '10px 16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
-            background: 'white',
+            background: 'var(--card)',
             fontSize: '0.875rem',
           }}
         >
@@ -213,13 +213,12 @@ export default function AdminAuditLogsPage() {
 
       {/* Logs List */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
       }}>
         {logs.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             ยังไม่มีบันทึกการใช้งาน
           </div>
         ) : (
@@ -228,7 +227,7 @@ export default function AdminAuditLogsPage() {
               <div
                 key={log.id}
                 style={{
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: '1px solid var(--muted)',
                 }}
               >
                 <div
@@ -239,7 +238,7 @@ export default function AdminAuditLogsPage() {
                     alignItems: 'center',
                     gap: '16px',
                     cursor: 'pointer',
-                    background: expandedLog === log.id ? '#f8fafc' : 'white',
+                    background: expandedLog === log.id ? 'var(--muted)' : 'white',
                   }}
                 >
                   <span style={{
@@ -255,25 +254,25 @@ export default function AdminAuditLogsPage() {
                     padding: '4px 10px',
                     borderRadius: '50px',
                     fontSize: '0.75rem',
-                    background: '#f1f5f9',
-                    color: '#64748b',
+                    background: 'var(--muted)',
+                    color: 'var(--muted-foreground)',
                   }}>
                     {getEntityTypeText(log.entityType)}
                   </span>
                   <div style={{ flex: 1 }}>
-                    <span style={{ color: '#1e293b', fontWeight: 500 }}>
+                    <span style={{ color: 'var(--foreground)', fontWeight: 500 }}>
                       {log.userName || log.userEmail || 'ระบบ'}
                     </span>
                     {log.entityId && (
-                      <span style={{ color: '#64748b', marginLeft: '8px', fontSize: '0.875rem' }}>
+                      <span style={{ color: 'var(--muted-foreground)', marginLeft: '8px', fontSize: '0.875rem' }}>
                         ID: {log.entityId}
                       </span>
                     )}
                   </div>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                  <div style={{ color: 'var(--muted-foreground)', fontSize: '0.75rem' }}>
                     {formatDate(log.createdAt)}
                   </div>
-                  <span style={{ color: '#94a3b8' }}>
+                  <span style={{ color: 'var(--muted-foreground)' }}>
                     {expandedLog === log.id ? '▲' : '▼'}
                   </span>
                 </div>
@@ -282,8 +281,8 @@ export default function AdminAuditLogsPage() {
                 {expandedLog === log.id && (
                   <div style={{
                     padding: '16px 20px',
-                    background: '#f8fafc',
-                    borderTop: '1px solid #e2e8f0',
+                    background: 'var(--muted)',
+                    borderTop: '1px solid var(--border)',
                   }}>
                     <div style={{
                       display: 'grid',
@@ -292,15 +291,15 @@ export default function AdminAuditLogsPage() {
                     }}>
                       {log.oldValue && (
                         <div>
-                          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '4px' }}>
                             ค่าเดิม
                           </div>
                           <div style={{
                             padding: '8px 12px',
-                            background: '#fef2f2',
+                            background: 'var(--color-error-soft)',
                             borderRadius: '6px',
                             fontSize: '0.875rem',
-                            color: '#dc2626',
+                            color: 'var(--color-error-strong)',
                             wordBreak: 'break-all',
                           }}>
                             {log.oldValue}
@@ -309,15 +308,15 @@ export default function AdminAuditLogsPage() {
                       )}
                       {log.newValue && (
                         <div>
-                          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px' }}>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '4px' }}>
                             ค่าใหม่
                           </div>
                           <div style={{
                             padding: '8px 12px',
-                            background: '#dcfce7',
+                            background: 'var(--color-success-soft)',
                             borderRadius: '6px',
                             fontSize: '0.875rem',
-                            color: '#16a34a',
+                            color: 'var(--color-success-strong)',
                             wordBreak: 'break-all',
                           }}>
                             {log.newValue}
@@ -328,7 +327,7 @@ export default function AdminAuditLogsPage() {
                     <div style={{
                       marginTop: '12px',
                       fontSize: '0.75rem',
-                      color: '#94a3b8',
+                      color: 'var(--muted-foreground)',
                     }}>
                       IP: {log.ipAddress || 'ไม่ทราบ'} | 
                       ผู้ใช้: {log.userEmail || 'ไม่ทราบ'}
@@ -348,23 +347,23 @@ export default function AdminAuditLogsPage() {
             alignItems: 'center',
             gap: '8px',
             padding: '16px',
-            borderTop: '1px solid #e2e8f0',
+            borderTop: '1px solid var(--border)',
           }}>
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               style={{
                 padding: '8px 16px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
-                background: 'white',
+                background: 'var(--card)',
                 cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                 opacity: currentPage === 1 ? 0.5 : 1,
               }}
             >
               ก่อนหน้า
             </button>
-            <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
+            <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
               หน้า {currentPage} จาก {pagination.totalPages}
             </span>
             <button
@@ -372,9 +371,9 @@ export default function AdminAuditLogsPage() {
               disabled={currentPage === pagination.totalPages}
               style={{
                 padding: '8px 16px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
-                background: 'white',
+                background: 'var(--card)',
                 cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
                 opacity: currentPage === pagination.totalPages ? 0.5 : 1,
               }}

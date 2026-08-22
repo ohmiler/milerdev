@@ -129,21 +129,20 @@ export default function AdminTagsPage() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>
           จัดการแท็ก
         </h1>
-        <p style={{ color: '#64748b' }}>สร้างและจัดการแท็กสำหรับจัดหมวดหมู่คอร์ส</p>
+        <p style={{ color: 'var(--muted-foreground)' }}>สร้างและจัดการแท็กสำหรับจัดหมวดหมู่คอร์ส</p>
       </div>
 
       {/* Create New Tag */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
         padding: '20px',
         marginBottom: '24px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       }}>
-        <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '16px' }}>
           สร้างแท็กใหม่
         </h2>
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -156,7 +155,7 @@ export default function AdminTagsPage() {
             style={{
               flex: 1,
               padding: '12px 16px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--border)',
               borderRadius: '8px',
               fontSize: '0.875rem',
             }}
@@ -166,8 +165,8 @@ export default function AdminTagsPage() {
             disabled={creating}
             style={{
               padding: '12px 24px',
-              background: '#2563eb',
-              color: 'white',
+              background: 'var(--primary)',
+              color: 'var(--primary-foreground)',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 500,
@@ -182,29 +181,28 @@ export default function AdminTagsPage() {
 
       {/* Tags List */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
       }}>
         <div style={{
           padding: '16px 20px',
-          borderBottom: '1px solid #e2e8f0',
+          borderBottom: '1px solid var(--border)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)' }}>
             รายการแท็ก ({tagsList.length})
           </h2>
         </div>
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             กำลังโหลด...
           </div>
         ) : tagsList.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             ยังไม่มีแท็ก สร้างแท็กใหม่ด้านบน
           </div>
         ) : (
@@ -222,7 +220,7 @@ export default function AdminTagsPage() {
                     alignItems: 'center',
                     gap: '8px',
                     padding: '8px 16px',
-                    background: '#f1f5f9',
+                    background: 'var(--muted)',
                     borderRadius: '50px',
                     fontSize: '0.875rem',
                   }}
@@ -236,7 +234,7 @@ export default function AdminTagsPage() {
                         onKeyDown={(e) => e.key === 'Enter' && handleUpdate(tag.id)}
                         style={{
                           padding: '4px 8px',
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid var(--border)',
                           borderRadius: '4px',
                           fontSize: '0.875rem',
                           width: '120px',
@@ -247,8 +245,8 @@ export default function AdminTagsPage() {
                         onClick={() => handleUpdate(tag.id)}
                         style={{
                           padding: '4px 8px',
-                          background: '#16a34a',
-                          color: 'white',
+                          background: 'var(--color-success-strong)',
+                          color: 'var(--primary-foreground)',
                           border: 'none',
                           borderRadius: '4px',
                           fontSize: '0.75rem',
@@ -261,8 +259,8 @@ export default function AdminTagsPage() {
                         onClick={() => { setEditing(null); setEditName(''); }}
                         style={{
                           padding: '4px 8px',
-                          background: '#94a3b8',
-                          color: 'white',
+                          background: 'var(--muted-foreground)',
+                          color: 'var(--primary-foreground)',
                           border: 'none',
                           borderRadius: '4px',
                           fontSize: '0.75rem',
@@ -274,13 +272,13 @@ export default function AdminTagsPage() {
                     </>
                   ) : (
                     <>
-                      <span style={{ color: '#1e293b', fontWeight: 500 }}>{tag.name}</span>
+                      <span style={{ color: 'var(--foreground)', fontWeight: 500 }}>{tag.name}</span>
                       <span style={{
-                        background: '#e2e8f0',
+                        background: 'var(--border)',
                         padding: '2px 8px',
                         borderRadius: '50px',
                         fontSize: '0.625rem',
-                        color: '#64748b',
+                        color: 'var(--muted-foreground)',
                       }}>
                         {tag.courseCount} คอร์ส
                       </span>
@@ -290,7 +288,7 @@ export default function AdminTagsPage() {
                           padding: '4px',
                           background: 'transparent',
                           border: 'none',
-                          color: '#64748b',
+                          color: 'var(--muted-foreground)',
                           cursor: 'pointer',
                           fontSize: '0.75rem',
                         }}
@@ -305,7 +303,7 @@ export default function AdminTagsPage() {
                           padding: '4px',
                           background: 'transparent',
                           border: 'none',
-                          color: '#dc2626',
+                          color: 'var(--color-error-strong)',
                           cursor: deleting === tag.id ? 'not-allowed' : 'pointer',
                           opacity: deleting === tag.id ? 0.5 : 1,
                           fontSize: '0.75rem',

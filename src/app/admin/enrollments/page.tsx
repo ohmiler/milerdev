@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { showToast } from '@/components/ui/Toast';
 
@@ -223,10 +224,10 @@ export default function AdminEnrollmentsPage() {
   };
 
   const getProgressColor = (percent: number | null) => {
-    if (!percent || percent === 0) return '#94a3b8';
-    if (percent < 50) return '#f59e0b';
-    if (percent < 100) return '#3b82f6';
-    return '#16a34a';
+    if (!percent || percent === 0) return 'var(--muted-foreground)';
+    if (percent < 50) return 'var(--color-warning-strong)';
+    if (percent < 100) return 'var(--primary)';
+    return 'var(--color-success-strong)';
   };
 
   return (
@@ -239,10 +240,10 @@ export default function AdminEnrollmentsPage() {
         marginBottom: '24px',
       }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>
             จัดการการลงทะเบียน
           </h1>
-          <p style={{ color: '#64748b' }}>ดูและจัดการการลงทะเบียนคอร์สของผู้ใช้</p>
+          <p style={{ color: 'var(--muted-foreground)' }}>ดูและจัดการการลงทะเบียนคอร์สของผู้ใช้</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <input
@@ -257,8 +258,8 @@ export default function AdminEnrollmentsPage() {
             disabled={importing}
             style={{
               padding: '12px 20px',
-              background: '#f1f5f9',
-              color: '#475569',
+              background: 'var(--muted)',
+              color: 'var(--muted-foreground)',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 500,
@@ -272,8 +273,8 @@ export default function AdminEnrollmentsPage() {
             onClick={() => setShowAddModal(true)}
             style={{
               padding: '12px 20px',
-              background: '#2563eb',
-              color: 'white',
+              background: 'var(--primary)',
+              color: 'var(--primary-foreground)',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 500,
@@ -288,38 +289,38 @@ export default function AdminEnrollmentsPage() {
       {/* Import Result */}
       {importResult && (
         <div style={{
-          background: importResult.success && importResult.success > 0 ? '#f0fdf4' : '#fefce8',
-          border: `1px solid ${importResult.success && importResult.success > 0 ? '#bbf7d0' : '#fde68a'}`,
+          background: importResult.success && importResult.success > 0 ? 'var(--color-success-soft)' : 'var(--color-warning-soft)',
+          border: `1px solid ${importResult.success && importResult.success > 0 ? 'var(--color-success-soft)' : 'var(--color-warning-soft)'}`,
           borderRadius: '12px',
           padding: '20px',
           marginBottom: '24px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
             <div>
-              <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '12px', fontSize: '1rem' }}>
+              <div style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: '12px', fontSize: '1rem' }}>
                 ผลการนำเข้าข้อมูล
               </div>
               <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '0.875rem' }}>
                 <div>
-                  <span style={{ color: '#64748b' }}>ทั้งหมด: </span>
-                  <strong style={{ color: '#1e293b' }}>{importResult.total}</strong>
+                  <span style={{ color: 'var(--muted-foreground)' }}>ทั้งหมด: </span>
+                  <strong style={{ color: 'var(--foreground)' }}>{importResult.total}</strong>
                 </div>
                 <div>
-                  <span style={{ color: '#64748b' }}>สำเร็จ: </span>
-                  <strong style={{ color: '#16a34a' }}>{importResult.success}</strong>
+                  <span style={{ color: 'var(--muted-foreground)' }}>สำเร็จ: </span>
+                  <strong style={{ color: 'var(--color-success-strong)' }}>{importResult.success}</strong>
                 </div>
                 <div>
-                  <span style={{ color: '#64748b' }}>ข้าม: </span>
-                  <strong style={{ color: '#d97706' }}>{importResult.skipped}</strong>
+                  <span style={{ color: 'var(--muted-foreground)' }}>ข้าม: </span>
+                  <strong style={{ color: 'var(--color-warning-strong)' }}>{importResult.skipped}</strong>
                 </div>
               </div>
 
               {importResult.matchedAliases && importResult.matchedAliases.length > 0 && (
                 <div style={{ marginTop: '12px' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2563eb', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '4px' }}>
                     คอร์สที่ match ชื่อใกล้เคียง ({importResult.matchedAliases.length}):
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#1d4ed8' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--primary)' }}>
                     {importResult.matchedAliases.map((a, i) => (
                       <div key={i}>• {a}</div>
                     ))}
@@ -329,10 +330,10 @@ export default function AdminEnrollmentsPage() {
 
               {importResult.missingCourses && importResult.missingCourses.length > 0 && (
                 <div style={{ marginTop: '12px' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#dc2626', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-error-strong)', marginBottom: '4px' }}>
                     คอร์สที่ไม่พบในระบบใหม่ ({importResult.courseNotFound} คอร์ส):
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#b91c1c' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-error-strong)' }}>
                     {importResult.missingCourses.map((c, i) => (
                       <div key={i}>• {c}</div>
                     ))}
@@ -342,10 +343,10 @@ export default function AdminEnrollmentsPage() {
 
               {importResult.missingUsers && importResult.missingUsers.length > 0 && (
                 <div style={{ marginTop: '12px' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#d97706', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-warning-strong)', marginBottom: '4px' }}>
                     User ที่ไม่พบในระบบใหม่ ({importResult.userNotFound} คน):
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#92400e', maxHeight: '80px', overflowY: 'auto' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-warning-strong)', maxHeight: '80px', overflowY: 'auto' }}>
                     {importResult.missingUsers.map((u, i) => (
                       <span key={i} style={{ marginRight: '8px' }}>{u}</span>
                     ))}
@@ -360,7 +361,7 @@ export default function AdminEnrollmentsPage() {
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: '1.2rem',
-                color: '#64748b',
+                color: 'var(--muted-foreground)',
                 padding: '4px',
               }}
             >
@@ -378,21 +379,21 @@ export default function AdminEnrollmentsPage() {
           gap: '16px',
           marginBottom: '24px',
         }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.total}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ทั้งหมด</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>{stats.total}</div>
           </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>เรียนจบแล้ว</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{stats.completed}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>เรียนจบแล้ว</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success-strong)' }}>{stats.completed}</div>
           </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>กำลังเรียน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3b82f6' }}>{stats.inProgress}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>กำลังเรียน</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>{stats.inProgress}</div>
           </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ยังไม่เริ่ม</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#94a3b8' }}>{stats.notStarted}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ยังไม่เริ่ม</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>{stats.notStarted}</div>
           </div>
         </div>
       )}
@@ -408,7 +409,7 @@ export default function AdminEnrollmentsPage() {
               transform: 'translateY(-50%)',
               width: '18px',
               height: '18px',
-              color: '#94a3b8',
+              color: 'var(--muted-foreground)',
             }}
             fill="none"
             stroke="currentColor"
@@ -424,10 +425,10 @@ export default function AdminEnrollmentsPage() {
             style={{
               width: '100%',
               padding: '10px 12px 10px 40px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--border)',
               borderRadius: '8px',
               fontSize: '0.875rem',
-              background: 'white',
+              background: 'var(--card)',
             }}
           />
         </div>
@@ -436,9 +437,9 @@ export default function AdminEnrollmentsPage() {
           onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
           style={{
             padding: '10px 16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
-            background: 'white',
+            background: 'var(--card)',
             fontSize: '0.875rem',
             minWidth: '200px',
           }}
@@ -458,26 +459,26 @@ export default function AdminEnrollmentsPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'color-mix(in oklch, var(--foreground) 48%, transparent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
         }}>
           <div style={{
-            background: 'white',
+            background: 'var(--card)',
             borderRadius: '12px',
             padding: '24px',
             width: '100%',
             maxWidth: '450px',
             margin: '16px',
           }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px', color: '#1e293b' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px', color: 'var(--foreground)' }}>
               เพิ่มการลงทะเบียนใหม่
             </h2>
             
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)' }}>
                 ผู้ใช้
               </label>
               <select
@@ -486,10 +487,10 @@ export default function AdminEnrollmentsPage() {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
                   fontSize: '1rem',
-                  background: 'white',
+                  background: 'var(--card)',
                 }}
               >
                 <option value="">-- เลือกผู้ใช้ --</option>
@@ -502,7 +503,7 @@ export default function AdminEnrollmentsPage() {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)' }}>
                 คอร์ส
               </label>
               <select
@@ -511,10 +512,10 @@ export default function AdminEnrollmentsPage() {
                 style={{
                   width: '100%',
                   padding: '10px 14px',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
                   fontSize: '1rem',
-                  background: 'white',
+                  background: 'var(--card)',
                 }}
               >
                 <option value="">-- เลือกคอร์ส --</option>
@@ -529,8 +530,8 @@ export default function AdminEnrollmentsPage() {
                 onClick={() => { setShowAddModal(false); setAddForm({ userId: '', courseId: '' }); }}
                 style={{
                   padding: '10px 20px',
-                  background: '#f1f5f9',
-                  color: '#475569',
+                  background: 'var(--muted)',
+                  color: 'var(--muted-foreground)',
                   border: 'none',
                   borderRadius: '8px',
                   cursor: 'pointer',
@@ -543,8 +544,8 @@ export default function AdminEnrollmentsPage() {
                 disabled={adding}
                 style={{
                   padding: '10px 20px',
-                  background: '#2563eb',
-                  color: 'white',
+                  background: 'var(--primary)',
+                  color: 'var(--primary-foreground)',
                   border: 'none',
                   borderRadius: '8px',
                   cursor: adding ? 'not-allowed' : 'pointer',
@@ -560,17 +561,16 @@ export default function AdminEnrollmentsPage() {
 
       {/* Enrollments Table */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
       }}>
         {loading && enrollments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             กำลังโหลด...
           </div>
         ) : enrollments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             ไม่พบการลงทะเบียน
           </div>
         ) : (
@@ -578,45 +578,52 @@ export default function AdminEnrollmentsPage() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
+                  <tr style={{ background: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                       ผู้ใช้
                     </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                       คอร์ส
                     </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                       ความคืบหน้า
                     </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                       วันที่ลงทะเบียน
                     </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                       สถานะ
                     </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
+                    <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                       การดำเนินการ
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {enrollments.map((enrollment) => (
-                    <tr key={enrollment.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <tr key={enrollment.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '16px' }}>
-                        <div
-                          onClick={() => enrollment.userId && (window.location.href = `/admin/users/${enrollment.userId}`)}
-                          style={{ cursor: enrollment.userId ? 'pointer' : 'default' }}
-                        >
-                          <div style={{ fontWeight: 500, color: enrollment.userId ? '#2563eb' : '#1e293b', marginBottom: '2px' }}>
+                        <div>
+                          {enrollment.userId ? (
+                            <Link
+                              href={`/admin/users/${enrollment.userId}`}
+                              className="block rounded-sm font-medium text-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+                              style={{ marginBottom: '2px' }}
+                            >
+                              {enrollment.userName || 'ไม่ระบุชื่อ'}
+                            </Link>
+                          ) : (
+                            <div style={{ fontWeight: 500, color: 'var(--foreground)', marginBottom: '2px' }}>
                             {enrollment.userName || 'ไม่ระบุชื่อ'}
-                          </div>
-                          <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                            </div>
+                          )}
+                          <div style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
                             {enrollment.userEmail || '-'}
                           </div>
                         </div>
                       </td>
                       <td style={{ padding: '16px' }}>
-                        <div style={{ color: '#1e293b', fontSize: '0.875rem' }}>
+                        <div style={{ color: 'var(--foreground)', fontSize: '0.875rem' }}>
                           {enrollment.courseTitle || '-'}
                         </div>
                       </td>
@@ -625,7 +632,7 @@ export default function AdminEnrollmentsPage() {
                           <div style={{
                             width: '60px',
                             height: '6px',
-                            background: '#e2e8f0',
+                            background: 'var(--border)',
                             borderRadius: '3px',
                             overflow: 'hidden',
                           }}>
@@ -636,12 +643,12 @@ export default function AdminEnrollmentsPage() {
                               borderRadius: '3px',
                             }} />
                           </div>
-                          <span style={{ fontSize: '0.875rem', color: '#64748b', minWidth: '40px' }}>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', minWidth: '40px' }}>
                             {enrollment.progressPercent || 0}%
                           </span>
                         </div>
                       </td>
-                      <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.875rem', color: '#64748b' }}>
+                      <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
                         {formatDate(enrollment.enrolledAt)}
                       </td>
                       <td style={{ padding: '16px', textAlign: 'center' }}>
@@ -650,8 +657,8 @@ export default function AdminEnrollmentsPage() {
                           borderRadius: '50px',
                           fontSize: '0.75rem',
                           fontWeight: 600,
-                          background: enrollment.completedAt ? '#dcfce7' : enrollment.progressPercent && enrollment.progressPercent > 0 ? '#dbeafe' : '#f1f5f9',
-                          color: enrollment.completedAt ? '#16a34a' : enrollment.progressPercent && enrollment.progressPercent > 0 ? '#2563eb' : '#64748b',
+                          background: enrollment.completedAt ? 'var(--color-success-soft)' : enrollment.progressPercent && enrollment.progressPercent > 0 ? 'var(--secondary)' : 'var(--muted)',
+                          color: enrollment.completedAt ? 'var(--color-success-strong)' : enrollment.progressPercent && enrollment.progressPercent > 0 ? 'var(--primary)' : 'var(--muted-foreground)',
                         }}>
                           {enrollment.completedAt ? 'เรียนจบ' : enrollment.progressPercent && enrollment.progressPercent > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}
                         </span>
@@ -662,8 +669,8 @@ export default function AdminEnrollmentsPage() {
                           disabled={updating === enrollment.id}
                           style={{
                             padding: '6px 12px',
-                            background: '#fef2f2',
-                            color: '#dc2626',
+                            background: 'var(--color-error-soft)',
+                            color: 'var(--color-error-strong)',
                             border: 'none',
                             borderRadius: '6px',
                             fontSize: '0.75rem',
@@ -688,23 +695,23 @@ export default function AdminEnrollmentsPage() {
                 alignItems: 'center',
                 gap: '8px',
                 padding: '16px',
-                borderTop: '1px solid #e2e8f0',
+                borderTop: '1px solid var(--border)',
               }}>
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   style={{
                     padding: '8px 16px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '6px',
-                    background: 'white',
+                    background: 'var(--card)',
                     cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
                     opacity: currentPage === 1 ? 0.5 : 1,
                   }}
                 >
                   ก่อนหน้า
                 </button>
-                <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                   หน้า {currentPage} จาก {pagination.totalPages}
                 </span>
                 <button
@@ -712,9 +719,9 @@ export default function AdminEnrollmentsPage() {
                   disabled={currentPage === pagination.totalPages}
                   style={{
                     padding: '8px 16px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '6px',
-                    background: 'white',
+                    background: 'var(--card)',
                     cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
                     opacity: currentPage === pagination.totalPages ? 0.5 : 1,
                   }}

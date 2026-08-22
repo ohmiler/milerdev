@@ -80,7 +80,7 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
               maxHeight: '180px',
               borderRadius: '8px',
               objectFit: 'cover',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--border)',
             }}
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
@@ -92,11 +92,11 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
               onClick={() => fileInputRef.current?.click()}
               style={{
                 padding: '6px 12px',
-                background: '#f1f5f9',
-                border: '1px solid #e2e8f0',
+                background: 'var(--muted)',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 fontSize: '0.813rem',
-                color: '#475569',
+                color: 'var(--muted-foreground)',
                 cursor: 'pointer',
               }}
             >
@@ -107,11 +107,11 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
               onClick={handleRemove}
               style={{
                 padding: '6px 12px',
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
+                background: 'var(--color-error-soft)',
+                border: '1px solid var(--color-error-soft)',
                 borderRadius: '6px',
                 fontSize: '0.813rem',
-                color: '#dc2626',
+                color: 'var(--color-error-strong)',
                 cursor: 'pointer',
               }}
             >
@@ -126,11 +126,11 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
               style={{
                 width: '100%',
                 padding: '6px 10px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 fontSize: '0.75rem',
-                color: '#94a3b8',
-                background: '#f8fafc',
+                color: 'var(--muted-foreground)',
+                background: 'var(--muted)',
               }}
             />
           </div>
@@ -142,37 +142,35 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           style={{
-            border: `2px dashed ${dragOver ? '#2563eb' : '#dbe5f4'}`,
+            border: `2px dashed ${dragOver ? 'var(--primary)' : 'var(--border)'}`,
             borderRadius: '18px',
             padding: '38px 24px',
             textAlign: 'center',
             cursor: uploading ? 'wait' : 'pointer',
-            background: dragOver ? 'linear-gradient(180deg, #eff6ff, #ffffff)' : 'linear-gradient(180deg, #ffffff, #f8fafc)',
+            background: dragOver ? 'var(--secondary)' : 'var(--card)',
             transition: 'all 0.2s',
-            boxShadow: dragOver ? '0 14px 24px rgba(37,99,235,0.08)' : 'inset 0 1px 0 rgba(255,255,255,0.82)',
+            outline: dragOver ? '3px solid color-mix(in oklch, var(--ring) 24%, transparent)' : 'none',
           }}
         >
           {uploading ? (
             <div>
-              <div style={{
+              <div className="admin-upload-spinner" style={{
                 width: '32px',
                 height: '32px',
-                border: '3px solid #e2e8f0',
-                borderTop: '3px solid #2563eb',
+                border: '3px solid var(--border)',
+                borderTop: '3px solid var(--primary)',
                 borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
                 margin: '0 auto 12px',
               }} />
-              <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>กำลังอัปโหลด...</p>
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', margin: 0 }}>กำลังอัปโหลด...</p>
             </div>
           ) : (
             <div>
               <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
-              <p style={{ color: '#475569', fontSize: '0.875rem', margin: '0 0 4px' }}>
+              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', margin: '0 0 4px' }}>
                 คลิกหรือลากไฟล์มาวาง
               </p>
-              <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0 }}>
+              <p style={{ color: 'var(--muted-foreground)', fontSize: '0.75rem', margin: 0 }}>
                 JPG, PNG, WEBP, GIF (สูงสุด 10MB)
               </p>
             </div>
@@ -181,7 +179,7 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
       )}
 
       {error && (
-        <p style={{ color: '#dc2626', fontSize: '0.813rem', marginTop: '8px' }}>{error}</p>
+        <p style={{ color: 'var(--color-error-strong)', fontSize: '0.813rem', marginTop: '8px' }}>{error}</p>
       )}
     </div>
   );

@@ -1,560 +1,121 @@
 'use client';
 
-import { useState } from 'react';
+import { ExternalLink, Menu, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { adminAllLinks, adminPrimaryLinks, adminSecondaryLinkGroups } from '@/components/admin/adminNav';
+
 import AdminNavIcon from '@/components/admin/AdminNavIcon';
+import { adminPrimaryLinks, adminSecondaryLinkGroups, getAdminNavTitle, isAdminNavActive } from '@/components/admin/adminNav';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 interface AdminHeaderProps {
   userName: string;
 }
 
 export default function AdminHeader({ userName }: AdminHeaderProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  const isActive = (href: string, exact?: boolean) => {
-    if (exact) return pathname === href;
-    return pathname.startsWith(href);
-  };
-
-  const exactMatch = adminAllLinks.find((link) => pathname === link.href);
-  const activeTitle = exactMatch?.label || adminAllLinks.find((link) => isActive(link.href, link.exact))?.label || 'Admin';
+  const activeTitle = getAdminNavTitle(pathname);
   const initial = userName.slice(0, 1).toUpperCase();
+  const linkClass = (active: boolean) => cn(
+    'flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors',
+    active ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+  );
 
   return (
     <>
-      <header className="admin-topbar">
-        <div className="admin-topbar-title">
-          <h1>{activeTitle}</h1>
-          <p>Welcome back, {userName}</p>
+      <header className="sticky top-0 z-30 hidden min-h-20 items-center justify-between gap-4 border-b border-border bg-background/95 px-7 backdrop-blur lg:flex">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground">ศูนย์จัดการ MilerDev</p>
+          <h1 className="mt-1 font-heading text-lg font-semibold text-foreground">{activeTitle}</h1>
         </div>
-
-        <label className="admin-topbar-search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="11" cy="11" r="7" />
-            <path d="M21 21l-4.3-4.3" />
-          </svg>
-          <input type="search" placeholder="Search courses, students, payments..." />
-          <span>Ctrl K</span>
-        </label>
-
-        <div className="admin-topbar-actions">
-          <Link href="/admin/courses/new" className="admin-new-button">
-            <span>+</span>
-            New
-          </Link>
-          <button type="button" aria-label="Notifications" className="admin-icon-button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.7 21a2 2 0 01-3.4 0" />
-            </svg>
-            <i>3</i>
-          </button>
-          <Link href="/admin/settings" className="admin-profile-chip" aria-label="Admin profile">
-            <span>{initial}</span>
-            <b />
-          </Link>
-        </div>
+        <Link href="/admin/settings" aria-label="เปิดการตั้งค่าผู้ดูแลระบบ" className="flex items-center gap-3 rounded-lg p-1.5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+          <div className="hidden text-right xl:block">
+            <strong className="block max-w-52 truncate text-sm font-medium text-foreground">{userName}</strong>
+            <span className="block text-xs text-muted-foreground">ผู้ดูแลระบบ</span>
+          </div>
+          <span className="grid size-10 place-items-center rounded-full bg-muted text-sm font-semibold text-foreground">{initial}</span>
+          <Settings className="size-4 text-muted-foreground" aria-hidden="true" />
+        </Link>
       </header>
 
-      <header className="admin-mobile-header">
-        <Link href="/admin" className="admin-mobile-brand">
-          <span>MD</span>
-          <div>
-            <strong>MilerDev</strong>
-            <small>{activeTitle}</small>
+      <header className="sticky top-0 z-40 flex min-h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur lg:hidden">
+        <Link href="/admin" className="flex min-w-0 items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-[0.68rem] font-black text-primary-foreground">MD</span>
+          <div className="min-w-0">
+            <strong className="block truncate text-sm font-semibold text-foreground">MilerDev</strong>
+            <span className="block truncate text-xs text-muted-foreground">{activeTitle}</span>
           </div>
         </Link>
 
-        <div className="admin-mobile-actions">
-          <Link href="/" className="admin-mobile-site" aria-label="ไปหน้าเว็บ">
-            &#8599;
-          </Link>
-          <Link href="/admin/courses/new" className="admin-mobile-new" aria-label="เพิ่มคอร์ส">
-            +
-          </Link>
-          <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open navigation">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-      </header>
+        <div className="flex items-center gap-1.5">
+          <Button asChild variant="ghost" size="icon-sm">
+            <Link href="/" aria-label="ไปหน้าเว็บไซต์"><ExternalLink /></Link>
+          </Button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon-sm" aria-label="เปิดเมนูผู้ดูแลระบบ"><Menu /></Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[min(88vw,22rem)] p-0">
+              <SheetHeader className="border-b border-border p-5 pr-14 text-left">
+                <SheetTitle>MilerDev Admin</SheetTitle>
+                <SheetDescription>เลือกส่วนที่ต้องการจัดการ</SheetDescription>
+              </SheetHeader>
 
-      {menuOpen ? (
-        <>
-          <button className="admin-mobile-overlay" type="button" aria-label="Close navigation overlay" onClick={() => setMenuOpen(false)} />
-          <nav className="admin-mobile-drawer" aria-label="Mobile admin navigation">
-            <div className="admin-mobile-drawer-head">
-              <Link href="/admin" onClick={() => setMenuOpen(false)} className="admin-mobile-brand">
-                <span>MD</span>
-                <div>
-                  <strong>MilerDev</strong>
-                  <small>Admin LMS</small>
-                </div>
-              </Link>
-              <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close navigation">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="admin-mobile-drawer-scroll">
-              <div className="admin-mobile-nav-group">
-                {adminPrimaryLinks.map((link) => {
-                  const active = isActive(link.href, link.exact);
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMenuOpen(false)}
-                      className={active ? 'admin-mobile-nav-link active' : 'admin-mobile-nav-link'}
-                    >
-                      <AdminNavIcon name={link.icon} />
-                      <span>{link.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {adminSecondaryLinkGroups.map((group) => (
-                <div className="admin-mobile-nav-group" key={group.title}>
-                  <h2>{group.title}</h2>
-                  {group.items.map((link) => {
-                    const active = isActive(link.href);
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setMenuOpen(false)}
-                        className={active ? 'admin-mobile-nav-link active' : 'admin-mobile-nav-link'}
-                      >
+              <nav aria-label="เมนูผู้ดูแลระบบบนมือถือ" className="flex-1 space-y-5 overflow-y-auto p-4">
+                <div className="space-y-1">
+                  {adminPrimaryLinks.map((link) => (
+                    <SheetClose asChild key={link.href}>
+                      <Link href={link.href} className={linkClass(isAdminNavActive(pathname, link))}>
                         <AdminNavIcon name={link.icon} />
                         <span>{link.label}</span>
                       </Link>
-                    );
-                  })}
+                    </SheetClose>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            <div className="admin-mobile-drawer-footer">
-              <Link href="/" onClick={() => setMenuOpen(false)} className="admin-mobile-site-link">
-                <span>&#8599;</span>
-                ไปหน้าเว็บ
-              </Link>
+                {adminSecondaryLinkGroups.map((group) => (
+                  <section key={group.title}>
+                    <h2 className="mb-1.5 px-3 text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{group.title}</h2>
+                    <div className="space-y-1">
+                      {group.items.map((link) => (
+                        <SheetClose asChild key={link.href}>
+                          <Link href={link.href} className={linkClass(isAdminNavActive(pathname, link))}>
+                            <AdminNavIcon name={link.icon} />
+                            <span>{link.label}</span>
+                          </Link>
+                        </SheetClose>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </nav>
 
-              <div className="admin-mobile-user">
-                <span>{initial}</span>
-                <div>
-                  <strong>{userName}</strong>
-                  <small>Admin</small>
-                </div>
-              </div>
-            </div>
-          </nav>
-        </>
-      ) : null}
-
-      <style jsx global>{`
-        .admin-topbar {
-          position: sticky;
-          top: 0;
-          z-index: 30;
-          min-height: 86px;
-          display: grid;
-          grid-template-columns: minmax(220px, 1fr) minmax(320px, 560px) auto;
-          gap: 22px;
-          align-items: center;
-          padding: 0 28px;
-          border-bottom: 1px solid #dbe8f2;
-          background: rgba(255, 255, 255, 0.86);
-          backdrop-filter: blur(18px);
-        }
-
-        .admin-topbar-title h1 {
-          margin: 0;
-          color: #102033;
-          font-size: 1.12rem;
-          line-height: 1.2;
-        }
-
-        .admin-topbar-title p {
-          margin: 5px 0 0;
-          color: #64758b;
-          font-size: 0.82rem;
-        }
-
-        .admin-topbar-search {
-          min-height: 44px;
-          display: grid;
-          grid-template-columns: 20px minmax(0, 1fr) auto;
-          gap: 10px;
-          align-items: center;
-          padding: 0 12px;
-          border: 1px solid #dbe8f2;
-          border-radius: 10px;
-          background: #ffffff;
-          box-shadow: 0 8px 20px rgba(16, 32, 51, 0.04);
-          color: #91a1b5;
-        }
-
-        .admin-topbar-search svg,
-        .admin-icon-button svg,
-        .admin-mobile-actions svg,
-        .admin-mobile-drawer-head button svg {
-          width: 20px;
-          height: 20px;
-        }
-
-        .admin-topbar-search input {
-          width: 100%;
-          border: 0;
-          outline: 0;
-          background: transparent;
-          color: #102033;
-          font-size: 0.88rem;
-        }
-
-        .admin-topbar-search span {
-          min-height: 24px;
-          display: inline-flex;
-          align-items: center;
-          border-radius: 6px;
-          background: #f2f7fc;
-          padding: 0 8px;
-          color: #64758b;
-          font-size: 0.72rem;
-          font-weight: 900;
-        }
-
-        .admin-topbar-actions {
-          display: flex;
-          gap: 12px;
-          align-items: center;
-        }
-
-        .admin-new-button {
-          min-height: 44px;
-          display: inline-flex;
-          gap: 8px;
-          align-items: center;
-          justify-content: center;
-          padding: 0 16px;
-          border-radius: 8px;
-          background: #02abff;
-          color: #ffffff;
-          text-decoration: none;
-          font-size: 0.84rem;
-          font-weight: 900;
-          box-shadow: 0 12px 24px rgba(2, 171, 255, 0.2);
-        }
-
-        .admin-new-button span {
-          font-size: 1.1rem;
-          line-height: 1;
-        }
-
-        .admin-icon-button {
-          position: relative;
-          width: 42px;
-          height: 42px;
-          display: grid;
-          place-items: center;
-          border: 1px solid #dbe8f2;
-          border-radius: 8px;
-          background: #ffffff;
-          color: #526981;
-          cursor: pointer;
-        }
-
-        .admin-icon-button i {
-          position: absolute;
-          top: -6px;
-          right: -5px;
-          min-width: 18px;
-          height: 18px;
-          display: grid;
-          place-items: center;
-          border-radius: 999px;
-          background: #02abff;
-          color: #ffffff;
-          font-size: 0.66rem;
-          font-style: normal;
-          font-weight: 900;
-        }
-
-        .admin-profile-chip {
-          position: relative;
-          width: 44px;
-          height: 44px;
-          display: grid;
-          place-items: center;
-          border-radius: 999px;
-          background: linear-gradient(135deg, #102033, #34465c);
-          color: #ffffff;
-          text-decoration: none;
-          font-weight: 900;
-        }
-
-        .admin-profile-chip b {
-          position: absolute;
-          right: 1px;
-          bottom: 2px;
-          width: 11px;
-          height: 11px;
-          border: 2px solid #ffffff;
-          border-radius: 999px;
-          background: #11a66a;
-        }
-
-        .admin-mobile-header,
-        .admin-mobile-overlay,
-        .admin-mobile-drawer {
-          display: none;
-        }
-
-        .admin-mobile-brand {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-          min-width: 0;
-          color: #102033;
-          text-decoration: none;
-        }
-
-        .admin-mobile-brand > span {
-          width: 40px;
-          height: 40px;
-          display: grid;
-          place-items: center;
-          flex: 0 0 auto;
-          border-radius: 10px;
-          background: linear-gradient(135deg, #02abff, #0089d6);
-          color: #ffffff;
-          font-size: 0.78rem;
-          font-weight: 950;
-          letter-spacing: 0;
-          box-shadow: 0 12px 22px rgba(2, 171, 255, 0.2);
-        }
-
-        .admin-mobile-brand div,
-        .admin-mobile-user div {
-          min-width: 0;
-        }
-
-        .admin-mobile-brand strong,
-        .admin-mobile-user strong {
-          display: block;
-          color: #102033;
-          font-size: 0.9rem;
-          line-height: 1.2;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .admin-mobile-brand small,
-        .admin-mobile-user small {
-          display: block;
-          color: #64758b;
-          font-size: 0.72rem;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .admin-mobile-actions {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-
-        .admin-mobile-new,
-        .admin-mobile-site,
-        .admin-mobile-actions button,
-        .admin-mobile-drawer-head button {
-          width: 40px;
-          height: 40px;
-          display: grid;
-          place-items: center;
-          border: 1px solid #dbe8f2;
-          border-radius: 8px;
-          background: #ffffff;
-          color: #102033;
-          text-decoration: none;
-          cursor: pointer;
-          font-weight: 900;
-        }
-
-        .admin-mobile-site {
-          color: #0089d6;
-        }
-
-        .admin-mobile-new {
-          border-color: #02abff;
-          background: #02abff;
-          color: #ffffff;
-          font-size: 1.25rem;
-        }
-
-        @media (max-width: 1024px) {
-          .admin-topbar {
-            display: none;
-          }
-
-          .admin-mobile-header {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            min-height: 64px;
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            padding: 0 14px;
-            border-bottom: 1px solid #dbe8f2;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(18px);
-          }
-
-          .admin-mobile-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 49;
-            display: block;
-            border: 0;
-            background: rgba(16, 32, 51, 0.42);
-          }
-
-          .admin-mobile-drawer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            z-index: 50;
-            width: min(88vw, 320px);
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            border-right: 1px solid #dbe8f2;
-            background: #ffffff;
-            box-shadow: 0 20px 60px rgba(16, 32, 51, 0.22);
-          }
-
-          .admin-mobile-drawer-head {
-            min-height: 64px;
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: center;
-            padding: 0 16px;
-            border-bottom: 1px solid #e8f1f8;
-          }
-
-          .admin-mobile-drawer-scroll {
-            display: grid;
-            align-content: start;
-            gap: 18px;
-            overflow-y: auto;
-            padding: 14px;
-          }
-
-          .admin-mobile-nav-group {
-            display: grid;
-            gap: 4px;
-          }
-
-          .admin-mobile-nav-group h2 {
-            margin: 10px 10px 6px;
-            color: #91a1b5;
-            font-size: 0.68rem;
-            font-weight: 900;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-          }
-
-          .admin-mobile-nav-link {
-            min-height: 42px;
-            display: flex !important;
-            gap: 12px;
-            align-items: center;
-            border-radius: 8px;
-            padding: 0 12px;
-            color: #526981;
-            text-decoration: none;
-            font-size: 0.86rem;
-            font-weight: 750;
-          }
-
-          .admin-mobile-nav-link svg {
-            width: 18px !important;
-            height: 18px !important;
-            flex: 0 0 auto;
-          }
-
-          .admin-mobile-nav-link span {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-
-          .admin-mobile-nav-link.active {
-            background: linear-gradient(135deg, #02abff, #0089d6);
-            color: #ffffff;
-            box-shadow: 0 12px 24px rgba(2, 171, 255, 0.2);
-          }
-
-          .admin-mobile-drawer-footer {
-            display: grid;
-            gap: 10px;
-            padding: 12px 16px 14px;
-            border-top: 1px solid #e8f1f8;
-            background: #ffffff;
-          }
-
-          .admin-mobile-site-link {
-            min-height: 38px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            border: 1px solid #dbe8f2;
-            border-radius: 8px;
-            background: #ffffff;
-            color: #102033;
-            text-decoration: none;
-            font-size: 0.82rem;
-            font-weight: 850;
-          }
-
-          .admin-mobile-site-link span {
-            color: #0089d6;
-            font-weight: 900;
-          }
-
-          .admin-mobile-user {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-          }
-
-          .admin-mobile-user > span {
-            width: 36px;
-            height: 36px;
-            display: grid;
-            place-items: center;
-            flex: 0 0 auto;
-            border-radius: 999px;
-            background: #eefaff;
-            color: #0089d6;
-            font-weight: 900;
-          }
-        }
-      `}</style>
+              <SheetFooter className="border-t border-border p-4">
+                <SheetClose asChild>
+                  <Link href="/admin/settings" className="flex items-center gap-3 rounded-lg p-1">
+                    <span className="grid size-9 place-items-center rounded-full bg-muted text-xs font-semibold">{initial}</span>
+                    <div className="min-w-0 text-left">
+                      <strong className="block truncate text-sm font-medium">{userName}</strong>
+                      <span className="block text-xs text-muted-foreground">ผู้ดูแลระบบ</span>
+                    </div>
+                  </Link>
+                </SheetClose>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </header>
     </>
   );
 }

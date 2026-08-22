@@ -113,7 +113,7 @@ export default function AdminAffiliateBannersPage() {
     const inputStyle: React.CSSProperties = {
         width: '100%',
         padding: '10px 14px',
-        border: '1px solid #d1d5db',
+        border: '1px solid var(--border)',
         borderRadius: '8px',
         fontSize: '0.9375rem',
     };
@@ -122,7 +122,7 @@ export default function AdminAffiliateBannersPage() {
         display: 'block',
         fontWeight: 600,
         marginBottom: '6px',
-        color: '#374151',
+        color: 'var(--foreground)',
         fontSize: '0.875rem',
     };
 
@@ -131,10 +131,10 @@ export default function AdminAffiliateBannersPage() {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>
                         Affiliate Banners
                     </h1>
-                    <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                    <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                         จัดการ Banner โฆษณาสินค้าและบริการแนะนำ
                     </p>
                 </div>
@@ -142,8 +142,8 @@ export default function AdminAffiliateBannersPage() {
                     onClick={() => { setShowForm(true); setEditingId(null); setForm(defaultForm); setError(''); }}
                     style={{
                         padding: '10px 20px',
-                        background: '#2563eb',
-                        color: 'white',
+                        background: 'var(--primary)',
+                        color: 'var(--primary-foreground)',
                         border: 'none',
                         borderRadius: '8px',
                         fontWeight: 600,
@@ -157,9 +157,9 @@ export default function AdminAffiliateBannersPage() {
             {/* Form Modal */}
             {showForm && (
                 <div style={{
-                    background: 'white',
+                    background: 'var(--card)',
                     borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     padding: '24px',
                     marginBottom: '24px',
                 }}>
@@ -168,7 +168,7 @@ export default function AdminAffiliateBannersPage() {
                     </h2>
 
                     {error && (
-                        <div style={{ background: '#fef2f2', color: '#dc2626', padding: '10px 14px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>
+                        <div style={{ background: 'var(--color-error-soft)', color: 'var(--color-error-strong)', padding: '10px 14px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>
                             {error}
                         </div>
                     )}
@@ -236,7 +236,7 @@ export default function AdminAffiliateBannersPage() {
                                 onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm); }}
                                 style={{
                                     padding: '10px 20px',
-                                    background: '#f1f5f9',
+                                    background: 'var(--muted)',
                                     border: 'none',
                                     borderRadius: '8px',
                                     cursor: 'pointer',
@@ -250,8 +250,8 @@ export default function AdminAffiliateBannersPage() {
                                 disabled={saving}
                                 style={{
                                     padding: '10px 20px',
-                                    background: '#2563eb',
-                                    color: 'white',
+                                    background: 'var(--primary)',
+                                    color: 'var(--primary-foreground)',
                                     border: 'none',
                                     borderRadius: '8px',
                                     cursor: 'pointer',
@@ -268,18 +268,18 @@ export default function AdminAffiliateBannersPage() {
 
             {/* Banner List */}
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>กำลังโหลด...</div>
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted-foreground)' }}>กำลังโหลด...</div>
             ) : banners.length === 0 ? (
                 <div style={{
                     textAlign: 'center',
                     padding: '60px 20px',
-                    background: 'white',
+                    background: 'var(--card)',
                     borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                 }}>
                     <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🖼️</div>
-                    <h3 style={{ fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>ยังไม่มี Banner</h3>
-                    <p style={{ color: '#64748b' }}>เพิ่ม Banner แรกเพื่อโปรโมทสินค้าและบริการ</p>
+                    <h3 style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: '8px' }}>ยังไม่มี Banner</h3>
+                    <p style={{ color: 'var(--muted-foreground)' }}>เพิ่ม Banner แรกเพื่อโปรโมทสินค้าและบริการ</p>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -290,9 +290,9 @@ export default function AdminAffiliateBannersPage() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '16px',
-                                background: 'white',
+                                background: 'var(--card)',
                                 borderRadius: '12px',
-                                border: '1px solid #e2e8f0',
+                                border: '1px solid var(--border)',
                                 padding: '16px',
                                 flexWrap: 'wrap',
                             }}
@@ -306,18 +306,18 @@ export default function AdminAffiliateBannersPage() {
                                     height: '90px',
                                     objectFit: 'cover',
                                     borderRadius: '8px',
-                                    background: '#f1f5f9',
+                                    background: 'var(--muted)',
                                     flexShrink: 0,
                                 }}
                             />
 
                             {/* Info */}
                             <div style={{ flex: 1, minWidth: '200px' }}>
-                                <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>
+                                <div style={{ fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px' }}>
                                     {banner.title}
                                 </div>
-                                <div style={{ fontSize: '0.8125rem', color: '#64748b', marginBottom: '4px' }}>
-                                    <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#2563eb' }}>
+                                <div style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)', marginBottom: '4px' }}>
+                                    <a href={banner.linkUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>
                                         {banner.linkUrl.length > 50 ? banner.linkUrl.slice(0, 50) + '...' : banner.linkUrl}
                                     </a>
                                 </div>
@@ -327,12 +327,12 @@ export default function AdminAffiliateBannersPage() {
                                         borderRadius: '50px',
                                         fontSize: '0.75rem',
                                         fontWeight: 600,
-                                        background: banner.isActive ? '#dcfce7' : '#f1f5f9',
-                                        color: banner.isActive ? '#16a34a' : '#94a3b8',
+                                        background: banner.isActive ? 'var(--color-success-soft)' : 'var(--muted)',
+                                        color: banner.isActive ? 'var(--color-success-strong)' : 'var(--muted-foreground)',
                                     }}>
                                         {banner.isActive ? 'แสดง' : 'ซ่อน'}
                                     </span>
-                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                                         ลำดับ: {banner.orderIndex}
                                     </span>
                                 </div>
@@ -344,8 +344,8 @@ export default function AdminAffiliateBannersPage() {
                                     onClick={() => handleToggleActive(banner)}
                                     style={{
                                         padding: '6px 12px',
-                                        background: banner.isActive ? '#fef3c7' : '#dcfce7',
-                                        color: banner.isActive ? '#92400e' : '#166534',
+                                        background: banner.isActive ? 'var(--color-warning-soft)' : 'var(--color-success-soft)',
+                                        color: banner.isActive ? 'var(--color-warning-strong)' : 'var(--color-success-strong)',
                                         border: 'none',
                                         borderRadius: '6px',
                                         cursor: 'pointer',
@@ -359,8 +359,8 @@ export default function AdminAffiliateBannersPage() {
                                     onClick={() => handleEdit(banner)}
                                     style={{
                                         padding: '6px 12px',
-                                        background: '#eff6ff',
-                                        color: '#2563eb',
+                                        background: 'var(--secondary)',
+                                        color: 'var(--primary)',
                                         border: 'none',
                                         borderRadius: '6px',
                                         cursor: 'pointer',
@@ -375,8 +375,8 @@ export default function AdminAffiliateBannersPage() {
                                     disabled={deleting === banner.id}
                                     style={{
                                         padding: '6px 12px',
-                                        background: '#fef2f2',
-                                        color: '#dc2626',
+                                        background: 'var(--color-error-soft)',
+                                        color: 'var(--color-error-strong)',
                                         border: 'none',
                                         borderRadius: '6px',
                                         cursor: 'pointer',

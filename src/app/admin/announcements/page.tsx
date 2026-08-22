@@ -170,10 +170,10 @@ export default function AdminAnnouncementsPage() {
 
   const getTypeStyle = (type: string) => {
     switch (type) {
-      case 'success': return { background: '#dcfce7', color: '#16a34a' };
-      case 'warning': return { background: '#fef3c7', color: '#d97706' };
-      case 'error': return { background: '#fef2f2', color: '#dc2626' };
-      default: return { background: '#dbeafe', color: '#2563eb' };
+      case 'success': return { background: 'var(--color-success-soft)', color: 'var(--color-success-strong)' };
+      case 'warning': return { background: 'var(--color-warning-soft)', color: 'var(--color-warning-strong)' };
+      case 'error': return { background: 'var(--color-error-soft)', color: 'var(--color-error-strong)' };
+      default: return { background: 'var(--secondary)', color: 'var(--primary)' };
     }
   };
 
@@ -207,17 +207,17 @@ export default function AdminAnnouncementsPage() {
         gap: '16px',
       }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--foreground)', marginBottom: '8px' }}>
             ประกาศ
           </h1>
-          <p style={{ color: '#64748b' }}>จัดการประกาศและข่าวสารสำหรับผู้ใช้</p>
+          <p style={{ color: 'var(--muted-foreground)' }}>จัดการประกาศและข่าวสารสำหรับผู้ใช้</p>
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
           style={{
             padding: '12px 24px',
-            background: '#2563eb',
-            color: 'white',
+            background: 'var(--primary)',
+            color: 'var(--primary-foreground)',
             border: 'none',
             borderRadius: '8px',
             fontWeight: 500,
@@ -236,17 +236,17 @@ export default function AdminAnnouncementsPage() {
           gap: '16px',
           marginBottom: '24px',
         }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.total}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ทั้งหมด</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--foreground)' }}>{stats.total}</div>
           </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>เปิดใช้งาน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{stats.active}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>เปิดใช้งาน</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-success-strong)' }}>{stats.active}</div>
           </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ปิดใช้งาน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#94a3b8' }}>{stats.inactive}</div>
+          <div style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px' }}>
+            <div style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', marginBottom: '4px' }}>ปิดใช้งาน</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--muted-foreground)' }}>{stats.inactive}</div>
           </div>
         </div>
       )}
@@ -258,9 +258,9 @@ export default function AdminAnnouncementsPage() {
           onChange={(e) => setStatusFilter(e.target.value)}
           style={{
             padding: '10px 16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
-            background: 'white',
+            background: 'var(--card)',
             fontSize: '0.875rem',
           }}
         >
@@ -278,7 +278,7 @@ export default function AdminAnnouncementsPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
+          background: 'color-mix(in oklch, var(--foreground) 48%, transparent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -286,7 +286,7 @@ export default function AdminAnnouncementsPage() {
           padding: '16px',
         }}>
           <div style={{
-            background: 'white',
+            background: 'var(--card)',
             borderRadius: '12px',
             padding: '24px',
             width: '100%',
@@ -294,13 +294,13 @@ export default function AdminAnnouncementsPage() {
             maxHeight: '90vh',
             overflow: 'auto',
           }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px', color: '#1e293b' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px', color: 'var(--foreground)' }}>
               {editingId ? 'แก้ไขประกาศ' : 'สร้างประกาศใหม่'}
             </h2>
             
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+                <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)' }}>
                   หัวข้อ *
                 </label>
                 <input
@@ -310,7 +310,7 @@ export default function AdminAnnouncementsPage() {
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
                     fontSize: '1rem',
                   }}
@@ -318,7 +318,7 @@ export default function AdminAnnouncementsPage() {
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+                <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)' }}>
                   เนื้อหา *
                 </label>
                 <textarea
@@ -328,7 +328,7 @@ export default function AdminAnnouncementsPage() {
                   style={{
                     width: '100%',
                     padding: '10px 14px',
-                    border: '1px solid #e2e8f0',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
                     fontSize: '1rem',
                     resize: 'vertical',
@@ -338,7 +338,7 @@ export default function AdminAnnouncementsPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)' }}>
                     ประเภท
                   </label>
                   <select
@@ -347,9 +347,9 @@ export default function AdminAnnouncementsPage() {
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
-                      background: 'white',
+                      background: 'var(--card)',
                     }}
                   >
                     <option value="info">ข้อมูล</option>
@@ -359,7 +359,7 @@ export default function AdminAnnouncementsPage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)' }}>
                     กลุ่มเป้าหมาย
                   </label>
                   <select
@@ -368,9 +368,9 @@ export default function AdminAnnouncementsPage() {
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
-                      background: 'white',
+                      background: 'var(--card)',
                     }}
                   >
                     <option value="all">ทุกคน</option>
@@ -383,7 +383,7 @@ export default function AdminAnnouncementsPage() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)' }}>
                     เริ่มแสดง (ถ้ามี)
                   </label>
                   <input
@@ -393,13 +393,13 @@ export default function AdminAnnouncementsPage() {
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
+                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: 'var(--foreground)' }}>
                     สิ้นสุด (ถ้ามี)
                   </label>
                   <input
@@ -409,7 +409,7 @@ export default function AdminAnnouncementsPage() {
                     style={{
                       width: '100%',
                       padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
+                      border: '1px solid var(--border)',
                       borderRadius: '8px',
                     }}
                   />
@@ -424,7 +424,7 @@ export default function AdminAnnouncementsPage() {
                     onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
                     style={{ width: '18px', height: '18px' }}
                   />
-                  <span style={{ color: '#374151' }}>เปิดใช้งาน</span>
+                  <span style={{ color: 'var(--foreground)' }}>เปิดใช้งาน</span>
                 </label>
               </div>
 
@@ -434,8 +434,8 @@ export default function AdminAnnouncementsPage() {
                   onClick={() => { setShowForm(false); resetForm(); }}
                   style={{
                     padding: '10px 20px',
-                    background: '#f1f5f9',
-                    color: '#475569',
+                    background: 'var(--muted)',
+                    color: 'var(--muted-foreground)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: 'pointer',
@@ -448,8 +448,8 @@ export default function AdminAnnouncementsPage() {
                   disabled={saving}
                   style={{
                     padding: '10px 20px',
-                    background: '#2563eb',
-                    color: 'white',
+                    background: 'var(--primary)',
+                    color: 'var(--primary-foreground)',
                     border: 'none',
                     borderRadius: '8px',
                     cursor: saving ? 'not-allowed' : 'pointer',
@@ -466,17 +466,16 @@ export default function AdminAnnouncementsPage() {
 
       {/* Announcements List */}
       <div style={{
-        background: 'white',
+        background: 'var(--card)',
         borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         overflow: 'hidden',
       }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             กำลังโหลด...
           </div>
         ) : announcements.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--muted-foreground)' }}>
             ยังไม่มีประกาศ
           </div>
         ) : (
@@ -486,7 +485,7 @@ export default function AdminAnnouncementsPage() {
                 key={announcement.id}
                 style={{
                   padding: '20px',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: '1px solid var(--muted)',
                   opacity: announcement.isActive ? 1 : 0.6,
                 }}
               >
@@ -506,8 +505,8 @@ export default function AdminAnnouncementsPage() {
                         padding: '4px 10px',
                         borderRadius: '50px',
                         fontSize: '0.75rem',
-                        background: '#f1f5f9',
-                        color: '#64748b',
+                        background: 'var(--muted)',
+                        color: 'var(--muted-foreground)',
                       }}>
                         {getRoleText(announcement.targetRole)}
                       </span>
@@ -516,22 +515,22 @@ export default function AdminAnnouncementsPage() {
                           padding: '4px 10px',
                           borderRadius: '50px',
                           fontSize: '0.75rem',
-                          background: '#fef2f2',
-                          color: '#dc2626',
+                          background: 'var(--color-error-soft)',
+                          color: 'var(--color-error-strong)',
                         }}>
                           ปิดใช้งาน
                         </span>
                       )}
                     </div>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--foreground)', marginBottom: '8px' }}>
                       {announcement.title}
                     </h3>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '8px', lineHeight: 1.6 }}>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '8px', lineHeight: 1.6 }}>
                       {announcement.content.length > 200 
                         ? announcement.content.substring(0, 200) + '...' 
                         : announcement.content}
                     </p>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                       สร้างโดย {announcement.creatorName || announcement.creatorEmail || 'ไม่ทราบ'} • 
                       {new Date(announcement.createdAt).toLocaleDateString('th-TH', {
                         year: 'numeric',
@@ -545,8 +544,8 @@ export default function AdminAnnouncementsPage() {
                       onClick={() => handleToggleActive(announcement)}
                       style={{
                         padding: '6px 12px',
-                        background: announcement.isActive ? '#fef2f2' : '#dcfce7',
-                        color: announcement.isActive ? '#dc2626' : '#16a34a',
+                        background: announcement.isActive ? 'var(--color-error-soft)' : 'var(--color-success-soft)',
+                        color: announcement.isActive ? 'var(--color-error-strong)' : 'var(--color-success-strong)',
                         border: 'none',
                         borderRadius: '6px',
                         fontSize: '0.75rem',
@@ -559,8 +558,8 @@ export default function AdminAnnouncementsPage() {
                       onClick={() => handleEdit(announcement)}
                       style={{
                         padding: '6px 12px',
-                        background: '#eff6ff',
-                        color: '#2563eb',
+                        background: 'var(--secondary)',
+                        color: 'var(--primary)',
                         border: 'none',
                         borderRadius: '6px',
                         fontSize: '0.75rem',
@@ -574,8 +573,8 @@ export default function AdminAnnouncementsPage() {
                       disabled={deleting === announcement.id}
                       style={{
                         padding: '6px 12px',
-                        background: '#fef2f2',
-                        color: '#dc2626',
+                        background: 'var(--color-error-soft)',
+                        color: 'var(--color-error-strong)',
                         border: 'none',
                         borderRadius: '6px',
                         fontSize: '0.75rem',

@@ -37,8 +37,8 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
               borderRadius: '12px',
               background: displayColor,
               cursor: 'pointer',
-              border: '3px solid #dbe5f4',
-              boxShadow: '0 10px 18px rgba(15, 23, 42, 0.08)',
+              border: '3px solid var(--border)',
+              outline: showPicker ? '3px solid color-mix(in oklch, var(--ring) 24%, transparent)' : 'none',
             }}
           />
           {showPicker && (
@@ -47,11 +47,10 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
               top: '56px',
               left: 0,
               zIndex: 100,
-              background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
+              background: 'var(--card)',
               borderRadius: '12px',
-              boxShadow: '0 18px 32px rgba(15, 23, 42, 0.12)',
               padding: '16px',
-              border: '1px solid #dbe5f4',
+              border: '1px solid var(--border)',
             }}>
               <input
                 type="color"
@@ -73,7 +72,7 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
                   marginTop: '8px',
                   width: '100%',
                   padding: '8px',
-                  background: '#f1f5f9',
+                  background: 'var(--muted)',
                   border: 'none',
                   borderRadius: '8px',
                   cursor: 'pointer',
@@ -97,13 +96,13 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
           style={{
             width: '100px',
             padding: '10px 12px',
-            border: '1px solid #dbe5f4',
+            border: '1px solid var(--border)',
             borderRadius: '8px',
             fontFamily: 'monospace',
             fontSize: '0.9375rem',
           }}
         />
-        <span style={{ fontSize: '0.8125rem', color: '#94a3b8' }}>คลิกสีเพื่อเปิด color picker หรือพิมพ์ hex code</span>
+        <span style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>คลิกสีเพื่อเปิด color picker หรือพิมพ์ hex code</span>
       </div>
 
       {/* Preset swatches */}
@@ -119,7 +118,7 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
               height: '32px',
               borderRadius: '8px',
               background: color,
-              border: value === color ? '3px solid #1e293b' : '2px solid #e2e8f0',
+              border: value === color ? '3px solid var(--foreground)' : '2px solid var(--border)',
               cursor: 'pointer',
               transition: 'transform 0.15s',
               transform: value === color ? 'scale(1.15)' : 'scale(1)',
@@ -127,7 +126,7 @@ export default function CertificateColorPicker({ value, onChange }: Props) {
           />
         ))}
       </div>
-      <p style={{ marginTop: '8px', fontSize: '0.8125rem', color: '#64748b' }}>
+      <p style={{ marginTop: '8px', fontSize: '0.8125rem', color: 'var(--muted-foreground)' }}>
         เลือกสีด่วนจากด้านบน หรือกำหนดสีเองได้อิสระ — สีนี้จะใช้เป็นธีมใบรับรองของคอร์สนี้
       </p>
     </div>

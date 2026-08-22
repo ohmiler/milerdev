@@ -59,9 +59,9 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
         return (
             <div style={{
                 padding: '12px 16px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--border)',
                 borderRadius: '8px',
-                color: '#94a3b8',
+                color: 'var(--muted-foreground)',
                 fontSize: '0.875rem',
             }}>
                 กำลังโหลดแท็ก...
@@ -87,7 +87,7 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                     minHeight: '48px',
                     padding: '8px 12px',
                     border: '1px solid',
-                    borderColor: isOpen ? '#02abff' : '#dbe8f2',
+                    borderColor: isOpen ? 'var(--primary)' : 'var(--border)',
                     borderRadius: '8px',
                     cursor: 'pointer',
                     display: 'flex',
@@ -95,9 +95,9 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                     gap: '6px',
                     alignItems: 'center',
                     textAlign: 'left',
-                    background: 'linear-gradient(180deg, #ffffff, #f7fbff)',
+                    background: isOpen ? 'var(--secondary)' : 'var(--card)',
                     transition: 'border-color 0.15s, box-shadow 0.15s',
-                    boxShadow: isOpen ? '0 0 0 4px rgba(2, 171, 255, 0.18)' : 'inset 0 1px 0 rgba(255,255,255,0.82)',
+                    outline: isOpen ? '3px solid color-mix(in oklch, var(--ring) 30%, transparent)' : 'none',
                 }}
             >
                 {selectedTags.length > 0 ? (
@@ -109,8 +109,8 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                 alignItems: 'center',
                                 gap: '4px',
                                 padding: '4px 10px',
-                                background: '#eefaff',
-                                color: '#0089d6',
+                                background: 'var(--secondary)',
+                                color: 'var(--primary)',
                                 borderRadius: '8px',
                                 fontSize: '0.8125rem',
                                 fontWeight: 500,
@@ -123,7 +123,7 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                 style={{
                                     background: 'none',
                                     border: 'none',
-                                    color: '#0089d6',
+                                    color: 'var(--primary)',
                                     cursor: 'pointer',
                                     padding: '0 2px',
                                     fontSize: '1rem',
@@ -135,7 +135,7 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                         </span>
                     ))
                 ) : (
-                    <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                    <span style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>
                         คลิกเพื่อเลือกแท็ก...
                     </span>
                 )}
@@ -149,17 +149,16 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                     left: 0,
                     right: 0,
                     marginTop: '4px',
-                    background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
-                    border: '1px solid #dbe5f4',
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
                     borderRadius: '8px',
-                    boxShadow: '0 18px 30px rgba(15, 23, 42, 0.08)',
                     zIndex: 1000,
                     maxHeight: '240px',
                     display: 'flex',
                     flexDirection: 'column',
                 }}>
                     {/* Search */}
-                    <div style={{ padding: '8px', borderBottom: '1px solid #f1f5f9' }}>
+                    <div style={{ padding: '8px', borderBottom: '1px solid var(--muted)' }}>
                         <input
                             type="text"
                             value={search}
@@ -169,7 +168,7 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                             style={{
                                 width: '100%',
                                 padding: '8px 12px',
-                                border: '1px solid #e2e8f0',
+                                border: '1px solid var(--border)',
                                 borderRadius: '6px',
                                 fontSize: '0.875rem',
                                 outline: 'none',
@@ -184,7 +183,7 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                             <div style={{
                                 padding: '16px',
                                 textAlign: 'center',
-                                color: '#94a3b8',
+                                color: 'var(--muted-foreground)',
                                 fontSize: '0.875rem',
                             }}>
                                 {allTags.length === 0 ? 'ยังไม่มีแท็ก — ไปสร้างที่หน้าจัดการแท็กก่อน' : 'ไม่พบแท็กที่ค้นหา'}
@@ -204,16 +203,16 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '10px',
-                                            background: isSelected ? '#eefaff' : 'transparent',
+                                            background: isSelected ? 'var(--secondary)' : 'transparent',
                                             border: 'none',
                                             textAlign: 'left',
                                             transition: 'background 0.1s',
                                         }}
                                         onMouseEnter={(e) => {
-                                            if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = '#f7fbff';
+                                            if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--muted)';
                                         }}
                                         onMouseLeave={(e) => {
-                                            (e.currentTarget as HTMLButtonElement).style.background = isSelected ? '#eefaff' : 'transparent';
+                                            (e.currentTarget as HTMLButtonElement).style.background = isSelected ? 'var(--secondary)' : 'transparent';
                                         }}
                                     >
                                         <div style={{
@@ -221,8 +220,8 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                             height: '18px',
                                             borderRadius: '4px',
                                             border: '2px solid',
-                                            borderColor: isSelected ? '#02abff' : '#cbd5e1',
-                                            background: isSelected ? '#02abff' : 'white',
+                                            borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
+                                            background: isSelected ? 'var(--primary)' : 'white',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -236,7 +235,7 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
                                         </div>
                                         <span style={{
                                             fontSize: '0.875rem',
-                                            color: isSelected ? '#0089d6' : '#374151',
+                                            color: isSelected ? 'var(--primary)' : 'var(--foreground)',
                                             fontWeight: isSelected ? 500 : 400,
                                         }}>
                                             {tag.name}

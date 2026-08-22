@@ -6,10 +6,10 @@ import type {
   CourseLifecycleAction,
   CourseStatus,
 } from '@/lib/course-lifecycle';
+import { AdminStatusBadge } from '@/components/admin/ui/AdminOperations';
 import DialogShell from '@/components/ui/DialogShell';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import styles from './AdminCourseLifecycleControls.module.css';
 
 type LifecyclePresentation = {
   title: string;
@@ -70,10 +70,16 @@ export function getCourseLifecyclePresentation(action: CourseLifecycleAction) {
 }
 
 export function AdminCourseLifecycleBadge({ status }: { status: CourseStatus }) {
+  const tones = {
+    draft: 'warning',
+    published: 'success',
+    archived: 'neutral',
+  } as const;
+
   return (
-    <span className={styles.badge} data-course-status={status}>
+    <AdminStatusBadge tone={tones[status]} data-course-status={status}>
       {statusLabels[status]}
-    </span>
+    </AdminStatusBadge>
   );
 }
 
@@ -87,21 +93,22 @@ export function AdminCourseLifecycleActions({
   onRequest: (action: CourseLifecycleAction) => void;
 }) {
   return (
-    <div className={styles.actions} aria-label="เปลี่ยนสถานะคอร์ส">
+    <div className="inline-flex flex-wrap gap-1.5" aria-label="เปลี่ยนสถานะคอร์ส">
       {allowedActions[status].map((action) => {
         const presentation = actionPresentation[action];
         return (
-          <button
+          <Button
             key={action}
             type="button"
-            className={styles.action}
+            variant={action === 'publish' ? 'secondary' : action === 'archive' ? 'destructive' : 'outline'}
+            size="xs"
             data-action={action}
             onClick={() => onRequest(action)}
             disabled={pending}
             aria-label={`${presentation.actionLabel}`}
           >
             {pending ? 'กำลังเปลี่ยนสถานะ...' : presentation.actionLabel}
-          </button>
+          </Button>
         );
       })}
     </div>
@@ -137,10 +144,14 @@ export function CourseLifecycleDialog({
       description={`${courseTitle}: ${presentation.summary}`}
       body={(
         <>
-          <ul className={styles.impactList}>
+          <ul className="grid list-disc gap-2 pl-5 text-sm leading-6 text-muted-foreground">
             {presentation.impacts.map((impact) => <li key={impact}>{impact}</li>)}
           </ul>
-          {error ? <p className={styles.dialogError} role="alert">{error}</p> : null}
+          {error ? (
+            <p className="mt-3 rounded-lg border border-destructive/20 bg-[var(--color-error-soft)] p-3 text-sm font-semibold leading-6 text-[var(--color-error-strong)]" role="alert">
+              {error}
+            </p>
+          ) : null}
         </>
       )}
       role="alertdialog"
