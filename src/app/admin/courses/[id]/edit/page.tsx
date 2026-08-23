@@ -28,6 +28,10 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Progress } from '@/components/ui/progress';
 import { showToast } from '@/components/ui/Toast';
 import { transitionAdminCourse } from '@/lib/admin-course-lifecycle-client';
+import {
+  DEFAULT_CERTIFICATE_COLOR,
+  normalizeCertificateColor,
+} from '@/lib/certificate-color';
 import type { CourseLifecycleAction, CourseStatus } from '@/lib/course-lifecycle';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
@@ -51,7 +55,7 @@ export default function EditCoursePage() {
     price: '0',
     status: 'draft' as CourseStatus,
     thumbnailUrl: '',
-    certificateColor: 'var(--primary)',
+    certificateColor: DEFAULT_CERTIFICATE_COLOR,
     certificateHeaderImage: '',
     previewVideoUrl: '',
     promoPrice: '',
@@ -77,7 +81,7 @@ export default function EditCoursePage() {
             price: String(data.course.price || 0),
             status: data.course.status || 'draft',
             thumbnailUrl: data.course.thumbnailUrl || '',
-            certificateColor: data.course.certificateColor || 'var(--primary)',
+            certificateColor: normalizeCertificateColor(data.course.certificateColor),
             certificateHeaderImage: data.course.certificateHeaderImage || '',
             previewVideoUrl: data.course.previewVideoUrl || '',
             promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',

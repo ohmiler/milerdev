@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { DEFAULT_CERTIFICATE_COLOR } from '@/lib/certificate-color';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -36,7 +37,7 @@ export default function NewCoursePage() {
     price: '0',
     status: 'draft',
     thumbnailUrl: '',
-    certificateColor: 'var(--primary)',
+    certificateColor: DEFAULT_CERTIFICATE_COLOR,
   });
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);

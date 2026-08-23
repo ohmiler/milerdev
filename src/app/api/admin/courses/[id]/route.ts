@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { getAuditContext, logAudit } from '@/lib/auditLog';
 import { requireAdmin } from '@/lib/auth-helpers';
+import { normalizeCertificateColor } from '@/lib/certificate-color';
 import { CourseLifecycleError, courseLifecycleService } from '@/lib/course-lifecycle';
 import { db } from '@/lib/db';
 import { courses, courseTags, tags } from '@/lib/db/schema';
@@ -124,7 +125,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
         description: description !== undefined ? description : existingCourse.description,
         price: price !== undefined ? String(parseFloat(String(price)) || 0) : existingCourse.price,
         thumbnailUrl: thumbnailUrl !== undefined ? thumbnailUrl : existingCourse.thumbnailUrl,
-        certificateColor: certificateColor || existingCourse.certificateColor,
+        certificateColor: certificateColor !== undefined
+          ? normalizeCertificateColor(certificateColor)
+          : existingCourse.certificateColor,
         certificateHeaderImage: certificateHeaderImage !== undefined ? (certificateHeaderImage || null) : existingCourse.certificateHeaderImage,
         previewVideoUrl: previewVideoUrl !== undefined ? (previewVideoUrl || null) : existingCourse.previewVideoUrl,
         promoPrice: promoPrice !== undefined ? (promoPrice ? String(parseFloat(String(promoPrice))) : null) : existingCourse.promoPrice,

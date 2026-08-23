@@ -1,14 +1,22 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState } from 'react';
-import { ImageIcon, RefreshCw, Trash2, UploadCloud } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ImageIcon, ImageOff, RefreshCw, Trash2, UploadCloud } from 'lucide-react';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { normalizeImageUrl } from '@/lib/url';
 
 interface ImageUploadProps {
   value: string;
@@ -19,11 +27,22 @@ interface ImageUploadProps {
 export default function ImageUpload({ value, onChange, folder = 'courses' }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [error, setError] = useState('');
+  const [uploadError, setUploadError] = useState('');
+  const [previewFailed, setPreviewFailed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrl = normalizeImageUrl(value);
+  const previewError = value && !previewUrl
+    ? 'URL รูปภาพไม่ถูกต้อง จึงไม่สามารถแสดงตัวอย่างได้'
+    : previewFailed
+      ? 'โหลดตัวอย่างรูปภาพไม่สำเร็จ กรุณาเปลี่ยนรูปหรือลบ URL นี้'
+      : '';
+
+  useEffect(() => {
+    setPreviewFailed(false);
+  }, [value]);
 
   const handleUpload = async (file: File) => {
-    setError('');
+    setUploadError('');
     setUploading(true);
 
     try {
@@ -31,19 +50,19 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
       formData.append('file', file);
       formData.append('folder', folder);
 
-      const res = await fetch('/api/upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+      const data = await response.json();
 
-      if (res.ok && data.url) {
+      if (response.ok && data.url) {
         onChange(data.url);
       } else {
-        setError(data.error || 'อัปโหลดไม่สำเร็จ');
+        setUploadError(data.error || 'อัปโหลดไม่สำเร็จ');
       }
     } catch {
-      setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      setUploadError('เกิดข้อผิดพลาด กรุณาลองใหม่');
     } finally {
       setUploading(false);
     }
@@ -51,7 +70,7 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) handleUpload(file);
+    if (file) void handleUpload(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -59,16 +78,17 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
     event.preventDefault();
     setDragOver(false);
     const file = event.dataTransfer.files?.[0];
-    if (file) handleUpload(file);
+    if (!uploading && file) void handleUpload(file);
   };
 
   const handleRemove = () => {
     onChange('');
-    setError('');
+    setUploadError('');
+    setPreviewFailed(false);
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <Input
         ref={fileInputRef}
         type="file"
@@ -79,17 +99,35 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
       />
 
       {value ? (
-        <div className="space-y-3">
-          <div className="relative aspect-video max-w-md overflow-hidden rounded-xl border border-border bg-muted">
-            <Image src={value} alt="ตัวอย่างรูปภาพ" fill unoptimized sizes="448px" className="object-cover" />
-          </div>
+        <div className="flex flex-col gap-3">
+          {previewUrl && !previewFailed ? (
+            <div className="relative aspect-video max-w-md overflow-hidden rounded-xl border border-border bg-muted">
+              <Image
+                src={previewUrl}
+                alt="ตัวอย่างรูปภาพ"
+                fill
+                unoptimized
+                sizes="448px"
+                className="object-cover"
+                onError={() => setPreviewFailed(true)}
+              />
+            </div>
+          ) : (
+            <Empty className="min-h-44 max-w-md border p-6">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><ImageOff aria-hidden /></EmptyMedia>
+                <EmptyTitle>ไม่สามารถแสดงตัวอย่างรูปภาพ</EmptyTitle>
+                <EmptyDescription>คุณยังเปลี่ยนหรือลบรูปภาพนี้ได้โดยไม่กระทบส่วนอื่นของฟอร์ม</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-              <RefreshCw aria-hidden />
+              <RefreshCw data-icon="inline-start" aria-hidden />
               เปลี่ยนรูป
             </Button>
             <Button type="button" variant="destructive" size="sm" onClick={handleRemove}>
-              <Trash2 aria-hidden />
+              <Trash2 data-icon="inline-start" aria-hidden />
               ลบรูป
             </Button>
           </div>
@@ -139,9 +177,17 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
         </div>
       )}
 
-      {error ? (
+      {previewError ? (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertTitle>แสดงตัวอย่างรูปภาพไม่สำเร็จ</AlertTitle>
+          <AlertDescription>{previewError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {uploadError ? (
+        <Alert variant="destructive">
+          <AlertTitle>อัปโหลดรูปภาพไม่สำเร็จ</AlertTitle>
+          <AlertDescription>{uploadError}</AlertDescription>
         </Alert>
       ) : null}
     </div>
