@@ -18,6 +18,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { DEFAULT_CERTIFICATE_COLOR } from '@/lib/certificate-color';
 
@@ -117,11 +123,11 @@ export default function NewCoursePage() {
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="course-slug">Slug (URL)</FieldLabel>
-                  <div className="flex items-center gap-2">
-                    <span className="shrink-0 text-sm text-muted-foreground">/courses/</span>
-                    <Input id="course-slug" value={formData.slug} onChange={(event) => { setSlugManuallyEdited(true); setFormData((previous) => ({ ...previous, slug: event.target.value })); }} placeholder="course-slug" />
-                    {slugManuallyEdited ? <Button type="button" variant="outline" size="sm" onClick={() => { setSlugManuallyEdited(false); setFormData((previous) => ({ ...previous, slug: generateSlug(previous.title) })); }}>รีเซ็ต</Button> : null}
-                  </div>
+                  <InputGroup>
+                    <InputGroupAddon>/courses/</InputGroupAddon>
+                    <InputGroupInput id="course-slug" value={formData.slug} onChange={(event) => { setSlugManuallyEdited(true); setFormData((previous) => ({ ...previous, slug: event.target.value })); }} placeholder="course-slug" />
+                    {slugManuallyEdited ? <InputGroupAddon align="inline-end"><InputGroupButton type="button" onClick={() => { setSlugManuallyEdited(false); setFormData((previous) => ({ ...previous, slug: generateSlug(previous.title) })); }}>รีเซ็ต</InputGroupButton></InputGroupAddon> : null}
+                  </InputGroup>
                   <FieldDescription>ตัวอย่าง: /courses/{normalizedSlug || 'course-slug'}</FieldDescription>
                 </Field>
               </div>

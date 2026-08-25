@@ -3,10 +3,15 @@
 import dynamic from 'next/dynamic';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -64,7 +69,7 @@ export default function AdminBlogEditorForm({
         onSubmit={onSubmit}
         className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"
       >
-        <div className="space-y-5">
+        <div className="flex flex-col gap-5">
           <Card className="rounded-xl shadow-none">
             <CardHeader>
               <CardTitle>ข้อมูลบทความ</CardTitle>
@@ -86,20 +91,22 @@ export default function AdminBlogEditorForm({
                 </Field>
                 <Field>
                   <FieldLabel htmlFor={formId + '-slug'}>Slug (URL)</FieldLabel>
-                  <div className="flex items-center gap-2">
-                    <span className="shrink-0 text-sm text-muted-foreground">/blog/</span>
-                    <Input
+                  <InputGroup>
+                    <InputGroupAddon>/blog/</InputGroupAddon>
+                    <InputGroupInput
                       id={formId + '-slug'}
                       value={value.slug}
                       onChange={(event) => onSlugChange(event.target.value)}
                       placeholder="auto-generated-from-title"
                     />
                     {slugCanReset && onResetSlug ? (
-                      <Button type="button" variant="outline" size="sm" onClick={onResetSlug}>
-                        รีเซ็ต
-                      </Button>
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupButton type="button" onClick={onResetSlug}>
+                          รีเซ็ต
+                        </InputGroupButton>
+                      </InputGroupAddon>
                     ) : null}
-                  </div>
+                  </InputGroup>
                   <FieldDescription>ใช้ตัวอักษรไทย อังกฤษ ตัวเลข และขีดกลาง</FieldDescription>
                 </Field>
               </FieldGroup>
@@ -136,7 +143,7 @@ export default function AdminBlogEditorForm({
           </Card>
         </div>
 
-        <aside className="space-y-5 xl:sticky xl:top-6">
+        <aside className="flex flex-col gap-5 xl:sticky xl:top-6">
           <Card className="rounded-xl shadow-none">
             <CardHeader>
               <CardTitle>การเผยแพร่</CardTitle>

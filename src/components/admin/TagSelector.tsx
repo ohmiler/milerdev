@@ -84,11 +84,17 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
       {selectedTags.length > 0 ? (
         <div className="flex flex-wrap gap-2" aria-label="แท็กที่เลือก">
           {selectedTags.map((tag) => (
-            <Badge key={tag.id} variant="secondary" asChild>
-              <button type="button" aria-label={`นำแท็ก ${tag.name} ออก`} onClick={() => toggleTag(tag.id)}>
-                {tag.name}
+            <Badge key={tag.id} variant="secondary" className="gap-1 pr-1">
+              {tag.name}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={`นำแท็ก ${tag.name} ออก`}
+                onClick={() => toggleTag(tag.id)}
+              >
                 <X data-icon="inline-end" aria-hidden />
-              </button>
+              </Button>
             </Badge>
           ))}
         </div>

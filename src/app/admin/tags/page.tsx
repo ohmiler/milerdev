@@ -141,7 +141,7 @@ export default function AdminTagsPage() {
   const deleteTarget = tagsList.find((tag) => tag.id === deleteConfirm);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Taxonomy"
         title="จัดการแท็ก"
@@ -197,7 +197,7 @@ export default function AdminTagsPage() {
                 className="rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/25"
               >
                 {editing === tag.id ? (
-                  <div className="space-y-3">
+                  <div className="flex flex-col gap-3">
                     <Input
                       value={editName}
                       onChange={(event) => setEditName(event.target.value)}

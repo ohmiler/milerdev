@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -163,16 +163,15 @@ export default function AdminCertificatesPage() {
             void refreshCertificates();
           }}
         >
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
+          <InputGroup className="flex-1">
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="ชื่อผู้รับ รหัสใบรับรอง หรือคอร์ส"
-              className="pl-9"
               aria-label="ค้นหาใบรับรอง"
             />
-          </div>
+          </InputGroup>
           <NativeSelect className="w-full sm:w-44" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="กรองสถานะใบรับรอง">
             <NativeSelectOption value="all">ทุกสถานะ</NativeSelectOption>
             <NativeSelectOption value="active">ใช้งาน</NativeSelectOption>

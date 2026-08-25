@@ -17,9 +17,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { showToast } from '@/components/ui/Toast';
-import { cn } from '@/lib/utils';
 
 interface MediaFile {
   id: string;
@@ -173,7 +173,7 @@ export default function AdminMediaPage() {
   const deleteTarget = mediaList.find((file) => file.id === deleteConfirm) ?? selectedMedia;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Media Library"
         title="จัดการไฟล์สื่อ"
@@ -240,9 +240,9 @@ export default function AdminMediaPage() {
             <option value="video">วิดีโอ</option>
             <option value="document">เอกสาร</option>
           </NativeSelect>
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
+          <InputGroup>
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
@@ -252,10 +252,9 @@ export default function AdminMediaPage() {
                 }
               }}
               placeholder="ค้นหาชื่อไฟล์"
-              className="pl-9"
               aria-label="ค้นหาชื่อไฟล์"
             />
-          </div>
+          </InputGroup>
           <Button
             variant="outline"
             onClick={() => {
@@ -286,14 +285,13 @@ export default function AdminMediaPage() {
             <div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
                 {mediaList.map((file) => (
-                  <button
+                  <Button
                     key={file.id}
                     type="button"
+                    variant={selectedMedia?.id === file.id ? 'secondary' : 'outline'}
                     onClick={() => setSelectedMedia(file)}
-                    className={cn(
-                      'group overflow-hidden rounded-xl border bg-card text-left transition-all hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      selectedMedia?.id === file.id ? 'border-primary ring-2 ring-primary/15' : 'border-border',
-                    )}
+                    aria-pressed={selectedMedia?.id === file.id}
+                    className="group block h-auto w-full overflow-hidden whitespace-normal p-0 text-left"
                   >
                     <span className="relative grid aspect-square place-items-center overflow-hidden bg-muted">
                       {file.type === 'image' ? (
@@ -313,7 +311,7 @@ export default function AdminMediaPage() {
                       <span className="block truncate text-xs font-medium text-foreground">{file.originalName}</span>
                       <span className="mt-1 block text-[11px] text-muted-foreground">{formatFileSize(file.size)}</span>
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
 
@@ -364,7 +362,7 @@ export default function AdminMediaPage() {
                   <CardTitle className="break-all text-sm">{selectedMedia.originalName}</CardTitle>
                   <CardDescription>{selectedMedia.mimeType}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="flex flex-col gap-4">
                   <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs">
                     <dt className="text-muted-foreground">ขนาด</dt>
                     <dd className="text-right text-foreground">{formatFileSize(selectedMedia.size)}</dd>
@@ -376,7 +374,7 @@ export default function AdminMediaPage() {
                     </dd>
                   </dl>
 
-                  <div className="space-y-2">
+                  <div className="flex flex-col gap-2">
                     <p className="text-xs font-medium text-muted-foreground">URL</p>
                     <Input value={selectedMedia.url} readOnly className="text-xs" aria-label="URL ของไฟล์" />
                     <div className="grid grid-cols-2 gap-2">

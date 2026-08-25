@@ -33,6 +33,12 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { showToast } from '@/components/ui/Toast';
@@ -334,10 +340,10 @@ export default function AdminUsersPage() {
 
       <AdminSection title="ค้นหาและกรอง" description="ค้นหาจากชื่อหรืออีเมล แล้วกรองตามบทบาทและสถานะ">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_10rem_11rem_13rem]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); setSelectedUsers([]); }} placeholder="ชื่อหรืออีเมล" className="pl-9" aria-label="ค้นหาผู้ใช้" />
-          </div>
+          <InputGroup>
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); setSelectedUsers([]); }} placeholder="ชื่อหรืออีเมล" aria-label="ค้นหาผู้ใช้" />
+          </InputGroup>
           <NativeSelect className="w-full" value={roleFilter} onChange={(event) => { setRoleFilter(event.target.value); setCurrentPage(1); setSelectedUsers([]); }} aria-label="กรองตามบทบาท">
             <NativeSelectOption value="all">ทุกบทบาท</NativeSelectOption>
             <NativeSelectOption value="admin">ผู้ดูแล</NativeSelectOption>
@@ -364,7 +370,7 @@ export default function AdminUsersPage() {
           <AlertTitle>ผลการนำเข้าผู้ใช้</AlertTitle>
           <AlertDescription>สำเร็จ {importResult.success || 0} · ข้าม {importResult.skipped || 0} · ล้มเหลว {importResult.failed || 0}</AlertDescription>
           <AlertAction><Button variant="ghost" size="sm" onClick={() => setImportResult(null)}>ปิด</Button></AlertAction>
-          {importResult.errors?.length ? <ul className="col-start-2 mt-2 list-disc space-y-1 pl-5 text-xs text-destructive">{importResult.errors.slice(0, 5).map((error, index) => <li key={`${error}-${index}`}>{error}</li>)}</ul> : null}
+          {importResult.errors?.length ? <ul className="col-start-2 mt-2 flex list-disc flex-col gap-1 pl-5 text-xs text-destructive">{importResult.errors.slice(0, 5).map((error, index) => <li key={`${error}-${index}`}>{error}</li>)}</ul> : null}
         </Alert>
       ) : null}
 
@@ -471,7 +477,7 @@ export default function AdminUsersPage() {
           <DialogHeader><DialogTitle>ตั้งรหัสผ่านใหม่</DialogTitle><DialogDescription>{passwordResetUser ? `${passwordResetUser.name || 'ไม่ระบุชื่อ'} (${passwordResetUser.email})` : 'กำหนดรหัสผ่านใหม่ให้ผู้ใช้'}</DialogDescription></DialogHeader>
           <Field data-invalid={Boolean(newPassword && newPassword.length < 8)}>
             <FieldLabel htmlFor="new-password">รหัสผ่านใหม่</FieldLabel>
-            <div className="relative"><Input id="new-password" type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="อย่างน้อย 8 ตัวอักษร" className="pr-10" /><Button type="button" variant="ghost" size="icon-sm" className="absolute top-1/2 right-1 -translate-y-1/2" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}>{showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}</Button></div>
+            <InputGroup><InputGroupInput id="new-password" type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="อย่างน้อย 8 ตัวอักษร" /><InputGroupAddon align="inline-end"><InputGroupButton size="icon-xs" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}>{showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}</InputGroupButton></InputGroupAddon></InputGroup>
             <FieldDescription>อย่างน้อย 8 ตัวอักษร</FieldDescription>
             {newPassword && newPassword.length < 8 ? <FieldError>รหัสผ่านสั้นเกินไป</FieldError> : null}
           </Field>

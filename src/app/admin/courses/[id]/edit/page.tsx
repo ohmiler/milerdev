@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
 import { showToast } from '@/components/ui/Toast';
@@ -190,7 +191,7 @@ export default function EditCoursePage() {
             <FieldGroup>
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field><FieldLabel htmlFor="course-title">ชื่อคอร์ส *</FieldLabel><Input id="course-title" value={formData.title} onChange={(event) => setFormData((previous) => ({ ...previous, title: event.target.value }))} required /><FieldDescription>ชื่อที่สื่อผลลัพธ์ของคอร์สอย่างชัดเจน</FieldDescription></Field>
-                <Field><FieldLabel htmlFor="course-slug">Slug</FieldLabel><div className="flex items-center gap-2"><span className="text-sm text-muted-foreground">/courses/</span><Input id="course-slug" value={formData.slug} onChange={(event) => setFormData((previous) => ({ ...previous, slug: event.target.value }))} /></div><FieldDescription>เปลี่ยนอย่างระมัดระวังหากเคยแชร์ลิงก์แล้ว</FieldDescription></Field>
+                <Field><FieldLabel htmlFor="course-slug">Slug</FieldLabel><InputGroup><InputGroupAddon>/courses/</InputGroupAddon><InputGroupInput id="course-slug" value={formData.slug} onChange={(event) => setFormData((previous) => ({ ...previous, slug: event.target.value }))} /></InputGroup><FieldDescription>เปลี่ยนอย่างระมัดระวังหากเคยแชร์ลิงก์แล้ว</FieldDescription></Field>
               </div>
               <Field><FieldLabel>คำอธิบาย</FieldLabel><RichTextEditor content={formData.description} onChange={(description) => setFormData((previous) => ({ ...previous, description }))} /></Field>
               <Field><FieldLabel>แท็ก</FieldLabel><TagSelector selectedTagIds={selectedTagIds} onChange={setSelectedTagIds} /></Field>

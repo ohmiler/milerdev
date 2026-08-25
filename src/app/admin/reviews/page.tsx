@@ -23,7 +23,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -272,7 +272,7 @@ export default function AdminReviewsPage() {
   const deleteTarget = reviews.find((review) => review.id === deleteConfirm);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Moderation"
         title="จัดการรีวิว"
@@ -320,19 +320,18 @@ export default function AdminReviewsPage() {
         }
       >
         <div className="mb-5 grid gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(180px,280px)_140px]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
+          <InputGroup>
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
                 setCurrentPage(1);
               }}
               placeholder="ค้นหาชื่อหรืออีเมล"
-              className="pl-9"
               aria-label="ค้นหารีวิว"
             />
-          </div>
+          </InputGroup>
           <NativeSelect
             value={courseFilter}
             onChange={(event) => {
@@ -509,11 +508,11 @@ export default function AdminReviewsPage() {
               </Field>
             </FieldGroup>
           ) : (
-            <div className="my-2 space-y-4">
+            <div className="my-2 flex flex-col gap-4">
               <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
                 พบ {wpReviews.length.toLocaleString('th-TH')} รีวิว จาก {wpCourseIds.length.toLocaleString('th-TH')} Course ID
               </div>
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {wpCourseIds.map((wpId) => {
                   const count = wpReviews.filter((review) => review.course_id === wpId).length;
                   return (

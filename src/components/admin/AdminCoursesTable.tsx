@@ -19,7 +19,7 @@ import {
 } from '@/components/admin/ui/AdminOperations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { showToast } from '@/components/ui/Toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -278,14 +278,13 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
       description="ค้นหา กรอง และเลือกงานถัดไปของแต่ละคอร์สจากข้อมูลจริง"
       actions={<AdminStatusBadge tone="info">{filtered.length} คอร์ส</AdminStatusBadge>}
     >
-      <div className="space-y-5">
+      <div className="flex flex-col gap-5">
         <div className="grid gap-3 xl:grid-cols-[minmax(16rem,1fr)_auto_auto] xl:items-end">
           <label className="grid gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">ค้นหาคอร์ส</span>
-            <span className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <Input
-                className="pl-10"
+            <InputGroup>
+              <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+              <InputGroupInput
                 type="search"
                 placeholder="ชื่อคอร์สหรือ slug"
                 value={search}
@@ -294,7 +293,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                   setCurrentPage(1);
                 }}
               />
-            </span>
+            </InputGroup>
           </label>
 
           <div className="flex flex-wrap gap-2" role="group" aria-label="กรองสถานะคอร์ส">
@@ -398,7 +397,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                     <CardHeader className="pb-0">
                       <CourseIdentity course={course} />
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="flex flex-col gap-4">
                       <div className="flex flex-wrap gap-2">
                         <AdminCourseLifecycleBadge status={course.status} />
                         <AdminStatusBadge tone={health.tone}>{health.label}</AdminStatusBadge>

@@ -157,7 +157,7 @@ export default function AdminAffiliateBannersPage() {
   const deleteTarget = banners.find((banner) => banner.id === deleteConfirm);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Affiliate Content"
         title="Affiliate Banners"
@@ -190,7 +190,7 @@ export default function AdminAffiliateBannersPage() {
             }
           />
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {[...banners]
               .sort((left, right) => left.orderIndex - right.orderIndex)
               .map((banner) => (

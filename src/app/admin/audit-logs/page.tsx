@@ -12,7 +12,7 @@ import {
   type AdminTone,
 } from '@/components/admin/ui/AdminOperations';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { cn } from '@/lib/utils';
 
@@ -128,7 +128,7 @@ export default function AdminAuditLogsPage() {
     });
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Traceability"
         title="บันทึกการใช้งาน"
@@ -146,19 +146,18 @@ export default function AdminAuditLogsPage() {
         }
       >
         <div className="mb-5 grid gap-3 lg:grid-cols-[minmax(220px,1fr)_220px_180px]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
+          <InputGroup>
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
                 setCurrentPage(1);
               }}
               placeholder="ค้นหาชื่อผู้ใช้หรืออีเมล"
-              className="pl-9"
               aria-label="ค้นหา audit log"
             />
-          </div>
+          </InputGroup>
           <NativeSelect
             value={entityTypeFilter}
             onChange={(event) => {
@@ -207,9 +206,10 @@ export default function AdminAuditLogsPage() {
 
               return (
                 <article key={log.id} className="py-3 first:pt-0 last:pb-0">
-                  <button
+                  <Button
                     type="button"
-                    className="grid w-full gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted/40 md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] md:items-center"
+                    variant="ghost"
+                    className="grid h-auto w-full justify-stretch gap-3 whitespace-normal px-2 py-2 text-left md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto] md:items-center"
                     onClick={() => setExpandedLog(expanded ? null : log.id)}
                     aria-expanded={expanded}
                   >
@@ -228,7 +228,7 @@ export default function AdminAuditLogsPage() {
                       aria-hidden
                       className={cn('size-4 text-muted-foreground transition-transform', expanded && 'rotate-180')}
                     />
-                  </button>
+                  </Button>
 
                   {expanded ? (
                     <div className="mt-2 rounded-xl border border-border bg-muted/25 p-4">

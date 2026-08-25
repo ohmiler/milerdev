@@ -72,8 +72,8 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                 <SheetDescription>เลือกส่วนที่ต้องการจัดการ</SheetDescription>
               </SheetHeader>
 
-              <nav aria-label="เมนูผู้ดูแลระบบบนมือถือ" className="flex-1 space-y-5 overflow-y-auto p-4">
-                <div className="space-y-1">
+              <nav aria-label="เมนูผู้ดูแลระบบบนมือถือ" className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">
+                <div className="flex flex-col gap-1">
                   {adminPrimaryLinks.map((link) => (
                     <SheetClose asChild key={link.href}>
                       <Link href={link.href} className={linkClass(isAdminNavActive(pathname, link))}>
@@ -87,7 +87,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
                 {adminSecondaryLinkGroups.map((group) => (
                   <section key={group.title}>
                     <h2 className="mb-1.5 px-3 text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{group.title}</h2>
-                    <div className="space-y-1">
+                    <div className="flex flex-col gap-1">
                       {group.items.map((link) => (
                         <SheetClose asChild key={link.href}>
                           <Link href={link.href} className={linkClass(isAdminNavActive(pathname, link))}>

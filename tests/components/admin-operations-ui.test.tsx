@@ -166,10 +166,18 @@ describe('Admin operations UI', () => {
 
     const themeSource = source('src/app/admin/admin-theme.css');
     expect(themeSource).not.toMatch(/#[0-9a-f]{3,8}/i);
-    expect(themeSource).toContain('.admin-route-surface > * > :first-child:has(h1)');
-    expect(themeSource).toContain('.admin-route-surface div[style*="position: fixed"]');
-    expect(themeSource).toContain('.admin-route-surface :where(tbody tr:hover)');
-    expect(themeSource).toContain('@media (max-width: 720px)');
+    expect(themeSource).toContain('.admin-theme {');
+    expect(themeSource).toContain('color: var(--foreground)');
+    expect(themeSource).toContain('.admin-route-surface {');
+    expect(themeSource).toContain('max-width: 96rem');
+    expect(themeSource).toContain('margin-inline: auto');
+    expect(themeSource).not.toContain('!important');
+    expect(themeSource).not.toContain(':has(');
+    expect(themeSource).not.toContain('[style*=');
+    expect(themeSource).not.toContain(':where(');
+    expect(themeSource).not.toContain('@media');
+    expect(themeSource).not.toMatch(/admin-(?:course-enrollments|lesson|edit|users)-/);
+    expect(themeSource.trim().split(/\r?\n/)).toHaveLength(9);
 
     const operationsSource = source('src/components/admin/ui/AdminOperations.tsx');
     expect(operationsSource).toContain('border-b border-border pb-5');
@@ -187,5 +195,41 @@ describe('Admin operations UI', () => {
     expect(headerSource).not.toContain('Search');
     expect(headerSource).not.toContain('Notifications');
     expect(headerSource).not.toContain('สร้างใหม่');
+  });
+
+  it('keeps migrated admin interactions on shadcn composition contracts', () => {
+    const source = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
+    const adminPageSources = collectAdminPages(join(process.cwd(), 'src/app/admin'))
+      .map((path) => readFileSync(path, 'utf8'));
+    const adminComponentSources = collectTsxFiles(join(process.cwd(), 'src/components/admin'))
+      .map((path) => readFileSync(path, 'utf8'));
+    const combinedSource = [...adminPageSources, ...adminComponentSources].join('\n');
+
+    expect(combinedSource).not.toMatch(/space-y-/);
+    expect(combinedSource).not.toContain('<button');
+    expect(combinedSource).not.toMatch(/Search className=.*absolute/);
+
+    const enrollmentsSource = source('src/app/admin/courses/[id]/enrollments/page.tsx');
+    const enrollmentsViewSource = source('src/components/admin/CourseEnrollmentsView.tsx');
+    expect(enrollmentsSource).toContain('normalizeCourseEnrollmentPage');
+    expect(enrollmentsSource).not.toContain('admin-course-enrollments-');
+    expect(enrollmentsViewSource).toContain('<Table>');
+    expect(enrollmentsViewSource).toContain('<AvatarFallback>');
+    expect(enrollmentsViewSource).toContain('<Progress');
+    expect(enrollmentsViewSource).toContain('<Pagination');
+
+    const lessonsSource = source('src/components/admin/DraggableLessonList.tsx');
+    expect(lessonsSource).toContain('KeyboardSensor');
+    expect(lessonsSource).toContain('id={`lesson-sort-${courseId}`}');
+    expect(lessonsSource).toContain('<TabsList');
+    expect(lessonsSource).toContain('<InputGroup');
+    expect(lessonsSource).not.toContain('<style');
+    expect(lessonsSource).not.toContain('admin-lesson-');
+
+    const reportsSource = source('src/app/admin/reports/page.tsx');
+    const settingsSource = source('src/app/admin/settings/page.tsx');
+    expect(reportsSource).toContain('<TabsList');
+    expect(reportsSource).toContain('<SelectGroup>');
+    expect(settingsSource).toContain('<TabsList');
   });
 });

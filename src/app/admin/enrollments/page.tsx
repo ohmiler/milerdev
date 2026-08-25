@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -284,16 +285,15 @@ export default function AdminEnrollmentsPage() {
 
       <AdminSection title="ค้นหาและกรอง" description="ค้นหาจากชื่อ อีเมล หรือชื่อคอร์ส">
         <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
+          <InputGroup className="flex-1">
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput
               value={search}
               onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }}
               placeholder="ชื่อ อีเมล หรือคอร์ส"
-              className="pl-9"
               aria-label="ค้นหาการลงทะเบียน"
             />
-          </div>
+          </InputGroup>
           <NativeSelect className="w-full sm:w-64" value={courseFilter} onChange={(event) => { setCourseFilter(event.target.value); setCurrentPage(1); }} aria-label="กรองตามคอร์ส">
             <NativeSelectOption value="all">คอร์สทั้งหมด</NativeSelectOption>
             {courses.map((course) => <NativeSelectOption key={course.id} value={course.id}>{course.title}</NativeSelectOption>)}
@@ -420,7 +420,7 @@ function ImportDetails({ title, items }: { title: string; items: string[] }) {
   return (
     <details className="mt-3">
       <summary className="cursor-pointer font-medium">{title} ({items.length.toLocaleString('th-TH')})</summary>
-      <ul className="mt-2 max-h-28 list-disc space-y-1 overflow-y-auto pl-5 text-xs">
+      <ul className="mt-2 flex max-h-28 list-disc flex-col gap-1 overflow-y-auto pl-5 text-xs">
         {items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
       </ul>
     </details>

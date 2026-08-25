@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 
@@ -106,7 +107,7 @@ export default function AdminSettingsPage() {
   const activeTabDetail = tabs.find((tab) => tab.id === activeTab);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="System Configuration"
         title="ตั้งค่าระบบ"
@@ -114,25 +115,25 @@ export default function AdminSettingsPage() {
         meta="ค่าบางรายการอาจมีผลต่อผู้ใช้ทันทีหลังบันทึก"
       />
 
-      <div className="flex flex-wrap gap-1 rounded-xl bg-muted p-1">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            variant={activeTab === tab.id ? 'secondary' : 'ghost'}
-            size="sm"
-            className={cn(activeTab === tab.id && 'bg-card shadow-xs')}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
-
-      <AdminSection
-        title={activeTabDetail?.label || 'การตั้งค่า'}
-        description={activeTabDetail?.description}
-        actions={<AdminStatusBadge tone="info">{currentSettings.length.toLocaleString('th-TH')} รายการ</AdminStatusBadge>}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as SettingsGroup)}
+        className="gap-6"
       >
+        <TabsList className="h-auto flex-wrap justify-start">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value={activeTab}>
+          <AdminSection
+            title={activeTabDetail?.label || 'การตั้งค่า'}
+            description={activeTabDetail?.description}
+            actions={<AdminStatusBadge tone="info">{currentSettings.length.toLocaleString('th-TH')} รายการ</AdminStatusBadge>}
+          >
         {currentSettings.length === 0 ? (
           <AdminEmptyState
             title="ไม่มีการตั้งค่าในหมวดนี้"
@@ -196,7 +197,9 @@ export default function AdminSettingsPage() {
             })}
           </div>
         )}
-      </AdminSection>
+          </AdminSection>
+        </TabsContent>
+      </Tabs>
 
       <Alert>
         <Info aria-hidden />

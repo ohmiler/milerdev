@@ -26,7 +26,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -198,10 +198,7 @@ export default function AdminPaymentsPage() {
 
       <AdminSection title="ค้นหาและกรอง" description="ค้นหาจากชื่อ อีเมล ชื่อคอร์ส หรือชื่อ bundle">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }} placeholder="ชื่อ อีเมล คอร์ส หรือ bundle" className="pl-9" aria-label="ค้นหารายการชำระเงิน" />
-          </div>
+          <InputGroup><InputGroupAddon><Search aria-hidden /></InputGroupAddon><InputGroupInput value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }} placeholder="ชื่อ อีเมล คอร์ส หรือ bundle" aria-label="ค้นหารายการชำระเงิน" /></InputGroup>
           <NativeSelect className="w-full" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setCurrentPage(1); }} aria-label="กรองสถานะ">
             <NativeSelectOption value="all">ทุกสถานะ</NativeSelectOption>
             {(Object.keys(statusText) as Payment['status'][]).map((status) => <NativeSelectOption key={status} value={status}>{statusText[status]}</NativeSelectOption>)}

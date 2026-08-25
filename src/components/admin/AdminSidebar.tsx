@@ -33,7 +33,7 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
         </Link>
       </div>
 
-      <nav aria-label="เมนูผู้ดูแลระบบ" className="flex-1 space-y-5 overflow-y-auto p-3">
+      <nav aria-label="เมนูผู้ดูแลระบบ" className="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
         <div className="flex flex-col gap-1">
           {adminPrimaryLinks.map((link) => (
             <Link key={link.href} href={link.href} className={linkClass(isAdminNavActive(pathname, link))}>
@@ -46,7 +46,7 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
         {adminSecondaryLinkGroups.map((group) => (
           <section key={group.title}>
             <h2 className="mb-1.5 px-3 text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{group.title}</h2>
-            <div className="space-y-1">
+            <div className="flex flex-col gap-1">
               {group.items.map((link) => (
                 <Link key={link.href} href={link.href} className={linkClass(isAdminNavActive(pathname, link))}>
                   <AdminNavIcon name={link.icon} />
@@ -58,7 +58,7 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
         ))}
       </nav>
 
-      <div className="space-y-3 border-t border-border p-4">
+      <div className="flex flex-col gap-3 border-t border-border p-4">
         <Button asChild variant="outline" size="sm" className="w-full justify-start">
           <Link href="/"><ExternalLink />ไปหน้าเว็บไซต์</Link>
         </Button>

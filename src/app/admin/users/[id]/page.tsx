@@ -21,7 +21,7 @@ import {
 } from '@/components/admin/ui/AdminOperations';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { showToast } from '@/components/ui/Toast';
@@ -309,7 +309,7 @@ function CoursePickerPanel({
     <div className="overflow-hidden rounded-xl border">
       <div className="border-b bg-muted/40 p-3">
         <div className="mb-2 text-sm font-semibold">{title}</div>
-        <div className="relative"><Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden /><Input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder={placeholder} className="pl-9" /></div>
+        <InputGroup><InputGroupAddon><Search aria-hidden /></InputGroupAddon><InputGroupInput value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder={placeholder} /></InputGroup>
       </div>
       <div className="max-h-80 overflow-y-auto">{children}</div>
     </div>

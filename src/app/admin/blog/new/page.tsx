@@ -66,7 +66,7 @@ export default function NewBlogPostPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Editorial"
         title="เขียนบทความใหม่"

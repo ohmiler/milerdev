@@ -204,7 +204,7 @@ export default function AdminBundlesPage() {
   const deleteTarget = bundlesList.find((bundle) => bundle.id === deleteConfirm);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Commerce"
         title="จัดการ Bundle"
@@ -237,7 +237,7 @@ export default function AdminBundlesPage() {
             }
           />
         ) : (
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             {bundlesList.map((bundle) => {
               const presentation = statusPresentation[bundle.status] ?? statusPresentation.draft;
 

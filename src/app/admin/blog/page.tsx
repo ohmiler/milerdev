@@ -13,7 +13,7 @@ import {
   AdminStatusBadge,
 } from '@/components/admin/ui/AdminOperations';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
@@ -90,7 +90,7 @@ export default function AdminBlogPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Editorial"
         title="จัดการบทความ"
@@ -126,16 +126,15 @@ export default function AdminBlogPage() {
               </Button>
             ))}
           </div>
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-            <Input
+          <InputGroup className="min-w-0 flex-1">
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="ค้นหาชื่อบทความหรือ slug"
-              className="pl-9"
               aria-label="ค้นหาบทความ"
             />
-          </div>
+          </InputGroup>
         </div>
 
         {loading ? (

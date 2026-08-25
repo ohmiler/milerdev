@@ -2,9 +2,20 @@
 
 วันที่ตรวจ: 2026-08-23
 สาขาที่ตรวจ: `feat/admin-ui-redesign`
-สถานะ: Phase 1 เสร็จแล้วเมื่อ 2026-08-24; Phase 2–5 ยังไม่ได้ดำเนินการ
+สถานะ: Phase 1–5 ดำเนินการด้าน implementation และ verification เสร็จแล้วเมื่อ 2026-08-25
 
 ## สถานะการดำเนินงาน
+
+### Phase 2–5: implementation เสร็จแล้ว (2026-08-25)
+
+- ลด `admin-theme.css` จาก compatibility stylesheet 2,546 บรรทัดเหลือ shell-only CSS 9 บรรทัด และลบ `!important`, `:has()`, style-attribute heuristics รวมถึง selector ของหน้ารุ่นเก่า
+- ย้ายหน้า course enrollments และ lesson workbench ไปใช้ shadcn `Table`, `Card`, `Avatar`, `Progress`, `Pagination`, `Tabs`, `InputGroup`, `Field`, `Badge` และ `Empty`
+- เปลี่ยน reports/settings เป็น shadcn Tabs, เปลี่ยน select ที่ต้องการ richer interaction แบบเลือกเฉพาะจุด และปรับ compound inputs กับ search inputs เป็น `InputGroup`
+- ลบ `space-y-*`, native `<button>` และ legacy admin class tokens ออกจากหน้ากับคอมโพเนนต์ที่ migrate พร้อมเพิ่ม regression tests
+- `npm run lint`, `npm run test -- --run` (82 files / 544 tests), `npm run check:admin-text`, `npm run build` และ `git diff --check` ผ่าน
+- visual QA ด้วย production shell/components และข้อมูลสมมติผ่านที่ 1440×1000, 1024×768 และ 390×844 ทั้ง light/dark theme โดยไม่มี page-level horizontal overflow หรือ console error
+- keyboard tab navigation, focus ring, filtered drag state และ keyboard drag-and-drop ผ่าน; visual QA พบและแก้ DndKit hydration mismatch ด้วย context ID ที่คงที่
+- ใช้ preview route ชั่วคราวนอก auth เฉพาะระหว่าง QA แล้วลบออกหลังตรวจเสร็จ โดยไม่ได้ข้าม auth หรืออ่าน credential/session store; เก็บภาพไว้ที่ `output/playwright/admin-shadcn-audit/`
 
 ### Phase 1: เสร็จแล้ว (2026-08-24)
 

@@ -208,7 +208,7 @@ export default function AdminAnnouncementsPage() {
   const deleteTarget = announcements.find((announcement) => announcement.id === deleteConfirm);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Communication"
         title="ประกาศ"

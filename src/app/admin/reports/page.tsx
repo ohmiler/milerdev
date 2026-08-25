@@ -15,9 +15,17 @@ import {
 } from '@/components/admin/ui/AdminOperations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { NativeSelect } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 
@@ -153,7 +161,7 @@ function TrendList({
   const maximum = Math.max(...items.map(getValue), 1);
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {items.map((item) => {
         const value = getValue(item);
         return (
@@ -246,42 +254,45 @@ export default function AdminReportsPage() {
   const completionTotal = Math.max(data.completionStats.total, 1);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <AdminPageHeader
         eyebrow="Analytics"
         title="รายงานและวิเคราะห์"
         description="ติดตามรายได้ การลงทะเบียน ความคืบหน้า และการเติบโตของผู้ใช้"
         actions={
-          <NativeSelect
+          <Select
             value={period}
-            onChange={(event) => setPeriod(event.target.value)}
-            className="w-48"
-            aria-label="ช่วงเวลารายงาน"
+            onValueChange={setPeriod}
           >
-            <option value="3">3 เดือนล่าสุด</option>
-            <option value="6">6 เดือนล่าสุด</option>
-            <option value="12">12 เดือนล่าสุด</option>
-            <option value="24">24 เดือนล่าสุด</option>
-          </NativeSelect>
+            <SelectTrigger className="w-48" aria-label="ช่วงเวลารายงาน">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="3">3 เดือนล่าสุด</SelectItem>
+                <SelectItem value="6">6 เดือนล่าสุด</SelectItem>
+                <SelectItem value="12">12 เดือนล่าสุด</SelectItem>
+                <SelectItem value="24">24 เดือนล่าสุด</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         }
       />
 
-      <div className="flex flex-wrap gap-1 rounded-xl bg-muted p-1">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            variant={activeTab === tab.id ? 'secondary' : 'ghost'}
-            size="sm"
-            className={cn(activeTab === tab.id && 'bg-card shadow-xs')}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as ReportTab)}
+        className="gap-6"
+      >
+        <TabsList className="h-auto flex-wrap justify-start">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      {activeTab === 'overview' ? (
-        <div className="space-y-6">
+        <TabsContent value="overview" className="flex flex-col gap-6">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <AdminMetricCard
               label="รายได้รวม"
@@ -325,7 +336,7 @@ export default function AdminReportsPage() {
 
           <div className="grid gap-6 xl:grid-cols-2">
             <AdminSection title="สถานะการเรียน" description={formatNumber(data.completionStats.total) + ' การลงทะเบียน'}>
-              <div className="space-y-5">
+              <div className="flex flex-col gap-5">
                 {[
                   { label: 'เรียนจบ', value: data.completionStats.completed, tone: 'text-[var(--color-success-strong)]' },
                   { label: 'กำลังเรียน', value: data.completionStats.inProgress, tone: 'text-primary' },
@@ -343,7 +354,7 @@ export default function AdminReportsPage() {
             </AdminSection>
 
             <AdminSection title="ประเภทผู้ใช้" description={formatNumber(data.userStats.total) + ' บัญชีทั้งหมด'}>
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {[
                   { label: 'Admin', value: data.userStats.admins, tone: 'danger' as const },
                   { label: 'Instructor', value: data.userStats.instructors, tone: 'info' as const },
@@ -357,11 +368,9 @@ export default function AdminReportsPage() {
               </div>
             </AdminSection>
           </div>
-        </div>
-      ) : null}
+        </TabsContent>
 
-      {activeTab === 'revenue' ? (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,1fr)]">
+        <TabsContent value="revenue" className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,1fr)]">
           <AdminSection title="รายได้รายเดือน" description="เทียบสัดส่วนกับเดือนที่มีรายได้สูงสุดในช่วงที่เลือก">
             <TrendList
               items={data.monthlyRevenue}
@@ -375,7 +384,7 @@ export default function AdminReportsPage() {
             {data.paymentMethods.length === 0 ? (
               <AdminEmptyState title="ไม่มีข้อมูล" description="ยังไม่มีวิธีชำระเงินในช่วงที่เลือก" icon={<ReceiptText />} />
             ) : (
-              <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {data.paymentMethods.map((method) => (
                   <div key={method.method || 'unknown'} className="rounded-xl border border-border p-4">
                     <p className="font-medium capitalize text-foreground">{method.method || 'ไม่ระบุ'}</p>
@@ -388,11 +397,9 @@ export default function AdminReportsPage() {
               </div>
             )}
           </AdminSection>
-        </div>
-      ) : null}
+        </TabsContent>
 
-      {activeTab === 'courses' ? (
-        <div className="space-y-6">
+        <TabsContent value="courses" className="flex flex-col gap-6">
           <AdminSection title="รายได้ตามคอร์ส" description="10 คอร์สที่สร้างรายได้สูงสุด">
             {data.revenueByCourse.length === 0 ? (
               <AdminEmptyState title="ไม่มีข้อมูล" description="ยังไม่มีรายได้จากคอร์สในช่วงที่เลือก" icon={<BookOpen />} />
@@ -484,11 +491,9 @@ export default function AdminReportsPage() {
               </Table>
             )}
           </AdminSection>
-        </div>
-      ) : null}
+        </TabsContent>
 
-      {activeTab === 'users' ? (
-        <div className="grid gap-6 xl:grid-cols-2">
+        <TabsContent value="users" className="grid gap-6 xl:grid-cols-2">
           <AdminSection title="ผู้ใช้ใหม่รายเดือน" description="จำนวนบัญชีที่สร้างใหม่ในแต่ละเดือน">
             <TrendList
               items={data.monthlyUsers}
@@ -505,41 +510,41 @@ export default function AdminReportsPage() {
               emptyDescription="ยังไม่มีการลงทะเบียนในช่วงเวลาที่เลือก"
             />
           </AdminSection>
-        </div>
-      ) : null}
+        </TabsContent>
 
-      {activeTab === 'export' ? (
-        <AdminSection
-          title="ส่งออกข้อมูลเป็น CSV"
-          description={'ดาวน์โหลดข้อมูลสำหรับ Excel หรือเครื่องมือวิเคราะห์ โดยใช้ช่วง ' + period + ' เดือนล่าสุด'}
-        >
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {exportOptions.map((option) => {
-              const pending = exporting === option.type;
-              return (
-                <Card key={option.type} className="rounded-xl shadow-none">
-                  <CardHeader>
-                    <CardTitle>{option.title}</CardTitle>
-                    <CardDescription className="leading-5">{option.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full" disabled={pending} onClick={() => handleExport(option.type)}>
-                      {pending ? (
-                        <AdminPendingLabel>กำลังส่งออก...</AdminPendingLabel>
-                      ) : (
-                        <>
-                          <Download aria-hidden />
-                          ดาวน์โหลด CSV
-                        </>
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </AdminSection>
-      ) : null}
+        <TabsContent value="export">
+          <AdminSection
+            title="ส่งออกข้อมูลเป็น CSV"
+            description={'ดาวน์โหลดข้อมูลสำหรับ Excel หรือเครื่องมือวิเคราะห์ โดยใช้ช่วง ' + period + ' เดือนล่าสุด'}
+          >
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {exportOptions.map((option) => {
+                const pending = exporting === option.type;
+                return (
+                  <Card key={option.type} className="rounded-xl shadow-none">
+                    <CardHeader>
+                      <CardTitle>{option.title}</CardTitle>
+                      <CardDescription className="leading-5">{option.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button className="w-full" disabled={pending} onClick={() => handleExport(option.type)}>
+                        {pending ? (
+                          <AdminPendingLabel>กำลังส่งออก...</AdminPendingLabel>
+                        ) : (
+                          <>
+                            <Download data-icon="inline-start" aria-hidden />
+                            ดาวน์โหลด CSV
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </AdminSection>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
