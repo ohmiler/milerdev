@@ -70,7 +70,7 @@ export const courses = mysqlTable('courses', {
     price: decimal('price', { precision: 10, scale: 2 }).notNull().default('0'),
     status: varchar('status', { length: 20, enum: ['draft', 'published', 'archived'] }).default('draft').notNull(),
     instructorId: varchar('instructor_id', { length: 36 }).references(() => users.id),
-    certificateColor: varchar('certificate_color', { length: 20 }).default('blue'),
+    certificateColor: varchar('certificate_color', { length: 20 }).default('#2563eb'),
     certificateHeaderImage: text('certificate_header_image'),
     certificateBadge: varchar('certificate_badge', { length: 50 }),
     previewVideoUrl: text('preview_video_url'),

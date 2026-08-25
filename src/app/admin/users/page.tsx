@@ -1,20 +1,47 @@
 'use client';
 
-import type { CSSProperties } from 'react';
-import { useState, useEffect, useRef } from 'react';
-import {
-  AdminButton,
-  AdminPageHero,
-  AdminPill,
-  AdminSectionHeading,
-  AdminSurfaceCard,
-} from '@/components/admin/ui/AdminPrimitives';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { showToast } from '@/components/ui/Toast';
+import { Eye, EyeOff, FileDown, FileUp, KeyRound, Pencil, Search, Users } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+
 import {
   AdminUserLifecycleAction,
   AdminUserLifecycleBadge,
 } from '@/components/admin/AdminUserLifecycleControls';
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
+import {
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+  type AdminTone,
+} from '@/components/admin/ui/AdminOperations';
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { showToast } from '@/components/ui/Toast';
 import {
   applyAuthoritativeLifecycleState,
   buildAdminUsersSearchParams,
@@ -52,6 +79,8 @@ interface Pagination {
   totalPages: number;
 }
 
+type ImportResult = { success?: number; skipped?: number; failed?: number; errors?: string[] };
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -61,40 +90,30 @@ export default function AdminUsersPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({ name: '', role: 'student' });
-  
-  // Filters
   const [search, setSearch] = useState('');
   const [searchDebounce, setSearchDebounce] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState('');
+  const [bulkRole, setBulkRole] = useState('student');
+  const [processingBulk, setProcessingBulk] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [lifecycleConfirm, setLifecycleConfirm] = useState<User | null>(null);
+  const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchDebounce(search), 400);
     return () => clearTimeout(timer);
   }, [search]);
-  
-  // Bulk operations
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [bulkAction, setBulkAction] = useState('');
-  const [bulkRole, setBulkRole] = useState('student');
-  const [processingBulk, setProcessingBulk] = useState(false);
-  
-  // Import
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{ success?: number; skipped?: number; failed?: number; errors?: string[] } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
-  const [lifecycleConfirm, setLifecycleConfirm] = useState<User | null>(null);
-
-  // Password reset
-  const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
-  const [newPassword, setNewPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [resettingPassword, setResettingPassword] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -106,29 +125,27 @@ export default function AdminUsersPage() {
         status: statusFilter,
         search: searchDebounce,
         sortBy,
-        sortOrder,
+        sortOrder: 'desc',
       });
-      const res = await fetch(`/api/admin/users?${params}`);
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
-      }
+      const response = await fetch(`/api/admin/users?${params}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
       const nextUsers = (data.users || []) as User[];
       setUsers(nextUsers);
       setSelectedUsers((current) => current.filter((id) => nextUsers.some((user) => user.id === id)));
       setStats(data.stats || null);
       setPagination(data.pagination || null);
-    } catch (error) {
-      setLoadError(error instanceof Error ? error.message : 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
+    } catch (caughtError) {
+      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    void fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, roleFilter, statusFilter, sortBy, sortOrder, searchDebounce]);
+  }, [currentPage, roleFilter, statusFilter, sortBy, searchDebounce]);
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
@@ -137,25 +154,20 @@ export default function AdminUsersPage() {
 
   const handleSave = async () => {
     if (!editingUser) return;
-    
     setUpdating(editingUser.id);
     try {
-      const res = await fetch(`/api/admin/users/${editingUser.id}`, {
+      const response = await fetch(`/api/admin/users/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
       });
-
-      if (res.ok) {
-        await fetchUsers();
-        setEditingUser(null);
-        showToast('บันทึกสำเร็จ', 'success');
-      } else {
-        const data = await res.json();
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'บันทึกผู้ใช้ไม่สำเร็จ');
+      await fetchUsers();
+      setEditingUser(null);
+      showToast('บันทึกผู้ใช้สำเร็จ', 'success');
+    } catch (caughtError) {
+      showToast(caughtError instanceof Error ? caughtError.message : 'บันทึกผู้ใช้ไม่สำเร็จ กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
     }
@@ -164,24 +176,18 @@ export default function AdminUsersPage() {
   const executeLifecycleAction = async (user: User, action: AdminUserLifecycleActionName) => {
     setUpdating(user.id);
     try {
-      const res = await fetch(`/api/admin/users/${user.id}`, {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-      const data = await res.json();
-      if (res.ok) {
-        setUsers((current) => applyAuthoritativeLifecycleState(
-          current,
-          (data.users || []) as AuthoritativeLifecycleUser[],
-        ) as User[]);
-        showToast(lifecycleMutationFeedback(action, data.changedCount ?? 0, data.skippedCount ?? 0), 'success');
-        await fetchUsers();
-      } else {
-        showToast(data.error || 'ไม่สามารถเปลี่ยนสถานะบัญชีได้', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ไม่สามารถเปลี่ยนสถานะบัญชีได้');
+      setUsers((current) => applyAuthoritativeLifecycleState(current, (data.users || []) as AuthoritativeLifecycleUser[]) as User[]);
+      showToast(lifecycleMutationFeedback(action, data.changedCount ?? 0, data.skippedCount ?? 0), 'success');
+      await fetchUsers();
+    } catch (caughtError) {
+      showToast(caughtError instanceof Error ? caughtError.message : 'เปลี่ยนสถานะบัญชีไม่สำเร็จ กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
       if (action === 'deactivate') setLifecycleConfirm(null);
@@ -190,94 +196,53 @@ export default function AdminUsersPage() {
 
   const handleLifecycleRequest = (user: User) => {
     const { action } = getLifecyclePresentation(user.lifecycleStatus);
-    if (action === 'deactivate') {
-      setLifecycleConfirm(user);
-      return;
-    }
-    void executeLifecycleAction(user, action);
-  };
-
-  const confirmDeleteUser = () => {
-    const user = users.find((candidate) => candidate.id === deleteConfirm);
-    setDeleteConfirm(null);
-    if (user) void executeLifecycleAction(user, 'deactivate');
+    if (action === 'deactivate') setLifecycleConfirm(user);
+    else void executeLifecycleAction(user, action);
   };
 
   const handleResetPassword = async () => {
-    if (!passwordResetUser) return;
-    if (newPassword.length < 8) {
-      showToast('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร', 'error');
-      return;
-    }
-
+    if (!passwordResetUser || newPassword.length < 8) return;
     setResettingPassword(true);
     try {
-      const res = await fetch(`/api/admin/users/${passwordResetUser.id}/reset-password`, {
+      const response = await fetch(`/api/admin/users/${passwordResetUser.id}/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newPassword }),
       });
-
-      if (res.ok) {
-        showToast(`เปลี่ยนรหัสผ่านของ ${passwordResetUser.name || passwordResetUser.email} สำเร็จ`, 'success');
-        setPasswordResetUser(null);
-        setNewPassword('');
-        setShowPassword(false);
-      } else {
-        const data = await res.json();
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'เปลี่ยนรหัสผ่านไม่สำเร็จ');
+      showToast(`เปลี่ยนรหัสผ่านของ ${passwordResetUser.name || passwordResetUser.email} สำเร็จ`, 'success');
+      setPasswordResetUser(null);
+      setNewPassword('');
+      setShowPassword(false);
+    } catch (caughtError) {
+      showToast(caughtError instanceof Error ? caughtError.message : 'เปลี่ยนรหัสผ่านไม่สำเร็จ กรุณาลองใหม่', 'error');
     } finally {
       setResettingPassword(false);
     }
   };
 
-  const getRoleStyle = (role: string) => {
-    switch (role) {
-      case 'admin': return { background: '#fef2f2', color: '#dc2626' };
-      case 'instructor': return { background: '#fef3c7', color: '#d97706' };
-      default: return { background: '#dcfce7', color: '#16a34a' };
-    }
-  };
-
-  const getRoleText = (role: string) => {
-    switch (role) {
-      case 'admin': return 'Admin';
-      case 'instructor': return 'ผู้สอน';
-      default: return 'นักเรียน';
-    }
-  };
-
-
-  const handleExport = async () => {
+  const handleExport = () => {
     const params = new URLSearchParams({ role: roleFilter, status: statusFilter });
     window.open(`/api/admin/users/export?${params}`, '_blank');
   };
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
-
     setImporting(true);
     setImportResult(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      
-      const res = await fetch('/api/admin/users/import', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      const data = await res.json();
+      const response = await fetch('/api/admin/users/import', { method: 'POST', body: formData });
+      const data = await response.json();
       setImportResult(data.results || data);
-      if (res.ok) {
-        await fetchUsers();
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาดในการนำเข้า', 'error');
+      if (!response.ok) throw new Error(data.error || 'นำเข้าผู้ใช้ไม่สำเร็จ');
+      await fetchUsers();
+      showToast('นำเข้าผู้ใช้สำเร็จ', 'success');
+    } catch (caughtError) {
+      showToast(caughtError instanceof Error ? caughtError.message : 'นำเข้าผู้ใช้ไม่สำเร็จ', 'error');
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -285,19 +250,11 @@ export default function AdminUsersPage() {
   };
 
   const toggleSelectUser = (userId: string) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
+    setSelectedUsers((previous) => previous.includes(userId) ? previous.filter((id) => id !== userId) : [...previous, userId]);
   };
 
   const toggleSelectAll = () => {
-    if (selectedUsers.length === users.length) {
-      setSelectedUsers([]);
-    } else {
-      setSelectedUsers(users.map(u => u.id));
-    }
+    setSelectedUsers((previous) => previous.length === users.length ? [] : users.map((user) => user.id));
   };
 
   const handleBulkAction = async () => {
@@ -305,19 +262,17 @@ export default function AdminUsersPage() {
       showToast('กรุณาเลือกผู้ใช้และการดำเนินการ', 'error');
       return;
     }
-
     if (bulkAction === 'delete' || bulkAction === 'deactivate') {
-      setBulkDeleteConfirm(true);
+      setBulkConfirm(true);
       return;
     }
-
     await executeBulkAction();
   };
 
   const executeBulkAction = async () => {
     setProcessingBulk(true);
     try {
-      const res = await fetch('/api/admin/users/bulk', {
+      const response = await fetch('/api/admin/users/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -326,1363 +281,232 @@ export default function AdminUsersPage() {
           data: bulkAction === 'updateRole' ? { role: bulkRole } : undefined,
         }),
       });
-
-      const data = await res.json();
-      if (res.ok) {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ดำเนินการแบบกลุ่มไม่สำเร็จ');
+      if (bulkAction !== 'updateRole') {
         const lifecycleAction = bulkAction === 'reactivate' ? 'reactivate' : 'deactivate';
-        if (bulkAction !== 'updateRole') {
-          setUsers((current) => applyAuthoritativeLifecycleState(
-            current,
-            (data.users || []) as AuthoritativeLifecycleUser[],
-          ) as User[]);
-          showToast(lifecycleMutationFeedback(lifecycleAction, data.changedCount ?? 0, data.skippedCount ?? 0), 'success');
-        } else {
-          showToast(`เปลี่ยนบทบาทสำเร็จ ${data.changedCount ?? 0} บัญชี`, 'success');
-        }
-        setSelectedUsers([]);
-        setBulkAction('');
-        await fetchUsers();
+        setUsers((current) => applyAuthoritativeLifecycleState(current, (data.users || []) as AuthoritativeLifecycleUser[]) as User[]);
+        showToast(lifecycleMutationFeedback(lifecycleAction, data.changedCount ?? 0, data.skippedCount ?? 0), 'success');
       } else {
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
+        showToast(`เปลี่ยนบทบาทสำเร็จ ${data.changedCount ?? 0} บัญชี`, 'success');
       }
-    } catch {
-      showToast('เกิดข้อผิดพลาด', 'error');
+      setSelectedUsers([]);
+      setBulkAction('');
+      await fetchUsers();
+    } catch (caughtError) {
+      showToast(caughtError instanceof Error ? caughtError.message : 'ดำเนินการแบบกลุ่มไม่สำเร็จ', 'error');
     } finally {
       setProcessingBulk(false);
-      setBulkDeleteConfirm(false);
+      setBulkConfirm(false);
     }
   };
 
-  const useRedesignedWorkspace = true as boolean;
-  if (useRedesignedWorkspace) {
-    if (loading && users.length === 0) {
-      return (
-        <div className="admin-users-state" role="status">
-          กำลังโหลดรายชื่อผู้ใช้...
-        </div>
-      );
-    }
-
-    return (
-      <AdminUsersWorkspace
-        users={users}
-        stats={stats}
-        pagination={pagination}
-        search={search}
-        roleFilter={roleFilter}
-        statusFilter={statusFilter}
-        sortBy={sortBy}
-        loading={loading}
-        loadError={loadError}
-        selectedUsers={selectedUsers}
-        bulkAction={bulkAction}
-        bulkRole={bulkRole}
-        processingBulk={processingBulk}
-        importing={importing}
-        importResult={importResult}
-        editingUser={editingUser}
-        editForm={editForm}
-        updating={updating}
-        passwordResetUser={passwordResetUser}
-        newPassword={newPassword}
-        showPassword={showPassword}
-        resettingPassword={resettingPassword}
-        lifecycleConfirm={lifecycleConfirm}
-        bulkDeleteConfirm={bulkDeleteConfirm}
-        getRoleStyle={getRoleStyle}
-        getRoleText={getRoleText}
-        onSearchChange={(value) => { setSearch(value); setCurrentPage(1); setSelectedUsers([]); }}
-        onRoleFilterChange={(value) => { setRoleFilter(value); setCurrentPage(1); setSelectedUsers([]); }}
-        onStatusFilterChange={(value) => { setStatusFilter(value); setCurrentPage(1); setSelectedUsers([]); }}
-        onSortByChange={setSortBy}
-        onToggleSelectAll={toggleSelectAll}
-        onToggleSelectUser={toggleSelectUser}
-        onBulkActionChange={setBulkAction}
-        onBulkRoleChange={setBulkRole}
-        onHandleBulkAction={handleBulkAction}
-        onOpenImport={() => fileInputRef.current?.click()}
-        onExport={handleExport}
-        onClearImportResult={() => setImportResult(null)}
-        onHandleEdit={handleEdit}
-        onOpenPasswordReset={(user) => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}
-        onLifecycleRequest={handleLifecycleRequest}
-        onRetry={fetchUsers}
-        onPrevPage={() => { setSelectedUsers([]); setCurrentPage((p) => Math.max(1, p - 1)); }}
-        onNextPage={() => { setSelectedUsers([]); setCurrentPage((p) => Math.min(pagination?.totalPages || 1, p + 1)); }}
-        onCloseEdit={() => setEditingUser(null)}
-        onEditFormChange={setEditForm}
-        onSave={handleSave}
-        onPasswordChange={setNewPassword}
-        onToggleShowPassword={() => setShowPassword((prev) => !prev)}
-        onClosePasswordReset={() => { setPasswordResetUser(null); setNewPassword(''); setShowPassword(false); }}
-        onResetPassword={handleResetPassword}
-        onConfirmLifecycle={() => lifecycleConfirm && void executeLifecycleAction(lifecycleConfirm, 'deactivate')}
-        onCancelLifecycle={() => setLifecycleConfirm(null)}
-        onConfirmBulkDelete={executeBulkAction}
-        onCancelBulkDelete={() => setBulkDeleteConfirm(false)}
-        onImport={handleImport}
-      />
-    );
-  }
-
-  if (loading && users.length === 0) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-        กำลังโหลด...
-      </div>
-    );
-  }
+  const formatDate = (dateString: string) => dateString
+    ? new Date(dateString).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
+    : '-';
+  const roleText = (role: User['role']) => role === 'admin' ? 'ผู้ดูแล' : role === 'instructor' ? 'ผู้สอน' : 'ผู้เรียน';
+  const roleTone = (role: User['role']): AdminTone => role === 'admin' ? 'danger' : role === 'instructor' ? 'warning' : 'success';
 
   return (
-    <div>
-      {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-          จัดการผู้ใช้
-        </h1>
-        <p style={{ color: '#64748b' }}>จัดการบัญชีผู้ใช้และสิทธิ์การเข้าถึง</p>
-      </div>
-
-      {/* Stats */}
-      {stats && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px',
-        }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ผู้ใช้ทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#2563eb' }}>{stats.total}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>Admin</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#dc2626' }}>{stats.admins}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ผู้สอน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f59e0b' }}>{stats.instructors}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>นักเรียน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{stats.students}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Search & Filters */}
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        marginBottom: '16px',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-      }}>
-        <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '350px' }}>
-          <svg
-            style={{
-              position: 'absolute',
-              left: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '18px',
-              height: '18px',
-              color: '#94a3b8',
-            }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="ค้นหาชื่อหรืออีเมล..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            style={{
-              width: '100%',
-              padding: '10px 12px 10px 40px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              background: 'white',
-            }}
-          />
-        </div>
-        <select
-          value={roleFilter}
-          onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}
-          style={{
-            padding: '10px 16px',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            background: 'white',
-            fontSize: '0.875rem',
-          }}
-        >
-          <option value="all">Role ทั้งหมด</option>
-          <option value="admin">Admin</option>
-          <option value="instructor">ผู้สอน</option>
-          <option value="student">นักเรียน</option>
-        </select>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          style={{
-            padding: '10px 16px',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            background: 'white',
-            fontSize: '0.875rem',
-          }}
-        >
-          <option value="createdAt">เรียงตามวันที่</option>
-          <option value="name">เรียงตามชื่อ</option>
-          <option value="email">เรียงตามอีเมล</option>
-          <option value="enrollmentCount">เรียงตามคอร์สที่ลง</option>
-        </select>
-      </div>
-
-      {/* Actions Row */}
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}>
-        {/* Bulk Actions */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {selectedUsers.length > 0 && (
-            <>
-              <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                เลือก {selectedUsers.length} รายการ
-              </span>
-              <select
-                value={bulkAction}
-                onChange={(e) => setBulkAction(e.target.value)}
-                style={{
-                  padding: '8px 12px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '6px',
-                  background: 'white',
-                  fontSize: '0.875rem',
-                }}
-              >
-                <option value="">เลือกการดำเนินการ</option>
-                <option value="updateRole">เปลี่ยน Role</option>
-                <option value="deactivate">ปิดใช้งาน</option>
-                <option value="reactivate">เปิดใช้งาน</option>
-              </select>
-              {bulkAction === 'updateRole' && (
-                <select
-                  value={bulkRole}
-                  onChange={(e) => setBulkRole(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    background: 'white',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  <option value="student">นักเรียน</option>
-                  <option value="instructor">ผู้สอน</option>
-                  <option value="admin">Admin</option>
-                </select>
-              )}
-              <button
-                onClick={handleBulkAction}
-                disabled={processingBulk || !bulkAction}
-                style={{
-                  padding: '8px 16px',
-                  background: bulkAction === 'deactivate' ? '#dc2626' : '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: processingBulk || !bulkAction ? 'not-allowed' : 'pointer',
-                  opacity: processingBulk || !bulkAction ? 0.7 : 1,
-                  fontSize: '0.875rem',
-                }}
-              >
-                {processingBulk ? 'กำลังดำเนินการ...' : 'ดำเนินการ'}
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Import/Export */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImport}
-            accept=".csv"
-            style={{ display: 'none' }}
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-            style={{
-              padding: '8px 16px',
-              background: '#f1f5f9',
-              color: '#475569',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: importing ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem',
-            }}
-          >
-            {importing ? 'กำลังนำเข้า...' : '📥 นำเข้า CSV'}
-          </button>
-          <button
-            onClick={handleExport}
-            style={{
-              padding: '8px 16px',
-              background: '#f1f5f9',
-              color: '#475569',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-            }}
-          >
-            📤 ส่งออก CSV
-          </button>
-        </div>
-      </div>
-
-      {/* Import Result */}
-      {importResult && (
-        <div style={{
-          background: '#f0fdf4',
-          border: '1px solid #bbf7d0',
-          borderRadius: '8px',
-          padding: '16px',
-          marginBottom: '24px',
-        }}>
-          <div style={{ fontWeight: 600, color: '#16a34a', marginBottom: '8px' }}>ผลการนำเข้า</div>
-          <div style={{ fontSize: '0.875rem', color: '#166534' }}>
-            สำเร็จ: {importResult.success} | ข้าม: {importResult.skipped} | ล้มเหลว: {importResult.failed}
-          </div>
-          {(importResult.errors?.length ?? 0) > 0 && (
-            <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#dc2626' }}>
-              {importResult.errors?.slice(0, 5).map((err: string, i: number) => (
-                <div key={i}>{err}</div>
-              ))}
-            </div>
-          )}
-          <button
-            onClick={() => setImportResult(null)}
-            style={{
-              marginTop: '8px',
-              padding: '4px 12px',
-              background: 'transparent',
-              color: '#16a34a',
-              border: '1px solid #16a34a',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '0.75rem',
-            }}
-          >
-            ปิด
-          </button>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {editingUser && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '400px',
-            margin: '16px',
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px', color: '#1e293b' }}>
-              แก้ไขผู้ใช้
-            </h2>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                ชื่อ
-              </label>
-              <input
-                type="text"
-                value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                Role
-              </label>
-              <select
-                value={editForm.role}
-                onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  background: 'white',
-                }}
-              >
-                <option value="student">นักเรียน</option>
-                <option value="instructor">ผู้สอน</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setEditingUser(null)}
-                style={{
-                  padding: '10px 20px',
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                }}
-              >
-                ยกเลิก
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={updating === editingUser.id}
-                style={{
-                  padding: '10px 20px',
-                  background: '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: updating === editingUser.id ? 'not-allowed' : 'pointer',
-                  opacity: updating === editingUser.id ? 0.7 : 1,
-                }}
-              >
-                {updating === editingUser.id ? 'กำลังบันทึก...' : 'บันทึก'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Users Table */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        overflow: 'hidden',
-      }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ padding: '14px 16px', textAlign: 'center', width: '40px' }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.length === users.length && users.length > 0}
-                    onChange={toggleSelectAll}
-                    style={{ cursor: 'pointer' }}
-                  />
-                </th>
-                <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                  ผู้ใช้
-                </th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                  Role
-                </th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                  คอร์สที่ลงทะเบียน
-                </th>
-                <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                  วันที่สมัคร
-                </th>
-                <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                  การดำเนินการ
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} style={{ borderBottom: '1px solid #e2e8f0', background: selectedUsers.includes(user.id) ? '#f0f9ff' : 'transparent' }}>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.includes(user.id)}
-                      onChange={() => toggleSelectUser(user.id)}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontWeight: 600,
-                        flexShrink: 0,
-                      }}>
-                        {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-                      </div>
-                      <div
-                        onClick={() => window.location.href = `/admin/users/${user.id}`}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div style={{ fontWeight: 500, color: '#2563eb' }}>
-                          {user.name || 'ไม่ระบุชื่อ'}
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                          {user.email}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center' }}>
-                    <span style={{
-                      padding: '4px 12px',
-                      borderRadius: '50px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      ...getRoleStyle(user.role),
-                    }}>
-                      {getRoleText(user.role)}
-                    </span>
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center', color: '#64748b' }}>
-                    {user.enrollmentCount} คอร์ส
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>
-                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString('th-TH', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    }) : '-'}
-                  </td>
-                  <td style={{ padding: '16px', textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button
-                        onClick={() => handleEdit(user)}
-                        style={{
-                          padding: '6px 12px',
-                          background: '#eff6ff',
-                          color: '#2563eb',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        แก้ไข
-                      </button>
-                      <button
-                        onClick={() => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}
-                        style={{
-                          padding: '6px 12px',
-                          background: '#fef3c7',
-                          color: '#d97706',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        รหัสผ่าน
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(user.id)}
-                        disabled={updating === user.id}
-                        style={{
-                          padding: '6px 12px',
-                          background: '#fef2f2',
-                          color: '#dc2626',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          cursor: updating === user.id ? 'not-allowed' : 'pointer',
-                          opacity: updating === user.id ? 0.7 : 1,
-                        }}
-                      >
-                        ลบ
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {users.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-            ยังไม่มีผู้ใช้
-          </div>
-        )}
-
-        {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '16px',
-            borderTop: '1px solid #e2e8f0',
-          }}>
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              style={{
-                padding: '8px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                background: 'white',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                opacity: currentPage === 1 ? 0.5 : 1,
-              }}
-            >
-              ก่อนหน้า
-            </button>
-            <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
-              หน้า {currentPage} จาก {pagination.totalPages} (ทั้งหมด {pagination.total} รายการ)
-            </span>
-            <button
-              onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
-              disabled={currentPage === pagination.totalPages}
-              style={{
-                padding: '8px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                background: 'white',
-                cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
-                opacity: currentPage === pagination.totalPages ? 0.5 : 1,
-              }}
-            >
-              ถัดไป
-            </button>
-          </div>
-        )}
-      </div>
-      {/* Password Reset Modal */}
-      {passwordResetUser && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '420px',
-            margin: '16px',
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '8px', color: '#1e293b' }}>
-              เปลี่ยนรหัสผ่าน
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '20px' }}>
-              {passwordResetUser.name || 'ไม่ระบุชื่อ'} ({passwordResetUser.email})
-            </p>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                รหัสผ่านใหม่
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="อย่างน้อย 8 ตัวอักษร"
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    paddingRight: '48px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '8px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    color: '#64748b',
-                    padding: '4px 8px',
-                  }}
-                >
-                  {showPassword ? 'ซ่อน' : 'แสดง'}
-                </button>
-              </div>
-              {newPassword.length > 0 && newPassword.length < 8 && (
-                <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '6px' }}>
-                  รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร
-                </p>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => { setPasswordResetUser(null); setNewPassword(''); setShowPassword(false); }}
-                style={{
-                  padding: '10px 20px',
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                }}
-              >
-                ยกเลิก
-              </button>
-              <button
-                onClick={handleResetPassword}
-                disabled={resettingPassword || newPassword.length < 8}
-                style={{
-                  padding: '10px 20px',
-                  background: '#d97706',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: resettingPassword || newPassword.length < 8 ? 'not-allowed' : 'pointer',
-                  opacity: resettingPassword || newPassword.length < 8 ? 0.7 : 1,
-                }}
-              >
-                {resettingPassword ? 'กำลังบันทึก...' : 'เปลี่ยนรหัสผ่าน'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        title="ปิดใช้งานบัญชี"
-        message={lifecycleDeactivationDialog.message}
-        confirmText="ยืนยันปิดใช้งาน"
-        onConfirm={confirmDeleteUser}
-        onCancel={() => setDeleteConfirm(null)}
-      />
-      <ConfirmDialog
-        isOpen={bulkDeleteConfirm}
-        title="ปิดใช้งานบัญชีที่เลือก"
-        message={`บัญชี ${selectedUsers.length} รายการจะเข้าสู่ระบบไม่ได้ แต่ข้อมูลที่เชื่อมกับบัญชียังคงอยู่`}
-        confirmText="ยืนยันปิดใช้งาน"
-        onConfirm={executeBulkAction}
-        onCancel={() => setBulkDeleteConfirm(false)}
-      />
-    </div>
-  );
-}
-
-interface AdminUsersWorkspaceProps {
-  users: User[];
-  stats: Stats | null;
-  pagination: Pagination | null;
-  search: string;
-  roleFilter: string;
-  statusFilter: 'all' | 'active' | 'inactive';
-  sortBy: string;
-  loading: boolean;
-  loadError: string | null;
-  selectedUsers: string[];
-  bulkAction: string;
-  bulkRole: string;
-  processingBulk: boolean;
-  importing: boolean;
-  importResult: { success?: number; skipped?: number; failed?: number; errors?: string[] } | null;
-  editingUser: User | null;
-  editForm: { name: string; role: string };
-  updating: string | null;
-  passwordResetUser: User | null;
-  newPassword: string;
-  showPassword: boolean;
-  resettingPassword: boolean;
-  lifecycleConfirm: User | null;
-  bulkDeleteConfirm: boolean;
-  getRoleStyle: (role: string) => { background: string; color: string };
-  getRoleText: (role: string) => string;
-  onSearchChange: (value: string) => void;
-  onRoleFilterChange: (value: string) => void;
-  onStatusFilterChange: (value: 'all' | 'active' | 'inactive') => void;
-  onSortByChange: (value: string) => void;
-  onToggleSelectAll: () => void;
-  onToggleSelectUser: (userId: string) => void;
-  onBulkActionChange: (value: string) => void;
-  onBulkRoleChange: (value: string) => void;
-  onHandleBulkAction: () => void;
-  onOpenImport: () => void;
-  onExport: () => void;
-  onClearImportResult: () => void;
-  onHandleEdit: (user: User) => void;
-  onOpenPasswordReset: (user: User) => void;
-  onLifecycleRequest: (user: User) => void;
-  onRetry: () => void;
-  onPrevPage: () => void;
-  onNextPage: () => void;
-  onCloseEdit: () => void;
-  onEditFormChange: (value: { name: string; role: string }) => void;
-  onSave: () => void;
-  onPasswordChange: (value: string) => void;
-  onToggleShowPassword: () => void;
-  onClosePasswordReset: () => void;
-  onResetPassword: () => void;
-  onConfirmLifecycle: () => void;
-  onCancelLifecycle: () => void;
-  onConfirmBulkDelete: () => void;
-  onCancelBulkDelete: () => void;
-  onImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-function AdminUsersWorkspace({
-  users,
-  stats,
-  pagination,
-  search,
-  roleFilter,
-  statusFilter,
-  sortBy,
-  loading,
-  loadError,
-  selectedUsers,
-  bulkAction,
-  bulkRole,
-  processingBulk,
-  importing,
-  importResult,
-  editingUser,
-  editForm,
-  updating,
-  passwordResetUser,
-  newPassword,
-  showPassword,
-  resettingPassword,
-  lifecycleConfirm,
-  bulkDeleteConfirm,
-  getRoleStyle,
-  getRoleText,
-  onSearchChange,
-  onRoleFilterChange,
-  onStatusFilterChange,
-  onSortByChange,
-  onToggleSelectAll,
-  onToggleSelectUser,
-  onBulkActionChange,
-  onBulkRoleChange,
-  onHandleBulkAction,
-  onOpenImport,
-  onExport,
-  onClearImportResult,
-  onHandleEdit,
-  onOpenPasswordReset,
-  onLifecycleRequest,
-  onRetry,
-  onPrevPage,
-  onNextPage,
-  onCloseEdit,
-  onEditFormChange,
-  onSave,
-  onPasswordChange,
-  onToggleShowPassword,
-  onClosePasswordReset,
-  onResetPassword,
-  onConfirmLifecycle,
-  onCancelLifecycle,
-  onConfirmBulkDelete,
-  onCancelBulkDelete,
-  onImport,
-}: AdminUsersWorkspaceProps) {
-  const formatDate = (dateString: string) =>
-    dateString
-      ? new Date(dateString).toLocaleDateString('th-TH', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        })
-      : '-';
-
-  return (
-    <div className="admin-users-workspace" aria-busy={loading}>
-      <AdminPageHero
-        eyebrow="User Directory"
-        title="ดูแลบัญชีผู้ใช้ สิทธิ์ และการดำเนินการแบบกลุ่ม"
-        description="ค้นหาและดูสถานะบัญชี ปรับบทบาท และปิดหรือเปิดใช้งานได้โดยไม่ลบประวัติการเรียน การชำระเงิน หรือใบรับรอง"
+    <div className="mx-auto grid w-full max-w-7xl gap-6" aria-busy={loading}>
+      <AdminPageHeader
+        eyebrow="User directory"
+        title="บัญชีผู้ใช้"
+        description="ค้นหา ปรับบทบาท และปิดหรือเปิดใช้งานบัญชี โดยไม่ลบประวัติการเรียน การชำระเงิน หรือใบรับรอง"
         actions={
           <>
-            <AdminButton tone="default" onClick={onOpenImport} disabled={importing}>
-              {importing ? 'กำลังนำเข้า...' : 'นำเข้า CSV'}
-            </AdminButton>
-            <AdminButton tone="dark" onClick={onExport}>
+            <Input ref={fileInputRef} type="file" accept=".csv" onChange={handleImport} className="hidden" tabIndex={-1} />
+            <Button variant="outline" disabled={importing} onClick={() => fileInputRef.current?.click()}>
+              <FileUp data-icon="inline-start" aria-hidden />
+              {importing ? 'กำลังนำเข้า' : 'นำเข้า CSV'}
+            </Button>
+            <Button variant="outline" onClick={handleExport}>
+              <FileDown data-icon="inline-start" aria-hidden />
               ส่งออก CSV
-            </AdminButton>
-            <AdminPill tone={selectedUsers.length > 0 ? 'warning' : 'default'}>
-              เลือกแล้ว {selectedUsers.length} รายการ
-            </AdminPill>
+            </Button>
           </>
         }
-        meta="การปิดใช้งานจะตัดสิทธิ์เข้าสู่ระบบและยกเลิกเซสชันเดิม ข้อมูลที่เชื่อมกับบัญชียังคงอยู่และเปิดใช้งานใหม่ได้"
+        meta={`เลือกอยู่ ${selectedUsers.length.toLocaleString('th-TH')} บัญชี`}
       />
 
-      {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px' }}>
-          {[
-            ['บัญชีทั้งหมด', stats.total, 'info', 'ผู้ใช้ที่เก็บอยู่ในระบบ'],
-            ['ใช้งาน', stats.active, 'success', 'เข้าสู่ระบบและใช้บัญชีได้'],
-            ['ปิดใช้งาน', stats.inactive, 'warning', 'ข้อมูลคงอยู่ แต่เข้าสู่ระบบไม่ได้'],
-            ['Admin', stats.admins, 'default', 'สิทธิ์ระดับดูแลระบบ'],
-          ].map(([label, value, tone, note]) => (
-            <AdminSurfaceCard key={String(label)} style={{ padding: '20px 22px' }}>
-              <div style={summaryLabelStyle}>{label}</div>
-              <div className={`admin-users-summary-value admin-users-summary-value--${tone}`}>{value}</div>
-              <div className="admin-users-summary-note">{note}</div>
-            </AdminSurfaceCard>
-          ))}
+      {stats ? (
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="สรุปสถานะบัญชีผู้ใช้">
+          <AdminMetricCard label="บัญชีทั้งหมด" value={stats.total.toLocaleString('th-TH')} detail="ผู้ใช้ที่อยู่ในระบบ" tone="info" />
+          <AdminMetricCard label="ใช้งาน" value={stats.active.toLocaleString('th-TH')} detail="เข้าสู่ระบบได้" tone="success" />
+          <AdminMetricCard label="ปิดใช้งาน" value={stats.inactive.toLocaleString('th-TH')} detail="ข้อมูลคงอยู่ แต่เข้าสู่ระบบไม่ได้" tone="warning" />
+          <AdminMetricCard label="ผู้ดูแลระบบ" value={stats.admins.toLocaleString('th-TH')} detail="บัญชีที่มีสิทธิ์ระดับ admin" tone="danger" />
+        </section>
+      ) : null}
+
+      <AdminSection title="ค้นหาและกรอง" description="ค้นหาจากชื่อหรืออีเมล แล้วกรองตามบทบาทและสถานะ">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_10rem_11rem_13rem]">
+          <InputGroup>
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); setSelectedUsers([]); }} placeholder="ชื่อหรืออีเมล" aria-label="ค้นหาผู้ใช้" />
+          </InputGroup>
+          <NativeSelect className="w-full" value={roleFilter} onChange={(event) => { setRoleFilter(event.target.value); setCurrentPage(1); setSelectedUsers([]); }} aria-label="กรองตามบทบาท">
+            <NativeSelectOption value="all">ทุกบทบาท</NativeSelectOption>
+            <NativeSelectOption value="admin">ผู้ดูแล</NativeSelectOption>
+            <NativeSelectOption value="instructor">ผู้สอน</NativeSelectOption>
+            <NativeSelectOption value="student">ผู้เรียน</NativeSelectOption>
+          </NativeSelect>
+          <NativeSelect className="w-full" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value as typeof statusFilter); setCurrentPage(1); setSelectedUsers([]); }} aria-label="กรองตามสถานะบัญชี">
+            <NativeSelectOption value="all">ทุกสถานะ</NativeSelectOption>
+            <NativeSelectOption value="active">ใช้งาน</NativeSelectOption>
+            <NativeSelectOption value="inactive">ปิดใช้งาน</NativeSelectOption>
+          </NativeSelect>
+          <NativeSelect className="w-full" value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="เรียงลำดับผู้ใช้">
+            <NativeSelectOption value="createdAt">วันที่สมัคร</NativeSelectOption>
+            <NativeSelectOption value="name">ชื่อ</NativeSelectOption>
+            <NativeSelectOption value="email">อีเมล</NativeSelectOption>
+            <NativeSelectOption value="enrollmentCount">จำนวนคอร์ส</NativeSelectOption>
+          </NativeSelect>
         </div>
-      )}
+      </AdminSection>
 
-      <AdminSurfaceCard>
-        <AdminSectionHeading
-          title="Member Operations"
-          description="ค้นหา กรอง และจัดการบัญชีจากรายการเดียว พร้อมทางลัดสำหรับ bulk actions, import/export และงานดูแลบัญชีสำคัญ"
-        />
+      {importResult ? (
+        <Alert className="border-[var(--color-success)]/25 bg-[var(--color-success-soft)]">
+          <FileUp aria-hidden />
+          <AlertTitle>ผลการนำเข้าผู้ใช้</AlertTitle>
+          <AlertDescription>สำเร็จ {importResult.success || 0} · ข้าม {importResult.skipped || 0} · ล้มเหลว {importResult.failed || 0}</AlertDescription>
+          <AlertAction><Button variant="ghost" size="sm" onClick={() => setImportResult(null)}>ปิด</Button></AlertAction>
+          {importResult.errors?.length ? <ul className="col-start-2 mt-2 flex list-disc flex-col gap-1 pl-5 text-xs text-destructive">{importResult.errors.slice(0, 5).map((error, index) => <li key={`${error}-${index}`}>{error}</li>)}</ul> : null}
+        </Alert>
+      ) : null}
 
-        <div style={{ display: 'grid', gap: '14px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: '1 1 260px', minWidth: '220px' }}>
-              <svg
-                style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: '#94a3b8' }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input type="text" placeholder="ค้นหาจากชื่อหรืออีเมล" value={search} onChange={(e) => onSearchChange(e.target.value)} style={filterInputStyle} />
-            </div>
-            <select value={roleFilter} onChange={(e) => onRoleFilterChange(e.target.value)} style={filterSelectStyle}>
-              <option value="all">ทุก role</option>
-              <option value="admin">Admin</option>
-              <option value="instructor">ผู้สอน</option>
-              <option value="student">นักเรียน</option>
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => onStatusFilterChange(e.target.value as 'all' | 'active' | 'inactive')}
-              style={filterSelectStyle}
-              aria-label="กรองตามสถานะบัญชี"
-            >
-              <option value="all">ทุกสถานะ</option>
-              <option value="active">ใช้งาน</option>
-              <option value="inactive">ปิดใช้งาน</option>
-            </select>
-            <select value={sortBy} onChange={(e) => onSortByChange(e.target.value)} style={filterSelectStyle}>
-              <option value="createdAt">เรียงตามวันที่</option>
-              <option value="name">เรียงตามชื่อ</option>
-              <option value="email">เรียงตามอีเมล</option>
-              <option value="enrollmentCount">เรียงตามคอร์สที่ลง</option>
-            </select>
+      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchUsers()}>ลองใหม่</Button>} /> : null}
+
+      <AdminSection
+        title="รายชื่อบัญชีผู้ใช้"
+        description={`${(pagination?.total ?? users.length).toLocaleString('th-TH')} บัญชี`}
+        actions={selectedUsers.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <AdminStatusBadge tone="warning">เลือก {selectedUsers.length.toLocaleString('th-TH')}</AdminStatusBadge>
+            <NativeSelect value={bulkAction} onChange={(event) => setBulkAction(event.target.value)} aria-label="เลือกการดำเนินการแบบกลุ่ม">
+              <NativeSelectOption value="">เลือกการดำเนินการ</NativeSelectOption>
+              <NativeSelectOption value="updateRole">เปลี่ยนบทบาท</NativeSelectOption>
+              <NativeSelectOption value="deactivate">ปิดใช้งาน</NativeSelectOption>
+              <NativeSelectOption value="reactivate">เปิดใช้งาน</NativeSelectOption>
+            </NativeSelect>
+            {bulkAction === 'updateRole' ? (
+              <NativeSelect value={bulkRole} onChange={(event) => setBulkRole(event.target.value)} aria-label="บทบาทใหม่">
+                <NativeSelectOption value="student">ผู้เรียน</NativeSelectOption>
+                <NativeSelectOption value="instructor">ผู้สอน</NativeSelectOption>
+                <NativeSelectOption value="admin">ผู้ดูแล</NativeSelectOption>
+              </NativeSelect>
+            ) : null}
+            <Button size="sm" variant={bulkAction === 'deactivate' ? 'destructive' : 'default'} disabled={processingBulk || !bulkAction} onClick={() => void handleBulkAction()}>
+              {processingBulk ? <AdminPendingLabel>กำลังดำเนินการ</AdminPendingLabel> : 'ดำเนินการ'}
+            </Button>
           </div>
-
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '18px', background: '#f8fbff', border: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <AdminPill tone="default">ทั้งหมด {pagination?.total ?? users.length} บัญชี</AdminPill>
-              <AdminPill tone="success">ใช้งาน {stats?.active ?? 0}</AdminPill>
-              <AdminPill tone="warning">ปิดใช้งาน {stats?.inactive ?? 0}</AdminPill>
-            </div>
-            {selectedUsers.length > 0 ? (
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.875rem', color: '#64748b' }}>เลือก {selectedUsers.length} รายการ</span>
-                <select value={bulkAction} onChange={(e) => onBulkActionChange(e.target.value)} style={bulkSelectStyle}>
-                  <option value="">เลือกการดำเนินการ</option>
-                  <option value="updateRole">เปลี่ยน role</option>
-                  <option value="deactivate">ปิดใช้งาน</option>
-                  <option value="reactivate">เปิดใช้งาน</option>
-                </select>
-                {bulkAction === 'updateRole' && (
-                  <select value={bulkRole} onChange={(e) => onBulkRoleChange(e.target.value)} style={bulkSelectStyle}>
-                    <option value="student">นักเรียน</option>
-                    <option value="instructor">ผู้สอน</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                )}
-                <button className={`admin-users-bulk-submit${bulkAction === 'deactivate' ? ' is-destructive' : ''}`} onClick={onHandleBulkAction} disabled={processingBulk || !bulkAction}>
-                  {processingBulk ? 'กำลังดำเนินการ...' : 'ดำเนินการ'}
-                </button>
-              </div>
-            ) : (
-              <div style={{ color: '#94a3b8', fontSize: '0.82rem' }}>เลือกผู้ใช้จากตารางเพื่อใช้ bulk actions</div>
-            )}
-          </div>
-        </div>
-        {importResult && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '16px', padding: '16px', marginBottom: '20px' }}>
-            <div style={{ fontWeight: 700, color: '#16a34a', marginBottom: '8px' }}>Import result</div>
-            <div style={{ fontSize: '0.875rem', color: '#166534' }}>
-              Success: {importResult.success} | Skipped: {importResult.skipped} | Failed: {importResult.failed}
-            </div>
-            {(importResult.errors?.length ?? 0) > 0 && (
-              <div style={{ marginTop: '8px', fontSize: '0.75rem', color: '#dc2626' }}>
-                {importResult.errors?.slice(0, 5).map((err: string, i: number) => (
-                  <div key={i}>{err}</div>
+        ) : undefined}
+      >
+        {loading && users.length === 0 ? (
+          <AdminLoadingState title="กำลังโหลดรายชื่อผู้ใช้" />
+        ) : users.length === 0 && !loadError ? (
+          <AdminEmptyState icon={<Users aria-hidden />} title="ไม่พบบัญชีที่ตรงกับตัวกรอง" description="ลองเปลี่ยนคำค้นหา บทบาท หรือสถานะบัญชี" />
+        ) : !loadError ? (
+          <>
+            {loading ? <div className="mb-3 text-xs text-muted-foreground">กำลังอัปเดตรายชื่อ…</div> : null}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10"><Checkbox checked={selectedUsers.length === users.length && users.length > 0} onCheckedChange={toggleSelectAll} aria-label="เลือกผู้ใช้ทั้งหมดในหน้านี้" /></TableHead>
+                  <TableHead>ผู้ใช้</TableHead>
+                  <TableHead>บทบาท</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead className="text-center">คอร์ส</TableHead>
+                  <TableHead>วันที่สมัคร</TableHead>
+                  <TableHead className="text-right">จัดการ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id} className={user.lifecycleStatus === 'inactive' ? 'opacity-65' : selectedUsers.includes(user.id) ? 'bg-muted/50' : undefined}>
+                    <TableCell><Checkbox checked={selectedUsers.includes(user.id)} onCheckedChange={() => toggleSelectUser(user.id)} aria-label={`เลือก ${user.name || user.email}`} /></TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">{(user.name?.charAt(0) || user.email.charAt(0)).toUpperCase()}</div>
+                        <Link href={`/admin/users/${user.id}`} className="min-w-0 hover:underline">
+                          <div className="truncate font-semibold text-primary">{user.name || 'ไม่ระบุชื่อ'}</div>
+                          <div className="mt-1 truncate text-xs text-muted-foreground">{user.email}</div>
+                        </Link>
+                      </div>
+                    </TableCell>
+                    <TableCell><AdminStatusBadge tone={roleTone(user.role)}>{roleText(user.role)}</AdminStatusBadge></TableCell>
+                    <TableCell><AdminUserLifecycleBadge status={user.lifecycleStatus} detail={user.deactivatedAt ? `ตั้งแต่ ${formatDate(user.deactivatedAt)}` : undefined} /></TableCell>
+                    <TableCell className="text-center tabular-nums text-muted-foreground">{user.enrollmentCount.toLocaleString('th-TH')}</TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(user)}><Pencil data-icon="inline-start" aria-hidden />แก้ไข</Button>
+                        <Button variant="outline" size="sm" onClick={() => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}><KeyRound data-icon="inline-start" aria-hidden />รหัสผ่าน</Button>
+                        <AdminUserLifecycleAction status={user.lifecycleStatus} pending={updating === user.id} onRequest={() => handleLifecycleRequest(user)} />
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+            {pagination && pagination.totalPages > 1 ? (
+              <div className="mt-4 flex flex-col items-center justify-between gap-3 border-t pt-4 sm:flex-row">
+                <div className="text-sm text-muted-foreground">หน้า {pagination.page.toLocaleString('th-TH')} จาก {pagination.totalPages.toLocaleString('th-TH')} · {pagination.total.toLocaleString('th-TH')} บัญชี</div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={pagination.page === 1} onClick={() => { setSelectedUsers([]); setCurrentPage((page) => Math.max(1, page - 1)); }}>ก่อนหน้า</Button>
+                  <Button variant="outline" size="sm" disabled={pagination.page === pagination.totalPages} onClick={() => { setSelectedUsers([]); setCurrentPage((page) => Math.min(pagination.totalPages, page + 1)); }}>ถัดไป</Button>
+                </div>
               </div>
-            )}
-            <button
-              onClick={onClearImportResult}
-              style={{ marginTop: '8px', padding: '4px 12px', background: 'transparent', color: '#16a34a', border: '1px solid #16a34a', borderRadius: '999px', cursor: 'pointer', fontSize: '0.75rem' }}
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {loadError ? (
-          <div className="admin-users-state admin-users-state--error" role="alert">
-            <strong>โหลดรายชื่อผู้ใช้ไม่สำเร็จ</strong>
-            <span>{loadError}</span>
-            <AdminButton tone="default" onClick={onRetry}>ลองอีกครั้ง</AdminButton>
-          </div>
+            ) : null}
+          </>
         ) : null}
-        {loading && users.length > 0 ? (
-          <div className="admin-users-refreshing" role="status">กำลังอัปเดตรายชื่อ...</div>
-        ) : null}
+      </AdminSection>
 
-        {!loadError ? <div className="admin-users-table-wrap">
-          <table className="admin-users-table">
-            <caption className="admin-users-table-caption">
-              รายชื่อผู้ใช้ บทบาท สถานะบัญชี จำนวนคอร์ส วันที่สมัคร และการจัดการ
-            </caption>
-            <thead>
-              <tr style={{ background: '#f8fbff', borderBottom: '1px solid #e2e8f0' }}>
-                <th style={{ ...headerCellStyle, textAlign: 'center', width: '52px' }}>
-                  <input aria-label="เลือกผู้ใช้ทั้งหมดในหน้านี้" type="checkbox" checked={selectedUsers.length === users.length && users.length > 0} onChange={onToggleSelectAll} style={{ cursor: 'pointer' }} />
-                </th>
-                <th style={headerCellStyle}>User</th>
-                <th style={{ ...headerCellStyle, textAlign: 'center' }}>Role</th>
-                <th style={{ ...headerCellStyle, textAlign: 'center' }}>สถานะ</th>
-                <th style={{ ...headerCellStyle, textAlign: 'center' }}>Enrollments</th>
-                <th style={{ ...headerCellStyle, textAlign: 'center' }}>Joined</th>
-                <th style={{ ...headerCellStyle, textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className={user.lifecycleStatus === 'inactive' ? 'is-inactive' : undefined} style={{ borderBottom: '1px solid #edf2f7', background: selectedUsers.includes(user.id) ? '#f8fbff' : 'transparent' }}>
-                  <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                    <input aria-label={`เลือก ${user.name || user.email}`} type="checkbox" checked={selectedUsers.includes(user.id)} onChange={() => onToggleSelectUser(user.id)} style={{ cursor: 'pointer' }} />
-                  </td>
-                  <td style={bodyCellStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, flexShrink: 0 }}>
-                        {(user.name?.charAt(0) || user.email.charAt(0)).toUpperCase()}
-                      </div>
-                      <div onClick={() => (window.location.href = `/admin/users/${user.id}`)} style={{ cursor: 'pointer' }}>
-                        <div style={{ fontWeight: 700, color: '#2563eb', marginBottom: '4px' }}>{user.name || 'No name'}</div>
-                        <div style={{ fontSize: '0.84rem', color: '#64748b' }}>{user.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                    <span style={{ padding: '6px 12px', borderRadius: '999px', fontSize: '0.76rem', fontWeight: 700, ...getRoleStyle(user.role) }}>
-                      {getRoleText(user.role)}
-                    </span>
-                  </td>
-                  <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                    <AdminUserLifecycleBadge
-                      status={user.lifecycleStatus}
-                      detail={user.deactivatedAt ? `ตั้งแต่ ${formatDate(user.deactivatedAt)}` : undefined}
-                    />
-                  </td>
-                  <td style={{ ...bodyCellStyle, textAlign: 'center', color: '#64748b' }}>{user.enrollmentCount} courses</td>
-                  <td style={{ ...bodyCellStyle, textAlign: 'center', color: '#64748b', fontSize: '0.84rem' }}>{formatDate(user.createdAt)}</td>
-                  <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                      <button onClick={() => onHandleEdit(user)} style={actionButtonStyle('#eff6ff', '#2563eb')}>Edit</button>
-                      <button onClick={() => onOpenPasswordReset(user)} style={actionButtonStyle('#fff7ed', '#b45309')}>Password</button>
-                      <AdminUserLifecycleAction
-                        status={user.lifecycleStatus}
-                        pending={updating === user.id}
-                        onRequest={() => onLifecycleRequest(user)}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div> : null}
-
-        {!loadError && users.length === 0 && !loading ? (
-          <div className="admin-users-state" role="status">
-            <strong>ไม่พบบัญชีที่ตรงกับตัวกรอง</strong>
-            <span>ลองเปลี่ยนคำค้นหา บทบาท หรือสถานะบัญชี</span>
+      <Dialog open={Boolean(editingUser)} onOpenChange={(open) => { if (!open && !updating) setEditingUser(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>แก้ไขบัญชีผู้ใช้</DialogTitle><DialogDescription>ปรับชื่อที่แสดงและบทบาทของบัญชี</DialogDescription></DialogHeader>
+          <div className="grid gap-5">
+            <Field><FieldLabel htmlFor="edit-user-name">ชื่อ</FieldLabel><Input id="edit-user-name" value={editForm.name} onChange={(event) => setEditForm((previous) => ({ ...previous, name: event.target.value }))} /></Field>
+            <Field><FieldLabel htmlFor="edit-user-role">บทบาท</FieldLabel><NativeSelect id="edit-user-role" className="w-full" value={editForm.role} onChange={(event) => setEditForm((previous) => ({ ...previous, role: event.target.value }))}><NativeSelectOption value="student">ผู้เรียน</NativeSelectOption><NativeSelectOption value="instructor">ผู้สอน</NativeSelectOption><NativeSelectOption value="admin">ผู้ดูแล</NativeSelectOption></NativeSelect></Field>
           </div>
-        ) : null}
+          <DialogFooter><Button variant="outline" disabled={Boolean(updating)} onClick={() => setEditingUser(null)}>ยกเลิก</Button><Button disabled={Boolean(updating)} onClick={() => void handleSave()}>{updating ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : 'บันทึก'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {pagination && pagination.totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '18px', borderTop: '1px solid #e2e8f0' }}>
-            <button onClick={onPrevPage} disabled={pagination.page === 1} style={paginationButtonStyle(pagination.page === 1)}>Previous</button>
-            <span style={{ color: '#64748b', fontSize: '0.84rem' }}>
-              Page {pagination.page} of {pagination.totalPages} ({pagination.total} records)
-            </span>
-            <button onClick={onNextPage} disabled={pagination.page === pagination.totalPages} style={paginationButtonStyle(pagination.page === pagination.totalPages)}>Next</button>
-          </div>
-        )}
-      </AdminSurfaceCard>
+      <Dialog open={Boolean(passwordResetUser)} onOpenChange={(open) => { if (!open && !resettingPassword) { setPasswordResetUser(null); setNewPassword(''); setShowPassword(false); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>ตั้งรหัสผ่านใหม่</DialogTitle><DialogDescription>{passwordResetUser ? `${passwordResetUser.name || 'ไม่ระบุชื่อ'} (${passwordResetUser.email})` : 'กำหนดรหัสผ่านใหม่ให้ผู้ใช้'}</DialogDescription></DialogHeader>
+          <Field data-invalid={Boolean(newPassword && newPassword.length < 8)}>
+            <FieldLabel htmlFor="new-password">รหัสผ่านใหม่</FieldLabel>
+            <InputGroup><InputGroupInput id="new-password" type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="อย่างน้อย 8 ตัวอักษร" /><InputGroupAddon align="inline-end"><InputGroupButton size="icon-xs" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}>{showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}</InputGroupButton></InputGroupAddon></InputGroup>
+            <FieldDescription>อย่างน้อย 8 ตัวอักษร</FieldDescription>
+            {newPassword && newPassword.length < 8 ? <FieldError>รหัสผ่านสั้นเกินไป</FieldError> : null}
+          </Field>
+          <DialogFooter><Button variant="outline" disabled={resettingPassword} onClick={() => setPasswordResetUser(null)}>ยกเลิก</Button><Button disabled={resettingPassword || newPassword.length < 8} onClick={() => void handleResetPassword()}>{resettingPassword ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : 'ตั้งรหัสผ่านใหม่'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {editingUser && (
-        <div style={modalBackdropStyle}>
-          <div style={modalPanelStyle(400)}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', color: '#1e293b' }}>Edit user</h2>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={modalLabelStyle}>Name</label>
-              <input type="text" value={editForm.name} onChange={(e) => onEditFormChange({ ...editForm, name: e.target.value })} style={modalInputStyle} />
-            </div>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={modalLabelStyle}>Role</label>
-              <select value={editForm.role} onChange={(e) => onEditFormChange({ ...editForm, role: e.target.value })} style={{ ...modalInputStyle, background: 'white' }}>
-                <option value="student">Student</option>
-                <option value="instructor">Instructor</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button onClick={onCloseEdit} style={secondaryModalButtonStyle}>Cancel</button>
-              <button onClick={onSave} disabled={updating === editingUser.id} style={{ ...primaryModalButtonStyle, cursor: updating === editingUser.id ? 'not-allowed' : 'pointer', opacity: updating === editingUser.id ? 0.7 : 1 }}>
-                {updating === editingUser.id ? 'Saving...' : 'Save'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {passwordResetUser && (
-        <div style={modalBackdropStyle}>
-          <div style={modalPanelStyle(420)}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px', color: '#1e293b' }}>Reset password</h2>
-            <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '20px' }}>
-              {passwordResetUser.name || 'No name'} ({passwordResetUser.email})
-            </p>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={modalLabelStyle}>New password</label>
-              <div style={{ position: 'relative' }}>
-                <input type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(e) => onPasswordChange(e.target.value)} placeholder="At least 8 characters" style={{ ...modalInputStyle, paddingRight: '48px' }} />
-                <button type="button" onClick={onToggleShowPassword} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#64748b', padding: '4px 8px' }}>
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              {newPassword.length > 0 && newPassword.length < 8 && <p style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '6px' }}>Password must be at least 8 characters</p>}
-            </div>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button onClick={onClosePasswordReset} style={secondaryModalButtonStyle}>Cancel</button>
-              <button onClick={onResetPassword} disabled={resettingPassword || newPassword.length < 8} style={{ ...warningModalButtonStyle, cursor: resettingPassword || newPassword.length < 8 ? 'not-allowed' : 'pointer', opacity: resettingPassword || newPassword.length < 8 ? 0.7 : 1 }}>
-                {resettingPassword ? 'Saving...' : 'Reset password'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <ConfirmDialog
-        isOpen={!!lifecycleConfirm}
+      <AdminConfirmActionDialog
+        open={Boolean(lifecycleConfirm)}
         title={lifecycleDeactivationDialog.title}
-        message={`${lifecycleConfirm?.name || lifecycleConfirm?.email || 'บัญชีนี้'}: ${lifecycleDeactivationDialog.message}`}
-        confirmText={updating === lifecycleConfirm?.id ? 'กำลังปิดใช้งาน...' : lifecycleDeactivationDialog.confirmText}
-        confirmDisabled={updating === lifecycleConfirm?.id}
-        onConfirm={onConfirmLifecycle}
-        onCancel={onCancelLifecycle}
+        description={lifecycleDeactivationDialog.message}
+        target={lifecycleConfirm ? lifecycleConfirm.name || lifecycleConfirm.email : undefined}
+        confirmLabel={lifecycleDeactivationDialog.confirmText}
+        pending={Boolean(lifecycleConfirm && updating === lifecycleConfirm.id)}
+        pendingLabel="กำลังปิดใช้งาน"
+        onConfirm={() => { if (lifecycleConfirm) void executeLifecycleAction(lifecycleConfirm, 'deactivate'); }}
+        onOpenChange={(open) => { if (!open) setLifecycleConfirm(null); }}
       />
-      <ConfirmDialog
-        isOpen={bulkDeleteConfirm}
+      <AdminConfirmActionDialog
+        open={bulkConfirm}
         title="ปิดใช้งานบัญชีที่เลือก"
-        message={`บัญชี ${selectedUsers.length} รายการจะเข้าสู่ระบบไม่ได้และเซสชันเดิมจะสิ้นสุด แต่ข้อมูลที่เชื่อมกับบัญชียังคงอยู่`}
-        confirmText={processingBulk ? 'กำลังปิดใช้งาน...' : 'ยืนยันปิดใช้งาน'}
-        confirmDisabled={processingBulk}
-        onConfirm={onConfirmBulkDelete}
-        onCancel={onCancelBulkDelete}
+        description="บัญชีที่เลือกจะเข้าสู่ระบบไม่ได้และเซสชันเดิมจะสิ้นสุด แต่ข้อมูลที่เชื่อมกับบัญชียังคงอยู่"
+        target={`${selectedUsers.length.toLocaleString('th-TH')} บัญชี`}
+        confirmLabel="ยืนยันปิดใช้งาน"
+        pending={processingBulk}
+        pendingLabel="กำลังปิดใช้งาน"
+        onConfirm={() => void executeBulkAction()}
+        onOpenChange={(open) => { if (!open) setBulkConfirm(false); }}
       />
-
-      <input type="file" onChange={onImport} accept=".csv" style={{ display: 'none' }} />
     </div>
   );
 }
-
-const summaryLabelStyle: CSSProperties = {
-  color: '#64748b',
-  fontSize: '0.78rem',
-  marginBottom: '8px',
-  fontWeight: 700,
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
-};
-
-const filterInputStyle: CSSProperties = {
-  width: '100%',
-  padding: '12px 14px 12px 42px',
-  border: '1px solid #dbe5f0',
-  borderRadius: '14px',
-  fontSize: '0.9rem',
-  background: '#f8fbff',
-  color: '#0f172a',
-};
-
-const filterSelectStyle: CSSProperties = {
-  padding: '12px 14px',
-  border: '1px solid #dbe5f0',
-  borderRadius: '14px',
-  background: '#f8fbff',
-  fontSize: '0.875rem',
-  color: '#334155',
-};
-
-const bulkSelectStyle: CSSProperties = {
-  padding: '10px 12px',
-  border: '1px solid #dbe5f0',
-  borderRadius: '12px',
-  background: 'white',
-  fontSize: '0.875rem',
-};
-
-const headerCellStyle: CSSProperties = {
-  padding: '15px 18px',
-  textAlign: 'left',
-  fontWeight: 700,
-  color: '#64748b',
-  fontSize: '0.79rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-};
-
-const bodyCellStyle: CSSProperties = {
-  padding: '18px',
-  verticalAlign: 'middle',
-};
-
-const actionButtonStyle = (background: string, color: string): CSSProperties => ({
-  padding: '8px 12px',
-  background,
-  color,
-  border: '1px solid transparent',
-  borderRadius: '10px',
-  fontSize: '0.78rem',
-  fontWeight: 700,
-  cursor: 'pointer',
-});
-
-const paginationButtonStyle = (disabled: boolean): CSSProperties => ({
-  padding: '9px 16px',
-  border: '1px solid #dbe5f0',
-  borderRadius: '10px',
-  background: '#fff',
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  opacity: disabled ? 0.5 : 1,
-});
-
-const modalBackdropStyle: CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'rgba(15, 23, 42, 0.48)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 1000,
-};
-
-const modalPanelStyle = (maxWidth: number): CSSProperties => ({
-  background: 'white',
-  borderRadius: '18px',
-  padding: '24px',
-  width: '100%',
-  maxWidth,
-  margin: '16px',
-  boxShadow: '0 24px 60px rgba(15, 23, 42, 0.18)',
-});
-
-const modalLabelStyle: CSSProperties = {
-  display: 'block',
-  fontWeight: 600,
-  marginBottom: '8px',
-  color: '#374151',
-};
-
-const modalInputStyle: CSSProperties = {
-  width: '100%',
-  padding: '10px 14px',
-  border: '1px solid #dbe5f0',
-  borderRadius: '12px',
-  fontSize: '1rem',
-};
-
-const secondaryModalButtonStyle: CSSProperties = {
-  padding: '10px 20px',
-  background: '#f1f5f9',
-  color: '#475569',
-  border: 'none',
-  borderRadius: '12px',
-  cursor: 'pointer',
-  fontWeight: 700,
-};
-
-const primaryModalButtonStyle: CSSProperties = {
-  padding: '10px 20px',
-  background: '#2563eb',
-  color: 'white',
-  border: 'none',
-  borderRadius: '12px',
-  fontWeight: 700,
-};
-
-const warningModalButtonStyle: CSSProperties = {
-  padding: '10px 20px',
-  background: '#d97706',
-  color: 'white',
-  border: 'none',
-  borderRadius: '12px',
-  fontWeight: 700,
-};

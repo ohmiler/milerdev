@@ -1,6 +1,22 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
+import { ImageIcon, ImageOff, RefreshCw, Trash2, UploadCloud } from 'lucide-react';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
+import { normalizeImageUrl } from '@/lib/url';
 
 interface ImageUploadProps {
   value: string;
@@ -11,11 +27,22 @@ interface ImageUploadProps {
 export default function ImageUpload({ value, onChange, folder = 'courses' }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [error, setError] = useState('');
+  const [uploadError, setUploadError] = useState('');
+  const [previewFailed, setPreviewFailed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewUrl = normalizeImageUrl(value);
+  const previewError = value && !previewUrl
+    ? 'URL รูปภาพไม่ถูกต้อง จึงไม่สามารถแสดงตัวอย่างได้'
+    : previewFailed
+      ? 'โหลดตัวอย่างรูปภาพไม่สำเร็จ กรุณาเปลี่ยนรูปหรือลบ URL นี้'
+      : '';
+
+  useEffect(() => {
+    setPreviewFailed(false);
+  }, [value]);
 
   const handleUpload = async (file: File) => {
-    setError('');
+    setUploadError('');
     setUploading(true);
 
     try {
@@ -23,166 +50,146 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
       formData.append('file', file);
       formData.append('folder', folder);
 
-      const res = await fetch('/api/upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
+      const data = await response.json();
 
-      const data = await res.json();
-
-      if (res.ok && data.url) {
+      if (response.ok && data.url) {
         onChange(data.url);
       } else {
-        setError(data.error || 'อัปโหลดไม่สำเร็จ');
+        setUploadError(data.error || 'อัปโหลดไม่สำเร็จ');
       }
     } catch {
-      setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      setUploadError('เกิดข้อผิดพลาด กรุณาลองใหม่');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleUpload(file);
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) void handleUpload(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleUpload(file);
+    const file = event.dataTransfer.files?.[0];
+    if (!uploading && file) void handleUpload(file);
   };
 
   const handleRemove = () => {
     onChange('');
-    setError('');
+    setUploadError('');
+    setPreviewFailed(false);
   };
 
   return (
-    <div>
-      <input
+    <div className="flex flex-col gap-3">
+      <Input
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={handleFileSelect}
-        style={{ display: 'none' }}
+        className="sr-only"
+        tabIndex={-1}
       />
 
       {value ? (
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img
-            src={value}
-            alt="Preview"
-            style={{
-              maxWidth: '300px',
-              maxHeight: '180px',
-              borderRadius: '8px',
-              objectFit: 'cover',
-              border: '1px solid #e2e8f0',
-            }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-          <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                padding: '6px 12px',
-                background: '#f1f5f9',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                fontSize: '0.813rem',
-                color: '#475569',
-                cursor: 'pointer',
-              }}
-            >
+        <div className="flex flex-col gap-3">
+          {previewUrl && !previewFailed ? (
+            <div className="relative aspect-video max-w-md overflow-hidden rounded-xl border border-border bg-muted">
+              <Image
+                src={previewUrl}
+                alt="ตัวอย่างรูปภาพ"
+                fill
+                unoptimized
+                sizes="448px"
+                className="object-cover"
+                onError={() => setPreviewFailed(true)}
+              />
+            </div>
+          ) : (
+            <Empty className="min-h-44 max-w-md border p-6">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><ImageOff aria-hidden /></EmptyMedia>
+                <EmptyTitle>ไม่สามารถแสดงตัวอย่างรูปภาพ</EmptyTitle>
+                <EmptyDescription>คุณยังเปลี่ยนหรือลบรูปภาพนี้ได้โดยไม่กระทบส่วนอื่นของฟอร์ม</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+              <RefreshCw data-icon="inline-start" aria-hidden />
               เปลี่ยนรูป
-            </button>
-            <button
-              type="button"
-              onClick={handleRemove}
-              style={{
-                padding: '6px 12px',
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: '6px',
-                fontSize: '0.813rem',
-                color: '#dc2626',
-                cursor: 'pointer',
-              }}
-            >
+            </Button>
+            <Button type="button" variant="destructive" size="sm" onClick={handleRemove}>
+              <Trash2 data-icon="inline-start" aria-hidden />
               ลบรูป
-            </button>
+            </Button>
           </div>
-          <div style={{ marginTop: '6px' }}>
-            <input
-              type="text"
-              value={value}
-              readOnly
-              style={{
-                width: '100%',
-                padding: '6px 10px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                fontSize: '0.75rem',
-                color: '#94a3b8',
-                background: '#f8fafc',
-              }}
-            />
-          </div>
+          <Input value={value} readOnly className="text-xs text-muted-foreground" aria-label="URL รูปภาพ" />
         </div>
       ) : (
         <div
-          onClick={() => !uploading && fileInputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          role="button"
+          tabIndex={uploading ? -1 : 0}
+          aria-disabled={uploading}
+          className={cn(
+            'grid min-h-44 cursor-pointer place-items-center rounded-xl border-2 border-dashed border-border bg-muted/20 p-6 text-center transition-colors outline-none hover:border-primary/40 hover:bg-muted/35 focus-visible:ring-2 focus-visible:ring-ring',
+            dragOver && 'border-primary bg-primary/5 ring-2 ring-primary/15',
+            uploading && 'cursor-wait opacity-70',
+          )}
+          onClick={() => {
+            if (!uploading) fileInputRef.current?.click();
+          }}
+          onKeyDown={(event) => {
+            if (!uploading && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (!uploading) setDragOver(true);
+          }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          style={{
-            border: `2px dashed ${dragOver ? '#2563eb' : '#dbe5f4'}`,
-            borderRadius: '18px',
-            padding: '38px 24px',
-            textAlign: 'center',
-            cursor: uploading ? 'wait' : 'pointer',
-            background: dragOver ? 'linear-gradient(180deg, #eff6ff, #ffffff)' : 'linear-gradient(180deg, #ffffff, #f8fafc)',
-            transition: 'all 0.2s',
-            boxShadow: dragOver ? '0 14px 24px rgba(37,99,235,0.08)' : 'inset 0 1px 0 rgba(255,255,255,0.82)',
-          }}
         >
           {uploading ? (
             <div>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                border: '3px solid #e2e8f0',
-                borderTop: '3px solid #2563eb',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                margin: '0 auto 12px',
-              }} />
-              <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>กำลังอัปโหลด...</p>
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <Spinner className="mx-auto size-7" aria-hidden />
+              <p className="mt-3 text-sm font-medium text-foreground">กำลังอัปโหลด...</p>
+              <p className="mt-1 text-xs text-muted-foreground">โปรดรอจนกว่าการอัปโหลดจะเสร็จ</p>
             </div>
           ) : (
             <div>
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📷</div>
-              <p style={{ color: '#475569', fontSize: '0.875rem', margin: '0 0 4px' }}>
-                คลิกหรือลากไฟล์มาวาง
-              </p>
-              <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: 0 }}>
-                JPG, PNG, WEBP, GIF (สูงสุด 10MB)
-              </p>
+              <span className="mx-auto grid size-10 place-items-center rounded-lg border border-border bg-card">
+                {dragOver ? <ImageIcon className="size-5 text-primary" aria-hidden /> : <UploadCloud className="size-5 text-muted-foreground" aria-hidden />}
+              </span>
+              <p className="mt-3 text-sm font-medium text-foreground">คลิกหรือลากไฟล์มาวาง</p>
+              <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WEBP, GIF สูงสุด 10MB</p>
             </div>
           )}
         </div>
       )}
 
-      {error && (
-        <p style={{ color: '#dc2626', fontSize: '0.813rem', marginTop: '8px' }}>{error}</p>
-      )}
+      {previewError ? (
+        <Alert variant="destructive">
+          <AlertTitle>แสดงตัวอย่างรูปภาพไม่สำเร็จ</AlertTitle>
+          <AlertDescription>{previewError}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {uploadError ? (
+        <Alert variant="destructive">
+          <AlertTitle>อัปโหลดรูปภาพไม่สำเร็จ</AlertTitle>
+          <AlertDescription>{uploadError}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }

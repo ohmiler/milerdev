@@ -1,13 +1,35 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import { ExternalLink, Search, WalletCards } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+
 import {
-  AdminPageHero,
-  AdminPill,
-  AdminSectionHeading,
-  AdminSurfaceCard,
-} from '@/components/admin/ui/AdminPrimitives';
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+  type AdminTone,
+} from '@/components/admin/ui/AdminOperations';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { showToast } from '@/components/ui/Toast';
 
 interface Payment {
@@ -45,13 +67,32 @@ interface Pagination {
   totalPages: number;
 }
 
+type StatusIntent = { payment: Payment; newStatus: Payment['status'] } | null;
+
+const statusText: Record<Payment['status'], string> = {
+  pending: 'รอดำเนินการ',
+  completed: 'สำเร็จ',
+  failed: 'ล้มเหลว',
+  refunded: 'คืนเงิน',
+  verifying: 'กำลังตรวจสอบ',
+};
+
+const methodText: Record<Payment['method'], string> = {
+  stripe: 'Stripe',
+  promptpay: 'PromptPay',
+  bank_transfer: 'โอนเงิน',
+};
+
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
-
+  const [statusIntent, setStatusIntent] = useState<StatusIntent>(null);
+  const [statusReason, setStatusReason] = useState('');
+  const [statusError, setStatusError] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,6 +106,7 @@ export default function AdminPaymentsPage() {
 
   const fetchPayments = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
@@ -72,455 +114,210 @@ export default function AdminPaymentsPage() {
         method: methodFilter,
         ...(searchDebounce && { search: searchDebounce }),
       });
-
-      const res = await fetch(`/api/admin/payments?${params}`);
-      const data = await res.json();
-
+      const response = await fetch(`/api/admin/payments?${params}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายการชำระเงินได้');
       setPayments(data.payments || []);
       setStats(data.stats || null);
       setPagination(data.pagination || null);
-    } catch (error) {
-      console.error('Error fetching payments:', error);
+    } catch (caughtError) {
+      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายการชำระเงินได้');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPayments();
+    void fetchPayments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, methodFilter, currentPage, searchDebounce]);
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    const reason = window.prompt('กรุณาระบุเหตุผลการเปลี่ยนสถานะ (อย่างน้อย 5 ตัวอักษร)');
-    if (reason === null) return;
-    if (reason.trim().length < 5) {
-      showToast('เหตุผลต้องมีอย่างน้อย 5 ตัวอักษร', 'error');
+  const openStatusDialog = (payment: Payment, newStatus: Payment['status']) => {
+    if (newStatus === payment.status) return;
+    setStatusReason('');
+    setStatusError('');
+    setStatusIntent({ payment, newStatus });
+  };
+
+  const handleStatusChange = async () => {
+    if (!statusIntent) return;
+    const reason = statusReason.trim();
+    if (reason.length < 5) {
+      setStatusError('เหตุผลต้องมีอย่างน้อย 5 ตัวอักษร');
       return;
     }
 
-    setUpdatingStatus(id);
+    setUpdatingStatus(statusIntent.payment.id);
+    setStatusError('');
     try {
-      const res = await fetch(`/api/admin/payments/${id}`, {
+      const response = await fetch(`/api/admin/payments/${statusIntent.payment.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, reason: reason.trim() }),
+        body: JSON.stringify({ status: statusIntent.newStatus, reason }),
       });
-      const data = await res.json();
-      if (res.ok) {
-        showToast(`เปลี่ยนสถานะเป็น "${getStatusText(newStatus)}" สำเร็จ`, 'success');
-        await fetchPayments();
-      } else {
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'เปลี่ยนสถานะไม่สำเร็จ');
+      showToast(`เปลี่ยนสถานะเป็น “${statusText[statusIntent.newStatus]}” สำเร็จ`, 'success');
+      setStatusIntent(null);
+      setStatusReason('');
+      await fetchPayments();
+    } catch (caughtError) {
+      setStatusError(caughtError instanceof Error ? caughtError.message : 'เปลี่ยนสถานะไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setUpdatingStatus(null);
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'รอดำเนินการ';
-      case 'completed':
-        return 'สำเร็จ';
-      case 'failed':
-        return 'ล้มเหลว';
-      case 'refunded':
-        return 'คืนเงิน';
-      case 'verifying':
-        return 'กำลังตรวจสอบ';
-      default:
-        return status;
-    }
-  };
-
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return { background: '#fff7ed', color: '#b45309' };
-      case 'completed':
-        return { background: '#eefbf3', color: '#15803d' };
-      case 'failed':
-        return { background: '#fef2f2', color: '#dc2626' };
-      case 'refunded':
-        return { background: '#eff6ff', color: '#1d4ed8' };
-      default:
-        return { background: '#f8fafc', color: '#475569' };
-    }
-  };
-
-  const getMethodText = (method: string) => {
-    switch (method) {
-      case 'stripe':
-        return 'Stripe';
-      case 'promptpay':
-        return 'PromptPay';
-      case 'bank_transfer':
-        return 'โอนเงิน';
-      default:
-        return method;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatCurrency = (amount: string | number) => {
-    return new Intl.NumberFormat('th-TH', {
-      style: 'currency',
-      currency: 'THB',
-    }).format(parseFloat(String(amount)));
-  };
-
-  const summaryCards = stats
-    ? [
-        {
-          label: 'ธุรกรรมทั้งหมด',
-          value: stats.total,
-          note: 'ภาพรวมรายการที่อยู่ในระบบ',
-          color: '#0f172a',
-        },
-        {
-          label: 'สำเร็จแล้ว',
-          value: stats.completed,
-          note: 'พร้อมใช้งานตาม entitlement',
-          color: '#15803d',
-        },
-        {
-          label: 'รอดำเนินการ',
-          value: stats.pending,
-          note: 'ควรติดตามเพื่อปิดงานให้ครบ',
-          color: '#b45309',
-        },
-        {
-          label: 'รายได้รวม',
-          value: formatCurrency(stats.totalRevenue),
-          note: 'ธุรกรรมสำเร็จที่ปิดยอดแล้ว',
-          color: '#2563eb',
-        },
-      ]
-    : [];
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const formatCurrency = (amount: string | number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(parseFloat(String(amount)));
+  const statusTone = (status: Payment['status']): AdminTone => status === 'completed' ? 'success' : status === 'failed' ? 'danger' : status === 'pending' || status === 'verifying' ? 'warning' : 'info';
 
   return (
-    <div style={{ display: 'grid', gap: '24px' }}>
-      <AdminPageHero
-        eyebrow="Payment Operations"
-        title="จัดการรายการชำระเงินและสถานะธุรกรรม"
-        description="รวมการค้นหา กรอง ตรวจสอบรายการที่มีปัญหา และคำสั่งอัปเดตสถานะไว้ใน workspace เดียว เพื่อให้ทีมจัดการ payment operations ได้เร็วและมั่นใจขึ้น"
-        actions={
-          <>
-            <AdminPill tone={statusFilter === 'all' ? 'default' : 'warning'}>
-              {statusFilter === 'all' ? 'ทุกสถานะ' : `สถานะ ${getStatusText(statusFilter)}`}
-            </AdminPill>
-            <AdminPill tone={methodFilter === 'all' ? 'default' : 'info'}>
-              {methodFilter === 'all' ? 'ทุกช่องทาง' : getMethodText(methodFilter)}
-            </AdminPill>
-          </>
-        }
-        meta="โฟกัสกับรายการที่ต้องปิดงาน เช่น pending ค้าง, รายการล้มเหลว และการยืนยันสิทธิ์หลังชำระเงินให้ครบในที่เดียว"
+    <div className="mx-auto grid w-full max-w-7xl gap-6">
+      <AdminPageHeader
+        eyebrow="Payment operations"
+        title="รายการชำระเงิน"
+        description="ค้นหา ตรวจหลักฐาน และเปลี่ยนสถานะธุรกรรมพร้อมบันทึกเหตุผลสำหรับตรวจสอบย้อนหลัง"
+        meta="การยืนยันรายการอาจส่งผลต่อสิทธิ์เข้าเรียน โปรดตรวจข้อมูลก่อนดำเนินการ"
       />
 
-      {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px' }}>
-          {summaryCards.map((card) => (
-            <AdminSurfaceCard key={card.label} style={{ padding: '20px 22px' }}>
-              <div
-                style={{
-                  color: '#64748b',
-                  fontSize: '0.78rem',
-                  marginBottom: '8px',
-                  fontWeight: 700,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {card.label}
-              </div>
-              <div style={{ color: card.color, fontSize: '1.65rem', fontWeight: 800, lineHeight: 1.1, marginBottom: '6px' }}>
-                {card.value}
-              </div>
-              <div style={{ color: '#94a3b8', fontSize: '0.78rem', lineHeight: 1.6 }}>{card.note}</div>
-            </AdminSurfaceCard>
-          ))}
+      {stats ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <AdminMetricCard label="ธุรกรรมทั้งหมด" value={stats.total.toLocaleString('th-TH')} detail="รายการที่อยู่ในระบบ" />
+          <AdminMetricCard label="สำเร็จแล้ว" value={stats.completed.toLocaleString('th-TH')} tone="success" detail="ปิดยอดและมอบสิทธิ์แล้ว" />
+          <AdminMetricCard label="รอดำเนินการ" value={stats.pending.toLocaleString('th-TH')} tone="warning" detail="ควรติดตามเพื่อปิดงาน" />
+          <AdminMetricCard label="รายได้รวม" value={formatCurrency(stats.totalRevenue)} tone="info" detail="จากธุรกรรมสำเร็จ" />
         </div>
-      )}
+      ) : null}
 
-      <AdminSurfaceCard>
-        <AdminSectionHeading
-          title="Payment Ledger"
-          description="ค้นหา กรอง และจัดการสถานะธุรกรรมพร้อมข้อมูลผู้ใช้ รายการที่ซื้อ และหลักฐานการโอนในมุมมองเดียว"
-        />
-
-        <div style={{ display: 'grid', gap: '14px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: '1 1 260px', minWidth: '220px' }}>
-              <svg
-                style={{
-                  position: 'absolute',
-                  left: '14px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '18px',
-                  height: '18px',
-                  color: '#94a3b8',
-                }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="ค้นหาจากชื่อ อีเมล หรือชื่อคอร์ส"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px 14px 12px 42px',
-                  border: '1px solid #dbe5f0',
-                  borderRadius: '14px',
-                  fontSize: '0.9rem',
-                  background: '#f8fbff',
-                  color: '#0f172a',
-                }}
-              />
-            </div>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: '12px 14px',
-                border: '1px solid #dbe5f0',
-                borderRadius: '14px',
-                background: '#f8fbff',
-                fontSize: '0.875rem',
-                color: '#334155',
-              }}
-            >
-              <option value="all">ทุกสถานะ</option>
-              <option value="pending">รอดำเนินการ</option>
-              <option value="completed">สำเร็จ</option>
-              <option value="failed">ล้มเหลว</option>
-              <option value="refunded">คืนเงิน</option>
-            </select>
-
-            <select
-              value={methodFilter}
-              onChange={(e) => {
-                setMethodFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: '12px 14px',
-                border: '1px solid #dbe5f0',
-                borderRadius: '14px',
-                background: '#f8fbff',
-                fontSize: '0.875rem',
-                color: '#334155',
-              }}
-            >
-              <option value="all">ทุกช่องทาง</option>
-              <option value="stripe">Stripe</option>
-              <option value="promptpay">PromptPay</option>
-              <option value="bank_transfer">โอนเงิน</option>
-            </select>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <AdminPill tone="default">ทั้งหมด {pagination?.total ?? payments.length} รายการ</AdminPill>
-            <AdminPill tone="success">สำเร็จ {stats?.completed ?? 0}</AdminPill>
-            <AdminPill tone="warning">รอจัดการ {stats?.pending ?? 0}</AdminPill>
-          </div>
+      <AdminSection title="ค้นหาและกรอง" description="ค้นหาจากชื่อ อีเมล ชื่อคอร์ส หรือชื่อ bundle">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
+          <InputGroup><InputGroupAddon><Search aria-hidden /></InputGroupAddon><InputGroupInput value={search} onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }} placeholder="ชื่อ อีเมล คอร์ส หรือ bundle" aria-label="ค้นหารายการชำระเงิน" /></InputGroup>
+          <NativeSelect className="w-full" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setCurrentPage(1); }} aria-label="กรองสถานะ">
+            <NativeSelectOption value="all">ทุกสถานะ</NativeSelectOption>
+            {(Object.keys(statusText) as Payment['status'][]).map((status) => <NativeSelectOption key={status} value={status}>{statusText[status]}</NativeSelectOption>)}
+          </NativeSelect>
+          <NativeSelect className="w-full" value={methodFilter} onChange={(event) => { setMethodFilter(event.target.value); setCurrentPage(1); }} aria-label="กรองช่องทางชำระเงิน">
+            <NativeSelectOption value="all">ทุกช่องทาง</NativeSelectOption>
+            {(Object.keys(methodText) as Payment['method'][]).map((method) => <NativeSelectOption key={method} value={method}>{methodText[method]}</NativeSelectOption>)}
+          </NativeSelect>
         </div>
+      </AdminSection>
 
+      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchPayments()}>ลองใหม่</Button>} /> : null}
+
+      <AdminSection title="สมุดรายการชำระเงิน" description={`${(pagination?.total ?? payments.length).toLocaleString('th-TH')} รายการ`}>
         {loading && payments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '72px 24px', color: '#64748b' }}>กำลังโหลดรายการชำระเงิน...</div>
+          <AdminLoadingState title="กำลังโหลดรายการชำระเงิน" />
         ) : payments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '72px 24px', color: '#64748b' }}>ไม่พบรายการที่ตรงกับตัวกรองตอนนี้</div>
+          <AdminEmptyState icon={<WalletCards aria-hidden />} title="ไม่พบรายการชำระเงิน" description="ลองเปลี่ยนคำค้นหา สถานะ หรือช่องทางชำระเงิน" />
         ) : (
           <>
-            <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '18px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px', background: 'white' }}>
-                <thead>
-                  <tr style={{ background: '#f8fbff', borderBottom: '1px solid #e2e8f0' }}>
-                    <th style={headerCellStyle}>ผู้ชำระเงิน</th>
-                    <th style={headerCellStyle}>รายการ</th>
-                    <th style={{ ...headerCellStyle, textAlign: 'center' }}>จำนวน</th>
-                    <th style={{ ...headerCellStyle, textAlign: 'center' }}>ช่องทาง</th>
-                    <th style={{ ...headerCellStyle, textAlign: 'center' }}>สถานะ</th>
-                    <th style={{ ...headerCellStyle, textAlign: 'center' }}>เวลา</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map((payment) => (
-                    <tr key={payment.id} style={{ borderBottom: '1px solid #edf2f7' }}>
-                      <td style={bodyCellStyle}>
-                        <div
-                          onClick={() => payment.userId && (window.location.href = `/admin/users/${payment.userId}`)}
-                          style={{ cursor: payment.userId ? 'pointer' : 'default' }}
-                        >
-                          <div style={{ fontWeight: 700, color: payment.userId ? '#2563eb' : '#0f172a', marginBottom: '5px', fontSize: '0.94rem' }}>
-                            {payment.userName || 'ไม่ระบุชื่อ'}
-                          </div>
-                          <div style={{ fontSize: '0.84rem', color: '#64748b' }}>{payment.userEmail || '-'}</div>
-                        </div>
-                      </td>
-                      <td style={bodyCellStyle}>
-                        <div style={{ color: '#0f172a', fontSize: '0.9rem', fontWeight: 600 }}>
-                          {payment.bundleTitle || payment.courseTitle || payment.itemTitle || '-'}
-                        </div>
-                        {payment.slipUrl && (
-                          payment.slipUrl.startsWith('http') ? (
-                            <a
-                              href={payment.slipUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                fontSize: '0.76rem',
-                                color: '#2563eb',
-                                textDecoration: 'none',
-                                display: 'inline-block',
-                                marginTop: '6px',
-                                fontWeight: 600,
-                              }}
-                            >
-                              ดูสลิป
-                            </a>
-                          ) : (
-                            <div style={{ fontSize: '0.76rem', color: '#64748b', marginTop: '6px' }}>
-                              Ref: <span style={{ fontFamily: 'monospace', color: '#475569', userSelect: 'all' }}>{payment.slipUrl}</span>
-                            </div>
-                          )
-                        )}
-                      </td>
-                      <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                        <div style={{ fontWeight: 800, color: '#0f172a' }}>{formatCurrency(payment.amount)}</div>
-                      </td>
-                      <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                        <span
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '50px',
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
-                            background: '#f8fafc',
-                            color: '#475569',
-                          }}
-                        >
-                          {getMethodText(payment.method)}
-                        </span>
-                      </td>
-                      <td style={{ ...bodyCellStyle, textAlign: 'center' }}>
-                        <select
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ผู้ชำระเงิน</TableHead>
+                  <TableHead>รายการ</TableHead>
+                  <TableHead className="text-right">จำนวน</TableHead>
+                  <TableHead>ช่องทาง</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead>เวลา</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payments.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell>
+                      {payment.userId ? <Link href={`/admin/users/${payment.userId}`} className="font-semibold text-primary hover:underline">{payment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-semibold">{payment.userName || 'ไม่ระบุชื่อ'}</div>}
+                      <div className="mt-1 text-xs text-muted-foreground">{payment.userEmail || '-'}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="max-w-72 truncate font-medium">{payment.bundleTitle || payment.courseTitle || payment.itemTitle || '-'}</div>
+                      {payment.slipUrl ? payment.slipUrl.startsWith('http') ? (
+                        <a href={payment.slipUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">ดูหลักฐาน <ExternalLink className="size-3" aria-hidden /></a>
+                      ) : <div className="mt-1 max-w-72 truncate font-mono text-xs text-muted-foreground" title={payment.slipUrl}>Ref: {payment.slipUrl}</div> : null}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums">{formatCurrency(payment.amount)}</TableCell>
+                    <TableCell><AdminStatusBadge>{methodText[payment.method]}</AdminStatusBadge></TableCell>
+                    <TableCell>
+                      <div className="flex min-w-44 items-center gap-2">
+                        <AdminStatusBadge tone={statusTone(payment.status)}>{statusText[payment.status]}</AdminStatusBadge>
+                        <NativeSelect
+                          size="sm"
                           value={payment.status}
-                          onChange={(e) => handleStatusChange(payment.id, e.target.value)}
                           disabled={updatingStatus === payment.id}
-                          style={{
-                            padding: '6px 10px',
-                            borderRadius: '10px',
-                            fontSize: '0.76rem',
-                            fontWeight: 700,
-                            border: '1px solid #dbe5f0',
-                            cursor: updatingStatus === payment.id ? 'wait' : 'pointer',
-                            opacity: updatingStatus === payment.id ? 0.5 : 1,
-                            ...getStatusStyle(payment.status),
-                          }}
+                          onChange={(event) => openStatusDialog(payment, event.target.value as Payment['status'])}
+                          aria-label={`เปลี่ยนสถานะธุรกรรม ${payment.id}`}
                         >
-                          <option value={payment.status}>{getStatusText(payment.status)}</option>
-                          {payment.status === 'completed' && <option value="refunded">คืนเงิน</option>}
-                          {payment.status !== 'completed'
-                            && payment.status !== 'refunded'
-                            && payment.method !== 'stripe'
-                            && <option value="completed">สำเร็จ</option>}
-                          {(payment.status === 'pending' || payment.status === 'verifying')
-                            && <option value="failed">ล้มเหลว</option>}
-                        </select>
-                      </td>
-                      <td style={{ ...bodyCellStyle, textAlign: 'center', fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6 }}>
-                        {formatDate(payment.createdAt)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {pagination && pagination.totalPages > 1 && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '18px',
-                  borderTop: '1px solid #e2e8f0',
-                }}
-              >
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  style={paginationButtonStyle(currentPage === 1)}
-                >
-                  ก่อนหน้า
-                </button>
-                <span style={{ color: '#64748b', fontSize: '0.84rem' }}>
-                  หน้า {currentPage} จาก {pagination.totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
-                  disabled={currentPage === pagination.totalPages}
-                  style={paginationButtonStyle(currentPage === pagination.totalPages)}
-                >
-                  ถัดไป
-                </button>
+                          <NativeSelectOption value={payment.status}>เปลี่ยนสถานะ</NativeSelectOption>
+                          {payment.status === 'completed' ? <NativeSelectOption value="refunded">คืนเงิน</NativeSelectOption> : null}
+                          {payment.status !== 'completed' && payment.status !== 'refunded' && payment.method !== 'stripe' ? <NativeSelectOption value="completed">สำเร็จ</NativeSelectOption> : null}
+                          {payment.status === 'pending' || payment.status === 'verifying' ? <NativeSelectOption value="failed">ล้มเหลว</NativeSelectOption> : null}
+                        </NativeSelect>
+                      </div>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs leading-5 text-muted-foreground">{formatDate(payment.createdAt)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {pagination && pagination.totalPages > 1 ? (
+              <div className="mt-4 flex flex-col items-center justify-between gap-3 border-t pt-4 sm:flex-row">
+                <div className="text-sm text-muted-foreground">หน้า {currentPage.toLocaleString('th-TH')} จาก {pagination.totalPages.toLocaleString('th-TH')}</div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>ก่อนหน้า</Button>
+                  <Button variant="outline" size="sm" disabled={currentPage === pagination.totalPages} onClick={() => setCurrentPage((page) => Math.min(pagination.totalPages, page + 1))}>ถัดไป</Button>
+                </div>
               </div>
-            )}
+            ) : null}
           </>
         )}
-      </AdminSurfaceCard>
+      </AdminSection>
 
+      <Dialog
+        open={Boolean(statusIntent)}
+        onOpenChange={(open) => {
+          if (!open && !updatingStatus) {
+            setStatusIntent(null);
+            setStatusReason('');
+            setStatusError('');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ยืนยันการเปลี่ยนสถานะ</DialogTitle>
+            <DialogDescription>
+              {statusIntent ? `เปลี่ยนจาก “${statusText[statusIntent.payment.status]}” เป็น “${statusText[statusIntent.newStatus]}” พร้อมบันทึกเหตุผล` : 'ระบุเหตุผลการเปลี่ยนสถานะ'}
+            </DialogDescription>
+          </DialogHeader>
+          {statusIntent ? (
+            <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+              <div className="font-medium">{statusIntent.payment.bundleTitle || statusIntent.payment.courseTitle || statusIntent.payment.itemTitle || 'ไม่ระบุรายการ'}</div>
+              <div className="mt-1 flex justify-between gap-3 text-xs text-muted-foreground"><span className="font-mono">{statusIntent.payment.id}</span><span>{formatCurrency(statusIntent.payment.amount)}</span></div>
+            </div>
+          ) : null}
+          {statusError ? <Alert variant="destructive"><AlertTitle>เปลี่ยนสถานะไม่สำเร็จ</AlertTitle><AlertDescription>{statusError}</AlertDescription></Alert> : null}
+          <Field data-invalid={Boolean(statusReason && statusReason.trim().length < 5)}>
+            <FieldLabel htmlFor="payment-status-reason">เหตุผล</FieldLabel>
+            <Textarea id="payment-status-reason" value={statusReason} onChange={(event) => setStatusReason(event.target.value)} rows={4} placeholder="ระบุสิ่งที่ตรวจสอบและเหตุผลของการเปลี่ยนสถานะ" />
+            <FieldDescription>อย่างน้อย 5 ตัวอักษร</FieldDescription>
+            {statusReason && statusReason.trim().length < 5 ? <FieldError>กรุณาระบุรายละเอียดเพิ่มเติม</FieldError> : null}
+          </Field>
+          <DialogFooter>
+            <Button variant="outline" disabled={Boolean(updatingStatus)} onClick={() => setStatusIntent(null)}>ยกเลิก</Button>
+            <Button variant={statusIntent?.newStatus === 'failed' || statusIntent?.newStatus === 'refunded' ? 'destructive' : 'default'} disabled={Boolean(updatingStatus) || statusReason.trim().length < 5} onClick={() => void handleStatusChange()}>
+              {updatingStatus ? <AdminPendingLabel>กำลังเปลี่ยนสถานะ</AdminPendingLabel> : 'ยืนยันการเปลี่ยนสถานะ'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-const headerCellStyle: CSSProperties = {
-  padding: '15px 18px',
-  textAlign: 'left',
-  fontWeight: 700,
-  color: '#64748b',
-  fontSize: '0.79rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-};
-
-const bodyCellStyle: CSSProperties = {
-  padding: '18px',
-  verticalAlign: 'middle',
-};
-
-const paginationButtonStyle = (disabled: boolean): CSSProperties => ({
-  padding: '9px 16px',
-  border: '1px solid #dbe5f0',
-  borderRadius: '10px',
-  background: '#fff',
-  cursor: disabled ? 'not-allowed' : 'pointer',
-  opacity: disabled ? 0.5 : 1,
-});

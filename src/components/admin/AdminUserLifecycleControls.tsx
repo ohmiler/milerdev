@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 
-import { AdminPill } from '@/components/admin/ui/AdminPrimitives';
+import { AdminStatusBadge } from '@/components/admin/ui/AdminOperations';
+import { Button } from '@/components/ui/button';
 import {
   getLifecyclePresentation,
   type AdminUserLifecycleStatus,
@@ -17,9 +18,9 @@ export function AdminUserLifecycleBadge({
 }) {
   const lifecycle = getLifecyclePresentation(status);
   return (
-    <div className="admin-user-lifecycle-badge">
-      <AdminPill tone={lifecycle.tone}>{lifecycle.badgeLabel}</AdminPill>
-      {detail ? <div className="admin-users-status-time">{detail}</div> : null}
+    <div className="flex flex-col items-start gap-1">
+      <AdminStatusBadge tone={lifecycle.tone}>{lifecycle.badgeLabel}</AdminStatusBadge>
+      {detail ? <div className="text-xs text-muted-foreground">{detail}</div> : null}
     </div>
   );
 }
@@ -35,14 +36,15 @@ export function AdminUserLifecycleAction({
 }) {
   const lifecycle = getLifecyclePresentation(status);
   return (
-    <button
+    <Button
       type="button"
-      className={`admin-users-lifecycle-action admin-users-lifecycle-action--${lifecycle.action}`}
+      size="sm"
+      variant={lifecycle.action === 'deactivate' ? 'destructive' : 'outline'}
       onClick={onRequest}
       disabled={pending}
       aria-label={`${lifecycle.actionLabel}บัญชี`}
     >
       {pending ? 'กำลังบันทึก...' : lifecycle.actionLabel}
-    </button>
+    </Button>
   );
 }

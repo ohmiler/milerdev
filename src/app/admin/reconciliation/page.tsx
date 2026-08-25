@@ -1,398 +1,321 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { CheckCircle2, RefreshCw, ShieldAlert, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
+import {
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface PaymentRecord {
-    id: string;
-    userId: string | null;
-    courseId: string | null;
-    bundleId: string | null;
-    amount: string;
-    currency: string;
-    method: string;
-    status: string;
-    itemTitle: string | null;
-    slipUrl: string | null;
-    retryCount: number | null;
-    lastRetryAt: string | null;
-    createdAt: string;
-    userName: string | null;
-    userEmail: string | null;
-    courseTitle: string | null;
-    bundleTitle: string | null;
+  id: string;
+  userId: string | null;
+  courseId: string | null;
+  bundleId: string | null;
+  amount: string;
+  currency: string;
+  method: string;
+  status: string;
+  itemTitle: string | null;
+  slipUrl: string | null;
+  retryCount: number | null;
+  lastRetryAt: string | null;
+  createdAt: string;
+  userName: string | null;
+  userEmail: string | null;
+  courseTitle: string | null;
+  bundleTitle: string | null;
 }
 
 interface Summary {
-    verifying: number;
-    failed: number;
-    pending: number;
+  verifying: number;
+  failed: number;
+  pending: number;
 }
 
 type StatusFilter = 'verifying' | 'failed' | 'pending';
+type ActionIntent =
+  | { type: 'single'; payment: PaymentRecord; action: 'approve' | 'reject' }
+  | { type: 'bulk' }
+  | null;
+
+const statusLabels: Record<StatusFilter, string> = {
+  verifying: 'รอตรวจสอบ',
+  failed: 'ล้มเหลว',
+  pending: 'รอดำเนินการ',
+};
 
 export default function ReconciliationPage() {
-    const [payments, setPayments] = useState<PaymentRecord[]>([]);
-    const [summary, setSummary] = useState<Summary>({ verifying: 0, failed: 0, pending: 0 });
-    const [loading, setLoading] = useState(true);
-    const [statusFilter, setStatusFilter] = useState<StatusFilter>('verifying');
-    const [daysBack, setDaysBack] = useState(30);
-    const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const [selected, setSelected] = useState<Set<string>>(new Set());
-    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [summary, setSummary] = useState<Summary>({ verifying: 0, failed: 0, pending: 0 });
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('verifying');
+  const [daysBack, setDaysBack] = useState(30);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [actionIntent, setActionIntent] = useState<ActionIntent>(null);
+  const [reason, setReason] = useState('');
+  const [actionError, setActionError] = useState('');
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const res = await fetch(`/api/admin/reconciliation?status=${statusFilter}&days=${daysBack}`);
-            const data = await res.json();
-            if (res.ok) {
-                setPayments(data.payments || []);
-                setSummary(data.summary || { verifying: 0, failed: 0, pending: 0 });
-            }
-        } catch {
-            console.error('Failed to fetch reconciliation data');
-        } finally {
-            setLoading(false);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      const response = await fetch(`/api/admin/reconciliation?status=${statusFilter}&days=${daysBack}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายการกระทบยอดได้');
+      setPayments(data.payments || []);
+      setSummary(data.summary || { verifying: 0, failed: 0, pending: 0 });
+      setSelected(new Set());
+    } catch (caughtError) {
+      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายการกระทบยอดได้');
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, daysBack]);
+
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
+
+  const openAction = (intent: Exclude<ActionIntent, null>) => {
+    setReason('');
+    setActionError('');
+    setActionIntent(intent);
+  };
+
+  const handleAction = async () => {
+    if (!actionIntent) return;
+    const normalizedReason = reason.trim();
+    if (normalizedReason.length < 5) {
+      setActionError('เหตุผลต้องมีอย่างน้อย 5 ตัวอักษร');
+      return;
+    }
+
+    setActionLoading(true);
+    setActionError('');
+    setMessage(null);
+    try {
+      const isBulk = actionIntent.type === 'bulk';
+      const response = await fetch(isBulk ? '/api/admin/reconciliation' : `/api/admin/reconciliation/${actionIntent.payment.id}/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(isBulk
+          ? { action: 'mark_failed', paymentIds: Array.from(selected), reason: normalizedReason }
+          : { action: actionIntent.action, reason: normalizedReason }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ดำเนินการไม่สำเร็จ');
+      setMessage({ type: 'success', text: data.message || 'ดำเนินการสำเร็จ' });
+      setActionIntent(null);
+      setReason('');
+      setSelected(new Set());
+      await fetchData();
+    } catch (caughtError) {
+      setActionError(caughtError instanceof Error ? caughtError.message : 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelected((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelected((previous) => previous.size === payments.length ? new Set() : new Set(payments.map((payment) => payment.id)));
+  };
+
+  const formatDate = (date: string | null) => date
+    ? new Date(date).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
+    : '-';
+  const formatAmount = (amount: string) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(parseFloat(amount));
+  const statusTone = (status: string) => status === 'completed' ? 'success' : status === 'failed' ? 'danger' : status === 'verifying' ? 'warning' : 'info';
+
+  const intentTitle = actionIntent?.type === 'bulk'
+    ? `ทำเครื่องหมาย ${selected.size.toLocaleString('th-TH')} รายการว่าล้มเหลว`
+    : actionIntent?.action === 'approve'
+      ? 'อนุมัติรายการชำระเงิน'
+      : 'ปฏิเสธรายการชำระเงิน';
+  const isDestructive = actionIntent?.type === 'bulk' || actionIntent?.action === 'reject';
+
+  return (
+    <div className="mx-auto grid w-full max-w-7xl gap-6">
+      <AdminPageHeader
+        eyebrow="Payment controls"
+        title="กระทบยอดการชำระเงิน"
+        description="จัดการรายการค้าง ตรวจสอบรายการผิดปกติ และบันทึกเหตุผลก่อนอนุมัติหรือปฏิเสธทุกครั้ง"
+        actions={
+          <Button variant="outline" disabled={loading} onClick={() => void fetchData()}>
+            <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : undefined} aria-hidden />
+            รีเฟรช
+          </Button>
         }
-    }, [statusFilter, daysBack]);
+      />
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+      <div className="grid gap-4 sm:grid-cols-3">
+        <AdminMetricCard label="รอตรวจสอบ" value={summary.verifying.toLocaleString('th-TH')} tone="warning" detail="ควรตรวจหลักฐานและปิดงาน" />
+        <AdminMetricCard label="ล้มเหลว" value={summary.failed.toLocaleString('th-TH')} tone="danger" detail="ตรวจสาเหตุและประวัติ retry" />
+        <AdminMetricCard label="รอดำเนินการ" value={summary.pending.toLocaleString('th-TH')} tone="info" detail="รายการที่ยังไม่สิ้นสุด" />
+      </div>
 
-    const handleRetry = async (paymentId: string, action: 'approve' | 'reject') => {
-        const reason = window.prompt(
-            action === 'approve'
-                ? 'ระบุเหตุผลและหลักฐานที่ใช้อนุมัติ (อย่างน้อย 5 ตัวอักษร)'
-                : 'ระบุเหตุผลที่ปฏิเสธ (อย่างน้อย 5 ตัวอักษร)'
-        );
-        if (reason === null) return;
-        if (reason.trim().length < 5) {
-            setMessage({ type: 'error', text: 'เหตุผลต้องมีอย่างน้อย 5 ตัวอักษร' });
-            return;
-        }
-
-        setActionLoading(paymentId);
-        setMessage(null);
-        try {
-            const res = await fetch(`/api/admin/reconciliation/${paymentId}/retry`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, reason: reason.trim() }),
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setMessage({ type: 'success', text: data.message });
-                fetchData();
-            } else {
-                setMessage({ type: 'error', text: data.error || 'เกิดข้อผิดพลาด' });
-            }
-        } catch {
-            setMessage({ type: 'error', text: 'เกิดข้อผิดพลาดในการเชื่อมต่อ' });
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const handleBulkMarkFailed = async () => {
-        if (selected.size === 0) return;
-        const reason = window.prompt('ระบุเหตุผลที่ทำเครื่องหมายรายการเหล่านี้ว่าล้มเหลว (อย่างน้อย 5 ตัวอักษร)');
-        if (reason === null) return;
-        if (reason.trim().length < 5) {
-            setMessage({ type: 'error', text: 'เหตุผลต้องมีอย่างน้อย 5 ตัวอักษร' });
-            return;
-        }
-        setMessage(null);
-        try {
-            const res = await fetch('/api/admin/reconciliation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'mark_failed',
-                    paymentIds: Array.from(selected),
-                    reason: reason.trim(),
-                }),
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setMessage({ type: 'success', text: data.message });
-                setSelected(new Set());
-                fetchData();
-            } else {
-                setMessage({ type: 'error', text: data.error || 'เกิดข้อผิดพลาด' });
-            }
-        } catch {
-            setMessage({ type: 'error', text: 'เกิดข้อผิดพลาดในการเชื่อมต่อ' });
-        }
-    };
-
-    const toggleSelect = (id: string) => {
-        setSelected(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    };
-
-    const toggleSelectAll = () => {
-        if (selected.size === payments.length) {
-            setSelected(new Set());
-        } else {
-            setSelected(new Set(payments.map(p => p.id)));
-        }
-    };
-
-    const formatDate = (d: string | null) => {
-        if (!d) return '-';
-        return new Date(d).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const formatAmount = (amount: string, _currency?: string) => {
-        return `฿${parseFloat(amount).toLocaleString()}`;
-    };
-
-    const statusColors: Record<string, { bg: string; text: string }> = {
-        verifying: { bg: '#fef3c7', text: '#92400e' },
-        failed: { bg: '#fee2e2', text: '#991b1b' },
-        pending: { bg: '#e0e7ff', text: '#3730a3' },
-        completed: { bg: '#d1fae5', text: '#065f46' },
-    };
-
-    const getStatusStyle = (status: string) => statusColors[status] || { bg: '#f1f5f9', text: '#475569' };
-
-    return (
-        <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
-                        Payment Reconciliation
-                    </h1>
-                    <p style={{ color: '#64748b', margin: '4px 0 0' }}>
-                        จัดการรายการชำระเงินที่ค้าง/ล้มเหลว
-                    </p>
-                </div>
-                <button
-                    onClick={fetchData}
-                    style={{
-                        padding: '8px 16px',
-                        background: '#f1f5f9',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                    }}
-                >
-                    🔄 รีเฟรช
-                </button>
-            </div>
-
-            {/* Summary Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
-                {([
-                    { key: 'verifying' as StatusFilter, label: 'รอตรวจสอบ', icon: '⏳', color: '#f59e0b' },
-                    { key: 'failed' as StatusFilter, label: 'ล้มเหลว', icon: '❌', color: '#ef4444' },
-                    { key: 'pending' as StatusFilter, label: 'รอดำเนินการ', icon: '🕐', color: '#6366f1' },
-                ]).map(card => (
-                    <button
-                        key={card.key}
-                        onClick={() => setStatusFilter(card.key)}
-                        style={{
-                            padding: '20px',
-                            background: statusFilter === card.key ? '#f8fafc' : 'white',
-                            border: statusFilter === card.key ? `2px solid ${card.color}` : '1px solid #e2e8f0',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                        }}
-                    >
-                        <div style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '4px' }}>
-                            {card.icon} {card.label}
-                        </div>
-                        <div style={{ fontSize: '1.75rem', fontWeight: 700, color: card.color }}>
-                            {summary[card.key]}
-                        </div>
-                    </button>
-                ))}
-            </div>
-
-            {/* Filters */}
-            <div style={{
-                display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px',
-                padding: '12px 16px', background: '#f8fafc', borderRadius: '8px',
-            }}>
-                <label style={{ fontSize: '0.875rem', color: '#64748b' }}>ย้อนหลัง:</label>
-                <select
-                    value={daysBack}
-                    onChange={(e) => setDaysBack(Number(e.target.value))}
-                    style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.875rem' }}
-                >
-                    <option value={7}>7 วัน</option>
-                    <option value={14}>14 วัน</option>
-                    <option value={30}>30 วัน</option>
-                    <option value={60}>60 วัน</option>
-                    <option value={90}>90 วัน</option>
-                </select>
-
-                {statusFilter === 'verifying' && selected.size > 0 && (
-                    <button
-                        onClick={handleBulkMarkFailed}
-                        style={{
-                            marginLeft: 'auto',
-                            padding: '6px 16px',
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '0.875rem',
-                        }}
-                    >
-                        Mark {selected.size} as Failed
-                    </button>
-                )}
-            </div>
-
-            {/* Message */}
-            {message && (
-                <div style={{
-                    padding: '12px 16px',
-                    marginBottom: '16px',
-                    borderRadius: '8px',
-                    background: message.type === 'success' ? '#d1fae5' : '#fee2e2',
-                    color: message.type === 'success' ? '#065f46' : '#991b1b',
-                    fontSize: '0.875rem',
-                }}>
-                    {message.text}
-                </div>
-            )}
-
-            {/* Table */}
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>กำลังโหลด...</div>
-            ) : payments.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px', color: '#94a3b8' }}>
-                    ไม่พบรายการ {statusFilter === 'verifying' ? 'รอตรวจสอบ' : statusFilter === 'failed' ? 'ล้มเหลว' : 'รอดำเนินการ'}
-                </div>
-            ) : (
-                <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                        <thead>
-                            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                {statusFilter === 'verifying' && (
-                                    <th style={{ padding: '12px 16px', textAlign: 'left' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selected.size === payments.length && payments.length > 0}
-                                            onChange={toggleSelectAll}
-                                        />
-                                    </th>
-                                )}
-                                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>วันที่</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>ผู้ชำระ</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>รายการ</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b', fontWeight: 600 }}>จำนวน</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>สถานะ</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>Retry</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b', fontWeight: 600 }}>จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {payments.map((p) => {
-                                const statusStyle = getStatusStyle(p.status);
-                                return (
-                                    <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                        {statusFilter === 'verifying' && (
-                                            <td style={{ padding: '12px 16px' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selected.has(p.id)}
-                                                    onChange={() => toggleSelect(p.id)}
-                                                />
-                                            </td>
-                                        )}
-                                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-                                            {formatDate(p.createdAt)}
-                                        </td>
-                                        <td style={{ padding: '12px 16px' }}>
-                                            <div style={{ fontWeight: 500, color: '#1e293b' }}>{p.userName || '-'}</div>
-                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{p.userEmail || '-'}</div>
-                                        </td>
-                                        <td style={{ padding: '12px 16px' }}>
-                                            <div style={{ fontWeight: 500, color: '#1e293b' }}>
-                                                {p.itemTitle || p.courseTitle || p.bundleTitle || '-'}
-                                            </div>
-                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                                {p.bundleId ? 'Bundle' : 'Course'} • ID: {p.id.slice(0, 8)}...
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>
-                                            {formatAmount(p.amount, p.currency)}
-                                        </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                            <span style={{
-                                                display: 'inline-block',
-                                                padding: '4px 10px',
-                                                borderRadius: '9999px',
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                background: statusStyle.bg,
-                                                color: statusStyle.text,
-                                            }}>
-                                                {p.status}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'center', color: '#64748b' }}>
-                                            {p.retryCount || 0}
-                                        </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                                                {(p.status === 'verifying' || p.status === 'failed') && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => handleRetry(p.id, 'approve')}
-                                                            disabled={actionLoading === p.id}
-                                                            style={{
-                                                                padding: '4px 12px',
-                                                                background: '#10b981',
-                                                                color: 'white',
-                                                                border: 'none',
-                                                                borderRadius: '6px',
-                                                                cursor: actionLoading === p.id ? 'not-allowed' : 'pointer',
-                                                                fontSize: '0.75rem',
-                                                                opacity: actionLoading === p.id ? 0.6 : 1,
-                                                            }}
-                                                        >
-                                                            {actionLoading === p.id ? '...' : '✓ อนุมัติ'}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRetry(p.id, 'reject')}
-                                                            disabled={actionLoading === p.id}
-                                                            style={{
-                                                                padding: '4px 12px',
-                                                                background: '#ef4444',
-                                                                color: 'white',
-                                                                border: 'none',
-                                                                borderRadius: '6px',
-                                                                cursor: actionLoading === p.id ? 'not-allowed' : 'pointer',
-                                                                fontSize: '0.75rem',
-                                                                opacity: actionLoading === p.id ? 0.6 : 1,
-                                                            }}
-                                                        >
-                                                            ✗ ปฏิเสธ
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+      <AdminSection
+        title="คิวตรวจสอบ"
+        description={`ย้อนหลัง ${daysBack.toLocaleString('th-TH')} วัน · เลือกอยู่ ${selected.size.toLocaleString('th-TH')} รายการ`}
+        actions={statusFilter === 'verifying' && selected.size > 0 ? <Button variant="destructive" size="sm" onClick={() => openAction({ type: 'bulk' })}>ทำเครื่องหมายว่าล้มเหลว</Button> : undefined}
+      >
+        <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <ToggleGroup
+            type="single"
+            value={statusFilter}
+            onValueChange={(value) => { if (value) setStatusFilter(value as StatusFilter); }}
+            variant="outline"
+            spacing={0}
+            aria-label="กรองสถานะกระทบยอด"
+            className="max-w-full overflow-x-auto"
+          >
+            {(Object.keys(statusLabels) as StatusFilter[]).map((status) => (
+              <ToggleGroupItem key={status} value={status}>{statusLabels[status]} {summary[status].toLocaleString('th-TH')}</ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">ย้อนหลัง</span>
+            <NativeSelect value={String(daysBack)} onChange={(event) => setDaysBack(Number(event.target.value))} aria-label="ช่วงเวลาย้อนหลัง">
+              {[7, 14, 30, 60, 90].map((days) => <NativeSelectOption key={days} value={days}>{days} วัน</NativeSelectOption>)}
+            </NativeSelect>
+          </div>
         </div>
-    );
+
+        {message ? (
+          <Alert variant={message.type === 'error' ? 'destructive' : 'default'} className="mb-5">
+            {message.type === 'error' ? <XCircle aria-hidden /> : <CheckCircle2 aria-hidden />}
+            <AlertTitle>{message.type === 'error' ? 'ดำเนินการไม่สำเร็จ' : 'ดำเนินการสำเร็จ'}</AlertTitle>
+            <AlertDescription>{message.text}</AlertDescription>
+          </Alert>
+        ) : null}
+        {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchData()}>ลองใหม่</Button>} /> : null}
+
+        {loading ? (
+          <AdminLoadingState title="กำลังโหลดคิวกระทบยอด" />
+        ) : payments.length === 0 ? (
+          <AdminEmptyState icon={<ShieldAlert aria-hidden />} title={`ไม่พบรายการ${statusLabels[statusFilter]}`} description="ไม่มีรายการในช่วงเวลาที่เลือก ลองเปลี่ยนสถานะหรือช่วงเวลา" tone="success" />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {statusFilter === 'verifying' ? (
+                  <TableHead className="w-10">
+                    <Checkbox checked={selected.size === payments.length && payments.length > 0} onCheckedChange={toggleSelectAll} aria-label="เลือกทุกรายการ" />
+                  </TableHead>
+                ) : null}
+                <TableHead>วันที่</TableHead>
+                <TableHead>ผู้ชำระ</TableHead>
+                <TableHead>รายการ</TableHead>
+                <TableHead className="text-right">จำนวน</TableHead>
+                <TableHead>สถานะ</TableHead>
+                <TableHead className="text-center">Retry</TableHead>
+                <TableHead className="text-right">จัดการ</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {payments.map((payment) => (
+                <TableRow key={payment.id}>
+                  {statusFilter === 'verifying' ? <TableCell><Checkbox checked={selected.has(payment.id)} onCheckedChange={() => toggleSelect(payment.id)} aria-label={`เลือกธุรกรรม ${payment.id}`} /></TableCell> : null}
+                  <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(payment.createdAt)}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{payment.userName || '-'}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{payment.userEmail || '-'}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="max-w-64 truncate font-medium">{payment.itemTitle || payment.courseTitle || payment.bundleTitle || '-'}</div>
+                    <div className="mt-1 font-mono text-xs text-muted-foreground">{payment.bundleId ? 'Bundle' : 'Course'} · {payment.id.slice(0, 8)}</div>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold tabular-nums">{formatAmount(payment.amount)}</TableCell>
+                  <TableCell><AdminStatusBadge tone={statusTone(payment.status)}>{statusLabels[payment.status as StatusFilter] || payment.status}</AdminStatusBadge></TableCell>
+                  <TableCell className="text-center tabular-nums text-muted-foreground">{payment.retryCount || 0}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      {payment.status === 'verifying' || payment.status === 'failed' ? (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => openAction({ type: 'single', payment, action: 'approve' })}>อนุมัติ</Button>
+                          <Button size="sm" variant="destructive" onClick={() => openAction({ type: 'single', payment, action: 'reject' })}>ปฏิเสธ</Button>
+                        </>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </AdminSection>
+
+      <Dialog
+        open={Boolean(actionIntent)}
+        onOpenChange={(open) => {
+          if (!open && !actionLoading) {
+            setActionIntent(null);
+            setReason('');
+            setActionError('');
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{intentTitle}</DialogTitle>
+            <DialogDescription>ระบุเหตุผลและหลักฐานประกอบอย่างน้อย 5 ตัวอักษร ระบบจะเก็บไว้สำหรับตรวจสอบย้อนหลัง</DialogDescription>
+          </DialogHeader>
+          {actionIntent?.type === 'single' ? (
+            <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+              <div className="font-medium">{actionIntent.payment.itemTitle || actionIntent.payment.courseTitle || actionIntent.payment.bundleTitle || 'ไม่ระบุรายการ'}</div>
+              <div className="mt-1 font-mono text-xs text-muted-foreground">{actionIntent.payment.id}</div>
+            </div>
+          ) : null}
+          {actionError ? <Alert variant="destructive"><AlertTitle>ดำเนินการไม่สำเร็จ</AlertTitle><AlertDescription>{actionError}</AlertDescription></Alert> : null}
+          <Field data-invalid={Boolean(reason && reason.trim().length < 5)}>
+            <FieldLabel htmlFor="reconciliation-reason">เหตุผลและหลักฐาน</FieldLabel>
+            <Textarea id="reconciliation-reason" value={reason} onChange={(event) => setReason(event.target.value)} rows={4} placeholder="อธิบายสิ่งที่ตรวจสอบและเหตุผลของการตัดสินใจ" />
+            <FieldDescription>อย่างน้อย 5 ตัวอักษร</FieldDescription>
+            {reason && reason.trim().length < 5 ? <FieldError>กรุณาระบุรายละเอียดเพิ่มเติม</FieldError> : null}
+          </Field>
+          <DialogFooter>
+            <Button variant="outline" disabled={actionLoading} onClick={() => setActionIntent(null)}>ยกเลิก</Button>
+            <Button variant={isDestructive ? 'destructive' : 'default'} disabled={actionLoading || reason.trim().length < 5} onClick={() => void handleAction()}>
+              {actionLoading ? <AdminPendingLabel>กำลังดำเนินการ</AdminPendingLabel> : isDestructive ? 'ยืนยันการปฏิเสธ' : 'ยืนยันการอนุมัติ'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }

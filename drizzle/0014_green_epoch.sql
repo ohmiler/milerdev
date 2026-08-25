@@ -1,0 +1,1 @@
+ALTER TABLE `courses` MODIFY COLUMN `certificate_color` varchar(20) DEFAULT '#2563eb';

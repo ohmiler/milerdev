@@ -1,6 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Pencil, Plus, TicketPercent, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
+import {
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Coupon {
   id: string;
@@ -43,29 +70,40 @@ const defaultForm = {
 export default function AdminCouponsPage() {
   const [couponsList, setCouponsList] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
-  const fetchCoupons = () => {
+  const fetchCoupons = useCallback(async () => {
     setLoading(true);
-    fetch('/api/admin/coupons')
-      .then(r => r.json())
-      .then(d => setCouponsList(d.coupons || []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
+    setLoadError('');
+    try {
+      const response = await fetch('/api/admin/coupons');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดคูปองได้');
+      setCouponsList(data.coupons || []);
+    } catch (caughtError) {
+      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดคูปองได้');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchCoupons();
+    void fetchCoupons();
     fetch('/api/admin/courses')
-      .then(r => r.json())
-      .then(d => setCourseOptions((d.courses || []).map((c: { id: string; title: string }) => ({ id: c.id, title: c.title }))))
-      .catch(console.error);
-  }, []);
+      .then((response) => response.json())
+      .then((data) => setCourseOptions((data.courses || []).map((course: CourseOption) => ({ id: course.id, title: course.title }))))
+      .catch(() => setCourseOptions([]));
+  }, [fetchCoupons]);
 
   const handleEdit = (coupon: Coupon) => {
     setEditingId(coupon.id);
@@ -82,19 +120,19 @@ export default function AdminCouponsPage() {
       startsAt: coupon.startsAt ? new Date(coupon.startsAt).toISOString().slice(0, 16) : '',
       expiresAt: coupon.expiresAt ? new Date(coupon.expiresAt).toISOString().slice(0, 16) : '',
     });
-    setShowForm(true);
     setError('');
+    setShowForm(true);
   };
 
   const handleCreate = () => {
     setEditingId(null);
     setForm(defaultForm);
-    setShowForm(true);
     setError('');
+    setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setSaving(true);
     setError('');
 
@@ -103,8 +141,8 @@ export default function AdminCouponsPage() {
       discountValue: parseFloat(form.discountValue) || 0,
       minPurchase: form.minPurchase ? parseFloat(form.minPurchase) : 0,
       maxDiscount: form.maxDiscount ? parseFloat(form.maxDiscount) : null,
-      usageLimit: form.usageLimit ? parseInt(form.usageLimit) : null,
-      perUserLimit: form.perUserLimit ? parseInt(form.perUserLimit) : 1,
+      usageLimit: form.usageLimit ? parseInt(form.usageLimit, 10) : null,
+      perUserLimit: form.perUserLimit ? parseInt(form.perUserLimit, 10) : 1,
       courseId: form.courseId || null,
       startsAt: form.startsAt || null,
       expiresAt: form.expiresAt || null,
@@ -112,213 +150,245 @@ export default function AdminCouponsPage() {
 
     try {
       const url = editingId ? `/api/admin/coupons/${editingId}` : '/api/admin/coupons';
-      const method = editingId ? 'PUT' : 'POST';
-      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const data = await res.json();
-      if (res.ok) {
-        setShowForm(false);
-        fetchCoupons();
-      } else {
-        setError(data.error || 'เกิดข้อผิดพลาด');
-      }
-    } catch {
-      setError('เกิดข้อผิดพลาด');
+      const response = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'บันทึกคูปองไม่สำเร็จ');
+      setShowForm(false);
+      await fetchCoupons();
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : 'บันทึกคูปองไม่สำเร็จ');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleToggle = async (id: string, isActive: boolean) => {
-    await fetch(`/api/admin/coupons/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isActive: !isActive }),
-    });
-    fetchCoupons();
+  const handleToggle = async (coupon: Coupon) => {
+    setTogglingId(coupon.id);
+    setLoadError('');
+    try {
+      const response = await fetch(`/api/admin/coupons/${coupon.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !coupon.isActive }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'เปลี่ยนสถานะคูปองไม่สำเร็จ');
+      await fetchCoupons();
+    } catch (caughtError) {
+      setLoadError(caughtError instanceof Error ? caughtError.message : 'เปลี่ยนสถานะคูปองไม่สำเร็จ');
+    } finally {
+      setTogglingId(null);
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('ต้องการลบคูปองนี้?')) return;
-    await fetch(`/api/admin/coupons/${id}`, { method: 'DELETE' });
-    fetchCoupons();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const response = await fetch(`/api/admin/coupons/${deleteTarget.id}`, { method: 'DELETE' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'ลบคูปองไม่สำเร็จ');
+      setDeleteTarget(null);
+      await fetchCoupons();
+    } catch (caughtError) {
+      setDeleteError(caughtError instanceof Error ? caughtError.message : 'ลบคูปองไม่สำเร็จ');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const formatDiscount = (type: string, value: string) =>
-    type === 'percentage' ? `${value}%` : `฿${parseFloat(value).toLocaleString()}`;
-
-  const isExpired = (d: string | null) => d && new Date(d) < new Date();
-
-  const inputStyle = {
-    width: '100%', padding: '10px 12px', border: '1px solid #e2e8f0',
-    borderRadius: '8px', fontSize: '0.9375rem',
-  };
-  const labelStyle = { display: 'block' as const, fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' };
+    type === 'percentage' ? `${value}%` : `฿${parseFloat(value).toLocaleString('th-TH')}`;
+  const isExpired = (date: string | null) => Boolean(date && new Date(date) < new Date());
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>จัดการคูปอง / โค้ดส่วนลด</h1>
-        <button onClick={handleCreate} style={{
-          padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none',
-          borderRadius: '8px', fontWeight: 600, cursor: 'pointer',
-        }}>+ สร้างคูปอง</button>
-      </div>
+    <div className="mx-auto grid w-full max-w-7xl gap-6">
+      <AdminPageHeader
+        eyebrow="Growth controls"
+        title="คูปองและส่วนลด"
+        description="สร้างข้อเสนอ กำหนดขอบเขตการใช้ และติดตามโควตาคงเหลือจากจุดเดียว"
+        actions={
+          <Button onClick={handleCreate}>
+            <Plus data-icon="inline-start" aria-hidden />
+            สร้างคูปอง
+          </Button>
+        }
+        meta={`ทั้งหมด ${couponsList.length.toLocaleString('th-TH')} คูปอง`}
+      />
 
-      {/* Form Modal */}
-      {showForm && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-          <div style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '560px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', color: '#1e293b' }}>
-              {editingId ? 'แก้ไขคูปอง' : 'สร้างคูปองใหม่'}
-            </h2>
+      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchCoupons()}>ลองใหม่</Button>} /> : null}
 
-            {error && <div style={{ background: '#fef2f2', color: '#dc2626', padding: '10px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>{error}</div>}
-
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>รหัสคูปอง *</label>
-                  <input required value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="SAVE20" style={{ ...inputStyle, fontFamily: 'monospace', textTransform: 'uppercase' }} />
-                </div>
-                <div>
-                  <label style={labelStyle}>ประเภทส่วนลด *</label>
-                  <select value={form.discountType} onChange={e => { const v = e.target.value; setForm(p => ({ ...p, discountType: v === 'fixed' ? 'fixed' : 'percentage' })); }} style={inputStyle}>
-                    <option value="percentage">เปอร์เซ็นต์ (%)</option>
-                    <option value="fixed">จำนวนเงิน (฿)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>มูลค่าส่วนลด *</label>
-                  <input required type="number" step="0.01" min="0" value={form.discountValue} onChange={e => setForm(p => ({ ...p, discountValue: e.target.value }))} placeholder={form.discountType === 'percentage' ? '20' : '100'} style={inputStyle} />
-                </div>
-                {form.discountType === 'percentage' && (
-                  <div>
-                    <label style={labelStyle}>ลดสูงสุด (฿)</label>
-                    <input type="number" step="0.01" min="0" value={form.maxDiscount} onChange={e => setForm(p => ({ ...p, maxDiscount: e.target.value }))} placeholder="ไม่จำกัด" style={inputStyle} />
-                  </div>
-                )}
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={labelStyle}>คำอธิบาย</label>
-                <input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="เช่น ส่วนลด 20% สำหรับลูกค้าใหม่" style={inputStyle} />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>ราคาขั้นต่ำ (฿)</label>
-                  <input type="number" step="0.01" min="0" value={form.minPurchase} onChange={e => setForm(p => ({ ...p, minPurchase: e.target.value }))} placeholder="0" style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>ใช้ได้กับคอร์ส</label>
-                  <select value={form.courseId} onChange={e => setForm(p => ({ ...p, courseId: e.target.value }))} style={inputStyle}>
-                    <option value="">ทุกคอร์ส</option>
-                    {courseOptions.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={labelStyle}>จำนวนใช้ได้ (ทั้งหมด)</label>
-                  <input type="number" min="0" value={form.usageLimit} onChange={e => setForm(p => ({ ...p, usageLimit: e.target.value }))} placeholder="ไม่จำกัด" style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>จำนวนต่อคน</label>
-                  <input type="number" min="1" value={form.perUserLimit} onChange={e => setForm(p => ({ ...p, perUserLimit: e.target.value }))} placeholder="1" style={inputStyle} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-                <div>
-                  <label style={labelStyle}>เริ่มใช้ได้</label>
-                  <input type="datetime-local" value={form.startsAt} onChange={e => setForm(p => ({ ...p, startsAt: e.target.value }))} style={inputStyle} />
-                </div>
-                <div>
-                  <label style={labelStyle}>หมดอายุ</label>
-                  <input type="datetime-local" value={form.expiresAt} onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))} style={inputStyle} />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowForm(false)} style={{ padding: '10px 20px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>ยกเลิก</button>
-                <button type="submit" disabled={saving} style={{ padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-                  {saving ? 'กำลังบันทึก...' : editingId ? 'อัพเดท' : 'สร้างคูปอง'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Coupons Table */}
-      {loading ? (
-        <p style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>กำลังโหลด...</p>
-      ) : couponsList.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          <p style={{ fontSize: '1.125rem', color: '#64748b', marginBottom: '8px' }}>ยังไม่มีคูปอง</p>
-          <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>สร้างคูปองเพื่อเริ่มให้ส่วนลด</p>
-        </div>
-      ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9375rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>รหัส</th>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>ส่วนลด</th>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>คอร์ส</th>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>ใช้แล้ว</th>
-                <th style={{ textAlign: 'left', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>สถานะ</th>
-                <th style={{ textAlign: 'right', padding: '12px 8px', color: '#64748b', fontWeight: 600 }}>จัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {couponsList.map(c => {
-                const expired = isExpired(c.expiresAt);
+      <AdminSection title="รายการคูปอง" description="ปิดใช้งานคูปองเพื่อหยุดการใช้ชั่วคราว หรือลบเมื่อแน่ใจว่าไม่ต้องเก็บรายการแล้ว">
+        {loading ? (
+          <AdminLoadingState title="กำลังโหลดคูปอง" />
+        ) : couponsList.length === 0 ? (
+          <AdminEmptyState
+            icon={<TicketPercent aria-hidden />}
+            title="ยังไม่มีคูปอง"
+            description="สร้างคูปองแรกเพื่อเริ่มมอบส่วนลดให้ผู้เรียน"
+            action={<Button onClick={handleCreate}>สร้างคูปอง</Button>}
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>รหัส</TableHead>
+                <TableHead>ส่วนลด</TableHead>
+                <TableHead>ขอบเขต</TableHead>
+                <TableHead>การใช้งาน</TableHead>
+                <TableHead>สถานะ</TableHead>
+                <TableHead className="text-right">จัดการ</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {couponsList.map((coupon) => {
+                const expired = isExpired(coupon.expiresAt);
                 return (
-                  <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9', opacity: expired || !c.isActive ? 0.6 : 1 }}>
-                    <td style={{ padding: '12px 8px' }}>
-                      <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#2563eb', background: '#eff6ff', padding: '2px 8px', borderRadius: '4px' }}>{c.code}</span>
-                      {c.description && <div style={{ fontSize: '0.8125rem', color: '#94a3b8', marginTop: '2px' }}>{c.description}</div>}
-                    </td>
-                    <td style={{ padding: '12px 8px', fontWeight: 600, color: '#16a34a' }}>
-                      {formatDiscount(c.discountType, c.discountValue)}
-                      {c.maxDiscount && <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>สูงสุด ฿{parseFloat(c.maxDiscount).toLocaleString()}</div>}
-                    </td>
-                    <td style={{ padding: '12px 8px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.courseTitle || <span style={{ color: '#94a3b8' }}>ทุกคอร์ส</span>}
-                    </td>
-                    <td style={{ padding: '12px 8px', color: '#64748b' }}>
-                      {c.usageCount || 0}{c.usageLimit ? `/${c.usageLimit}` : ''}
-                    </td>
-                    <td style={{ padding: '12px 8px' }}>
-                      {expired ? (
-                        <span style={{ background: '#fef2f2', color: '#dc2626', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>หมดอายุ</span>
-                      ) : c.isActive ? (
-                        <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>ใช้งาน</span>
-                      ) : (
-                        <span style={{ background: '#f8fafc', color: '#94a3b8', padding: '2px 10px', borderRadius: '12px', fontSize: '0.8125rem', fontWeight: 600 }}>ปิดใช้งาน</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px 8px', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                        <button onClick={() => handleEdit(c)} style={{ padding: '6px 10px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>แก้ไข</button>
-                        <button onClick={() => handleToggle(c.id, !!c.isActive)} style={{ padding: '6px 10px', background: c.isActive ? '#fef2f2' : '#f0fdf4', color: c.isActive ? '#dc2626' : '#16a34a', border: `1px solid ${c.isActive ? '#fecaca' : '#bbf7d0'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>
-                          {c.isActive ? 'ปิด' : 'เปิด'}
-                        </button>
-                        <button onClick={() => handleDelete(c.id)} style={{ padding: '6px 10px', background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8125rem' }}>ลบ</button>
+                  <TableRow key={coupon.id} className={expired || !coupon.isActive ? 'opacity-65' : undefined}>
+                    <TableCell>
+                      <div className="font-mono font-semibold text-primary">{coupon.code}</div>
+                      {coupon.description ? <div className="mt-1 max-w-64 text-xs text-muted-foreground">{coupon.description}</div> : null}
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-[var(--color-success-strong)]">{formatDiscount(coupon.discountType, coupon.discountValue)}</div>
+                      {coupon.maxDiscount ? <div className="mt-1 text-xs text-muted-foreground">สูงสุด ฿{parseFloat(coupon.maxDiscount).toLocaleString('th-TH')}</div> : null}
+                    </TableCell>
+                    <TableCell className="max-w-56 truncate">{coupon.courseTitle || 'ทุกคอร์ส'}</TableCell>
+                    <TableCell className="tabular-nums text-muted-foreground">
+                      {coupon.usageCount || 0}{coupon.usageLimit ? ` / ${coupon.usageLimit}` : ' / ไม่จำกัด'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={coupon.isActive && !expired}
+                          disabled={expired || togglingId === coupon.id}
+                          onCheckedChange={() => void handleToggle(coupon)}
+                          aria-label={`${coupon.isActive ? 'ปิด' : 'เปิด'}ใช้งานคูปอง ${coupon.code}`}
+                        />
+                        <AdminStatusBadge tone={expired ? 'danger' : coupon.isActive ? 'success' : 'neutral'}>
+                          {expired ? 'หมดอายุ' : coupon.isActive ? 'ใช้งาน' : 'ปิดใช้งาน'}
+                        </AdminStatusBadge>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(coupon)}>
+                          <Pencil data-icon="inline-start" aria-hidden />
+                          แก้ไข
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" onClick={() => { setDeleteError(''); setDeleteTarget(coupon); }} aria-label={`ลบคูปอง ${coupon.code}`}>
+                          <Trash2 aria-hidden />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </TableBody>
+          </Table>
+        )}
+      </AdminSection>
+
+      <Dialog open={showForm} onOpenChange={(open) => { if (!saving) setShowForm(open); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingId ? 'แก้ไขคูปอง' : 'สร้างคูปองใหม่'}</DialogTitle>
+            <DialogDescription>กำหนดมูลค่า เงื่อนไข และช่วงเวลาที่ใช้ส่วนลดได้</DialogDescription>
+          </DialogHeader>
+          <form id="coupon-form" onSubmit={handleSubmit}>
+            <FieldGroup className="gap-5">
+              {error ? <Alert variant="destructive"><AlertTitle>บันทึกไม่สำเร็จ</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="coupon-code">รหัสคูปอง *</FieldLabel>
+                  <Input id="coupon-code" required value={form.code} onChange={(event) => setForm((previous) => ({ ...previous, code: event.target.value.toUpperCase() }))} placeholder="SAVE20" className="font-mono uppercase" />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="coupon-type">ประเภทส่วนลด *</FieldLabel>
+                  <NativeSelect id="coupon-type" className="w-full" value={form.discountType} onChange={(event) => setForm((previous) => ({ ...previous, discountType: event.target.value === 'fixed' ? 'fixed' : 'percentage' }))}>
+                    <NativeSelectOption value="percentage">เปอร์เซ็นต์ (%)</NativeSelectOption>
+                    <NativeSelectOption value="fixed">จำนวนเงิน (฿)</NativeSelectOption>
+                  </NativeSelect>
+                </Field>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="coupon-value">มูลค่าส่วนลด *</FieldLabel>
+                  <Input id="coupon-value" required type="number" step="0.01" min="0" value={form.discountValue} onChange={(event) => setForm((previous) => ({ ...previous, discountValue: event.target.value }))} placeholder={form.discountType === 'percentage' ? '20' : '100'} />
+                </Field>
+                {form.discountType === 'percentage' ? (
+                  <Field>
+                    <FieldLabel htmlFor="coupon-maximum">ลดสูงสุด (฿)</FieldLabel>
+                    <Input id="coupon-maximum" type="number" step="0.01" min="0" value={form.maxDiscount} onChange={(event) => setForm((previous) => ({ ...previous, maxDiscount: event.target.value }))} placeholder="ไม่จำกัด" />
+                  </Field>
+                ) : null}
+              </div>
+              <Field>
+                <FieldLabel htmlFor="coupon-description">คำอธิบาย</FieldLabel>
+                <Input id="coupon-description" value={form.description} onChange={(event) => setForm((previous) => ({ ...previous, description: event.target.value }))} placeholder="เช่น ส่วนลดสำหรับผู้เรียนใหม่" />
+              </Field>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="coupon-minimum">ยอดซื้อขั้นต่ำ (฿)</FieldLabel>
+                  <Input id="coupon-minimum" type="number" step="0.01" min="0" value={form.minPurchase} onChange={(event) => setForm((previous) => ({ ...previous, minPurchase: event.target.value }))} placeholder="0" />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="coupon-course">ใช้ได้กับคอร์ส</FieldLabel>
+                  <NativeSelect id="coupon-course" className="w-full" value={form.courseId} onChange={(event) => setForm((previous) => ({ ...previous, courseId: event.target.value }))}>
+                    <NativeSelectOption value="">ทุกคอร์ส</NativeSelectOption>
+                    {courseOptions.map((course) => <NativeSelectOption key={course.id} value={course.id}>{course.title}</NativeSelectOption>)}
+                  </NativeSelect>
+                </Field>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="coupon-limit">จำนวนใช้ได้ทั้งหมด</FieldLabel>
+                  <Input id="coupon-limit" type="number" min="0" value={form.usageLimit} onChange={(event) => setForm((previous) => ({ ...previous, usageLimit: event.target.value }))} placeholder="ไม่จำกัด" />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="coupon-user-limit">จำนวนต่อคน</FieldLabel>
+                  <Input id="coupon-user-limit" type="number" min="1" value={form.perUserLimit} onChange={(event) => setForm((previous) => ({ ...previous, perUserLimit: event.target.value }))} placeholder="1" />
+                </Field>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="coupon-start">เริ่มใช้ได้</FieldLabel>
+                  <Input id="coupon-start" type="datetime-local" value={form.startsAt} onChange={(event) => setForm((previous) => ({ ...previous, startsAt: event.target.value }))} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="coupon-expiry">หมดอายุ</FieldLabel>
+                  <Input id="coupon-expiry" type="datetime-local" value={form.expiresAt} onChange={(event) => setForm((previous) => ({ ...previous, expiresAt: event.target.value }))} />
+                </Field>
+              </div>
+              {form.discountType === 'percentage' && Number(form.discountValue) > 100 ? <FieldError>ส่วนลดเปอร์เซ็นต์ไม่ควรเกิน 100%</FieldError> : null}
+            </FieldGroup>
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={saving} onClick={() => setShowForm(false)}>ยกเลิก</Button>
+            <Button type="submit" form="coupon-form" disabled={saving}>
+              {saving ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : editingId ? 'บันทึกการแก้ไข' : 'สร้างคูปอง'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AdminConfirmActionDialog
+        open={Boolean(deleteTarget)}
+        title="ลบคูปองถาวร"
+        description="การลบไม่สามารถย้อนกลับได้ หากต้องการหยุดใช้ชั่วคราวให้เลือกปิดใช้งานแทน"
+        target={deleteTarget ? <span className="font-mono">{deleteTarget.code}</span> : null}
+        confirmLabel="ลบคูปอง"
+        pending={deleting}
+        pendingLabel="กำลังลบ"
+        error={deleteError || undefined}
+        onConfirm={() => void handleDelete()}
+        onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(''); } }}
+      />
     </div>
   );
 }

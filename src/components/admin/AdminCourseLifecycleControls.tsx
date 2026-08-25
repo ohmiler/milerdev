@@ -1,15 +1,22 @@
 'use client';
 
-import { useRef } from 'react';
+import { Archive, CircleAlert, Send, Undo2 } from 'lucide-react';
 
-import type {
-  CourseLifecycleAction,
-  CourseStatus,
-} from '@/lib/course-lifecycle';
-import DialogShell from '@/components/ui/DialogShell';
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import styles from './AdminCourseLifecycleControls.module.css';
+import { AdminStatusBadge } from '@/components/admin/ui/AdminOperations';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import type { CourseLifecycleAction, CourseStatus } from '@/lib/course-lifecycle';
 
 type LifecyclePresentation = {
   title: string;
@@ -70,11 +77,8 @@ export function getCourseLifecyclePresentation(action: CourseLifecycleAction) {
 }
 
 export function AdminCourseLifecycleBadge({ status }: { status: CourseStatus }) {
-  return (
-    <span className={styles.badge} data-course-status={status}>
-      {statusLabels[status]}
-    </span>
-  );
+  const tones = { draft: 'warning', published: 'success', archived: 'neutral' } as const;
+  return <AdminStatusBadge tone={tones[status]} data-course-status={status}>{statusLabels[status]}</AdminStatusBadge>;
 }
 
 export function AdminCourseLifecycleActions({
@@ -87,21 +91,22 @@ export function AdminCourseLifecycleActions({
   onRequest: (action: CourseLifecycleAction) => void;
 }) {
   return (
-    <div className={styles.actions} aria-label="เปลี่ยนสถานะคอร์ส">
+    <div className="inline-flex flex-wrap gap-2" aria-label="เปลี่ยนสถานะคอร์ส">
       {allowedActions[status].map((action) => {
         const presentation = actionPresentation[action];
         return (
-          <button
+          <Button
             key={action}
             type="button"
-            className={styles.action}
+            variant={action === 'publish' ? 'secondary' : action === 'archive' ? 'destructive' : 'outline'}
+            size="sm"
             data-action={action}
             onClick={() => onRequest(action)}
             disabled={pending}
-            aria-label={`${presentation.actionLabel}`}
+            aria-label={presentation.actionLabel}
           >
             {pending ? 'กำลังเปลี่ยนสถานะ...' : presentation.actionLabel}
-          </button>
+          </Button>
         );
       })}
     </div>
@@ -125,46 +130,29 @@ export function CourseLifecycleDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const presentation = actionPresentation[action];
   const destructive = action === 'archive';
+  const Icon = action === 'publish' ? Send : action === 'archive' ? Archive : Undo2;
 
   return (
-    <DialogShell
-      isOpen={isOpen}
-      onClose={onCancel}
-      title={presentation.title}
-      description={`${courseTitle}: ${presentation.summary}`}
-      body={(
-        <>
-          <ul className={styles.impactList}>
-            {presentation.impacts.map((impact) => <li key={impact}>{impact}</li>)}
-          </ul>
-          {error ? <p className={styles.dialogError} role="alert">{error}</p> : null}
-        </>
-      )}
-      role="alertdialog"
-      tone={destructive ? 'warning' : 'info'}
-      variant={destructive ? 'destructive' : 'informational'}
-      initialFocusRef={cancelButtonRef}
-    >
-      <button
-        ref={cancelButtonRef}
-        type="button"
-        className={buttonVariants({ variant: 'outline' })}
-        onClick={onCancel}
-        disabled={pending}
-      >
-        ยกเลิก
-      </button>
-      <button
-        type="button"
-        className={cn(buttonVariants({ variant: destructive ? 'destructive' : 'default' }))}
-        onClick={onConfirm}
-        disabled={pending}
-      >
-        {pending ? 'กำลังเปลี่ยนสถานะ...' : presentation.confirmLabel}
-      </button>
-    </DialogShell>
+    <AlertDialog open={isOpen} onOpenChange={(open) => { if (!open && !pending) onCancel(); }}>
+      <AlertDialogContent role="alertdialog">
+        <AlertDialogHeader>
+          <AlertDialogMedia><Icon aria-hidden /></AlertDialogMedia>
+          <AlertDialogTitle>{presentation.title}</AlertDialogTitle>
+          <AlertDialogDescription>{courseTitle}: {presentation.summary}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <ul className="grid list-disc gap-2 pl-5 text-sm leading-6 text-muted-foreground">
+          {presentation.impacts.map((impact) => <li key={impact}>{impact}</li>)}
+        </ul>
+        {error ? <Alert variant="destructive"><CircleAlert aria-hidden /><AlertTitle>เปลี่ยนสถานะไม่สำเร็จ</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>ยกเลิก</AlertDialogCancel>
+          <AlertDialogAction variant={destructive ? 'destructive' : 'default'} disabled={pending} onClick={(event) => { event.preventDefault(); onConfirm(); }}>
+            {pending ? 'กำลังเปลี่ยนสถานะ...' : presentation.confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

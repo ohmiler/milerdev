@@ -1,253 +1,169 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, ChevronsUpDown, Tags, X } from 'lucide-react';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Tag {
-    id: string;
-    name: string;
-    slug: string;
+  id: string;
+  name: string;
+  slug: string;
 }
 
 interface TagSelectorProps {
-    selectedTagIds: string[];
-    onChange: (tagIds: string[]) => void;
+  selectedTagIds: string[];
+  onChange: (tagIds: string[]) => void;
 }
 
+type LoadState = 'loading' | 'error' | 'empty' | 'ready';
+
 export default function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
-    const [allTags, setAllTags] = useState<Tag[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isOpen, setIsOpen] = useState(false);
-    const [search, setSearch] = useState('');
-    const dropdownRef = useRef<HTMLDivElement>(null);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [loadState, setLoadState] = useState<LoadState>('loading');
+  const [open, setOpen] = useState(false);
 
-    useEffect(() => {
-        fetch('/api/admin/tags')
-            .then(res => res.json())
-            .then(data => setAllTags(data.tags || []))
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    }, []);
+  const loadTags = useCallback(async (signal?: AbortSignal) => {
+    setLoadState('loading');
 
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    try {
+      const response = await fetch('/api/admin/tags', { signal });
+      if (!response.ok) throw new Error('Unable to load tags');
 
-    const toggleTag = (tagId: string) => {
-        if (selectedTagIds.includes(tagId)) {
-            onChange(selectedTagIds.filter(id => id !== tagId));
-        } else {
-            onChange([...selectedTagIds, tagId]);
-        }
-    };
+      const data: unknown = await response.json();
+      const tags = typeof data === 'object' && data !== null && Array.isArray((data as { tags?: unknown }).tags)
+        ? (data as { tags: Tag[] }).tags
+        : [];
 
-    const removeTag = (tagId: string) => {
-        onChange(selectedTagIds.filter(id => id !== tagId));
-    };
-
-    const selectedTags = allTags.filter(t => selectedTagIds.includes(t.id));
-    const filteredTags = allTags.filter(t =>
-        t.name.toLowerCase().includes(search.toLowerCase())
-    );
-
-    if (loading) {
-        return (
-            <div style={{
-                padding: '12px 16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                color: '#94a3b8',
-                fontSize: '0.875rem',
-            }}>
-                กำลังโหลดแท็ก...
-            </div>
-        );
+      setAllTags(tags);
+      setLoadState(tags.length > 0 ? 'ready' : 'empty');
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      setAllTags([]);
+      setLoadState('error');
     }
+  }, []);
 
-    return (
-        <div ref={dropdownRef} style={{ position: 'relative' }}>
-            {/* Selected tags + trigger */}
-            <div
-                role="button"
-                tabIndex={0}
-                onClick={() => setIsOpen(!isOpen)}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setIsOpen(!isOpen);
-                    }
-                }}
-                style={{
-                    width: '100%',
-                    minHeight: '48px',
-                    padding: '8px 12px',
-                    border: '1px solid',
-                    borderColor: isOpen ? '#02abff' : '#dbe8f2',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '6px',
-                    alignItems: 'center',
-                    textAlign: 'left',
-                    background: 'linear-gradient(180deg, #ffffff, #f7fbff)',
-                    transition: 'border-color 0.15s, box-shadow 0.15s',
-                    boxShadow: isOpen ? '0 0 0 4px rgba(2, 171, 255, 0.18)' : 'inset 0 1px 0 rgba(255,255,255,0.82)',
-                }}
-            >
-                {selectedTags.length > 0 ? (
-                    selectedTags.map(tag => (
-                        <span
-                            key={tag.id}
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '4px 10px',
-                                background: '#eefaff',
-                                color: '#0089d6',
-                                borderRadius: '8px',
-                                fontSize: '0.8125rem',
-                                fontWeight: 500,
-                            }}
-                        >
-                            {tag.name}
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); removeTag(tag.id); }}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: '#0089d6',
-                                    cursor: 'pointer',
-                                    padding: '0 2px',
-                                    fontSize: '1rem',
-                                    lineHeight: 1,
-                                }}
-                            >
-                                &times;
-                            </button>
-                        </span>
-                    ))
-                ) : (
-                    <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
-                        คลิกเพื่อเลือกแท็ก...
-                    </span>
-                )}
-            </div>
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadTags(controller.signal);
+    return () => controller.abort();
+  }, [loadTags]);
 
-            {/* Dropdown */}
-            {isOpen && (
-                <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: '4px',
-                    background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
-                    border: '1px solid #dbe5f4',
-                    borderRadius: '8px',
-                    boxShadow: '0 18px 30px rgba(15, 23, 42, 0.08)',
-                    zIndex: 1000,
-                    maxHeight: '240px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}>
-                    {/* Search */}
-                    <div style={{ padding: '8px', borderBottom: '1px solid #f1f5f9' }}>
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="ค้นหาแท็ก..."
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '6px',
-                                fontSize: '0.875rem',
-                                outline: 'none',
-                            }}
-                            autoFocus
-                        />
-                    </div>
+  const toggleTag = (tagId: string) => {
+    if (selectedTagIds.includes(tagId)) {
+      onChange(selectedTagIds.filter((id) => id !== tagId));
+    } else {
+      onChange([...selectedTagIds, tagId]);
+    }
+  };
 
-                    {/* Tag list */}
-                    <div style={{ overflowY: 'auto', maxHeight: '180px' }}>
-                        {filteredTags.length === 0 ? (
-                            <div style={{
-                                padding: '16px',
-                                textAlign: 'center',
-                                color: '#94a3b8',
-                                fontSize: '0.875rem',
-                            }}>
-                                {allTags.length === 0 ? 'ยังไม่มีแท็ก — ไปสร้างที่หน้าจัดการแท็กก่อน' : 'ไม่พบแท็กที่ค้นหา'}
-                            </div>
-                        ) : (
-                            filteredTags.map(tag => {
-                                const isSelected = selectedTagIds.includes(tag.id);
-                                return (
-                                    <button
-                                        type="button"
-                                        key={tag.id}
-                                        onClick={(e) => { e.stopPropagation(); toggleTag(tag.id); }}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 16px',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '10px',
-                                            background: isSelected ? '#eefaff' : 'transparent',
-                                            border: 'none',
-                                            textAlign: 'left',
-                                            transition: 'background 0.1s',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = '#f7fbff';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            (e.currentTarget as HTMLButtonElement).style.background = isSelected ? '#eefaff' : 'transparent';
-                                        }}
-                                    >
-                                        <div style={{
-                                            width: '18px',
-                                            height: '18px',
-                                            borderRadius: '4px',
-                                            border: '2px solid',
-                                            borderColor: isSelected ? '#02abff' : '#cbd5e1',
-                                            background: isSelected ? '#02abff' : 'white',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            flexShrink: 0,
-                                        }}>
-                                            {isSelected && (
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                    <polyline points="20 6 9 17 4 12" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                        <span style={{
-                                            fontSize: '0.875rem',
-                                            color: isSelected ? '#0089d6' : '#374151',
-                                            fontWeight: isSelected ? 500 : 400,
-                                        }}>
-                                            {tag.name}
-                                        </span>
-                                    </button>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
-            )}
+  const selectedTags = allTags.filter((tag) => selectedTagIds.includes(tag.id));
+
+  return (
+    <div className="flex flex-col gap-3">
+      {selectedTags.length > 0 ? (
+        <div className="flex flex-wrap gap-2" aria-label="แท็กที่เลือก">
+          {selectedTags.map((tag) => (
+            <Badge key={tag.id} variant="secondary" className="gap-1 pr-1">
+              {tag.name}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={`นำแท็ก ${tag.name} ออก`}
+                onClick={() => toggleTag(tag.id)}
+              >
+                <X data-icon="inline-end" aria-hidden />
+              </Button>
+            </Badge>
+          ))}
         </div>
-    );
+      ) : (
+        <p className="text-sm text-muted-foreground">ยังไม่ได้เลือกแท็ก</p>
+      )}
+
+      {loadState === 'loading' ? (
+        <Button type="button" variant="outline" className="w-full" disabled aria-live="polite">
+          <Spinner data-icon="inline-start" aria-hidden />
+          กำลังโหลดแท็ก
+        </Button>
+      ) : null}
+
+      {loadState === 'error' ? (
+        <Alert variant="destructive">
+          <AlertCircle aria-hidden />
+          <AlertTitle>โหลดแท็กไม่สำเร็จ</AlertTitle>
+          <AlertDescription className="flex flex-col items-start gap-3">
+            <span>กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => void loadTags()}>
+              ลองใหม่
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {loadState === 'empty' ? (
+        <Empty className="border p-6">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><Tags aria-hidden /></EmptyMedia>
+            <EmptyTitle>ยังไม่มีแท็กในระบบ</EmptyTitle>
+            <EmptyDescription>สร้างแท็กในหน้าจัดการแท็กก่อนนำมาใช้กับคอร์ส</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : null}
+
+      {loadState === 'ready' ? (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="outline" role="combobox" aria-expanded={open} aria-label="เลือกแท็ก" className="w-full justify-between">
+              <span className="inline-flex items-center gap-2">
+                <Tags data-icon="inline-start" aria-hidden />
+                {selectedTagIds.length > 0 ? `เลือกแล้ว ${selectedTagIds.length.toLocaleString('th-TH')} แท็ก` : 'เลือกแท็ก'}
+              </span>
+              <ChevronsUpDown data-icon="inline-end" aria-hidden />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-(--radix-popover-trigger-width) p-0">
+            <Command label="ค้นหาแท็ก">
+              <CommandInput placeholder="ค้นหาแท็ก..." aria-label="ค้นหาแท็ก" />
+              <CommandList>
+                <CommandEmpty>ไม่พบแท็กที่ค้นหา</CommandEmpty>
+                <CommandGroup heading={`${allTags.length.toLocaleString('th-TH')} แท็กในระบบ`}>
+                  {allTags.map((tag) => {
+                    const selected = selectedTagIds.includes(tag.id);
+                    return (
+                      <CommandItem key={tag.id} value={`${tag.name} ${tag.slug}`} data-checked={selected} onSelect={() => toggleTag(tag.id)}>
+                        <span className="truncate">{tag.name}</span>
+                        <span className="sr-only">{selected ? 'เลือกแล้ว' : 'ยังไม่ได้เลือก'}</span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      ) : null}
+    </div>
+  );
 }

@@ -1,7 +1,36 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { CircleCheck, FileUp, GraduationCap, Plus, Search, Trash2, X } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
+import {
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Progress } from '@/components/ui/progress';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { showToast } from '@/components/ui/Toast';
 
 interface Enrollment {
@@ -42,6 +71,18 @@ interface Pagination {
   totalPages: number;
 }
 
+type ImportResult = {
+  success?: number;
+  skipped?: number;
+  userNotFound?: number;
+  courseNotFound?: number;
+  total?: number;
+  errors?: string[];
+  missingUsers?: string[];
+  missingCourses?: string[];
+  matchedAliases?: string[];
+};
+
 export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -49,58 +90,45 @@ export default function AdminEnrollmentsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
-  
-  // Filters
   const [courseFilter, setCourseFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [searchDebounce, setSearchDebounce] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ userId: '', courseId: '' });
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Enrollment | null>(null);
+  const [deleteError, setDeleteError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchDebounce(search), 400);
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Add enrollment modal
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ userId: '', courseId: '' });
-  const [adding, setAdding] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-
-  // Import CSV
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{
-    success?: number;
-    skipped?: number;
-    userNotFound?: number;
-    courseNotFound?: number;
-    total?: number;
-    errors?: string[];
-    missingUsers?: string[];
-    missingCourses?: string[];
-    matchedAliases?: string[];
-  } | null>(null);
-
   const fetchEnrollments = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         courseId: courseFilter,
         ...(searchDebounce && { search: searchDebounce }),
       });
-      
-      const res = await fetch(`/api/admin/enrollments?${params}`);
-      const data = await res.json();
-      
+      const response = await fetch(`/api/admin/enrollments?${params}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดการลงทะเบียนได้');
       setEnrollments(data.enrollments || []);
       setCourses(data.courses || []);
       setStats(data.stats || null);
       setPagination(data.pagination || null);
-    } catch (error) {
-      console.error('Error fetching enrollments:', error);
+    } catch (caughtError) {
+      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดการลงทะเบียนได้');
     } finally {
       setLoading(false);
     }
@@ -108,46 +136,39 @@ export default function AdminEnrollmentsPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users');
-      const data = await res.json();
+      const response = await fetch('/api/admin/users');
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดผู้ใช้ได้');
       setUsers(data.users || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
+    } catch (caughtError) {
+      setAddError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดผู้ใช้ได้');
     }
   };
 
   useEffect(() => {
-    fetchEnrollments();
+    void fetchEnrollments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseFilter, currentPage, searchDebounce]);
 
   useEffect(() => {
-    if (showAddModal && users.length === 0) {
-      fetchUsers();
-    }
+    if (showAddModal && users.length === 0) void fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAddModal]);
 
   const confirmDeleteEnrollment = async () => {
-    if (!deleteConfirm) return;
-    const enrollmentId = deleteConfirm;
-    setDeleteConfirm(null);
-    
+    if (!deleteTarget) return;
+    const enrollmentId = deleteTarget.id;
     setUpdating(enrollmentId);
+    setDeleteError('');
     try {
-      const res = await fetch(`/api/admin/enrollments/${enrollmentId}`, {
-        method: 'DELETE',
-      });
-
-      if (res.ok) {
-        await fetchEnrollments();
-        showToast('ลบการลงทะเบียนสำเร็จ', 'success');
-      } else {
-        const data = await res.json();
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+      const response = await fetch(`/api/admin/enrollments/${enrollmentId}`, { method: 'DELETE' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'ลบการลงทะเบียนไม่สำเร็จ');
+      setDeleteTarget(null);
+      await fetchEnrollments();
+      showToast('ลบการลงทะเบียนสำเร็จ', 'success');
+    } catch (caughtError) {
+      setDeleteError(caughtError instanceof Error ? caughtError.message : 'ลบการลงทะเบียนไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setUpdating(null);
     }
@@ -155,36 +176,32 @@ export default function AdminEnrollmentsPage() {
 
   const handleAdd = async () => {
     if (!addForm.userId || !addForm.courseId) {
-      showToast('กรุณาเลือกผู้ใช้และคอร์ส', 'error');
+      setAddError('กรุณาเลือกผู้ใช้และคอร์ส');
       return;
     }
-
     setAdding(true);
+    setAddError('');
     try {
-      const res = await fetch('/api/admin/enrollments', {
+      const response = await fetch('/api/admin/enrollments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(addForm),
       });
-
-      if (res.ok) {
-        await fetchEnrollments();
-        setShowAddModal(false);
-        setAddForm({ userId: '', courseId: '' });
-        showToast('เพิ่มการลงทะเบียนสำเร็จ', 'success');
-      } else {
-        const data = await res.json();
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'เพิ่มการลงทะเบียนไม่สำเร็จ');
+      await fetchEnrollments();
+      setShowAddModal(false);
+      setAddForm({ userId: '', courseId: '' });
+      showToast('เพิ่มการลงทะเบียนสำเร็จ', 'success');
+    } catch (caughtError) {
+      setAddError(caughtError instanceof Error ? caughtError.message : 'เพิ่มการลงทะเบียนไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setAdding(false);
     }
   };
 
-  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
     setImporting(true);
@@ -192,548 +209,220 @@ export default function AdminEnrollmentsPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-
-      const res = await fetch('/api/admin/enrollments/import', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setImportResult(data.results);
-        await fetchEnrollments();
-        showToast(`นำเข้าสำเร็จ ${data.results?.success || 0} รายการ`, 'success');
-      } else {
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+      const response = await fetch('/api/admin/enrollments/import', { method: 'POST', body: formData });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'นำเข้าข้อมูลไม่สำเร็จ');
+      setImportResult(data.results);
+      await fetchEnrollments();
+      showToast(`นำเข้าสำเร็จ ${data.results?.success || 0} รายการ`, 'success');
+    } catch (caughtError) {
+      showToast(caughtError instanceof Error ? caughtError.message : 'นำเข้าข้อมูลไม่สำเร็จ กรุณาลองใหม่', 'error');
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const getProgressColor = (percent: number | null) => {
-    if (!percent || percent === 0) return '#94a3b8';
-    if (percent < 50) return '#f59e0b';
-    if (percent < 100) return '#3b82f6';
-    return '#16a34a';
-  };
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('th-TH', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 
   return (
-    <div>
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-      }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-            จัดการการลงทะเบียน
-          </h1>
-          <p style={{ color: '#64748b' }}>ดูและจัดการการลงทะเบียนคอร์สของผู้ใช้</p>
-        </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImportCSV}
-            accept=".csv"
-            style={{ display: 'none' }}
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-            style={{
-              padding: '12px 20px',
-              background: '#f1f5f9',
-              color: '#475569',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 500,
-              cursor: importing ? 'not-allowed' : 'pointer',
-              opacity: importing ? 0.7 : 1,
-            }}
-          >
-            {importing ? 'กำลังนำเข้า...' : 'ไฟล์ CSV นำเข้าจากเว็บเก่า'}
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            style={{
-              padding: '12px 20px',
-              background: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 500,
-              cursor: 'pointer',
-            }}
-          >
-            + เพิ่มการลงทะเบียน
-          </button>
-        </div>
-      </div>
+    <div className="mx-auto grid w-full max-w-7xl gap-6">
+      <AdminPageHeader
+        eyebrow="Learning operations"
+        title="การลงทะเบียน"
+        description="ตรวจสิทธิ์เข้าเรียน ความคืบหน้า และจัดการการเพิ่มหรือถอนผู้เรียนจากคอร์ส"
+        actions={
+          <>
+            <Input ref={fileInputRef} type="file" accept=".csv" onChange={handleImportCSV} className="hidden" tabIndex={-1} />
+            <Button variant="outline" disabled={importing} onClick={() => fileInputRef.current?.click()}>
+              <FileUp data-icon="inline-start" aria-hidden />
+              {importing ? 'กำลังนำเข้า' : 'นำเข้า CSV'}
+            </Button>
+            <Button onClick={() => { setAddError(''); setShowAddModal(true); }}>
+              <Plus data-icon="inline-start" aria-hidden />
+              เพิ่มการลงทะเบียน
+            </Button>
+          </>
+        }
+        meta="การเพิ่มสิทธิ์จากหน้านี้เป็นการกระทำโดยผู้ดูแลโดยตรง"
+      />
 
-      {/* Import Result */}
-      {importResult && (
-        <div style={{
-          background: importResult.success && importResult.success > 0 ? '#f0fdf4' : '#fefce8',
-          border: `1px solid ${importResult.success && importResult.success > 0 ? '#bbf7d0' : '#fde68a'}`,
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '24px',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-            <div>
-              <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '12px', fontSize: '1rem' }}>
-                ผลการนำเข้าข้อมูล
-              </div>
-              <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '0.875rem' }}>
-                <div>
-                  <span style={{ color: '#64748b' }}>ทั้งหมด: </span>
-                  <strong style={{ color: '#1e293b' }}>{importResult.total}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b' }}>สำเร็จ: </span>
-                  <strong style={{ color: '#16a34a' }}>{importResult.success}</strong>
-                </div>
-                <div>
-                  <span style={{ color: '#64748b' }}>ข้าม: </span>
-                  <strong style={{ color: '#d97706' }}>{importResult.skipped}</strong>
-                </div>
-              </div>
-
-              {importResult.matchedAliases && importResult.matchedAliases.length > 0 && (
-                <div style={{ marginTop: '12px' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#2563eb', marginBottom: '4px' }}>
-                    คอร์สที่ match ชื่อใกล้เคียง ({importResult.matchedAliases.length}):
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: '#1d4ed8' }}>
-                    {importResult.matchedAliases.map((a, i) => (
-                      <div key={i}>• {a}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {importResult.missingCourses && importResult.missingCourses.length > 0 && (
-                <div style={{ marginTop: '12px' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#dc2626', marginBottom: '4px' }}>
-                    คอร์สที่ไม่พบในระบบใหม่ ({importResult.courseNotFound} คอร์ส):
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: '#b91c1c' }}>
-                    {importResult.missingCourses.map((c, i) => (
-                      <div key={i}>• {c}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {importResult.missingUsers && importResult.missingUsers.length > 0 && (
-                <div style={{ marginTop: '12px' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#d97706', marginBottom: '4px' }}>
-                    User ที่ไม่พบในระบบใหม่ ({importResult.userNotFound} คน):
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: '#92400e', maxHeight: '80px', overflowY: 'auto' }}>
-                    {importResult.missingUsers.map((u, i) => (
-                      <span key={i} style={{ marginRight: '8px' }}>{u}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
+      {importResult ? (
+        <Alert className={importResult.success ? 'border-[var(--color-success)]/25 bg-[var(--color-success-soft)]' : 'border-[var(--color-warning)]/25 bg-[var(--color-warning-soft)]'}>
+          <CircleCheck aria-hidden />
+          <AlertTitle>ผลการนำเข้าข้อมูล</AlertTitle>
+          <AlertDescription>
+            <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1">
+              <span>ทั้งหมด {importResult.total || 0}</span>
+              <span>สำเร็จ {importResult.success || 0}</span>
+              <span>ข้าม {importResult.skipped || 0}</span>
+              <span>ไม่พบผู้ใช้ {importResult.userNotFound || 0}</span>
+              <span>ไม่พบคอร์ส {importResult.courseNotFound || 0}</span>
             </div>
-            <button
-              onClick={() => setImportResult(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '1.2rem',
-                color: '#64748b',
-                padding: '4px',
-              }}
-            >
-              ×
-            </button>
-          </div>
+            {importResult.matchedAliases?.length ? <ImportDetails title="ชื่อคอร์สที่จับคู่ใกล้เคียง" items={importResult.matchedAliases} /> : null}
+            {importResult.missingCourses?.length ? <ImportDetails title="คอร์สที่ไม่พบ" items={importResult.missingCourses} /> : null}
+            {importResult.missingUsers?.length ? <ImportDetails title="ผู้ใช้ที่ไม่พบ" items={importResult.missingUsers} /> : null}
+            {importResult.errors?.length ? <ImportDetails title="ข้อผิดพลาด" items={importResult.errors} /> : null}
+          </AlertDescription>
+          <AlertAction>
+            <Button variant="ghost" size="icon-sm" onClick={() => setImportResult(null)} aria-label="ปิดผลการนำเข้า"><X aria-hidden /></Button>
+          </AlertAction>
+        </Alert>
+      ) : null}
+
+      {stats ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <AdminMetricCard label="ทั้งหมด" value={stats.total.toLocaleString('th-TH')} detail="สิทธิ์เข้าเรียนทุกสถานะ" />
+          <AdminMetricCard label="เรียนจบแล้ว" value={stats.completed.toLocaleString('th-TH')} tone="success" detail="ผ่านเงื่อนไขจบคอร์ส" />
+          <AdminMetricCard label="กำลังเรียน" value={stats.inProgress.toLocaleString('th-TH')} tone="info" detail="มีความคืบหน้ามากกว่า 0%" />
+          <AdminMetricCard label="ยังไม่เริ่ม" value={stats.notStarted.toLocaleString('th-TH')} tone="neutral" detail="ยังไม่มีความคืบหน้า" />
         </div>
-      )}
+      ) : null}
 
-      {/* Stats */}
-      {stats && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px',
-        }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.total}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>เรียนจบแล้ว</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{stats.completed}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>กำลังเรียน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#3b82f6' }}>{stats.inProgress}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ยังไม่เริ่ม</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#94a3b8' }}>{stats.notStarted}</div>
-          </div>
+      <AdminSection title="ค้นหาและกรอง" description="ค้นหาจากชื่อ อีเมล หรือชื่อคอร์ส">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <InputGroup className="flex-1">
+            <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+            <InputGroupInput
+              value={search}
+              onChange={(event) => { setSearch(event.target.value); setCurrentPage(1); }}
+              placeholder="ชื่อ อีเมล หรือคอร์ส"
+              aria-label="ค้นหาการลงทะเบียน"
+            />
+          </InputGroup>
+          <NativeSelect className="w-full sm:w-64" value={courseFilter} onChange={(event) => { setCourseFilter(event.target.value); setCurrentPage(1); }} aria-label="กรองตามคอร์ส">
+            <NativeSelectOption value="all">คอร์สทั้งหมด</NativeSelectOption>
+            {courses.map((course) => <NativeSelectOption key={course.id} value={course.id}>{course.title}</NativeSelectOption>)}
+          </NativeSelect>
         </div>
-      )}
+      </AdminSection>
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '350px' }}>
-          <svg
-            style={{
-              position: 'absolute',
-              left: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '18px',
-              height: '18px',
-              color: '#94a3b8',
-            }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            placeholder="ค้นหาชื่อ, อีเมล, คอร์ส..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            style={{
-              width: '100%',
-              padding: '10px 12px 10px 40px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              background: 'white',
-            }}
-          />
-        </div>
-        <select
-          value={courseFilter}
-          onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
-          style={{
-            padding: '10px 16px',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            background: 'white',
-            fontSize: '0.875rem',
-            minWidth: '200px',
-          }}
-        >
-          <option value="all">คอร์สทั้งหมด</option>
-          {courses.map(course => (
-            <option key={course.id} value={course.id}>{course.title}</option>
-          ))}
-        </select>
-      </div>
+      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchEnrollments()}>ลองใหม่</Button>} /> : null}
 
-      {/* Add Modal */}
-      {showAddModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '450px',
-            margin: '16px',
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px', color: '#1e293b' }}>
-              เพิ่มการลงทะเบียนใหม่
-            </h2>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                ผู้ใช้
-              </label>
-              <select
-                value={addForm.userId}
-                onChange={(e) => setAddForm({ ...addForm, userId: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  background: 'white',
-                }}
-              >
-                <option value="">-- เลือกผู้ใช้ --</option>
-                {users.map(user => (
-                  <option key={user.id} value={user.id}>
-                    {user.name || user.email} ({user.email})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                คอร์ส
-              </label>
-              <select
-                value={addForm.courseId}
-                onChange={(e) => setAddForm({ ...addForm, courseId: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  background: 'white',
-                }}
-              >
-                <option value="">-- เลือกคอร์ส --</option>
-                {courses.map(course => (
-                  <option key={course.id} value={course.id}>{course.title}</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => { setShowAddModal(false); setAddForm({ userId: '', courseId: '' }); }}
-                style={{
-                  padding: '10px 20px',
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                }}
-              >
-                ยกเลิก
-              </button>
-              <button
-                onClick={handleAdd}
-                disabled={adding}
-                style={{
-                  padding: '10px 20px',
-                  background: '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: adding ? 'not-allowed' : 'pointer',
-                  opacity: adding ? 0.7 : 1,
-                }}
-              >
-                {adding ? 'กำลังเพิ่ม...' : 'เพิ่มการลงทะเบียน'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Enrollments Table */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        overflow: 'hidden',
-      }}>
+      <AdminSection title="รายการสิทธิ์เข้าเรียน" description={pagination ? `${pagination.total.toLocaleString('th-TH')} รายการ` : undefined}>
         {loading && enrollments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-            กำลังโหลด...
-          </div>
+          <AdminLoadingState title="กำลังโหลดการลงทะเบียน" />
         ) : enrollments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-            ไม่พบการลงทะเบียน
-          </div>
+          <AdminEmptyState icon={<GraduationCap aria-hidden />} title="ไม่พบการลงทะเบียน" description="ลองเปลี่ยนคำค้นหาหรือตัวกรอง หรือเพิ่มสิทธิ์เข้าเรียนใหม่" />
         ) : (
           <>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
-                <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                      ผู้ใช้
-                    </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                      คอร์ส
-                    </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                      ความคืบหน้า
-                    </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                      วันที่ลงทะเบียน
-                    </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                      สถานะ
-                    </th>
-                    <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>
-                      การดำเนินการ
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {enrollments.map((enrollment) => (
-                    <tr key={enrollment.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '16px' }}>
-                        <div
-                          onClick={() => enrollment.userId && (window.location.href = `/admin/users/${enrollment.userId}`)}
-                          style={{ cursor: enrollment.userId ? 'pointer' : 'default' }}
-                        >
-                          <div style={{ fontWeight: 500, color: enrollment.userId ? '#2563eb' : '#1e293b', marginBottom: '2px' }}>
-                            {enrollment.userName || 'ไม่ระบุชื่อ'}
-                          </div>
-                          <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                            {enrollment.userEmail || '-'}
-                          </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ผู้ใช้</TableHead>
+                  <TableHead>คอร์ส</TableHead>
+                  <TableHead>ความคืบหน้า</TableHead>
+                  <TableHead>วันที่ลงทะเบียน</TableHead>
+                  <TableHead>สถานะ</TableHead>
+                  <TableHead className="text-right">จัดการ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {enrollments.map((enrollment) => {
+                  const progress = enrollment.progressPercent || 0;
+                  return (
+                    <TableRow key={enrollment.id}>
+                      <TableCell>
+                        {enrollment.userId ? <Link href={`/admin/users/${enrollment.userId}`} className="font-medium text-primary hover:underline">{enrollment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-medium">{enrollment.userName || 'ไม่ระบุชื่อ'}</div>}
+                        <div className="mt-1 text-xs text-muted-foreground">{enrollment.userEmail || '-'}</div>
+                      </TableCell>
+                      <TableCell className="max-w-64 truncate">{enrollment.courseTitle || '-'}</TableCell>
+                      <TableCell>
+                        <div className="flex min-w-32 items-center gap-3">
+                          <Progress value={progress} className="w-24" aria-label={`ความคืบหน้า ${progress}%`} />
+                          <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{progress}%</span>
                         </div>
-                      </td>
-                      <td style={{ padding: '16px' }}>
-                        <div style={{ color: '#1e293b', fontSize: '0.875rem' }}>
-                          {enrollment.courseTitle || '-'}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(enrollment.enrolledAt)}</TableCell>
+                      <TableCell>
+                        <AdminStatusBadge tone={enrollment.completedAt ? 'success' : progress > 0 ? 'info' : 'neutral'}>
+                          {enrollment.completedAt ? 'เรียนจบ' : progress > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}
+                        </AdminStatusBadge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end">
+                          <Button variant="ghost" size="icon-sm" disabled={updating === enrollment.id} onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอน ${enrollment.userName || enrollment.userEmail || 'ผู้ใช้'} ออกจากคอร์ส`}>
+                            <Trash2 aria-hidden />
+                          </Button>
                         </div>
-                      </td>
-                      <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                          <div style={{
-                            width: '60px',
-                            height: '6px',
-                            background: '#e2e8f0',
-                            borderRadius: '3px',
-                            overflow: 'hidden',
-                          }}>
-                            <div style={{
-                              width: `${enrollment.progressPercent || 0}%`,
-                              height: '100%',
-                              background: getProgressColor(enrollment.progressPercent),
-                              borderRadius: '3px',
-                            }} />
-                          </div>
-                          <span style={{ fontSize: '0.875rem', color: '#64748b', minWidth: '40px' }}>
-                            {enrollment.progressPercent || 0}%
-                          </span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '16px', textAlign: 'center', fontSize: '0.875rem', color: '#64748b' }}>
-                        {formatDate(enrollment.enrolledAt)}
-                      </td>
-                      <td style={{ padding: '16px', textAlign: 'center' }}>
-                        <span style={{
-                          padding: '4px 12px',
-                          borderRadius: '50px',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          background: enrollment.completedAt ? '#dcfce7' : enrollment.progressPercent && enrollment.progressPercent > 0 ? '#dbeafe' : '#f1f5f9',
-                          color: enrollment.completedAt ? '#16a34a' : enrollment.progressPercent && enrollment.progressPercent > 0 ? '#2563eb' : '#64748b',
-                        }}>
-                          {enrollment.completedAt ? 'เรียนจบ' : enrollment.progressPercent && enrollment.progressPercent > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '16px', textAlign: 'right' }}>
-                        <button
-                          onClick={() => setDeleteConfirm(enrollment.id)}
-                          disabled={updating === enrollment.id}
-                          style={{
-                            padding: '6px 12px',
-                            background: '#fef2f2',
-                            color: '#dc2626',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '0.75rem',
-                            cursor: updating === enrollment.id ? 'not-allowed' : 'pointer',
-                            opacity: updating === enrollment.id ? 0.7 : 1,
-                          }}
-                        >
-                          ลบ
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '16px',
-                borderTop: '1px solid #e2e8f0',
-              }}>
-                <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    background: 'white',
-                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                    opacity: currentPage === 1 ? 0.5 : 1,
-                  }}
-                >
-                  ก่อนหน้า
-                </button>
-                <span style={{ color: '#64748b', fontSize: '0.875rem' }}>
-                  หน้า {currentPage} จาก {pagination.totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
-                  disabled={currentPage === pagination.totalPages}
-                  style={{
-                    padding: '8px 16px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    background: 'white',
-                    cursor: currentPage === pagination.totalPages ? 'not-allowed' : 'pointer',
-                    opacity: currentPage === pagination.totalPages ? 0.5 : 1,
-                  }}
-                >
-                  ถัดไป
-                </button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+            {pagination && pagination.totalPages > 1 ? (
+              <div className="mt-4 flex flex-col items-center justify-between gap-3 border-t pt-4 sm:flex-row">
+                <div className="text-sm text-muted-foreground">หน้า {currentPage.toLocaleString('th-TH')} จาก {pagination.totalPages.toLocaleString('th-TH')}</div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>ก่อนหน้า</Button>
+                  <Button variant="outline" size="sm" disabled={currentPage === pagination.totalPages} onClick={() => setCurrentPage((page) => Math.min(pagination.totalPages, page + 1))}>ถัดไป</Button>
+                </div>
               </div>
-            )}
+            ) : null}
           </>
         )}
-      </div>
-      <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        title="ลบการลงทะเบียน"
-        message="คุณแน่ใจหรือไม่ที่จะลบการลงทะเบียนนี้?"
-        confirmText="ลบ"
-        onConfirm={confirmDeleteEnrollment}
-        onCancel={() => setDeleteConfirm(null)}
+      </AdminSection>
+
+      <Dialog open={showAddModal} onOpenChange={(open) => { if (!adding) { setShowAddModal(open); if (!open) setAddForm({ userId: '', courseId: '' }); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>เพิ่มการลงทะเบียนใหม่</DialogTitle>
+            <DialogDescription>มอบสิทธิ์เข้าเรียนโดยผู้ดูแล การดำเนินการนี้ไม่ผ่านขั้นตอนชำระเงิน</DialogDescription>
+          </DialogHeader>
+          {addError ? <Alert variant="destructive"><AlertTitle>เพิ่มสิทธิ์ไม่สำเร็จ</AlertTitle><AlertDescription>{addError}</AlertDescription></Alert> : null}
+          <div className="grid gap-5">
+            <Field>
+              <FieldLabel htmlFor="enrollment-user">ผู้ใช้</FieldLabel>
+              <NativeSelect id="enrollment-user" className="w-full" value={addForm.userId} onChange={(event) => setAddForm((previous) => ({ ...previous, userId: event.target.value }))}>
+                <NativeSelectOption value="">เลือกผู้ใช้</NativeSelectOption>
+                {users.map((user) => <NativeSelectOption key={user.id} value={user.id}>{user.name || user.email} ({user.email})</NativeSelectOption>)}
+              </NativeSelect>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="enrollment-course">คอร์ส</FieldLabel>
+              <NativeSelect id="enrollment-course" className="w-full" value={addForm.courseId} onChange={(event) => setAddForm((previous) => ({ ...previous, courseId: event.target.value }))}>
+                <NativeSelectOption value="">เลือกคอร์ส</NativeSelectOption>
+                {courses.map((course) => <NativeSelectOption key={course.id} value={course.id}>{course.title}</NativeSelectOption>)}
+              </NativeSelect>
+            </Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" disabled={adding} onClick={() => setShowAddModal(false)}>ยกเลิก</Button>
+            <Button disabled={adding || !addForm.userId || !addForm.courseId} onClick={() => void handleAdd()}>
+              {adding ? <AdminPendingLabel>กำลังเพิ่ม</AdminPendingLabel> : 'เพิ่มการลงทะเบียน'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AdminConfirmActionDialog
+        open={Boolean(deleteTarget)}
+        title="ถอนสิทธิ์การลงทะเบียน"
+        description="ผู้เรียนจะเสียสิทธิ์เข้าคอร์สและข้อมูลความคืบหน้าที่ผูกกับการลงทะเบียนนี้อาจถูกลบ"
+        target={deleteTarget ? <span>{deleteTarget.userName || deleteTarget.userEmail || 'ผู้ใช้'} · {deleteTarget.courseTitle || 'ไม่ระบุคอร์ส'}</span> : null}
+        confirmLabel="ถอนสิทธิ์"
+        pending={Boolean(deleteTarget && updating === deleteTarget.id)}
+        pendingLabel="กำลังถอนสิทธิ์"
+        error={deleteError || undefined}
+        onConfirm={() => void confirmDeleteEnrollment()}
+        onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(''); } }}
       />
     </div>
+  );
+}
+
+function ImportDetails({ title, items }: { title: string; items: string[] }) {
+  return (
+    <details className="mt-3">
+      <summary className="cursor-pointer font-medium">{title} ({items.length.toLocaleString('th-TH')})</summary>
+      <ul className="mt-2 flex max-h-28 list-disc flex-col gap-1 overflow-y-auto pl-5 text-xs">
+        {items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+      </ul>
+    </details>
   );
 }

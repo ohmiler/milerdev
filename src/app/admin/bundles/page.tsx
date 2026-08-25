@@ -1,511 +1,481 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { ExternalLink, Package, Plus, Trash2 } from 'lucide-react';
+
 import ImageUpload from '@/components/admin/ImageUpload';
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
+import {
+  AdminEmptyState,
+  AdminLoadingState,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+  type AdminTone,
+} from '@/components/admin/ui/AdminOperations';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 interface CourseOption {
-    id: string;
-    title: string;
-    price: string;
-    status: string;
+  id: string;
+  title: string;
+  price: string;
+  status: string;
 }
 
 interface BundleCourse {
-    courseId: string;
-    courseTitle: string;
-    coursePrice: string;
+  courseId: string;
+  courseTitle: string;
+  coursePrice: string;
 }
 
 interface Bundle {
-    id: string;
-    title: string;
-    slug: string;
-    description: string | null;
-    thumbnailUrl: string | null;
-    price: string;
-    status: string;
-    courses: BundleCourse[];
-    courseCount: number;
-    totalOriginalPrice: number;
-    discount: number;
-    createdAt: string | null;
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  thumbnailUrl: string | null;
+  price: string;
+  status: string;
+  courses: BundleCourse[];
+  courseCount: number;
+  totalOriginalPrice: number;
+  discount: number;
+  createdAt: string | null;
 }
 
 const defaultForm = {
-    title: '',
-    slug: '',
-    description: '',
-    price: '',
-    status: 'draft' as string,
-    thumbnailUrl: '',
-    courseIds: [] as string[],
+  title: '',
+  slug: '',
+  description: '',
+  price: '',
+  status: 'draft',
+  thumbnailUrl: '',
+  courseIds: [] as string[],
+};
+
+const statusPresentation: Record<string, { label: string; tone: AdminTone }> = {
+  published: { label: 'เผยแพร่', tone: 'success' },
+  archived: { label: 'เก็บถาวร', tone: 'neutral' },
+  draft: { label: 'แบบร่าง', tone: 'warning' },
 };
 
 export default function AdminBundlesPage() {
-    const [bundlesList, setBundlesList] = useState<Bundle[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [showForm, setShowForm] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [form, setForm] = useState(defaultForm);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
-    const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
-    const [deleting, setDeleting] = useState<string | null>(null);
+  const [bundlesList, setBundlesList] = useState<Bundle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(defaultForm);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-    const fetchBundles = () => {
-        setLoading(true);
-        fetch('/api/admin/bundles')
-            .then(r => r.json())
-            .then(d => setBundlesList(d.bundles || []))
-            .catch(console.error)
-            .finally(() => setLoading(false));
-    };
+  const fetchBundles = () => {
+    setLoading(true);
+    fetch('/api/admin/bundles')
+      .then((response) => response.json())
+      .then((data) => setBundlesList(data.bundles || []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
 
-    useEffect(() => {
+  useEffect(() => {
+    fetchBundles();
+    fetch('/api/admin/courses')
+      .then((response) => response.json())
+      .then((data) => setCourseOptions(data.courses || []))
+      .catch(console.error);
+  }, []);
+
+  const handleEdit = (bundle: Bundle) => {
+    setEditingId(bundle.id);
+    setForm({
+      title: bundle.title,
+      slug: bundle.slug,
+      description: bundle.description || '',
+      price: bundle.price,
+      status: bundle.status,
+      thumbnailUrl: bundle.thumbnailUrl || '',
+      courseIds: bundle.courses.map((course) => course.courseId),
+    });
+    setShowForm(true);
+    setError('');
+  };
+
+  const handleNew = () => {
+    setEditingId(null);
+    setForm(defaultForm);
+    setShowForm(true);
+    setError('');
+  };
+
+  const closeForm = () => {
+    if (saving) return;
+    setShowForm(false);
+    setEditingId(null);
+    setForm(defaultForm);
+    setError('');
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    const id = deleteConfirm;
+    setDeleting(id);
+    try {
+      const res = await fetch('/api/admin/bundles/' + id, { method: 'DELETE' });
+      if (res.ok) {
+        setDeleteConfirm(null);
         fetchBundles();
-        fetch('/api/admin/courses')
-            .then(r => r.json())
-            .then(d => setCourseOptions(d.courses || []))
-            .catch(console.error);
-    }, []);
+      }
+    } catch (deleteError) {
+      console.error(deleteError);
+    } finally {
+      setDeleting(null);
+    }
+  };
 
-    const handleEdit = (bundle: Bundle) => {
-        setEditingId(bundle.id);
-        setForm({
-            title: bundle.title,
-            slug: bundle.slug,
-            description: bundle.description || '',
-            price: bundle.price,
-            status: bundle.status,
-            thumbnailUrl: bundle.thumbnailUrl || '',
-            courseIds: bundle.courses.map(c => c.courseId),
-        });
-        setShowForm(true);
-        setError('');
-    };
+  const toggleCourse = (courseId: string) => {
+    setForm((current) => ({
+      ...current,
+      courseIds: current.courseIds.includes(courseId)
+        ? current.courseIds.filter((id) => id !== courseId)
+        : [...current.courseIds, courseId],
+    }));
+  };
 
-    const handleNew = () => {
-        setEditingId(null);
-        setForm(defaultForm);
-        setShowForm(true);
-        setError('');
-    };
+  const selectedCoursesTotal = form.courseIds.reduce((sum, id) => {
+    const course = courseOptions.find((option) => option.id === id);
+    return sum + parseFloat(course?.price || '0');
+  }, 0);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('ต้องการลบ Bundle นี้หรือไม่?')) return;
-        setDeleting(id);
-        try {
-            const res = await fetch(`/api/admin/bundles/${id}`, { method: 'DELETE' });
-            if (res.ok) fetchBundles();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setDeleting(null);
+  const discountPercent =
+    selectedCoursesTotal > 0 && parseFloat(form.price) > 0
+      ? Math.round((1 - parseFloat(form.price) / selectedCoursesTotal) * 100)
+      : 0;
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+
+    try {
+      const url = editingId ? '/api/admin/bundles/' + editingId : '/api/admin/bundles';
+      const res = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'เกิดข้อผิดพลาด');
+        return;
+      }
+
+      setShowForm(false);
+      setEditingId(null);
+      setForm(defaultForm);
+      fetchBundles();
+    } catch {
+      setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteTarget = bundlesList.find((bundle) => bundle.id === deleteConfirm);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        eyebrow="Commerce"
+        title="จัดการ Bundle"
+        description="รวมหลายคอร์สเป็นชุดราคาเดียว พร้อมตรวจส่วนลดและสถานะก่อนเปิดขาย"
+        actions={
+          <Button onClick={handleNew}>
+            <Plus aria-hidden />
+            สร้าง Bundle
+          </Button>
         }
-    };
+      />
 
-    const toggleCourse = (courseId: string) => {
-        setForm(prev => ({
-            ...prev,
-            courseIds: prev.courseIds.includes(courseId)
-                ? prev.courseIds.filter(id => id !== courseId)
-                : [...prev.courseIds, courseId],
-        }));
-    };
-
-    const selectedCoursesTotal = form.courseIds.reduce((sum, id) => {
-        const c = courseOptions.find(o => o.id === id);
-        return sum + parseFloat(c?.price || '0');
-    }, 0);
-
-    const discountPercent = selectedCoursesTotal > 0 && parseFloat(form.price) > 0
-        ? Math.round((1 - parseFloat(form.price) / selectedCoursesTotal) * 100)
-        : 0;
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSaving(true);
-        setError('');
-
-        try {
-            const url = editingId ? `/api/admin/bundles/${editingId}` : '/api/admin/bundles';
-            const method = editingId ? 'PUT' : 'POST';
-
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form),
-            });
-
-            const data = await res.json();
-            if (!res.ok) {
-                setError(data.error || 'เกิดข้อผิดพลาด');
-                return;
+      <AdminSection
+        title="Bundle ทั้งหมด"
+        description="ตรวจคอร์สที่รวมอยู่ ราคาเต็ม ราคาขาย และสถานะเผยแพร่จากรายการเดียว"
+        actions={<AdminStatusBadge tone="info">{bundlesList.length.toLocaleString('th-TH')} Bundle</AdminStatusBadge>}
+      >
+        {loading ? (
+          <AdminLoadingState title="กำลังโหลด Bundle" />
+        ) : bundlesList.length === 0 ? (
+          <AdminEmptyState
+            title="ยังไม่มี Bundle"
+            description="สร้าง Bundle แรกเพื่อขายหลายคอร์สในราคาพิเศษ"
+            icon={<Package />}
+            action={
+              <Button variant="outline" onClick={handleNew}>
+                <Plus aria-hidden />
+                สร้าง Bundle
+              </Button>
             }
+          />
+        ) : (
+          <div className="flex flex-col gap-4">
+            {bundlesList.map((bundle) => {
+              const presentation = statusPresentation[bundle.status] ?? statusPresentation.draft;
 
-            setShowForm(false);
-            setEditingId(null);
-            setForm(defaultForm);
-            fetchBundles();
-        } catch {
-            setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
-        } finally {
-            setSaving(false);
-        }
-    };
+              return (
+                <article key={bundle.id} className="rounded-xl border border-border p-5">
+                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-base font-semibold text-foreground">{bundle.title}</h2>
+                        <AdminStatusBadge tone={presentation.tone}>{presentation.label}</AdminStatusBadge>
+                        <AdminStatusBadge>{bundle.courseCount.toLocaleString('th-TH')} คอร์ส</AdminStatusBadge>
+                      </div>
+                      {bundle.description ? (
+                        <p className="mt-2 line-clamp-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                          {bundle.description}
+                        </p>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {bundle.courses.map((course) => (
+                          <span
+                            key={course.courseId}
+                            className="rounded-md border border-primary/15 bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
+                          >
+                            {course.courseTitle}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="text-xl font-semibold tabular-nums text-foreground">
+                          ฿{parseFloat(bundle.price).toLocaleString('th-TH')}
+                        </span>
+                        <span className="text-sm text-muted-foreground line-through">
+                          ฿{bundle.totalOriginalPrice.toLocaleString('th-TH')}
+                        </span>
+                        {bundle.discount > 0 ? (
+                          <AdminStatusBadge tone="success">ลด {bundle.discount.toLocaleString('th-TH')}%</AdminStatusBadge>
+                        ) : null}
+                      </div>
+                    </div>
 
-    const cardStyle: React.CSSProperties = {
-        background: 'white',
-        borderRadius: '12px',
-        border: '1px solid #e2e8f0',
-        padding: '24px',
-    };
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={'/bundles/' + bundle.slug} target="_blank">
+                          <ExternalLink aria-hidden />
+                          ดูหน้าขาย
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(bundle)}>
+                        แก้ไข
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={deleting === bundle.id}
+                        onClick={() => setDeleteConfirm(bundle.id)}
+                      >
+                        <Trash2 aria-hidden />
+                        ลบ
+                      </Button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </AdminSection>
 
-    const btnPrimary: React.CSSProperties = {
-        background: '#2563eb',
-        color: 'white',
-        border: 'none',
-        padding: '10px 20px',
-        borderRadius: '8px',
-        fontWeight: 600,
-        cursor: 'pointer',
-        fontSize: '0.875rem',
-    };
+      <Dialog
+        open={showForm}
+        onOpenChange={(open) => {
+          if (open) setShowForm(true);
+          else closeForm();
+        }}
+      >
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{editingId ? 'แก้ไข Bundle' : 'สร้าง Bundle ใหม่'}</DialogTitle>
+              <DialogDescription>กำหนดข้อมูล ราคา สถานะ รูปปก และคอร์สอย่างน้อย 2 รายการ</DialogDescription>
+            </DialogHeader>
 
-    const btnSecondary: React.CSSProperties = {
-        background: '#f1f5f9',
-        color: '#475569',
-        border: '1px solid #e2e8f0',
-        padding: '10px 20px',
-        borderRadius: '8px',
-        fontWeight: 500,
-        cursor: 'pointer',
-        fontSize: '0.875rem',
-    };
+            {error ? (
+              <Alert variant="destructive" className="mt-5">
+                <AlertTitle>บันทึกไม่สำเร็จ</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            ) : null}
 
-    const inputStyle: React.CSSProperties = {
-        width: '100%',
-        padding: '10px 14px',
-        border: '1px solid #d1d5db',
-        borderRadius: '8px',
-        fontSize: '0.9375rem',
-        outline: 'none',
-        boxSizing: 'border-box',
-    };
+            <FieldGroup className="my-6 gap-5">
+              <div className="grid gap-5 md:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="bundle-title">ชื่อ Bundle *</FieldLabel>
+                  <Input
+                    id="bundle-title"
+                    value={form.title}
+                    onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                    placeholder="เช่น Full-Stack Developer Bundle"
+                    required
+                    autoFocus
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="bundle-slug">Slug</FieldLabel>
+                  <Input
+                    id="bundle-slug"
+                    value={form.slug}
+                    onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))}
+                    placeholder="สร้างอัตโนมัติหากไม่ระบุ"
+                  />
+                </Field>
+              </div>
 
-    return (
-        <div>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
-                        จัดการ Bundle
-                    </h1>
-                    <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '0.875rem' }}>
-                        รวมหลายคอร์สเป็นชุดราคาพิเศษ
-                    </p>
-                </div>
-                {!showForm && (
-                    <button onClick={handleNew} style={btnPrimary}>
-                        + สร้าง Bundle ใหม่
-                    </button>
-                )}
-            </div>
+              <Field>
+                <FieldLabel htmlFor="bundle-description">รายละเอียด</FieldLabel>
+                <Textarea
+                  id="bundle-description"
+                  value={form.description}
+                  onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                  rows={4}
+                  placeholder="อธิบายจุดเด่นของ Bundle"
+                />
+              </Field>
 
-            {/* Form */}
-            {showForm && (
-                <div style={{ ...cardStyle, marginBottom: '24px' }}>
-                    <h2 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '20px', color: '#1e293b' }}>
-                        {editingId ? 'แก้ไข Bundle' : 'สร้าง Bundle ใหม่'}
-                    </h2>
-
-                    {error && (
-                        <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>
-                            {error}
-                        </div>
+              <div className="grid gap-5 md:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="bundle-price">ราคา Bundle (บาท) *</FieldLabel>
+                  <Input
+                    id="bundle-price"
+                    type="number"
+                    value={form.price}
+                    onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))}
+                    min="0"
+                    step="0.01"
+                    required
+                  />
+                  <FieldDescription
+                    className={cn(
+                      discountPercent > 0 && 'text-[var(--color-success-strong)]',
+                      discountPercent < 0 && 'text-destructive',
                     )}
+                  >
+                    ราคารวมปกติ ฿{selectedCoursesTotal.toLocaleString('th-TH')} · ส่วนลด {discountPercent.toLocaleString('th-TH')}%
+                  </FieldDescription>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="bundle-status">สถานะ</FieldLabel>
+                  <NativeSelect
+                    id="bundle-status"
+                    value={form.status}
+                    onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
+                  >
+                    <option value="draft">แบบร่าง</option>
+                    <option value="published">เผยแพร่</option>
+                    <option value="archived">เก็บถาวร</option>
+                  </NativeSelect>
+                </Field>
+              </div>
 
-                    <form onSubmit={handleSubmit}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                            <div>
-                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
-                                    ชื่อ Bundle *
-                                </label>
-                                <input
-                                    style={inputStyle}
-                                    value={form.title}
-                                    onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                                    placeholder="เช่น Full-Stack Developer Bundle"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
-                                    Slug
-                                </label>
-                                <input
-                                    style={inputStyle}
-                                    value={form.slug}
-                                    onChange={e => setForm(prev => ({ ...prev, slug: e.target.value }))}
-                                    placeholder="จะสร้างอัตโนมัติถ้าไม่ระบุ"
-                                />
-                            </div>
-                        </div>
+              <Field>
+                <FieldLabel>รูปปก Bundle</FieldLabel>
+                <ImageUpload
+                  value={form.thumbnailUrl}
+                  onChange={(url) => setForm((current) => ({ ...current, thumbnailUrl: url }))}
+                  folder="bundles"
+                />
+                <FieldDescription>ขนาดแนะนำ 1200 × 630 พิกเซล</FieldDescription>
+              </Field>
 
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
-                                รายละเอียด
-                            </label>
-                            <textarea
-                                style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
-                                value={form.description}
-                                onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                                placeholder="อธิบาย Bundle นี้..."
-                            />
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                            <div>
-                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
-                                    ราคา Bundle (บาท) *
-                                </label>
-                                <input
-                                    type="number"
-                                    style={inputStyle}
-                                    value={form.price}
-                                    onChange={e => setForm(prev => ({ ...prev, price: e.target.value }))}
-                                    placeholder="0"
-                                    required
-                                    min="0"
-                                    step="0.01"
-                                />
-                                {selectedCoursesTotal > 0 && parseFloat(form.price) > 0 && (
-                                    <p style={{ margin: '6px 0 0', fontSize: '0.8125rem', color: discountPercent > 0 ? '#16a34a' : '#dc2626' }}>
-                                        ราคารวมปกติ: ฿{selectedCoursesTotal.toLocaleString()} → ลด {discountPercent}%
-                                    </p>
-                                )}
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
-                                    สถานะ
-                                </label>
-                                <select
-                                    style={inputStyle}
-                                    value={form.status}
-                                    onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))}
-                                >
-                                    <option value="draft">แบบร่าง</option>
-                                    <option value="published">เผยแพร่</option>
-                                    <option value="archived">เก็บถาวร</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '6px', color: '#374151', fontSize: '0.875rem' }}>
-                                รูปปก Bundle (แนะนำ 1200 × 630 px)
-                            </label>
-                            <ImageUpload
-                                value={form.thumbnailUrl}
-                                onChange={(url) => setForm(prev => ({ ...prev, thumbnailUrl: url }))}
-                                folder="bundles"
-                            />
-                        </div>
-
-                        {/* Course Picker */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151', fontSize: '0.875rem' }}>
-                                เลือกคอร์สใน Bundle * (อย่างน้อย 2 คอร์ส)
-                            </label>
-                            <div style={{
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '8px',
-                                maxHeight: '300px',
-                                overflowY: 'auto',
-                            }}>
-                                {courseOptions.map((course) => {
-                                    const isSelected = form.courseIds.includes(course.id);
-                                    return (
-                                        <div
-                                            key={course.id}
-                                            onClick={() => toggleCourse(course.id)}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                padding: '12px 16px',
-                                                borderBottom: '1px solid #f1f5f9',
-                                                cursor: 'pointer',
-                                                background: isSelected ? '#eff6ff' : 'white',
-                                                transition: 'background 0.15s',
-                                            }}
-                                        >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <div style={{
-                                                    width: '20px',
-                                                    height: '20px',
-                                                    borderRadius: '4px',
-                                                    border: isSelected ? '2px solid #2563eb' : '2px solid #d1d5db',
-                                                    background: isSelected ? '#2563eb' : 'white',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    flexShrink: 0,
-                                                }}>
-                                                    {isSelected && (
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                                                            <polyline points="20 6 9 17 4 12" />
-                                                        </svg>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontWeight: 500, color: '#1e293b', fontSize: '0.9375rem' }}>
-                                                        {course.title}
-                                                    </div>
-                                                    <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
-                                                        {course.status === 'published' ? '✅ เผยแพร่' : '📝 แบบร่าง'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem' }}>
-                                                ฿{parseFloat(course.price).toLocaleString()}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            <p style={{ margin: '6px 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
-                                เลือกแล้ว {form.courseIds.length} คอร์ส | ราคารวมปกติ: ฿{selectedCoursesTotal.toLocaleString()}
-                            </p>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <button type="submit" style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }} disabled={saving}>
-                                {saving ? 'กำลังบันทึก...' : editingId ? 'อัปเดต Bundle' : 'สร้าง Bundle'}
-                            </button>
-                            <button
-                                type="button"
-                                style={btnSecondary}
-                                onClick={() => { setShowForm(false); setEditingId(null); setForm(defaultForm); }}
-                            >
-                                ยกเลิก
-                            </button>
-                        </div>
-                    </form>
+              <Field>
+                <FieldLabel>คอร์สใน Bundle *</FieldLabel>
+                <div className="max-h-72 divide-y divide-border overflow-y-auto rounded-xl border border-border">
+                  {courseOptions.map((course) => {
+                    const selected = form.courseIds.includes(course.id);
+                    return (
+                      <label
+                        key={course.id}
+                        className={cn(
+                          'flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40',
+                          selected && 'bg-primary/5',
+                        )}
+                      >
+                        <Checkbox checked={selected} onCheckedChange={() => toggleCourse(course.id)} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-foreground">{course.title}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {course.status === 'published' ? 'เผยแพร่' : 'แบบร่าง'}
+                          </span>
+                        </span>
+                        <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
+                          ฿{parseFloat(course.price).toLocaleString('th-TH')}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
-            )}
+                <FieldDescription>
+                  เลือกแล้ว {form.courseIds.length.toLocaleString('th-TH')} คอร์ส · ราคารวม ฿
+                  {selectedCoursesTotal.toLocaleString('th-TH')}
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
 
-            {/* Bundle List */}
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>กำลังโหลด...</div>
-            ) : bundlesList.length === 0 ? (
-                <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 24px' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📦</div>
-                    <h3 style={{ fontWeight: 600, color: '#1e293b', margin: '0 0 8px' }}>ยังไม่มี Bundle</h3>
-                    <p style={{ color: '#64748b', margin: '0 0 20px', fontSize: '0.9375rem' }}>สร้าง Bundle แรกเพื่อขายคอร์สรวมในราคาพิเศษ</p>
-                    {!showForm && <button onClick={handleNew} style={btnPrimary}>+ สร้าง Bundle ใหม่</button>}
-                </div>
-            ) : (
-                <div style={{ display: 'grid', gap: '16px' }}>
-                    {bundlesList.map((bundle) => (
-                        <div key={bundle.id} style={cardStyle}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                                        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#1e293b', margin: 0 }}>
-                                            {bundle.title}
-                                        </h3>
-                                        <span style={{
-                                            padding: '2px 10px',
-                                            borderRadius: '50px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            ...(bundle.status === 'published'
-                                                ? { background: '#dcfce7', color: '#16a34a' }
-                                                : bundle.status === 'archived'
-                                                    ? { background: '#f1f5f9', color: '#64748b' }
-                                                    : { background: '#fef3c7', color: '#b45309' }),
-                                        }}>
-                                            {bundle.status === 'published' ? 'เผยแพร่' : bundle.status === 'archived' ? 'เก็บถาวร' : 'แบบร่าง'}
-                                        </span>
-                                    </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" disabled={saving} onClick={closeForm}>
+                ยกเลิก
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? (
+                  <AdminPendingLabel>กำลังบันทึก...</AdminPendingLabel>
+                ) : editingId ? (
+                  'อัปเดต Bundle'
+                ) : (
+                  'สร้าง Bundle'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-                                    {bundle.description && (
-                                        <p style={{ color: '#64748b', fontSize: '0.875rem', margin: '0 0 12px', lineHeight: 1.5 }}>
-                                            {bundle.description}
-                                        </p>
-                                    )}
-
-                                    {/* Courses in bundle */}
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
-                                        {bundle.courses.map((c) => (
-                                            <span key={c.courseId} style={{
-                                                background: '#eff6ff',
-                                                color: '#2563eb',
-                                                padding: '4px 10px',
-                                                borderRadius: '6px',
-                                                fontSize: '0.8125rem',
-                                                fontWeight: 500,
-                                            }}>
-                                                {c.courseTitle}
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    {/* Pricing */}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9375rem' }}>
-                                        <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '1.125rem' }}>
-                                            ฿{parseFloat(bundle.price).toLocaleString()}
-                                        </span>
-                                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.875rem' }}>
-                                            ฿{bundle.totalOriginalPrice.toLocaleString()}
-                                        </span>
-                                        {bundle.discount > 0 && (
-                                            <span style={{ background: '#dcfce7', color: '#16a34a', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8125rem', fontWeight: 600 }}>
-                                                ลด {bundle.discount}%
-                                            </span>
-                                        )}
-                                        <span style={{ color: '#64748b', fontSize: '0.8125rem' }}>
-                                            • {bundle.courseCount} คอร์ส
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Actions */}
-                                <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                                    <Link href={`/bundles/${bundle.slug}`} target="_blank" style={{
-                                        ...btnSecondary,
-                                        textDecoration: 'none',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        fontSize: '0.8125rem',
-                                        padding: '8px 14px',
-                                    }}>
-                                        ดู
-                                    </Link>
-                                    <button onClick={() => handleEdit(bundle)} style={{ ...btnSecondary, fontSize: '0.8125rem', padding: '8px 14px' }}>
-                                        แก้ไข
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(bundle.id)}
-                                        disabled={deleting === bundle.id}
-                                        style={{
-                                            ...btnSecondary,
-                                            color: '#dc2626',
-                                            fontSize: '0.8125rem',
-                                            padding: '8px 14px',
-                                            opacity: deleting === bundle.id ? 0.5 : 1,
-                                        }}
-                                    >
-                                        ลบ
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
+      <AdminConfirmActionDialog
+        open={Boolean(deleteConfirm)}
+        title="ลบ Bundle"
+        description="Bundle จะถูกลบออกจากระบบ โปรดตรวจสอบว่าไม่มีหน้าขายหรือลิงก์การตลาดที่ยังอ้างถึง"
+        target={
+          deleteTarget
+            ? deleteTarget.title + ' · ' + deleteTarget.courseCount.toLocaleString('th-TH') + ' คอร์ส'
+            : undefined
+        }
+        confirmLabel="ลบ Bundle"
+        pendingLabel="กำลังลบ"
+        pending={Boolean(deleting)}
+        onConfirm={handleDelete}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
+      />
+    </div>
+  );
 }

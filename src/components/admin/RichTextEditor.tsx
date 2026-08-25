@@ -6,7 +6,11 @@ import Link from '@tiptap/extension-link';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import { TextSelection } from '@tiptap/pm/state';
-import { useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 
 const lowlight = createLowlight(common);
 
@@ -26,31 +30,23 @@ const MenuButton = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <button
+  <Button
     type="button"
     onClick={onClick}
     title={title}
-    style={{
-      padding: '6px 10px',
-      background: active ? 'linear-gradient(180deg, #2563eb, #1d4ed8)' : '#ffffff',
-      color: active ? 'white' : '#475569',
-      border: '1px solid ' + (active ? '#2563eb' : '#dbe5f4'),
-      borderRadius: '8px',
-      cursor: 'pointer',
-      fontSize: '0.8rem',
-      fontWeight: 500,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minWidth: '32px',
-      height: '32px',
-    }}
+    variant={active ? 'default' : 'outline'}
+    size="sm"
+    className="h-8 min-w-8 px-2 text-xs"
+    aria-pressed={active}
   >
     {children}
-  </button>
+  </Button>
 );
 
 export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -77,14 +73,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     },
     editorProps: {
       attributes: {
-        style: [
-          'min-height: 200px',
-          'padding: 16px',
-          'outline: none',
-          'font-size: 0.95rem',
-          'line-height: 1.7',
-          'color: #1e293b',
-        ].join(';'),
+        class: 'min-h-[200px] p-4 text-[0.95rem] leading-7 text-foreground outline-none',
       },
       handleKeyDown(view, event) {
         const { state } = view;
@@ -191,39 +180,29 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     view.focus();
   }, [editor]);
 
-  const setLink = useCallback(() => {
+  const openLinkDialog = useCallback(() => {
     if (!editor) return;
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('URL', previousUrl);
-
-    if (url === null) return;
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
-    }
-
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    setLinkUrl(editor.getAttributes('link').href || '');
+    setLinkDialogOpen(true);
   }, [editor]);
+
+  const applyLink = useCallback(() => {
+    if (!editor) return;
+    const url = linkUrl.trim();
+    if (!url) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    }
+    setLinkDialogOpen(false);
+  }, [editor, linkUrl]);
 
   if (!editor) return null;
 
   return (
-    <div style={{
-      border: '1px solid #dbe5f4',
-      borderRadius: '14px',
-      overflow: 'hidden',
-      background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.84)',
-    }}>
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       {/* Toolbar */}
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '4px',
-        padding: '10px 12px',
-        borderBottom: '1px solid #e2e8f0',
-        background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
-      }}>
+      <div className="flex flex-wrap gap-1 border-b border-border bg-muted/60 p-2.5">
         <MenuButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           active={editor.isActive('bold')}
@@ -246,7 +225,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           <s>S</s>
         </MenuButton>
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div className="mx-1 hidden w-px self-stretch bg-border sm:block" aria-hidden />
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -263,7 +242,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           H3
         </MenuButton>
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div className="mx-1 hidden w-px self-stretch bg-border sm:block" aria-hidden />
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -280,7 +259,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           1. List
         </MenuButton>
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div className="mx-1 hidden w-px self-stretch bg-border sm:block" aria-hidden />
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleCode().run()}
@@ -298,21 +277,13 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         </MenuButton>
         {editor.isActive('codeBlock') && (
           <>
-            <select
+            <NativeSelect
               value={editor.getAttributes('codeBlock').language || ''}
-              onChange={(e) => {
-                editor.chain().focus().setCodeBlock({ language: e.target.value }).run();
+              onChange={(event) => {
+                editor.chain().focus().setCodeBlock({ language: event.target.value }).run();
               }}
-              style={{
-                padding: '4px 8px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                fontSize: '0.8rem',
-                color: '#475569',
-                background: 'white',
-                cursor: 'pointer',
-                height: '32px',
-              }}
+              className="h-8 w-auto text-xs"
+              aria-label="ภาษาของ code block"
             >
               <option value="">Auto</option>
               <option value="javascript">JavaScript</option>
@@ -324,7 +295,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
               <option value="bash">Bash / Shell</option>
               <option value="sql">SQL</option>
               <option value="json">JSON</option>
-            </select>
+            </NativeSelect>
             <MenuButton
               onClick={exitCodeBlock}
               title="ออกจาก Code Block (↓ Arrow Down ท้ายบล็อก)"
@@ -334,10 +305,10 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           </>
         )}
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div className="mx-1 hidden w-px self-stretch bg-border sm:block" aria-hidden />
 
         <MenuButton
-          onClick={setLink}
+          onClick={openLinkDialog}
           active={editor.isActive('link')}
           title="Link"
         >
@@ -352,7 +323,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           </MenuButton>
         )}
 
-        <div style={{ width: '1px', background: '#e2e8f0', margin: '0 4px' }} />
+        <div className="mx-1 hidden w-px self-stretch bg-border sm:block" aria-hidden />
 
         <MenuButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -405,16 +376,16 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           display: list-item;
         }
         .tiptap code {
-          background: #f1f5f9;
+          background: var(--muted);
           padding: 2px 6px;
           border-radius: 4px;
           font-size: 0.9em;
-          color: #e11d48;
+          color: var(--color-error-strong);
           font-family: 'Fira Code', monospace;
         }
         .tiptap pre {
-          background: #1e293b;
-          color: #e2e8f0;
+          background: var(--foreground);
+          color: var(--border);
           padding: 40px 16px 16px;
           border-radius: 8px;
           overflow-x: auto;
@@ -431,9 +402,9 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           padding: 5px 12px;
           font-size: 0.65rem;
           font-family: monospace;
-          color: #64748b;
-          background: rgba(255,255,255,0.05);
-          border-bottom: 1px solid rgba(255,255,255,0.08);
+          color: var(--muted-foreground);
+          background: color-mix(in oklch, var(--background) 6%, transparent);
+          border-bottom: 1px solid color-mix(in oklch, var(--background) 10%, transparent);
           border-radius: 8px 8px 0 0;
           letter-spacing: 0.05em;
           pointer-events: none;
@@ -446,20 +417,20 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           font-size: inherit;
         }
         .tiptap a {
-          color: #2563eb;
+          color: var(--primary);
           text-decoration: underline;
           cursor: pointer;
         }
         .tiptap blockquote {
-          border-left: 3px solid #3b82f6;
+          border-left: 3px solid var(--primary);
           padding-left: 16px;
           margin: 0.75em 0;
-          color: #64748b;
+          color: var(--muted-foreground);
           font-style: italic;
         }
         .tiptap hr {
           border: none;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid var(--border);
           margin: 1em 0;
         }
         /* Syntax Highlighting (lowlight / highlight.js classes) */
@@ -488,6 +459,38 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         .tiptap pre .hljs-meta { color: #ffcb6b; }
         .tiptap pre .hljs-symbol { color: #f78c6c; }
       `}</style>
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              applyLink();
+            }}
+          >
+            <DialogHeader>
+              <DialogTitle>เพิ่มหรือแก้ไขลิงก์</DialogTitle>
+              <DialogDescription>
+                ระบุ URL ปลายทาง เว้นว่างแล้วบันทึกเพื่อนำลิงก์ออกจากข้อความที่เลือก
+              </DialogDescription>
+            </DialogHeader>
+            <div className="my-6">
+              <Input
+                value={linkUrl}
+                onChange={(event) => setLinkUrl(event.target.value)}
+                placeholder="https://example.com"
+                aria-label="URL ปลายทาง"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setLinkDialogOpen(false)}>
+                ยกเลิก
+              </Button>
+              <Button type="submit">{linkUrl.trim() ? 'บันทึกลิงก์' : 'นำลิงก์ออก'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

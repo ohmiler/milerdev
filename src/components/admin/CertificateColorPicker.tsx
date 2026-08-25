@@ -1,6 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Palette } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Field, FieldDescription } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  isHtmlCertificateColor,
+  normalizeCertificateColor,
+} from '@/lib/certificate-color';
+import { cn } from '@/lib/utils';
 
 const PRESET_COLORS = [
   { color: '#2563eb', label: 'น้ำเงิน' },
@@ -21,115 +32,103 @@ interface Props {
 }
 
 export default function CertificateColorPicker({ value, onChange }: Props) {
+  const committedColor = normalizeCertificateColor(value);
+  const [draftColor, setDraftColor] = useState(committedColor);
   const [showPicker, setShowPicker] = useState(false);
-  const displayColor = value || '#2563eb';
+  const draftIsValid = isHtmlCertificateColor(draftColor);
+
+  useEffect(() => {
+    setDraftColor(committedColor);
+  }, [committedColor]);
+
+  const updateDraft = (nextValue: string) => {
+    setDraftColor(nextValue);
+    if (isHtmlCertificateColor(nextValue)) onChange(nextValue.toLowerCase());
+  };
+
+  const selectColor = (nextValue: string) => {
+    const normalized = normalizeCertificateColor(nextValue);
+    setDraftColor(normalized);
+    onChange(normalized);
+  };
 
   return (
-    <div>
-      {/* Main color display + picker */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-        <div style={{ position: 'relative' }}>
-          <div
-            onClick={() => setShowPicker(!showPicker)}
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: displayColor,
-              cursor: 'pointer',
-              border: '3px solid #dbe5f4',
-              boxShadow: '0 10px 18px rgba(15, 23, 42, 0.08)',
-            }}
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-lg"
+          style={{ backgroundColor: committedColor, color: 'var(--primary-foreground)' }}
+          onClick={() => setShowPicker(true)}
+          aria-label="เปิดตัวเลือกสี"
+        >
+          <Palette aria-hidden />
+        </Button>
+        <Field data-invalid={!draftIsValid}>
+          <Input
+            value={draftColor}
+            onChange={(event) => updateDraft(event.target.value)}
+            placeholder="#2563eb"
+            maxLength={7}
+            className="w-32 font-mono"
+            aria-label="รหัสสี Hex"
+            aria-invalid={!draftIsValid}
           />
-          {showPicker && (
-            <div style={{
-              position: 'absolute',
-              top: '56px',
-              left: 0,
-              zIndex: 100,
-              background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
-              borderRadius: '12px',
-              boxShadow: '0 18px 32px rgba(15, 23, 42, 0.12)',
-              padding: '16px',
-              border: '1px solid #dbe5f4',
-            }}>
-              <input
-                type="color"
-                value={displayColor}
-                onChange={(e) => onChange(e.target.value)}
-                style={{
-                  width: '200px',
-                  height: '150px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  padding: 0,
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPicker(false)}
-                style={{
-                  marginTop: '8px',
-                  width: '100%',
-                  padding: '8px',
-                  background: '#f1f5f9',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}
-              >
-                ตกลง
-              </button>
-            </div>
-          )}
-        </div>
-        <input
-          type="text"
-          value={displayColor}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) onChange(v);
-          }}
-          placeholder="#2563eb"
-          style={{
-            width: '100px',
-            padding: '10px 12px',
-            border: '1px solid #dbe5f4',
-            borderRadius: '8px',
-            fontFamily: 'monospace',
-            fontSize: '0.9375rem',
-          }}
-        />
-        <span style={{ fontSize: '0.8125rem', color: '#94a3b8' }}>คลิกสีเพื่อเปิด color picker หรือพิมพ์ hex code</span>
+          <FieldDescription>
+            {draftIsValid
+              ? 'คลิกตัวอย่างสีเพื่อเปิด color picker หรือพิมพ์ hex code'
+              : 'กรุณาระบุรหัสสีให้ครบในรูปแบบ #RRGGBB'}
+          </FieldDescription>
+        </Field>
       </div>
 
-      {/* Preset swatches */}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-        {PRESET_COLORS.map(({ color, label }) => (
-          <button
-            key={color}
-            type="button"
-            onClick={() => onChange(color)}
-            title={label}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: color,
-              border: value === color ? '3px solid #1e293b' : '2px solid #e2e8f0',
-              cursor: 'pointer',
-              transition: 'transform 0.15s',
-              transform: value === color ? 'scale(1.15)' : 'scale(1)',
-            }}
-          />
-        ))}
+      <div className="flex flex-wrap gap-2" aria-label="สีสำเร็จรูป">
+        {PRESET_COLORS.map(({ color, label }) => {
+          const selected = committedColor === color;
+          return (
+            <Button
+              key={color}
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              title={label}
+              aria-label={label}
+              aria-pressed={selected}
+              className={cn(selected && 'ring-2 ring-ring ring-offset-2')}
+              style={{ backgroundColor: color }}
+              onClick={() => selectColor(color)}
+            />
+          );
+        })}
       </div>
-      <p style={{ marginTop: '8px', fontSize: '0.8125rem', color: '#64748b' }}>
-        เลือกสีด่วนจากด้านบน หรือกำหนดสีเองได้อิสระ — สีนี้จะใช้เป็นธีมใบรับรองของคอร์สนี้
+      <p className="text-xs leading-5 text-muted-foreground">
+        สีนี้จะใช้เป็นธีมใบรับรองของคอร์ส สามารถเลือกสีด่วนหรือกำหนดเองได้
       </p>
+
+      <Dialog open={showPicker} onOpenChange={setShowPicker}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>กำหนดสีใบรับรอง</DialogTitle>
+            <DialogDescription>เลือกสีจากเครื่องมือของระบบ แล้วตรวจรหัส Hex ก่อนยืนยัน</DialogDescription>
+          </DialogHeader>
+          <div className="my-4 flex flex-col gap-3">
+            <Input
+              type="color"
+              value={committedColor}
+              onChange={(event) => selectColor(event.target.value)}
+              className="h-44 w-full cursor-pointer p-2"
+              aria-label="เลือกสีใบรับรอง"
+            />
+            <Input value={committedColor} readOnly className="font-mono" aria-label="รหัสสีที่เลือก" />
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={() => setShowPicker(false)}>
+              ใช้สีนี้
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

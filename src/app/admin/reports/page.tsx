@@ -1,7 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { BookOpen, Download, GraduationCap, ReceiptText, TrendingUp, Users } from 'lucide-react';
+
+import {
+  AdminEmptyState,
+  AdminErrorState,
+  AdminLoadingState,
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+} from '@/components/admin/ui/AdminOperations';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/Toast';
+import { cn } from '@/lib/utils';
 
 interface Overview {
   totalRevenue: number;
@@ -81,27 +107,98 @@ interface ReportData {
   paymentMethods: PaymentMethod[];
 }
 
+type ReportTab = 'overview' | 'revenue' | 'courses' | 'users' | 'export';
+
+const tabs: Array<{ id: ReportTab; label: string }> = [
+  { id: 'overview', label: 'ภาพรวม' },
+  { id: 'revenue', label: 'รายได้' },
+  { id: 'courses', label: 'คอร์ส' },
+  { id: 'users', label: 'ผู้ใช้' },
+  { id: 'export', label: 'ส่งออกข้อมูล' },
+];
+
+const exportOptions = [
+  { type: 'payments', title: 'รายงานการชำระเงิน', description: 'ข้อมูลการชำระเงินทั้งหมดในช่วงที่เลือก' },
+  { type: 'enrollments', title: 'รายงานการลงทะเบียน', description: 'ข้อมูลการลงทะเบียนทั้งหมดในช่วงที่เลือก' },
+  { type: 'users', title: 'รายงานผู้ใช้', description: 'รายชื่อผู้ใช้ทั้งหมดพร้อมข้อมูลการลงทะเบียน' },
+  { type: 'courses', title: 'รายงานคอร์ส', description: 'รายการคอร์ส จำนวนการลงทะเบียน และรายได้' },
+  { type: 'revenue-monthly', title: 'รายได้รายเดือน', description: 'สรุปรายได้แยกตามเดือนในช่วงที่เลือก' },
+];
+
+function formatCurrency(amount: number | string) {
+  return new Intl.NumberFormat('th-TH', {
+    style: 'currency',
+    currency: 'THB',
+  }).format(parseFloat(String(amount)));
+}
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('th-TH').format(value);
+}
+
+function formatMonth(monthString: string) {
+  if (!monthString) return '';
+  const [year, month] = monthString.split('-');
+  const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  return months[parseInt(month) - 1] + ' ' + year;
+}
+
+function TrendList({
+  items,
+  getValue,
+  formatValue,
+  emptyDescription,
+}: {
+  items: MonthlyData[];
+  getValue: (item: MonthlyData) => number;
+  formatValue: (value: number) => string;
+  emptyDescription: string;
+}) {
+  if (items.length === 0) {
+    return <AdminEmptyState title="ไม่มีข้อมูลในช่วงนี้" description={emptyDescription} icon={<TrendingUp />} />;
+  }
+
+  const maximum = Math.max(...items.map(getValue), 1);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {items.map((item) => {
+        const value = getValue(item);
+        return (
+          <div key={item.month} className="grid gap-2 sm:grid-cols-[90px_minmax(120px,1fr)_140px] sm:items-center">
+            <span className="text-xs font-medium text-muted-foreground">{formatMonth(item.month)}</span>
+            <Progress value={(value / maximum) * 100} aria-label={formatValue(value)} />
+            <span className="text-left text-sm font-semibold tabular-nums text-foreground sm:text-right">
+              {formatValue(value)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AdminReportsPage() {
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState('12');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<ReportTab>('overview');
   const [exporting, setExporting] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/reports?period=${period}`);
+      const res = await fetch('/api/admin/reports?period=' + period);
       const json = await res.json();
       if (!res.ok) {
         setError(json.error || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
         return;
       }
       setData(json);
-    } catch (err) {
-      console.error('Error fetching reports:', err);
+    } catch (fetchError) {
+      console.error('Error fetching reports:', fetchError);
       setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
     } finally {
       setLoading(false);
@@ -116,642 +213,338 @@ export default function AdminReportsPage() {
   const handleExport = async (type: string) => {
     setExporting(type);
     try {
-      const res = await fetch(`/api/admin/reports/export?type=${type}&period=${period}`);
+      const res = await fetch('/api/admin/reports/export?type=' + type + '&period=' + period);
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${type}-report.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = type + '-report.csv';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export error:', error);
+    } catch (exportError) {
+      console.error('Export error:', exportError);
       showToast('เกิดข้อผิดพลาดในการส่งออกข้อมูล', 'error');
     } finally {
       setExporting(null);
     }
   };
 
-  const formatCurrency = (amount: number | string) => {
-    return new Intl.NumberFormat('th-TH', {
-      style: 'currency',
-      currency: 'THB',
-    }).format(parseFloat(String(amount)));
-  };
-
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('th-TH').format(num);
-  };
-
-  const formatMonth = (monthStr: string) => {
-    if (!monthStr) return '';
-    const [year, month] = monthStr.split('-');
-    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-    return `${months[parseInt(month) - 1]} ${year}`;
-  };
-
-  const getMaxRevenue = () => {
-    if (!data?.monthlyRevenue) return 1;
-    return Math.max(...data.monthlyRevenue.map(m => m.revenue || 0), 1);
-  };
-
-  const tabs = [
-    { id: 'overview', label: 'ภาพรวม' },
-    { id: 'revenue', label: 'รายได้' },
-    { id: 'courses', label: 'คอร์ส' },
-    { id: 'users', label: 'ผู้ใช้' },
-    { id: 'export', label: 'ส่งออกข้อมูล' },
-  ];
-
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-        กำลังโหลดข้อมูล...
-      </div>
-    );
+  if (loading && !data) {
+    return <AdminLoadingState title="กำลังโหลดรายงาน" description="กำลังรวบรวมข้อมูลตามช่วงเวลาที่เลือก" />;
   }
 
   if (error) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px' }}>
-        <div style={{ color: '#dc2626', marginBottom: '16px' }}>{error}</div>
-        <button
-          onClick={fetchData}
-          style={{
-            padding: '10px 20px',
-            background: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-          }}
-        >
-          ลองใหม่
-        </button>
-      </div>
+      <AdminErrorState
+        title="โหลดรายงานไม่สำเร็จ"
+        description={error}
+        action={
+          <Button variant="outline" size="sm" onClick={fetchData}>
+            ลองใหม่
+          </Button>
+        }
+      />
     );
   }
 
+  if (!data) return null;
+
+  const completionTotal = Math.max(data.completionStats.total, 1);
+
   return (
-    <div>
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        gap: '16px',
-      }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-            รายงานและวิเคราะห์
-          </h1>
-          <p style={{ color: '#64748b' }}>ดูสถิติและรายงานการใช้งานระบบ</p>
-        </div>
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          style={{
-            padding: '10px 16px',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            background: 'white',
-            fontSize: '0.875rem',
-          }}
-        >
-          <option value="3">3 เดือนล่าสุด</option>
-          <option value="6">6 เดือนล่าสุด</option>
-          <option value="12">12 เดือนล่าสุด</option>
-          <option value="24">24 เดือนล่าสุด</option>
-        </select>
-      </div>
-
-      {/* Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '4px',
-        marginBottom: '24px',
-        background: '#f1f5f9',
-        padding: '4px',
-        borderRadius: '10px',
-        flexWrap: 'wrap',
-      }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '10px 20px',
-              border: 'none',
-              borderRadius: '8px',
-              background: activeTab === tab.id ? 'white' : 'transparent',
-              color: activeTab === tab.id ? '#1e293b' : '#64748b',
-              fontWeight: activeTab === tab.id ? 600 : 400,
-              cursor: 'pointer',
-              boxShadow: activeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-            }}
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        eyebrow="Analytics"
+        title="รายงานและวิเคราะห์"
+        description="ติดตามรายได้ การลงทะเบียน ความคืบหน้า และการเติบโตของผู้ใช้"
+        actions={
+          <Select
+            value={period}
+            onValueChange={setPeriod}
           >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+            <SelectTrigger className="w-48" aria-label="ช่วงเวลารายงาน">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="3">3 เดือนล่าสุด</SelectItem>
+                <SelectItem value="6">6 เดือนล่าสุด</SelectItem>
+                <SelectItem value="12">12 เดือนล่าสุด</SelectItem>
+                <SelectItem value="24">24 เดือนล่าสุด</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        }
+      />
 
-      {/* Overview Tab */}
-      {activeTab === 'overview' && data && data.overview && (
-        <>
-          {/* Main Stats */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '16px',
-            marginBottom: '24px',
-          }}>
-            <div style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', padding: '24px', borderRadius: '12px', color: 'white' }}>
-              <div style={{ opacity: 0.9, fontSize: '0.875rem', marginBottom: '4px' }}>รายได้รวม</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{formatCurrency(data.overview.totalRevenue)}</div>
-              <div style={{ opacity: 0.8, fontSize: '0.75rem', marginTop: '4px' }}>{formatNumber(data.overview.totalTransactions)} รายการ</div>
-            </div>
-            <div style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', padding: '24px', borderRadius: '12px', color: 'white' }}>
-              <div style={{ opacity: 0.9, fontSize: '0.875rem', marginBottom: '4px' }}>การลงทะเบียน</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{formatNumber(data.overview.totalEnrollments)}</div>
-              <div style={{ opacity: 0.8, fontSize: '0.75rem', marginTop: '4px' }}>ทั้งหมด</div>
-            </div>
-            <div style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', padding: '24px', borderRadius: '12px', color: 'white' }}>
-              <div style={{ opacity: 0.9, fontSize: '0.875rem', marginBottom: '4px' }}>ผู้ใช้</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{formatNumber(data.overview.totalUsers)}</div>
-              <div style={{ opacity: 0.8, fontSize: '0.75rem', marginTop: '4px' }}>ทั้งหมด</div>
-            </div>
-            <div style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', padding: '24px', borderRadius: '12px', color: 'white' }}>
-              <div style={{ opacity: 0.9, fontSize: '0.875rem', marginBottom: '4px' }}>คอร์ส</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{formatNumber(data.overview.totalCourses)}</div>
-              <div style={{ opacity: 0.8, fontSize: '0.75rem', marginTop: '4px' }}>ทั้งหมด</div>
-            </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as ReportTab)}
+        className="gap-6"
+      >
+        <TabsList className="h-auto flex-wrap justify-start">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="overview" className="flex flex-col gap-6">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <AdminMetricCard
+              label="รายได้รวม"
+              value={formatCurrency(data.overview.totalRevenue)}
+              detail={formatNumber(data.overview.totalTransactions) + ' รายการชำระเงิน'}
+              icon={<ReceiptText />}
+              tone="success"
+            />
+            <AdminMetricCard
+              label="การลงทะเบียน"
+              value={formatNumber(data.overview.totalEnrollments)}
+              icon={<GraduationCap />}
+              tone="info"
+            />
+            <AdminMetricCard label="ผู้ใช้" value={formatNumber(data.overview.totalUsers)} icon={<Users />} tone="warning" />
+            <AdminMetricCard label="คอร์ส" value={formatNumber(data.overview.totalCourses)} icon={<BookOpen />} />
           </div>
 
-          {/* 30-Day Stats */}
-          {data.recentStats && (
-            <div style={{
-              background: 'white',
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '24px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
-                30 วันล่าสุด
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px' }}>
-                <div>
-                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>รายได้</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#16a34a' }}>{formatCurrency(data.recentStats.revenue)}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>ผู้ใช้ใหม่</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#2563eb' }}>{formatNumber(data.recentStats.newUsers)}</div>
-                </div>
-                <div>
-                  <div style={{ color: '#64748b', fontSize: '0.875rem' }}>การลงทะเบียนใหม่</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#f59e0b' }}>{formatNumber(data.recentStats.newEnrollments)}</div>
-                </div>
+          <AdminSection title="30 วันล่าสุด" description="สัญญาณการเติบโตระยะสั้นของแพลตฟอร์ม">
+            <div className="grid gap-5 sm:grid-cols-3">
+              <div>
+                <p className="text-xs text-muted-foreground">รายได้</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-[var(--color-success-strong)]">
+                  {formatCurrency(data.recentStats.revenue)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">ผู้ใช้ใหม่</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                  {formatNumber(data.recentStats.newUsers)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">การลงทะเบียนใหม่</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">
+                  {formatNumber(data.recentStats.newEnrollments)}
+                </p>
               </div>
             </div>
-          )}
+          </AdminSection>
 
-          {/* Completion Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-            {data.completionStats && (
-              <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
-                  สถานะการเรียน
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ color: '#64748b', fontSize: '0.875rem' }}>เรียนจบ</span>
-                      <span style={{ fontWeight: 600, color: '#16a34a' }}>{data.completionStats.completed}</span>
+          <div className="grid gap-6 xl:grid-cols-2">
+            <AdminSection title="สถานะการเรียน" description={formatNumber(data.completionStats.total) + ' การลงทะเบียน'}>
+              <div className="flex flex-col gap-5">
+                {[
+                  { label: 'เรียนจบ', value: data.completionStats.completed, tone: 'text-[var(--color-success-strong)]' },
+                  { label: 'กำลังเรียน', value: data.completionStats.inProgress, tone: 'text-primary' },
+                  { label: 'ยังไม่เริ่ม', value: data.completionStats.notStarted, tone: 'text-muted-foreground' },
+                ].map((item) => (
+                  <div key={item.label}>
+                    <div className="mb-2 flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{item.label}</span>
+                      <span className={cn('font-semibold tabular-nums', item.tone)}>{formatNumber(item.value)}</span>
                     </div>
-                    <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${(data.completionStats.completed / Math.max(data.completionStats.total, 1)) * 100}%`, height: '100%', background: '#16a34a', borderRadius: '4px' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ color: '#64748b', fontSize: '0.875rem' }}>กำลังเรียน</span>
-                      <span style={{ fontWeight: 600, color: '#3b82f6' }}>{data.completionStats.inProgress}</span>
-                    </div>
-                    <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${(data.completionStats.inProgress / Math.max(data.completionStats.total, 1)) * 100}%`, height: '100%', background: '#3b82f6', borderRadius: '4px' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ color: '#64748b', fontSize: '0.875rem' }}>ยังไม่เริ่ม</span>
-                      <span style={{ fontWeight: 600, color: '#94a3b8' }}>{data.completionStats.notStarted}</span>
-                    </div>
-                    <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${(data.completionStats.notStarted / Math.max(data.completionStats.total, 1)) * 100}%`, height: '100%', background: '#94a3b8', borderRadius: '4px' }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {data.userStats && (
-              <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '16px' }}>
-                  ประเภทผู้ใช้
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748b', fontSize: '0.875rem' }}>Admin</span>
-                    <span style={{ padding: '4px 12px', background: '#fef2f2', color: '#dc2626', borderRadius: '50px', fontWeight: 600, fontSize: '0.875rem' }}>{data.userStats.admins}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748b', fontSize: '0.875rem' }}>Instructor</span>
-                    <span style={{ padding: '4px 12px', background: '#dbeafe', color: '#2563eb', borderRadius: '50px', fontWeight: 600, fontSize: '0.875rem' }}>{data.userStats.instructors}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748b', fontSize: '0.875rem' }}>Student</span>
-                    <span style={{ padding: '4px 12px', background: '#dcfce7', color: '#16a34a', borderRadius: '50px', fontWeight: 600, fontSize: '0.875rem' }}>{data.userStats.students}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Revenue Tab */}
-      {activeTab === 'revenue' && data && data.monthlyRevenue && (
-        <>
-          {/* Monthly Revenue Chart */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-              รายได้รายเดือน
-            </h3>
-            {data.monthlyRevenue.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>ไม่มีข้อมูล</div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '200px', paddingTop: '20px' }}>
-                {data.monthlyRevenue.map((item, index) => (
-                  <div key={index} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ fontSize: '0.625rem', color: '#64748b', transform: 'rotate(-45deg)', whiteSpace: 'nowrap' }}>
-                      {formatCurrency(item.revenue || 0)}
-                    </div>
-                    <div
-                      style={{
-                        width: '100%',
-                        maxWidth: '40px',
-                        height: `${Math.max(((item.revenue || 0) / getMaxRevenue()) * 150, 4)}px`,
-                        background: 'linear-gradient(180deg, #3b82f6, #2563eb)',
-                        borderRadius: '4px 4px 0 0',
-                      }}
-                    />
-                    <div style={{ fontSize: '0.625rem', color: '#94a3b8', textAlign: 'center' }}>
-                      {formatMonth(item.month)}
-                    </div>
+                    <Progress value={(item.value / completionTotal) * 100} />
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </AdminSection>
 
-          {/* Payment Methods */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-              วิธีการชำระเงิน
-            </h3>
+            <AdminSection title="ประเภทผู้ใช้" description={formatNumber(data.userStats.total) + ' บัญชีทั้งหมด'}>
+              <div className="flex flex-col gap-3">
+                {[
+                  { label: 'Admin', value: data.userStats.admins, tone: 'danger' as const },
+                  { label: 'Instructor', value: data.userStats.instructors, tone: 'info' as const },
+                  { label: 'Student', value: data.userStats.students, tone: 'success' as const },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
+                    <span className="text-sm text-muted-foreground">{item.label}</span>
+                    <AdminStatusBadge tone={item.tone}>{formatNumber(item.value)}</AdminStatusBadge>
+                  </div>
+                ))}
+              </div>
+            </AdminSection>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="revenue" className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,1fr)]">
+          <AdminSection title="รายได้รายเดือน" description="เทียบสัดส่วนกับเดือนที่มีรายได้สูงสุดในช่วงที่เลือก">
+            <TrendList
+              items={data.monthlyRevenue}
+              getValue={(item) => item.revenue || 0}
+              formatValue={formatCurrency}
+              emptyDescription="ยังไม่มีรายได้ในช่วงเวลาที่เลือก"
+            />
+          </AdminSection>
+
+          <AdminSection title="วิธีการชำระเงิน" description="จำนวนธุรกรรมและรายได้แยกตามช่องทาง">
             {data.paymentMethods.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>ไม่มีข้อมูล</div>
+              <AdminEmptyState title="ไม่มีข้อมูล" description="ยังไม่มีวิธีชำระเงินในช่วงที่เลือก" icon={<ReceiptText />} />
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-                {data.paymentMethods.map((method, index) => (
-                  <div key={index} style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px' }}>
-                    <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '8px', textTransform: 'capitalize' }}>
-                      {method.method || 'ไม่ระบุ'}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', fontSize: '0.875rem' }}>
-                      <span>จำนวน: {method.count}</span>
-                      <span>{formatCurrency(method.revenue)}</span>
+              <div className="flex flex-col gap-3">
+                {data.paymentMethods.map((method) => (
+                  <div key={method.method || 'unknown'} className="rounded-xl border border-border p-4">
+                    <p className="font-medium capitalize text-foreground">{method.method || 'ไม่ระบุ'}</p>
+                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{formatNumber(method.count)} รายการ</span>
+                      <span className="font-semibold tabular-nums text-foreground">{formatCurrency(method.revenue)}</span>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        </>
-      )}
+          </AdminSection>
+        </TabsContent>
 
-      {/* Courses Tab */}
-      {activeTab === 'courses' && data && data.revenueByCourse && (
-        <>
-          {/* Revenue by Course */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-              รายได้ตามคอร์ส (Top 10)
-            </h3>
+        <TabsContent value="courses" className="flex flex-col gap-6">
+          <AdminSection title="รายได้ตามคอร์ส" description="10 คอร์สที่สร้างรายได้สูงสุด">
             {data.revenueByCourse.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>ไม่มีข้อมูล</div>
+              <AdminEmptyState title="ไม่มีข้อมูล" description="ยังไม่มีรายได้จากคอร์สในช่วงที่เลือก" icon={<BookOpen />} />
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>คอร์ส</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>รายได้</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>รายการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.revenueByCourse.map((course) => (
-                      <tr key={course.courseId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '12px', color: '#1e293b' }}>{course.courseTitle || 'ไม่ระบุ'}</td>
-                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#16a34a' }}>{formatCurrency(course.revenue)}</td>
-                        <td style={{ padding: '12px', textAlign: 'right', color: '#64748b' }}>{course.transactions}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>คอร์ส</TableHead>
+                    <TableHead className="text-right">รายได้</TableHead>
+                    <TableHead className="text-right">รายการ</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.revenueByCourse.map((course) => (
+                    <TableRow key={course.courseId}>
+                      <TableCell className="font-medium">{course.courseTitle || 'ไม่ระบุ'}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-[var(--color-success-strong)]">
+                        {formatCurrency(course.revenue)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {formatNumber(course.transactions)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-          </div>
+          </AdminSection>
 
-          {/* Revenue by Bundle */}
-          {data.revenueByBundle && data.revenueByBundle.length > 0 && (
-            <div style={{ background: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-                📦 รายได้ตาม Bundle (Top 10)
-              </h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>Bundle</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>รายได้</th>
-                      <th style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>รายการ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.revenueByBundle.map((bundle) => (
-                      <tr key={bundle.bundleId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '12px', color: '#1e293b' }}>{bundle.bundleTitle || 'ไม่ระบุ'}</td>
-                        <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#16a34a' }}>{formatCurrency(bundle.revenue)}</td>
-                        <td style={{ padding: '12px', textAlign: 'right', color: '#64748b' }}>{bundle.transactions}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {data.revenueByBundle.length > 0 ? (
+            <AdminSection title="รายได้ตาม Bundle" description="10 Bundle ที่สร้างรายได้สูงสุด">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Bundle</TableHead>
+                    <TableHead className="text-right">รายได้</TableHead>
+                    <TableHead className="text-right">รายการ</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.revenueByBundle.map((bundle) => (
+                    <TableRow key={bundle.bundleId}>
+                      <TableCell className="font-medium">{bundle.bundleTitle || 'ไม่ระบุ'}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-[var(--color-success-strong)]">
+                        {formatCurrency(bundle.revenue)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {formatNumber(bundle.transactions)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </AdminSection>
+          ) : null}
 
-          {/* Course Performance */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-              ความคืบหน้าการเรียนตามคอร์ส (Top 10)
-            </h3>
+          <AdminSection title="ความคืบหน้าตามคอร์ส" description="10 คอร์สที่มีการลงทะเบียนสูงสุด">
             {data.coursePerformance.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>ไม่มีข้อมูล</div>
+              <AdminEmptyState title="ไม่มีข้อมูล" description="ยังไม่มีข้อมูลความคืบหน้าในช่วงที่เลือก" icon={<GraduationCap />} />
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>คอร์ส</th>
-                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>ลงทะเบียน</th>
-                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>เรียนจบ</th>
-                      <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#64748b', fontSize: '0.875rem' }}>ความคืบหน้าเฉลี่ย</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.coursePerformance.map((course) => (
-                      <tr key={course.courseId} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '12px', color: '#1e293b' }}>{course.courseTitle || 'ไม่ระบุ'}</td>
-                        <td style={{ padding: '12px', textAlign: 'center', color: '#64748b' }}>{course.enrollmentCount}</td>
-                        <td style={{ padding: '12px', textAlign: 'center', color: '#16a34a', fontWeight: 600 }}>{course.completedCount}</td>
-                        <td style={{ padding: '12px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                            <div style={{ width: '60px', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
-                              <div style={{ width: `${course.avgProgress}%`, height: '100%', background: '#3b82f6', borderRadius: '3px' }} />
-                            </div>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{Math.round(course.avgProgress)}%</span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>คอร์ส</TableHead>
+                    <TableHead className="text-right">ลงทะเบียน</TableHead>
+                    <TableHead className="text-right">เรียนจบ</TableHead>
+                    <TableHead className="min-w-52">ความคืบหน้าเฉลี่ย</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.coursePerformance.map((course) => (
+                    <TableRow key={course.courseId}>
+                      <TableCell className="font-medium">{course.courseTitle || 'ไม่ระบุ'}</TableCell>
+                      <TableCell className="text-right tabular-nums">{formatNumber(course.enrollmentCount)}</TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-[var(--color-success-strong)]">
+                        {formatNumber(course.completedCount)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Progress value={course.avgProgress} className="min-w-24" />
+                          <span className="w-11 text-right text-xs tabular-nums text-muted-foreground">
+                            {Math.round(course.avgProgress)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-          </div>
-        </>
-      )}
+          </AdminSection>
+        </TabsContent>
 
-      {/* Users Tab */}
-      {activeTab === 'users' && data && data.monthlyUsers && (
-        <>
-          {/* Monthly New Users */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-              ผู้ใช้ใหม่รายเดือน
-            </h3>
-            {data.monthlyUsers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>ไม่มีข้อมูล</div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '200px', paddingTop: '20px' }}>
-                {data.monthlyUsers.map((item, index) => {
-                  const maxCount = Math.max(...data.monthlyUsers.map(m => m.count || 0), 1);
-                  return (
-                    <div key={index} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#1e293b', fontWeight: 600 }}>
-                        {item.count}
-                      </div>
-                      <div
-                        style={{
-                          width: '100%',
-                          maxWidth: '40px',
-                          height: `${Math.max(((item.count || 0) / maxCount) * 150, 4)}px`,
-                          background: 'linear-gradient(180deg, #f59e0b, #d97706)',
-                          borderRadius: '4px 4px 0 0',
-                        }}
-                      />
-                      <div style={{ fontSize: '0.625rem', color: '#94a3b8', textAlign: 'center' }}>
-                        {formatMonth(item.month)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+        <TabsContent value="users" className="grid gap-6 xl:grid-cols-2">
+          <AdminSection title="ผู้ใช้ใหม่รายเดือน" description="จำนวนบัญชีที่สร้างใหม่ในแต่ละเดือน">
+            <TrendList
+              items={data.monthlyUsers}
+              getValue={(item) => item.count || 0}
+              formatValue={formatNumber}
+              emptyDescription="ยังไม่มีผู้ใช้ใหม่ในช่วงเวลาที่เลือก"
+            />
+          </AdminSection>
+          <AdminSection title="การลงทะเบียนรายเดือน" description="จำนวนการลงทะเบียนใหม่ในแต่ละเดือน">
+            <TrendList
+              items={data.monthlyEnrollments}
+              getValue={(item) => item.count || 0}
+              formatValue={formatNumber}
+              emptyDescription="ยังไม่มีการลงทะเบียนในช่วงเวลาที่เลือก"
+            />
+          </AdminSection>
+        </TabsContent>
 
-          {/* Monthly Enrollments */}
-          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-              การลงทะเบียนรายเดือน
-            </h3>
-            {data.monthlyEnrollments.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>ไม่มีข้อมูล</div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '200px', paddingTop: '20px' }}>
-                {data.monthlyEnrollments.map((item, index) => {
-                  const maxCount = Math.max(...data.monthlyEnrollments.map(m => m.count || 0), 1);
-                  return (
-                    <div key={index} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#1e293b', fontWeight: 600 }}>
-                        {item.count}
-                      </div>
-                      <div
-                        style={{
-                          width: '100%',
-                          maxWidth: '40px',
-                          height: `${Math.max(((item.count || 0) / maxCount) * 150, 4)}px`,
-                          background: 'linear-gradient(180deg, #16a34a, #15803d)',
-                          borderRadius: '4px 4px 0 0',
-                        }}
-                      />
-                      <div style={{ fontSize: '0.625rem', color: '#94a3b8', textAlign: 'center' }}>
-                        {formatMonth(item.month)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Export Tab */}
-      {activeTab === 'export' && (
-        <div style={{ background: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '20px' }}>
-            ส่งออกข้อมูลเป็น CSV
-          </h3>
-          <p style={{ color: '#64748b', marginBottom: '24px' }}>
-            ดาวน์โหลดข้อมูลในรูปแบบ CSV เพื่อนำไปใช้งานใน Excel หรือโปรแกรมอื่น
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-              <h4 style={{ fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>รายงานการชำระเงิน</h4>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '16px' }}>
-                ข้อมูลการชำระเงินทั้งหมดในช่วง {period} เดือนล่าสุด
-              </p>
-              <button
-                onClick={() => handleExport('payments')}
-                disabled={exporting === 'payments'}
-                style={{
-                  padding: '10px 20px',
-                  background: '#2563eb',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: exporting === 'payments' ? 'not-allowed' : 'pointer',
-                  opacity: exporting === 'payments' ? 0.7 : 1,
-                  width: '100%',
-                }}
-              >
-                {exporting === 'payments' ? 'กำลังส่งออก...' : 'ดาวน์โหลด CSV'}
-              </button>
+        <TabsContent value="export">
+          <AdminSection
+            title="ส่งออกข้อมูลเป็น CSV"
+            description={'ดาวน์โหลดข้อมูลสำหรับ Excel หรือเครื่องมือวิเคราะห์ โดยใช้ช่วง ' + period + ' เดือนล่าสุด'}
+          >
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {exportOptions.map((option) => {
+                const pending = exporting === option.type;
+                return (
+                  <Card key={option.type} className="rounded-xl shadow-none">
+                    <CardHeader>
+                      <CardTitle>{option.title}</CardTitle>
+                      <CardDescription className="leading-5">{option.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button className="w-full" disabled={pending} onClick={() => handleExport(option.type)}>
+                        {pending ? (
+                          <AdminPendingLabel>กำลังส่งออก...</AdminPendingLabel>
+                        ) : (
+                          <>
+                            <Download data-icon="inline-start" aria-hidden />
+                            ดาวน์โหลด CSV
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-
-            <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-              <h4 style={{ fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>รายงานการลงทะเบียน</h4>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '16px' }}>
-                ข้อมูลการลงทะเบียนทั้งหมดในช่วง {period} เดือนล่าสุด
-              </p>
-              <button
-                onClick={() => handleExport('enrollments')}
-                disabled={exporting === 'enrollments'}
-                style={{
-                  padding: '10px 20px',
-                  background: '#16a34a',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: exporting === 'enrollments' ? 'not-allowed' : 'pointer',
-                  opacity: exporting === 'enrollments' ? 0.7 : 1,
-                  width: '100%',
-                }}
-              >
-                {exporting === 'enrollments' ? 'กำลังส่งออก...' : 'ดาวน์โหลด CSV'}
-              </button>
-            </div>
-
-            <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-              <h4 style={{ fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>รายงานผู้ใช้</h4>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '16px' }}>
-                รายชื่อผู้ใช้ทั้งหมดในระบบ พร้อมข้อมูลการลงทะเบียน
-              </p>
-              <button
-                onClick={() => handleExport('users')}
-                disabled={exporting === 'users'}
-                style={{
-                  padding: '10px 20px',
-                  background: '#f59e0b',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: exporting === 'users' ? 'not-allowed' : 'pointer',
-                  opacity: exporting === 'users' ? 0.7 : 1,
-                  width: '100%',
-                }}
-              >
-                {exporting === 'users' ? 'กำลังส่งออก...' : 'ดาวน์โหลด CSV'}
-              </button>
-            </div>
-
-            <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-              <h4 style={{ fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>รายงานคอร์ส</h4>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '16px' }}>
-                รายการคอร์สทั้งหมด พร้อมจำนวนการลงทะเบียนและรายได้
-              </p>
-              <button
-                onClick={() => handleExport('courses')}
-                disabled={exporting === 'courses'}
-                style={{
-                  padding: '10px 20px',
-                  background: '#8b5cf6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: exporting === 'courses' ? 'not-allowed' : 'pointer',
-                  opacity: exporting === 'courses' ? 0.7 : 1,
-                  width: '100%',
-                }}
-              >
-                {exporting === 'courses' ? 'กำลังส่งออก...' : 'ดาวน์โหลด CSV'}
-              </button>
-            </div>
-
-            <div style={{ padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-              <h4 style={{ fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>รายได้รายเดือน</h4>
-              <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '16px' }}>
-                สรุปรายได้รายเดือนในช่วง {period} เดือนล่าสุด
-              </p>
-              <button
-                onClick={() => handleExport('revenue-monthly')}
-                disabled={exporting === 'revenue-monthly'}
-                style={{
-                  padding: '10px 20px',
-                  background: '#0891b2',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: exporting === 'revenue-monthly' ? 'not-allowed' : 'pointer',
-                  opacity: exporting === 'revenue-monthly' ? 0.7 : 1,
-                  width: '100%',
-                }}
-              >
-                {exporting === 'revenue-monthly' ? 'กำลังส่งออก...' : 'ดาวน์โหลด CSV'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </AdminSection>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

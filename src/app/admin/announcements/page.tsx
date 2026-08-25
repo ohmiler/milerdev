@@ -1,7 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useEffect, useState } from 'react';
+import { CircleOff, Megaphone, Plus, RadioTower } from 'lucide-react';
+
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
+import {
+  AdminEmptyState,
+  AdminLoadingState,
+  AdminMetricCard,
+  AdminPageHeader,
+  AdminPendingLabel,
+  AdminSection,
+  AdminStatusBadge,
+  type AdminTone,
+} from '@/components/admin/ui/AdminOperations';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { showToast } from '@/components/ui/Toast';
 
 interface Announcement {
@@ -24,6 +50,36 @@ interface Stats {
   inactive: number;
 }
 
+const emptyForm = {
+  title: '',
+  content: '',
+  type: 'info',
+  targetRole: 'all',
+  isActive: true,
+  startsAt: '',
+  endsAt: '',
+};
+
+const typePresentation: Record<Announcement['type'], { label: string; tone: AdminTone }> = {
+  info: { label: 'ข้อมูล', tone: 'info' },
+  success: { label: 'สำเร็จ', tone: 'success' },
+  warning: { label: 'คำเตือน', tone: 'warning' },
+  error: { label: 'ข้อผิดพลาด', tone: 'danger' },
+};
+
+function getRoleText(role: string) {
+  switch (role) {
+    case 'admin':
+      return 'Admin';
+    case 'instructor':
+      return 'ผู้สอน';
+    case 'student':
+      return 'นักเรียน';
+    default:
+      return 'ทุกคน';
+  }
+}
+
 export default function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -34,22 +90,13 @@ export default function AdminAnnouncementsPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  
-  const [form, setForm] = useState({
-    title: '',
-    content: '',
-    type: 'info',
-    targetRole: 'all',
-    isActive: true,
-    startsAt: '',
-    endsAt: '',
-  });
+  const [form, setForm] = useState(emptyForm);
 
   const fetchAnnouncements = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ status: statusFilter });
-      const res = await fetch(`/api/admin/announcements?${params}`);
+      const res = await fetch('/api/admin/announcements?' + params);
       const data = await res.json();
       setAnnouncements(data.announcements || []);
       setStats(data.stats || null);
@@ -66,20 +113,18 @@ export default function AdminAnnouncementsPage() {
   }, [statusFilter]);
 
   const resetForm = () => {
-    setForm({
-      title: '',
-      content: '',
-      type: 'info',
-      targetRole: 'all',
-      isActive: true,
-      startsAt: '',
-      endsAt: '',
-    });
+    setForm(emptyForm);
     setEditingId(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const closeForm = () => {
+    if (saving) return;
+    setShowForm(false);
+    resetForm();
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!form.title || !form.content) {
       showToast('กรุณาระบุหัวข้อและเนื้อหา', 'error');
       return;
@@ -87,10 +132,7 @@ export default function AdminAnnouncementsPage() {
 
     setSaving(true);
     try {
-      const url = editingId 
-        ? `/api/admin/announcements/${editingId}` 
-        : '/api/admin/announcements';
-      
+      const url = editingId ? '/api/admin/announcements/' + editingId : '/api/admin/announcements';
       const res = await fetch(url, {
         method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -130,15 +172,12 @@ export default function AdminAnnouncementsPage() {
   const confirmDeleteAnnouncement = async () => {
     if (!deleteConfirm) return;
     const id = deleteConfirm;
-    setDeleteConfirm(null);
-
     setDeleting(id);
-    try {
-      const res = await fetch(`/api/admin/announcements/${id}`, {
-        method: 'DELETE',
-      });
 
+    try {
+      const res = await fetch('/api/admin/announcements/' + id, { method: 'DELETE' });
       if (res.ok) {
+        setDeleteConfirm(null);
         await fetchAnnouncements();
         showToast('ลบประกาศสำเร็จ', 'success');
       } else {
@@ -154,451 +193,290 @@ export default function AdminAnnouncementsPage() {
 
   const handleToggleActive = async (announcement: Announcement) => {
     try {
-      const res = await fetch(`/api/admin/announcements/${announcement.id}`, {
+      const res = await fetch('/api/admin/announcements/' + announcement.id, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !announcement.isActive }),
       });
 
-      if (res.ok) {
-        await fetchAnnouncements();
-      }
+      if (res.ok) await fetchAnnouncements();
     } catch {
       showToast('เกิดข้อผิดพลาด', 'error');
     }
   };
 
-  const getTypeStyle = (type: string) => {
-    switch (type) {
-      case 'success': return { background: '#dcfce7', color: '#16a34a' };
-      case 'warning': return { background: '#fef3c7', color: '#d97706' };
-      case 'error': return { background: '#fef2f2', color: '#dc2626' };
-      default: return { background: '#dbeafe', color: '#2563eb' };
-    }
-  };
-
-  const getTypeText = (type: string) => {
-    switch (type) {
-      case 'success': return 'สำเร็จ';
-      case 'warning': return 'คำเตือน';
-      case 'error': return 'ข้อผิดพลาด';
-      default: return 'ข้อมูล';
-    }
-  };
-
-  const getRoleText = (role: string) => {
-    switch (role) {
-      case 'admin': return 'Admin';
-      case 'instructor': return 'ผู้สอน';
-      case 'student': return 'นักเรียน';
-      default: return 'ทุกคน';
-    }
-  };
+  const deleteTarget = announcements.find((announcement) => announcement.id === deleteConfirm);
 
   return (
-    <div>
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        gap: '16px',
-      }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
-            ประกาศ
-          </h1>
-          <p style={{ color: '#64748b' }}>จัดการประกาศและข่าวสารสำหรับผู้ใช้</p>
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader
+        eyebrow="Communication"
+        title="ประกาศ"
+        description="จัดการข่าวสาร กำหนดกลุ่มเป้าหมาย และควบคุมช่วงเวลาที่ประกาศแสดงต่อผู้ใช้"
+        actions={
+          <Button
+            onClick={() => {
+              resetForm();
+              setShowForm(true);
+            }}
+          >
+            <Plus aria-hidden />
+            สร้างประกาศ
+          </Button>
+        }
+      />
+
+      {stats ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <AdminMetricCard label="ประกาศทั้งหมด" value={stats.total.toLocaleString('th-TH')} icon={<Megaphone />} />
+          <AdminMetricCard
+            label="กำลังเปิดใช้งาน"
+            value={stats.active.toLocaleString('th-TH')}
+            detail="ผู้ใช้มีโอกาสเห็นตามช่วงเวลาที่กำหนด"
+            icon={<RadioTower />}
+            tone="success"
+          />
+          <AdminMetricCard
+            label="ปิดใช้งาน"
+            value={stats.inactive.toLocaleString('th-TH')}
+            icon={<CircleOff />}
+            tone="neutral"
+          />
         </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          style={{
-            padding: '12px 24px',
-            background: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
-          + สร้างประกาศ
-        </button>
-      </div>
+      ) : null}
 
-      {/* Stats */}
-      {stats && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px',
-        }}>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ทั้งหมด</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{stats.total}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>เปิดใช้งาน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{stats.active}</div>
-          </div>
-          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: '4px' }}>ปิดใช้งาน</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#94a3b8' }}>{stats.inactive}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div style={{ marginBottom: '24px' }}>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={{
-            padding: '10px 16px',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            background: 'white',
-            fontSize: '0.875rem',
-          }}
-        >
-          <option value="all">ทั้งหมด</option>
-          <option value="active">เปิดใช้งาน</option>
-          <option value="inactive">ปิดใช้งาน</option>
-        </select>
-      </div>
-
-      {/* Form Modal */}
-      {showForm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '16px',
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '600px',
-            maxHeight: '90vh',
-            overflow: 'auto',
-          }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '20px', color: '#1e293b' }}>
-              {editingId ? 'แก้ไขประกาศ' : 'สร้างประกาศใหม่'}
-            </h2>
-            
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                  หัวข้อ *
-                </label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                  เนื้อหา *
-                </label>
-                <textarea
-                  value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  rows={5}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    resize: 'vertical',
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                    ประเภท
-                  </label>
-                  <select
-                    value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      background: 'white',
-                    }}
-                  >
-                    <option value="info">ข้อมูล</option>
-                    <option value="success">สำเร็จ</option>
-                    <option value="warning">คำเตือน</option>
-                    <option value="error">ข้อผิดพลาด</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                    กลุ่มเป้าหมาย
-                  </label>
-                  <select
-                    value={form.targetRole}
-                    onChange={(e) => setForm({ ...form, targetRole: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      background: 'white',
-                    }}
-                  >
-                    <option value="all">ทุกคน</option>
-                    <option value="student">นักเรียน</option>
-                    <option value="instructor">ผู้สอน</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                    เริ่มแสดง (ถ้ามี)
-                  </label>
-                  <input
-                    type="date"
-                    value={form.startsAt}
-                    onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontWeight: 500, marginBottom: '8px', color: '#374151' }}>
-                    สิ้นสุด (ถ้ามี)
-                  </label>
-                  <input
-                    type="date"
-                    value={form.endsAt}
-                    onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={form.isActive}
-                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                    style={{ width: '18px', height: '18px' }}
-                  />
-                  <span style={{ color: '#374151' }}>เปิดใช้งาน</span>
-                </label>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  onClick={() => { setShowForm(false); resetForm(); }}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#f1f5f9',
-                    color: '#475569',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: saving ? 'not-allowed' : 'pointer',
-                    opacity: saving ? 0.7 : 1,
-                  }}
-                >
-                  {saving ? 'กำลังบันทึก...' : editingId ? 'บันทึก' : 'สร้าง'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Announcements List */}
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        overflow: 'hidden',
-      }}>
+      <AdminSection
+        title="รายการประกาศ"
+        description="กรองตามสถานะ แล้วเปิดหรือปิดการแสดงผลได้จากแต่ละรายการ"
+        actions={
+          <NativeSelect
+            aria-label="กรองสถานะประกาศ"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="w-44"
+          >
+            <option value="all">ทุกสถานะ</option>
+            <option value="active">เปิดใช้งาน</option>
+            <option value="inactive">ปิดใช้งาน</option>
+          </NativeSelect>
+        }
+      >
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-            กำลังโหลด...
-          </div>
+          <AdminLoadingState title="กำลังโหลดประกาศ" />
         ) : announcements.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
-            ยังไม่มีประกาศ
-          </div>
+          <AdminEmptyState
+            title="ยังไม่มีประกาศ"
+            description={
+              statusFilter === 'all'
+                ? 'สร้างประกาศแรกเพื่อสื่อสารกับผู้ใช้ในระบบ'
+                : 'ไม่พบประกาศในสถานะที่เลือก'
+            }
+            icon={<Megaphone />}
+            action={
+              statusFilter === 'all' ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    resetForm();
+                    setShowForm(true);
+                  }}
+                >
+                  <Plus aria-hidden />
+                  สร้างประกาศ
+                </Button>
+              ) : undefined
+            }
+          />
         ) : (
-          <div>
-            {announcements.map((announcement) => (
-              <div
-                key={announcement.id}
-                style={{
-                  padding: '20px',
-                  borderBottom: '1px solid #f1f5f9',
-                  opacity: announcement.isActive ? 1 : 0.6,
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '50px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        ...getTypeStyle(announcement.type),
-                      }}>
-                        {getTypeText(announcement.type)}
-                      </span>
-                      <span style={{
-                        padding: '4px 10px',
-                        borderRadius: '50px',
-                        fontSize: '0.75rem',
-                        background: '#f1f5f9',
-                        color: '#64748b',
-                      }}>
-                        {getRoleText(announcement.targetRole)}
-                      </span>
-                      {!announcement.isActive && (
-                        <span style={{
-                          padding: '4px 10px',
-                          borderRadius: '50px',
-                          fontSize: '0.75rem',
-                          background: '#fef2f2',
-                          color: '#dc2626',
-                        }}>
-                          ปิดใช้งาน
-                        </span>
-                      )}
+          <div className="divide-y divide-border">
+            {announcements.map((announcement) => {
+              const presentation = typePresentation[announcement.type];
+
+              return (
+                <article
+                  key={announcement.id}
+                  className="grid gap-4 py-5 first:pt-0 last:pb-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <AdminStatusBadge tone={presentation.tone}>{presentation.label}</AdminStatusBadge>
+                      <AdminStatusBadge>{getRoleText(announcement.targetRole)}</AdminStatusBadge>
+                      <AdminStatusBadge tone={announcement.isActive ? 'success' : 'neutral'}>
+                        {announcement.isActive ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}
+                      </AdminStatusBadge>
                     </div>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>
-                      {announcement.title}
-                    </h3>
-                    <p style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: '8px', lineHeight: 1.6 }}>
-                      {announcement.content.length > 200 
-                        ? announcement.content.substring(0, 200) + '...' 
-                        : announcement.content}
-                    </p>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                      สร้างโดย {announcement.creatorName || announcement.creatorEmail || 'ไม่ทราบ'} • 
+                    <h2 className="mt-3 text-base font-semibold text-foreground">{announcement.title}</h2>
+                    <p className="mt-1 line-clamp-3 text-sm leading-6 text-muted-foreground">{announcement.content}</p>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      สร้างโดย {announcement.creatorName || announcement.creatorEmail || 'ไม่ทราบ'} ·{' '}
                       {new Date(announcement.createdAt).toLocaleDateString('th-TH', {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
                       })}
-                    </div>
+                    </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => handleToggleActive(announcement)}
-                      style={{
-                        padding: '6px 12px',
-                        background: announcement.isActive ? '#fef2f2' : '#dcfce7',
-                        color: announcement.isActive ? '#dc2626' : '#16a34a',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {announcement.isActive ? 'ปิด' : 'เปิด'}
-                    </button>
-                    <button
-                      onClick={() => handleEdit(announcement)}
-                      style={{
-                        padding: '6px 12px',
-                        background: '#eff6ff',
-                        color: '#2563eb',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                      }}
-                    >
+
+                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    <div className="mr-1 flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+                      <Switch
+                        aria-label={(announcement.isActive ? 'ปิด' : 'เปิด') + 'ประกาศ ' + announcement.title}
+                        checked={announcement.isActive}
+                        onCheckedChange={() => handleToggleActive(announcement)}
+                      />
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {announcement.isActive ? 'เปิดอยู่' : 'ปิดอยู่'}
+                      </span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>
                       แก้ไข
-                    </button>
-                    <button
-                      onClick={() => setDeleteConfirm(announcement.id)}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
                       disabled={deleting === announcement.id}
-                      style={{
-                        padding: '6px 12px',
-                        background: '#fef2f2',
-                        color: '#dc2626',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        cursor: deleting === announcement.id ? 'not-allowed' : 'pointer',
-                        opacity: deleting === announcement.id ? 0.7 : 1,
-                      }}
+                      onClick={() => setDeleteConfirm(announcement.id)}
                     >
                       ลบ
-                    </button>
+                    </Button>
                   </div>
-                </div>
-              </div>
-            ))}
+                </article>
+              );
+            })}
           </div>
         )}
-      </div>
-      <ConfirmDialog
-        isOpen={!!deleteConfirm}
+      </AdminSection>
+
+      <Dialog
+        open={showForm}
+        onOpenChange={(open) => {
+          if (open) setShowForm(true);
+          else closeForm();
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{editingId ? 'แก้ไขประกาศ' : 'สร้างประกาศใหม่'}</DialogTitle>
+              <DialogDescription>
+                ระบุข้อความ กลุ่มผู้รับ และช่วงเวลาที่ต้องการแสดงประกาศ
+              </DialogDescription>
+            </DialogHeader>
+
+            <FieldGroup className="my-6 gap-5">
+              <Field>
+                <FieldLabel htmlFor="announcement-title">หัวข้อ *</FieldLabel>
+                <Input
+                  id="announcement-title"
+                  value={form.title}
+                  onChange={(event) => setForm({ ...form, title: event.target.value })}
+                  placeholder="หัวข้อประกาศ"
+                  autoFocus
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="announcement-content">เนื้อหา *</FieldLabel>
+                <Textarea
+                  id="announcement-content"
+                  value={form.content}
+                  onChange={(event) => setForm({ ...form, content: event.target.value })}
+                  rows={6}
+                  placeholder="ข้อความที่ผู้ใช้จะเห็น"
+                />
+              </Field>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="announcement-type">ประเภท</FieldLabel>
+                  <NativeSelect
+                    id="announcement-type"
+                    value={form.type}
+                    onChange={(event) => setForm({ ...form, type: event.target.value })}
+                  >
+                    <option value="info">ข้อมูล</option>
+                    <option value="success">สำเร็จ</option>
+                    <option value="warning">คำเตือน</option>
+                    <option value="error">ข้อผิดพลาด</option>
+                  </NativeSelect>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="announcement-role">กลุ่มเป้าหมาย</FieldLabel>
+                  <NativeSelect
+                    id="announcement-role"
+                    value={form.targetRole}
+                    onChange={(event) => setForm({ ...form, targetRole: event.target.value })}
+                  >
+                    <option value="all">ทุกคน</option>
+                    <option value="student">นักเรียน</option>
+                    <option value="instructor">ผู้สอน</option>
+                    <option value="admin">Admin</option>
+                  </NativeSelect>
+                </Field>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="announcement-start">เริ่มแสดง</FieldLabel>
+                  <Input
+                    id="announcement-start"
+                    type="date"
+                    value={form.startsAt}
+                    onChange={(event) => setForm({ ...form, startsAt: event.target.value })}
+                  />
+                  <FieldDescription>เว้นว่างเพื่อเริ่มแสดงทันที</FieldDescription>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="announcement-end">สิ้นสุด</FieldLabel>
+                  <Input
+                    id="announcement-end"
+                    type="date"
+                    value={form.endsAt}
+                    onChange={(event) => setForm({ ...form, endsAt: event.target.value })}
+                  />
+                  <FieldDescription>เว้นว่างเพื่อไม่กำหนดวันสิ้นสุด</FieldDescription>
+                </Field>
+              </div>
+
+              <Field orientation="horizontal" className="rounded-xl border border-border p-4">
+                <Switch
+                  id="announcement-active"
+                  checked={form.isActive}
+                  onCheckedChange={(checked) => setForm({ ...form, isActive: checked })}
+                />
+                <div>
+                  <FieldLabel htmlFor="announcement-active">เปิดใช้งานประกาศ</FieldLabel>
+                  <FieldDescription>ปิดตัวเลือกนี้หากต้องการบันทึกเป็นฉบับที่ยังไม่แสดง</FieldDescription>
+                </div>
+              </Field>
+            </FieldGroup>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" disabled={saving} onClick={closeForm}>
+                ยกเลิก
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? <AdminPendingLabel>กำลังบันทึก...</AdminPendingLabel> : editingId ? 'บันทึกการแก้ไข' : 'สร้างประกาศ'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AdminConfirmActionDialog
+        open={Boolean(deleteConfirm)}
         title="ลบประกาศ"
-        message="คุณแน่ใจหรือไม่ที่จะลบประกาศนี้?"
-        confirmText="ลบประกาศ"
+        description="ประกาศจะถูกนำออกจากระบบและไม่สามารถเรียกคืนได้"
+        target={deleteTarget?.title}
+        confirmLabel="ลบประกาศ"
+        pendingLabel="กำลังลบ"
+        pending={Boolean(deleting)}
         onConfirm={confirmDeleteAnnouncement}
-        onCancel={() => setDeleteConfirm(null)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteConfirm(null);
+        }}
       />
     </div>
   );

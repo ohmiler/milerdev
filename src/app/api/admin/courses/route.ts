@@ -5,6 +5,7 @@ import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { desc, eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
+import { normalizeCertificateColor } from '@/lib/certificate-color';
 import { createCourseSchema, validateBody } from '@/lib/validations/admin';
 
 // GET /api/admin/courses - List all courses
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
       price: String(parseFloat(String(price ?? 0)) || 0),
       status: status || 'draft',
       thumbnailUrl: thumbnailUrl || null,
-      certificateColor: certificateColor || '#2563eb',
+      certificateColor: normalizeCertificateColor(certificateColor),
       instructorId: session.user.id,
       createdAt: new Date(),
       updatedAt: new Date(),
