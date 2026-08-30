@@ -57,7 +57,7 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
 
     return (
         <nav
-            className="sticky top-0 z-50 border-b bg-background/90 text-foreground shadow-xs backdrop-blur-xl"
+            className="sticky top-0 z-50 border-b border-border/70 bg-background/95 text-foreground shadow-sm backdrop-blur-xl"
             aria-label="เมนูหลัก"
             data-surface="public"
         >
@@ -76,7 +76,12 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
                         className="size-9 object-contain"
                         priority
                     />
-                    <span className="font-heading text-xl font-bold tracking-tight">MilerDev</span>
+                    <span
+                        className="font-heading text-xl font-bold tracking-tight transition-colors group-hover:text-primary motion-reduce:transition-none"
+                        translate="no"
+                    >
+                        MilerDev
+                    </span>
                 </Link>
 
                 <div className="hidden flex-1 items-center justify-center gap-1 lg:flex">
@@ -84,7 +89,7 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
                         <Button
                             key={href}
                             asChild
-                            variant={isActive(href) ? 'secondary' : 'ghost'}
+                            variant="navigation"
                             size="sm"
                         >
                             <Link
