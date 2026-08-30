@@ -106,7 +106,13 @@ export default function UserNavigationMenus({
         <div className="flex items-center gap-1">
             <Popover open={notificationsOpen} onOpenChange={setNotificationPanel}>
                 <PopoverTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon" aria-label="การแจ้งเตือน">
+                    <Button
+                        type="button"
+                        variant="navigation"
+                        size="icon"
+                        className="relative"
+                        aria-label="การแจ้งเตือน"
+                    >
                         <Bell data-icon="inline-start" aria-hidden="true" />
                         {unreadCount > 0 && (
                             <Badge
@@ -120,6 +126,7 @@ export default function UserNavigationMenus({
                 </PopoverTrigger>
                 <PopoverContent
                     align="end"
+                    sideOffset={10}
                     className="w-[min(24rem,calc(100vw-2rem))] gap-0 overflow-hidden p-0"
                     aria-label="การแจ้งเตือน"
                 >
@@ -229,27 +236,38 @@ export default function UserNavigationMenus({
                     <Button
                         ref={userTriggerRef}
                         type="button"
-                        variant="ghost"
+                        variant="navigation"
+                        size="navigation"
                         aria-label={`เมนูผู้ใช้ ${session.user?.name || 'ผู้ใช้'}`}
                     >
                         <UserAvatar image={session.user?.image} name={session.user?.name} />
-                        <ChevronDown data-icon="inline-end" aria-hidden="true" />
+                        <span className="flex transition-transform duration-150 group-data-[state=open]/button:rotate-180 motion-reduce:transition-none">
+                            <ChevronDown data-icon="inline-end" aria-hidden="true" />
+                        </span>
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-72">
-                    <DropdownMenuLabel>
-                        <div className="flex min-w-0 items-center gap-3">
-                            <UserAvatar image={session.user?.image} name={session.user?.name} size="lg" />
-                            <span className="min-w-0">
-                                <strong className="block truncate">{session.user?.name || 'ผู้ใช้'}</strong>
-                                <span className="block truncate">{session.user?.email}</span>
-                            </span>
-                        </div>
-                    </DropdownMenuLabel>
+                <DropdownMenuContent align="end" sideOffset={10} className="w-72">
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel variant="account">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <UserAvatar image={session.user?.image} name={session.user?.name} size="lg" />
+                                <span className="min-w-0">
+                                    <strong className="block truncate text-sm font-semibold text-popover-foreground">
+                                        {session.user?.name || 'ผู้ใช้'}
+                                    </strong>
+                                    {session.user?.email && (
+                                        <span className="block truncate text-xs font-normal text-muted-foreground">
+                                            {session.user.email}
+                                        </span>
+                                    )}
+                                </span>
+                            </div>
+                        </DropdownMenuLabel>
+                    </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                         {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
-                            <DropdownMenuItem key={href} asChild>
+                            <DropdownMenuItem key={href} variant="navigation" asChild>
                                 <Link href={href} aria-current={isActive(href) ? 'page' : undefined}>
                                     <Icon aria-hidden="true" />
                                     {label}
@@ -257,8 +275,11 @@ export default function UserNavigationMenus({
                             </DropdownMenuItem>
                         ))}
                         {isAdmin && (
-                            <DropdownMenuItem asChild>
-                                <Link href="/admin">
+                            <DropdownMenuItem variant="navigation" asChild>
+                                <Link
+                                    href="/admin"
+                                    aria-current={isActive('/admin') ? 'page' : undefined}
+                                >
                                     <ShieldCheck aria-hidden="true" />
                                     Admin Panel
                                 </Link>
@@ -269,6 +290,7 @@ export default function UserNavigationMenus({
                     <DropdownMenuGroup>
                         <DropdownMenuItem
                             variant="destructive"
+                            className="min-h-11 gap-3"
                             onSelect={() => onLogout(userTriggerRef.current)}
                         >
                             <LogOut aria-hidden="true" />

@@ -44,7 +44,7 @@ export function UserAvatar({
     const fallback = name?.trim().charAt(0).toUpperCase() || 'U';
 
     return (
-        <Avatar size={size}>
+        <Avatar size={size} variant="brand">
             {image && <AvatarImage src={image} alt={name || 'รูปโปรไฟล์ผู้ใช้'} />}
             <AvatarFallback aria-hidden>{fallback}</AvatarFallback>
         </Avatar>
