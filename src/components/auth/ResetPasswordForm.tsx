@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { FormButton, FormInput } from '@/components/ui/FormControls';
-import { PasswordIcon } from './AuthIcons';
 import { Button } from '@/components/ui/button';
-import { AuthError, AuthField, AuthFootnote, PasswordField, RecoveryState } from './AuthFormLayout';
+import { FieldGroup } from '@/components/ui/field';
+import { Spinner } from '@/components/ui/spinner';
+import { AuthError, AuthField, AuthFootnote, PasswordInput, RecoveryState } from './AuthFormLayout';
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -63,13 +63,14 @@ export default function ResetPasswordForm() {
   return (
     <>
       {error && <AuthError>{error}</AuthError>}
-      <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
-        <AuthField htmlFor="reset-password" label="รหัสผ่านใหม่" help="อย่างน้อย 8 ตัวอักษร มีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข">
-          <PasswordField action={<button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'} aria-pressed={showPassword}><PasswordIcon visible={showPassword} /></button>}>
-            <FormInput
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" aria-busy={loading}>
+        <FieldGroup className="gap-5">
+          <AuthField htmlFor="reset-password" label="รหัสผ่านใหม่" help={<span id="reset-password-help">อย่างน้อย 8 ตัวอักษร มีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข</span>}>
+            <PasswordInput
               id={'reset-password'}
               name={'password'}
-              type={showPassword ? 'text' : 'password'}
+              visible={showPassword}
+              onVisibilityChange={() => setShowPassword((visible) => !visible)}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
@@ -78,26 +79,35 @@ export default function ResetPasswordForm() {
               placeholder={'••••••••'}
               aria-describedby={'reset-password-help'}
             />
-          </PasswordField>
-        </AuthField>
+          </AuthField>
 
-        <AuthField htmlFor="reset-confirm-password" label="ยืนยันรหัสผ่านใหม่">
-          <FormInput
+          <AuthField
+            htmlFor="reset-confirm-password"
+            label="ยืนยันรหัสผ่านใหม่"
+            invalid={Boolean(confirmPassword && password !== confirmPassword)}
+          >
+            <PasswordInput
             id={'reset-confirm-password'}
             name={'confirmPassword'}
-            type={showPassword ? 'text' : 'password'}
+            visible={showPassword}
+            onVisibilityChange={() => setShowPassword((visible) => !visible)}
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
             required
             minLength={8}
             autoComplete={'new-password'}
             placeholder={'••••••••'}
-          />
-        </AuthField>
+            aria-invalid={Boolean(confirmPassword && password !== confirmPassword) || undefined}
+            showLabel="แสดงรหัสผ่านยืนยัน"
+            hideLabel="ซ่อนรหัสผ่านยืนยัน"
+            />
+          </AuthField>
+        </FieldGroup>
 
-        <FormButton type={'submit'} block pending={loading} disabled={loading}>
+        <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
+          {loading && <Spinner data-icon="inline-start" aria-hidden="true" />}
           {loading ? 'กำลังบันทึก...' : 'ตั้งรหัสผ่านใหม่'}
-        </FormButton>
+        </Button>
       </form>
       <AuthFootnote><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></AuthFootnote>
     </>

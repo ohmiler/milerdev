@@ -254,7 +254,7 @@ export default async function BlogPostPage({ params }: Props) {
                   <div><span className="block text-xs text-muted-foreground">ผู้เขียน</span><strong className="text-sm">{post.author?.name || 'MilerDev'}</strong></div>
                 </div>
                 <Separator className="my-5" />
-                <dl className="space-y-3 text-sm">
+                <dl className="flex flex-col gap-3 text-sm">
                   <div className="flex justify-between gap-4"><dt className="text-muted-foreground">เผยแพร่</dt><dd>{formatDate(post.publishedAt) || '—'}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-muted-foreground">เวลาอ่าน</dt><dd>{readingTime} นาที</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-muted-foreground">ยอดอ่าน</dt><dd>{(post.viewCount ?? 0).toLocaleString()} ครั้ง</dd></div>

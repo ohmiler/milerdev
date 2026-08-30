@@ -1,67 +1,47 @@
-import type { ReactNode } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment jsdom
+
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
 import DialogShell from '@/components/ui/DialogShell';
 
-const { portalSpy } = vi.hoisted(() => ({
-  portalSpy: vi.fn((node: ReactNode) => node),
-}));
+describe('DialogShell browser behavior', () => {
+  it('renders a named modal dialog and delegates close actions', async () => {
+    const onClose = vi.fn();
 
-vi.mock('react-dom', async (importOriginal) => ({
-  ...await importOriginal<typeof import('react-dom')>(),
-  createPortal: portalSpy,
-}));
-
-const originalDocument = globalThis.document;
-const quote = String.fromCharCode(34);
-
-afterEach(() => {
-  portalSpy.mockClear();
-  Object.defineProperty(globalThis, 'document', {
-    configurable: true,
-    value: originalDocument,
-  });
-});
-
-describe('DialogShell portal boundary', () => {
-  it('renders an open browser dialog under document.body', () => {
-    const body = {};
-    Object.defineProperty(globalThis, 'document', {
-      configurable: true,
-      value: { body },
-    });
-
-    const html = renderToStaticMarkup(
+    render(
       <DialogShell
         isOpen
-        onClose={vi.fn()}
+        onClose={onClose}
         title={'Course preview'}
         description={'Preview before enrolling'}
       />,
     );
 
-    expect(portalSpy).toHaveBeenCalledOnce();
-    expect(portalSpy).toHaveBeenCalledWith(expect.anything(), body);
-    expect(html).toBe('');
+    const dialog = await screen.findByRole('dialog', { name: 'Course preview' });
+    expect(document.body).toContain(dialog);
+    expect(dialog.getAttribute('aria-labelledby')).toBeTruthy();
+    expect(screen.getByText('Preview before enrolling')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'ปิด' }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('keeps a named inline fallback when no DOM exists', () => {
-    Object.defineProperty(globalThis, 'document', {
-      configurable: true,
-      value: undefined,
-    });
-
-    const html = renderToStaticMarkup(
+  it('keeps interactive body and footer content inside the dialog', async () => {
+    render(
       <DialogShell
         isOpen
         onClose={vi.fn()}
-        title={'Server notice'}
-        description={'Rendered without a browser DOM'}
-      />,
+        title={'Payment method'}
+        description={'Choose how to pay'}
+        body={<button type={'button'}>PromptPay</button>}
+      >
+        <button type={'button'}>Cancel</button>
+      </DialogShell>,
     );
 
-    expect(portalSpy).not.toHaveBeenCalled();
-    expect(html).toContain('role=' + quote + 'dialog' + quote);
-    expect(html).toContain('Server notice');
+    const dialog = await screen.findByRole('dialog', { name: 'Payment method' });
+    expect(dialog.contains(screen.getByRole('button', { name: 'PromptPay' }))).toBe(true);
+    expect(dialog.contains(screen.getByRole('button', { name: 'Cancel' }))).toBe(true);
   });
 });

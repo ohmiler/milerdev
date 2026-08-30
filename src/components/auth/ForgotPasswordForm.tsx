@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FormButton, FormInput } from '@/components/ui/FormControls';
 import { Button } from '@/components/ui/button';
+import { FieldGroup } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 import { AuthError, AuthField, AuthFootnote, RecoveryState } from './AuthFormLayout';
 
 export default function ForgotPasswordForm() {
@@ -49,9 +51,10 @@ export default function ForgotPasswordForm() {
   return (
     <>
       {error && <AuthError>{error}</AuthError>}
-      <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
-        <AuthField htmlFor="forgot-email" label="อีเมล">
-          <FormInput
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" aria-busy={loading}>
+        <FieldGroup className="gap-5">
+          <AuthField htmlFor="forgot-email" label="อีเมล">
+            <Input
             id={'forgot-email'}
             name={'email'}
             type={'email'}
@@ -60,11 +63,13 @@ export default function ForgotPasswordForm() {
             required
             autoComplete={'email'}
             placeholder={'your@email.com'}
-          />
-        </AuthField>
-        <FormButton type={'submit'} block pending={loading} disabled={loading}>
+            />
+          </AuthField>
+        </FieldGroup>
+        <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
+          {loading && <Spinner data-icon="inline-start" aria-hidden="true" />}
           {loading ? 'กำลังส่ง...' : 'ส่งลิงก์รีเซ็ตรหัสผ่าน'}
-        </FormButton>
+        </Button>
       </form>
       <AuthFootnote><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></AuthFootnote>
     </>

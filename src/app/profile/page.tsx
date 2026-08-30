@@ -1,12 +1,13 @@
 import { redirect } from 'next/navigation';
-import Image from 'next/image';
 import type { Metadata } from 'next';
 import { eq, count } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users, enrollments } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
-import { learnerAccountStyles as styles } from '@/components/account/learner-account-styles';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ProfileForm from './ProfileForm';
 
 export const metadata: Metadata = {
@@ -52,36 +53,35 @@ export default async function ProfilePage() {
       title="โปรไฟล์ของฉัน"
       description="ข้อมูลระบุตัวตนสำหรับบัญชีผู้เรียนและชื่อที่ใช้ในประสบการณ์เรียนของคุณ"
     >
-      <section aria-labelledby="profile-identity-title">
-        <div className={styles.profileLead}>
-          <div className={styles.avatarWrap}>
-            {user.avatarUrl ? (
-              <Image className={styles.avatar} src={user.avatarUrl} alt="" width={96} height={96} />
-            ) : (
-              <div className={styles.avatarFallback} aria-hidden="true">
-                {user.name?.charAt(0).toUpperCase() || 'U'}
-              </div>
-            )}
+      <Card aria-labelledby="profile-identity-title">
+        <CardHeader className="flex-row items-center gap-4">
+          <Avatar size="lg">
+            {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name || 'รูปโปรไฟล์ผู้ใช้'} />}
+            <AvatarFallback aria-hidden>{user.name?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <Badge variant="outline">ข้อมูลโปรไฟล์</Badge>
+            <CardTitle id="profile-identity-title">{user.name || 'ไม่ระบุชื่อ'}</CardTitle>
+            <CardDescription>{user.email}</CardDescription>
           </div>
-          <div className={styles.profileIdentity}>
-            <p className={styles.sectionLabel}>ข้อมูลโปรไฟล์</p>
-            <h2 id="profile-identity-title">{user.name || 'ไม่ระบุชื่อ'}</h2>
-            <p>{user.email}</p>
-          </div>
-        </div>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid gap-4 sm:grid-cols-3" aria-label="ข้อมูลสรุปบัญชี">
+            <div><dt className="text-sm text-muted-foreground">คอร์สที่ลงทะเบียน</dt><dd className="font-semibold">{user.totalEnrollments}</dd></div>
+            <div><dt className="text-sm text-muted-foreground">ประเภทบัญชี</dt><dd className="font-semibold">{getRoleLabel(user.role)}</dd></div>
+            <div><dt className="text-sm text-muted-foreground">สมาชิกตั้งแต่</dt><dd className="font-semibold">{memberSince}</dd></div>
+          </dl>
+        </CardContent>
+      </Card>
 
-        <div className={`${styles.summary} ${styles.profileStats}`} aria-label="ข้อมูลสรุปบัญชี">
-          <div><span>คอร์สที่ลงทะเบียน</span><strong data-accent="true">{user.totalEnrollments}</strong></div>
-          <div><span>ประเภทบัญชี</span><strong>{getRoleLabel(user.role)}</strong></div>
-          <div><span>สมาชิกตั้งแต่</span><strong>{memberSince}</strong></div>
-        </div>
-      </section>
-
-      <section className={styles.formSection} aria-labelledby="edit-profile-title">
-        <p className={styles.sectionLabel}>ข้อมูลที่แก้ไขได้</p>
-        <h2 id="edit-profile-title">แก้ไขข้อมูล</h2>
-        <ProfileForm user={user} />
-      </section>
+      <Card aria-labelledby="edit-profile-title">
+        <CardHeader>
+          <Badge variant="outline">ข้อมูลที่แก้ไขได้</Badge>
+          <CardTitle id="edit-profile-title">แก้ไขข้อมูล</CardTitle>
+          <CardDescription>อัปเดตชื่อที่ใช้แสดงในบัญชีผู้เรียน</CardDescription>
+        </CardHeader>
+        <CardContent><ProfileForm user={user} /></CardContent>
+      </Card>
     </LearnerAccountShell>
   );
 }

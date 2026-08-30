@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import {
   Sheet,
   SheetContent,
@@ -84,6 +86,8 @@ export default function LearnPageClient({
   const watchTimeRef = useRef(0);
   const lastSyncRef = useRef(0);
   const isPlayingRef = useRef(false);
+  const mobileCurriculumTriggerRef = useRef<HTMLElement | null>(null);
+  const lockedLessonTriggerRef = useRef<HTMLElement | null>(null);
 
   const completedCount = completedIds.size;
   const totalCount = allLessons.length;
@@ -190,9 +194,17 @@ export default function LearnPageClient({
   const openLockedDialog = useCallback((lessonId: string) => {
     const lesson = allLessons.find((item) => item.id === lessonId);
     if (!lesson) return;
+    lockedLessonTriggerRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     setMobileCurriculumOpen(false);
     setLockedLesson(lesson);
   }, [allLessons]);
+
+  const openMobileCurriculum = useCallback((returnFocus: HTMLElement | null) => {
+    mobileCurriculumTriggerRef.current = returnFocus;
+    setMobileCurriculumOpen(true);
+  }, []);
 
   const curriculum = (
     <LearningCurriculum
@@ -222,7 +234,7 @@ export default function LearnPageClient({
         isEnrolled={isEnrolled}
         sidebarCollapsed={curriculumCollapsed}
         onToggleSidebar={() => setCurriculumCollapsed((current) => !current)}
-        onOpenSidebar={() => setMobileCurriculumOpen(true)}
+        onOpenSidebar={openMobileCurriculum}
       />
 
       <div className={cn('grid min-h-[calc(100dvh-4rem)]', !curriculumCollapsed && 'lg:grid-cols-[22.5rem_minmax(0,1fr)]')}>
@@ -252,7 +264,7 @@ export default function LearnPageClient({
 
             <section className="mt-6 flex flex-col gap-4 rounded-2xl border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5" aria-label="สถานะบทเรียน">
               <div className="flex items-start gap-3">
-                <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-full', isCurrentCompleted ? 'bg-emerald-50 text-emerald-700' : 'bg-primary/10 text-primary')} aria-hidden="true">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
                   {isCurrentCompleted ? <CircleCheck className="size-5" /> : <FileText className="size-5" />}
                 </span>
                 <div>
@@ -270,32 +282,38 @@ export default function LearnPageClient({
               </div>
               {isEnrolled && !isCurrentCompleted && (
                 <Button type="button" onClick={() => void completeCurrentLesson()} disabled={markingComplete}>
-                  <Check className="size-4" />
+                  <Check data-icon="inline-start" aria-hidden="true" />
                   {markingComplete ? 'กำลังบันทึก...' : 'ทำเครื่องหมายว่าเรียนจบ'}
                 </Button>
               )}
             </section>
 
             {hasContent && (
-              <section className="mt-6 rounded-2xl border bg-background p-5 shadow-sm sm:p-8" aria-labelledby="lesson-content-title">
-                <h2 id="lesson-content-title" className="font-heading text-xl font-semibold">เนื้อหาบทเรียน</h2>
-                <div className="lesson-content mt-6" dangerouslySetInnerHTML={{ __html: sanitizeRichContent(currentLesson.content ?? '') }} />
-              </section>
+              <Card className="mt-6" aria-labelledby="lesson-content-title">
+                <CardHeader>
+                  <CardTitle id="lesson-content-title">เนื้อหาบทเรียน</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="lesson-content" dangerouslySetInnerHTML={{ __html: sanitizeRichContent(currentLesson.content ?? '') }} />
+                </CardContent>
+              </Card>
             )}
 
             {!currentLesson.videoUrl && !hasContent && (
-              <section className="mt-6 rounded-2xl border border-dashed bg-background p-8 text-center" aria-label="ไม่มีเนื้อหาบทเรียน">
-                <FileText className="mx-auto size-8 text-muted-foreground" aria-hidden="true" />
-                <h2 className="mt-3 font-heading text-lg font-semibold">บทเรียนนี้ยังไม่มีเนื้อหา</h2>
-                <p className="mt-1 text-sm text-muted-foreground">คุณยังสามารถเลือกบทก่อนหน้าหรือบทถัดไปได้</p>
-              </section>
+              <Empty className="mt-6 border" aria-label="ไม่มีเนื้อหาบทเรียน">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon"><FileText aria-hidden="true" /></EmptyMedia>
+                  <EmptyTitle>บทเรียนนี้ยังไม่มีเนื้อหา</EmptyTitle>
+                  <EmptyDescription>คุณยังสามารถเลือกบทก่อนหน้าหรือบทถัดไปได้</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
 
             <nav className="mt-8 grid grid-cols-2 gap-3 border-t pt-6" aria-label="เปลี่ยนบทเรียน">
               {prevLesson ? (
                 <Button asChild variant="outline" className="h-auto min-h-12 justify-start px-4 py-3">
                   <Link href={`/courses/${course.slug}/learn/${prevLesson.id}`}>
-                    <ArrowLeft className="size-4 shrink-0" />
+                    <ArrowLeft data-icon="inline-start" aria-hidden="true" />
                     <span className="min-w-0 text-left"><small className="block text-xs font-normal text-muted-foreground">บทก่อนหน้า</small><strong className="block truncate text-sm">{prevLesson.title}</strong></span>
                   </Link>
                 </Button>
@@ -305,13 +323,13 @@ export default function LearnPageClient({
                 <Button asChild className="h-auto min-h-12 justify-end px-4 py-3">
                   <Link href={`/courses/${course.slug}/learn/${nextLesson.id}`}>
                     <span className="min-w-0 text-right"><small className="block text-xs font-normal text-primary-foreground/75">บทถัดไป</small><strong className="block truncate text-sm">{nextLesson.title}</strong></span>
-                    <ArrowRight className="size-4 shrink-0" />
+                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
                   </Link>
                 </Button>
               ) : nextLesson ? (
                 <Button type="button" variant="secondary" className="h-auto min-h-12 justify-end px-4 py-3" onClick={() => openLockedDialog(nextLesson.id)}>
                   <span className="min-w-0 text-right"><small className="block text-xs font-normal text-muted-foreground">บทถัดไป</small><strong className="block truncate text-sm">{nextLesson.title}</strong></span>
-                  <Lock className="size-4 shrink-0" />
+                  <Lock data-icon="inline-end" aria-hidden="true" />
                 </Button>
               ) : <span />}
             </nav>
@@ -326,7 +344,16 @@ export default function LearnPageClient({
       </div>
 
       <Sheet open={mobileCurriculumOpen} onOpenChange={setMobileCurriculumOpen}>
-        <SheetContent side="left" className="!w-[min(92vw,25rem)] p-0 sm:!max-w-[25rem]">
+        <SheetContent
+          side="left"
+          className="!w-[min(92vw,25rem)] p-0 sm:!max-w-[25rem]"
+          onCloseAutoFocus={(event) => {
+            if (!mobileCurriculumTriggerRef.current) return;
+            event.preventDefault();
+            mobileCurriculumTriggerRef.current.focus();
+            mobileCurriculumTriggerRef.current = null;
+          }}
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>ลำดับบทเรียน</SheetTitle>
             <SheetDescription>ค้นหาและเลือกบทเรียนในคอร์สนี้</SheetDescription>
@@ -336,7 +363,14 @@ export default function LearnPageClient({
       </Sheet>
 
       <AlertDialog open={Boolean(lockedLesson)} onOpenChange={(open) => { if (!open) setLockedLesson(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            if (!lockedLessonTriggerRef.current) return;
+            event.preventDefault();
+            lockedLessonTriggerRef.current.focus();
+            lockedLessonTriggerRef.current = null;
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogMedia><Lock className="size-7 text-primary" /></AlertDialogMedia>
             <AlertDialogTitle>สมัครเรียนเพื่อเปิดบทนี้</AlertDialogTitle>

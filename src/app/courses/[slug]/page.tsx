@@ -17,6 +17,7 @@ import { getExcerpt, getSanitizedRichContentCached } from '@/lib/sanitize';
 import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Card, CardContent } from '@/components/ui/card';
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -294,13 +295,18 @@ export default async function CourseDetailPage({ params }: Props) {
 
           <CourseSectionNav items={courseSectionItems} />
 
-          <article className="mx-auto max-w-5xl space-y-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <article className="mx-auto flex max-w-5xl flex-col gap-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
             <section id="course-overview" className="scroll-mt-24" aria-labelledby="course-overview-title">
               <h2 className="text-3xl font-bold tracking-tight" id="course-overview-title">รายละเอียดคอร์ส</h2>
               {course.description ? (
                 <div className="rich-content mt-6 max-w-3xl" dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }} />
               ) : (
-                <p className="mt-6 rounded-xl border border-dashed p-6 text-muted-foreground">คอร์สนี้ยังไม่มีรายละเอียดเพิ่มเติม</p>
+                <Empty className="mt-6 border p-6">
+                  <EmptyHeader>
+                    <EmptyTitle>กำลังเตรียมรายละเอียดคอร์ส</EmptyTitle>
+                    <EmptyDescription>คอร์สนี้ยังไม่มีรายละเอียดเพิ่มเติม</EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
               )}
             </section>
 

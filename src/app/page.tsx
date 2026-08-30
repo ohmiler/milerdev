@@ -25,7 +25,21 @@ import StudioProofSection from '@/components/home/StudioProofSection';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Progress } from '@/components/ui/progress';
 import { db } from '@/lib/db';
 import { courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
 
@@ -133,19 +147,16 @@ const LEARNING_OUTCOMES = [
     icon: Lightbulb,
     title: 'เข้าใจเหตุผล',
     description: 'เริ่มจากปัญหาและเป้าหมายของงาน เพื่อให้รู้ว่าเครื่องมือแต่ละชิ้นมีไว้ทำอะไร',
-    tone: 'bg-amber-50 text-amber-600',
   },
   {
     icon: Code2,
     title: 'สร้างด้วยตัวเอง',
     description: 'เรียนแนวคิดผ่านโค้ด ตัวอย่าง และการลงมือทำ โดยไม่หยุดอยู่ที่การจำ syntax',
-    tone: 'bg-sky-50 text-sky-600',
   },
   {
     icon: Rocket,
     title: 'ต่อยอดเป็นผลงาน',
     description: 'เชื่อมบทเรียนเป็นโปรเจกต์ที่อธิบายได้ ทดสอบได้ และนำไปพัฒนาต่อได้',
-    tone: 'bg-emerald-50 text-emerald-600',
   },
 ] as const;
 
@@ -156,11 +167,11 @@ export default async function HomePage() {
     <>
       <Navbar />
 
-      <main className="overflow-hidden bg-white text-slate-950">
+      <main className="overflow-hidden bg-background text-foreground">
         <HomeAnimations />
         <section
           data-home-section="hero"
-          className="relative isolate border-b border-slate-100 bg-[radial-gradient(circle_at_78%_12%,rgba(0,171,255,0.16),transparent_28%),linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]"
+          className="relative isolate border-b bg-[radial-gradient(circle_at_78%_12%,rgba(0,171,255,0.16),transparent_28%),linear-gradient(180deg,var(--background)_0%,var(--muted)_100%)]"
           aria-labelledby="home-hero-title"
         >
           <div
@@ -171,38 +182,29 @@ export default async function HomePage() {
             <div className="max-w-2xl" data-reveal>
               <h1
                 id="home-hero-title"
-                className="max-w-[13ch] text-balance text-[clamp(2.7rem,6vw,5.25rem)] font-bold leading-[1.04] tracking-[-0.055em] text-slate-950"
+                className="max-w-[13ch] text-balance text-[clamp(2.7rem,6vw,5.25rem)] font-bold leading-[1.04] tracking-[-0.055em]"
               >
                 เรียนให้เข้าใจ สร้างได้จริง{' '}
-                <span className="text-[#00abff]">เติบโตเป็น Developer</span>
+                <span className="text-secondary-foreground">เติบโตเป็น Developer</span>
               </h1>
-              <p className="mt-6 max-w-xl text-pretty text-base leading-8 text-slate-600 sm:text-lg">
+              <p className="mt-6 max-w-xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">
                 คอร์สภาษาไทยที่พาคุณเห็นภาพรวม เข้าใจเหตุผล และลงมือทำทีละขั้น
                 ตั้งแต่พื้นฐานจนเป็นผลงานที่นำไปต่อยอดได้จริง
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button
-                  asChild
-                  size="lg"
-                  className="h-13 rounded-xl px-6 shadow-[0_12px_28px_rgba(0,171,255,0.24)]"
-                >
+                <Button asChild size="hero" variant="hero">
                   <TrackedAnalyticsLink
                     href="/courses"
                     analyticsEvent={{ eventName: 'home_primary_cta_clicked', placement: 'hero' }}
                   >
                     ดูคอร์สทั้งหมด
-                    <ArrowRight className="size-4" aria-hidden="true" />
+                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
                   </TrackedAnalyticsLink>
                 </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="h-13 rounded-xl border-slate-200 bg-white/80 px-6"
-                >
+                <Button asChild size="hero" variant="heroOutline">
                   <Link href="/courses?preview=free">
-                    <PlayCircle className="size-4 text-[#00abff]" aria-hidden="true" />
+                    <PlayCircle data-icon="inline-start" aria-hidden="true" />
                     ทดลองบทเรียนฟรี
                   </Link>
                 </Button>
@@ -210,53 +212,53 @@ export default async function HomePage() {
             </div>
 
             <div className="relative mx-auto w-full max-w-[42rem] lg:mx-0" data-reveal data-delay="90">
-              <div className="absolute -left-8 top-12 size-24 rounded-full bg-sky-200/50 blur-2xl" aria-hidden="true" />
-              <div className="absolute -right-8 bottom-10 size-32 rounded-full bg-blue-200/50 blur-3xl" aria-hidden="true" />
-              <Card className="relative gap-0 overflow-visible rounded-[2rem] border border-white/90 bg-white/80 p-3 shadow-[0_28px_80px_rgba(15,35,58,0.16)] ring-1 ring-slate-950/5 backdrop-blur">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-[1.45rem] bg-slate-100">
-                  <Image
-                    src="/images/milerdev-learner-hero-v1.png"
-                    alt="ผู้เรียนกำลังลงมือพัฒนาโปรเจกต์ด้วยแล็ปท็อป"
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 54vw"
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/70 to-transparent" />
-                  <div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 text-white">
-                    <div>
-                      <p className="max-w-sm text-lg font-semibold">
-                        เรียนจากโจทย์จริง แล้วลงมือสร้างไปพร้อมกัน
-                      </p>
+              <div className="absolute -left-8 top-12 size-24 rounded-full bg-primary/20 blur-2xl" aria-hidden="true" />
+              <div className="absolute -right-8 bottom-10 size-32 rounded-full bg-primary/15 blur-3xl" aria-hidden="true" />
+              <Card variant="homeMedia" className="relative">
+                <CardContent>
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-[1.45rem] bg-muted">
+                    <Image
+                      src="/images/milerdev-learner-hero-v1.png"
+                      alt="ผู้เรียนกำลังลงมือพัฒนาโปรเจกต์ด้วยแล็ปท็อป"
+                      fill
+                      priority
+                      sizes="(max-width: 1024px) 100vw, 54vw"
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/70 to-transparent" />
+                    <div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 text-white">
+                      <div>
+                        <p className="max-w-sm text-lg font-semibold">
+                          เรียนจากโจทย์จริง แล้วลงมือสร้างไปพร้อมกัน
+                        </p>
+                      </div>
+                      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-[#00abff] shadow-lg">
+                        <PlayCircle className="size-6" aria-hidden="true" />
+                      </span>
                     </div>
-                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-[#00abff] shadow-lg">
-                      <PlayCircle className="size-6" aria-hidden="true" />
-                    </span>
                   </div>
-                </div>
+                </CardContent>
               </Card>
 
-              <Card className="absolute -left-3 top-7 hidden w-40 gap-3 rounded-2xl bg-white p-4 shadow-xl sm:flex lg:-left-8">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                  <span>ความคืบหน้า</span>
-                  <CheckCircle2 className="size-4 text-emerald-500" aria-hidden="true" />
-                </div>
-                <strong className="text-2xl text-slate-950">75%</strong>
-                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                  <span className="block h-full w-3/4 rounded-full bg-[#00abff]" />
-                </div>
+              <Card variant="homeProgress" className="absolute -left-3 top-7 hidden w-40 gap-3 sm:flex lg:-left-8">
+                <CardHeader className="grid-cols-[1fr_auto] gap-3">
+                  <CardDescription>ความคืบหน้า</CardDescription>
+                  <CheckCircle2 className="text-success" aria-hidden="true" />
+                  <CardTitle>75%</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Progress value={75} aria-label="ความคืบหน้า 75 เปอร์เซ็นต์" />
+                </CardContent>
               </Card>
 
-              <Card className="absolute -right-2 -bottom-5 hidden w-56 gap-2 rounded-2xl bg-white p-4 shadow-xl sm:flex lg:-right-6">
-                <div className="flex items-center gap-2">
-                  <span className="grid size-9 place-items-center rounded-xl bg-sky-50 text-[#00abff]">
-                    <BookOpenCheck className="size-4" aria-hidden="true" />
+              <Card variant="homeNext" className="absolute -right-2 -bottom-5 hidden w-56 gap-2 sm:flex lg:-right-6">
+                <CardHeader className="grid-cols-[auto_1fr] items-center gap-x-2">
+                  <span className="row-span-2 grid size-9 place-items-center rounded-xl bg-secondary text-secondary-foreground">
+                    <BookOpenCheck aria-hidden="true" />
                   </span>
-                  <div>
-                    <p className="text-xs text-slate-500">บทเรียนถัดไป</p>
-                    <p className="font-semibold text-slate-950">สร้าง Feature แรก</p>
-                  </div>
-                </div>
+                  <CardDescription>บทเรียนถัดไป</CardDescription>
+                  <CardTitle>สร้าง Feature แรก</CardTitle>
+                </CardHeader>
               </Card>
             </div>
           </div>
@@ -264,18 +266,18 @@ export default async function HomePage() {
 
         <section
           data-home-section="confidence"
-          className="border-b border-slate-100 bg-white"
+          className="border-b bg-background"
           aria-label="สิ่งที่ผู้เรียนได้รับจาก MilerDev"
         >
           <div className="container grid gap-6 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8 lg:py-9">
             {CONFIDENCE_POINTS.map(({ icon: Icon, title, description }, index) => (
               <div key={title} className="flex items-start gap-3" data-reveal data-delay={String(index * 45)}>
-                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-sky-50 text-[#008bd1]">
+                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-secondary text-secondary-foreground">
                   <Icon className="size-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
-                  <p className="mt-1 text-xs leading-6 text-slate-500">{description}</p>
+                  <h2 className="text-sm font-semibold">{title}</h2>
+                  <p className="mt-1 text-xs leading-6 text-muted-foreground">{description}</p>
                 </div>
               </div>
             ))}
@@ -284,7 +286,7 @@ export default async function HomePage() {
 
         <section
           data-home-section="outcomes"
-          className="bg-[#f7fbfe] py-16 sm:py-20 lg:py-24"
+          className="bg-muted/30 py-16 sm:py-20 lg:py-24"
           aria-labelledby="outcomes-title"
         >
           <div className="container">
@@ -298,36 +300,32 @@ export default async function HomePage() {
                 </h2>
               </div>
               <div>
-                <p className="max-w-2xl text-pretty leading-8 text-slate-600">
+                <p className="max-w-2xl text-pretty leading-8 text-muted-foreground">
                   MilerDev ไม่ได้พาคุณทำตามวิดีโอให้จบเท่านั้น
                   แต่จัดลำดับเนื้อหาให้เห็นความสัมพันธ์ระหว่างแนวคิด โค้ด และผลลัพธ์จริง
                 </p>
-                <Link
-                  href="/about"
-                  className="mt-5 inline-flex items-center gap-2 font-semibold text-[#008bd1] hover:text-[#0075b3]"
-                >
-                  ดูวิธีเรียนแบบ MilerDev
-                  <ArrowRight className="size-4" aria-hidden="true" />
-                </Link>
+                <Button asChild variant="link" className="mt-5 px-0">
+                  <Link href="/about">
+                    ดูวิธีเรียนแบบ MilerDev
+                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                  </Link>
+                </Button>
               </div>
             </div>
 
             <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12">
-              {LEARNING_OUTCOMES.map(({ icon: Icon, title, description, tone }, index) => (
+              {LEARNING_OUTCOMES.map(({ icon: Icon, title, description }, index) => (
                 <Card
                   key={title}
                   data-reveal data-delay={String(index * 55)}
-                  className="gap-6 rounded-[1.5rem] border border-slate-100 bg-white p-6 shadow-[0_12px_36px_rgba(15,35,58,0.06)] ring-0 sm:p-7"
                 >
-                  <div>
-                    <span className={`grid size-12 place-items-center rounded-2xl ${tone}`}>
+                  <CardHeader>
+                    <span className="grid size-12 place-items-center rounded-2xl bg-secondary text-secondary-foreground">
                       <Icon className="size-5" aria-hidden="true" />
                     </span>
-                  </div>
-                  <CardContent className="p-0">
-                    <h3 className="text-xl font-semibold">{title}</h3>
-                    <p className="mt-3 leading-7 text-slate-600">{description}</p>
-                  </CardContent>
+                    <CardTitle className="mt-4 text-xl">{title}</CardTitle>
+                    <CardDescription className="leading-7">{description}</CardDescription>
+                  </CardHeader>
                 </Card>
               ))}
             </div>
@@ -337,13 +335,13 @@ export default async function HomePage() {
         <section
           id="latest-courses"
           data-home-section="courses"
-          className="bg-white py-16 sm:py-20 lg:py-24"
+          className="bg-background py-16 sm:py-20 lg:py-24"
           aria-labelledby="latest-courses-title"
         >
           <div className="container">
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end" data-reveal>
               <div>
-                <p className="text-sm font-semibold text-[#008bd1]">คอร์สล่าสุดจาก MilerDev</p>
+                <p className="text-sm font-semibold text-secondary-foreground">คอร์สล่าสุดจาก MilerDev</p>
                 <h2
                   id="latest-courses-title"
                   className="mt-2 text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl"
@@ -354,7 +352,7 @@ export default async function HomePage() {
               <Button asChild variant="outline" className="w-fit">
                 <Link href="/courses">
                   ดูคอร์สทั้งหมด
-                  <ArrowRight className="size-4" aria-hidden="true" />
+                  <ArrowRight data-icon="inline-end" aria-hidden="true" />
                 </Link>
               </Button>
             </div>
@@ -366,7 +364,7 @@ export default async function HomePage() {
                 role="region"
                 aria-label="รายการคอร์สล่าสุด"
                 tabIndex={0}
-                className="-mx-4 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-5 outline-none focus-visible:ring-4 focus-visible:ring-sky-200 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4"
+                className="-mx-4 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-5 outline-none focus-visible:ring-4 focus-visible:ring-ring/30 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4"
               >
                 {latestCourses.map((course, index) => (
                   <div
@@ -394,15 +392,19 @@ export default async function HomePage() {
                 ))}
               </div>
             ) : (
-              <Card className="mt-10 items-center rounded-[1.5rem] bg-slate-50 p-10 text-center ring-0">
-                <h3 className="text-xl font-semibold">กำลังเตรียมคอร์สชุดถัดไป</h3>
-                <p className="max-w-lg text-slate-600">
-                  บอกหัวข้อที่คุณอยากเรียนได้ เรายินดีนำไปวางแผนเป็นเนื้อหาที่ใช้ได้จริง
-                </p>
-                <Button asChild variant="outline">
-                  <Link href="/contact">เสนอหัวข้อที่อยากเรียน</Link>
-                </Button>
-              </Card>
+              <Empty className="mt-10 border">
+                <EmptyHeader>
+                  <EmptyTitle>กำลังเตรียมคอร์สชุดถัดไป</EmptyTitle>
+                  <EmptyDescription>
+                    บอกหัวข้อที่คุณอยากเรียนได้ เรายินดีนำไปวางแผนเป็นเนื้อหาที่ใช้ได้จริง
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button asChild variant="outline">
+                    <Link href="/contact">เสนอหัวข้อที่อยากเรียน</Link>
+                  </Button>
+                </EmptyContent>
+              </Empty>
             )}
           </div>
         </section>
@@ -411,45 +413,44 @@ export default async function HomePage() {
 
         <section
           data-home-section="faq"
-          className="bg-[#f7fbfe] py-16 sm:py-20 lg:py-24"
+          className="bg-muted/30 py-16 sm:py-20 lg:py-24"
           aria-labelledby="home-faq-title"
         >
           <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-16">
             <div className="max-w-lg lg:sticky lg:top-28" data-reveal>
-              <p className="text-sm font-semibold text-[#008bd1]">คำถามก่อนเริ่มเรียน</p>
+              <p className="text-sm font-semibold text-secondary-foreground">คำถามก่อนเริ่มเรียน</p>
               <h2
                 id="home-faq-title"
                 className="mt-3 text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl"
               >
                 ข้อมูลที่ควรรู้ก่อนเลือกคอร์ส
               </h2>
-              <p className="mt-4 leading-8 text-slate-600">
+              <p className="mt-4 leading-8 text-muted-foreground">
                 ตรวจพื้นฐาน ระยะเวลาการเข้าถึง Certificate และขั้นตอนชำระเงินให้ครบก่อนตัดสินใจ
               </p>
-              <Link
-                href="/faq"
-                className="mt-6 inline-flex items-center gap-2 font-semibold text-[#008bd1] hover:text-[#0075b3]"
-              >
-                ดูคำถามทั้งหมด
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
+              <Button asChild variant="link" className="mt-6 px-0">
+                <Link href="/faq">
+                  ดูคำถามทั้งหมด
+                  <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                </Link>
+              </Button>
             </div>
             <div data-reveal data-delay="80"><HomeFAQ items={HOME_FAQ_ITEMS} /></div>
           </div>
         </section>
 
-        <section data-home-section="final-cta" className="bg-white py-16 sm:py-20 lg:py-24">
+        <section data-home-section="final-cta" className="bg-background py-16 sm:py-20 lg:py-24">
           <div className="container">
-            <div className="grid gap-8 rounded-[2rem] bg-slate-950 px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14" data-reveal>
+            <div className="grid gap-8 rounded-2xl bg-foreground px-6 py-10 text-background sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14" data-reveal>
               <div>
-                <div className="flex items-center gap-2 text-sm font-semibold text-sky-300">
+                <div className="flex items-center gap-2 text-sm font-semibold text-background/75">
                   <Rocket className="size-4" aria-hidden="true" />
                   พร้อมเริ่มเส้นทางของคุณแล้วหรือยัง
                 </div>
                 <h2 className="mt-3 max-w-2xl text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl">
                   เลือกคอร์สแรก แล้วเริ่มสร้างงานของคุณ
                 </h2>
-                <p className="mt-3 max-w-2xl leading-7 text-slate-300">
+                <p className="mt-3 max-w-2xl leading-7 text-background/75">
                   ดูเนื้อหา ราคา และบททดลองให้ครบก่อนตัดสินใจ
                   หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน
                 </p>
@@ -458,14 +459,13 @@ export default async function HomePage() {
                 <Button asChild size="lg">
                   <Link href="/courses">
                     ดูคอร์สทั้งหมด
-                    <ArrowRight className="size-4" aria-hidden="true" />
+                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
                   </Link>
                 </Button>
                 <Button
                   asChild
                   size="lg"
-                  variant="outline"
-                  className="border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                  variant="secondary"
                 >
                   <Link href="/register">สมัครสมาชิกฟรี</Link>
                 </Button>

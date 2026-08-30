@@ -10,6 +10,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground shadow-sm hover:bg-[var(--color-accent-hover)] hover:text-white hover:shadow-md",
+        hero:
+          "bg-primary text-primary-foreground shadow-[var(--home-hero-cta-shadow)] hover:bg-[var(--color-accent-hover)] hover:text-white hover:shadow-md",
+        heroOutline:
+          "border-[var(--gray-200)] bg-card/80 text-foreground hover:border-primary/40 hover:bg-secondary hover:text-secondary-foreground",
         outline:
           "border-border bg-background text-foreground hover:border-primary/40 hover:bg-secondary hover:text-secondary-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
@@ -26,6 +30,7 @@ const buttonVariants = cva(
         xs: "h-6 gap-1 px-2.5 text-xs has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-9 gap-1.5 rounded-lg px-3.5 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
         lg: "h-12 gap-2 px-6 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
+        hero: "h-13 gap-2 px-6 text-base",
         icon: "size-11",
         "icon-xs": "size-6 [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",

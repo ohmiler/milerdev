@@ -1,7 +1,6 @@
 'use client';
 
 import { useId, type ReactNode, type RefObject } from 'react';
-import { createPortal } from 'react-dom';
 import {
   Dialog,
   DialogContent,
@@ -18,27 +17,19 @@ type FeedbackTone = 'success' | 'error' | 'info' | 'warning';
 interface DialogShellProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: ReactNode;
+  title: ReactNode;
   description: ReactNode;
   body?: ReactNode;
   children?: ReactNode;
   role?: DialogRole;
   tone?: FeedbackTone;
   variant?: 'informational' | 'destructive' | 'media';
-  label?: string;
   dismissOnBackdrop?: boolean;
   initialFocusRef?: RefObject<HTMLButtonElement | null>;
   returnFocusRef?: RefObject<HTMLElement | null>;
   icon?: ReactNode;
   size?: 'default' | 'wide' | 'media';
 }
-
-const toneClasses: Record<FeedbackTone, string> = {
-  success: 'bg-emerald-50 text-emerald-700',
-  error: 'bg-destructive/10 text-destructive',
-  info: 'bg-primary/10 text-primary',
-  warning: 'bg-amber-50 text-amber-700',
-};
 
 export default function DialogShell({
   isOpen,
@@ -50,7 +41,6 @@ export default function DialogShell({
   role = 'dialog',
   tone = 'info',
   variant = 'informational',
-  label,
   dismissOnBackdrop = false,
   initialFocusRef,
   returnFocusRef,
@@ -63,8 +53,8 @@ export default function DialogShell({
 
   if (typeof document === 'undefined') {
     return (
-      <div role={role} aria-label={title ? undefined : label} aria-labelledby={title ? titleId : undefined} aria-describedby={descriptionId} aria-modal="true" data-tone={tone} data-variant={variant} data-size={size}>
-        {title ? <h3 id={titleId}>{title}</h3> : null}
+      <div role={role} aria-labelledby={titleId} aria-describedby={descriptionId} aria-modal="true" data-tone={tone} data-variant={variant} data-size={size}>
+        <h3 id={titleId}>{title}</h3>
         <div id={descriptionId}>{description}</div>
         {body}
         {children}
@@ -72,22 +62,16 @@ export default function DialogShell({
     );
   }
 
-  const dialog = (
+  return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent
         role={role}
-        aria-label={title ? undefined : label}
-        aria-labelledby={title ? titleId : undefined}
+        aria-labelledby={titleId}
         aria-describedby={descriptionId}
         data-tone={tone}
-        data-variant={variant}
-        data-size={size}
-        className={cn(
-          'max-h-[calc(100vh-2rem)] overflow-y-auto',
-          size === 'wide' && 'sm:max-w-2xl',
-          size === 'media' && 'bg-slate-950 p-3 text-white sm:max-w-5xl',
-          variant === 'destructive' && 'ring-destructive/20',
-        )}
+        variant={variant === 'informational' ? 'default' : variant}
+        size={size}
+        className="max-h-[calc(100vh-2rem)] overflow-y-auto"
         onPointerDownOutside={(event) => { if (!dismissOnBackdrop) event.preventDefault(); }}
         onOpenAutoFocus={(event) => {
           if (!initialFocusRef?.current) return;
@@ -102,11 +86,11 @@ export default function DialogShell({
       >
         <DialogHeader className={cn(icon && 'items-center text-center sm:items-start sm:text-left')}>
           {icon ? (
-            <div className={cn('flex size-12 items-center justify-center rounded-full [&_svg]:size-6', toneClasses[tone])} aria-hidden="true">
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted [&_svg]:size-6" aria-hidden="true">
               {icon}
             </div>
           ) : null}
-          {title ? <DialogTitle id={titleId} className="text-xl leading-snug">{title}</DialogTitle> : null}
+          <DialogTitle id={titleId}>{title}</DialogTitle>
           <DialogDescription asChild>
             <div id={descriptionId} className="text-pretty leading-6">{description}</div>
           </DialogDescription>
@@ -116,6 +100,4 @@ export default function DialogShell({
       </DialogContent>
     </Dialog>
   );
-
-  return createPortal(dialog, document.body);
 }

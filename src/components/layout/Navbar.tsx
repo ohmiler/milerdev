@@ -3,8 +3,8 @@
 import { useRef, useState } from 'react';
 import { signOut } from 'next-auth/react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import AnnouncementBanner from './AnnouncementBanner';
-import PublicNavbar from './PublicNavbar';
+import AnnouncementAlert from './AnnouncementAlert';
+import PublicNavigationBar from './PublicNavigationBar';
 
 export default function Navbar() {
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -12,8 +12,8 @@ export default function Navbar() {
 
     return (
         <>
-            <AnnouncementBanner />
-            <PublicNavbar
+            <AnnouncementAlert />
+            <PublicNavigationBar
                 onRequestLogout={(returnFocus) => {
                     logoutReturnFocusRef.current = returnFocus;
                     setShowLogoutDialog(true);

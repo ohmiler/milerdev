@@ -1,42 +1,22 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useRef, useState } from 'react';
+import { CircleAlert, CircleCheck, CreditCard, ImagePlus, Smartphone, X } from 'lucide-react';
 import DialogShell from '@/components/ui/DialogShell';
 import Modal from '@/components/ui/Modal';
-import { buttonVariants } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
-
-const styles = {
-  primaryButton: buttonVariants({ className: 'w-full' }),
-  successButton: 'bg-emerald-600 text-white hover:bg-emerald-700',
-  loadingContent: 'inline-flex items-center gap-2',
-  spinner: 'size-4 animate-spin rounded-full border-2 border-current border-t-transparent',
-  dialogAmount: 'text-foreground',
-  methodList: 'grid gap-3',
-  methodButton: 'flex w-full items-center gap-4 rounded-lg border bg-background p-4 text-left transition hover:border-primary/50 hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-50',
-  methodIcon: 'flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary',
-  transferIcon: 'bg-emerald-500/10 text-emerald-700',
-  methodTitle: 'block font-semibold text-foreground',
-  methodDescription: 'mt-1 block text-sm text-muted-foreground',
-  secondaryButton: buttonVariants({ variant: 'outline' }),
-  bankInfo: 'rounded-lg border bg-muted/30 p-4',
-  bankRows: 'mt-3 grid gap-2 text-sm [&_div]:flex [&_div]:justify-between [&_div]:gap-4 [&_dt]:text-muted-foreground',
-  accountNumber: 'font-mono tracking-wide',
-  amount: 'text-lg text-primary',
-  uploadField: 'grid gap-2',
-  fieldLabel: 'text-sm font-medium text-foreground',
-  uploadButton: 'flex w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center transition hover:border-primary/50 hover:bg-primary/5',
-  uploadTitle: 'font-medium text-foreground',
-  uploadHint: 'mt-1 text-sm text-muted-foreground',
-  slipPreview: 'relative overflow-hidden rounded-lg border bg-muted',
-  removePreviewButton: 'absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-background/90 text-lg shadow-sm hover:bg-background',
-  hiddenInput: 'hidden',
-  errorPanel: 'grid gap-1 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive',
-  verifyButton: buttonVariants({ className: 'w-full' }),
-};
 
 interface BundleEnrollButtonProps {
   bundleId: string;
@@ -77,6 +57,7 @@ export default function BundleEnrollButton({
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [promptPayIntent, setPromptPayIntent] = useState<{ paymentId: string; amount: number } | null>(null);
+  const enrollmentTriggerRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [modal, setModal] = useState<{
     isOpen: boolean;
@@ -177,10 +158,12 @@ export default function BundleEnrollButton({
     if (!file) return;
 
     if (!BUNDLE_PAYMENT_CONTRACT.allowedSlipTypes.includes(file.type)) {
+      resetSlipState();
       setVerifyError('รองรับเฉพาะไฟล์ JPG, PNG, WEBP เท่านั้น');
       return;
     }
     if (file.size > BUNDLE_PAYMENT_CONTRACT.maxSlipBytes) {
+      resetSlipState();
       setVerifyError('ไฟล์ต้องมีขนาดไม่เกิน 5MB');
       return;
     }
@@ -231,7 +214,7 @@ export default function BundleEnrollButton({
       });
       const data = await res.json();
 
-      if (data.success) {
+      if (res.ok && data.success) {
         setEnrolled(true);
         setPaymentStep('idle');
         setPromptPayIntent(null);
@@ -272,152 +255,203 @@ export default function BundleEnrollButton({
 
   if (enrolled || allEnrolled) {
     return (
-      <Link className={`${styles.primaryButton} ${styles.successButton}`} href={'/dashboard'}>
-        <svg viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} strokeWidth={2} aria-hidden={true}>
-          <path d={'M22 11.08V12a10 10 0 1 1-5.93-9.14'} />
-          <path d={'m9 11 3 3L22 4'} />
-        </svg>
-        ลงทะเบียนครบแล้ว — เข้าเรียน
-      </Link>
+      <Button asChild className="w-full">
+        <Link href="/dashboard">
+          <CircleCheck data-icon="inline-start" aria-hidden="true" />
+          ลงทะเบียนครบแล้ว — เข้าเรียน
+        </Link>
+      </Button>
     );
   }
 
   if (!available) {
     return (
-      <div className="grid gap-2 rounded-xl border border-dashed bg-muted/30 p-4">
-        <strong>Bundle นี้กำลังเตรียมเนื้อหา</strong>
-        <p className="text-sm leading-6 text-muted-foreground">จะเปิดรับสมัครเมื่อทุกคอร์สใน Bundle มีบทเรียนพร้อมแล้ว</p>
-        <button className={styles.primaryButton} type="button" disabled>ยังไม่เปิดรับสมัคร</button>
-      </div>
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleAlert aria-hidden="true" />
+          </EmptyMedia>
+          <EmptyTitle>Bundle นี้กำลังเตรียมเนื้อหา</EmptyTitle>
+          <EmptyDescription>จะเปิดรับสมัครเมื่อทุกคอร์สใน Bundle มีบทเรียนพร้อมแล้ว</EmptyDescription>
+        </EmptyHeader>
+        <Button type="button" className="w-full" disabled>ยังไม่เปิดรับสมัคร</Button>
+      </Empty>
     );
   }
 
   return (
     <>
-      <button className={styles.primaryButton} type={'button'} onClick={handleEnroll} disabled={loading}>
+      <Button
+        ref={enrollmentTriggerRef}
+        className="w-full"
+        type="button"
+        onClick={handleEnroll}
+        disabled={loading}
+        aria-busy={loading}
+      >
+        {loading && <Spinner data-icon="inline-start" aria-hidden="true" />}
         {loading
-          ? <span className={styles.loadingContent}><span className={styles.spinner} aria-hidden={true} />กำลังดำเนินการ...</span>
+          ? 'กำลังดำเนินการ...'
           : price === 0
             ? 'ลงทะเบียน Bundle ฟรี'
             : `ซื้อ Bundle ฿${price.toLocaleString()}`}
-      </button>
+      </Button>
 
       <DialogShell
         isOpen={paymentStep === 'method'}
         onClose={() => setPaymentStep('idle')}
         title={'เลือกช่องทางชำระเงิน'}
-        description={<span>ยอดชำระ <strong className={styles.dialogAmount}>฿{price.toLocaleString()}</strong></span>}
+        description={<span>ยอดชำระ <strong>฿{price.toLocaleString()}</strong></span>}
         body={(
-          <div className={styles.methodList} data-payment-step={'method'}>
-            <button className={styles.methodButton} type={'button'} onClick={() => void handlePromptPayPayment()} disabled={loading}>
-              <span className={`${styles.methodIcon} ${styles.transferIcon}`} aria-hidden={true}>
-                <svg viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} strokeWidth={2}>
-                  <rect x={1} y={4} width={22} height={16} rx={2} />
-                  <path d={'M1 10h22'} />
-                </svg>
-              </span>
-              <span>
-                <strong className={styles.methodTitle}>โอนเงิน / PromptPay</strong>
-                <span className={styles.methodDescription}>โอนเงินแล้วแนบสลิปเพื่อตรวจสอบอัตโนมัติ</span>
-              </span>
-            </button>
-
-            <button
-              className={styles.methodButton}
-              type={'button'}
-              onClick={() => { setPaymentStep('idle'); handleStripePayment(); }}
+          <ToggleGroup
+            type="single"
+            orientation="vertical"
+            variant="outline"
+            className="w-full"
+            aria-label="ช่องทางชำระเงิน"
+            data-payment-step="method"
+            onValueChange={(value) => {
+              if (value === 'promptpay') void handlePromptPayPayment();
+              if (value === 'stripe') {
+                setPaymentStep('idle');
+                void handleStripePayment();
+              }
+            }}
+          >
+            <ToggleGroupItem
+              value="promptpay"
               disabled={loading}
+              className="h-auto w-full justify-start p-4 text-left whitespace-normal"
             >
-              <span className={styles.methodIcon} aria-hidden={true}>
-                <svg viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} strokeWidth={2}>
-                  <rect x={1} y={4} width={22} height={16} rx={2} />
-                  <path d={'M1 10h22'} />
-                </svg>
+              <Smartphone aria-hidden="true" />
+              <span className="flex flex-col items-start gap-1">
+                <strong>โอนเงิน / PromptPay</strong>
+                <span>โอนเงินแล้วแนบสลิปเพื่อตรวจสอบอัตโนมัติ</span>
               </span>
-              <span>
-                <strong className={styles.methodTitle}>{loading ? 'กำลังเปิดหน้าชำระเงิน...' : 'บัตรเครดิต / เดบิต'}</strong>
-                <span className={styles.methodDescription}>ชำระผ่าน Stripe (Visa, Mastercard)</span>
+            </ToggleGroupItem>
+
+            <ToggleGroupItem
+              value="stripe"
+              disabled={loading}
+              className="h-auto w-full justify-start p-4 text-left whitespace-normal"
+            >
+              <CreditCard aria-hidden="true" />
+              <span className="flex flex-col items-start gap-1">
+                <strong>{loading ? 'กำลังเปิดหน้าชำระเงิน...' : 'บัตรเครดิต / เดบิต'}</strong>
+                <span>ชำระผ่าน Stripe (Visa, Mastercard)</span>
               </span>
-            </button>
-          </div>
+            </ToggleGroupItem>
+          </ToggleGroup>
         )}
         dismissOnBackdrop={true}
+        returnFocusRef={enrollmentTriggerRef}
+        size={'wide'}
       >
-        <button className={styles.secondaryButton} type={'button'} onClick={() => setPaymentStep('idle')}>ยกเลิก</button>
+        <Button type="button" variant="outline" onClick={() => setPaymentStep('idle')}>ยกเลิก</Button>
       </DialogShell>
 
       <DialogShell
         isOpen={paymentStep === 'transfer' || paymentStep === 'verifying'}
         onClose={closeTransfer}
         title={'โอนเงินและแนบสลิป'}
-        description={<span>ยอดที่ระบบจะตรวจสอบ <strong className={styles.dialogAmount}>฿{(promptPayIntent?.amount ?? price).toLocaleString()}</strong></span>}
+        description={<span>ยอดที่ระบบจะตรวจสอบ <strong>฿{(promptPayIntent?.amount ?? price).toLocaleString()}</strong></span>}
         body={(
-          <div data-payment-step={paymentStep}>
-            <section className={styles.bankInfo} aria-labelledby={'bundle-bank-details'}>
-              <h4 id={'bundle-bank-details'}>ข้อมูลสำหรับโอนเงิน</h4>
-              <dl className={styles.bankRows}>
-                <div><dt>ธนาคาร</dt><dd>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</dd></div>
-                <div><dt>เลขบัญชี</dt><dd className={styles.accountNumber}>{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</dd></div>
-                <div><dt>ชื่อบัญชี</dt><dd>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</dd></div>
-                <div><dt>จำนวนเงิน</dt><dd className={styles.amount}>฿{(promptPayIntent?.amount ?? price).toLocaleString()}</dd></div>
-              </dl>
-            </section>
+          <div className="flex flex-col gap-5" data-payment-step={paymentStep}>
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle>ข้อมูลสำหรับโอนเงิน</CardTitle>
+                <CardDescription>ตรวจสอบชื่อบัญชีและจำนวนเงินก่อนโอน</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-3">
+                  <div className="flex items-center justify-between gap-4"><dt>ธนาคาร</dt><dd><strong>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</strong></dd></div>
+                  <div className="flex items-center justify-between gap-4"><dt>เลขบัญชี</dt><dd><strong className="font-mono">{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</strong></dd></div>
+                  <div className="flex items-center justify-between gap-4"><dt>ชื่อบัญชี</dt><dd><strong>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</strong></dd></div>
+                  <div className="flex items-center justify-between gap-4"><dt>จำนวนเงิน</dt><dd><strong>฿{(promptPayIntent?.amount ?? price).toLocaleString()}</strong></dd></div>
+                </dl>
+              </CardContent>
+            </Card>
 
-            <div className={styles.uploadField}>
-              <span className={styles.fieldLabel}>แนบสลิปการโอนเงิน</span>
+            <Field data-invalid={Boolean(verifyError) || undefined}>
+              <FieldLabel htmlFor="bundle-slip-upload">แนบสลิปการโอนเงิน</FieldLabel>
               {!slipPreview ? (
-                <button className={styles.uploadButton} type={'button'} onClick={() => fileInputRef.current?.click()}>
-                  <svg viewBox={'0 0 24 24'} fill={'none'} stroke={'currentColor'} aria-hidden={true}>
-                    <path strokeLinecap={'round'} strokeLinejoin={'round'} strokeWidth={1.5} d={'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'} />
-                  </svg>
-                  <span className={styles.uploadTitle}>เลือกไฟล์รูปสลิป</span>
-                  <span className={styles.uploadHint}>JPG, PNG, WEBP — ไม่เกิน 5MB</span>
-                </button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-auto w-full flex-col py-8 whitespace-normal"
+                >
+                  <ImagePlus data-icon="inline-start" aria-hidden="true" />
+                  <span>คลิกเพื่อเลือกรูปสลิป</span>
+                  <span>JPG, PNG, WEBP (ไม่เกิน 5MB)</span>
+                </Button>
               ) : (
-                <div className={styles.slipPreview}>
-                  <img src={slipPreview} alt={'ตัวอย่างสลิปที่เลือก'} />
-                  <button className={styles.removePreviewButton} type={'button'} onClick={resetSlipState} aria-label={'นำสลิปที่เลือกออก'}>×</button>
+                <div className="relative overflow-hidden rounded-xl border bg-muted">
+                  <Image src={slipPreview} alt="สลิป" width={720} height={900} unoptimized className="h-auto w-full" />
+                  <Button
+                    type="button"
+                    onClick={resetSlipState}
+                    variant="destructive"
+                    size="icon-sm"
+                    className="absolute top-2 right-2"
+                    aria-label="ลบรูปสลิปที่เลือก"
+                  >
+                    <X data-icon="inline-start" aria-hidden="true" />
+                  </Button>
                 </div>
               )}
-              <input
+              <Input
+                id="bundle-slip-upload"
                 ref={fileInputRef}
-                className={styles.hiddenInput}
-                type={'file'}
+                className="sr-only"
+                type="file"
                 tabIndex={-1}
-                accept={'image/jpeg,image/jpg,image/png,image/webp'}
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleFileChange}
+                aria-invalid={Boolean(verifyError) || undefined}
               />
-            </div>
+            </Field>
 
-            {verifyError ? <div className={styles.errorPanel} role={'alert'}><strong>ตรวจสอบไม่สำเร็จ</strong><span>{verifyError}</span></div> : null}
+            {verifyError ? (
+              <Alert variant="destructive">
+                <CircleAlert aria-hidden="true" />
+                <AlertTitle>ตรวจสอบสลิปไม่สำเร็จ</AlertTitle>
+                <AlertDescription>{verifyError}</AlertDescription>
+              </Alert>
+            ) : null}
           </div>
         )}
         dismissOnBackdrop={paymentStep !== 'verifying'}
+        returnFocusRef={enrollmentTriggerRef}
         size={'wide'}
       >
-        <button
-          className={styles.secondaryButton}
-          type={'button'}
+        <Button
+          type="button"
+          variant="outline"
           onClick={() => { setPaymentStep('method'); setPromptPayIntent(null); resetSlipState(); }}
           disabled={paymentStep === 'verifying'}
         >
           กลับ
-        </button>
-        <button
-          className={styles.verifyButton}
-          type={'button'}
+        </Button>
+        <Button
+          type="button"
           onClick={handleSlipVerify}
           disabled={!slipFile || !promptPayIntent || paymentStep === 'verifying'}
+          aria-busy={paymentStep === 'verifying'}
         >
-          {paymentStep === 'verifying'
-            ? <span className={styles.loadingContent}><span className={styles.spinner} aria-hidden={true} />กำลังตรวจสอบสลิป...</span>
-            : 'ตรวจสอบและชำระเงิน'}
-        </button>
+          {paymentStep === 'verifying' ? (
+            <>
+              <Spinner data-icon="inline-start" aria-hidden="true" />
+              กำลังตรวจสอบสลิป...
+            </>
+          ) : 'ตรวจสอบและชำระเงิน'}
+        </Button>
       </DialogShell>
 
       <Modal
         isOpen={modal.isOpen}
         onClose={handleModalClose}
+        returnFocusRef={enrollmentTriggerRef}
         type={modal.type}
         title={modal.title}
         buttonText={modal.type === 'success' ? 'เรียบร้อย' : 'ตกลง'}

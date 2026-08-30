@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
-import CertificatesClient from './CertificatesClient';
+import CertificateCollection from './CertificateCollection';
 
 export const metadata: Metadata = {
   title: 'ใบรับรองของฉัน',
@@ -14,7 +14,7 @@ export default function UserCertificatesPage() {
       title="ใบรับรองของฉัน"
       description="หลักฐานการเรียนจบที่ตรวจสอบได้ เปิดดูใบรับรองฉบับเต็มหรือคัดลอกลิงก์เพื่อแชร์ผลงานของคุณ"
     >
-      <CertificatesClient />
+      <CertificateCollection />
     </LearnerAccountShell>
   );
 }

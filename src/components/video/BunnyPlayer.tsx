@@ -1,6 +1,10 @@
 'use client';
 
 import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
+import { TriangleAlert, VideoOff } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { cn } from '@/lib/utils';
 
 interface BunnyPlayerProps {
   videoId: string;
@@ -154,79 +158,37 @@ export default function BunnyPlayer({
 
   if (!videoId) {
     return (
-      <div 
-        className={className}
-        style={{
-          aspectRatio: '16/9',
-          background: '#1e293b',
-          borderRadius: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#64748b',
-        }}
-      >
-        <div style={{ textAlign: 'center' }}>
-          <svg style={{ width: '48px', height: '48px', margin: '0 auto 12px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          <p>ไม่มีวิดีโอสำหรับบทเรียนนี้</p>
-        </div>
-      </div>
+      <Empty className={cn('aspect-video border', className)}>
+        <EmptyHeader>
+          <EmptyMedia variant="icon"><VideoOff aria-hidden="true" /></EmptyMedia>
+          <EmptyTitle>ไม่มีวิดีโอสำหรับบทเรียนนี้</EmptyTitle>
+          <EmptyDescription>เลือกบทเรียนอื่นหรือลองกลับมาตรวจสอบอีกครั้งภายหลัง</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   return (
-    <div 
-      className={className}
-      style={{
-        position: 'relative',
-        paddingTop: '56.25%', // 16:9 aspect ratio
-        borderRadius: '12px',
-        overflow: 'hidden',
-        background: '#000',
-      }}
-    >
+    <div className={cn('relative aspect-video overflow-hidden rounded-xl bg-muted', className)}>
       <iframe
         key={finalUrl}
         ref={iframeRef}
         src={finalUrl}
         loading="lazy"
         onLoad={() => setLoadedUrl(finalUrl)}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          border: 'none',
-        }}
+        className="absolute inset-0 size-full border-0"
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
         allowFullScreen
       />
       {showDebugOverlay && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0, 0, 0, 0.72)',
-            color: '#e2e8f0',
-            padding: '24px',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ maxWidth: '520px' }}>
-            <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '10px' }}>วิดีโอกำลังโหลดช้าผิดปกติ</div>
-            <div style={{ color: '#94a3b8', fontSize: '0.875rem', lineHeight: 1.7, marginBottom: '14px' }}>
+        <div className="absolute inset-0 flex items-center justify-center bg-background/90 p-6">
+          <Alert className="max-w-xl">
+            <TriangleAlert aria-hidden="true" />
+            <AlertTitle>วิดีโอกำลังโหลดช้าผิดปกติ</AlertTitle>
+            <AlertDescription>
               หากหน้าจอยังคงเป็นสีดำ อาจเกิดจากเครือข่ายหรือผู้ให้บริการอินเทอร์เน็ตบล็อกการเชื่อมต่อกับระบบวิดีโอ
-            </div>
-            <div style={{ color: '#64748b', fontSize: '0.75rem', lineHeight: 1.7, wordBreak: 'break-all' }}>
-              {finalUrl}
-            </div>
-          </div>
+            </AlertDescription>
+          </Alert>
         </div>
       )}
     </div>

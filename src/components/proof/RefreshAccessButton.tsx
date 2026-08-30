@@ -1,9 +1,11 @@
 'use client';
 
-export default function RefreshAccessButton({ className }: { className: string }) {
+import { Button } from '@/components/ui/button';
+
+export default function RefreshAccessButton() {
   return (
-    <button className={className} type="button" onClick={() => window.location.reload()}>
+    <Button type="button" onClick={() => window.location.reload()}>
       ตรวจสอบสถานะอีกครั้ง
-    </button>
+    </Button>
   );
 }

@@ -34,7 +34,7 @@ export default function FAQPage() {
           <div className="container grid gap-10 lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-14">
             <aside className="top-24 lg:sticky">
               <h2 id="faq-index-title" className="text-2xl font-semibold">เลือกหัวข้อ</h2>
-              <nav className="mt-5 space-y-1" aria-label="หมวดคำถาม">
+              <nav className="mt-5 flex flex-col gap-1" aria-label="หมวดคำถาม">
                 {FAQ_CATEGORIES.map((category, index) => (
                   <a className="block rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground" href={`#faq-category-${index + 1}`} key={category.title}>
                     {category.title}
@@ -43,7 +43,7 @@ export default function FAQPage() {
               </nav>
             </aside>
 
-            <div className="space-y-12">
+            <div className="flex flex-col gap-12">
               {FAQ_CATEGORIES.map((category, index) => (
                 <section id={`faq-category-${index + 1}`} className="scroll-mt-24" aria-labelledby={`faq-category-title-${index + 1}`} key={category.title}>
                   <div className="mb-5">

@@ -7,6 +7,13 @@ import CourseCatalogFilters from '@/components/course/CourseCatalogFilters';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
 import { and, asc, count, desc, eq, gt, like, sql } from 'drizzle-orm';
@@ -353,7 +360,15 @@ export default async function CoursesPage({ searchParams }: Props) {
             <div className="mb-6 flex items-center justify-between gap-4"><p className="font-semibold">{search ? `ผลการค้นหาสำหรับ “${search}”` : 'หลักสูตรที่เปิดให้เรียน'}</p><span className="text-sm text-muted-foreground">หน้า {pagination.page} / {Math.max(1, pagination.totalPages)}</span></div>
 
             {courseList.length === 0 ? (
-              <Card className="items-center py-14 text-center"><CardContent><h3 className="text-2xl font-semibold">ไม่พบคอร์สตามเงื่อนไขนี้</h3><p className="mt-2 text-muted-foreground">ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</p><Button className="mt-6" asChild><Link href="/courses">ดูคอร์สทั้งหมด</Link></Button></CardContent></Card>
+              <Empty className="border">
+                <EmptyHeader>
+                  <EmptyTitle>ไม่พบคอร์สตามเงื่อนไขนี้</EmptyTitle>
+                  <EmptyDescription>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button asChild><Link href="/courses">ดูคอร์สทั้งหมด</Link></Button>
+                </EmptyContent>
+              </Empty>
             ) : (
               <>
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{courseList.map((course) => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} price={parseFloat(course.price || '0')} promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null} isPromoActive={course.isPromoActive} instructorName={course.instructor?.name || null} lessonCount={course.lessonCount} totalDurationSeconds={course.totalDurationSeconds} hasFreePreview={course.hasFreePreview} tags={course.tags} />)}</div>
@@ -367,7 +382,7 @@ export default async function CoursesPage({ searchParams }: Props) {
           <section className="border-t bg-background py-14 sm:py-20" aria-labelledby="courses-bundles-title">
             <div className="container">
               <header className="mb-8 grid gap-4 md:grid-cols-[1fr_auto] md:items-end"><div><h2 id="courses-bundles-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div><Badge variant="secondary">{bundlesList.length} เส้นทาง</Badge></header>
-              <div className="grid gap-5 lg:grid-cols-2">{bundlesList.map((bundle) => <Link key={bundle.id} href={`/bundles/${bundle.slug}`} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"><Card className="h-full transition-shadow group-hover:shadow-[var(--academy-shadow-card-hover)]"><CardHeader><div className="flex items-center justify-between gap-3"><Badge>Bundle · {bundle.courseCount} คอร์ส</Badge>{bundle.discount > 0 ? <Badge variant="destructive">ประหยัด {bundle.discount}%</Badge> : null}</div><CardTitle className="mt-3 text-2xl group-hover:text-primary">{bundle.title}</CardTitle>{bundle.description ? <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{bundle.description}</p> : null}</CardHeader><CardContent><div className="space-y-2 border-y py-4 text-sm">{bundle.courses.slice(0, 2).map((course, index) => <p key={`${bundle.id}-${index}`}>{String(index + 1).padStart(2, '0')} · {course.courseTitle}</p>)}{bundle.courses.length > 2 ? <p className="text-muted-foreground">+{bundle.courses.length - 2} คอร์ส</p> : null}</div><div className="mt-5 flex items-end justify-between gap-4"><div><strong className="text-2xl">฿{parseFloat(bundle.price).toLocaleString()}</strong><s className="ml-2 text-sm text-muted-foreground">฿{bundle.totalOriginalPrice.toLocaleString()}</s></div><span className="text-sm font-semibold text-primary">ดูรายละเอียด →</span></div></CardContent></Card></Link>)}</div>
+              <div className="grid gap-5 lg:grid-cols-2">{bundlesList.map((bundle) => <Link key={bundle.id} href={`/bundles/${bundle.slug}`} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"><Card className="h-full"><CardHeader><div className="flex items-center justify-between gap-3"><Badge>Bundle · {bundle.courseCount} คอร์ส</Badge>{bundle.discount > 0 ? <Badge variant="destructive">ประหยัด {bundle.discount}%</Badge> : null}</div><CardTitle className="mt-3 text-2xl group-hover:text-primary">{bundle.title}</CardTitle>{bundle.description ? <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{bundle.description}</p> : null}</CardHeader><CardContent><div className="flex flex-col gap-2 border-y py-4 text-sm">{bundle.courses.slice(0, 2).map((course, index) => <p key={`${bundle.id}-${index}`}>{String(index + 1).padStart(2, '0')} · {course.courseTitle}</p>)}{bundle.courses.length > 2 ? <p className="text-muted-foreground">+{bundle.courses.length - 2} คอร์ส</p> : null}</div><div className="mt-5 flex items-end justify-between gap-4"><div><strong className="text-2xl">฿{parseFloat(bundle.price).toLocaleString()}</strong><s className="ml-2 text-sm text-muted-foreground">฿{bundle.totalOriginalPrice.toLocaleString()}</s></div><span className="text-sm font-semibold text-primary">ดูรายละเอียด →</span></div></CardContent></Card></Link>)}</div>
             </div>
           </section>
         ) : null}

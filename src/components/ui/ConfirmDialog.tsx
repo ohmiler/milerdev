@@ -58,7 +58,7 @@ export default function ConfirmDialog({
         }}
       >
         <AlertDialogHeader>
-          <AlertDialogMedia className="bg-destructive/10 text-destructive"><AlertTriangle /></AlertDialogMedia>
+          <AlertDialogMedia><AlertTriangle /></AlertDialogMedia>
           <AlertDialogTitle id={titleId}>{title}</AlertDialogTitle>
           <AlertDialogDescription id={descriptionId}>{message}</AlertDialogDescription>
         </AlertDialogHeader>

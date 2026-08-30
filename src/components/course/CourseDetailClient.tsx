@@ -2,9 +2,19 @@
 
 import { createContext, useContext, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { BookOpen, Check, CircleCheck } from 'lucide-react';
 import EnrollButton from '@/components/course/EnrollButton';
 import CourseLessonList from '@/components/course/CourseLessonList';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Spinner } from '@/components/ui/spinner';
 
 export type EnrollmentStatus = 'checking' | 'enrolled' | 'not-enrolled';
 
@@ -76,24 +86,30 @@ export default function CourseDetailClient({
   if (renderMode === 'button') {
     if (!courseReady) {
       return (
-        <div className="grid gap-3 rounded-xl border border-dashed bg-muted/30 p-4">
-          <strong>คอร์สกำลังเตรียมเนื้อหา</strong>
-          <p className="text-sm leading-6 text-muted-foreground">
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BookOpen aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>คอร์สกำลังเตรียมเนื้อหา</EmptyTitle>
+            <EmptyDescription>
             คอร์สนี้ยังไม่เปิดรับสมัคร เมื่อบทเรียนพร้อมแล้วจึงจะสามารถลงทะเบียนได้
-          </p>
+            </EmptyDescription>
+          </EmptyHeader>
           <Button type="button" disabled className="w-full">ยังไม่เปิดรับสมัคร</Button>
-        </div>
+        </Empty>
       );
     }
 
     if (status === 'enrolled') {
       return (
-        <div className="grid gap-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
-          <div>
-            <strong className="text-emerald-800">คุณมีสิทธิ์เรียนคอร์สนี้แล้ว</strong>
-            <p className="mt-1 text-sm leading-6 text-emerald-800/80">กลับไปยังบทเรียนและเรียนต่อจากจุดที่ค้างไว้ได้เลย</p>
-          </div>
-          <Button asChild className="w-full bg-emerald-600 text-white hover:bg-emerald-700">
+        <div className="grid gap-4">
+          <Alert variant="success">
+            <CircleCheck aria-hidden="true" />
+            <AlertTitle>คุณมีสิทธิ์เรียนคอร์สนี้แล้ว</AlertTitle>
+            <AlertDescription>กลับไปยังบทเรียนและเรียนต่อจากจุดที่ค้างไว้ได้เลย</AlertDescription>
+          </Alert>
+          <Button asChild className="w-full">
             <Link href={`/courses/${courseSlug}/learn`}>เข้าเรียน / เรียนต่อ</Link>
           </Button>
         </div>
@@ -103,7 +119,10 @@ export default function CourseDetailClient({
     return (
       <div className="grid gap-5">
         {status === 'checking' ? (
-          <p className="text-sm font-medium text-muted-foreground">กำลังตรวจสอบสิทธิ์การเรียน</p>
+          <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Spinner data-icon="inline-start" />
+            กำลังตรวจสอบสิทธิ์การเรียน
+          </p>
         ) : (
           <div>
             <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
@@ -147,9 +166,9 @@ export default function CourseDetailClient({
                 : 'เลือกชำระด้วยบัตรหรือ PromptPay ในขั้นตอนถัดไป'}
             </p>
             <ul className="grid gap-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2"><span className="text-primary" aria-hidden="true">✓</span> เข้าเรียนได้ตลอดชีพ</li>
-              <li className="flex items-center gap-2"><span className="text-primary" aria-hidden="true">✓</span> เรียนได้ทุกอุปกรณ์</li>
-              <li className="flex items-center gap-2"><span className="text-primary" aria-hidden="true">✓</span> รับ Certificate เมื่อเรียนจบ</li>
+              <li className="flex items-center gap-2"><Check className="text-primary" aria-hidden="true" /> เข้าเรียนได้ตลอดชีพ</li>
+              <li className="flex items-center gap-2"><Check className="text-primary" aria-hidden="true" /> เรียนได้ทุกอุปกรณ์</li>
+              <li className="flex items-center gap-2"><Check className="text-primary" aria-hidden="true" /> รับ Certificate เมื่อเรียนจบ</li>
             </ul>
           </>
         )}

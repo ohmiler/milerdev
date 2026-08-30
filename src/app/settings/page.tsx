@@ -1,13 +1,16 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { ArrowUpRight } from 'lucide-react';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
-import { learnerAccountStyles as styles } from '@/components/account/learner-account-styles';
-import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
+import PasswordSettingsForm from '@/components/settings/PasswordSettingsForm';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const metadata: Metadata = {
   title: 'ตั้งค่า',
@@ -33,23 +36,35 @@ export default async function SettingsPage() {
       title="ตั้งค่าบัญชี"
       description="จัดการข้อมูลที่แสดงในบัญชีและควบคุมความปลอดภัยของการเข้าสู่ระบบ"
     >
-      <section className={styles.settingsSection} aria-labelledby="account-settings-title">
-        <p className={styles.sectionLabel}>บัญชี</p>
-        <h2 id="account-settings-title">ข้อมูลบัญชี</h2>
-        <Link className={styles.settingRow} href="/profile">
-          <span className={styles.settingCopy}>
-            <strong>แก้ไขโปรไฟล์</strong>
-            <span>เปลี่ยนชื่อที่ใช้ในบัญชีผู้เรียนและตรวจสอบอีเมล</span>
-          </span>
-          <span className={styles.settingMarker} aria-hidden="true">03 ↗</span>
-        </Link>
-      </section>
+      <Card aria-labelledby="account-settings-title">
+        <CardHeader>
+          <Badge variant="outline">บัญชี</Badge>
+          <CardTitle id="account-settings-title">ข้อมูลบัญชี</CardTitle>
+          <CardDescription>จัดการชื่อที่แสดงและตรวจสอบข้อมูลประจำบัญชี</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline" className="h-auto w-full justify-between py-4">
+            <Link href="/profile">
+              <span className="flex min-w-0 flex-col items-start gap-1 text-left">
+                <strong>แก้ไขโปรไฟล์</strong>
+                <span className="whitespace-normal">เปลี่ยนชื่อที่ใช้ในบัญชีผู้เรียนและตรวจสอบอีเมล</span>
+              </span>
+              <ArrowUpRight data-icon="inline-end" aria-hidden="true" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
-      <section className={styles.settingsSection} aria-labelledby="security-settings-title">
-        <p className={styles.sectionLabel}>ความปลอดภัย</p>
-        <h2 id="security-settings-title">การเข้าสู่ระบบ</h2>
-        <ChangePasswordForm hasPassword={Boolean(user?.passwordHash)} />
-      </section>
+      <Card aria-labelledby="security-settings-title">
+        <CardHeader>
+          <Badge variant="outline">ความปลอดภัย</Badge>
+          <CardTitle id="security-settings-title">การเข้าสู่ระบบ</CardTitle>
+          <CardDescription>เปลี่ยนรหัสผ่านสำหรับบัญชีที่เข้าสู่ระบบด้วยอีเมล</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PasswordSettingsForm hasPassword={Boolean(user?.passwordHash)} />
+        </CardContent>
+      </Card>
     </LearnerAccountShell>
   );
 }

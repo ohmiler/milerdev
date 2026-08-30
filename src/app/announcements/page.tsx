@@ -27,7 +27,7 @@ export default function AnnouncementsPage() {
             <aside className="top-24 lg:sticky">
               <h2 id="announcement-feed-title" className="text-2xl font-semibold">ข่าวสารล่าสุด</h2>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">เรียงจากประกาศใหม่ไปเก่า พร้อมประเภท เวลาเผยแพร่ และผู้ประกาศเมื่อมีข้อมูล</p>
-              <dl className="mt-6 space-y-3 border-y py-5 text-xs"><div className="flex justify-between gap-3"><dt className="font-medium text-primary">ทั่วไป</dt><dd className="text-muted-foreground">ข้อมูลทั่วไป</dd></div><div className="flex justify-between gap-3"><dt className="font-medium text-primary">ติดตาม</dt><dd className="text-muted-foreground">เรื่องที่ควรติดตาม</dd></div><div className="flex justify-between gap-3"><dt className="font-medium text-primary">สำคัญ</dt><dd className="text-muted-foreground">ประกาศสำคัญ</dd></div></dl>
+              <dl className="mt-6 flex flex-col gap-3 border-y py-5 text-xs"><div className="flex justify-between gap-3"><dt className="font-medium text-primary">ทั่วไป</dt><dd className="text-muted-foreground">ข้อมูลทั่วไป</dd></div><div className="flex justify-between gap-3"><dt className="font-medium text-primary">ติดตาม</dt><dd className="text-muted-foreground">เรื่องที่ควรติดตาม</dd></div><div className="flex justify-between gap-3"><dt className="font-medium text-primary">สำคัญ</dt><dd className="text-muted-foreground">ประกาศสำคัญ</dd></div></dl>
             </aside>
             <AnnouncementFeed />
           </div>

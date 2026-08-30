@@ -14,7 +14,7 @@ export interface LearningNavbarProps {
   isEnrolled: boolean;
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
-  onOpenSidebar: () => void;
+  onOpenSidebar: (returnFocus: HTMLElement | null) => void;
 }
 
 export default function LearningNavbar({
@@ -43,19 +43,23 @@ export default function LearningNavbar({
           aria-pressed={sidebarCollapsed}
           data-learning-control="curriculum"
         >
-          {sidebarCollapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+          {sidebarCollapsed ? (
+            <PanelLeftOpen data-icon="inline-start" aria-hidden="true" />
+          ) : (
+            <PanelLeftClose data-icon="inline-start" aria-hidden="true" />
+          )}
         </Button>
         <Button
           type="button"
           size="icon-sm"
           variant="outline"
           className="lg:hidden"
-          onClick={onOpenSidebar}
+          onClick={(event) => onOpenSidebar(event.currentTarget)}
           aria-label="เปิดรายการบทเรียน"
           title="เปิดรายการบทเรียน"
           data-learning-control="curriculum"
         >
-          <ListVideo className="size-4" />
+          <ListVideo data-icon="inline-start" aria-hidden="true" />
         </Button>
 
         <Link href={`/courses/${courseSlug}`} className="hidden items-center gap-2 sm:flex" aria-label={`กลับไปยังคอร์ส ${courseTitle}`}>
@@ -82,7 +86,7 @@ export default function LearningNavbar({
             title="กลับไปหน้าคอร์ส"
             data-learning-control="course-exit"
           >
-            <ArrowLeft className="size-4" />
+            <ArrowLeft data-icon="inline-start" aria-hidden="true" />
             <span className="hidden lg:inline">กลับหน้าคอร์ส</span>
           </Link>
         </Button>

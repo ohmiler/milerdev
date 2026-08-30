@@ -7,6 +7,7 @@ const announcementsPageSource = readFileSync('src/app/announcements/page.tsx', '
 const announcementFeedSource = readFileSync('src/components/content/AnnouncementFeed.tsx', 'utf8');
 const privacySource = readFileSync('src/app/privacy/page.tsx', 'utf8');
 const termsSource = readFileSync('src/app/terms/page.tsx', 'utf8');
+const bundleDetailSource = readFileSync('src/app/bundles/[slug]/page.tsx', 'utf8');
 
 describe('public content contracts', () => {
   it('keeps announcement fetching in a narrow client feed with metadata on the server page', () => {
@@ -73,5 +74,13 @@ describe('public content contracts', () => {
     expect(termsSource).toContain('เมื่อชำระเงินสำเร็จแล้ว จะไม่สามารถขอคืนเงินได้');
     expect(termsSource).toContain('ไม่ใช่วุฒิการศึกษาหรือใบรับรองวิชาชีพ');
     expect(termsSource).toContain('milerdev.official@gmail.com');
+  });
+
+  it('pairs bundle summary labels and values with description-list semantics', () => {
+    const summary = bundleDetailSource.match(/<dl[^>]*aria-label=\{'ข้อมูลชุดคอร์ส'\}[\s\S]*?<\/dl>/)?.[0];
+
+    expect(summary).toBeTruthy();
+    expect(summary?.match(/<dt\b/g)).toHaveLength(4);
+    expect(summary?.match(/<dd\b/g)).toHaveLength(4);
   });
 });

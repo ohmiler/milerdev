@@ -3,11 +3,37 @@ import { describe, expect, it, vi } from 'vitest';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import DialogShell from '@/components/ui/DialogShell';
 import Modal from '@/components/ui/Modal';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TOAST_LIFETIME_MS, toastRoleFor } from '@/components/ui/Toast';
 
 const quote = String.fromCharCode(34);
 
 describe('shared feedback primitives', () => {
+  it('keeps visual skeletons out of the accessibility tree and respects reduced motion', () => {
+    const html = renderToStaticMarkup(<Skeleton />);
+
+    expect(html).toContain(`aria-hidden=${quote}true${quote}`);
+    expect(html).toContain('motion-reduce:animate-none');
+  });
+
+  it.each(['info', 'warning', 'success', 'destructive'] as const)(
+    'exposes the %s alert meaning to consumers',
+    (variant) => {
+      const html = renderToStaticMarkup(
+        <Alert variant={variant}>
+          <AlertTitle>Status</AlertTitle>
+          <AlertDescription>Actionable context</AlertDescription>
+        </Alert>,
+      );
+
+      expect(html).toContain(`role=${quote}alert${quote}`);
+      expect(html).toContain(`data-variant=${quote}${variant}${quote}`);
+      expect(html).toContain('Status');
+      expect(html).toContain('Actionable context');
+    },
+  );
+
   it('renders a named informational dialog with an explicit recovery control', () => {
     const html = renderToStaticMarkup(
       <Modal

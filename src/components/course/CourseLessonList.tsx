@@ -3,9 +3,11 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { BookOpen, Lock } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
 interface Lesson {
   id: string;
@@ -22,14 +24,6 @@ interface CourseLessonListProps {
 }
 
 const INITIAL_SHOW = 10;
-
-function LockIcon() {
-  return (
-    <svg className="size-3.5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-    </svg>
-  );
-}
 
 export default function CourseLessonList({ lessons, courseSlug, isEnrolled = false }: CourseLessonListProps) {
   const session = useSession()?.data;
@@ -59,7 +53,15 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
   };
 
   if (lessons.length === 0) {
-    return <div className="rounded-xl border border-dashed p-8 text-center text-muted-foreground"><p>กำลังเตรียมเนื้อหา โปรดกลับมาตรวจสอบอีกครั้ง</p></div>;
+    return (
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon"><BookOpen aria-hidden="true" /></EmptyMedia>
+          <EmptyTitle>กำลังเตรียมเนื้อหา</EmptyTitle>
+          <EmptyDescription>โปรดกลับมาตรวจสอบรายการบทเรียนอีกครั้ง</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
   }
 
   return (
@@ -69,9 +71,10 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
           const duration = formatDuration(lesson.videoDuration);
           return (
             <li key={lesson.id}>
-              <button
+              <Button
                 type="button"
-                className="grid min-h-16 w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left transition hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                variant="ghost"
+                className="grid h-auto min-h-16 w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] justify-normal gap-3 px-4 py-3 text-left whitespace-normal"
                 onClick={() => handleLessonClick(lesson)}
                 aria-label={`${lesson.title}, ${lesson.isFreePreview ? 'ดูฟรี' : isEnrolled ? 'เปิดบทเรียน' : 'ต้องสมัครเรียนก่อน'}`}
               >
@@ -83,9 +86,9 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
                 ) : isEnrolled ? (
                   <Badge>เปิดบทเรียน</Badge>
                 ) : (
-                  <Badge className="gap-1" variant="outline"><LockIcon /> ล็อก</Badge>
+                  <Badge variant="outline"><Lock data-icon="inline-end" aria-hidden="true" /> ล็อก</Badge>
                 )}
-              </button>
+              </Button>
             </li>
           );
         })}

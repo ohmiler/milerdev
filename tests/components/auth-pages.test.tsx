@@ -37,10 +37,10 @@ describe('account journey UI contracts', () => {
     expect(source).toContain("signIn('google', { callbackUrl: '/dashboard' })");
     expect(source).toContain('OAuthAccountNotLinked');
     expect(source).toContain('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
-    expect(source).toContain("name={'email'}");
-    expect(source).toContain("autoComplete={'current-password'}");
-    expect(source).toContain("type={'submit'}");
-    expect(source).toContain("type={'button'}");
+    expect(source).toMatch(/name=(?:["']email["']|\{["']email["']\})/);
+    expect(source).toMatch(/autoComplete=(?:["']current-password["']|\{["']current-password["']\})/);
+    expect(source).toMatch(/type=(?:["']submit["']|\{["']submit["']\})/);
+    expect(source).toMatch(/type=(?:["']button["']|\{["']button["']\})/);
   });
 
   it('locks every account form while its request is pending', () => {

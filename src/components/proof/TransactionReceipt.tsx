@@ -1,12 +1,12 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { CircleCheck, Clock3 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import RefreshAccessButton from './RefreshAccessButton';
 import { Badge } from '@/components/ui/badge';
-import { buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 
 interface ReceiptItem {
   id: string;
@@ -112,13 +112,16 @@ export default function TransactionReceipt({
             </Card>
 
             <Card className="h-fit overflow-hidden lg:sticky lg:top-24" aria-label="ขั้นตอนถัดไป">
-              <CardHeader className={cn(accessReady ? 'bg-emerald-500/10' : 'bg-amber-500/10')}>
+              <CardHeader>
               <div
                 className="grid gap-3"
                 data-access={accessReady ? 'ready' : 'pending'}
                 role="status"
               >
-                <Badge variant="outline" className="w-fit">{accessReady ? '✓ พร้อมเข้าเรียน' : '… กำลังตรวจสอบสิทธิ์'}</Badge>
+                <Badge variant="outline" className="w-fit">
+                  {accessReady ? <CircleCheck data-icon="inline-start" aria-hidden="true" /> : <Clock3 data-icon="inline-start" aria-hidden="true" />}
+                  {accessReady ? 'พร้อมเข้าเรียน' : 'กำลังตรวจสอบสิทธิ์'}
+                </Badge>
                 <CardTitle>{accessReady ? 'คอร์สอยู่ในบัญชีแล้ว' : 'ยังไม่ควรเริ่มเรียน'}</CardTitle>
                 <p className="text-sm leading-6 text-muted-foreground">
                   {accessReady
@@ -130,11 +133,15 @@ export default function TransactionReceipt({
 
               <CardContent className="grid gap-3 p-6">
                 {accessReady && primaryHref && primaryLabel ? (
-                  <Link className={buttonVariants()} href={primaryHref}>{primaryLabel}<span aria-hidden="true">→</span></Link>
+                  <Button asChild>
+                    <Link href={primaryHref}>{primaryLabel}<span aria-hidden="true">→</span></Link>
+                  </Button>
                 ) : (
-                  <RefreshAccessButton className={buttonVariants()} />
+                  <RefreshAccessButton />
                 )}
-                <Link className={buttonVariants({ variant: 'outline' })} href="/dashboard">ไปยัง Dashboard</Link>
+                <Button asChild variant="outline">
+                  <Link href="/dashboard">ไปยัง Dashboard</Link>
+                </Button>
               </CardContent>
 
               <CardFooter className="block border-t text-sm text-muted-foreground"><p>ต้องการความช่วยเหลือเกี่ยวกับรายการนี้?</p><a className="font-medium text-primary" href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a></CardFooter>

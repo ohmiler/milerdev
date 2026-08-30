@@ -28,8 +28,14 @@ describe('adaptive learning workspace contracts', () => {
     expect(workspace).toContain("from '@/components/ui/alert-dialog'");
     expect(workspace.match(/\{curriculum\}/g)).toHaveLength(2);
     expect(workspace).toContain('side="left"');
+    expect(workspace.match(/onCloseAutoFocus/g)).toHaveLength(2);
+    expect(workspace).toContain('mobileCurriculumTriggerRef.current.focus()');
+    expect(workspace).toContain('lockedLessonTriggerRef.current.focus()');
     expect(curriculum).toContain("import { Progress } from '@/components/ui/progress';");
     expect(curriculum.match(/<Progress/g)).toHaveLength(1);
+    expect(curriculum).toContain("from '@/components/ui/input-group';");
+    expect(curriculum.match(/<InputGroup/g)).toHaveLength(3);
+    expect(curriculum).not.toContain("from '@/components/ui/input';");
   });
 
   it('places the lesson curriculum on the left across desktop and mobile layouts', () => {

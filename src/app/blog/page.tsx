@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Search } from 'lucide-react';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';
@@ -203,7 +204,27 @@ export default async function BlogPage({ searchParams }: Props) {
           <div className="container">
             <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b pb-7"><h2 id="blog-catalog-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">{search || tagFilter !== 'all' ? 'ผลลัพธ์ที่กรองแล้ว' : 'บทความทั้งหมด'}</h2><Badge variant="secondary" aria-live="polite">{pagination.total} รายการ</Badge></header>
 
-            <Card className="mb-6 shadow-[var(--academy-shadow-card)]"><CardContent className="pt-6"><form method="GET" action="/blog" className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end" role="search"><div className="space-y-2"><Label htmlFor="blog-search">ค้นหาบทความ</Label><Input id="blog-search" type="search" name="search" defaultValue={search} placeholder="ค้นหาจากชื่อบทความ" /></div>{tagFilter !== 'all' ? <input type="hidden" name="tag" value={tagFilter} /> : null}<Button type="submit">แสดงผลลัพธ์</Button><Button variant="outline" asChild><Link href="/blog">ล้างตัวกรอง</Link></Button></form></CardContent></Card>
+            <Card className="mb-6">
+              <CardHeader className="sr-only"><CardTitle>ค้นหาและกรองบทความ</CardTitle></CardHeader>
+              <CardContent>
+                <form method="GET" action="/blog" role="search">
+                  <FieldGroup className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                    <Field>
+                      <FieldLabel htmlFor="blog-search">ค้นหาบทความ</FieldLabel>
+                      <InputGroup>
+                        <InputGroupAddon><Search aria-hidden="true" /></InputGroupAddon>
+                        <InputGroupInput id="blog-search" type="search" name="search" defaultValue={search} placeholder="ค้นหาจากชื่อบทความ" />
+                      </InputGroup>
+                    </Field>
+                    {tagFilter !== 'all' ? <input type="hidden" name="tag" value={tagFilter} /> : null}
+                    <Field orientation="horizontal" className="gap-2">
+                      <Button type="submit">แสดงผลลัพธ์</Button>
+                      <Button variant="outline" asChild><Link href="/blog">ล้างตัวกรอง</Link></Button>
+                    </Field>
+                  </FieldGroup>
+                </form>
+              </CardContent>
+            </Card>
 
             {allTags.length > 0 ? <nav className="mb-10 flex flex-wrap gap-2" aria-label="หัวข้อบทความ">{topicItems.map((tag) => { const isActive = tagFilter === tag.slug; return <Button key={tag.id} variant={isActive ? 'default' : 'outline'} size="sm" asChild><Link href={buildBlogQuery({ search, tag: tag.slug, page: 1 })} aria-current={isActive ? 'page' : undefined}>{tag.name}</Link></Button>; })}</nav> : null}
 
