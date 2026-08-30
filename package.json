@@ -7,7 +7,7 @@
     "dev:remote": "infisical run --env=dev -- next dev",
     "dev:local": "infisical run --env=dev -- next dev",
     "build": "next build",
-    "start": "npm run db:migrate && npm run start:app",
+    "start": "npm run start:app",
     "lint": "eslint",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
