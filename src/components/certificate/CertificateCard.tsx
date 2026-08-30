@@ -5,7 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { toPng } from 'html-to-image';
 import styles from './CertificateArtifact.module.css';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 interface CertificateData {
   certificateCode: string;
@@ -197,19 +199,22 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
 
       <div className="mt-6 flex flex-wrap justify-center gap-3" aria-label="เครื่องมือใบรับรอง">
         <Button type="button" onClick={handleDownload} disabled={downloading}>
-          {downloading ? 'กำลังสร้างไฟล์...' : 'ดาวน์โหลด PNG'}
+          {downloading ? <><Spinner data-icon="inline-start" />กำลังสร้างไฟล์...</> : 'ดาวน์โหลด PNG'}
         </Button>
         <Button variant="outline" type="button" onClick={handleShare}>คัดลอกลิงก์</Button>
         {cert.courseSlug && <Button asChild variant="outline"><Link href={`/courses/${cert.courseSlug}`}>ดูรายละเอียดคอร์ส</Link></Button>}
       </div>
 
-      <p
-        className={`mt-3 min-h-6 text-center text-sm font-medium ${feedback?.tone === 'error' ? 'text-destructive' : 'text-emerald-700'}`}
-        role={feedback?.tone === 'error' ? 'alert' : 'status'}
-        aria-live="polite"
-      >
-        {feedback?.message || ''}
-      </p>
+      {feedback ? (
+        <Alert
+          className="mx-auto mt-3 max-w-xl"
+          variant={feedback.tone === 'error' ? 'destructive' : 'default'}
+          role={feedback.tone === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          <AlertDescription>{feedback.message}</AlertDescription>
+        </Alert>
+      ) : null}
     </>
   );
 }

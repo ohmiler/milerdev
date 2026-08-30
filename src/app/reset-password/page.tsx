@@ -18,7 +18,7 @@ export default function ResetPasswordPage() {
         { label: 'กลับเข้าสู่ระบบ', text: 'กลับไปเข้าสู่ระบบอีกครั้ง' },
       ]}
     >
-      <Suspense fallback={<div className="space-y-4" aria-label="กำลังตรวจสอบลิงก์"><Skeleton className="h-5 w-36" /><Skeleton className="h-11 w-full" /><Skeleton className="h-11 w-full" /></div>}>
+      <Suspense fallback={<div className="flex flex-col gap-4" aria-busy="true"><span className="sr-only" role="status" aria-live="polite">กำลังตรวจสอบลิงก์</span><Skeleton aria-hidden="true" className="h-5 w-36" /><Skeleton aria-hidden="true" className="h-11 w-full" /><Skeleton aria-hidden="true" className="h-11 w-full" /></div>}>
         <ResetPasswordForm />
       </Suspense>
     </AuthShell>

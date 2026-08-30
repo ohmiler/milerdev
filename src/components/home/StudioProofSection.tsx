@@ -25,12 +25,12 @@ const STUDIO_IMAGES = [
 export default function StudioProofSection() {
   return (
     <section data-home-section="studio-proof"
-      className="bg-slate-950 py-16 text-white sm:py-20 lg:py-24"
+      className="bg-foreground py-16 text-background sm:py-20 lg:py-24"
       aria-labelledby="studio-proof-title"
     >
       <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-end lg:gap-16">
         <div className="max-w-xl">
-          <div className="flex items-center gap-2 text-sm font-semibold text-sky-300">
+          <div className="flex items-center gap-2 text-sm font-semibold text-background/75">
             <Presentation className="size-4" aria-hidden="true" />
             MilerDev Studio
           </div>
@@ -40,19 +40,19 @@ export default function StudioProofSection() {
           >
             สอนจากประสบการณ์จริง แล้วอธิบายให้คนเริ่มต้นเห็นภาพ
           </h2>
-          <p className="mt-5 text-pretty leading-8 text-slate-300">
+          <p className="mt-5 text-pretty leading-8 text-background/75">
             MilerDev นำประสบการณ์จากการพัฒนาเว็บไซต์ การสอน และการเป็นวิทยากร
             มาจัดลำดับเป็นบทเรียนภาษาไทยที่เริ่มจากเหตุผล ก่อนพาไปลงมือสร้างด้วยตัวเอง
           </p>
           <Button
             asChild
             size="lg"
-            variant="outline"
-            className="mt-8 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+            variant="secondary"
+            className="mt-8"
           >
             <Link href="/about">
               รู้จักแนวทางของ MilerDev
-              <ArrowRight className="size-4" aria-hidden="true" />
+              <ArrowRight data-icon="inline-end" aria-hidden="true" />
             </Link>
           </Button>
         </div>

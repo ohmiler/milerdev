@@ -26,7 +26,7 @@ export default function ScrollToTop() {
       }}
       aria-label={'กลับขึ้นด้านบน'}
     >
-      <ChevronUp aria-hidden="true" />
+      <ChevronUp data-icon="inline-start" aria-hidden="true" />
     </Button>
   );
 }

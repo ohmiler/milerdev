@@ -1,18 +1,101 @@
 import Link from 'next/link';
+import { BookOpen, CircleCheck } from 'lucide-react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 
-interface EmptyCourseWorkspaceProps { courseTitle: string; courseSlug: string; paymentSuccess: boolean; }
+interface EmptyCourseWorkspaceProps {
+  courseTitle: string;
+  courseSlug: string;
+  paymentSuccess: boolean;
+}
 
-export default function EmptyCourseWorkspace({ courseTitle, courseSlug, paymentSuccess }: EmptyCourseWorkspaceProps) {
+export default function EmptyCourseWorkspace({
+  courseTitle,
+  courseSlug,
+  paymentSuccess,
+}: EmptyCourseWorkspaceProps) {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      {paymentSuccess && <div className="mx-auto max-w-7xl px-4 pt-4"><Alert className="border-emerald-400/30 bg-emerald-400/10 text-emerald-100"><AlertTitle>✓ สิทธิ์เข้าเรียนพร้อมแล้ว</AlertTitle><AlertDescription className="text-emerald-100/80">ระบบบันทึกคอร์ส {courseTitle} ไว้ในบัญชีของคุณเรียบร้อย</AlertDescription></Alert></div>}
-      <header className="border-b border-white/10"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8"><Link className="flex items-center gap-3 font-semibold" href="/dashboard"><span className="flex size-9 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">MD</span>MilerDev Learning</Link><strong className="hidden max-w-md truncate text-sm md:block">{courseTitle}</strong><Button asChild variant="secondary"><Link href={'/courses/' + courseSlug}>ดูหน้าคอร์ส →</Link></Button></div></header>
+    <main className="min-h-screen bg-background text-foreground">
+      {paymentSuccess ? (
+        <div className="mx-auto max-w-7xl px-4 pt-4">
+          <Alert>
+            <CircleCheck aria-hidden="true" />
+            <AlertTitle>สิทธิ์เข้าเรียนพร้อมแล้ว</AlertTitle>
+            <AlertDescription>
+              ระบบบันทึกคอร์ส {courseTitle} ไว้ในบัญชีของคุณเรียบร้อย
+            </AlertDescription>
+          </Alert>
+        </div>
+      ) : null}
+
+      <header className="border-b">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <Link className="flex items-center gap-3 font-semibold" href="/dashboard">
+            <span className="flex size-9 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">MD</span>
+            MilerDev Learning
+          </Link>
+          <strong className="hidden max-w-md truncate text-sm md:block">{courseTitle}</strong>
+          <Button asChild variant="secondary">
+            <Link href={`/courses/${courseSlug}`}>ดูหน้าคอร์ส</Link>
+          </Button>
+        </div>
+      </header>
+
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[18rem_minmax(0,1fr)] lg:px-8">
-        <Card className="h-fit border-white/10 bg-white/5 text-slate-100"><CardHeader><CardTitle>ลำดับการเรียน</CardTitle></CardHeader><CardContent><div className="rounded-lg border border-white/10 p-4"><strong>ยังไม่มีบทเรียน</strong><p className="text-sm text-slate-400">รอทีมเผยแพร่เนื้อหา</p></div></CardContent></Card>
-        <section aria-labelledby="empty-course-title"><div className="mb-6"><h1 className="text-3xl font-bold tracking-tight" id="empty-course-title">คอร์สนี้ยังไม่มีบทเรียนที่เปิดให้เรียน</h1></div><Card className="border-white/10 bg-white/5 text-slate-100"><CardContent className="grid gap-6 p-8 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-center"><div className="flex aspect-square items-center justify-center rounded-full bg-primary/15 text-3xl text-primary">▶</div><div><h2 className="text-2xl font-semibold">ทีมกำลังเตรียมเนื้อหาบทเรียน</h2><p className="mt-3 leading-7 text-slate-400">สิทธิ์เข้าเรียนของคุณยังอยู่ครบ เมื่อมีบทเรียนเผยแพร่ คุณสามารถกลับมาเริ่มเรียนจากแดชบอร์ดได้ทันที</p></div></CardContent></Card><div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/dashboard">กลับไปแดชบอร์ด →</Link></Button><Button asChild variant="secondary"><Link href={'/courses/' + courseSlug}>ดูรายละเอียดคอร์ส</Link></Button><Button asChild variant="ghost"><Link href="/contact">ติดต่อทีม MilerDev</Link></Button></div></section>
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle>ลำดับการเรียน</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Empty className="border p-6">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <BookOpen aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>ยังไม่มีบทเรียน</EmptyTitle>
+                <EmptyDescription>รอทีมเผยแพร่เนื้อหา</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          </CardContent>
+        </Card>
+
+        <section aria-labelledby="empty-course-title">
+          <h1 className="mb-6 text-3xl font-bold tracking-tight" id="empty-course-title">
+            คอร์สนี้ยังไม่มีบทเรียนที่เปิดให้เรียน
+          </h1>
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <BookOpen aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle>ทีมกำลังเตรียมเนื้อหาบทเรียน</EmptyTitle>
+              <EmptyDescription>
+                สิทธิ์เข้าเรียนของคุณยังอยู่ครบ เมื่อมีบทเรียนเผยแพร่ คุณสามารถกลับมาเริ่มเรียนจากแดชบอร์ดได้ทันที
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent className="sm:max-w-xl sm:flex-row sm:flex-wrap sm:justify-center">
+              <Button asChild>
+                <Link href="/dashboard">กลับไปแดชบอร์ด</Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href={`/courses/${courseSlug}`}>ดูรายละเอียดคอร์ส</Link>
+              </Button>
+              <Button asChild variant="ghost">
+                <Link href="/contact">ติดต่อทีม MilerDev</Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
+        </section>
       </div>
     </main>
   );

@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
-import PaymentsClient from '@/app/dashboard/payments/PaymentsClient';
-import CertificatesClient from '@/app/dashboard/certificates/CertificatesClient';
+import PaymentHistory from '@/app/dashboard/payments/PaymentHistory';
+import CertificateCollection from '@/app/dashboard/certificates/CertificateCollection';
 import ProfileForm from '@/app/profile/ProfileForm';
-import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
+import PasswordSettingsForm from '@/components/settings/PasswordSettingsForm';
 import ProfileLoading from '@/app/profile/loading';
 import SettingsLoading from '@/app/settings/loading';
 
@@ -32,8 +32,8 @@ describe('learner account contracts', () => {
   });
 
   it('announces the initial record loading states', () => {
-    const payments = renderToStaticMarkup(<PaymentsClient />);
-    const certificates = renderToStaticMarkup(<CertificatesClient />);
+    const payments = renderToStaticMarkup(<PaymentHistory />);
+    const certificates = renderToStaticMarkup(<CertificateCollection />);
 
     expect(payments).toContain(`aria-busy=${quote}true${quote}`);
     expect(certificates).toContain(`aria-busy=${quote}true${quote}`);
@@ -52,8 +52,8 @@ describe('learner account contracts', () => {
   });
 
   it('retains the payment and certificate API boundaries plus visible failure branches', () => {
-    const payments = readFileSync('src/app/dashboard/payments/PaymentsClient.tsx', 'utf8');
-    const certificates = readFileSync('src/app/dashboard/certificates/CertificatesClient.tsx', 'utf8');
+    const payments = readFileSync('src/app/dashboard/payments/PaymentHistory.tsx', 'utf8');
+    const certificates = readFileSync('src/app/dashboard/certificates/CertificateCollection.tsx', 'utf8');
 
     expect(payments).toContain("fetch('/api/payments'");
     expect(payments).toContain('if (!response.ok)');
@@ -80,14 +80,14 @@ describe('learner account contracts', () => {
   });
 
   it('keeps password controls collapsed and names the OAuth-only state', () => {
-    const password = renderToStaticMarkup(<ChangePasswordForm hasPassword />);
-    const oauth = renderToStaticMarkup(<ChangePasswordForm hasPassword={false} />);
-    const source = readFileSync('src/components/settings/ChangePasswordForm.tsx', 'utf8');
+    const password = renderToStaticMarkup(<PasswordSettingsForm hasPassword />);
+    const oauth = renderToStaticMarkup(<PasswordSettingsForm hasPassword={false} />);
+    const source = readFileSync('src/components/settings/PasswordSettingsForm.tsx', 'utf8');
 
     expect(password).toContain(`aria-expanded=${quote}false${quote}`);
-    expect(password).toContain(`aria-controls=${quote}change-password-panel${quote}`);
+    expect(password).toContain('เปลี่ยนรหัสผ่าน');
     expect(password).not.toContain(`<form`);
-    expect(oauth).toContain('GOOGLE LOGIN');
+    expect(oauth).toContain('Google Login');
     expect(oauth).not.toContain(`<form`);
     expect(source).toContain("fetch('/api/auth/change-password'");
     expect(source).toContain("method: 'POST'");
@@ -99,8 +99,8 @@ describe('learner account contracts', () => {
     const sources = [
       'src/components/account/LearnerAccountShell.tsx',
       'src/app/dashboard/page.tsx',
-      'src/app/dashboard/payments/PaymentsClient.tsx',
-      'src/app/dashboard/certificates/CertificatesClient.tsx',
+      'src/app/dashboard/payments/PaymentHistory.tsx',
+      'src/app/dashboard/certificates/CertificateCollection.tsx',
       'src/app/profile/page.tsx',
       'src/app/settings/page.tsx',
     ].map((path) => readFileSync(path, 'utf8')).join('\n');

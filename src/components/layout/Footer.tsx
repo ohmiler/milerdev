@@ -44,17 +44,17 @@ export default function Footer() {
 
           <nav aria-labelledby="footer-explore">
             <h2 id="footer-explore" className="mb-4 text-sm font-semibold">สำรวจ MilerDev</h2>
-            <ul className="space-y-3">{quickLinks.map((link) => <li key={link.href}><Link className={linkClass} href={link.href}>{link.label}</Link></li>)}</ul>
+            <ul className="flex flex-col gap-3">{quickLinks.map((link) => <li key={link.href}><Link className={linkClass} href={link.href}>{link.label}</Link></li>)}</ul>
           </nav>
 
           <nav aria-labelledby="footer-support">
             <h2 id="footer-support" className="mb-4 text-sm font-semibold">ข้อมูลและความช่วยเหลือ</h2>
-            <ul className="space-y-3">{supportLinks.map((link) => <li key={link.href}><Link className={linkClass} href={link.href}>{link.label}</Link></li>)}</ul>
+            <ul className="flex flex-col gap-3">{supportLinks.map((link) => <li key={link.href}><Link className={linkClass} href={link.href}>{link.label}</Link></li>)}</ul>
           </nav>
 
           <div>
             <h2 className="mb-4 text-sm font-semibold">คุยกับเรา</h2>
-            <div className="space-y-3 text-sm leading-6 text-muted-foreground">
+            <div className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
               <a className={linkClass} href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
               <address className="not-italic">กรุงเทพมหานคร, ประเทศไทย</address>
               <p>จันทร์–ศุกร์<br />09:00–18:00 น.</p>

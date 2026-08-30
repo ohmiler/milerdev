@@ -1,8 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { FormButton, FormInput } from '@/components/ui/FormControls';
-import { learnerAccountStyles as styles } from '@/components/account/learner-account-styles';
+import { CircleAlert, CircleCheck } from 'lucide-react';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
 
 interface User {
   id: string;
@@ -42,39 +47,43 @@ export default function ProfileForm({ user }: { user: User }) {
   }
 
   return (
-    <form className={styles.formGrid} onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-5" onSubmit={handleSubmit} aria-busy={isSubmitting}>
       {message && (
-        <p
-          className={`${styles.message} ${message.type === 'success' ? styles.messageSuccess : styles.messageError}`}
+        <Alert
+          variant={message.type === 'error' ? 'destructive' : 'default'}
           role={message.type === 'error' ? 'alert' : 'status'}
         >
-          {message.text}
-        </p>
+          {message.type === 'error' ? <CircleAlert aria-hidden="true" /> : <CircleCheck aria-hidden="true" />}
+          <AlertTitle>{message.type === 'error' ? 'บันทึกไม่สำเร็จ' : 'บันทึกสำเร็จ'}</AlertTitle>
+          <AlertDescription>{message.text}</AlertDescription>
+        </Alert>
       )}
 
-      <div className={styles.field}>
-        <label htmlFor="profile-name">ชื่อ</label>
-        <FormInput
-          surface="workspace"
+      <FieldGroup className="gap-5">
+        <Field>
+          <FieldLabel htmlFor="profile-name">ชื่อ</FieldLabel>
+          <Input
           id="profile-name"
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="ชื่อของคุณ"
           autoComplete="name"
-        />
-      </div>
+          />
+        </Field>
 
-      <div className={styles.field}>
-        <label htmlFor="profile-email">อีเมล</label>
-        <FormInput surface="workspace" id="profile-email" type="email" value={user.email} disabled />
-        <p className={styles.fieldHint}>อีเมลเป็นข้อมูลประจำบัญชีและไม่สามารถเปลี่ยนจากหน้านี้ได้</p>
-      </div>
+        <Field data-disabled="true">
+          <FieldLabel htmlFor="profile-email">อีเมล</FieldLabel>
+          <Input id="profile-email" type="email" value={user.email} disabled />
+          <FieldDescription>อีเมลเป็นข้อมูลประจำบัญชีและไม่สามารถเปลี่ยนจากหน้านี้ได้</FieldDescription>
+        </Field>
+      </FieldGroup>
 
-      <div className={styles.formActions}>
-        <FormButton surface="workspace" type="submit" pending={isSubmitting} disabled={isSubmitting}>
+      <div className="flex flex-wrap gap-3 pt-2">
+        <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+          {isSubmitting && <Spinner data-icon="inline-start" aria-hidden="true" />}
           {isSubmitting ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
-        </FormButton>
+        </Button>
       </div>
     </form>
   );

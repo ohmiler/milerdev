@@ -5,14 +5,25 @@ import { cn } from "@/lib/utils"
 function Card({
   className,
   size = "default",
+  variant = "default",
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: React.ComponentProps<"div"> & {
+  size?: "default" | "sm"
+  variant?: "default" | "homeMedia" | "homeProgress" | "homeNext"
+}) {
   return (
     <div
       data-slot="card"
       data-size={size}
+      data-variant={variant}
       className={cn(
         "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-2xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(6)] has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(4)] *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        variant === "homeMedia" &&
+          "gap-0 overflow-visible rounded-[2rem] border border-card/90 bg-card/80 p-3 shadow-[var(--home-hero-media-shadow)] ring-foreground/5 backdrop-blur [&>[data-slot=card-content]]:p-0",
+        variant === "homeProgress" &&
+          "bg-card p-4 shadow-xl [&_[data-slot=card-description]]:text-xs [&_[data-slot=card-description]]:font-semibold [&_[data-slot=card-title]]:text-2xl [&_[data-slot=card-title]]:font-bold [&_svg]:size-4 [&>[data-slot=card-content]]:p-0 [&>[data-slot=card-header]]:p-0",
+        variant === "homeNext" &&
+          "bg-card p-4 shadow-xl [&_[data-slot=card-description]]:text-xs [&_[data-slot=card-title]]:text-sm [&_[data-slot=card-title]]:font-semibold [&_svg]:size-4 [&>[data-slot=card-header]]:p-0",
         className
       )}
       {...props}

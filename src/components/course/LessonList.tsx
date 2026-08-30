@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Check, Lock } from 'lucide-react';
+import { BookOpen, Check, Lock, SearchX } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
 interface Lesson {
   id: string;
@@ -71,14 +72,26 @@ export default function LessonList({
   }, [currentLessonId]);
 
   if (lessons.length === 0) {
-    return <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">ยังไม่มีบทเรียน</p>;
+    return (
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon"><BookOpen aria-hidden="true" /></EmptyMedia>
+          <EmptyTitle>ยังไม่มีบทเรียน</EmptyTitle>
+          <EmptyDescription>เนื้อหาของคอร์สกำลังอยู่ระหว่างการเตรียมพร้อม</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
   }
 
   if (filteredLessons.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed p-5 text-center text-sm text-muted-foreground">
-        ไม่พบบทเรียนที่ตรงกับ &ldquo;{searchQuery}&rdquo;
-      </p>
+      <Empty className="border">
+        <EmptyHeader>
+          <EmptyMedia variant="icon"><SearchX aria-hidden="true" /></EmptyMedia>
+          <EmptyTitle>ไม่พบบทเรียนที่ตรงกับ &ldquo;{searchQuery}&rdquo;</EmptyTitle>
+          <EmptyDescription>ลองใช้คำค้นที่สั้นลงหรือสะกดคำใหม่อีกครั้ง</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -93,19 +106,13 @@ export default function LessonList({
           const duration = formatDuration(lesson.videoDuration);
           const number = String(originalIndex + 1).padStart(2, '0');
 
-          const itemClassName = cn(
-            'grid min-h-16 w-full grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            isCurrent
-              ? 'border-primary/25 bg-primary/10 text-foreground'
-              : 'text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground',
-            isLocked && 'text-muted-foreground/75',
-          );
+          const itemClassName = 'grid h-auto min-h-16 w-full grid-cols-[2rem_minmax(0,1fr)_auto] justify-normal gap-3 px-3 py-2.5 text-left whitespace-normal';
 
           const content = (
             <>
-              <span className={cn('flex size-7 items-center justify-center rounded-full bg-muted font-mono text-[11px]', isCurrent && 'bg-primary text-primary-foreground', isCompleted && !isCurrent && 'bg-emerald-50 text-emerald-700')}>
-                {isCompleted ? <Check className="size-3.5" aria-hidden="true" /> : number}
-              </span>
+              <Badge variant={isCurrent ? 'default' : 'secondary'} className="font-mono">
+                {isCompleted ? <Check aria-hidden="true" /> : number}
+              </Badge>
               <span className="min-w-0">
                 <strong className="block truncate text-sm font-medium text-current">{lesson.title}</strong>
                 <small className="mt-1 block text-xs text-muted-foreground">
@@ -121,13 +128,15 @@ export default function LessonList({
           return (
             <li key={lesson.id}>
               {isLocked ? (
-                <button type="button" className={itemClassName} onClick={() => onLockedClick?.(lesson.id)} aria-label={`บทที่ ${originalIndex + 1} ${lesson.title}, ต้องสมัครเรียนก่อน`}>
+                <Button type="button" variant="ghost" className={itemClassName} onClick={() => onLockedClick?.(lesson.id)} aria-label={`บทที่ ${originalIndex + 1} ${lesson.title}, ต้องสมัครเรียนก่อน`}>
                   {content}
-                </button>
+                </Button>
               ) : (
-                <Link ref={isCurrent ? currentItemRef : null} href={`/courses/${courseSlug}/learn/${lesson.id}`} className={itemClassName} aria-current={isCurrent ? 'page' : undefined}>
-                  {content}
-                </Link>
+                <Button asChild variant={isCurrent ? 'secondary' : 'ghost'} className={itemClassName}>
+                  <Link ref={isCurrent ? currentItemRef : null} href={`/courses/${courseSlug}/learn/${lesson.id}`} aria-current={isCurrent ? 'page' : undefined}>
+                    {content}
+                  </Link>
+                </Button>
               )}
             </li>
           );

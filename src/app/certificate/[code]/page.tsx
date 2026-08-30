@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { BadgeCheck, CircleX } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CertificateCard from '@/components/certificate/CertificateCard';
@@ -102,10 +103,10 @@ export default async function CertificatePage({ params }: Props) {
             </div>
             <Alert
               variant={isRevoked ? 'destructive' : 'default'}
-              className={isRevoked ? undefined : 'border-emerald-500/40 bg-emerald-500/5 text-emerald-800'}
               data-verification-status={isRevoked ? 'revoked' : 'valid'}
             >
-              <AlertTitle>{isRevoked ? '× REVOKED CREDENTIAL' : '✓ VERIFIED CREDENTIAL'}</AlertTitle>
+              {isRevoked ? <CircleX aria-hidden="true" /> : <BadgeCheck aria-hidden="true" />}
+              <AlertTitle>{isRevoked ? 'REVOKED CREDENTIAL' : 'VERIFIED CREDENTIAL'}</AlertTitle>
               <AlertDescription>{isRevoked ? 'ใบรับรองนี้ถูกเพิกถอนแล้ว' : 'ใบรับรองนี้ตรวจสอบได้'}</AlertDescription>
             </Alert>
           </header>

@@ -1,50 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { buttonVariants } from '@/components/ui/button';
+import { MessageSquare, Star } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Pagination, PaginationContent, PaginationItem } from '@/components/ui/pagination';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
-
-const reviewStyles = {
-  section: 'mt-8',
-  summary: 'mb-6 grid gap-6 rounded-xl border bg-card p-6 md:grid-cols-[12rem_minmax(0,1fr)]',
-  average: 'grid content-center justify-items-center gap-2 border-b pb-5 md:border-b-0 md:border-r md:pb-0 md:pr-6',
-  score: 'text-4xl font-bold tracking-tight',
-  total: 'text-sm text-muted-foreground',
-  distribution: 'grid gap-2',
-  distributionRow: 'grid grid-cols-[1rem_1rem_minmax(0,1fr)_2rem] items-center gap-2 text-sm data-[muted=true]:opacity-40',
-  distributionLabel: 'text-right',
-  distributionStar: 'size-4 text-amber-400',
-  distributionCount: 'text-right text-muted-foreground',
-  actions: 'mb-5 flex flex-wrap items-center justify-between gap-3',
-  actionControls: 'flex flex-wrap gap-2',
-  select: 'h-9 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
-  filterClear: buttonVariants({ variant: 'ghost', size: 'sm' }),
-  writeButton: buttonVariants(),
-  form: 'mb-6 grid gap-5 rounded-xl border bg-card p-5',
-  field: 'grid gap-2',
-  label: 'text-sm font-medium',
-  error: 'rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive',
-  submit: buttonVariants({ className: 'w-fit' }),
-  success: 'mb-5 rounded-md border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm text-emerald-700',
-  empty: 'grid justify-items-center gap-3 rounded-xl border border-dashed p-8 text-center text-muted-foreground',
-  emptyIcon: 'size-10',
-  emptyButton: 'mt-2',
-  list: 'grid gap-3',
-  row: 'rounded-xl border bg-card p-5',
-  rowHeader: 'flex flex-wrap items-start justify-between gap-3',
-  identity: 'flex items-center gap-3',
-  avatar: 'flex size-10 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary',
-  nameLine: 'flex flex-wrap items-center gap-2',
-  name: 'font-semibold',
-  verified: 'rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700',
-  date: 'mt-1 text-xs text-muted-foreground',
-  comment: 'mt-4 leading-7 text-muted-foreground',
-  pagination: 'mt-6 flex items-center justify-center gap-3',
-  pageButton: buttonVariants({ variant: 'outline', size: 'sm' }),
-  pageStatus: 'text-sm text-muted-foreground',
-};
 
 interface Review {
   id: string;
@@ -73,31 +45,40 @@ interface CourseReviewsProps {
   isEnrolled: boolean;
 }
 
-function StarRating({ rating, size = 16, interactive = false, onChange }: {
+function StarRating({ rating, interactive = false, onChange }: {
   rating: number;
-  size?: number;
   interactive?: boolean;
   onChange?: (r: number) => void;
 }) {
-  const [hover, setHover] = useState(0);
+  const stars = [1, 2, 3, 4, 5];
+
+  if (interactive) {
+    return (
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        value={rating > 0 ? String(rating) : ''}
+        onValueChange={(value) => value && onChange?.(Number(value))}
+        aria-label="คะแนนรีวิว"
+      >
+        {stars.map(star => (
+          <ToggleGroupItem key={star} value={String(star)} size="sm" aria-label={`${star} ดาว`}>
+            <Star fill={star <= rating ? 'currentColor' : 'none'} aria-hidden="true" />
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    );
+  }
 
   return (
-    <div className="flex gap-0.5 text-muted-foreground">
-      {[1, 2, 3, 4, 5].map(star => (
-        <svg
+    <div className="flex gap-0.5" aria-label={`${rating} จาก 5 ดาว`}>
+      {stars.map(star => (
+        <Star
           key={star}
-          className="text-muted-foreground transition data-[active=true]:text-amber-400 data-[interactive=true]:cursor-pointer"
-          data-active={star <= (hover || rating)}
-          data-interactive={interactive}
-          style={{ width: size, height: size }}
-          fill="currentColor"
-          viewBox="0 0 24 24"
-          onClick={() => interactive && onChange?.(star)}
-          onMouseEnter={() => interactive && setHover(star)}
-          onMouseLeave={() => interactive && setHover(0)}
-        >
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
+          className={cn('size-4', star <= rating ? 'text-primary' : 'text-muted-foreground')}
+          fill={star <= rating ? 'currentColor' : 'none'}
+          aria-hidden="true"
+        />
       ))}
     </div>
   );
@@ -105,11 +86,7 @@ function StarRating({ rating, size = 16, interactive = false, onChange }: {
 
 function ReviewBar({ count, total }: { count: number; total: number }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
-  return (
-    <div className="h-2 overflow-hidden rounded-full bg-muted">
-      <div className="h-full rounded-full bg-amber-400" style={{ width: pct + '%' }} />
-    </div>
-  );
+  return <Progress value={pct} aria-label={`${count} จาก ${total} รีวิว`} />;
 }
 
 export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsProps) {
@@ -194,119 +171,137 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
   };
 
   return (
-    <section className={reviewStyles.section} aria-labelledby="course-reviews-title">
+    <section className="mt-8" aria-labelledby="course-reviews-title">
       <h2 className="mb-5 text-2xl font-bold tracking-tight" id="course-reviews-title">
         รีวิวจากผู้เรียน
       </h2>
 
       {/* Stats Summary */}
       {stats && stats.totalReviews > 0 && (
-        <div className={reviewStyles.summary}>
-          {/* Average */}
-          <div className={reviewStyles.average}>
-            <div className={reviewStyles.score}>
-              {stats.avgRating.toFixed(1)}
+        <Card className="mb-6">
+          <CardHeader className="sr-only">
+            <CardTitle>สรุปคะแนนรีวิว</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-[12rem_minmax(0,1fr)]">
+            <div className="grid content-center justify-items-center gap-2 border-b pb-5 md:border-r md:border-b-0 md:pr-6 md:pb-0">
+              <div className="text-4xl font-bold tracking-tight">{stats.avgRating.toFixed(1)}</div>
+              <StarRating rating={Math.round(stats.avgRating)} />
+              <div className="text-sm text-muted-foreground">{stats.totalReviews} รีวิว</div>
             </div>
-            <StarRating rating={Math.round(stats.avgRating)} size={20} />
-            <div className={reviewStyles.total}>
-              {stats.totalReviews} รีวิว
-            </div>
-          </div>
 
-          {/* Distribution */}
-          <div className={reviewStyles.distribution}>
-            {[5, 4, 3, 2, 1].map(star => (
-              <button
-                key={star}
-                onClick={() => setFilterRating(filterRating === star ? null : star)}
-                className={reviewStyles.distributionRow}
-                data-muted={Boolean(filterRating && filterRating !== star)}
-              >
-                <span className={reviewStyles.distributionLabel}>{star}</span>
-                <svg className={reviewStyles.distributionStar} fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-                <ReviewBar count={stats.distribution[star] || 0} total={stats.totalReviews} />
-                <span className={reviewStyles.distributionCount}>
-                  {stats.distribution[star] || 0}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+            <div className="grid gap-2">
+              {[5, 4, 3, 2, 1].map(star => (
+                <Button
+                  key={star}
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFilterRating(filterRating === star ? null : star)}
+                  className="grid h-auto grid-cols-[1rem_1rem_minmax(0,1fr)_2rem] justify-normal gap-2"
+                  data-muted={Boolean(filterRating && filterRating !== star)}
+                  aria-pressed={filterRating === star}
+                >
+                  <span className="text-right">{star}</span>
+                  <Star data-icon="inline-start" fill="currentColor" aria-hidden="true" />
+                  <ReviewBar count={stats.distribution[star] || 0} total={stats.totalReviews} />
+                  <span className="text-right text-muted-foreground">{stats.distribution[star] || 0}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Actions */}
-      <div className={reviewStyles.actions}>
-        <div className={reviewStyles.actionControls}>
-          <select
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          <NativeSelect
             value={sort}
             onChange={(e) => { setSort(e.target.value); setCurrentPage(1); }}
-            className={reviewStyles.select}
+            aria-label="เรียงรีวิว"
           >
-            <option value="latest">ล่าสุด</option>
-            <option value="highest">คะแนนสูงสุด</option>
-            <option value="lowest">คะแนนต่ำสุด</option>
-          </select>
+            <NativeSelectOption value="latest">ล่าสุด</NativeSelectOption>
+            <NativeSelectOption value="highest">คะแนนสูงสุด</NativeSelectOption>
+            <NativeSelectOption value="lowest">คะแนนต่ำสุด</NativeSelectOption>
+          </NativeSelect>
           {filterRating && (
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setFilterRating(null)}
-              className={reviewStyles.filterClear}
             >
               ล้างตัวกรอง ({filterRating} ดาว) ✕
-            </button>
+            </Button>
           )}
         </div>
 
         {isEnrolled && !submitSuccess && (
-          <button
+          <Button
+            type="button"
             onClick={() => setShowForm(!showForm)}
-            className={reviewStyles.writeButton}
           >
             {showForm ? 'ยกเลิก' : 'เขียนรีวิว'}
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Review Form */}
       {showForm && (
-        <div className={reviewStyles.form}>
-          <div className={reviewStyles.field}>
-            <label className={reviewStyles.label}>
-              คะแนน *
-            </label>
-            <StarRating rating={formRating} size={32} interactive onChange={setFormRating} />
-          </div>
-          <div className={reviewStyles.field}>
-            <label className={reviewStyles.label}>
-              ความคิดเห็น
-            </label>
-            <Textarea
-              value={formComment}
-              onChange={(e) => setFormComment(e.target.value)}
-              placeholder="แชร์ประสบการณ์การเรียนของคุณ..."
-              rows={4}
-            />
-          </div>
-          {submitError && (
-            <div className={reviewStyles.error} role="alert">
-              {submitError}
-            </div>
-          )}
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || formRating === 0}
-            className={reviewStyles.submit}
-          >
-            {submitting ? 'กำลังส่ง...' : 'ส่งรีวิว'}
-          </button>
-        </div>
+        <form
+          className="mb-6"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSubmit();
+          }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>เขียนรีวิวคอร์สนี้</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FieldGroup>
+                <Field data-invalid={Boolean(submitError && formRating === 0) || undefined}>
+                  <FieldLabel>คะแนน *</FieldLabel>
+                  <StarRating rating={formRating} interactive onChange={setFormRating} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="course-review-comment">ความคิดเห็น</FieldLabel>
+                  <Textarea
+                    id="course-review-comment"
+                    value={formComment}
+                    onChange={(e) => setFormComment(e.target.value)}
+                    placeholder="แชร์ประสบการณ์การเรียนของคุณ..."
+                    rows={4}
+                  />
+                </Field>
+                {submitError && (
+                  <Alert variant="destructive">
+                    <AlertTitle>ส่งรีวิวไม่สำเร็จ</AlertTitle>
+                    <AlertDescription>{submitError}</AlertDescription>
+                  </Alert>
+                )}
+              </FieldGroup>
+            </CardContent>
+            <CardFooter>
+              <Button
+                type="submit"
+                disabled={submitting || formRating === 0}
+                aria-busy={submitting}
+              >
+                {submitting && <Spinner data-icon="inline-start" aria-hidden="true" />}
+                {submitting ? 'กำลังส่ง...' : 'ส่งรีวิว'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </form>
       )}
 
       {submitSuccess && (
-        <div className={reviewStyles.success} role="status">
-          ขอบคุณสำหรับรีวิวของคุณ!
-        </div>
+        <Alert className="mb-5" role="status">
+          <AlertTitle>ส่งรีวิวแล้ว</AlertTitle>
+          <AlertDescription>ขอบคุณสำหรับรีวิวของคุณ!</AlertDescription>
+        </Alert>
       )}
 
       {/* Reviews List */}
@@ -315,52 +310,50 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
           <Skeleton className="h-24 w-full" /><Skeleton className="h-24 w-full" />
         </div>
       ) : reviews.length === 0 ? (
-        <div className={reviewStyles.empty}>
-          <svg className={reviewStyles.emptyIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <p>{filterRating ? 'ไม่พบรีวิวที่ตรงกับตัวกรอง' : 'ยังไม่มีรีวิว'}</p>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <MessageSquare aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>{filterRating ? 'ไม่พบรีวิวที่ตรงกับตัวกรอง' : 'ยังไม่มีรีวิว'}</EmptyTitle>
+            <EmptyDescription>
+              {filterRating ? 'ลองล้างตัวกรองเพื่อดูรีวิวทั้งหมด' : 'รีวิวแรกจะช่วยให้ผู้เรียนคนอื่นตัดสินใจได้ง่ายขึ้น'}
+            </EmptyDescription>
+          </EmptyHeader>
           {isEnrolled && !submitSuccess && (
-            <button
-              onClick={() => setShowForm(true)}
-              className={cn(reviewStyles.writeButton, reviewStyles.emptyButton)}
-            >
-              เป็นคนแรกที่รีวิว
-            </button>
+            <EmptyContent>
+              <Button type="button" onClick={() => setShowForm(true)}>เป็นคนแรกที่รีวิว</Button>
+            </EmptyContent>
           )}
-        </div>
+        </Empty>
       ) : (
-        <div className={reviewStyles.list}>
+        <div className="flex flex-col gap-3">
           {reviews.map(review => (
-            <article className={reviewStyles.row} key={review.id}>
-              <div className={reviewStyles.rowHeader}>
-                <div className={reviewStyles.identity}>
-                  <div className={reviewStyles.avatar}>
-                    {review.displayName?.charAt(0)?.toUpperCase() || '?'}
-                  </div>
-                  <div>
-                    <div className={reviewStyles.nameLine}>
-                      <span className={reviewStyles.name}>
-                        {review.displayName}
-                      </span>
-                      {review.isVerified && (
-                        <span className={reviewStyles.verified}>
-                          ผู้เรียนจริง
-                        </span>
-                      )}
-                    </div>
-                    <div className={reviewStyles.date}>
-                      {formatDate(review.createdAt)}
+            <article key={review.id}>
+              <Card size="sm">
+                <CardHeader className="flex-row items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar size="lg">
+                      <AvatarFallback>{review.displayName?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <strong>{review.displayName}</strong>
+                        {review.isVerified && <Badge variant="secondary">ผู้เรียนจริง</Badge>}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {formatDate(review.createdAt)}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <StarRating rating={review.rating} size={16} />
-              </div>
-              {review.comment && (
-                <p className={reviewStyles.comment}>
-                  {review.comment}
-                </p>
-              )}
+                  <StarRating rating={review.rating} />
+                </CardHeader>
+                {review.comment && (
+                  <CardContent>
+                    <p className="leading-7 text-muted-foreground">{review.comment}</p>
+                  </CardContent>
+                )}
+              </Card>
             </article>
           ))}
         </div>
@@ -368,25 +361,37 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
-        <div className={reviewStyles.pagination}>
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className={reviewStyles.pageButton}
-          >
-            ก่อนหน้า
-          </button>
-          <span className={reviewStyles.pageStatus}>
-            หน้า {currentPage} จาก {pagination.totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
-            disabled={currentPage === pagination.totalPages}
-            className={reviewStyles.pageButton}
-          >
-            ถัดไป
-          </button>
-        </div>
+        <Pagination className="mt-6" aria-label="หน้ารีวิว">
+          <PaginationContent>
+            <PaginationItem>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                ก่อนหน้า
+              </Button>
+            </PaginationItem>
+            <PaginationItem>
+              <span className="px-2 text-sm text-muted-foreground" aria-current="page">
+                หน้า {currentPage} จาก {pagination.totalPages}
+              </span>
+            </PaginationItem>
+            <PaginationItem>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+                disabled={currentPage === pagination.totalPages}
+              >
+                ถัดไป
+              </Button>
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </section>
   );

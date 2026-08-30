@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { FormButton, FormInput } from '@/components/ui/FormControls';
-import { GoogleIcon, PasswordIcon } from './AuthIcons';
-import { AuthDivider, AuthError, AuthField, AuthFootnote, PasswordField } from './AuthFormLayout';
+import { Button } from '@/components/ui/button';
+import { FieldGroup } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import { GoogleIcon } from './AuthIcons';
+import { AuthDivider, AuthError, AuthField, AuthFootnote, PasswordInput } from './AuthFormLayout';
 
 export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   OAuthAccountNotLinked: 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านก่อน แล้วจึงเชื่อมบัญชี Google ภายหลัง',
@@ -61,9 +64,10 @@ export default function LoginForm() {
     <>
       {error && <AuthError>{error}</AuthError>}
 
-      <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
-        <AuthField htmlFor="login-email" label="อีเมล">
-          <FormInput
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" aria-busy={loading}>
+        <FieldGroup className="gap-5">
+          <AuthField htmlFor="login-email" label="อีเมล">
+            <Input
             id={'login-email'}
             name={'email'}
             type={'email'}
@@ -72,42 +76,41 @@ export default function LoginForm() {
             required
             autoComplete={'email'}
             placeholder={'name@example.com'}
-          />
-        </AuthField>
+            />
+          </AuthField>
 
-        <AuthField htmlFor="login-password" label="รหัสผ่าน" trailing={<Link className="text-xs font-semibold text-primary hover:underline" href="/forgot-password">ลืมรหัสผ่าน?</Link>}>
-          <PasswordField action={
-            <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'} aria-pressed={showPassword}><PasswordIcon visible={showPassword} /></button>
-          }>
-            <FormInput
+          <AuthField htmlFor="login-password" label="รหัสผ่าน" trailing={<Link className="text-xs font-semibold text-primary hover:underline" href="/forgot-password">ลืมรหัสผ่าน?</Link>}>
+            <PasswordInput
               id={'login-password'}
               name={'password'}
-              type={showPassword ? 'text' : 'password'}
+              visible={showPassword}
+              onVisibilityChange={() => setShowPassword((visible) => !visible)}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
               autoComplete={'current-password'}
               placeholder={'••••••••'}
             />
-          </PasswordField>
-        </AuthField>
+          </AuthField>
+        </FieldGroup>
 
-        <FormButton type={'submit'} block pending={loading} disabled={loading}>
+        <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
+          {loading && <Spinner data-icon="inline-start" aria-hidden="true" />}
           {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-        </FormButton>
+        </Button>
       </form>
 
       <AuthDivider>หรือใช้บัญชี Google</AuthDivider>
 
-      <FormButton
-        type={'button'}
+      <Button
+        type="button"
         onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-        variant={'secondary'}
-        block
+        variant="outline"
+        className="w-full"
       >
         <GoogleIcon />
         เข้าสู่ระบบด้วย Google
-      </FormButton>
+      </Button>
 
       <AuthFootnote>ยังไม่มีบัญชี? <Link href="/register">สมัครสมาชิกฟรี</Link></AuthFootnote>
       <p className="mt-2 text-center text-xs leading-5 text-muted-foreground">การเข้าสู่ระบบจะใช้ข้อมูลบัญชีตามนโยบายความเป็นส่วนตัวของ MilerDev</p>

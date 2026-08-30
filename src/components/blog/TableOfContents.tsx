@@ -74,12 +74,12 @@ export default function TableOfContents({ contentHtml }: Props) {
         aria-expanded={open}
         aria-controls={'blog-toc-items'}
       >
-        <span className="inline-flex items-center gap-2"><List />สารบัญบทความ</span>
-        <ChevronDown className={cn('transition-transform', open && 'rotate-180')} aria-hidden="true" />
+        <span className="inline-flex items-center gap-2"><List data-icon="inline-start" aria-hidden="true" />สารบัญบทความ</span>
+        <ChevronDown data-icon="inline-end" className={cn('transition-transform', open && 'rotate-180')} aria-hidden="true" />
       </Button>
 
       {open ? (
-        <nav id="blog-toc-items" className="mt-3 space-y-1 border-t pt-3" aria-label="หัวข้อในบทความ">
+        <nav id="blog-toc-items" className="mt-3 flex flex-col gap-1 border-t pt-3" aria-label="หัวข้อในบทความ">
           {items.map((item) => (
             <a
               key={item.id}

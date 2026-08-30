@@ -1,42 +1,81 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { Check, Copy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-const copyIcon = `<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='9' width='13' height='13' rx='2'/><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/></svg>`;
-const successIcon = `<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>`;
+function CodeCopyAction({ pre }: { pre: HTMLPreElement }) {
+  const [copied, setCopied] = useState(false);
+  const resetTimerRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current);
+  }, []);
+
+  const handleCopy = async () => {
+    const code = pre.querySelector('code')?.innerText ?? '';
+
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      size="xs"
+      onClick={handleCopy}
+      aria-label={copied ? 'คัดลอกโค้ดแล้ว' : 'คัดลอกโค้ด'}
+      aria-live="polite"
+    >
+      {copied ? (
+        <Check data-icon="inline-start" aria-hidden="true" />
+      ) : (
+        <Copy data-icon="inline-start" aria-hidden="true" />
+      )}
+      {copied ? 'คัดลอกแล้ว' : 'คัดลอก'}
+    </Button>
+  );
+}
 
 export default function CodeCopyButton({ selector = '.rich-content pre' }: { selector?: string } = {}) {
   useEffect(() => {
+    const created: Array<{
+      pre: HTMLPreElement;
+      container: HTMLSpanElement;
+      root: Root;
+      addedRelativeClass: boolean;
+    }> = [];
     const blocks = document.querySelectorAll<HTMLPreElement>(selector);
 
     blocks.forEach((pre) => {
       if (pre.querySelector('[data-code-copy]')) return;
 
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'absolute right-3 top-3 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 bg-black/40 px-2.5 text-xs font-medium text-white backdrop-blur hover:bg-black/60 data-[copied=true]:border-emerald-400/40 data-[copied=true]:text-emerald-300';
-      button.dataset.codeCopy = 'true';
-      button.setAttribute('aria-label', 'คัดลอกโค้ด');
-      button.innerHTML = `${copyIcon}คัดลอก`;
-
-      button.addEventListener('click', async () => {
-        const code = pre.querySelector('code')?.innerText ?? '';
-        try {
-          await navigator.clipboard.writeText(code);
-          button.innerHTML = `${successIcon}คัดลอกแล้ว`;
-          button.dataset.copied = 'true';
-          setTimeout(() => {
-            button.innerHTML = `${copyIcon}คัดลอก`;
-            delete button.dataset.copied;
-          }, 2000);
-        } catch {
-          button.textContent = 'Error';
-        }
-      });
-
-      pre.style.position = 'relative';
-      pre.appendChild(button);
+      const container = document.createElement('span');
+      const addedRelativeClass = !pre.classList.contains('relative');
+      if (addedRelativeClass) pre.classList.add('relative');
+      container.dataset.codeCopy = 'true';
+      container.className = 'absolute top-3 right-3';
+      pre.appendChild(container);
+      const root = createRoot(container);
+      root.render(<CodeCopyAction pre={pre} />);
+      created.push({ pre, container, root, addedRelativeClass });
     });
+
+    return () => {
+      created.forEach(({ pre, container, root, addedRelativeClass }) => {
+        root.unmount();
+        container.remove();
+        if (addedRelativeClass) pre.classList.remove('relative');
+      });
+    };
   }, [selector]);
 
   return null;

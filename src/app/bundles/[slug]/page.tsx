@@ -210,24 +210,24 @@ export default async function BundleDetailPage({ params }: Props) {
                 {bundle.description ? <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">{bundle.description}</p> : null}
               </div>
 
-              <div className="grid grid-cols-2 gap-3" aria-label={'ข้อมูลชุดคอร์ส'}>
-                <div className="rounded-lg border bg-background p-4">
-                  <span>คอร์ส</span>
-                  <strong>{bundle.courseCount}</strong>
+              <dl className="grid grid-cols-2 gap-3" aria-label={'ข้อมูลชุดคอร์ส'}>
+                <div className="flex flex-col gap-1 rounded-lg border bg-background p-4">
+                  <dt className="text-sm text-muted-foreground">คอร์ส</dt>
+                  <dd className="text-lg font-semibold">{bundle.courseCount}</dd>
                 </div>
-                <div className="rounded-lg border bg-background p-4">
-                  <span>บทเรียน</span>
-                  <strong>{totalLessons}</strong>
+                <div className="flex flex-col gap-1 rounded-lg border bg-background p-4">
+                  <dt className="text-sm text-muted-foreground">บทเรียน</dt>
+                  <dd className="text-lg font-semibold">{totalLessons}</dd>
                 </div>
-                <div className="rounded-lg border bg-background p-4">
-                  <span>ราคาชุด</span>
-                  <strong>{bundlePrice === 0 ? 'ฟรี' : `฿${bundlePrice.toLocaleString()}`}</strong>
+                <div className="flex flex-col gap-1 rounded-lg border bg-background p-4">
+                  <dt className="text-sm text-muted-foreground">ราคาชุด</dt>
+                  <dd className="text-lg font-semibold">{bundlePrice === 0 ? 'ฟรี' : `฿${bundlePrice.toLocaleString()}`}</dd>
                 </div>
-                <div className="rounded-lg border bg-background p-4">
-                  <span>ส่วนลด</span>
-                  <strong>{bundle.discount > 0 ? `${bundle.discount}%` : '—'}</strong>
+                <div className="flex flex-col gap-1 rounded-lg border bg-background p-4">
+                  <dt className="text-sm text-muted-foreground">ส่วนลด</dt>
+                  <dd className="text-lg font-semibold">{bundle.discount > 0 ? `${bundle.discount}%` : '—'}</dd>
                 </div>
-              </div>
+              </dl>
             </div>
           </div>
         </header>
@@ -283,7 +283,7 @@ export default async function BundleDetailPage({ params }: Props) {
                   <CardTitle className="text-2xl">เริ่มเส้นทางนี้</CardTitle>
                 </CardHeader>
 
-                <CardContent className="space-y-6">
+                <CardContent className="flex flex-col gap-6">
                 <div className="rounded-lg bg-muted p-5">
                   <span className="text-sm text-muted-foreground">ราคาชุดคอร์ส</span>
                   <strong className="mt-1 block text-3xl tracking-tight">{bundlePrice === 0 ? 'ฟรี' : `฿${bundlePrice.toLocaleString()}`}</strong>

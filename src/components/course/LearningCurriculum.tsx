@@ -2,7 +2,7 @@
 
 import { BookOpen, Check, Lock, Search } from 'lucide-react';
 import LessonList from './LessonList';
-import { Input } from '@/components/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { Progress } from '@/components/ui/progress';
 
 interface Lesson {
@@ -58,7 +58,7 @@ export default function LearningCurriculum({
           <div className="mt-5 rounded-xl border bg-muted/30 p-3.5">
             <div className="flex items-center justify-between gap-3 text-sm">
               <span className="flex items-center gap-2 font-medium">
-                {isReviewMode && <Check className="size-4 text-emerald-600" aria-hidden="true" />}
+                {isReviewMode && <Check className="text-primary" aria-hidden="true" />}
                 {isReviewMode ? 'เรียนครบแล้ว · กำลังทบทวน' : 'ความคืบหน้าของคุณ'}
               </span>
               <span className="shrink-0 tabular-nums text-muted-foreground">{completedCount}/{lessons.length}</span>
@@ -72,17 +72,18 @@ export default function LearningCurriculum({
           </div>
         )}
 
-        <div className="relative mt-4">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <Input
-            className="pl-9"
+        <InputGroup className="mt-4">
+          <InputGroupAddon>
+            <Search aria-hidden="true" />
+          </InputGroupAddon>
+          <InputGroupInput
             type="search"
             aria-label="ค้นหาบทเรียน"
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="ค้นหาบทเรียน..."
           />
-        </div>
+        </InputGroup>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">

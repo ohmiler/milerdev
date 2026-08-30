@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 
 interface Notification {
     id: string;
@@ -16,10 +17,8 @@ interface Notification {
 interface NotificationContextType {
     unreadCount: number;
     notifications: Notification[];
-    toasts: Notification[];
     markAsRead: (ids?: string[]) => Promise<void>;
     deleteRead: () => Promise<void>;
-    dismissToast: (id: string) => void;
     refreshNotifications: () => Promise<void>;
     setNotificationsPanelOpen: (open: boolean) => void;
 }
@@ -27,10 +26,8 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType>({
     unreadCount: 0,
     notifications: [],
-    toasts: [],
     markAsRead: async () => {},
     deleteRead: async () => {},
-    dismissToast: () => {},
     refreshNotifications: async () => {},
     setNotificationsPanelOpen: () => {},
 });
@@ -46,12 +43,11 @@ export default function NotificationProvider({ children }: { children: React.Rea
     const isAuthenticated = status === 'authenticated' && !!session?.user;
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    const [toasts, setToasts] = useState<Notification[]>([]);
     const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
     const eventSourceRef = useRef<EventSource | null>(null);
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const toastTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+    const shownToastIdsRef = useRef<Set<string>>(new Set());
     const isPanelOpenRef = useRef(false);
 
     const fetchNotificationSummary = useCallback(async () => {
@@ -84,29 +80,35 @@ export default function NotificationProvider({ children }: { children: React.Rea
         }
     }, []);
 
-    // Add a toast notification (auto-dismiss after 6s)
+    // Surface live notifications through the root Sonner toaster.
     const addToast = useCallback((notification: Notification) => {
-        setToasts(prev => {
-            // Prevent duplicates
-            if (prev.some(t => t.id === notification.id)) return prev;
-            return [notification, ...prev].slice(0, 5);
-        });
-
-        // Auto-dismiss after 6 seconds
-        const timer = setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== notification.id));
-            toastTimersRef.current.delete(notification.id);
-        }, 6000);
-        toastTimersRef.current.set(notification.id, timer);
-    }, []);
-
-    const dismissToast = useCallback((id: string) => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-        const timer = toastTimersRef.current.get(id);
-        if (timer) {
-            clearTimeout(timer);
-            toastTimersRef.current.delete(id);
+        if (shownToastIdsRef.current.has(notification.id)) return;
+        if (shownToastIdsRef.current.size >= 100) {
+            const oldestId = shownToastIdsRef.current.values().next().value;
+            if (oldestId) shownToastIdsRef.current.delete(oldestId);
         }
+        shownToastIdsRef.current.add(notification.id);
+
+        const options = {
+            id: notification.id,
+            description: notification.message
+                ? notification.message.length > 80
+                    ? `${notification.message.slice(0, 80)}...`
+                    : notification.message
+                : undefined,
+            duration: 6000,
+            action: notification.link
+                ? {
+                    label: 'ดูรายละเอียด',
+                    onClick: () => window.location.assign(notification.link!),
+                }
+                : undefined,
+        };
+
+        if (notification.type === 'success') toast.success(notification.title, options);
+        else if (notification.type === 'warning') toast.warning(notification.title, options);
+        else if (notification.type === 'error') toast.error(notification.title, options);
+        else toast.info(notification.title, options);
     }, []);
 
     // Mark notifications as read
@@ -334,114 +336,25 @@ export default function NotificationProvider({ children }: { children: React.Rea
             clearInterval(pollIntervalRef.current);
             pollIntervalRef.current = null;
         }
-        for (const timer of toastTimersRef.current.values()) {
-            clearTimeout(timer);
+        for (const toastId of shownToastIdsRef.current) {
+            toast.dismiss(toastId);
         }
-        toastTimersRef.current.clear();
+        shownToastIdsRef.current.clear();
     }, [isAuthenticated]);
 
     const visibleNotifications = isAuthenticated ? notifications : [];
     const visibleUnreadCount = isAuthenticated ? unreadCount : 0;
-    const visibleToasts = isAuthenticated ? toasts : [];
 
     return (
         <NotificationContext.Provider value={{
             unreadCount: visibleUnreadCount,
             notifications: visibleNotifications,
-            toasts: visibleToasts,
             markAsRead,
             deleteRead,
-            dismissToast,
             refreshNotifications,
             setNotificationsPanelOpen: setIsNotificationsPanelOpen,
         }}>
             {children}
-            {/* Toast Container */}
-            {visibleToasts.length > 0 && (
-                <div style={{
-                    position: 'fixed',
-                    top: '80px',
-                    right: '16px',
-                    zIndex: 9999,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    maxWidth: '380px',
-                    width: '100%',
-                }}>
-                    {visibleToasts.map(toast => (
-                        <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
-                    ))}
-                </div>
-            )}
         </NotificationContext.Provider>
-    );
-}
-
-// Toast item component
-function ToastItem({ toast, onDismiss }: { toast: Notification; onDismiss: (id: string) => void }) {
-    const typeStyles: Record<string, { bg: string; border: string; icon: string }> = {
-        info: { bg: '#eff6ff', border: '#bfdbfe', icon: 'ℹ️' },
-        success: { bg: '#f0fdf4', border: '#bbf7d0', icon: '✅' },
-        warning: { bg: '#fffbeb', border: '#fde68a', icon: '⚠️' },
-        error: { bg: '#fef2f2', border: '#fecaca', icon: '❌' },
-    };
-    const style = typeStyles[toast.type] || typeStyles.info;
-
-    return (
-        <div
-            style={{
-                background: 'white',
-                borderRadius: '12px',
-                border: `1px solid ${style.border}`,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                padding: '14px 16px',
-                display: 'flex',
-                gap: '10px',
-                alignItems: 'flex-start',
-                animation: 'slideInRight 0.3s ease-out',
-            }}
-        >
-            <span style={{ fontSize: '1.125rem', flexShrink: 0, marginTop: '1px' }}>{style.icon}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem', marginBottom: '2px' }}>
-                    {toast.title}
-                </div>
-                {toast.message && (
-                    <div style={{ color: '#64748b', fontSize: '0.8125rem', lineHeight: 1.4 }}>
-                        {toast.message.length > 80 ? toast.message.slice(0, 80) + '...' : toast.message}
-                    </div>
-                )}
-                {toast.link && (
-                    <a
-                        href={toast.link}
-                        style={{ color: 'var(--accent-strong)', fontSize: '0.8125rem', fontWeight: 500, textDecoration: 'none', marginTop: '4px', display: 'inline-block' }}
-                    >
-                        ดูรายละเอียด →
-                    </a>
-                )}
-            </div>
-            <button
-                onClick={() => onDismiss(toast.id)}
-                style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#94a3b8',
-                    fontSize: '1.125rem',
-                    padding: '0',
-                    lineHeight: 1,
-                    flexShrink: 0,
-                }}
-            >
-                ×
-            </button>
-            <style>{`
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-            `}</style>
-        </div>
     );
 }

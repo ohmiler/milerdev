@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, type RefObject } from 'react';
 import { AlertTriangle, Check, Info, X } from 'lucide-react';
 import DialogShell from './DialogShell';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ interface ModalProps {
   children: React.ReactNode;
   type?: ModalTone;
   buttonText?: string;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
 const icons = {
@@ -23,7 +24,22 @@ const icons = {
   warning: <AlertTriangle />,
 };
 
-export default function Modal({ isOpen, onClose, title, children, type = 'info', buttonText }: ModalProps) {
+const fallbackTitles: Record<ModalTone, string> = {
+  success: 'ดำเนินการสำเร็จ',
+  error: 'เกิดข้อผิดพลาด',
+  info: 'ข้อมูล',
+  warning: 'โปรดตรวจสอบ',
+};
+
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  type = 'info',
+  buttonText,
+  returnFocusRef,
+}: ModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const resolvedButtonText = buttonText ?? 'ตกลง';
 
@@ -31,12 +47,12 @@ export default function Modal({ isOpen, onClose, title, children, type = 'info',
     <DialogShell
       isOpen={isOpen}
       onClose={onClose}
-      title={title}
+      title={title ?? fallbackTitles[type]}
       description={children}
       tone={type}
-      label={title ?? resolvedButtonText}
       dismissOnBackdrop
       initialFocusRef={closeButtonRef}
+      returnFocusRef={returnFocusRef}
       icon={icons[type]}
     >
       <Button ref={closeButtonRef} type="button" onClick={onClose}>{resolvedButtonText}</Button>

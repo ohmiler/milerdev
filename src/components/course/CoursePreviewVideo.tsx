@@ -1,8 +1,10 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { Play } from 'lucide-react';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
 import DialogShell from '@/components/ui/DialogShell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 interface CoursePreviewVideoProps {
@@ -16,20 +18,19 @@ export default function CoursePreviewVideo({ previewVideoUrl }: CoursePreviewVid
 
   return (
     <>
-      <button
+      <Button
         ref={triggerRef}
         type={'button'}
-        className="group absolute inset-0 z-10 grid cursor-pointer place-items-center border-0 bg-slate-950/45 text-white transition-colors hover:bg-slate-950/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary motion-reduce:transition-none"
+        variant="ghost"
+        className="group absolute inset-0 z-10 grid h-auto w-full place-items-center rounded-none bg-background/45 whitespace-normal hover:bg-background/65"
         onClick={() => setShowModal(true)}
         aria-label={'ดูวิดีโอตัวอย่างคอร์ส'}
       >
-        <span className="grid size-16 place-items-center rounded-full border border-white/50 bg-background/95 text-primary shadow-lg transition-transform group-hover:scale-105 motion-reduce:transition-none" aria-hidden={true}>
-          <svg className="size-7 fill-current" viewBox={'0 0 24 24'}>
-            <path d={'M8 5v14l11-7z'} />
-          </svg>
+        <span className="grid size-16 place-items-center rounded-full border bg-background/95 text-primary shadow-lg transition-transform group-hover:scale-105 motion-reduce:transition-none" aria-hidden={true}>
+          <Play data-icon="inline-start" fill="currentColor" />
         </span>
-        <span className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/30 bg-slate-950/80 px-3 py-1.5 text-xs font-semibold">ดูตัวอย่างคอร์ส</span>
-      </button>
+        <Badge className="absolute bottom-4 left-1/2 -translate-x-1/2" variant="secondary">ดูตัวอย่างคอร์ส</Badge>
+      </Button>
 
       <DialogShell
         isOpen={showModal}

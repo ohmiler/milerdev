@@ -2,7 +2,9 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { RotateCcw } from 'lucide-react';
 import StatusSurface from '@/components/status/StatusSurface';
+import { Button } from '@/components/ui/button';
 
 export default function Error({
   error,
@@ -23,8 +25,13 @@ export default function Error({
       description="เกิดข้อผิดพลาดที่ไม่คาดคิดระหว่างเปิดหน้านี้ คุณสามารถลองประมวลผลอีกครั้งหรือกลับไปเริ่มจากหน้าหลัก"
       note="รายละเอียดทางเทคนิคถูกเก็บไว้สำหรับการตรวจสอบและจะไม่แสดงบนหน้านี้"
     >
-      <button type="button" onClick={reset}>ลองใหม่อีกครั้ง <span aria-hidden="true">↻</span></button>
-      <Link href="/">กลับหน้าหลัก</Link>
+      <Button type="button" onClick={reset}>
+        <RotateCcw data-icon="inline-start" aria-hidden="true" />
+        ลองใหม่อีกครั้ง
+      </Button>
+      <Button asChild variant="outline">
+        <Link href="/">กลับหน้าหลัก</Link>
+      </Button>
     </StatusSurface>
   );
 }

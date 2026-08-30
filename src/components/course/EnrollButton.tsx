@@ -1,56 +1,35 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import {
+  CircleAlert,
+  CreditCard,
+  ImagePlus,
+  PlayCircle,
+  Smartphone,
+  TicketPercent,
+  X,
+} from 'lucide-react';
 import DialogShell from '@/components/ui/DialogShell';
 import Modal from '@/components/ui/Modal';
-import { buttonVariants } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { Spinner } from '@/components/ui/spinner';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
-
-const styles = {
-  primaryButton: buttonVariants({ className: 'w-full' }),
-  successButton: 'bg-emerald-600 text-white hover:bg-emerald-700',
-  discountSummary: 'grid gap-1 rounded-lg bg-primary/5 p-4',
-  originalPrice: 'text-sm text-muted-foreground line-through',
-  effectivePrice: 'text-2xl text-primary',
-  couponSaving: 'text-sm text-muted-foreground',
-  dialogAmount: 'text-foreground',
-  couponPanel: 'grid gap-2 rounded-lg border bg-muted/30 p-4',
-  fieldLabel: 'text-sm font-medium text-foreground',
-  couponApplied: 'flex items-center justify-between gap-3',
-  couponCode: 'font-mono font-semibold text-primary',
-  couponDescription: 'ml-2 text-sm text-muted-foreground',
-  textButton: buttonVariants({ variant: 'ghost', size: 'sm' }),
-  dangerText: 'text-destructive hover:text-destructive',
-  couponInputRow: 'flex gap-2',
-  couponInput: 'h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring',
-  compactButton: buttonVariants({ variant: 'outline', size: 'sm' }),
-  errorText: 'text-sm text-destructive',
-  methodList: 'grid gap-3',
-  methodButton: 'flex w-full items-center gap-4 rounded-lg border bg-background p-4 text-left transition hover:border-primary/50 hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-50',
-  methodIcon: 'flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary',
-  transferIcon: 'bg-emerald-500/10 text-emerald-700',
-  methodTitle: 'font-semibold text-foreground',
-  methodDescription: 'mt-1 text-sm text-muted-foreground',
-  secondaryButton: buttonVariants({ variant: 'outline' }),
-  bankInfo: 'rounded-lg border bg-muted/30 p-4',
-  bankInfoLabel: 'mb-3 font-semibold text-foreground',
-  bankRows: 'grid gap-2 text-sm',
-  bankRow: 'flex items-center justify-between gap-4',
-  accountNumber: 'font-mono tracking-wide',
-  amount: 'text-lg text-primary',
-  uploadField: 'grid gap-2',
-  uploadButton: 'flex w-full flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center transition hover:border-primary/50 hover:bg-primary/5',
-  uploadTitle: 'font-medium text-foreground',
-  uploadHint: 'mt-1 text-sm text-muted-foreground',
-  slipPreview: 'relative overflow-hidden rounded-lg border bg-muted',
-  removePreviewButton: 'absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-background/90 text-lg shadow-sm hover:bg-background',
-  hiddenInput: 'hidden',
-  errorPanel: 'grid gap-1 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive',
-  loadingContent: 'inline-flex items-center gap-2',
-  spinner: 'size-4 animate-spin rounded-full border-2 border-current border-t-transparent',
-};
 
 interface EnrollButtonProps {
   courseId: string;
@@ -88,6 +67,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [promptPayIntent, setPromptPayIntent] = useState<{ paymentId: string; amount: number } | null>(null);
+  const enrollmentTriggerRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [couponCode, setCouponCode] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
@@ -334,12 +314,14 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
 
     // Validate file type
     if (!COURSE_PAYMENT_CONTRACT.allowedSlipTypes.includes(file.type)) {
+      resetSlipState();
       setVerifyError('รองรับเฉพาะไฟล์ JPG, PNG, WEBP เท่านั้น');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > COURSE_PAYMENT_CONTRACT.maxSlipBytes) {
+      resetSlipState();
       setVerifyError('ไฟล์ต้องมีขนาดไม่เกิน 5MB');
       return;
     }
@@ -373,7 +355,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
 
       const data = await res.json();
 
-      if (data.success) {
+      if (res.ok && data.success) {
         updateEnrolled(true);
         setPaymentStep('idle');
         setPromptPayIntent(null);
@@ -415,45 +397,40 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
 
   if (checking) {
     return (
-      <button
-        type="button"
-        disabled
-        className={styles.primaryButton}
-      >
+      <Button type="button" className="w-full" disabled aria-busy="true">
+        <Spinner data-icon="inline-start" aria-hidden="true" />
         กำลังตรวจสอบ...
-      </button>
+      </Button>
     );
   }
 
   return (
     <>
       {enrolled ? (
-        <button
+        <Button
           type="button"
           onClick={handleGoToLearn}
-          className={`${styles.primaryButton} ${styles.successButton}`}
+          className="w-full"
         >
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <PlayCircle data-icon="inline-start" aria-hidden="true" />
           เข้าเรียน
-        </button>
+        </Button>
       ) : (
-        <button
+        <Button
+          ref={enrollmentTriggerRef}
           type="button"
           onClick={handleEnroll}
           disabled={loading}
-          className={styles.primaryButton}
+          className="w-full"
+          aria-busy={loading}
         >
-          {loading ? (
-            'กำลังดำเนินการ...'
-          ) : price === 0 ? (
+          {loading && <Spinner data-icon="inline-start" aria-hidden="true" />}
+          {loading ? 'กำลังดำเนินการ...' : price === 0 ? (
             'ลงทะเบียนเรียนฟรี'
           ) : (
             `ซื้อคอร์สนี้ ฿${price.toLocaleString()}`
           )}
-        </button>
+        </Button>
       )}
 
       {/* Payment Method Selection Modal */}
@@ -462,115 +439,110 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
         onClose={() => setPaymentStep('idle')}
         title={'เลือกช่องทางชำระเงิน'}
         description={appliedCoupon ? (
-          <span className={styles.discountSummary}>
-            <span className={styles.originalPrice}>฿{price.toLocaleString()}</span>
-            <strong className={styles.effectivePrice}>฿{effectivePrice.toLocaleString()}</strong>
-            <span className={styles.couponSaving}>ใช้คูปอง {appliedCoupon.code} ลด ฿{appliedCoupon.discountAmount.toLocaleString()}</span>
+          <span className="flex flex-wrap items-center gap-2">
+            <s>฿{price.toLocaleString()}</s>
+            <strong>฿{effectivePrice.toLocaleString()}</strong>
+            <Badge variant="secondary">คูปอง {appliedCoupon.code} ลด ฿{appliedCoupon.discountAmount.toLocaleString()}</Badge>
           </span>
         ) : (
-          <span>ยอดชำระ <strong className={styles.dialogAmount}>฿{price.toLocaleString()}</strong></span>
+          <span>ยอดชำระ <strong>฿{price.toLocaleString()}</strong></span>
         )}
         body={(
-          <>
-
-            {/* Coupon Input */}
-            <div className={styles.couponPanel}>
-              <label className={styles.fieldLabel} htmlFor="course-coupon-code">มีโค้ดส่วนลด?</label>
+          <div className="flex flex-col gap-5">
+            <Field data-invalid={Boolean(couponError) || undefined}>
+              <FieldLabel htmlFor="course-coupon-code">มีโค้ดส่วนลด?</FieldLabel>
               {appliedCoupon ? (
-                <div className={styles.couponApplied}>
-                  <div>
-                    <span className={styles.couponCode}>{appliedCoupon.code}</span>
-                    {appliedCoupon.description && <span className={styles.couponDescription}>{appliedCoupon.description}</span>}
-                  </div>
-                  <button type="button" onClick={handleRemoveCoupon} className={`${styles.textButton} ${styles.dangerText}`}>ลบ</button>
-                </div>
+                <Alert>
+                  <TicketPercent aria-hidden="true" />
+                  <AlertTitle>ใช้คูปอง {appliedCoupon.code} แล้ว</AlertTitle>
+                  <AlertDescription>
+                    {appliedCoupon.description || `ลด ฿${appliedCoupon.discountAmount.toLocaleString()}`}
+                    <div className="mt-3"><Button type="button" variant="destructive" size="sm" onClick={handleRemoveCoupon}>ลบคูปอง</Button></div>
+                  </AlertDescription>
+                </Alert>
               ) : (
-                <div className={styles.couponInputRow}>
-                  <input
+                <InputGroup>
+                  <InputGroupInput
                     id="course-coupon-code"
                     value={couponCode}
                     onChange={e => setCouponCode(e.target.value.toUpperCase())}
                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
                     placeholder="ใส่โค้ดส่วนลด"
-                    className={styles.couponInput}
+                    aria-invalid={Boolean(couponError) || undefined}
                   />
-                  <button
-                    type="button"
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton
                     onClick={handleApplyCoupon}
                     disabled={couponLoading || !couponCode.trim()}
-                    className={styles.compactButton}
-                  >
-                    {couponLoading ? '...' : 'ใช้โค้ด'}
-                  </button>
-                </div>
+                    >
+                      {couponLoading && <Spinner data-icon="inline-start" aria-hidden="true" />}
+                      {couponLoading ? 'กำลังตรวจ' : 'ใช้โค้ด'}
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
               )}
-              {couponError && <p className={styles.errorText}>{couponError}</p>}
-            </div>
+              {couponError && <FieldError>{couponError}</FieldError>}
+            </Field>
 
             {effectivePrice === 0 && appliedCoupon ? null : (
-              <>
-                <div className={styles.methodList}>
-                  {/* Stripe Card */}
-                  <button
-                    type="button"
-                    onClick={handleStripePayment}
+              <ToggleGroup
+                type="single"
+                orientation="vertical"
+                variant="outline"
+                className="w-full"
+                aria-label="ช่องทางชำระเงิน"
+                onValueChange={(value) => {
+                  if (value === 'stripe') void handleStripePayment();
+                  if (value === 'promptpay') void handlePromptPayPayment();
+                }}
+              >
+                  <ToggleGroupItem
+                    value="stripe"
                     disabled={loading}
-                    className={styles.methodButton}
+                    className="h-auto w-full justify-start p-4 text-left whitespace-normal"
                   >
-                    <div className={styles.methodIcon}>
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className={styles.methodTitle}>บัตรเครดิต / เดบิต</div>
-                      <div className={styles.methodDescription}>Visa, Mastercard ผ่าน Stripe</div>
-                    </div>
-                  </button>
-
-                  {/* Bank Transfer */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void handlePromptPayPayment();
-                    }}
+                    <CreditCard aria-hidden="true" />
+                    <span className="flex flex-col items-start gap-1">
+                      <strong>บัตรเครดิต / เดบิต</strong>
+                      <span>Visa, Mastercard ผ่าน Stripe</span>
+                    </span>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="promptpay"
                     disabled={loading}
-                    className={styles.methodButton}
+                    className="h-auto w-full justify-start p-4 text-left whitespace-normal"
                   >
-                    <div className={`${styles.methodIcon} ${styles.transferIcon}`}>
-                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className={styles.methodTitle}>โอนเงิน / PromptPay</div>
-                      <div className={styles.methodDescription}>โอนแล้วแนบสลิป ตรวจสอบอัตโนมัติ</div>
-                    </div>
-                  </button>
-                </div>
-              </>
+                    <Smartphone aria-hidden="true" />
+                    <span className="flex flex-col items-start gap-1">
+                      <strong>โอนเงิน / PromptPay</strong>
+                      <span>โอนแล้วแนบสลิป ตรวจสอบอัตโนมัติ</span>
+                    </span>
+                  </ToggleGroupItem>
+              </ToggleGroup>
             )}
-          </>
+          </div>
         )}
         dismissOnBackdrop={true}
+        returnFocusRef={enrollmentTriggerRef}
         size={'wide'}
       >
-        <button
-          type={'button'}
+        <Button
+          type="button"
           onClick={() => setPaymentStep('idle')}
-          className={styles.secondaryButton}
+          variant="outline"
         >
           ยกเลิก
-        </button>
+        </Button>
         {effectivePrice === 0 && appliedCoupon ? (
-          <button
-            type={'button'}
+          <Button
+            type="button"
             onClick={handleCouponEnrollment}
             disabled={loading}
-            className={styles.primaryButton}
+            aria-busy={loading}
           >
+            {loading && <Spinner data-icon="inline-start" aria-hidden="true" />}
             {loading ? 'กำลังดำเนินการ...' : 'ลงทะเบียนเรียนฟรี (คูปอง 100%)'}
-          </button>
+          </Button>
         ) : null}
       </DialogShell>
 
@@ -579,113 +551,106 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
         isOpen={paymentStep === 'transfer' || paymentStep === 'verifying'}
         onClose={() => { if (paymentStep !== 'verifying') { setPaymentStep('idle'); resetSlipState(); } }}
         title={'โอนเงินและแนบสลิป'}
-        description={<span>ยอดที่ระบบจะตรวจสอบ <strong className={styles.dialogAmount}>฿{(promptPayIntent?.amount ?? effectivePrice).toLocaleString()}</strong></span>}
+        description={<span>ยอดที่ระบบจะตรวจสอบ <strong>฿{(promptPayIntent?.amount ?? effectivePrice).toLocaleString()}</strong></span>}
         body={(
-          <>
+          <div className="flex flex-col gap-5">
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle>ข้อมูลสำหรับโอนเงิน</CardTitle>
+                <CardDescription>ตรวจสอบชื่อบัญชีและจำนวนเงินก่อนโอน</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-3">
+                  <div className="flex items-center justify-between gap-4"><dt>ธนาคาร</dt><dd><strong>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</strong></dd></div>
+                  <div className="flex items-center justify-between gap-4"><dt>เลขบัญชี</dt><dd><strong className="font-mono">{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</strong></dd></div>
+                  <div className="flex items-center justify-between gap-4"><dt>ชื่อบัญชี</dt><dd><strong>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</strong></dd></div>
+                  <div className="flex items-center justify-between gap-4"><dt>จำนวนเงิน</dt><dd><strong>฿{(promptPayIntent?.amount ?? effectivePrice).toLocaleString()}</strong></dd></div>
+                </dl>
+              </CardContent>
+            </Card>
 
-            {/* Bank Info */}
-            <div className={styles.bankInfo}>
-              <div className={styles.bankInfoLabel}>ข้อมูลสำหรับโอนเงิน</div>
-              <div className={styles.bankRows}>
-                <div className={styles.bankRow}>
-                  <span>ธนาคาร</span>
-                  <strong>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</strong>
-                </div>
-                <div className={styles.bankRow}>
-                  <span>เลขบัญชี</span>
-                  <strong className={styles.accountNumber}>{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</strong>
-                </div>
-                <div className={styles.bankRow}>
-                  <span>ชื่อบัญชี</span>
-                  <strong>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</strong>
-                </div>
-                <div className={styles.bankRow}>
-                  <span>จำนวนเงิน</span>
-                  <strong className={styles.amount}>฿{(promptPayIntent?.amount ?? effectivePrice).toLocaleString()}</strong>
-                </div>
-              </div>
-            </div>
-
-            {/* Upload Area */}
-            <div className={styles.uploadField}>
-              <label className={styles.fieldLabel}>
-                แนบสลิปการโอนเงิน
-              </label>
+            <Field data-invalid={Boolean(verifyError) || undefined}>
+              <FieldLabel htmlFor="course-slip-upload">แนบสลิปการโอนเงิน</FieldLabel>
 
               {!slipPreview ? (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => fileInputRef.current?.click()}
-                  className={styles.uploadButton}
+                  className="h-auto w-full flex-col py-8 whitespace-normal"
                 >
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className={styles.uploadTitle}>คลิกเพื่อเลือกรูปสลิป</p>
-                  <p className={styles.uploadHint}>JPG, PNG, WEBP (ไม่เกิน 5MB)</p>
-                </button>
+                  <ImagePlus data-icon="inline-start" aria-hidden="true" />
+                  <span>คลิกเพื่อเลือกรูปสลิป</span>
+                  <span>JPG, PNG, WEBP (ไม่เกิน 5MB)</span>
+                </Button>
               ) : (
-                <div className={styles.slipPreview}>
-                  <img src={slipPreview} alt="สลิป" />
-                  <button
+                <div className="relative overflow-hidden rounded-xl border bg-muted">
+                  <Image src={slipPreview} alt="สลิป" width={720} height={900} unoptimized className="h-auto w-full" />
+                  <Button
                     type="button"
                     onClick={() => resetSlipState()}
-                    className={styles.removePreviewButton}
+                    variant="destructive"
+                    size="icon-sm"
+                    className="absolute top-2 right-2"
                     aria-label="ลบรูปสลิปที่เลือก"
                   >
-                    ✕
-                  </button>
+                    <X data-icon="inline-start" aria-hidden="true" />
+                  </Button>
                 </div>
               )}
 
-              <input
+              <Input
+                id="course-slip-upload"
                 ref={fileInputRef}
                 type="file"
                 tabIndex={-1}
                 accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleFileChange}
-                className={styles.hiddenInput}
+                className="sr-only"
+                aria-invalid={Boolean(verifyError) || undefined}
               />
-            </div>
+            </Field>
 
-            {/* Error */}
             {verifyError && (
-              <div className={styles.errorPanel} role="alert">
-                {verifyError}
-              </div>
+              <Alert variant="destructive">
+                <CircleAlert aria-hidden="true" />
+                <AlertTitle>ตรวจสอบสลิปไม่สำเร็จ</AlertTitle>
+                <AlertDescription>{verifyError}</AlertDescription>
+              </Alert>
             )}
-
-          </>
+          </div>
         )}
         dismissOnBackdrop={paymentStep !== 'verifying'}
+        returnFocusRef={enrollmentTriggerRef}
         size={'wide'}
       >
-        <button
-          type={'button'}
+        <Button
+          type="button"
+          variant="outline"
           onClick={() => { setPaymentStep('method'); setPromptPayIntent(null); resetSlipState(); }}
           disabled={paymentStep === 'verifying'}
-          className={styles.secondaryButton}
         >
           กลับ
-        </button>
-        <button
-          type={'button'}
+        </Button>
+        <Button
+          type="button"
           onClick={handleSlipVerify}
           disabled={!slipFile || !promptPayIntent || paymentStep === 'verifying'}
-          className={styles.primaryButton}
+          aria-busy={paymentStep === 'verifying'}
         >
           {paymentStep === 'verifying' ? (
-            <span className={styles.loadingContent}>
-              <span className={styles.spinner} aria-hidden={true} />
+            <>
+              <Spinner data-icon="inline-start" aria-hidden="true" />
               กำลังตรวจสอบสลิป...
-            </span>
+            </>
           ) : 'ตรวจสอบและชำระเงิน'}
-        </button>
+        </Button>
       </DialogShell>
 
       <Modal
         isOpen={modal.isOpen}
         onClose={handleModalClose}
+        returnFocusRef={enrollmentTriggerRef}
         type={modal.type}
         title={modal.title}
         buttonText={modal.type === 'success' ? 'เริ่มเรียนเลย' : 'ตกลง'}

@@ -6,8 +6,9 @@ import { Banknote, ListFilter, Search, SlidersHorizontal, Tag, X } from 'lucide-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import {
   Sheet,
   SheetContent,
@@ -16,6 +17,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 interface CatalogTag {
   id: string;
@@ -46,8 +48,6 @@ const SORT_LABELS: Record<string, string> = {
   'price-high': 'ราคาสูงไปต่ำ',
 };
 
-const selectClass = 'h-11 w-full rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-shadow focus:border-ring focus:ring-3 focus:ring-ring/30';
-
 export default function CourseCatalogFilters({
   tags,
   search,
@@ -69,66 +69,80 @@ export default function CourseCatalogFilters({
     <form
       method="GET"
       action="/courses"
-      className={mobile
-        ? 'grid gap-5'
-        : 'grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.5fr)_repeat(3,minmax(9rem,.65fr))_auto] xl:items-end'}
     >
-      <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-search`}>ค้นหาจากชื่อคอร์ส</Label>
-        <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <Input
+      <FieldGroup
+        className={cn(
+          mobile
+            ? 'grid gap-5'
+            : 'grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.5fr)_repeat(3,minmax(9rem,.65fr))_auto] xl:items-end',
+        )}
+      >
+        <Field>
+          <FieldLabel htmlFor={`${idPrefix}-search`}>ค้นหาจากชื่อคอร์ส</FieldLabel>
+          <InputGroup>
+            <InputGroupAddon>
+              <Search aria-hidden="true" />
+            </InputGroupAddon>
+            <InputGroupInput
             id={`${idPrefix}-search`}
             type="search"
             name="search"
             defaultValue={search}
             placeholder="เช่น JavaScript, React"
-            className="pl-10"
           />
-        </div>
-      </div>
+          </InputGroup>
+        </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-price`}>ราคา</Label>
-        <select className={selectClass} id={`${idPrefix}-price`} name="price" defaultValue={priceFilter}>
-          <option value="all">ทุกราคา</option>
-          <option value="free">ฟรี</option>
-          <option value="paid">มีค่าใช้จ่าย</option>
-        </select>
-      </div>
+        <Field>
+          <FieldLabel htmlFor={`${idPrefix}-price`}>ราคา</FieldLabel>
+          <NativeSelect id={`${idPrefix}-price`} name="price" defaultValue={priceFilter}>
+            <NativeSelectOption value="all">ทุกราคา</NativeSelectOption>
+            <NativeSelectOption value="free">ฟรี</NativeSelectOption>
+            <NativeSelectOption value="paid">มีค่าใช้จ่าย</NativeSelectOption>
+          </NativeSelect>
+        </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-tag`}>หัวข้อ</Label>
-        <select className={selectClass} id={`${idPrefix}-tag`} name="tag" defaultValue={tagFilter}>
-          <option value="all">ทุกหัวข้อ</option>
-          {tags.map((tag) => <option key={tag.id} value={tag.slug}>{tag.name}</option>)}
-        </select>
-      </div>
+        <Field>
+          <FieldLabel htmlFor={`${idPrefix}-tag`}>หัวข้อ</FieldLabel>
+          <NativeSelect id={`${idPrefix}-tag`} name="tag" defaultValue={tagFilter}>
+            <NativeSelectOption value="all">ทุกหัวข้อ</NativeSelectOption>
+            {tags.map((tag) => (
+              <NativeSelectOption key={tag.id} value={tag.slug}>{tag.name}</NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-sort`}>เรียงตาม</Label>
-        <select className={selectClass} id={`${idPrefix}-sort`} name="sort" defaultValue={sort}>
-          <option value="newest">ใหม่ล่าสุด</option>
-          <option value="oldest">เก่าสุด</option>
-          <option value="price-low">ราคาต่ำไปสูง</option>
-          <option value="price-high">ราคาสูงไปต่ำ</option>
-        </select>
-      </div>
+        <Field>
+          <FieldLabel htmlFor={`${idPrefix}-sort`}>เรียงตาม</FieldLabel>
+          <NativeSelect id={`${idPrefix}-sort`} name="sort" defaultValue={sort}>
+            <NativeSelectOption value="newest">ใหม่ล่าสุด</NativeSelectOption>
+            <NativeSelectOption value="oldest">เก่าสุด</NativeSelectOption>
+            <NativeSelectOption value="price-low">ราคาต่ำไปสูง</NativeSelectOption>
+            <NativeSelectOption value="price-high">ราคาสูงไปต่ำ</NativeSelectOption>
+          </NativeSelect>
+        </Field>
 
-      <div className={mobile ? `grid ${hasActiveFilters ? 'grid-cols-2' : 'grid-cols-1'} gap-3 pt-1` : 'flex gap-2'}>
-        <Button type="submit" className={mobile ? 'w-full' : undefined}>แสดงผลลัพธ์</Button>
-        {hasActiveFilters ? (
-          <Button variant="outline" asChild className={mobile ? 'w-full' : undefined}>
-            <Link href="/courses">ล้างตัวกรอง</Link>
-          </Button>
-        ) : null}
-      </div>
+        <Field
+          orientation="horizontal"
+          className={cn(
+            'gap-3 pt-1',
+            mobile && (hasActiveFilters ? 'grid grid-cols-2' : 'grid grid-cols-1'),
+          )}
+        >
+          <Button type="submit" className={cn(mobile && 'w-full')}>แสดงผลลัพธ์</Button>
+          {hasActiveFilters ? (
+            <Button variant="outline" asChild className={cn(mobile && 'w-full')}>
+              <Link href="/courses">ล้างตัวกรอง</Link>
+            </Button>
+          ) : null}
+        </Field>
+      </FieldGroup>
     </form>
   );
 
   return (
     <aside className="mb-10" aria-label="ตัวกรองคอร์ส">
-      <Card className="hidden shadow-[var(--academy-shadow-card)] md:flex">
+      <Card className="hidden md:flex">
         <CardHeader>
           <CardTitle>คัดให้เหลือสิ่งที่ใช่</CardTitle>
         </CardHeader>
@@ -139,8 +153,8 @@ export default function CourseCatalogFilters({
         <div className="flex items-center gap-3 rounded-2xl border bg-card p-3 shadow-[var(--academy-shadow-card)]">
           <Sheet>
             <SheetTrigger asChild>
-              <Button type="button" variant="outline" className="h-11 shrink-0 gap-2 rounded-xl">
-                <SlidersHorizontal className="size-4" aria-hidden="true" />
+              <Button type="button" variant="outline" size="lg" className="shrink-0">
+                <SlidersHorizontal data-icon="inline-start" aria-hidden="true" />
                 ตัวกรอง
                 {activeFilterCount > 0 ? <Badge className="min-w-5 px-1.5">{activeFilterCount}</Badge> : null}
               </Button>
@@ -148,7 +162,7 @@ export default function CourseCatalogFilters({
             <SheetContent side="bottom" className="max-h-[90svh] overflow-y-auto rounded-t-3xl border-x px-0 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
               <div className="mx-auto mt-2 h-1.5 w-12 rounded-full bg-muted" aria-hidden="true" />
               <SheetHeader className="border-b px-5 pt-5 pb-4 text-left">
-                <SheetTitle className="text-xl font-semibold">คัดคอร์สที่ตรงกับคุณ</SheetTitle>
+                <SheetTitle>คัดคอร์สที่ตรงกับคุณ</SheetTitle>
                 <SheetDescription>ค้นหา เลือกราคาและหัวข้อ แล้วจัดลำดับผลลัพธ์ใหม่</SheetDescription>
               </SheetHeader>
               <div className="px-5 pt-5">{renderFields('course-filter-mobile', true)}</div>
@@ -164,17 +178,17 @@ export default function CourseCatalogFilters({
 
           {hasActiveFilters ? (
             <Button asChild variant="ghost" size="icon-sm" className="shrink-0" aria-label="ล้างตัวกรอง">
-              <Link href="/courses"><X className="size-4" aria-hidden="true" /></Link>
+              <Link href="/courses"><X data-icon="inline-start" aria-hidden="true" /></Link>
             </Button>
           ) : null}
         </div>
 
         {activeFilterCount > 0 ? (
           <div className="flex gap-2 overflow-x-auto pb-1" aria-label="ตัวกรองที่เลือก">
-            {search ? <Badge variant="secondary" className="shrink-0 gap-1.5"><Search className="size-3" />“{search}”</Badge> : null}
-            {priceFilter !== 'all' ? <Badge variant="secondary" className="shrink-0 gap-1.5"><Banknote className="size-3" />{PRICE_LABELS[priceFilter]}</Badge> : null}
-            {tagFilter !== 'all' ? <Badge variant="secondary" className="shrink-0 gap-1.5"><Tag className="size-3" />{selectedTag ?? tagFilter}</Badge> : null}
-            {sort !== 'newest' ? <Badge variant="secondary" className="shrink-0 gap-1.5"><ListFilter className="size-3" />{SORT_LABELS[sort]}</Badge> : null}
+            {search ? <Badge variant="secondary" className="shrink-0"><Search aria-hidden="true" />“{search}”</Badge> : null}
+            {priceFilter !== 'all' ? <Badge variant="secondary" className="shrink-0"><Banknote aria-hidden="true" />{PRICE_LABELS[priceFilter]}</Badge> : null}
+            {tagFilter !== 'all' ? <Badge variant="secondary" className="shrink-0"><Tag aria-hidden="true" />{selectedTag ?? tagFilter}</Badge> : null}
+            {sort !== 'newest' ? <Badge variant="secondary" className="shrink-0"><ListFilter aria-hidden="true" />{SORT_LABELS[sort]}</Badge> : null}
           </div>
         ) : null}
       </div>
