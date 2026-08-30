@@ -7,7 +7,7 @@
     "dev:remote": "infisical run --env=dev -- next dev",
     "dev:local": "infisical run --env=dev -- next dev",
     "build": "next build",
-    "start": "tsx src/lib/db/migrate.ts && next start",
+    "start": "npm run db:migrate && npm run start:app",
     "lint": "eslint",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -29,7 +29,8 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs mysql",
-    "docker:mysql": "docker exec -it milerdev-mysql mysql -uroot -proot milerdev"
+    "docker:mysql": "docker exec -it milerdev-mysql mysql -uroot -proot milerdev",
+    "start:app": "next start"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "1.11.3",
