@@ -77,6 +77,7 @@ export async function recordClientAnalyticsEvent(
 export async function recordServerAnalyticsEvent(input: ServerAnalyticsEvent): Promise<boolean> {
   const parsed = serverAnalyticsEventSchema.safeParse(input);
   if (!parsed.success) return false;
+  if (parsed.data.eventName === 'purchase_completed') return false;
   return insertAnalyticsEvent({ ...parsed.data, source: 'server' });
 }
 

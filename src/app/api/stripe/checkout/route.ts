@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from 'zod';
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
@@ -7,6 +8,16 @@ import { eq, and, count } from "drizzle-orm";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/course-availability";
+import { analyticsExposureIdSchema } from '@/lib/analytics-contract';
+import { logEvent } from '@/lib/error-handler';
+import { measurementRecorder } from '@/lib/measurement-recorder';
+
+const stripeCheckoutRequestSchema = z.object({
+    courseId: z.string().trim().min(1).max(36),
+    couponId: z.string().trim().min(1).max(36).optional(),
+    exposureId: analyticsExposureIdSchema.optional(),
+}).strict();
+
 
 // POST /api/stripe/checkout - Create Stripe checkout session
 export async function POST(request: Request) {
@@ -21,7 +32,11 @@ export async function POST(request: Request) {
             return rateLimitResponse(rateLimit.resetTime);
         }
 
-        const { courseId, couponId } = await request.json();
+        const parsed = stripeCheckoutRequestSchema.safeParse(await request.json().catch(() => null));
+        if (!parsed.success) {
+            return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
+        }
+        const { courseId, couponId, exposureId } = parsed.data;
 
         // Get course details
         const course = await db.query.courses.findFirst({
@@ -100,6 +115,20 @@ export async function POST(request: Request) {
         // A checkout session is an immutable payment attempt. Reusing and repricing
         // an older pending row would let multiple Stripe sessions point at mutable
         // local state and can strand a successfully paid session.
+
+        let attributedExposureId: string | null = null;
+        if (exposureId) {
+            try {
+                attributedExposureId = await measurementRecorder.resolveProductExposureAttribution({
+                    exposureId,
+                    productType: 'course',
+                    productId: course.id,
+                });
+            } catch {
+                logEvent('analytics.payment_attribution_failed', 'warn');
+            }
+        }
+
         const paymentId = crypto.randomUUID();
         await db.insert(payments).values({
             id: paymentId,
@@ -108,6 +137,7 @@ export async function POST(request: Request) {
             couponId: appliedCouponId,
             amount: priceNumber.toFixed(2),
             currency: "THB",
+            attributedExposureId,
             method: "stripe",
             itemTitle: course.title,
             status: "pending",

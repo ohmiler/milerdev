@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
+import { useProductExposureId } from '@/components/analytics/AnalyticsViewEvent';
 
 interface BundleEnrollButtonProps {
   bundleId: string;
@@ -50,6 +51,7 @@ export default function BundleEnrollButton({
 }: BundleEnrollButtonProps) {
   const router = useRouter();
   const session = useSession()?.data;
+  const exposureId = useProductExposureId();
   const [loading, setLoading] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('idle');
@@ -125,7 +127,7 @@ export default function BundleEnrollButton({
       const res = await fetch(BUNDLE_PAYMENT_CONTRACT.stripeEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bundleId }),
+        body: JSON.stringify({ bundleId, ...(exposureId && { exposureId }) }),
       });
       const data = await res.json();
       if (res.ok && data.url) {

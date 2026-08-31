@@ -30,6 +30,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
+import { useProductExposureId } from '@/components/analytics/AnalyticsViewEvent';
 
 interface EnrollButtonProps {
   courseId: string;
@@ -59,6 +60,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   const sessionResult = useSession();
   const session = sessionResult?.data;
   const status = sessionResult?.status ?? 'unauthenticated';
+  const exposureId = useProductExposureId();
   const [loading, setLoading] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
   const [checking, setChecking] = useState(true);
@@ -255,7 +257,11 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       const res = await fetch(COURSE_PAYMENT_CONTRACT.stripeEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId, ...(appliedCoupon && { couponId: appliedCoupon.couponId }) }),
+        body: JSON.stringify({
+          courseId,
+          ...(appliedCoupon && { couponId: appliedCoupon.couponId }),
+          ...(exposureId && { exposureId }),
+        }),
       });
 
       const data = await res.json();
