@@ -72,26 +72,33 @@ export const serverAnalyticsEventSchema = z.object({
   courseId: analyticsIdSchema.optional(),
   bundleId: analyticsIdSchema.optional(),
   paymentId: analyticsIdSchema.optional(),
+  enrollmentId: analyticsIdSchema.optional(),
 }).strict().superRefine((value, context) => {
   const hasCourse = Boolean(value.courseId);
   const hasBundle = Boolean(value.bundleId);
   const hasOneProduct = hasCourse !== hasBundle;
 
   if (value.eventName === 'registration_completed') {
-    if (!value.userId || hasCourse || hasBundle || value.paymentId) {
+    if (!value.userId || hasCourse || hasBundle || value.paymentId || value.enrollmentId) {
       context.addIssue({ code: 'custom', message: 'Invalid Registration event' });
     }
     return;
   }
 
   if (value.eventName === 'free_enrollment_completed') {
-    if (!value.userId || !hasOneProduct || value.paymentId) {
+    if (
+      !value.userId
+      || !value.enrollmentId
+      || !hasCourse
+      || hasBundle
+      || value.paymentId
+    ) {
       context.addIssue({ code: 'custom', message: 'Invalid Free enrollment event' });
     }
     return;
   }
 
-  if (!value.userId || !value.paymentId || !hasOneProduct) {
+  if (!value.userId || !value.paymentId || value.enrollmentId || !hasOneProduct) {
     context.addIssue({ code: 'custom', message: 'Paid events require a user, payment, and one product' });
   }
 });

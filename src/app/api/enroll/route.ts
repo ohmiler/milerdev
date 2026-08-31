@@ -3,14 +3,14 @@ import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { enrollments, courses, payments, coupons, couponUsages } from "@/lib/db/schema";
-import { eq, and, sql, count } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/email";
 import { z } from "zod";
-import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 import { safeInsertEnrollment } from "@/lib/db/safe-insert";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/course-availability";
+import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
 
 // Validation schema
 const enrollSchema = z.object({
@@ -132,33 +132,20 @@ export async function POST(request: Request) {
             if (discount < coursePrice) {
                 return NextResponse.json({ error: 'คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ' }, { status: 402 });
             }
-            // Record coupon usage + enrollment in a transaction to prevent race conditions
-            // Conditional update guards against TOCTOU: only increments if still under limit
-            const enrollmentId = createId();
-            await db.transaction(async (tx) => {
-                const updateResult = await tx.update(coupons)
-                    .set({ usageCount: sql`${coupons.usageCount} + 1` })
-                    .where(and(
-                        eq(coupons.id, coupon.id),
-                        sql`(${coupons.usageLimit} IS NULL OR ${coupons.usageCount} < ${coupons.usageLimit})`
-                    ));
-                if (updateResult[0].affectedRows === 0) {
-                    throw new Error('COUPON_LIMIT_EXCEEDED');
-                }
-                await tx.insert(couponUsages).values({
-                    couponId: coupon.id,
-                    userId: session.user.id,
-                    courseId,
+            const fulfillment = await fulfillFreeEnrollment({
+                userId: session.user.id,
+                courseIds: [courseId],
+                coupon: {
+                    id: coupon.id,
                     discountAmount: String(Math.min(discount, coursePrice)),
-                });
-                await tx.insert(enrollments).values({
-                    id: enrollmentId,
-                    userId: session.user.id,
-                    courseId,
-                });
+                },
             });
+            const createdEnrollment = fulfillment.created[0];
+            if (!createdEnrollment) {
+                return NextResponse.json({ error: 'Already enrolled in this course' }, { status: 400 });
+            }
 
-            const enrollment = { id: enrollmentId, userId: session.user.id, courseId };
+            const enrollment = { id: createdEnrollment.id, userId: session.user.id, courseId };
 
             // Send enrollment email (non-blocking)
             if (session.user.email && session.user.name) {
@@ -179,8 +166,16 @@ export async function POST(request: Request) {
         }
 
         // Create enrollment (free course or paid with payment verification)
-        // Uses safe insert to handle concurrent duplicate attempts via unique constraint
-        const { created, enrollment } = await safeInsertEnrollment(session.user.id, courseId);
+        const freeFulfillment = coursePrice <= 0
+            ? await fulfillFreeEnrollment({ userId: session.user.id, courseIds: [courseId] })
+            : null;
+        const paidEnrollment = freeFulfillment
+            ? null
+            : await safeInsertEnrollment(session.user.id, courseId);
+        const created = freeFulfillment
+            ? freeFulfillment.created.length > 0
+            : Boolean(paidEnrollment?.created);
+        const enrollment = freeFulfillment?.created[0] ?? paidEnrollment?.enrollment;
         if (!created) {
             return NextResponse.json(
                 { error: "Already enrolled in this course" },

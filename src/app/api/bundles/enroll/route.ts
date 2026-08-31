@@ -7,6 +7,7 @@ import { sendEnrollmentEmail } from '@/lib/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
+import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
 
 // POST /api/bundles/enroll - Enroll in all courses of a bundle
 export async function POST(request: Request) {
@@ -112,12 +113,27 @@ export async function POST(request: Request) {
         const enrolled: string[] = [];
         const skipped: string[] = [];
 
-        for (const course of bCourses) {
-            const { created } = await safeInsertEnrollment(session.user.id, course.courseId);
-            if (created) {
-                enrolled.push(course.courseTitle);
-            } else {
-                skipped.push(course.courseTitle);
+        if (hasAcceptedPayment) {
+            for (const course of bCourses) {
+                const { created } = await safeInsertEnrollment(session.user.id, course.courseId);
+                if (created) {
+                    enrolled.push(course.courseTitle);
+                } else {
+                    skipped.push(course.courseTitle);
+                }
+            }
+        } else {
+            const fulfillment = await fulfillFreeEnrollment({
+                userId: session.user.id,
+                courseIds: bCourses.map((course) => course.courseId),
+            });
+            const createdCourseIds = new Set(fulfillment.created.map((entry) => entry.courseId));
+            for (const course of bCourses) {
+                if (createdCourseIds.has(course.courseId)) {
+                    enrolled.push(course.courseTitle);
+                } else {
+                    skipped.push(course.courseTitle);
+                }
             }
         }
 

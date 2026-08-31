@@ -8,10 +8,12 @@ import {
   couponUsages,
   courses,
   enrollments,
+  measurementOutbox,
   payments,
   type Payment,
 } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
+import { purchaseMeasurementProjector } from '@/lib/purchase-measurement-projector';
 import {
   assertPromptPayIntentClaim,
   PromptPayIntentError,
@@ -97,7 +99,7 @@ export async function fulfillPromptPayIntent({
     throw new Error('PROMPTPAY_REFERENCE_INVALID');
   }
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const [payment] = await tx.select().from(payments)
       .where(eq(payments.id, paymentId))
       .for('update');
@@ -176,11 +178,19 @@ export async function fulfillPromptPayIntent({
       }
     }
 
+    await tx.insert(measurementOutbox).values({
+      eventName: 'purchase_completed',
+      paymentId: payment.id,
+    });
+
     return {
       status: 'fulfilled' as const,
-      payment: { ...payment, status: 'completed', promptpayTransRef, slipUrl: promptpayTransRef },
+      payment: { ...payment, status: 'completed' as const, promptpayTransRef, slipUrl: promptpayTransRef },
       enrolledCount,
       emailDetails,
     };
   });
+
+  await purchaseMeasurementProjector.projectPurchase(result.payment.id);
+  return result;
 }

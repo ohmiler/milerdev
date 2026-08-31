@@ -33,6 +33,7 @@ async function insertAnalyticsEvent(input: {
   courseId?: string | null;
   bundleId?: string | null;
   paymentId?: string | null;
+  enrollmentId?: string | null;
   placement?: AnalyticsPlacement;
 }): Promise<boolean> {
   try {
@@ -45,6 +46,7 @@ async function insertAnalyticsEvent(input: {
       courseId: input.courseId ?? null,
       bundleId: input.bundleId ?? null,
       paymentId: input.paymentId ?? null,
+      enrollmentId: input.enrollmentId ?? null,
       metadata: input.placement ? JSON.stringify({ placement: input.placement }) : null,
       ipAddress: null,
       userAgent: null,
@@ -77,7 +79,10 @@ export async function recordClientAnalyticsEvent(
 export async function recordServerAnalyticsEvent(input: ServerAnalyticsEvent): Promise<boolean> {
   const parsed = serverAnalyticsEventSchema.safeParse(input);
   if (!parsed.success) return false;
-  if (parsed.data.eventName === 'purchase_completed') return false;
+  if (
+    parsed.data.eventName === 'purchase_completed'
+    || parsed.data.eventName === 'free_enrollment_completed'
+  ) return false;
   return insertAnalyticsEvent({ ...parsed.data, source: 'server' });
 }
 
