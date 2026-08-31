@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { clientAnalyticsEventSchema } from '@/lib/analytics-contract';
 import {
-  isAnalyticsEnabled,
+  isAnalyticsEventEnabled,
   isPublishedAnalyticsTarget,
   recordClientAnalyticsEvent,
 } from '@/lib/analytics';
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (!(await isAnalyticsEnabled())) {
+    if (!(await isAnalyticsEventEnabled(parsed.data.eventName))) {
       return new NextResponse(null, { status: 204 });
     }
 
