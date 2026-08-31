@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from 'zod';
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
@@ -6,6 +7,15 @@ import { bundles, bundleCourses, courses, enrollments, lessons, payments } from 
 import { eq, asc, and, count, inArray } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
+import { analyticsExposureIdSchema } from '@/lib/analytics-contract';
+import { logEvent } from '@/lib/error-handler';
+import { measurementRecorder } from '@/lib/measurement-recorder';
+
+const stripeBundleCheckoutRequestSchema = z.object({
+    bundleId: z.string().trim().min(1).max(36),
+    exposureId: analyticsExposureIdSchema.optional(),
+}).strict();
+
 
 // POST /api/stripe/bundle-checkout - Create Stripe checkout session for bundle
 export async function POST(request: Request) {
@@ -20,7 +30,11 @@ export async function POST(request: Request) {
             return rateLimitResponse(rateLimit.resetTime);
         }
 
-        const { bundleId } = await request.json();
+        const parsed = stripeBundleCheckoutRequestSchema.safeParse(await request.json().catch(() => null));
+        if (!parsed.success) {
+            return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
+        }
+        const { bundleId, exposureId } = parsed.data;
 
         // Get bundle details
         const [bundle] = await db
@@ -99,6 +113,20 @@ export async function POST(request: Request) {
         // A checkout session is an immutable payment attempt. Reusing and repricing
         // an older pending row would let multiple Stripe sessions point at mutable
         // local state and can strand a successfully paid session.
+
+        let attributedExposureId: string | null = null;
+        if (exposureId) {
+            try {
+                attributedExposureId = await measurementRecorder.resolveProductExposureAttribution({
+                    exposureId,
+                    productType: 'bundle',
+                    productId: bundle.id,
+                });
+            } catch {
+                logEvent('analytics.payment_attribution_failed', 'warn');
+            }
+        }
+
         const paymentId = crypto.randomUUID();
         await db.insert(payments).values({
             id: paymentId,
@@ -106,6 +134,7 @@ export async function POST(request: Request) {
             bundleId: bundle.id,
             amount: priceNumber.toFixed(2),
             currency: "THB",
+            attributedExposureId,
             method: "stripe",
             itemTitle: `📦 ${bundle.title}`,
             status: "pending",

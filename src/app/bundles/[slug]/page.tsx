@@ -191,8 +191,8 @@ export default async function BundleDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <Navbar />
-      <main className="min-h-screen bg-background text-foreground">
-        <AnalyticsViewEvent productType="bundle" productId={bundle.id} />
+      <AnalyticsViewEvent productType="bundle" productId={bundle.id}>
+        <main className="min-h-screen bg-background text-foreground">
         <header className="border-b bg-muted/30">
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
             <nav className="mb-10 flex flex-wrap items-center gap-2 text-sm text-muted-foreground [&_a:hover]:text-foreground" aria-label={'เส้นทางนำทาง'}>
@@ -315,7 +315,8 @@ export default async function BundleDetailPage({ params }: Props) {
             </aside>
           </div>
         </section>
-      </main>
+        </main>
+      </AnalyticsViewEvent>
       <Footer />
     </>
   );

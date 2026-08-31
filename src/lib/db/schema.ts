@@ -176,6 +176,7 @@ export const payments = mysqlTable('payments', {
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
     bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
     couponId: varchar('coupon_id', { length: 36 }),
+    attributedExposureId: varchar('attributed_exposure_id', { length: 36 }),
     amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
     currency: varchar('currency', { length: 10 }).default('THB').notNull(),
     method: varchar('method', { length: 20, enum: ['stripe', 'promptpay', 'bank_transfer'] }).notNull(),
@@ -595,6 +596,7 @@ export const analyticsEvents = mysqlTable('analytics_events', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
     eventName: varchar('event_name', { length: 100 }).notNull(),
     exposureId: varchar('exposure_id', { length: 36 }),
+    attributedExposureId: varchar('attributed_exposure_id', { length: 36 }),
     userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
     bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
@@ -606,6 +608,7 @@ export const analyticsEvents = mysqlTable('analytics_events', {
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
 }, (table) => [
     uniqueIndex('uq_analytics_exposure_id').on(table.exposureId),
+    index('idx_analytics_attributed_exposure_id').on(table.attributedExposureId),
     index('idx_analytics_event_name').on(table.eventName),
     index('idx_analytics_created_at').on(table.createdAt),
     index('idx_analytics_course_id').on(table.courseId),
@@ -629,6 +632,31 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
     }),
     payment: one(payments, {
         fields: [analyticsEvents.paymentId],
+        references: [payments.id],
+    }),
+}));
+
+// =====================
+// MEASUREMENT OUTBOX TABLE
+// =====================
+export const measurementOutbox = mysqlTable('measurement_outbox', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    eventName: varchar('event_name', { length: 100, enum: ['purchase_completed'] }).notNull(),
+    paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id).notNull(),
+    attemptCount: int('attempt_count').default(0).notNull(),
+    lastAttemptAt: datetime('last_attempt_at'),
+    lastErrorCode: varchar('last_error_code', { length: 64 }),
+    projectedAt: datetime('projected_at'),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()).notNull(),
+}, (table) => [
+    uniqueIndex('uq_measurement_outbox_event_payment').on(table.eventName, table.paymentId),
+    index('idx_measurement_outbox_projected_at').on(table.projectedAt),
+    index('idx_measurement_outbox_payment_id').on(table.paymentId),
+]);
+
+export const measurementOutboxRelations = relations(measurementOutbox, ({ one }) => ({
+    payment: one(payments, {
+        fields: [measurementOutbox.paymentId],
         references: [payments.id],
     }),
 }));
@@ -678,6 +706,8 @@ export type BundleCourse = typeof bundleCourses.$inferSelect;
 export type NewBundleCourse = typeof bundleCourses.$inferInsert;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
+export type MeasurementOutboxEntry = typeof measurementOutbox.$inferSelect;
+export type NewMeasurementOutboxEntry = typeof measurementOutbox.$inferInsert;
 export type RateLimitBucket = typeof rateLimitBuckets.$inferSelect;
 
 // =====================

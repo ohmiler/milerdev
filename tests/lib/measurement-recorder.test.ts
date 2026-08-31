@@ -19,6 +19,10 @@ class MemoryMeasurementStore implements MeasurementStore {
     return this.eligibility.get(`${productType}:${productId}`) ?? null;
   }
 
+  async readProductExposure() {
+    return null;
+  }
+
   async insertProductExposure(row: ProductExposureRow) {
     this.inserts += 1;
     if (this.exposureIds.has(row.exposureId)) return 'duplicate' as const;

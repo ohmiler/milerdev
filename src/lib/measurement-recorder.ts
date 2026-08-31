@@ -51,12 +51,20 @@ export type ProductExposureRow = {
   placement: 'course_detail' | 'bundle_detail';
 };
 
+export type ProductExposureAttributionRow = {
+  exposureId: string | null;
+  eventName: string;
+  courseId: string | null;
+  bundleId: string | null;
+};
+
 export interface MeasurementStore {
   readProductEligibility(
     productType: ProductType,
     productId: string,
   ): Promise<ProductEligibility | null>;
   insertProductExposure(row: ProductExposureRow): Promise<'inserted' | 'duplicate'>;
+  readProductExposure(exposureId: string): Promise<ProductExposureAttributionRow | null>;
 }
 
 export interface MeasurementRecorder {
@@ -65,6 +73,11 @@ export interface MeasurementRecorder {
     productType: ProductType;
     productId: string;
   }): Promise<{ status: 'recorded' | 'duplicate' | 'disabled' | 'ineligible' }>;
+  resolveProductExposureAttribution(input: {
+    exposureId: string;
+    productType: ProductType;
+    productId: string;
+  }): Promise<string | null>;
 }
 
 export class MeasurementRecorderError extends Error {
@@ -115,6 +128,23 @@ export function createMeasurementRecorder(input: {
         placement: parsed.data.productType === 'course' ? 'course_detail' : 'bundle_detail',
       });
       return { status: inserted === 'inserted' ? 'recorded' : 'duplicate' };
+    },
+
+    async resolveProductExposureAttribution(attribution) {
+      const parsed = productExposureFactSchema.safeParse(attribution);
+      if (!parsed.success) return null;
+
+      const eventName = parsed.data.productType === 'course' ? 'course_viewed' : 'bundle_viewed';
+      if (!(await input.isEventEnabled(eventName))) return null;
+
+      const exposure = await input.store.readProductExposure(parsed.data.exposureId);
+      if (!exposure || exposure.exposureId !== parsed.data.exposureId) return null;
+      if (exposure.eventName !== eventName) return null;
+
+      const targetMatches = parsed.data.productType === 'course'
+        ? exposure.courseId === parsed.data.productId && exposure.bundleId === null
+        : exposure.bundleId === parsed.data.productId && exposure.courseId === null;
+      return targetMatches ? parsed.data.exposureId : null;
     },
   };
 }
@@ -177,6 +207,20 @@ const drizzleMeasurementStore: MeasurementStore = {
       if (isDuplicateKeyError(error)) return 'duplicate';
       throw error;
     }
+  },
+
+  async readProductExposure(exposureId) {
+    const [row] = await db
+      .select({
+        exposureId: analyticsEvents.exposureId,
+        eventName: analyticsEvents.eventName,
+        courseId: analyticsEvents.courseId,
+        bundleId: analyticsEvents.bundleId,
+      })
+      .from(analyticsEvents)
+      .where(eq(analyticsEvents.exposureId, exposureId))
+      .limit(1);
+    return row ?? null;
   },
 };
 

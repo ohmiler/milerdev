@@ -10,10 +10,12 @@ import {
   courses,
   enrollments,
   payments,
+  measurementOutbox,
   stripeEvents,
   type Payment,
 } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
+import { purchaseMeasurementProjector } from '@/lib/purchase-measurement-projector';
 
 type PaymentTarget =
   | { type: 'course'; itemId: string }
@@ -164,7 +166,8 @@ export async function fulfillStripeCheckoutSession({
   }
 
   try {
-    return await db.transaction(async (tx) => {
+    const result: Extract<StripeFulfillmentResult, { payment: Payment }> = await db.transaction(
+      async (tx) => {
       if (event) {
         if (!event.id || !event.type) reject('INVALID_EVENT');
         await tx.insert(stripeEvents).values({
@@ -284,14 +287,28 @@ export async function fulfillStripeCheckoutSession({
         }
       }
 
+      if (!wasCompleted) {
+        await tx.insert(measurementOutbox).values({
+          eventName: 'purchase_completed',
+          paymentId: payment.id,
+        });
+      }
+
       return {
         status: wasCompleted ? 'already_fulfilled' : 'fulfilled',
         payment: { ...payment, status: 'completed', stripePaymentId: paymentIntentId },
         emailDetails,
       };
-    });
+      },
+    );
+
+    await purchaseMeasurementProjector.projectPurchase(result.payment.id);
+    return result;
   } catch (error) {
-    if (event && isDuplicateKeyError(error)) return { status: 'replayed' };
+    if (event && isDuplicateKeyError(error)) {
+      await purchaseMeasurementProjector.projectPurchase(identity.paymentId);
+      return { status: 'replayed' };
+    }
     if (error instanceof FulfillmentRejection) {
       return { status: 'rejected', code: error.code, retryable: error.retryable };
     }

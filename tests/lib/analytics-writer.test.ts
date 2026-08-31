@@ -70,6 +70,18 @@ describe('analytics writer boundary', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
+  it('routes purchase completion through the transactional outbox instead of the legacy writer', async () => {
+    await expect(recordServerAnalyticsEvent({
+      eventName: 'purchase_completed',
+      userId: 'user-1',
+      courseId: 'course-1',
+      paymentId: 'payment-1',
+    })).resolves.toBe(false);
+
+    expect(isAnalyticsEventEnabled).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
+  });
+
   it('stores only allow-listed fields with null network identifiers', async () => {
     await expect(recordClientAnalyticsEvent(checkoutEvent, 'user-1')).resolves.toBe(true);
 
