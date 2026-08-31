@@ -12,11 +12,12 @@ export type PurchaseProjection = {
   bundleId: string | null;
   method: 'stripe' | 'promptpay' | 'bank_transfer';
   status: 'pending' | 'completed' | 'failed' | 'refunded' | 'verifying';
+  amount: string;
   attributedExposureId: string | null;
 };
 
 export interface PurchaseMeasurementStore {
-  readCompletedStripePayment(paymentId: string): Promise<PurchaseProjection | null>;
+  readCompletedPayment(paymentId: string): Promise<PurchaseProjection | null>;
   ensurePurchaseOutbox(paymentId: string): Promise<void>;
   projectPendingPurchase(
     payment: PurchaseProjection,
@@ -30,13 +31,15 @@ export interface PurchaseMeasurementProjector {
   ): Promise<{ status: 'projected' | 'duplicate' | 'already_projected' | 'disabled' | 'ineligible' | 'failed' }>;
 }
 
-function isEligibleStripePurchase(payment: PurchaseProjection | null): payment is PurchaseProjection {
+function isEligiblePaidPurchase(payment: PurchaseProjection | null): payment is PurchaseProjection {
+  const amount = Number(payment?.amount);
   return Boolean(
     payment
     && payment.status === 'completed'
-    && payment.method === 'stripe'
     && payment.userId
-    && Boolean(payment.courseId) !== Boolean(payment.bundleId),
+    && Boolean(payment.courseId) !== Boolean(payment.bundleId)
+    && Number.isFinite(amount)
+    && amount > 0
   );
 }
 
@@ -51,8 +54,8 @@ export function createPurchaseMeasurementProjector(input: {
       try {
         if (!(await input.isEventEnabled('purchase_completed'))) return { status: 'disabled' };
 
-        const payment = await input.store.readCompletedStripePayment(paymentId);
-        if (!isEligibleStripePurchase(payment)) return { status: 'ineligible' };
+        const payment = await input.store.readCompletedPayment(paymentId);
+        if (!isEligiblePaidPurchase(payment)) return { status: 'ineligible' };
 
         await input.store.ensurePurchaseOutbox(paymentId);
         const status = await input.store.projectPendingPurchase(payment);
@@ -70,7 +73,7 @@ export function createPurchaseMeasurementProjector(input: {
 }
 
 const drizzlePurchaseMeasurementStore: PurchaseMeasurementStore = {
-  async readCompletedStripePayment(paymentId) {
+  async readCompletedPayment(paymentId) {
     const [payment] = await db
       .select({
         paymentId: payments.id,
@@ -79,6 +82,7 @@ const drizzlePurchaseMeasurementStore: PurchaseMeasurementStore = {
         bundleId: payments.bundleId,
         method: payments.method,
         status: payments.status,
+        amount: payments.amount,
         attributedExposureId: payments.attributedExposureId,
       })
       .from(payments)

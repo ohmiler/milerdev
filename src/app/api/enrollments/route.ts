@@ -5,7 +5,7 @@ import { enrollments, courses, lessons } from '@/lib/db/schema';
 import { eq, and, count, desc } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
-import { safeInsertEnrollment } from '@/lib/db/safe-insert';
+import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
 import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/course-availability';
 
 // GET /api/enrollments - Get user's enrollments
@@ -111,9 +111,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create enrollment (safe insert handles race conditions)
-    const { created } = await safeInsertEnrollment(session.user.id, courseId);
-    if (!created) {
+    const fulfillment = await fulfillFreeEnrollment({
+      userId: session.user.id,
+      courseIds: [courseId],
+    });
+    if (fulfillment.status === 'already_fulfilled') {
       return NextResponse.json(
         { error: 'คุณลงทะเบียนคอร์สนี้แล้ว' },
         { status: 400 }

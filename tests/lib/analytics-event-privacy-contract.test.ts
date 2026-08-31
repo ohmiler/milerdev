@@ -42,7 +42,8 @@ describe('analytics privacy contracts', () => {
     expect(serverAnalyticsEventSchema.safeParse({
       eventName: 'free_enrollment_completed',
       userId: 'user-1',
-      bundleId: 'bundle-1',
+      courseId: 'course-1',
+      enrollmentId: 'enrollment-1',
     }).success).toBe(true);
   });
 
@@ -57,6 +58,11 @@ describe('analytics privacy contracts', () => {
       userId: 'user-1',
       courseId: 'course-1',
       bundleId: 'bundle-1',
+    }).success).toBe(false);
+    expect(serverAnalyticsEventSchema.safeParse({
+      eventName: 'free_enrollment_completed',
+      userId: 'user-1',
+      courseId: 'course-1',
     }).success).toBe(false);
     expect(serverAnalyticsEventSchema.safeParse({
       eventName: 'registration_completed',

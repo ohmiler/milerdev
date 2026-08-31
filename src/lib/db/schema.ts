@@ -1,5 +1,5 @@
-import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, uniqueIndex, index } from 'drizzle-orm/mysql-core';
-import { relations } from 'drizzle-orm';
+import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, uniqueIndex, index, check } from 'drizzle-orm/mysql-core';
+import { relations, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // =====================
@@ -601,6 +601,7 @@ export const analyticsEvents = mysqlTable('analytics_events', {
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
     bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
     paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id, { onDelete: 'set null' }),
+    enrollmentId: varchar('enrollment_id', { length: 36 }).references(() => enrollments.id, { onDelete: 'set null' }),
     source: varchar('source', { length: 20, enum: ['client', 'server'] }).default('server').notNull(),
     metadata: text('metadata'),
     ipAddress: varchar('ip_address', { length: 45 }),
@@ -614,7 +615,9 @@ export const analyticsEvents = mysqlTable('analytics_events', {
     index('idx_analytics_course_id').on(table.courseId),
     index('idx_analytics_bundle_id').on(table.bundleId),
     index('idx_analytics_payment_id').on(table.paymentId),
+    index('idx_analytics_enrollment_id').on(table.enrollmentId),
     uniqueIndex('uq_analytics_event_payment').on(table.eventName, table.paymentId),
+    uniqueIndex('uq_analytics_event_enrollment').on(table.eventName, table.enrollmentId),
 ]);
 
 export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
@@ -634,6 +637,10 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
         fields: [analyticsEvents.paymentId],
         references: [payments.id],
     }),
+    enrollment: one(enrollments, {
+        fields: [analyticsEvents.enrollmentId],
+        references: [enrollments.id],
+    }),
 }));
 
 // =====================
@@ -641,8 +648,9 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
 // =====================
 export const measurementOutbox = mysqlTable('measurement_outbox', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    eventName: varchar('event_name', { length: 100, enum: ['purchase_completed'] }).notNull(),
-    paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id).notNull(),
+    eventName: varchar('event_name', { length: 100, enum: ['purchase_completed', 'free_enrollment_completed'] }).notNull(),
+    paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id),
+    enrollmentId: varchar('enrollment_id', { length: 36 }).references(() => enrollments.id),
     attemptCount: int('attempt_count').default(0).notNull(),
     lastAttemptAt: datetime('last_attempt_at'),
     lastErrorCode: varchar('last_error_code', { length: 64 }),
@@ -650,14 +658,24 @@ export const measurementOutbox = mysqlTable('measurement_outbox', {
     createdAt: datetime('created_at').$defaultFn(() => new Date()).notNull(),
 }, (table) => [
     uniqueIndex('uq_measurement_outbox_event_payment').on(table.eventName, table.paymentId),
+    uniqueIndex('uq_measurement_outbox_event_enrollment').on(table.eventName, table.enrollmentId),
     index('idx_measurement_outbox_projected_at').on(table.projectedAt),
     index('idx_measurement_outbox_payment_id').on(table.paymentId),
+    index('idx_measurement_outbox_enrollment_id').on(table.enrollmentId),
+    check('chk_measurement_outbox_acquisition_identity', sql`
+        (${table.eventName} = 'purchase_completed' AND ${table.paymentId} IS NOT NULL AND ${table.enrollmentId} IS NULL)
+        OR (${table.eventName} = 'free_enrollment_completed' AND ${table.paymentId} IS NULL AND ${table.enrollmentId} IS NOT NULL)
+    `),
 ]);
 
 export const measurementOutboxRelations = relations(measurementOutbox, ({ one }) => ({
     payment: one(payments, {
         fields: [measurementOutbox.paymentId],
         references: [payments.id],
+    }),
+    enrollment: one(enrollments, {
+        fields: [measurementOutbox.enrollmentId],
+        references: [enrollments.id],
     }),
 }));
 

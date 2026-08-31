@@ -82,6 +82,18 @@ describe('analytics writer boundary', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
+  it('routes free enrollment completion through the transactional outbox', async () => {
+    await expect(recordServerAnalyticsEvent({
+      eventName: 'free_enrollment_completed',
+      userId: 'user-1',
+      courseId: 'course-1',
+      enrollmentId: 'enrollment-1',
+    })).resolves.toBe(false);
+
+    expect(isAnalyticsEventEnabled).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
+  });
+
   it('stores only allow-listed fields with null network identifiers', async () => {
     await expect(recordClientAnalyticsEvent(checkoutEvent, 'user-1')).resolves.toBe(true);
 
@@ -92,6 +104,7 @@ describe('analytics writer boundary', () => {
       courseId: 'course-1',
       bundleId: null,
       paymentId: null,
+      enrollmentId: null,
       metadata: JSON.stringify({ placement: 'course_detail' }),
       ipAddress: null,
       userAgent: null,

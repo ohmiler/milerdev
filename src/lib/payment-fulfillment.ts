@@ -299,8 +299,7 @@ export async function fulfillStripeCheckoutSession({
         payment: { ...payment, status: 'completed', stripePaymentId: paymentIntentId },
         emailDetails,
       };
-      },
-    );
+    });
 
     await purchaseMeasurementProjector.projectPurchase(result.payment.id);
     return result;
@@ -337,7 +336,7 @@ export async function fulfillManualPayment({
   }
 
   try {
-    return await db.transaction(async (tx) => {
+    const result: Extract<ManualPaymentFulfillmentResult, { payment: Payment }> = await db.transaction(async (tx) => {
       const [payment] = await tx
         .select()
         .from(payments)
@@ -391,12 +390,20 @@ export async function fulfillManualPayment({
         newValue: `status: completed; manual approval; reason: ${reason.trim()}`,
       });
 
+      await tx.insert(measurementOutbox).values({
+        eventName: 'purchase_completed',
+        paymentId: payment.id,
+      });
+
       return {
         status: 'fulfilled',
         payment: { ...payment, status: 'completed' },
         enrolledCount,
       };
     });
+
+    await purchaseMeasurementProjector.projectPurchase(result.payment.id);
+    return result;
   } catch (error) {
     if (error instanceof FulfillmentRejection) {
       return { status: 'rejected', code: error.code, retryable: error.retryable };

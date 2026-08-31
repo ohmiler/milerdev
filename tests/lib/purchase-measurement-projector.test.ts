@@ -14,6 +14,7 @@ class MemoryPurchaseMeasurementStore implements PurchaseMeasurementStore {
     bundleId: null,
     method: 'stripe',
     status: 'completed',
+    amount: '990.00',
     attributedExposureId: '11111111-1111-4111-8111-111111111111',
   };
   outbox = new Map<string, { id: string; paymentId: string; createdAt: Date; projected: boolean }>();
@@ -21,7 +22,7 @@ class MemoryPurchaseMeasurementStore implements PurchaseMeasurementStore {
   failures = 0;
   failProjection = false;
 
-  async readCompletedStripePayment(paymentId: string) {
+  async readCompletedPayment(paymentId: string) {
     return this.payment?.paymentId === paymentId ? this.payment : null;
   }
 
@@ -53,7 +54,7 @@ class MemoryPurchaseMeasurementStore implements PurchaseMeasurementStore {
 describe('purchase measurement projector', () => {
   it('does not inspect or mutate payment data while purchase measurement is disabled', async () => {
     const store = new MemoryPurchaseMeasurementStore();
-    const readPayment = vi.spyOn(store, 'readCompletedStripePayment');
+    const readPayment = vi.spyOn(store, 'readCompletedPayment');
     const projector = createPurchaseMeasurementProjector({
       store,
       isEventEnabled: async () => false,
@@ -76,6 +77,32 @@ describe('purchase measurement projector', () => {
 
     await expect(projector.projectPurchase('pay-1')).resolves.toEqual({ status: 'failed' });
     expect(store.payment?.status).toBe('completed');
+  });
+
+  it.each(['promptpay', 'bank_transfer'] as const)(
+    'projects an authoritative completed %s payment as a paid purchase',
+    async (method) => {
+      const store = new MemoryPurchaseMeasurementStore();
+      if (!store.payment) throw new Error('missing fixture');
+      store.payment = { ...store.payment, method };
+      const projector = createPurchaseMeasurementProjector({
+        store,
+        isEventEnabled: async () => true,
+      });
+
+      await expect(projector.projectPurchase('pay-1')).resolves.toEqual({ status: 'projected' });
+      expect(store.facts).toEqual(new Set(['pay-1']));
+    },
+  );
+
+  it('does not classify a zero-value payment as a paid purchase', async () => {
+    const store = new MemoryPurchaseMeasurementStore();
+    if (!store.payment) throw new Error('missing fixture');
+    store.payment = { ...store.payment, method: 'promptpay', amount: '0.00' };
+    const projector = createPurchaseMeasurementProjector({ store, isEventEnabled: async () => true });
+
+    await expect(projector.projectPurchase('pay-1')).resolves.toEqual({ status: 'ineligible' });
+    expect(store.facts.size).toBe(0);
   });
 
   it('treats an existing payment fact as a successful idempotent projection', async () => {
