@@ -6,6 +6,9 @@ vi.mock('@/lib/analytics', () => ({
   isPublishedAnalyticsTarget: vi.fn(),
   recordClientAnalyticsEvent: vi.fn(),
 }));
+vi.mock('@/lib/measurement-recorder', () => ({
+  measurementRecorder: { recordProductExposure: vi.fn() },
+}));
 vi.mock('@/lib/error-handler', () => ({ logEvent: vi.fn() }));
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(),
@@ -23,7 +26,7 @@ import { auth } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 const validEvent = {
-  eventName: 'course_viewed',
+  eventName: 'checkout_opened',
   courseId: 'course-1',
   placement: 'course_detail',
 };
@@ -61,7 +64,7 @@ describe('POST /api/analytics/events', () => {
     const response = await post(validEvent);
 
     expect(response.status).toBe(204);
-    expect(isAnalyticsEventEnabled).toHaveBeenCalledWith('course_viewed');
+    expect(isAnalyticsEventEnabled).toHaveBeenCalledWith('checkout_opened');
     expect(isPublishedAnalyticsTarget).not.toHaveBeenCalled();
     expect(auth).not.toHaveBeenCalled();
     expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();

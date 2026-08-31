@@ -23,6 +23,12 @@ import {
   recordServerAnalyticsEvent,
 } from '@/lib/analytics';
 
+const checkoutEvent = {
+  eventName: 'checkout_opened' as const,
+  courseId: 'course-1',
+  placement: 'course_detail' as const,
+};
+
 describe('analytics writer boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -33,13 +39,21 @@ describe('analytics writer boundary', () => {
   it('does not write when the operational or event-class gate is disabled', async () => {
     vi.mocked(isAnalyticsEventEnabled).mockResolvedValue(false);
 
+    await expect(recordClientAnalyticsEvent(checkoutEvent, 'user-1')).resolves.toBe(false);
+
+    expect(isAnalyticsEventEnabled).toHaveBeenCalledWith('checkout_opened');
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it('keeps product views behind MeasurementRecorder eligibility and idempotency', async () => {
     await expect(recordClientAnalyticsEvent({
       eventName: 'course_viewed',
+      exposureId: '11111111-1111-4111-8111-111111111111',
       courseId: 'course-1',
       placement: 'course_detail',
     }, 'user-1')).resolves.toBe(false);
 
-    expect(isAnalyticsEventEnabled).toHaveBeenCalledWith('course_viewed');
+    expect(isAnalyticsEventEnabled).not.toHaveBeenCalled();
     expect(insert).not.toHaveBeenCalled();
   });
 
@@ -57,14 +71,10 @@ describe('analytics writer boundary', () => {
   });
 
   it('stores only allow-listed fields with null network identifiers', async () => {
-    await expect(recordClientAnalyticsEvent({
-      eventName: 'course_viewed',
-      courseId: 'course-1',
-      placement: 'course_detail',
-    }, 'user-1')).resolves.toBe(true);
+    await expect(recordClientAnalyticsEvent(checkoutEvent, 'user-1')).resolves.toBe(true);
 
     expect(insertValues).toHaveBeenCalledWith({
-      eventName: 'course_viewed',
+      eventName: 'checkout_opened',
       source: 'client',
       userId: 'user-1',
       courseId: 'course-1',

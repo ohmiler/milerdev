@@ -227,7 +227,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
       <CourseDetailProvider>
         <main className="min-h-screen bg-background text-foreground">
-          <AnalyticsViewEvent event={{ eventName: 'course_viewed', courseId: course.id, placement: 'course_detail' }} />
+          <AnalyticsViewEvent productType="course" productId={course.id} />
 
           <header className="bg-[radial-gradient(circle_at_12%_8%,var(--color-accent-soft),transparent_36%),linear-gradient(180deg,var(--academy-canvas),var(--background))]">
             <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:gap-14 lg:px-8 lg:py-20">
