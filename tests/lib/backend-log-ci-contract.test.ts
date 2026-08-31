@@ -29,11 +29,12 @@ describe('backend production logging contract', () => {
 });
 
 describe('CI test gate contract', () => {
-    it('runs Vitest non-interactively and blocks Build on the test job', () => {
+    it('runs required tests non-interactively before Build', () => {
         const workflow = source('.github/workflows/ci.yml');
 
         expect(workflow).toMatch(/\n  test:\n[\s\S]*?run: npm run test -- --run/);
-        expect(workflow).toContain('needs: [lint-and-typecheck, test]');
+        expect(workflow).toMatch(/\n  required-e2e:\n[\s\S]*?run: npm run test:e2e:required/);
+        expect(workflow).toContain('needs: [lint-and-typecheck, test, required-e2e]');
         expect(workflow).not.toContain('# test:');
     });
 });
