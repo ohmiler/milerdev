@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/analytics', () => ({
-  isAnalyticsEnabled: vi.fn(),
+  isAnalyticsEventEnabled: vi.fn(),
   isPublishedAnalyticsTarget: vi.fn(),
   recordClientAnalyticsEvent: vi.fn(),
 }));
@@ -15,7 +15,7 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 import {
-  isAnalyticsEnabled,
+  isAnalyticsEventEnabled,
   isPublishedAnalyticsTarget,
   recordClientAnalyticsEvent,
 } from '@/lib/analytics';
@@ -49,25 +49,30 @@ describe('POST /api/analytics/events', () => {
       remaining: 99,
       resetTime: Date.now() + 60_000,
     });
-    vi.mocked(isAnalyticsEnabled).mockResolvedValue(true);
+    vi.mocked(isAnalyticsEventEnabled).mockResolvedValue(true);
     vi.mocked(isPublishedAnalyticsTarget).mockResolvedValue(true);
     vi.mocked(recordClientAnalyticsEvent).mockResolvedValue(true);
     vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as never);
   });
 
-  it('returns 204 without target lookup or identity work when analytics is disabled', async () => {
-    vi.mocked(isAnalyticsEnabled).mockResolvedValue(false);
+  it('returns 204 without target lookup or identity work when the event is disabled', async () => {
+    vi.mocked(isAnalyticsEventEnabled).mockResolvedValue(false);
 
     const response = await post(validEvent);
 
     expect(response.status).toBe(204);
+    expect(isAnalyticsEventEnabled).toHaveBeenCalledWith('course_viewed');
     expect(isPublishedAnalyticsTarget).not.toHaveBeenCalled();
     expect(auth).not.toHaveBeenCalled();
     expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
   });
 
   it('rejects unknown events and arbitrary personal metadata', async () => {
-    const response = await post({ ...validEvent, eventName: 'purchase_completed', email: 'person@example.com' });
+    const response = await post({
+      ...validEvent,
+      eventName: 'purchase_completed',
+      email: 'person@example.com',
+    });
 
     expect(response.status).toBe(400);
     expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
@@ -99,6 +104,6 @@ describe('POST /api/analytics/events', () => {
     const response = await post(validEvent);
 
     expect(response.status).toBe(429);
-    expect(isAnalyticsEnabled).not.toHaveBeenCalled();
+    expect(isAnalyticsEventEnabled).not.toHaveBeenCalled();
   });
 });

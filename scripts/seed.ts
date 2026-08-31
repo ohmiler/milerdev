@@ -154,7 +154,7 @@ async function main() {
     // =====================
     const settingsData = [
         { key: 'site_name', value: 'MilerDev', type: 'string', desc: 'ชื่อเว็บไซต์' },
-        { key: 'analytics_enabled', value: 'true', type: 'boolean', desc: 'เปิด/ปิด Analytics' },
+        { key: 'analytics_enabled', value: 'false', type: 'boolean', desc: 'เปิด/ปิด Analytics' },
         { key: 'maintenance_mode', value: 'false', type: 'boolean', desc: 'โหมดปิดปรับปรุง' },
     ];
     for (const s of settingsData) {

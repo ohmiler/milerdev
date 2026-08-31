@@ -1,38 +1,29 @@
 import { and, eq } from 'drizzle-orm';
 
+import {
+  getAnalyticsControlState,
+  isAnalyticsEventEnabled,
+  resetAnalyticsControlCache,
+} from '@/lib/analytics-control';
+import {
+  clientAnalyticsEventSchema,
+  serverAnalyticsEventSchema,
+  type AnalyticsPlacement,
+  type ClientAnalyticsEvent,
+  type ServerAnalyticsEvent,
+  type ServerAnalyticsEventName,
+} from '@/lib/analytics-contract';
 import { db } from '@/lib/db';
-import { analyticsEvents, courses, bundles, settings } from '@/lib/db/schema';
+import { analyticsEvents, bundles, courses } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { logEvent } from '@/lib/error-handler';
-import type {
-  AnalyticsPlacement,
-  ClientAnalyticsEvent,
-  ServerAnalyticsEventName,
-} from '@/lib/analytics-contract';
-
-const ANALYTICS_SETTING_KEY = 'analytics_enabled';
-const ANALYTICS_SETTING_CACHE_MS = 60_000;
-
-let analyticsSettingCache: { enabled: boolean; expiresAt: number } | null = null;
 
 export async function isAnalyticsEnabled(): Promise<boolean> {
-  const now = Date.now();
-  if (analyticsSettingCache && analyticsSettingCache.expiresAt > now) {
-    return analyticsSettingCache.enabled;
-  }
-
-  const [setting] = await db
-    .select({ value: settings.value })
-    .from(settings)
-    .where(eq(settings.key, ANALYTICS_SETTING_KEY))
-    .limit(1);
-  const enabled = setting?.value?.trim().toLowerCase() === 'true';
-  analyticsSettingCache = { enabled, expiresAt: now + ANALYTICS_SETTING_CACHE_MS };
-  return enabled;
+  return (await getAnalyticsControlState()).effectiveEnabled;
 }
 
 export function resetAnalyticsSettingCache(): void {
-  analyticsSettingCache = null;
+  resetAnalyticsControlCache();
 }
 
 async function insertAnalyticsEvent(input: {
@@ -45,7 +36,7 @@ async function insertAnalyticsEvent(input: {
   placement?: AnalyticsPlacement;
 }): Promise<boolean> {
   try {
-    if (!(await isAnalyticsEnabled())) return false;
+    if (!(await isAnalyticsEventEnabled(input.eventName))) return false;
 
     await db.insert(analyticsEvents).values({
       eventName: input.eventName,
@@ -70,21 +61,20 @@ export async function recordClientAnalyticsEvent(
   input: ClientAnalyticsEvent,
   userId?: string | null,
 ): Promise<boolean> {
+  const parsed = clientAnalyticsEventSchema.safeParse(input);
+  if (!parsed.success) return false;
+
   return insertAnalyticsEvent({
-    ...input,
+    ...parsed.data,
     source: 'client',
     userId,
   });
 }
 
-export async function recordServerAnalyticsEvent(input: {
-  eventName: ServerAnalyticsEventName;
-  userId?: string | null;
-  courseId?: string | null;
-  bundleId?: string | null;
-  paymentId?: string | null;
-}): Promise<boolean> {
-  return insertAnalyticsEvent({ ...input, source: 'server' });
+export async function recordServerAnalyticsEvent(input: ServerAnalyticsEvent): Promise<boolean> {
+  const parsed = serverAnalyticsEventSchema.safeParse(input);
+  if (!parsed.success) return false;
+  return insertAnalyticsEvent({ ...parsed.data, source: 'server' });
 }
 
 export async function isPublishedAnalyticsTarget(input: {
@@ -111,3 +101,5 @@ export async function isPublishedAnalyticsTarget(input: {
 
   return true;
 }
+
+export { isAnalyticsEventEnabled };
