@@ -33,7 +33,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, test]
+    needs: [lint-and-typecheck, test, required-e2e]
 
     steps:
       - name: Checkout code
@@ -84,3 +84,68 @@ jobs:
 
       - name: Run tests
         run: npm run test -- --run
+
+  required-e2e:
+    name: Required E2E
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: milerdev_e2e
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure isolated E2E environment
+        shell: bash
+        env:
+          E2E_DB_PROTOCOL: mysql
+          E2E_DB_USER: root
+          E2E_DB_HOST: 127.0.0.1
+          E2E_DB_PORT: '3306'
+          E2E_DB_NAME: milerdev_e2e
+          E2E_APP_HOST: 127.0.0.1
+          E2E_APP_PORT: '3100'
+        run: |
+          database_url="${E2E_DB_PROTOCOL}://${E2E_DB_USER}@${E2E_DB_HOST}:${E2E_DB_PORT}/${E2E_DB_NAME}"
+          app_url="http://${E2E_APP_HOST}:${E2E_APP_PORT}"
+          {
+            echo "DATABASE_URL=${database_url}"
+            echo "E2E_DATABASE_URL=${database_url}"
+            echo "AUTH_SECRET=$(openssl rand -hex 32)"
+            echo "NEXTAUTH_URL=${app_url}"
+            echo "NEXT_PUBLIC_APP_URL=${app_url}"
+          } >> "$GITHUB_ENV"
+
+      - name: Migrate isolated E2E database
+        run: npm run db:migrate
+
+      - name: Create deterministic E2E fixtures
+        run: npm run db:fixtures:e2e
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run required browser journey
+        run: npm run test:e2e:required
