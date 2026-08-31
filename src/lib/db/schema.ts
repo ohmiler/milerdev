@@ -594,6 +594,7 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
 export const analyticsEvents = mysqlTable('analytics_events', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
     eventName: varchar('event_name', { length: 100 }).notNull(),
+    exposureId: varchar('exposure_id', { length: 36 }),
     userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
     bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
@@ -604,6 +605,7 @@ export const analyticsEvents = mysqlTable('analytics_events', {
     userAgent: text('user_agent'),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
 }, (table) => [
+    uniqueIndex('uq_analytics_exposure_id').on(table.exposureId),
     index('idx_analytics_event_name').on(table.eventName),
     index('idx_analytics_created_at').on(table.createdAt),
     index('idx_analytics_course_id').on(table.courseId),

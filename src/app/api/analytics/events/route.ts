@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 
-import { clientAnalyticsEventSchema } from '@/lib/analytics-contract';
 import {
   isAnalyticsEventEnabled,
   isPublishedAnalyticsTarget,
   recordClientAnalyticsEvent,
 } from '@/lib/analytics';
+import { clientAnalyticsEventSchema } from '@/lib/analytics-contract';
 import { auth } from '@/lib/auth';
 import { logEvent } from '@/lib/error-handler';
+import { measurementRecorder } from '@/lib/measurement-recorder';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
@@ -28,6 +29,24 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (parsed.data.eventName === 'course_viewed' || parsed.data.eventName === 'bundle_viewed') {
+      const productType = parsed.data.eventName === 'course_viewed' ? 'course' : 'bundle';
+      const productId = productType === 'course' ? parsed.data.courseId : parsed.data.bundleId;
+      if (!parsed.data.exposureId || !productId) {
+        return NextResponse.json({ error: 'Invalid analytics event' }, { status: 400 });
+      }
+
+      const result = await measurementRecorder.recordProductExposure({
+        exposureId: parsed.data.exposureId,
+        productType,
+        productId,
+      });
+      if (result.status === 'ineligible') {
+        return NextResponse.json({ error: 'Analytics target not found' }, { status: 404 });
+      }
+      return new NextResponse(null, { status: 204 });
+    }
+
     if (!(await isAnalyticsEventEnabled(parsed.data.eventName))) {
       return new NextResponse(null, { status: 204 });
     }

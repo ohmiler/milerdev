@@ -22,9 +22,13 @@ export const analyticsPlacementSchema = z.enum([
 ]);
 
 const analyticsIdSchema = z.string().trim().min(1).max(36);
+export const analyticsExposureIdSchema = z.string().uuid().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+);
 
 export const clientAnalyticsEventSchema = z.object({
   eventName: z.enum(CLIENT_ANALYTICS_EVENT_NAMES),
+  exposureId: analyticsExposureIdSchema.optional(),
   courseId: analyticsIdSchema.optional(),
   bundleId: analyticsIdSchema.optional(),
   placement: analyticsPlacementSchema,
@@ -33,27 +37,31 @@ export const clientAnalyticsEventSchema = z.object({
   const hasBundle = Boolean(value.bundleId);
 
   if (value.eventName === 'home_primary_cta_clicked') {
-    if (value.placement !== 'hero' || hasCourse || hasBundle) {
+    if (value.placement !== 'hero' || value.exposureId || hasCourse || hasBundle) {
       context.addIssue({ code: 'custom', message: 'Invalid Home CTA event' });
     }
     return;
   }
 
   if (value.eventName === 'course_viewed') {
-    if (!hasCourse || hasBundle || value.placement !== 'course_detail') {
+    if (!value.exposureId || !hasCourse || hasBundle || value.placement !== 'course_detail') {
       context.addIssue({ code: 'custom', message: 'Invalid Course view event' });
     }
     return;
   }
 
   if (value.eventName === 'bundle_viewed') {
-    if (!hasBundle || hasCourse || value.placement !== 'bundle_detail') {
+    if (!value.exposureId || !hasBundle || hasCourse || value.placement !== 'bundle_detail') {
       context.addIssue({ code: 'custom', message: 'Invalid Bundle view event' });
     }
     return;
   }
 
-  if (hasCourse === hasBundle || !['course_detail', 'bundle_detail'].includes(value.placement)) {
+  if (
+    value.exposureId
+    || hasCourse === hasBundle
+    || !['course_detail', 'bundle_detail'].includes(value.placement)
+  ) {
     context.addIssue({ code: 'custom', message: 'Checkout events require exactly one product' });
   }
 });

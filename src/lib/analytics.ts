@@ -63,6 +63,9 @@ export async function recordClientAnalyticsEvent(
 ): Promise<boolean> {
   const parsed = clientAnalyticsEventSchema.safeParse(input);
   if (!parsed.success) return false;
+  if (parsed.data.eventName === 'course_viewed' || parsed.data.eventName === 'bundle_viewed') {
+    return false;
+  }
 
   return insertAnalyticsEvent({
     ...parsed.data,
