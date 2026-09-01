@@ -152,6 +152,7 @@ export const lessonProgress = mysqlTable('lesson_progress', {
     watchTimeSeconds: int('watch_time_seconds').default(0),
     lastWatchedAt: datetime('last_watched_at'),
 }, (table) => [
+    uniqueIndex('uq_lesson_progress_user_lesson').on(table.userId, table.lessonId),
     index('idx_lesson_progress_user_id').on(table.userId),
     index('idx_lesson_progress_lesson_id').on(table.lessonId),
 ]);

@@ -4,7 +4,10 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
-import { analyticsExposureIdSchema } from '@/lib/analytics-contract';
+import {
+  analyticsExposureIdSchema,
+  serverAnalyticsEventSchema,
+} from '@/lib/analytics-contract';
 import { db } from '@/lib/db';
 import {
   analyticsEvents,
@@ -45,6 +48,9 @@ export interface LearningMeasurementStore {
   readPendingMilestone(
     identity: LearningMilestoneIdentity,
   ): Promise<LearningMilestoneProjection | null>;
+  listPendingMilestones(
+    enrollmentId: string,
+  ): Promise<LearningMilestoneIdentity[]>;
   projectPendingMilestone(
     milestone: LearningMilestoneProjection,
   ): Promise<'projected' | 'duplicate' | 'already_projected'>;
@@ -61,6 +67,16 @@ const milestoneIdentitySchema = z.object({
   eventName: z.enum(['lesson_completed', 'course_completed']),
   factId: analyticsIdSchema,
 }).strict();
+
+export function parseLearningMilestoneEvent(milestone: LearningMilestoneProjection) {
+  return serverAnalyticsEventSchema.parse({
+    eventName: milestone.eventName,
+    courseId: milestone.courseId,
+    factId: milestone.factId,
+    learningEnrollmentId: milestone.enrollmentId,
+    ...(milestone.lessonId ? { lessonId: milestone.lessonId } : {}),
+  });
+}
 
 export function createLearningMeasurementRecorder(input: {
   store: LearningMeasurementStore;
@@ -101,25 +117,46 @@ export function createLearningMeasurementProjector(input: {
   store: LearningMeasurementStore;
   isEventEnabled(eventName: LearningMilestoneEventName): Promise<boolean>;
 }) {
-  return {
-    async projectMilestone(
-      identity: LearningMilestoneIdentity,
-    ): Promise<{ status: 'projected' | 'duplicate' | 'already_projected' | 'disabled' | 'ineligible' | 'failed' }> {
-      const parsed = milestoneIdentitySchema.safeParse(identity);
-      if (!parsed.success) return { status: 'ineligible' };
+  async function projectMilestone(
+    identity: LearningMilestoneIdentity,
+  ): Promise<{ status: 'projected' | 'duplicate' | 'already_projected' | 'disabled' | 'ineligible' | 'failed' }> {
+    const parsed = milestoneIdentitySchema.safeParse(identity);
+    if (!parsed.success) return { status: 'ineligible' };
 
+    try {
+      if (!(await input.isEventEnabled(parsed.data.eventName))) return { status: 'disabled' };
+      const milestone = await input.store.readPendingMilestone(parsed.data);
+      if (!milestone) return { status: 'already_projected' };
+      return { status: await input.store.projectPendingMilestone(milestone) };
+    } catch {
       try {
-        if (!(await input.isEventEnabled(parsed.data.eventName))) return { status: 'disabled' };
-        const milestone = await input.store.readPendingMilestone(parsed.data);
-        if (!milestone) return { status: 'already_projected' };
-        return { status: await input.store.projectPendingMilestone(milestone) };
+        await input.store.recordProjectionFailure(parsed.data);
       } catch {
-        try {
-          await input.store.recordProjectionFailure(parsed.data);
-        } catch {
-          // Optional measurement recovery never becomes progress authority.
-        }
-        return { status: 'failed' };
+        // Optional measurement recovery never becomes progress authority.
+      }
+      return { status: 'failed' };
+    }
+  }
+
+  return {
+    projectMilestone,
+    async projectPendingMilestones(enrollmentId: string) {
+      const parsedEnrollmentId = analyticsIdSchema.safeParse(enrollmentId);
+      if (!parsedEnrollmentId.success) return [];
+      try {
+        const enabled = await Promise.all([
+          input.isEventEnabled('lesson_completed'),
+          input.isEventEnabled('course_completed'),
+        ]);
+        if (!enabled.some(Boolean)) return [];
+
+        const pending = await input.store.listPendingMilestones(parsedEnrollmentId.data);
+        return Promise.all(pending.map(async (identity) => ({
+          identity,
+          status: (await projectMilestone(identity)).status,
+        })));
+      } catch {
+        return [];
       }
     },
   };
@@ -204,7 +241,26 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
     };
   },
 
+  async listPendingMilestones(enrollmentId) {
+    const pending = await db
+      .select({
+        eventName: measurementOutbox.eventName,
+        factId: measurementOutbox.learningFactId,
+      })
+      .from(measurementOutbox)
+      .where(and(
+        eq(measurementOutbox.learningEnrollmentId, enrollmentId),
+        isNull(measurementOutbox.projectedAt),
+      ));
+
+    return pending.flatMap((milestone) => {
+      const parsed = milestoneIdentitySchema.safeParse(milestone);
+      return parsed.success ? [parsed.data] : [];
+    });
+  },
+
   async projectPendingMilestone(milestone) {
+    const event = parseLearningMilestoneEvent(milestone);
     return db.transaction(async (tx) => {
       const [outbox] = await tx
         .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt })
@@ -221,17 +277,17 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
       let duplicate = false;
       try {
         await tx.insert(analyticsEvents).values({
-          eventName: milestone.eventName,
+          eventName: event.eventName,
           exposureId: null,
           source: 'server',
           userId: null,
-          courseId: milestone.courseId,
+          courseId: event.courseId ?? null,
           bundleId: null,
           paymentId: null,
           enrollmentId: null,
-          learningFactId: milestone.factId,
-          learningEnrollmentId: milestone.enrollmentId,
-          lessonId: milestone.lessonId,
+          learningFactId: event.factId ?? null,
+          learningEnrollmentId: event.learningEnrollmentId ?? null,
+          lessonId: event.lessonId ?? null,
           metadata: null,
           ipAddress: null,
           userAgent: null,

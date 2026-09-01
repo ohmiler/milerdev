@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createLearningMeasurementProjector,
   createLearningMeasurementRecorder,
+  parseLearningMilestoneEvent,
   type LearningMeasurementStore,
   type LearningMilestoneIdentity,
   type LearningMilestoneProjection,
@@ -36,6 +37,12 @@ class MemoryLearningMeasurementStore implements LearningMeasurementStore {
 
   async readPendingMilestone(identity: LearningMilestoneIdentity) {
     return this.pending.get(`${identity.eventName}:${identity.factId}`) ?? null;
+  }
+
+  async listPendingMilestones(enrollmentId: string) {
+    return [...this.pending.values()]
+      .filter((milestone) => milestone.enrollmentId === enrollmentId)
+      .map(({ eventName, factId }) => ({ eventName, factId }));
   }
 
   async projectPendingMilestone(milestone: LearningMilestoneProjection) {
@@ -134,5 +141,35 @@ describe('learning milestone projector', () => {
     await expect(projector.projectMilestone(identity)).resolves.toEqual({ status: 'failed' });
     expect(store.pending.has('lesson_completed:progress-1')).toBe(true);
     expect(store.failures).toBe(1);
+  });
+
+  it('reconciles pending milestones for an enrollment after a projection outage', async () => {
+    const store = new MemoryLearningMeasurementStore();
+    store.pending.set('lesson_completed:progress-1', pendingMilestone());
+    store.failProjection = true;
+    const projector = createLearningMeasurementProjector({ store, isEventEnabled: async () => true });
+
+    await expect(projector.projectMilestone(identity)).resolves.toEqual({ status: 'failed' });
+    store.failProjection = false;
+
+    await expect(projector.projectPendingMilestones('enrollment-1')).resolves.toEqual([
+      { identity, status: 'projected' },
+    ]);
+    expect(store.projected).toEqual(new Set(['lesson_completed:progress-1']));
+  });
+
+  it('routes production milestone facts through the privacy allow-list shape', () => {
+    expect(parseLearningMilestoneEvent(pendingMilestone())).toEqual({
+      eventName: 'lesson_completed',
+      courseId: 'course-1',
+      factId: 'progress-1',
+      learningEnrollmentId: 'enrollment-1',
+      lessonId: 'lesson-1',
+    });
+
+    expect(() => parseLearningMilestoneEvent({
+      ...pendingMilestone(),
+      eventName: 'course_completed',
+    })).toThrow();
   });
 });

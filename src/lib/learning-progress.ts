@@ -32,7 +32,19 @@ export type LearningProgressUpdateResult =
     milestones: LearningMilestoneIdentity[];
     courseCompleted: boolean;
     courseId: string;
+    enrollmentId: string | null;
   };
+
+export async function retryLearningProgressTransaction<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (!isDuplicateKeyError(error)) throw error;
+    return operation();
+  }
+}
 
 export function deriveLearningMilestoneIdentities(input: {
   progressId: string;
@@ -80,7 +92,8 @@ async function enqueueLearningMilestone(
 export async function updateLearningProgress(
   input: LearningProgressUpdate,
 ): Promise<LearningProgressUpdateResult> {
-  const result = await db.transaction(async (tx): Promise<LearningProgressUpdateResult> => {
+  const result = await retryLearningProgressTransaction(() => (
+    db.transaction(async (tx): Promise<LearningProgressUpdateResult> => {
     const [lesson] = await tx
       .select({
         id: lessons.id,
@@ -155,6 +168,7 @@ export async function updateLearningProgress(
         milestones: [],
         courseCompleted: false,
         courseId: lesson.courseId,
+        enrollmentId: enrollment?.id ?? null,
       };
     }
 
@@ -199,8 +213,15 @@ export async function updateLearningProgress(
       });
     }
 
-    return { status: 'saved', milestones, courseCompleted, courseId: lesson.courseId };
-  });
+      return {
+        status: 'saved',
+        milestones,
+        courseCompleted,
+        courseId: lesson.courseId,
+        enrollmentId: enrollment.id,
+      };
+    })
+  ));
 
   if (result.status !== 'saved') return result;
 
@@ -215,8 +236,8 @@ export async function updateLearningProgress(
     }
   }
 
-  await Promise.all(result.milestones.map((milestone) => (
-    learningMeasurementProjector.projectMilestone(milestone)
-  )));
+  if (result.enrollmentId) {
+    await learningMeasurementProjector.projectPendingMilestones(result.enrollmentId);
+  }
   return result;
 }

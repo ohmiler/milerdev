@@ -1,0 +1,1 @@
+ALTER TABLE `lesson_progress` ADD CONSTRAINT `uq_lesson_progress_user_lesson` UNIQUE(`user_id`,`lesson_id`);

@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { deriveLearningMilestoneIdentities } from '@/lib/learning-progress';
+import {
+  deriveLearningMilestoneIdentities,
+  retryLearningProgressTransaction,
+} from '@/lib/learning-progress';
 
 const base = {
   progressId: 'progress-1',
@@ -12,6 +15,26 @@ const base = {
 };
 
 describe('learning progress milestone transitions', () => {
+  it('retries the complete transaction once after a natural-key race', async () => {
+    const duplicate = Object.assign(new Error('Duplicate entry'), { code: 'ER_DUP_ENTRY' });
+    let attempts = 0;
+
+    await expect(retryLearningProgressTransaction(async () => {
+      attempts += 1;
+      if (attempts === 1) throw duplicate;
+      return 'saved' as const;
+    })).resolves.toBe('saved');
+    expect(attempts).toBe(2);
+  });
+
+  it('does not retry non-duplicate transaction failures', async () => {
+    const failure = new Error('database unavailable');
+    const operation = vi.fn().mockRejectedValue(failure);
+
+    await expect(retryLearningProgressTransaction(operation)).rejects.toBe(failure);
+    expect(operation).toHaveBeenCalledOnce();
+  });
+
   it('emits a lesson fact only for the first persisted false-to-true transition', () => {
     expect(deriveLearningMilestoneIdentities(base)).toEqual([
       { eventName: 'lesson_completed', factId: 'progress-1' },

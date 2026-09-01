@@ -35,6 +35,7 @@ describe('POST /api/progress contract', () => {
       milestones: [],
       courseCompleted: false,
       courseId: 'course-1',
+      enrollmentId: 'enrollment-1',
     });
   });
 
