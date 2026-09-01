@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import type { SafeAuthReturnPath } from '@/lib/safe-auth-return';
 import { GoogleIcon } from './AuthIcons';
 import { AuthDivider, AuthError, AuthField, AuthFootnote, PasswordInput } from './AuthFormLayout';
 
@@ -19,7 +20,13 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   unauthorized: 'กรุณาเข้าสู่ระบบก่อนเข้าใช้งานหน้านี้',
 };
 
-export default function LoginForm() {
+export default function LoginForm({
+  returnTo,
+  registerHref,
+}: {
+  returnTo: SafeAuthReturnPath;
+  registerHref: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -50,7 +57,7 @@ export default function LoginForm() {
       if (result?.error) {
         setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
       } else {
-        router.push('/dashboard');
+        router.push(returnTo);
         router.refresh();
       }
     } catch {
@@ -104,7 +111,7 @@ export default function LoginForm() {
 
       <Button
         type="button"
-        onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+        onClick={() => signIn('google', { callbackUrl: returnTo })}
         variant="outline"
         className="w-full"
       >
@@ -112,7 +119,7 @@ export default function LoginForm() {
         เข้าสู่ระบบด้วย Google
       </Button>
 
-      <AuthFootnote>ยังไม่มีบัญชี? <Link href="/register">สมัครสมาชิกฟรี</Link></AuthFootnote>
+      <AuthFootnote>ยังไม่มีบัญชี? <Link href={registerHref}>สมัครสมาชิกฟรี</Link></AuthFootnote>
       <p className="mt-2 text-center text-xs leading-5 text-muted-foreground">การเข้าสู่ระบบจะใช้ข้อมูลบัญชีตามนโยบายความเป็นส่วนตัวของ MilerDev</p>
     </>
   );
