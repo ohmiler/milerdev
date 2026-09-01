@@ -15,6 +15,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Spinner } from '@/components/ui/spinner';
+import type { CourseDecisionFacts } from '@/lib/course-decision-facts';
 
 export type EnrollmentStatus = 'checking' | 'enrolled' | 'not-enrolled';
 
@@ -30,8 +31,14 @@ export function useEnrollment() {
 }
 
 // Provider that wraps the course detail section
-export function CourseDetailProvider({ children }: { children: React.ReactNode }) {
-  const [status, setEnrollmentStatus] = useState<EnrollmentStatus>('checking');
+export function CourseDetailProvider({
+  children,
+  initialStatus = 'checking',
+}: {
+  children: React.ReactNode;
+  initialStatus?: EnrollmentStatus;
+}) {
+  const [status, setEnrollmentStatus] = useState<EnrollmentStatus>(initialStatus);
   return (
     <EnrollmentContext.Provider value={{
       status,
@@ -55,11 +62,8 @@ interface Lesson {
 interface CourseDetailClientProps {
   courseId: string;
   courseSlug: string;
+  decisionFacts: CourseDecisionFacts;
   lessons?: Lesson[];
-  price?: number;
-  originalPrice?: number;
-  promoLabel?: string | null;
-  courseReady?: boolean;
   previewLessonHref?: string | null;
   hasVideoPreview?: boolean;
   renderMode?: 'lessons' | 'button' | 'final-action';
@@ -68,23 +72,24 @@ interface CourseDetailClientProps {
 export default function CourseDetailClient({
   courseId,
   courseSlug,
+  decisionFacts,
   lessons,
-  price = 0,
-  originalPrice = price,
-  promoLabel = null,
-  courseReady = true,
   previewLessonHref = null,
   hasVideoPreview = false,
   renderMode,
 }: CourseDetailClientProps) {
   const { status, isEnrolled, setEnrollmentStatus } = useEnrollment();
+  const price = decisionFacts.price.effective;
+  const originalPrice = decisionFacts.price.regular;
+  const promoLabel = decisionFacts.promotion.label;
+  const courseReady = decisionFacts.readiness === 'ready';
 
   const handleEnrollmentChange = useCallback((enrolled: boolean) => {
     setEnrollmentStatus(enrolled ? 'enrolled' : 'not-enrolled');
   }, [setEnrollmentStatus]);
 
   if (renderMode === 'button') {
-    if (!courseReady) {
+    if (!courseReady && status !== 'enrolled') {
       return (
         <Empty className="border">
           <EmptyHeader>
@@ -110,7 +115,7 @@ export default function CourseDetailClient({
             <AlertDescription>กลับไปยังบทเรียนและเรียนต่อจากจุดที่ค้างไว้ได้เลย</AlertDescription>
           </Alert>
           <Button asChild className="w-full">
-            <Link href={`/courses/${courseSlug}/learn`}>เข้าเรียน / เรียนต่อ</Link>
+            <Link href={decisionFacts.actions.learner.href!}>{decisionFacts.actions.learner.label}</Link>
           </Button>
         </div>
       );
@@ -177,19 +182,19 @@ export default function CourseDetailClient({
   }
 
   if (renderMode === 'final-action') {
-    if (!courseReady || status === 'checking') return null;
+    if (status === 'checking' || (!courseReady && status !== 'enrolled')) return null;
 
     if (status === 'enrolled') {
       return (
         <Button asChild>
-          <Link href={`/courses/${courseSlug}/learn`}>เข้าเรียน / เรียนต่อ</Link>
+          <Link href={decisionFacts.actions.learner.href!}>{decisionFacts.actions.learner.label}</Link>
         </Button>
       );
     }
 
     return (
       <Button asChild>
-        <a href="#course-action">{price === 0 ? 'ลงทะเบียนเรียนฟรี' : 'สมัครคอร์สนี้'}</a>
+        <a href="#course-action">{decisionFacts.actions.member.label}</a>
       </Button>
     );
   }

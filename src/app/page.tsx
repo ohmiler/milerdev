@@ -42,6 +42,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { db } from '@/lib/db';
 import { courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
+import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
 
 async function getLatestCourses() {
   const lessonStatsSq = db
@@ -104,16 +105,27 @@ async function getLatestCourses() {
 
   const now = new Date();
   return rows.map((row) => {
-    const hasPromo = row.promoPrice !== null && row.promoPrice !== undefined;
-    const promoStartOk = !row.promoStartsAt || new Date(row.promoStartsAt) <= now;
-    const promoEndOk = !row.promoEndsAt || new Date(row.promoEndsAt) >= now;
+    const lessonCount = Number(row.lessonCount) || 0;
+    const totalDurationSeconds = Number(row.totalDurationSeconds) || 0;
+    const freePreviewCount = Number(row.freePreviewCount) || 0;
 
     return {
       ...row,
-      isPromoActive: hasPromo && promoStartOk && promoEndOk,
-      lessonCount: Number(row.lessonCount) || 0,
-      totalDurationSeconds: Number(row.totalDurationSeconds) || 0,
-      hasFreePreview: Number(row.freePreviewCount) > 0,
+      decisionFacts: deriveCourseDecisionFacts({
+        slug: row.slug,
+        regularPrice: row.price,
+        promotion: row.promoPrice === null
+          ? null
+          : {
+              price: row.promoPrice,
+              startsAt: row.promoStartsAt,
+              endsAt: row.promoEndsAt,
+            },
+        lessonCount,
+        knownDurationSeconds: totalDurationSeconds,
+        freePreviewCount,
+        instructor: row.instructorName ? { name: row.instructorName } : null,
+      }, { now }),
       tags: tagsByCourse.get(row.id) ?? [],
     };
   });
@@ -379,13 +391,7 @@ export default async function HomePage() {
                       slug={course.slug}
                       description={course.description}
                       thumbnailUrl={course.thumbnailUrl}
-                      price={parseFloat(course.price)}
-                      promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null}
-                      isPromoActive={course.isPromoActive}
-                      instructorName={course.instructorName}
-                      lessonCount={course.lessonCount}
-                      totalDurationSeconds={course.totalDurationSeconds}
-                      hasFreePreview={course.hasFreePreview}
+                      decisionFacts={course.decisionFacts}
                       tags={course.tags}
                     />
                   </div>
