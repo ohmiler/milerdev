@@ -1,9 +1,22 @@
-import { Suspense } from 'react';
 import AuthShell from '@/components/auth/AuthShell';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
-import { Skeleton } from '@/components/ui/skeleton';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
 
-export default function ResetPasswordPage() {
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    token?: string | string[];
+    callbackUrl?: string | string[];
+  }>;
+}) {
+  const { token, callbackUrl } = await searchParams;
+  const opaqueToken = typeof token === 'string' && token.length > 0 ? token : null;
+  const { pathname: returnTo } = resolveSafeAuthReturn(callbackUrl);
+  const forgotPasswordHref = createAuthReturnHref('/forgot-password', returnTo);
+  const loginHref = createAuthReturnHref('/login', returnTo);
+  const successLoginHref = `${loginHref}&reason=password-reset`;
+
   return (
     <AuthShell
       pageId={'reset-password'}
@@ -18,9 +31,12 @@ export default function ResetPasswordPage() {
         { label: 'กลับเข้าสู่ระบบ', text: 'กลับไปเข้าสู่ระบบอีกครั้ง' },
       ]}
     >
-      <Suspense fallback={<div className="flex flex-col gap-4" aria-busy="true"><span className="sr-only" role="status" aria-live="polite">กำลังตรวจสอบลิงก์</span><Skeleton aria-hidden="true" className="h-5 w-36" /><Skeleton aria-hidden="true" className="h-11 w-full" /><Skeleton aria-hidden="true" className="h-11 w-full" /></div>}>
-        <ResetPasswordForm />
-      </Suspense>
+      <ResetPasswordForm
+        token={opaqueToken}
+        forgotPasswordHref={forgotPasswordHref}
+        loginHref={loginHref}
+        successLoginHref={successLoginHref}
+      />
     </AuthShell>
   );
 }

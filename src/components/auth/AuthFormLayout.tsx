@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldLabel,
   FieldSeparator,
 } from '@/components/ui/field';
@@ -15,11 +16,32 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 
-export function AuthError({ children }: { children: ReactNode }) {
+export function AuthError({
+  children,
+  live = 'assertive',
+}: {
+  children: ReactNode;
+  live?: 'assertive' | 'polite';
+}) {
   return (
-    <Alert variant="destructive" className="mb-5">
+    <Alert
+      variant={'destructive'}
+      className={'mb-5'}
+      role={live === 'polite' ? 'status' : 'alert'}
+      aria-live={live}
+    >
       <AlertCircle aria-hidden="true" />
       <AlertTitle>ไม่สามารถดำเนินการได้</AlertTitle>
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
+  );
+}
+
+export function AuthNotice({ children }: { children: ReactNode }) {
+  return (
+    <Alert variant={'success'} role={'status'} aria-live={'polite'} className={'mb-5'}>
+      <CheckCircle2 aria-hidden={'true'} />
+      <AlertTitle>ดำเนินการสำเร็จ</AlertTitle>
       <AlertDescription>{children}</AlertDescription>
     </Alert>
   );
@@ -32,6 +54,7 @@ export function AuthField({
   help,
   children,
   invalid = false,
+  error,
 }: {
   htmlFor: string;
   label: string;
@@ -39,6 +62,7 @@ export function AuthField({
   help?: ReactNode;
   children: ReactNode;
   invalid?: boolean;
+  error?: { id: string; message: string };
 }) {
   return (
     <Field data-invalid={invalid || undefined}>
@@ -47,6 +71,7 @@ export function AuthField({
         {trailing}
       </div>
       {children}
+      {error ? <FieldError id={error.id}>{error.message}</FieldError> : null}
       {help ? <FieldDescription>{help}</FieldDescription> : null}
     </Field>
   );
@@ -108,7 +133,11 @@ export function RecoveryState({
 }) {
   const Icon = tone === 'success' ? CheckCircle2 : AlertCircle;
   return (
-    <Alert variant={tone === 'error' ? 'destructive' : 'default'}>
+    <Alert
+      variant={tone === 'error' ? 'destructive' : 'success'}
+      role={tone === 'error' ? 'alert' : 'status'}
+      aria-live={tone === 'error' ? 'assertive' : 'polite'}
+    >
       <Icon aria-hidden="true" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>

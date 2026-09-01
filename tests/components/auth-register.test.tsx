@@ -17,20 +17,13 @@ describe('Register UI contracts', () => {
     expect(source).toContain("signIn('credentials'");
   });
 
-  it('keeps fields and client password policy aligned with the API', () => {
+  it('keeps the account identity fields aligned with the API request', () => {
     const source = readSource('src/components/auth/RegisterForm.tsx');
 
     expect(source).toMatch(/name=(?:["']name["']|\{["']name["']\})/);
-    expect(source).toContain('name.trim().length < 2');
     expect(source).toContain('maxLength={100}');
     expect(source).toMatch(/name=(?:["']email["']|\{["']email["']\})/);
     expect(source).toMatch(/name=(?:["']password["']|\{["']password["']\})/);
-    expect(source).toContain('password.length < 8');
-    expect(source).toContain('/[A-Z]/');
-    expect(source).toContain('/[a-z]/');
-    expect(source).toContain('/[0-9]/');
     expect(source).toMatch(/name=(?:["']confirmPassword["']|\{["']confirmPassword["']\})/);
-    expect(source).toContain('รหัสผ่านไม่ตรงกัน');
-    expect(source).toContain('อักขระพิเศษ (แนะนำ)');
   });
 });

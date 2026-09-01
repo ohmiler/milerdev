@@ -10,18 +10,22 @@ import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,
 } from '@/lib/auth-rate-limit';
+import { resolveSafeAuthReturn } from '@/lib/safe-auth-return';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const DUPLICATE_RESET_SUPPRESSION_MS = 5 * 60 * 1000;
+const RESET_REQUEST_ACCEPTED = {
+    message: 'ตรวจสอบคำขอแล้ว',
+    retryAfterSeconds: DUPLICATE_RESET_SUPPRESSION_MS / 1000,
+};
 
 const resetSchema = z.object({
     email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
+    callbackUrl: z.unknown().optional(),
 });
 
 export async function POST(request: Request) {
     try {
-        const genericMessage = 'หากอีเมลนี้มีในระบบ คุณจะได้รับลิงก์รีเซ็ตรหัสผ่าน';
-
         // Rate limiting
         const clientIP = getClientIP(request);
         const rateLimit = await consumeAuthRateLimit({
@@ -49,6 +53,7 @@ export async function POST(request: Request) {
         }
 
         const email = validation.data.email.toLowerCase().trim();
+        const { pathname: returnTo } = resolveSafeAuthReturn(validation.data.callbackUrl);
 
         // Check if user exists
         const [user] = await db
@@ -59,9 +64,7 @@ export async function POST(request: Request) {
 
         // Always return success to prevent email enumeration
         if (!user || user.deactivatedAt !== null) {
-            return NextResponse.json({
-                message: genericMessage
-            });
+            return NextResponse.json(RESET_REQUEST_ACCEPTED);
         }
 
         const now = Date.now();
@@ -74,7 +77,7 @@ export async function POST(request: Request) {
         // Avoid invalidating the email that was just sent if the user taps submit twice
         // or requests another reset before the first message arrives.
         if (hasFreshResetToken) {
-            return NextResponse.json({ message: genericMessage });
+            return NextResponse.json(RESET_REQUEST_ACCEPTED);
         }
 
         // Generate cryptographically secure reset token
@@ -92,7 +95,7 @@ export async function POST(request: Request) {
             .where(and(eq(users.id, user.id), isNull(users.deactivatedAt)));
 
         if (issueResult[0]?.affectedRows !== 1) {
-            return NextResponse.json({ message: genericMessage });
+            return NextResponse.json(RESET_REQUEST_ACCEPTED);
         }
 
         // Wait for delivery so serverless runtimes do not end the request first.
@@ -101,6 +104,7 @@ export async function POST(request: Request) {
                 email: user.email,
                 name: user.name,
                 resetToken,
+                returnTo,
             });
 
             if (!emailSent) {
@@ -119,9 +123,7 @@ export async function POST(request: Request) {
             }
         }
 
-        return NextResponse.json({
-            message: genericMessage
-        });
+        return NextResponse.json(RESET_REQUEST_ACCEPTED);
     } catch {
         console.error('Password reset request failed');
         return NextResponse.json(

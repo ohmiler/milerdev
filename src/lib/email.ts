@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { logError, logEvent } from '@/lib/error-handler';
+import type { SafeAuthReturnPath } from '@/lib/safe-auth-return';
 
 // =====================
 // EMAIL PROVIDER (Resend for production, nodemailer for local)
@@ -210,6 +211,7 @@ interface SendPasswordResetEmailParams {
     email: string;
     name: string | null;
     resetToken: string;
+    returnTo: SafeAuthReturnPath;
 }
 
 interface SendCertificateEmailParams {
@@ -280,8 +282,11 @@ export async function sendPasswordResetEmail({
     email,
     name,
     resetToken,
+    returnTo,
 }: SendPasswordResetEmailParams) {
-    const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
+    const resetUrl = new URL('/reset-password', APP_URL);
+    resetUrl.searchParams.set('token', resetToken);
+    resetUrl.searchParams.set('callbackUrl', returnTo);
     const html = emailLayout(`
       <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">รีเซ็ตรหัสผ่าน</h2>
       <p style="color:#475569;line-height:1.7;margin:0 0 16px;">
@@ -291,7 +296,7 @@ export async function sendPasswordResetEmail({
         คลิกปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่ ลิงก์นี้จะหมดอายุใน <strong>1 ชั่วโมง</strong>
       </p>
       <div style="text-align:center;margin:24px 0;">
-        ${button('ตั้งรหัสผ่านใหม่', resetUrl, '#dc2626')}
+        ${button('ตั้งรหัสผ่านใหม่', resetUrl.toString(), '#dc2626')}
       </div>
       <div style="background:#fef2f2;border-radius:8px;padding:12px 16px;margin-top:20px;">
         <p style="color:#991b1b;font-size:0.8125rem;margin:0;">

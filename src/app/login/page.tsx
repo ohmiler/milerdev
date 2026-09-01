@@ -12,6 +12,7 @@ export default async function LoginPage({
   const { callbackUrl } = await searchParams;
   const { pathname: returnTo } = resolveSafeAuthReturn(callbackUrl);
   const registerHref = createAuthReturnHref('/register', returnTo);
+  const forgotPasswordHref = createAuthReturnHref('/forgot-password', returnTo);
 
   return (
     <AuthShell
@@ -20,7 +21,11 @@ export default async function LoginPage({
       panelDescription={'ใช้บัญชี MilerDev เพื่อกลับไปเรียนต่อ'}
     >
       <Suspense fallback={<div className="flex flex-col gap-4" aria-busy="true"><span className="sr-only" role="status" aria-live="polite">กำลังเตรียมแบบฟอร์ม</span><Skeleton aria-hidden="true" className="h-5 w-24" /><Skeleton aria-hidden="true" className="h-11 w-full" /><Skeleton aria-hidden="true" className="h-11 w-full" /></div>}>
-        <LoginForm returnTo={returnTo} registerHref={registerHref} />
+        <LoginForm
+          returnTo={returnTo}
+          registerHref={registerHref}
+          forgotPasswordHref={forgotPasswordHref}
+        />
       </Suspense>
     </AuthShell>
   );

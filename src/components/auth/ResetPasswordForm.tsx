@@ -1,31 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Spinner } from '@/components/ui/spinner';
+import { getAuthPublicError } from '@/lib/auth-public-error';
+import { getPasswordPolicyError } from '@/lib/password-policy';
 import { AuthError, AuthField, AuthFootnote, PasswordInput, RecoveryState } from './AuthFormLayout';
+import PasswordPolicyFeedback from './PasswordPolicyFeedback';
 
-export default function ResetPasswordForm() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+export default function ResetPasswordForm({
+  token,
+  forgotPasswordHref,
+  loginHref,
+  successLoginHref,
+}: {
+  token: string | null;
+  forgotPasswordHref: string;
+  loginHref: string;
+  successLoginHref: string;
+}) {
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [invalidLink, setInvalidLink] = useState(false);
   const [error, setError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
 
-    if (password !== confirmPassword) {
-      setError('รหัสผ่านไม่ตรงกัน');
+    const nextPasswordError = getPasswordPolicyError(password);
+    if (nextPasswordError) {
+      setPasswordError(nextPasswordError);
+      setConfirmPasswordError('');
+      passwordRef.current?.focus();
       return;
     }
+
+    if (password !== confirmPassword) {
+      setPasswordError('');
+      setConfirmPasswordError('รหัสผ่านไม่ตรงกัน');
+      confirmPasswordRef.current?.focus();
+      return;
+    }
+
+    setPasswordError('');
+    setConfirmPasswordError('');
 
     setLoading(true);
     try {
@@ -38,8 +67,10 @@ export default function ResetPasswordForm() {
 
       if (response.ok) {
         setSuccess(true);
+      } else if (data.kind === 'invalid_or_expired_link') {
+        setInvalidLink(true);
       } else {
-        setError(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+        setError(getAuthPublicError(response.status, data));
       }
     } catch {
       setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
@@ -50,66 +81,85 @@ export default function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <RecoveryState tone="error" title="ลิงก์ไม่ถูกต้อง" actions={<><Button asChild><Link href={'/forgot-password'}>ขอลิงก์รีเซ็ตใหม่</Link></Button><Button variant="outline" asChild><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></Button></>}><p>ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้อง กรุณาขอลิงก์ใหม่</p></RecoveryState>
+      <RecoveryState tone={'error'} title={'ลิงก์ไม่สมบูรณ์'} actions={<><Button asChild><Link href={forgotPasswordHref}>ขอลิงก์ใหม่</Link></Button><Button variant={'outline'} asChild><Link href={loginHref}>กลับไปหน้าเข้าสู่ระบบ</Link></Button></>}><p>กรุณาขอลิงก์ตั้งรหัสผ่านใหม่</p></RecoveryState>
+    );
+  }
+
+  if (invalidLink) {
+    return (
+      <RecoveryState tone={'error'} title={'ลิงก์นี้ใช้ไม่ได้แล้ว'} actions={<><Button asChild><Link href={forgotPasswordHref}>ขอลิงก์ใหม่</Link></Button><Button variant={'outline'} asChild><Link href={loginHref}>กลับไปหน้าเข้าสู่ระบบ</Link></Button></>}><p>ลิงก์อาจหมดอายุหรือถูกใช้ไปแล้ว กรุณาขอลิงก์ใหม่</p></RecoveryState>
     );
   }
 
   if (success) {
     return (
-      <RecoveryState tone="success" title="ตั้งรหัสผ่านใหม่สำเร็จ!" actions={<Button asChild><Link href={'/login'}>ไปหน้าเข้าสู่ระบบ</Link></Button>}><p>คุณสามารถเข้าสู่ระบบด้วยรหัสผ่านใหม่ได้แล้ว</p></RecoveryState>
+      <RecoveryState tone={'success'} title={'ตั้งรหัสผ่านใหม่แล้ว'} actions={<Button asChild><Link href={successLoginHref}>ไปหน้าเข้าสู่ระบบ</Link></Button>}><p>เพื่อความปลอดภัย กรุณาเข้าสู่ระบบอีกครั้ง</p></RecoveryState>
     );
   }
 
   return (
     <>
-      {error && <AuthError>{error}</AuthError>}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5" aria-busy={loading}>
+      {error && <AuthError live={'polite'}>{error}</AuthError>}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" aria-busy={loading} noValidate>
         <FieldGroup className="gap-5">
-          <AuthField htmlFor="reset-password" label="รหัสผ่านใหม่" help={<span id="reset-password-help">อย่างน้อย 8 ตัวอักษร มีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลข</span>}>
+          <AuthField htmlFor="reset-password" label="รหัสผ่านใหม่" invalid={Boolean(passwordError)} help={passwordError ? <span id={'reset-password-error'}>{passwordError}</span> : null}>
             <PasswordInput
+              ref={passwordRef}
               id={'reset-password'}
               name={'password'}
               visible={showPassword}
               onVisibilityChange={() => setShowPassword((visible) => !visible)}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                if (passwordError) setPasswordError('');
+              }}
               required
               minLength={8}
               autoComplete={'new-password'}
               placeholder={'••••••••'}
-              aria-describedby={'reset-password-help'}
+              aria-invalid={Boolean(passwordError) || undefined}
+              aria-describedby={passwordError ? 'reset-password-policy reset-password-error' : 'reset-password-policy'}
             />
           </AuthField>
 
           <AuthField
             htmlFor="reset-confirm-password"
             label="ยืนยันรหัสผ่านใหม่"
-            invalid={Boolean(confirmPassword && password !== confirmPassword)}
+            invalid={Boolean(confirmPasswordError)}
+            help={confirmPasswordError ? <span id={'reset-confirm-password-error'}>{confirmPasswordError}</span> : null}
           >
             <PasswordInput
+            ref={confirmPasswordRef}
             id={'reset-confirm-password'}
             name={'confirmPassword'}
-            visible={showPassword}
-            onVisibilityChange={() => setShowPassword((visible) => !visible)}
+            visible={showConfirmPassword}
+            onVisibilityChange={() => setShowConfirmPassword((visible) => !visible)}
             value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
+            onChange={(event) => {
+              setConfirmPassword(event.target.value);
+              if (confirmPasswordError) setConfirmPasswordError('');
+            }}
             required
             minLength={8}
             autoComplete={'new-password'}
             placeholder={'••••••••'}
-            aria-invalid={Boolean(confirmPassword && password !== confirmPassword) || undefined}
+            aria-invalid={Boolean(confirmPasswordError) || undefined}
+            aria-describedby={confirmPasswordError ? 'reset-confirm-password-error' : undefined}
             showLabel="แสดงรหัสผ่านยืนยัน"
             hideLabel="ซ่อนรหัสผ่านยืนยัน"
             />
           </AuthField>
         </FieldGroup>
 
+        <PasswordPolicyFeedback password={password} id={'reset-password-policy'} />
+
         <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
           {loading && <Spinner data-icon="inline-start" aria-hidden="true" />}
           {loading ? 'กำลังบันทึก...' : 'ตั้งรหัสผ่านใหม่'}
         </Button>
       </form>
-      <AuthFootnote><Link href={'/login'}>กลับไปหน้าเข้าสู่ระบบ</Link></AuthFootnote>
+      <AuthFootnote><Link href={loginHref}>กลับไปหน้าเข้าสู่ระบบ</Link></AuthFootnote>
     </>
   );
 }
