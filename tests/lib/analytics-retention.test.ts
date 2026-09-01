@@ -9,9 +9,9 @@ import {
 class MemoryAnalyticsRetentionStore implements AnalyticsRetentionStore {
   calls: Array<{ cutoff: Date; batchSize: number }> = [];
 
-  async deleteRawEventsBefore(cutoff: Date, batchSize: number): Promise<number> {
+  async deleteRawMeasurementsBefore(cutoff: Date, batchSize: number) {
     this.calls.push({ cutoff, batchSize });
-    return 7;
+    return { analyticsEvents: 5, webVitals: 2 };
   }
 }
 
@@ -29,6 +29,8 @@ describe('analytics raw-event retention policy', () => {
     expect(result).toEqual({
       cutoff: new Date('2026-08-01T12:00:00.000Z'),
       deletedCount: 7,
+      deletedAnalyticsEventCount: 5,
+      deletedWebVitalCount: 2,
       batchSize: 500,
     });
     expect(store.calls).toEqual([{

@@ -142,6 +142,22 @@ describe('analytics control service', () => {
 
     await expect(service.isEventEnabled('course_viewed')).resolves.toBe(true);
     await expect(service.isEventEnabled('purchase_completed')).resolves.toBe(false);
+    await expect(service.isEventEnabled('web_vitals')).resolves.toBe(false);
+  });
+
+  it('enables Web Vitals only when the performance class is approved', async () => {
+    const store = new MemoryAnalyticsControlStore();
+    const service = createAnalyticsControlService(store);
+
+    await service.recordGovernanceDecision({
+      decision: { ...governanceDecision, approvedEventClasses: ['performance'] },
+      actorId: 'admin-1',
+      auditContext,
+    });
+    await service.setOperationalEnabled({ enabled: true, actorId: 'admin-1', auditContext });
+
+    await expect(service.isEventEnabled('web_vitals')).resolves.toBe(true);
+    await expect(service.isEventEnabled('course_viewed')).resolves.toBe(false);
   });
 
   it('rejects incomplete or extensible governance records', async () => {
