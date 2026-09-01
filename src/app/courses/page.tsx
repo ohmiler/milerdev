@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/empty';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
+import { deriveCourseDecisionFacts, type CourseDecisionFacts } from '@/lib/course-decision-facts';
 import { and, asc, count, desc, eq, gt, like, sql } from 'drizzle-orm';
 
 export const revalidate = 300;
@@ -44,13 +45,7 @@ interface CourseListItem {
   slug: string;
   description: string | null;
   thumbnailUrl: string | null;
-  price: string;
-  promoPrice: string | null;
-  isPromoActive: boolean;
-  instructor: { id: string; name: string | null; avatarUrl: string | null } | null;
-  lessonCount: number;
-  totalDurationSeconds: number;
-  hasFreePreview: boolean;
+  decisionFacts: CourseDecisionFacts;
   tags: Tag[];
 }
 
@@ -269,10 +264,12 @@ async function getCoursesData(input: {
 
   const now = new Date();
   const formattedCourses: CourseListItem[] = courseRows.map((row) => {
-    const hasPromo = row.promoPrice !== null && row.promoPrice !== undefined;
-    const promoStartOk = !row.promoStartsAt || new Date(row.promoStartsAt) <= now;
-    const promoEndOk = !row.promoEndsAt || new Date(row.promoEndsAt) >= now;
-    const isPromoActive = hasPromo && promoStartOk && promoEndOk;
+    const lessonCount = Number(row.lessonCount) || 0;
+    const totalDurationSeconds = Number(row.totalDurationSeconds) || 0;
+    const freePreviewCount = Number(row.freePreviewCount) || 0;
+    const instructor = row.instructorId
+      ? { id: row.instructorId, name: row.instructorName, avatarUrl: row.instructorAvatarUrl }
+      : null;
 
     return {
       id: row.id,
@@ -280,15 +277,21 @@ async function getCoursesData(input: {
       slug: row.slug,
       description: row.description,
       thumbnailUrl: row.thumbnailUrl,
-      price: row.price,
-      promoPrice: row.promoPrice,
-      isPromoActive,
-      instructor: row.instructorId
-        ? { id: row.instructorId, name: row.instructorName, avatarUrl: row.instructorAvatarUrl }
-        : null,
-      lessonCount: Number(row.lessonCount) || 0,
-      totalDurationSeconds: Number(row.totalDurationSeconds) || 0,
-      hasFreePreview: Number(row.freePreviewCount) > 0,
+      decisionFacts: deriveCourseDecisionFacts({
+        slug: row.slug,
+        regularPrice: row.price,
+        promotion: row.promoPrice === null
+          ? null
+          : {
+              price: row.promoPrice,
+              startsAt: row.promoStartsAt,
+              endsAt: row.promoEndsAt,
+            },
+        lessonCount,
+        knownDurationSeconds: totalDurationSeconds,
+        freePreviewCount,
+        instructor,
+      }, { now }),
       tags: tagsByCourse.get(row.id) || [],
     };
   });
@@ -371,7 +374,7 @@ export default async function CoursesPage({ searchParams }: Props) {
               </Empty>
             ) : (
               <>
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{courseList.map((course) => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} price={parseFloat(course.price || '0')} promoPrice={course.promoPrice ? parseFloat(course.promoPrice) : null} isPromoActive={course.isPromoActive} instructorName={course.instructor?.name || null} lessonCount={course.lessonCount} totalDurationSeconds={course.totalDurationSeconds} hasFreePreview={course.hasFreePreview} tags={course.tags} />)}</div>
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{courseList.map((course) => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} decisionFacts={course.decisionFacts} tags={course.tags} />)}</div>
                 {pagination.totalPages > 1 ? <nav className="mt-10 flex flex-wrap items-center justify-center gap-2" aria-label="หน้ารายการคอร์ส">{currentPage > 1 ? <Button variant="outline" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: currentPage - 1 })}>← ก่อนหน้า</Link></Button> : null}{Array.from({ length: Math.min(5, pagination.totalPages) }, (_, index) => { let pageNumber; if (pagination.totalPages <= 5) pageNumber = index + 1; else if (currentPage <= 3) pageNumber = index + 1; else if (currentPage >= pagination.totalPages - 2) pageNumber = pagination.totalPages - 4 + index; else pageNumber = currentPage - 2 + index; const isActive = currentPage === pageNumber; return <Button key={pageNumber} variant={isActive ? 'default' : 'outline'} size="icon-sm" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: pageNumber })} aria-current={isActive ? 'page' : undefined}>{pageNumber}</Link></Button>; })}{currentPage < pagination.totalPages ? <Button variant="outline" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: currentPage + 1 })}>ถัดไป →</Link></Button> : null}</nav> : null}
               </>
             )}

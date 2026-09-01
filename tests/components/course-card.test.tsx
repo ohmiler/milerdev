@@ -1,6 +1,21 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import CourseCard from '@/components/course/CourseCard';
+import {
+  deriveCourseDecisionFacts,
+  type CourseDecisionSource,
+} from '@/lib/course-decision-facts';
+
+const NOW = new Date('2026-09-01T05:00:00.000Z');
+
+function decisionFacts(overrides: Partial<CourseDecisionSource> = {}) {
+  return deriveCourseDecisionFacts({
+    slug: 'react-nextjs-masterclass',
+    regularPrice: 1990,
+    lessonCount: 12,
+    ...overrides,
+  }, { now: NOW });
+}
 
 const baseProps = {
   id: 'course-1',
@@ -8,19 +23,20 @@ const baseProps = {
   slug: 'react-nextjs-masterclass',
   description: 'สร้างเว็บแอปพลิเคชันจากพื้นฐานไปจนถึงการใช้งานจริง',
   thumbnailUrl: null,
-  price: 1990,
-  instructorName: null,
-  lessonCount: 12,
+  decisionFacts: decisionFacts(),
 } as const;
 
-describe('CourseCard decision evidence', () => {
+describe('shared Home and Catalog CourseCard decision evidence', () => {
   it('renders truthful optional metadata and keeps one course link', () => {
     const html = renderToStaticMarkup(
       <CourseCard
         {...baseProps}
-        instructorName="Miler"
-        totalDurationSeconds={5460}
-        hasFreePreview
+        decisionFacts={decisionFacts({
+          instructor: { name: 'Miler' },
+          knownDurationSeconds: 5460,
+          freePreviewCount: 1,
+          verifiedReview: { average: 4.8, count: 24 },
+        })}
         tags={[{ id: 'tag-1', name: 'React', slug: 'react' }]}
       />,
     );
@@ -29,7 +45,8 @@ describe('CourseCard decision evidence', () => {
     expect(html).toContain('1 ชม. 31 นาที');
     expect(html).toContain('มีบทเรียนทดลอง');
     expect(html).toContain('สอนโดย Miler');
-    expect(html).toContain('ทดลองฟรี');
+    expect(html).toContain('4.8 · 24 รีวิว');
+    expect(html).toContain('ดูรายละเอียด');
     expect(html.match(/<a\b/g)).toHaveLength(1);
   });
 
@@ -39,7 +56,7 @@ describe('CourseCard decision evidence', () => {
     expect(html).not.toContain('ชม.');
     expect(html).not.toContain('มีบทเรียนทดลอง');
     expect(html).not.toContain('สอนโดย');
-    expect(html).toContain('ดูคอร์ส');
+    expect(html).toContain('ดูรายละเอียด');
   });
 
   it('uses existing course data for missing media without implying a real thumbnail', () => {
@@ -70,8 +87,7 @@ describe('CourseCard decision evidence', () => {
     const html = renderToStaticMarkup(
       <CourseCard
         {...baseProps}
-        promoPrice={1490}
-        isPromoActive
+        decisionFacts={decisionFacts({ promotion: { price: 1490 } })}
       />,
     );
 
@@ -81,9 +97,22 @@ describe('CourseCard decision evidence', () => {
   });
 
   it('uses a restrained free-price treatment', () => {
-    const html = renderToStaticMarkup(<CourseCard {...baseProps} price={0} />);
+    const html = renderToStaticMarkup(
+      <CourseCard {...baseProps} decisionFacts={decisionFacts({ regularPrice: 0 })} />,
+    );
 
     expect(html).toContain('aria-label="ราคา ฟรี"');
     expect(html).toContain('>ฟรี</strong>');
+  });
+
+  it('keeps a preparing course discoverable without presenting an enrollment price', () => {
+    const html = renderToStaticMarkup(
+      <CourseCard {...baseProps} decisionFacts={decisionFacts({ lessonCount: 0 })} />,
+    );
+
+    expect(html).toContain('กำลังเตรียมเนื้อหา');
+    expect(html).toContain('ยังไม่เปิดลงทะเบียน');
+    expect(html).toContain('ดูรายละเอียด');
+    expect(html).not.toContain('aria-label="ราคา');
   });
 });

@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
 
 function normalizeUrl(url: string | null): string | null {
     if (!url || url.trim() === '') return null;
@@ -134,33 +135,34 @@ export default async function CourseDetailPage({ params }: Props) {
       })()
     : course.previewVideoUrl;
 
-  const price = parseFloat(course.price || '0');
-
   // Calculate total course duration
   const totalSeconds = course.lessons.reduce((sum: number, l: { videoDuration: number | null }) => sum + (l.videoDuration || 0), 0);
   const freePreviewCount = course.lessons.filter((lesson: { isFreePreview: boolean | null }) => lesson.isFreePreview).length;
-  const courseReady = course.lessons.length > 0;
   const firstPreviewLesson = course.lessons.find((lesson: { isFreePreview: boolean | null }) => lesson.isFreePreview) || null;
   const totalHours = Math.floor(totalSeconds / 3600);
   const totalMinutes = Math.floor((totalSeconds % 3600) / 60);
   const durationText = totalHours > 0
     ? `${totalHours} ชั่วโมง ${totalMinutes > 0 ? `${totalMinutes} นาที` : ''}`
     : `${totalMinutes} นาที`;
-  const now = new Date();
-  const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
-  const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
-  const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
-  const isPromoActive = hasPromo && promoStartOk && promoEndOk;
-  const promoPrice = isPromoActive ? parseFloat(course.promoPrice || '0') : null;
-  const displayPrice = promoPrice !== null ? promoPrice : price;
-  const instructorName = course.instructor?.name?.trim() || null;
+  const decisionFacts = deriveCourseDecisionFacts({
+    slug: course.slug,
+    regularPrice: course.price,
+    promotion: course.promoPrice === null
+      ? null
+      : {
+          price: course.promoPrice,
+          startsAt: course.promoStartsAt,
+          endsAt: course.promoEndsAt,
+        },
+    lessonCount: course.lessons.length,
+    knownDurationSeconds: totalSeconds,
+    freePreviewCount,
+    instructor: course.instructor ? { name: course.instructor.name } : null,
+  }, { now: new Date() });
+  const displayPrice = decisionFacts.price.effective;
+  const courseReady = decisionFacts.readiness === 'ready';
+  const instructorName = decisionFacts.evidence.instructorName;
   const instructorAvatarUrl = normalizeUrl(course.instructor?.avatarUrl || null);
-  const promoDiscount = isPromoActive && price > 0
-    ? Math.round((1 - displayPrice / price) * 100)
-    : null;
-  const promoLabel = promoDiscount !== null
-    ? `โปรโมชั่น ลด ${promoDiscount}%${course.promoEndsAt ? ` ถึง ${new Date(course.promoEndsAt).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}`
-    : null;
 
   const courseSectionItems = [
     { id: 'course-overview', label: 'รายละเอียดคอร์ส' },
@@ -279,10 +281,7 @@ export default async function CourseDetailPage({ params }: Props) {
                     <CourseDetailClient
                       courseId={course.id}
                       courseSlug={course.slug}
-                      price={displayPrice}
-                      originalPrice={price}
-                      promoLabel={promoLabel}
-                      courseReady={courseReady}
+                      decisionFacts={decisionFacts}
                       previewLessonHref={firstPreviewLesson ? `/courses/${course.slug}/learn/${firstPreviewLesson.id}` : null}
                       hasVideoPreview={Boolean(signedPreviewVideoUrl)}
                       renderMode="button"
@@ -329,7 +328,7 @@ export default async function CourseDetailPage({ params }: Props) {
                     รายการบทเรียนทั้งหมด
                   </AccordionTrigger>
                   <AccordionContent className="-mx-4 pb-0">
-                    <CourseDetailClient courseId={course.id} courseSlug={course.slug} lessons={course.lessons} />
+                    <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} lessons={course.lessons} />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -369,7 +368,7 @@ export default async function CourseDetailPage({ params }: Props) {
                     <h2 className="text-xl font-bold">พร้อมเริ่มเรียนแล้วหรือยัง?</h2>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">กลับไปสมัครคอร์ส หรือเข้าเรียนต่อได้จากตรงนี้</p>
                   </div>
-                  <CourseDetailClient courseId={course.id} courseSlug={course.slug} price={displayPrice} courseReady={courseReady} renderMode="final-action" />
+                  <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} renderMode="final-action" />
                 </CardContent>
               </Card>
             )}

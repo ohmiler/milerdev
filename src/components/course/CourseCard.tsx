@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Clock3, PlayCircle } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock3, PlayCircle, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { getExcerpt } from '@/lib/sanitize';
+import type { CourseDecisionFacts } from '@/lib/course-decision-facts';
 import CourseArtwork from '@/components/course/CourseArtwork';
 
 interface Tag { id: string; name: string; slug: string }
@@ -12,15 +13,9 @@ interface CourseCardProps {
   slug: string;
   description: string | null;
   thumbnailUrl: string | null;
-  price: number;
-  promoPrice?: number | null;
-  isPromoActive?: boolean;
-  instructorName: string | null;
-  lessonCount: number;
+  decisionFacts: CourseDecisionFacts;
   tags?: Tag[];
   outcomes?: string[];
-  totalDurationSeconds?: number;
-  hasFreePreview?: boolean;
 }
 
 function normalizeUrl(url: string | null): string | null {
@@ -43,21 +38,19 @@ export default function CourseCard({
   slug,
   description,
   thumbnailUrl: rawThumbnailUrl,
-  price,
-  promoPrice,
-  isPromoActive,
-  instructorName,
-  lessonCount,
+  decisionFacts,
   tags,
   outcomes,
-  totalDurationSeconds,
-  hasFreePreview = false,
 }: CourseCardProps) {
-  const displayPrice = isPromoActive && promoPrice != null ? promoPrice : price;
-  const showOriginalPrice = isPromoActive && promoPrice != null && promoPrice < price;
-  const discountPercent = showOriginalPrice ? Math.round((1 - displayPrice / price) * 100) : 0;
+  const { evidence, price: pricing } = decisionFacts;
+  const displayPrice = pricing.effective;
+  const showOriginalPrice = pricing.discountPercent !== null;
+  const discountPercent = pricing.discountPercent ?? 0;
+  const instructorName = evidence.instructorName;
+  const lessonCount = evidence.lessonCount;
   const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
-  const durationText = formatCourseDuration(totalDurationSeconds);
+  const durationText = formatCourseDuration(evidence.knownDurationSeconds ?? undefined);
+  const hasFreePreview = evidence.freePreviewCount > 0;
 
   return (
     <Link href={`/courses/${slug}`} className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
@@ -66,7 +59,10 @@ export default function CourseCard({
           {thumbnailUrl
             ? <img src={thumbnailUrl} alt={title} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
             : <CourseArtwork title={title} slug={slug} tags={tags} />}
-          {hasFreePreview ? <Badge className="absolute top-4 left-4 gap-1.5 bg-background/95 text-foreground shadow-sm"><PlayCircle />มีบทเรียนทดลอง</Badge> : null}
+          <div className="absolute top-4 left-4 flex flex-col items-start gap-2">
+            {decisionFacts.readiness === 'preparing' ? <Badge variant="secondary">กำลังเตรียมเนื้อหา</Badge> : null}
+            {hasFreePreview ? <Badge className="gap-1.5 bg-background/95 text-foreground shadow-sm"><PlayCircle />มีบทเรียนทดลอง</Badge> : null}
+          </div>
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
@@ -78,14 +74,19 @@ export default function CourseCard({
               <span className="inline-flex items-center gap-1.5"><BookOpen className="size-3.5" />{lessonCount} บทเรียน</span>
               {durationText ? <span className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" />{durationText}</span> : null}
               {instructorName ? <span className="basis-full">สอนโดย {instructorName}</span> : null}
+              {evidence.verifiedReview ? <span className="inline-flex items-center gap-1.5"><Star className="size-3.5 fill-current" />{evidence.verifiedReview.average.toFixed(1)} · {evidence.verifiedReview.count} รีวิว</span> : null}
             </div>
           </CardContent>
 
           <CardFooter className="mt-5 flex-wrap justify-between gap-x-4 gap-y-3 border-t px-5 py-5 sm:px-6">
-            <div aria-label={displayPrice === 0 ? 'ราคา ฟรี' : showOriginalPrice ? `ราคาพิเศษ ฿${displayPrice.toLocaleString()} จาก ฿${price.toLocaleString()} ลด ${discountPercent}%` : `ราคา ฿${displayPrice.toLocaleString()}`}>
-              {displayPrice === 0 ? <strong className="text-xl text-primary">ฟรี</strong> : <div className="flex flex-wrap items-baseline gap-2"><strong className="text-xl">฿{displayPrice.toLocaleString()}</strong>{showOriginalPrice ? <><s className="text-sm text-muted-foreground">฿{price.toLocaleString()}</s><Badge variant="destructive">ลด {discountPercent}%</Badge></> : null}</div>}
-            </div>
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">{hasFreePreview ? 'ทดลองฟรี' : 'ดูคอร์ส'}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
+            {decisionFacts.readiness === 'preparing' ? (
+              <strong className="text-sm text-muted-foreground">ยังไม่เปิดลงทะเบียน</strong>
+            ) : (
+              <div aria-label={displayPrice === 0 ? 'ราคา ฟรี' : showOriginalPrice ? `ราคาพิเศษ ${pricing.effectiveFormatted} จาก ${pricing.regularFormatted} ลด ${discountPercent}%` : `ราคา ${pricing.effectiveFormatted}`}>
+                {displayPrice === 0 ? <strong className="text-xl text-primary">ฟรี</strong> : <div className="flex flex-wrap items-baseline gap-2"><strong className="text-xl">{pricing.effectiveFormatted}</strong>{showOriginalPrice ? <><s className="text-sm text-muted-foreground">{pricing.regularFormatted}</s><Badge variant="destructive">ลด {discountPercent}%</Badge></> : null}</div>}
+              </div>
+            )}
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">{decisionFacts.actions.discovery.label}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
           </CardFooter>
         </div>
       </Card>
