@@ -50,4 +50,5 @@ describe('Web Vitals schema', () => {
     expect(migration).not.toMatch(/user_id|full_url|query|ip_address|user_agent/i);
     expect(migration).not.toMatch(/^\s*(DROP TABLE|DROP COLUMN|DELETE|UPDATE|RENAME|TRUNCATE)\b/im);
   });
+
 });

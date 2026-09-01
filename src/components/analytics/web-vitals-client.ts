@@ -1,13 +1,22 @@
 'use client';
 
-import type {
-  WebVitalDeviceClass,
-  WebVitalName,
-  WebVitalRating,
-  WebVitalRouteFamily,
+import {
+  WEB_VITAL_NAMES,
+  type WebVitalDeviceClass,
+  type WebVitalName,
+  type WebVitalRating,
+  type WebVitalRouteFamily,
 } from '@/lib/web-vitals-contract';
 
-const CORE_WEB_VITAL_NAMES = new Set<string>(['LCP', 'INP', 'CLS']);
+const CORE_WEB_VITAL_NAMES = new Set<string>(WEB_VITAL_NAMES);
+
+type PageLoadContext = {
+  routeFamily: WebVitalRouteFamily;
+  deviceClass: WebVitalDeviceClass;
+  releaseIdentity: string;
+};
+
+let pageLoadContext: PageLoadContext | null | undefined;
 
 export type BrowserWebVitalMetric = {
   id: string;
@@ -49,6 +58,15 @@ function getDeviceClass(): WebVitalDeviceClass {
   return window.innerWidth < 768 ? 'mobile' : 'desktop';
 }
 
+export function initializeWebVitalsPageLoadContext(releaseIdentity: string): void {
+  if (typeof window === 'undefined' || pageLoadContext !== undefined) return;
+
+  const routeFamily = normalizeWebVitalRouteFamily(window.location.pathname);
+  pageLoadContext = routeFamily
+    ? { routeFamily, deviceClass: getDeviceClass(), releaseIdentity }
+    : null;
+}
+
 export function reportWebVitalMetric(metric: BrowserWebVitalMetric): void {
   if (
     typeof window === 'undefined'
@@ -56,14 +74,15 @@ export function reportWebVitalMetric(metric: BrowserWebVitalMetric): void {
     || !Number.isFinite(metric.value)
   ) return;
 
-  const routeFamily = normalizeWebVitalRouteFamily(window.location.pathname);
-  if (!routeFamily) return;
+  const context = pageLoadContext;
+  if (!context) return;
 
   const body = JSON.stringify({
     pageLoadId: metric.id,
     metricName: metric.name as WebVitalName,
-    routeFamily,
-    deviceClass: getDeviceClass(),
+    routeFamily: context.routeFamily,
+    deviceClass: context.deviceClass,
+    releaseIdentity: context.releaseIdentity,
     value: metric.value,
     rating: metric.rating as WebVitalRating,
   });

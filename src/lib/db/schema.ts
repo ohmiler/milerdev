@@ -1,6 +1,12 @@
 import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, uniqueIndex, index, check } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import {
+    WEB_VITAL_DEVICE_CLASSES,
+    WEB_VITAL_NAMES,
+    WEB_VITAL_RATINGS,
+    WEB_VITAL_ROUTE_FAMILIES,
+} from '@/lib/web-vitals-contract';
 
 // =====================
 // USERS TABLE
@@ -664,15 +670,15 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
 export const webVitals = mysqlTable('web_vitals', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
     pageLoadId: varchar('page_load_id', { length: 100 }).notNull(),
-    metricName: varchar('metric_name', { length: 10, enum: ['LCP', 'INP', 'CLS'] }).notNull(),
+    metricName: varchar('metric_name', { length: 10, enum: WEB_VITAL_NAMES }).notNull(),
     routeFamily: varchar('route_family', {
         length: 40,
-        enum: ['home', 'catalog', 'product_detail', 'purchase', 'authentication', 'account', 'learning', 'certificate', 'content', 'legal_support', 'other'],
+        enum: WEB_VITAL_ROUTE_FAMILIES,
     }).notNull(),
-    deviceClass: varchar('device_class', { length: 10, enum: ['mobile', 'desktop'] }).notNull(),
+    deviceClass: varchar('device_class', { length: 10, enum: WEB_VITAL_DEVICE_CLASSES }).notNull(),
     releaseIdentity: varchar('release_identity', { length: 100 }).notNull(),
     value: decimal('value', { precision: 16, scale: 4 }).notNull(),
-    rating: varchar('rating', { length: 20, enum: ['good', 'needs-improvement', 'poor'] }).notNull(),
+    rating: varchar('rating', { length: 20, enum: WEB_VITAL_RATINGS }).notNull(),
     createdAt: datetime('created_at').$defaultFn(() => new Date()).notNull(),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()).notNull(),
 }, (table) => [

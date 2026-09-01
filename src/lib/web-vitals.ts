@@ -8,6 +8,8 @@ import { webVitals } from '@/lib/db/schema';
 import {
   WEB_VITAL_DEVICE_CLASSES,
   WEB_VITAL_NAMES,
+  WEB_VITAL_RELEASE_IDENTITY_MAX_LENGTH,
+  WEB_VITAL_RELEASE_IDENTITY_PATTERN,
   WEB_VITAL_RATINGS,
   WEB_VITAL_ROUTE_FAMILIES,
   type WebVitalName,
@@ -17,8 +19,9 @@ import {
 const MAX_DURATION_MS = 600_000;
 const MAX_CLS = 10;
 
-const releaseIdentitySchema = z.string().trim().min(1).max(100)
-  .regex(/^[A-Za-z0-9._:-]+$/);
+const releaseIdentitySchema = z.string().trim().min(1)
+  .max(WEB_VITAL_RELEASE_IDENTITY_MAX_LENGTH)
+  .regex(WEB_VITAL_RELEASE_IDENTITY_PATTERN);
 
 export function deriveWebVitalRating(
   metricName: WebVitalName,
@@ -44,6 +47,7 @@ export const webVitalReportSchema = z.object({
   metricName: z.enum(WEB_VITAL_NAMES),
   routeFamily: z.enum(WEB_VITAL_ROUTE_FAMILIES),
   deviceClass: z.enum(WEB_VITAL_DEVICE_CLASSES),
+  releaseIdentity: releaseIdentitySchema,
   value: z.number().finite().min(0),
   rating: z.enum(WEB_VITAL_RATINGS),
 }).strict().superRefine((report, context) => {
@@ -59,7 +63,6 @@ export const webVitalReportSchema = z.object({
 export type WebVitalReport = z.infer<typeof webVitalReportSchema>;
 
 export type StoredWebVital = Omit<WebVitalReport, 'value'> & {
-  releaseIdentity: string;
   value: string;
   observedAt: Date;
 };
@@ -68,19 +71,9 @@ export interface WebVitalsStore {
   upsert(metric: StoredWebVital): Promise<void>;
 }
 
-export function getWebVitalsReleaseIdentity(): string {
-  return releaseIdentitySchema.parse(
-    process.env.RAILWAY_GIT_COMMIT_SHA
-      ?? process.env.VERCEL_GIT_COMMIT_SHA
-      ?? process.env.GITHUB_SHA
-      ?? 'local-development',
-  );
-}
-
 export function createWebVitalsRecorder(input: {
   store: WebVitalsStore;
   isEventEnabled(eventName: 'web_vitals'): Promise<boolean>;
-  getReleaseIdentity: () => string;
   now?: () => Date;
 }) {
   const now = input.now ?? (() => new Date());
@@ -94,10 +87,8 @@ export function createWebVitalsRecorder(input: {
 
       try {
         if (!(await input.isEventEnabled('web_vitals'))) return { status: 'disabled' };
-        const releaseIdentity = releaseIdentitySchema.parse(input.getReleaseIdentity());
         await input.store.upsert({
           ...parsed.data,
-          releaseIdentity,
           value: parsed.data.value.toFixed(4),
           observedAt: now(),
         });
@@ -109,36 +100,36 @@ export function createWebVitalsRecorder(input: {
   };
 }
 
-const drizzleWebVitalsStore: WebVitalsStore = {
-  async upsert(metric) {
-    await db
-      .insert(webVitals)
-      .values({
-        pageLoadId: metric.pageLoadId,
-        metricName: metric.metricName,
-        routeFamily: metric.routeFamily,
-        deviceClass: metric.deviceClass,
-        releaseIdentity: metric.releaseIdentity,
-        value: metric.value,
-        rating: metric.rating,
-        createdAt: metric.observedAt,
-        updatedAt: metric.observedAt,
-      })
-      .onDuplicateKeyUpdate({
-        set: {
+export function createDrizzleWebVitalsStore(database: typeof db): WebVitalsStore {
+  return {
+    async upsert(metric) {
+      await database
+        .insert(webVitals)
+        .values({
+          pageLoadId: metric.pageLoadId,
+          metricName: metric.metricName,
           routeFamily: metric.routeFamily,
           deviceClass: metric.deviceClass,
           releaseIdentity: metric.releaseIdentity,
           value: metric.value,
           rating: metric.rating,
+          createdAt: metric.observedAt,
           updatedAt: metric.observedAt,
-        },
-      });
-  },
-};
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            value: metric.value,
+            rating: metric.rating,
+            updatedAt: metric.observedAt,
+          },
+        });
+    },
+  };
+}
+
+const drizzleWebVitalsStore = createDrizzleWebVitalsStore(db);
 
 export const webVitalsRecorder = createWebVitalsRecorder({
   store: drizzleWebVitalsStore,
   isEventEnabled: isAnalyticsEventEnabled,
-  getReleaseIdentity: getWebVitalsReleaseIdentity,
 });

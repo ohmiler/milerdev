@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import {
+  createDrizzleWebVitalsStore,
   createWebVitalsRecorder,
   deriveWebVitalRating,
   webVitalReportSchema,
@@ -13,6 +14,7 @@ const validReport = {
   metricName: 'LCP',
   routeFamily: 'product_detail',
   deviceClass: 'mobile',
+  releaseIdentity: 'release-1',
   value: 2_400,
   rating: 'good',
 } as const;
@@ -51,7 +53,7 @@ describe('Web Vitals contract', () => {
       { ...validReport, value: 4_001, rating: 'good' },
       { ...validReport, fullUrl: 'https://example.com/courses/private?email=person@example.com' },
       { ...validReport, userId: 'user-1' },
-      { ...validReport, releaseIdentity: 'client-controlled-release' },
+      { ...validReport, releaseIdentity: 'release identity with spaces' },
     ]) {
       expect(webVitalReportSchema.safeParse(report).success).toBe(false);
     }
@@ -70,15 +72,12 @@ describe('Web Vitals contract', () => {
 describe('Web Vitals recorder', () => {
   it('stops before release identity and persistence when performance analytics is disabled', async () => {
     const store = new MemoryWebVitalsStore();
-    const getReleaseIdentity = vi.fn(() => 'release-1');
     const recorder = createWebVitalsRecorder({
       store,
       isEventEnabled: async () => false,
-      getReleaseIdentity,
     });
 
     await expect(recorder.record(validReport)).resolves.toEqual({ status: 'disabled' });
-    expect(getReleaseIdentity).not.toHaveBeenCalled();
     expect(store.records.size).toBe(0);
   });
 
@@ -87,7 +86,6 @@ describe('Web Vitals recorder', () => {
     const recorder = createWebVitalsRecorder({
       store,
       isEventEnabled: async () => true,
-      getReleaseIdentity: () => 'release-1',
       now: () => new Date('2026-09-01T03:00:00.000Z'),
     });
 
@@ -111,6 +109,44 @@ describe('Web Vitals recorder', () => {
       value: '3200.0000',
       rating: 'needs-improvement',
       observedAt: new Date('2026-09-01T03:00:00.000Z'),
+    });
+  });
+
+  it('keeps cohort dimensions immutable through the Drizzle store boundary', async () => {
+    const records = new Map<string, Record<string, unknown>>();
+    const database = {
+      insert: () => ({
+        values: (values: Record<string, unknown>) => ({
+          onDuplicateKeyUpdate: async ({ set }: { set: Record<string, unknown> }) => {
+            const key = `${values.pageLoadId}:${values.metricName}`;
+            records.set(key, records.has(key)
+              ? { ...records.get(key), ...set }
+              : values);
+          },
+        }),
+      }),
+    } as unknown as Parameters<typeof createDrizzleWebVitalsStore>[0];
+    const store = createDrizzleWebVitalsStore(database);
+    const observedAt = new Date('2026-09-01T03:00:00.000Z');
+
+    await store.upsert({ ...validReport, value: '2400.0000', observedAt });
+    await store.upsert({
+      ...validReport,
+      routeFamily: 'content',
+      deviceClass: 'desktop',
+      releaseIdentity: 'release-2',
+      value: '3200.0000',
+      rating: 'needs-improvement',
+      observedAt: new Date('2026-09-01T03:01:00.000Z'),
+    });
+
+    expect(records.get(`${validReport.pageLoadId}:LCP`)).toMatchObject({
+      routeFamily: 'product_detail',
+      deviceClass: 'mobile',
+      releaseIdentity: 'release-1',
+      value: '3200.0000',
+      rating: 'needs-improvement',
+      updatedAt: new Date('2026-09-01T03:01:00.000Z'),
     });
   });
 });

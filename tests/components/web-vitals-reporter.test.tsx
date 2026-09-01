@@ -11,6 +11,7 @@ vi.mock('next/web-vitals', () => ({ useReportWebVitals }));
 
 import WebVitalsReporter from '@/components/analytics/WebVitalsReporter';
 import {
+  initializeWebVitalsPageLoadContext,
   normalizeWebVitalRouteFamily,
   reportWebVitalMetric,
 } from '@/components/analytics/web-vitals-client';
@@ -24,13 +25,14 @@ describe('WebVitalsReporter', () => {
       configurable: true,
       value: vi.fn().mockReturnValue(true),
     });
+    initializeWebVitalsPageLoadContext('release-1');
   });
 
   afterEach(() => cleanup());
 
   it('keeps the Next.js callback stable across renders', () => {
-    const view = render(<WebVitalsReporter />);
-    view.rerender(<WebVitalsReporter />);
+    const view = render(<WebVitalsReporter releaseIdentity={'release-1'} />);
+    view.rerender(<WebVitalsReporter releaseIdentity={'release-1'} />);
 
     expect(useReportWebVitals).toHaveBeenCalledTimes(2);
     expect(useReportWebVitals.mock.calls[0][0]).toBe(useReportWebVitals.mock.calls[1][0]);
@@ -53,10 +55,32 @@ describe('WebVitalsReporter', () => {
       metricName: 'LCP',
       routeFamily: 'learning',
       deviceClass: 'mobile',
+      releaseIdentity: 'release-1',
       value: 1_900,
       rating: 'good',
     });
     expect(payload).not.toContain('/courses/typescript');
+  });
+
+  it('keeps page-load dimensions stable across callback updates', async () => {
+    const metric = {
+      id: 'v4-1720000000000-stable-context',
+      name: 'CLS',
+      value: 0.08,
+      rating: 'good',
+    };
+
+    reportWebVitalMetric(metric);
+    window.history.replaceState({}, '', '/blog/privacy-update');
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1_024 });
+    reportWebVitalMetric({ ...metric, value: 0.12, rating: 'needs-improvement' });
+
+    const calls = vi.mocked(navigator.sendBeacon).mock.calls;
+    const firstPayload = JSON.parse(await (calls[0][1] as Blob).text());
+    const updatedPayload = JSON.parse(await (calls[1][1] as Blob).text());
+
+    expect(firstPayload).toMatchObject({ routeFamily: 'learning', deviceClass: 'mobile' });
+    expect(updatedPayload).toMatchObject({ routeFamily: 'learning', deviceClass: 'mobile' });
   });
 
   it('ignores non-Core metrics and normalizes dynamic routes without retaining the path', () => {

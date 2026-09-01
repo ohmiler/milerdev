@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Inter, Prompt } from "next/font/google";
 import "./globals.css";
+import WebVitalsReporter from "@/components/analytics/WebVitalsReporter";
 import SessionProvider from "@/components/providers/SessionProvider";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
 import ThemeSurface from "@/components/theme/ThemeSurface";
 import { Toaster } from "@/components/ui/sonner";
 
 import { buildSiteJsonLd, serializeJsonLd, SITE_URL } from "@/lib/seo";
-
-import WebVitalsReporter from '@/components/analytics/WebVitalsReporter';
+import { getWebVitalsReleaseIdentity } from "@/lib/web-vitals-release";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -86,7 +86,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="antialiased">
-        <WebVitalsReporter />
+        <WebVitalsReporter releaseIdentity={getWebVitalsReleaseIdentity()} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

@@ -25,6 +25,7 @@ const validReport = {
   metricName: 'CLS',
   routeFamily: 'home',
   deviceClass: 'desktop',
+  releaseIdentity: 'release-1',
   value: 0.08,
   rating: 'good',
 };
