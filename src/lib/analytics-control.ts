@@ -17,6 +17,7 @@ export const ANALYTICS_EVENT_CLASSES = [
   'account_lifecycle',
   'commerce',
   'enrollment',
+  'learning',
 ] as const;
 
 export type AnalyticsEventClass = typeof ANALYTICS_EVENT_CLASSES[number];
@@ -62,6 +63,9 @@ const eventClassByName: Record<AnalyticsEventName, AnalyticsEventClass> = {
   payment_initiated: 'commerce',
   purchase_completed: 'commerce',
   free_enrollment_completed: 'enrollment',
+  learning_workspace_started: 'learning',
+  lesson_completed: 'learning',
+  course_completed: 'learning',
 };
 
 for (const eventName of [...CLIENT_ANALYTICS_EVENT_NAMES, ...SERVER_ANALYTICS_EVENT_NAMES]) {

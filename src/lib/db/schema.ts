@@ -602,6 +602,9 @@ export const analyticsEvents = mysqlTable('analytics_events', {
     bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
     paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id, { onDelete: 'set null' }),
     enrollmentId: varchar('enrollment_id', { length: 36 }).references(() => enrollments.id, { onDelete: 'set null' }),
+    learningFactId: varchar('learning_fact_id', { length: 36 }),
+    learningEnrollmentId: varchar('learning_enrollment_id', { length: 36 }).references(() => enrollments.id, { onDelete: 'set null' }),
+    lessonId: varchar('lesson_id', { length: 36 }).references(() => lessons.id, { onDelete: 'set null' }),
     source: varchar('source', { length: 20, enum: ['client', 'server'] }).default('server').notNull(),
     metadata: text('metadata'),
     ipAddress: varchar('ip_address', { length: 45 }),
@@ -616,8 +619,11 @@ export const analyticsEvents = mysqlTable('analytics_events', {
     index('idx_analytics_bundle_id').on(table.bundleId),
     index('idx_analytics_payment_id').on(table.paymentId),
     index('idx_analytics_enrollment_id').on(table.enrollmentId),
+    index('idx_analytics_learning_enrollment_id').on(table.learningEnrollmentId),
+    index('idx_analytics_lesson_id').on(table.lessonId),
     uniqueIndex('uq_analytics_event_payment').on(table.eventName, table.paymentId),
     uniqueIndex('uq_analytics_event_enrollment').on(table.eventName, table.enrollmentId),
+    uniqueIndex('uq_analytics_learning_fact').on(table.eventName, table.learningFactId),
 ]);
 
 export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
@@ -641,6 +647,14 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
         fields: [analyticsEvents.enrollmentId],
         references: [enrollments.id],
     }),
+    learningEnrollment: one(enrollments, {
+        fields: [analyticsEvents.learningEnrollmentId],
+        references: [enrollments.id],
+    }),
+    lesson: one(lessons, {
+        fields: [analyticsEvents.lessonId],
+        references: [lessons.id],
+    }),
 }));
 
 // =====================
@@ -648,9 +662,13 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
 // =====================
 export const measurementOutbox = mysqlTable('measurement_outbox', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    eventName: varchar('event_name', { length: 100, enum: ['purchase_completed', 'free_enrollment_completed'] }).notNull(),
+    eventName: varchar('event_name', { length: 100, enum: ['purchase_completed', 'free_enrollment_completed', 'lesson_completed', 'course_completed'] }).notNull(),
     paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id),
     enrollmentId: varchar('enrollment_id', { length: 36 }).references(() => enrollments.id),
+    learningFactId: varchar('learning_fact_id', { length: 36 }),
+    learningEnrollmentId: varchar('learning_enrollment_id', { length: 36 }).references(() => enrollments.id, { onDelete: 'cascade' }),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }),
+    lessonId: varchar('lesson_id', { length: 36 }).references(() => lessons.id, { onDelete: 'cascade' }),
     attemptCount: int('attempt_count').default(0).notNull(),
     lastAttemptAt: datetime('last_attempt_at'),
     lastErrorCode: varchar('last_error_code', { length: 64 }),
@@ -659,12 +677,30 @@ export const measurementOutbox = mysqlTable('measurement_outbox', {
 }, (table) => [
     uniqueIndex('uq_measurement_outbox_event_payment').on(table.eventName, table.paymentId),
     uniqueIndex('uq_measurement_outbox_event_enrollment').on(table.eventName, table.enrollmentId),
+    uniqueIndex('uq_measurement_outbox_learning_fact').on(table.eventName, table.learningFactId),
     index('idx_measurement_outbox_projected_at').on(table.projectedAt),
     index('idx_measurement_outbox_payment_id').on(table.paymentId),
     index('idx_measurement_outbox_enrollment_id').on(table.enrollmentId),
-    check('chk_measurement_outbox_acquisition_identity', sql`
-        (${table.eventName} = 'purchase_completed' AND ${table.paymentId} IS NOT NULL AND ${table.enrollmentId} IS NULL)
-        OR (${table.eventName} = 'free_enrollment_completed' AND ${table.paymentId} IS NULL AND ${table.enrollmentId} IS NOT NULL)
+    index('idx_measurement_outbox_learning_enrollment_id').on(table.learningEnrollmentId),
+    index('idx_measurement_outbox_course_id').on(table.courseId),
+    index('idx_measurement_outbox_lesson_id').on(table.lessonId),
+    check('chk_measurement_outbox_identity', sql`
+        (${table.eventName} = 'purchase_completed'
+            AND ${table.paymentId} IS NOT NULL AND ${table.enrollmentId} IS NULL
+            AND ${table.learningFactId} IS NULL AND ${table.learningEnrollmentId} IS NULL
+            AND ${table.courseId} IS NULL AND ${table.lessonId} IS NULL)
+        OR (${table.eventName} = 'free_enrollment_completed'
+            AND ${table.paymentId} IS NULL AND ${table.enrollmentId} IS NOT NULL
+            AND ${table.learningFactId} IS NULL AND ${table.learningEnrollmentId} IS NULL
+            AND ${table.courseId} IS NULL AND ${table.lessonId} IS NULL)
+        OR (${table.eventName} = 'lesson_completed'
+            AND ${table.paymentId} IS NULL AND ${table.enrollmentId} IS NULL
+            AND ${table.learningFactId} IS NOT NULL AND ${table.learningEnrollmentId} IS NOT NULL
+            AND ${table.courseId} IS NOT NULL AND ${table.lessonId} IS NOT NULL)
+        OR (${table.eventName} = 'course_completed'
+            AND ${table.paymentId} IS NULL AND ${table.enrollmentId} IS NULL
+            AND ${table.learningFactId} IS NOT NULL AND ${table.learningEnrollmentId} IS NOT NULL
+            AND ${table.courseId} IS NOT NULL AND ${table.lessonId} IS NULL)
     `),
 ]);
 
@@ -676,6 +712,18 @@ export const measurementOutboxRelations = relations(measurementOutbox, ({ one })
     enrollment: one(enrollments, {
         fields: [measurementOutbox.enrollmentId],
         references: [enrollments.id],
+    }),
+    learningEnrollment: one(enrollments, {
+        fields: [measurementOutbox.learningEnrollmentId],
+        references: [enrollments.id],
+    }),
+    course: one(courses, {
+        fields: [measurementOutbox.courseId],
+        references: [courses.id],
+    }),
+    lesson: one(lessons, {
+        fields: [measurementOutbox.lessonId],
+        references: [lessons.id],
     }),
 }));
 

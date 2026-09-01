@@ -5,6 +5,7 @@ export const CLIENT_ANALYTICS_EVENT_NAMES = [
   'course_viewed',
   'bundle_viewed',
   'checkout_opened',
+  'learning_workspace_started',
 ] as const;
 
 export const SERVER_ANALYTICS_EVENT_NAMES = [
@@ -12,6 +13,8 @@ export const SERVER_ANALYTICS_EVENT_NAMES = [
   'payment_initiated',
   'purchase_completed',
   'free_enrollment_completed',
+  'lesson_completed',
+  'course_completed',
 ] as const;
 
 export const analyticsPlacementSchema = z.enum([
@@ -19,6 +22,7 @@ export const analyticsPlacementSchema = z.enum([
   'catalog',
   'course_detail',
   'bundle_detail',
+  'learning_workspace',
 ]);
 
 const analyticsIdSchema = z.string().trim().min(1).max(36);
@@ -31,34 +35,44 @@ export const clientAnalyticsEventSchema = z.object({
   exposureId: analyticsExposureIdSchema.optional(),
   courseId: analyticsIdSchema.optional(),
   bundleId: analyticsIdSchema.optional(),
+  lessonId: analyticsIdSchema.optional(),
   placement: analyticsPlacementSchema,
 }).strict().superRefine((value, context) => {
   const hasCourse = Boolean(value.courseId);
   const hasBundle = Boolean(value.bundleId);
+  const hasLesson = Boolean(value.lessonId);
 
   if (value.eventName === 'home_primary_cta_clicked') {
-    if (value.placement !== 'hero' || value.exposureId || hasCourse || hasBundle) {
+    if (value.placement !== 'hero' || value.exposureId || hasCourse || hasBundle || hasLesson) {
       context.addIssue({ code: 'custom', message: 'Invalid Home CTA event' });
     }
     return;
   }
 
   if (value.eventName === 'course_viewed') {
-    if (!value.exposureId || !hasCourse || hasBundle || value.placement !== 'course_detail') {
+    if (!value.exposureId || !hasCourse || hasBundle || hasLesson || value.placement !== 'course_detail') {
       context.addIssue({ code: 'custom', message: 'Invalid Course view event' });
     }
     return;
   }
 
   if (value.eventName === 'bundle_viewed') {
-    if (!value.exposureId || !hasBundle || hasCourse || value.placement !== 'bundle_detail') {
+    if (!value.exposureId || !hasBundle || hasCourse || hasLesson || value.placement !== 'bundle_detail') {
       context.addIssue({ code: 'custom', message: 'Invalid Bundle view event' });
+    }
+    return;
+  }
+
+  if (value.eventName === 'learning_workspace_started') {
+    if (!value.exposureId || !hasLesson || hasCourse || hasBundle || value.placement !== 'learning_workspace') {
+      context.addIssue({ code: 'custom', message: 'Invalid Learning workspace event' });
     }
     return;
   }
 
   if (
     value.exposureId
+    || hasLesson
     || hasCourse === hasBundle
     || !['course_detail', 'bundle_detail'].includes(value.placement)
   ) {
@@ -73,13 +87,20 @@ export const serverAnalyticsEventSchema = z.object({
   bundleId: analyticsIdSchema.optional(),
   paymentId: analyticsIdSchema.optional(),
   enrollmentId: analyticsIdSchema.optional(),
+  factId: analyticsIdSchema.optional(),
+  learningEnrollmentId: analyticsIdSchema.optional(),
+  lessonId: analyticsIdSchema.optional(),
 }).strict().superRefine((value, context) => {
   const hasCourse = Boolean(value.courseId);
   const hasBundle = Boolean(value.bundleId);
   const hasOneProduct = hasCourse !== hasBundle;
+  const hasLearningIdentity = Boolean(value.factId) && Boolean(value.learningEnrollmentId);
 
   if (value.eventName === 'registration_completed') {
-    if (!value.userId || hasCourse || hasBundle || value.paymentId || value.enrollmentId) {
+    if (
+      !value.userId || hasCourse || hasBundle || value.paymentId || value.enrollmentId
+      || value.factId || value.learningEnrollmentId || value.lessonId
+    ) {
       context.addIssue({ code: 'custom', message: 'Invalid Registration event' });
     }
     return;
@@ -92,13 +113,32 @@ export const serverAnalyticsEventSchema = z.object({
       || !hasCourse
       || hasBundle
       || value.paymentId
+      || value.factId
+      || value.learningEnrollmentId
+      || value.lessonId
     ) {
       context.addIssue({ code: 'custom', message: 'Invalid Free enrollment event' });
     }
     return;
   }
 
-  if (!value.userId || !value.paymentId || value.enrollmentId || !hasOneProduct) {
+  if (value.eventName === 'lesson_completed' || value.eventName === 'course_completed') {
+    const lessonShapeMatches = value.eventName === 'lesson_completed'
+      ? Boolean(value.lessonId)
+      : !value.lessonId;
+    if (
+      value.userId || value.bundleId || value.paymentId || value.enrollmentId
+      || !hasCourse || !hasLearningIdentity || !lessonShapeMatches
+    ) {
+      context.addIssue({ code: 'custom', message: 'Invalid Learning milestone event' });
+    }
+    return;
+  }
+
+  if (
+    !value.userId || !value.paymentId || value.enrollmentId || !hasOneProduct
+    || value.factId || value.learningEnrollmentId || value.lessonId
+  ) {
     context.addIssue({ code: 'custom', message: 'Paid events require a user, payment, and one product' });
   }
 });

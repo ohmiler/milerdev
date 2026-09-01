@@ -45,6 +45,19 @@ describe('analytics privacy contracts', () => {
       courseId: 'course-1',
       enrollmentId: 'enrollment-1',
     }).success).toBe(true);
+    expect(serverAnalyticsEventSchema.safeParse({
+      eventName: 'lesson_completed',
+      factId: 'progress-1',
+      learningEnrollmentId: 'enrollment-1',
+      courseId: 'course-1',
+      lessonId: 'lesson-1',
+    }).success).toBe(true);
+    expect(serverAnalyticsEventSchema.safeParse({
+      eventName: 'course_completed',
+      factId: 'enrollment-1',
+      learningEnrollmentId: 'enrollment-1',
+      courseId: 'course-1',
+    }).success).toBe(true);
   });
 
   it('rejects missing, conflicting, arbitrary, and prohibited server data', () => {
@@ -75,6 +88,19 @@ describe('analytics privacy contracts', () => {
       courseId: 'course-1',
       paymentId: 'payment-1',
       email: 'person@example.com',
+    }).success).toBe(false);
+    expect(serverAnalyticsEventSchema.safeParse({
+      eventName: 'lesson_completed',
+      factId: 'progress-1',
+      learningEnrollmentId: 'enrollment-1',
+      courseId: 'course-1',
+    }).success).toBe(false);
+    expect(serverAnalyticsEventSchema.safeParse({
+      eventName: 'course_completed',
+      factId: 'enrollment-1',
+      learningEnrollmentId: 'enrollment-1',
+      courseId: 'course-1',
+      lessonId: 'lesson-1',
     }).success).toBe(false);
   });
 });

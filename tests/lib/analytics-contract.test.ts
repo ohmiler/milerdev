@@ -46,6 +46,27 @@ describe('client analytics event contract', () => {
     }).success).toBe(false);
   });
 
+  it('accepts only a browser-committed learning workspace exposure', () => {
+    expect(clientAnalyticsEventSchema.safeParse({
+      eventName: 'learning_workspace_started',
+      exposureId,
+      lessonId: 'lesson-1',
+      placement: 'learning_workspace',
+    }).success).toBe(true);
+    expect(clientAnalyticsEventSchema.safeParse({
+      eventName: 'learning_workspace_started',
+      exposureId,
+      courseId: 'course-1',
+      lessonId: 'lesson-1',
+      placement: 'learning_workspace',
+    }).success).toBe(false);
+    expect(clientAnalyticsEventSchema.safeParse({
+      eventName: 'learning_workspace_started',
+      lessonId: 'lesson-1',
+      placement: 'learning_workspace',
+    }).success).toBe(false);
+  });
+
   it('rejects arbitrary metadata, identifiers, and event names', () => {
     expect(clientAnalyticsEventSchema.safeParse({
       eventName: 'purchase_completed',
