@@ -10,16 +10,32 @@ import {
     consumeAuthRateLimit,
 } from '@/lib/auth-rate-limit';
 import { createHash } from 'crypto';
+import {
+    PASSWORD_LOWERCASE_PATTERN,
+    PASSWORD_MIN_LENGTH,
+    PASSWORD_NUMBER_PATTERN,
+    PASSWORD_UPPERCASE_PATTERN,
+} from '@/lib/password-policy';
 
 const confirmResetSchema = z.object({
     token: z.string().min(1, 'Token ไม่ถูกต้อง'),
     newPassword: z
         .string()
-        .min(8, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
-        .regex(/[A-Z]/, 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว')
-        .regex(/[a-z]/, 'รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว')
-        .regex(/[0-9]/, 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว'),
+        .min(PASSWORD_MIN_LENGTH, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
+        .regex(PASSWORD_UPPERCASE_PATTERN, 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว')
+        .regex(PASSWORD_LOWERCASE_PATTERN, 'รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว')
+        .regex(PASSWORD_NUMBER_PATTERN, 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว'),
 });
+
+function invalidResetLinkResponse() {
+    return NextResponse.json(
+        {
+            kind: 'invalid_or_expired_link',
+            error: 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว',
+        },
+        { status: 400 }
+    );
+}
 
 export async function POST(request: Request) {
     try {
@@ -68,10 +84,7 @@ export async function POST(request: Request) {
             .limit(1);
 
         if (!user || user.deactivatedAt !== null) {
-            return NextResponse.json(
-                { error: 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว' },
-                { status: 400 }
-            );
+            return invalidResetLinkResponse();
         }
 
         // Hash new password and clear reset token
@@ -94,10 +107,7 @@ export async function POST(request: Request) {
             ));
 
         if (updateResult[0]?.affectedRows !== 1) {
-            return NextResponse.json(
-                { error: 'ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว' },
-                { status: 400 }
-            );
+            return invalidResetLinkResponse();
         }
 
         return NextResponse.json({

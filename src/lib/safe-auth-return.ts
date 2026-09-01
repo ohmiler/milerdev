@@ -13,7 +13,7 @@ export type SafeAuthReturn = {
   source: 'validated' | 'fallback';
 };
 
-export type AuthEntryPath = '/login' | '/register';
+export type AuthEntryPath = '/login' | '/register' | '/forgot-password';
 
 const AUTH_LOOP_PATHS = ['/login', '/register', '/forgot-password', '/reset-password'];
 const INTERNAL_PATHS = ['/api', '/_next', '/_vercel'];

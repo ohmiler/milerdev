@@ -128,6 +128,23 @@ describe('POST /api/auth/register', () => {
         return mod.POST(makeRequest('http://localhost:3000/api/auth/register', body));
     }
 
+    it('should return the same neutral response for new, password, Google-only, and inactive accounts', async () => {
+        const request = { name: 'Test User', email: 'test@example.com', password: 'Test1234' };
+        const accountStates = [
+            [],
+            [{ id: 'password-user', passwordHash: 'hash', deactivatedAt: null }],
+            [{ id: 'google-user', passwordHash: null, deactivatedAt: null }],
+            [{ id: 'inactive-user', passwordHash: 'hash', deactivatedAt: new Date() }],
+        ];
+
+        for (const accountState of accountStates) {
+            mockDbState.selectResult = accountState;
+            const response = await callRegister(request);
+            expect(response.status).toBe(200);
+            await expect(response.json()).resolves.toEqual({ message: 'ตรวจสอบคำขอแล้ว' });
+        }
+    });
+
     it('should register a valid user', async () => {
         const res = await callRegister({ name: 'Test User', email: 'test@example.com', password: 'Test1234' });
         expect(res.status).toBe(200);
@@ -235,12 +252,44 @@ describe('POST /api/auth/reset-password', () => {
         return mod.POST(makeRequest('http://localhost:3000/api/auth/reset-password', body));
     }
 
+    it('should return the same neutral cooldown contract for every account state', async () => {
+        const expected = {
+            message: 'ตรวจสอบคำขอแล้ว',
+            retryAfterSeconds: 300,
+        };
+
+        mockDbState.selectResult = [];
+        const missingAccount = await callReset({ email: 'nobody@example.com' });
+
+        mockDbState.selectResult = [{
+            id: 'inactive-user',
+            email: 'inactive@example.com',
+            name: 'Inactive',
+            deactivatedAt: new Date('2026-07-24T00:00:00.000Z'),
+        }];
+        const inactiveAccount = await callReset({ email: 'inactive@example.com' });
+
+        mockDbState.selectResult = [{
+            id: 'active-user',
+            email: 'active@example.com',
+            name: 'Active',
+            resetToken: 'existing-token-hash',
+            resetExpires: new Date(Date.now() + 58 * 60 * 1000),
+            deactivatedAt: null,
+        }];
+        const activeAccount = await callReset({ email: 'active@example.com' });
+
+        await expect(missingAccount.json()).resolves.toEqual(expected);
+        await expect(inactiveAccount.json()).resolves.toEqual(expected);
+        await expect(activeAccount.json()).resolves.toEqual(expected);
+    });
+
     it('should return success even for non-existent email (anti-enumeration)', async () => {
         mockDbState.selectResult = [];
         const res = await callReset({ email: 'nobody@example.com' });
         expect(res.status).toBe(200);
         const data = await res.json();
-        expect(data.message).toContain('หากอีเมลนี้มีในระบบ');
+        expect(data.message).toBe('ตรวจสอบคำขอแล้ว');
     });
 
     it('should return success for existing email', async () => {
@@ -248,7 +297,7 @@ describe('POST /api/auth/reset-password', () => {
         const res = await callReset({ email: 'user@example.com' });
         expect(res.status).toBe(200);
         const data = await res.json();
-        expect(data.message).toContain('หากอีเมลนี้มีในระบบ');
+        expect(data.message).toBe('ตรวจสอบคำขอแล้ว');
     });
 
     it('should generate reset token for existing user', async () => {
@@ -257,6 +306,24 @@ describe('POST /api/auth/reset-password', () => {
         expect(mockDbState.updateSet).toBeTruthy();
         expect(mockDbState.updateSet).toHaveProperty('resetToken');
         expect(mockDbState.updateSet).toHaveProperty('resetExpires');
+    });
+
+    it('should validate the return destination before putting it in a reset email', async () => {
+        mockDbState.selectResult = [{
+            id: 'user-1',
+            email: 'user@example.com',
+            name: 'User',
+            deactivatedAt: null,
+        }];
+
+        await callReset({
+            email: 'user@example.com',
+            callbackUrl: 'https://evil.example/steal-token',
+        });
+
+        expect(mockedSendPasswordResetEmail).toHaveBeenCalledWith(expect.objectContaining({
+            returnTo: '/dashboard',
+        }));
     });
 
     it('should return the generic success shape without issuing a token for an inactive user', async () => {
@@ -354,6 +421,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
         const res = await callResetConfirm({ token: 'invalid-token', newPassword: 'NewPass1' });
         expect(res.status).toBe(400);
         const data = await res.json();
+        expect(data.kind).toBe('invalid_or_expired_link');
         expect(data.error).toContain('หมดอายุ');
     });
 
@@ -381,6 +449,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
 
         expect(res.status).toBe(400);
         const data = await res.json();
+        expect(data.kind).toBe('invalid_or_expired_link');
         expect(data.error).toContain('หมดอายุ');
     });
 
@@ -395,6 +464,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
         const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
 
         expect(res.status).toBe(400);
+        expect(await res.json()).toMatchObject({ kind: 'invalid_or_expired_link' });
         expect(mockDbState.updateSet).toBeNull();
         expect(mockedBcrypt.hash).not.toHaveBeenCalled();
     });

@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { CircleAlert, CircleCheck, Info } from 'lucide-react';
+import { signOut } from 'next-auth/react';
 
 import {
   Accordion,
@@ -53,17 +54,10 @@ export default function PasswordSettingsForm({ hasPassword }: { hasPassword: boo
   const [success, setSuccess] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const strength = getPasswordStrength(newPassword);
   const passwordsMatch = newPassword === confirmPassword;
   const isDisabled = loading || !currentPassword || !newPassword || !confirmPassword || !passwordsMatch;
-
-  useEffect(() => {
-    return () => {
-      if (successTimerRef.current) clearTimeout(successTimerRef.current);
-    };
-  }, []);
 
   function resetForm() {
     setCurrentPassword('');
@@ -96,11 +90,7 @@ export default function PasswordSettingsForm({ hasPassword }: { hasPassword: boo
       if (response.ok) {
         resetForm();
         setSuccess(true);
-        successTimerRef.current = setTimeout(() => {
-          setOpenItem('');
-          setSuccess(false);
-          successTimerRef.current = null;
-        }, 3000);
+        await signOut({ callbackUrl: '/login?reason=password-changed' });
       } else {
         setError(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
       }
@@ -189,14 +179,14 @@ export default function PasswordSettingsForm({ hasPassword }: { hasPassword: boo
                     hideLabel="ซ่อนรหัสผ่านใหม่"
                   />
                   {newPassword && (
-                    <FieldDescription id="password-strength">
-                      ความแข็งแรง: {strength.label}
+                    <div id="password-strength">
+                      <FieldDescription>ความแข็งแรง: {strength.label}</FieldDescription>
                       <Progress
                         className="mt-2"
                         value={(strength.score / 6) * 100}
                         aria-label={`ความแข็งแรงของรหัสผ่าน ${strength.label}`}
                       />
-                    </FieldDescription>
+                    </div>
                   )}
                 </Field>
 

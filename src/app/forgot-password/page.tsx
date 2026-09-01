@@ -1,7 +1,16 @@
 import AuthShell from '@/components/auth/AuthShell';
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  const { pathname: returnTo } = resolveSafeAuthReturn(callbackUrl);
+  const loginHref = createAuthReturnHref('/login', returnTo);
+
   return (
     <AuthShell
       pageId={'forgot-password'}
@@ -16,7 +25,7 @@ export default function ForgotPasswordPage() {
         { label: 'ตั้งรหัสผ่าน', text: 'ใช้ลิงก์เพื่อตั้งรหัสผ่านใหม่' },
       ]}
     >
-      <ForgotPasswordForm />
+      <ForgotPasswordForm returnTo={returnTo} loginHref={loginHref} />
     </AuthShell>
   );
 }

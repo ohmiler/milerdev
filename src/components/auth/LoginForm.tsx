@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import type { SafeAuthReturnPath } from '@/lib/safe-auth-return';
 import { GoogleIcon } from './AuthIcons';
-import { AuthDivider, AuthError, AuthField, AuthFootnote, PasswordInput } from './AuthFormLayout';
+import { AuthDivider, AuthError, AuthField, AuthFootnote, AuthNotice, PasswordInput } from './AuthFormLayout';
 
 export const AUTH_ERROR_MESSAGES: Record<string, string> = {
   OAuthAccountNotLinked: 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านก่อน แล้วจึงเชื่อมบัญชี Google ภายหลัง',
@@ -23,9 +23,11 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
 export default function LoginForm({
   returnTo,
   registerHref,
+  forgotPasswordHref,
 }: {
   returnTo: SafeAuthReturnPath;
   registerHref: string;
+  forgotPasswordHref: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,6 +36,12 @@ export default function LoginForm({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const arrivalReason = searchParams.get('reason');
+  const arrivalMessage = arrivalReason === 'password-reset'
+    ? 'ตั้งรหัสผ่านใหม่แล้ว กรุณาเข้าสู่ระบบอีกครั้ง'
+    : arrivalReason === 'password-changed'
+      ? 'เปลี่ยนรหัสผ่านแล้ว กรุณาเข้าสู่ระบบอีกครั้ง'
+      : '';
 
   useEffect(() => {
     const errorCode = searchParams.get('error');
@@ -69,6 +77,7 @@ export default function LoginForm({
 
   return (
     <>
+      {arrivalMessage && <AuthNotice>{arrivalMessage}</AuthNotice>}
       {error && <AuthError>{error}</AuthError>}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" aria-busy={loading}>
@@ -86,7 +95,7 @@ export default function LoginForm({
             />
           </AuthField>
 
-          <AuthField htmlFor="login-password" label="รหัสผ่าน" trailing={<Link className="text-xs font-semibold text-primary hover:underline" href="/forgot-password">ลืมรหัสผ่าน?</Link>}>
+          <AuthField htmlFor="login-password" label="รหัสผ่าน" trailing={<Link className="text-xs font-semibold text-primary hover:underline" href={forgotPasswordHref}>ลืมรหัสผ่าน?</Link>}>
             <PasswordInput
               id={'login-password'}
               name={'password'}
