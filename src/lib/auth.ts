@@ -9,6 +9,7 @@ import { authorizeGoogleSignIn, createGoogleProvider } from "./auth-google";
 import { applyJwtSessionPolicy, exposeAuthorizedSession } from "./auth-session";
 import { authorizeCredentials } from "./auth-credentials";
 import { consumeAuthRateLimit } from "./auth-rate-limit";
+import { resolveSafeAuthRedirect } from "./safe-auth-return";
 
 const EXPECTED_AUTH_ERROR_TYPES = new Set(["CredentialsSignin", "MissingCSRF"]);
 
@@ -73,6 +74,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }),
     ],
     callbacks: {
+        async redirect({ url, baseUrl }) {
+            return resolveSafeAuthRedirect(url, baseUrl);
+        },
         async signIn({ account, profile, user }) {
             if (account?.provider === "google") {
                 return authorizeGoogleSignIn(profile, user?.id, async ({ email, userId }) => {

@@ -17,6 +17,7 @@ import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
+import type { SafeAuthReturnPath } from '@/lib/safe-auth-return';
 import { GoogleIcon } from './AuthIcons';
 import { AuthDivider, AuthError, AuthField, AuthFootnote, PasswordInput } from './AuthFormLayout';
 
@@ -42,7 +43,13 @@ export const getPasswordStrength = (password: string) => {
   return { score, checks, label, percentage: (score / 5) * 100 };
 };
 
-export default function RegisterForm() {
+export default function RegisterForm({
+  returnTo,
+  loginHref,
+}: {
+  returnTo: SafeAuthReturnPath;
+  loginHref: string;
+}) {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -80,9 +87,9 @@ export default function RegisterForm() {
 
       const result = await signIn('credentials', { email, password, redirect: false });
       if (result?.error) {
-        router.push('/login');
+        router.push(loginHref);
       } else {
-        router.push('/dashboard');
+        router.push(returnTo);
         router.refresh();
       }
     } catch {
@@ -144,8 +151,8 @@ export default function RegisterForm() {
       </form>
 
       <AuthDivider>หรือใช้บัญชี Google</AuthDivider>
-      <Button type="button" variant="outline" className="w-full" onClick={() => signIn('google', { callbackUrl: '/dashboard' })}><GoogleIcon />สมัครสมาชิกด้วย Google</Button>
-      <AuthFootnote>มีบัญชีอยู่แล้ว? <Link href="/login">เข้าสู่ระบบ</Link></AuthFootnote>
+      <Button type="button" variant="outline" className="w-full" onClick={() => signIn('google', { callbackUrl: returnTo })}><GoogleIcon />สมัครสมาชิกด้วย Google</Button>
+      <AuthFootnote>มีบัญชีอยู่แล้ว? <Link href={loginHref}>เข้าสู่ระบบ</Link></AuthFootnote>
       <p className="mt-2 text-center text-xs leading-5 text-muted-foreground">การสมัครสมาชิกหมายถึงคุณยอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัวของ MilerDev</p>
     </>
   );

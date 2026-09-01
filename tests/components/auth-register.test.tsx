@@ -9,15 +9,12 @@ describe('Register UI contracts', () => {
     const source = readSource('src/components/auth/RegisterForm.tsx');
 
     expect(page).not.toContain('use client');
-    expect(page).toContain('<RegisterForm />');
+    expect(page).toContain('<RegisterForm');
     expect(source).toContain("fetch('/api/auth/register'");
     expect(source).toContain("method: 'POST'");
     expect(source).toContain("'Content-Type': 'application/json'");
     expect(source).toContain('JSON.stringify({ name, email, password })');
     expect(source).toContain("signIn('credentials'");
-    expect(source).toContain("router.push('/login')");
-    expect(source).toContain("router.push('/dashboard')");
-    expect(source).toContain("signIn('google', { callbackUrl: '/dashboard' })");
   });
 
   it('keeps fields and client password policy aligned with the API', () => {

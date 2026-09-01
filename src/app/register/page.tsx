@@ -1,7 +1,16 @@
 import AuthShell from '@/components/auth/AuthShell';
 import RegisterForm from '@/components/auth/RegisterForm';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  const { pathname: returnTo } = resolveSafeAuthReturn(callbackUrl);
+  const loginHref = createAuthReturnHref('/login', returnTo);
+
   return (
     <AuthShell
       pageId={'register'}
@@ -9,7 +18,7 @@ export default function RegisterPage() {
       panelTitle={'สมัครสมาชิก'}
       panelDescription={'กรอกข้อมูลสำหรับบัญชีผู้เรียน หรือสมัครด้วย Google'}
     >
-      <RegisterForm />
+      <RegisterForm returnTo={returnTo} loginHref={loginHref} />
     </AuthShell>
   );
 }
