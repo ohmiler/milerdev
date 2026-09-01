@@ -9,6 +9,9 @@ vi.mock('@/lib/analytics', () => ({
 vi.mock('@/lib/measurement-recorder', () => ({
   measurementRecorder: { recordProductExposure: vi.fn() },
 }));
+vi.mock('@/lib/learning-measurement', () => ({
+  learningMeasurementRecorder: { recordWorkspaceStart: vi.fn() },
+}));
 vi.mock('@/lib/error-handler', () => ({ logEvent: vi.fn() }));
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(),

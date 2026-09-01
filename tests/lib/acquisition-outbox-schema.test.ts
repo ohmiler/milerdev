@@ -32,7 +32,7 @@ describe('authoritative acquisition outbox schema', () => {
       columns: ['event_name', 'enrollment_id'],
     });
     expect(outbox.checks.map((candidate) => candidate.name)).toContain(
-      'chk_measurement_outbox_acquisition_identity',
+      'chk_measurement_outbox_identity',
     );
   });
 

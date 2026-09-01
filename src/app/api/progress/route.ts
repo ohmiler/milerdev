@@ -1,219 +1,113 @@
-import { NextResponse } from "next/server";
-import { logError, logEvent } from '@/lib/error-handler';
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { lessonProgress, lessons, enrollments } from "@/lib/db/schema";
-import { eq, and, count } from "drizzle-orm";
-import { issueCertificate } from "@/lib/certificate";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { and, eq } from 'drizzle-orm';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { lessonProgress, lessons } from '@/lib/db/schema';
+import { logError } from '@/lib/error-handler';
+import { updateLearningProgress } from '@/lib/learning-progress';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+
+const progressUpdateSchema = z.object({
+  lessonId: z.string().trim().min(1).max(36),
+  watchTimeSeconds: z.number().int().min(0).max(2_147_483_647).optional(),
+  completed: z.boolean().optional(),
+}).strict().refine(
+  (value) => value.watchTimeSeconds !== undefined || value.completed !== undefined,
+  'A progress value is required',
+);
 
 // POST /api/progress - Update lesson progress
 export async function POST(request: Request) {
-    try {
-        const session = await auth();
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const rateLimit = checkRateLimit(`progress:${session.user.id}`, rateLimits.general);
-        if (!rateLimit.success) {
-            return rateLimitResponse(rateLimit.resetTime);
-        }
-
-        const { lessonId, watchTimeSeconds, completed } = await request.json();
-
-        // Get lesson
-        const [lesson] = await db
-            .select({ id: lessons.id, courseId: lessons.courseId, isFreePreview: lessons.isFreePreview })
-            .from(lessons)
-            .where(eq(lessons.id, lessonId))
-            .limit(1);
-
-        if (!lesson) {
-            return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
-        }
-
-        // Check enrollment
-        const [enrollment] = await db
-            .select({ id: enrollments.id })
-            .from(enrollments)
-            .where(
-                and(
-                    eq(enrollments.userId, session.user.id),
-                    eq(enrollments.courseId, lesson.courseId)
-                )
-            )
-            .limit(1);
-
-        if (!enrollment && !lesson.isFreePreview) {
-            return NextResponse.json(
-                { error: "Not enrolled in this course" },
-                { status: 403 }
-            );
-        }
-
-        // Update or create progress
-        const [existingProgress] = await db
-            .select({
-                id: lessonProgress.id,
-                completed: lessonProgress.completed,
-                watchTimeSeconds: lessonProgress.watchTimeSeconds,
-            })
-            .from(lessonProgress)
-            .where(
-                and(
-                    eq(lessonProgress.userId, session.user.id),
-                    eq(lessonProgress.lessonId, lessonId)
-                )
-            )
-            .limit(1);
-
-        const wasCompleted = existingProgress?.completed === true;
-        const nextCompleted = typeof completed === "boolean"
-            ? completed
-            : existingProgress?.completed ?? false;
-        const nextWatchTimeSeconds = typeof watchTimeSeconds === 'number' && Number.isFinite(watchTimeSeconds)
-            ? Math.max(0, Math.floor(watchTimeSeconds))
-            : null;
-
-        if (existingProgress) {
-            const currentWatchTimeSeconds = Number(existingProgress.watchTimeSeconds || 0);
-            const resolvedWatchTimeSeconds = nextWatchTimeSeconds === null
-                ? currentWatchTimeSeconds
-                : Math.max(currentWatchTimeSeconds, nextWatchTimeSeconds);
-
-            if (resolvedWatchTimeSeconds !== currentWatchTimeSeconds || nextCompleted !== existingProgress.completed) {
-                await db
-                    .update(lessonProgress)
-                    .set({
-                        watchTimeSeconds: resolvedWatchTimeSeconds,
-                        completed: nextCompleted,
-                        lastWatchedAt: new Date(),
-                    })
-                    .where(eq(lessonProgress.id, existingProgress.id));
-            }
-        } else {
-            await db.insert(lessonProgress).values({
-                userId: session.user.id,
-                lessonId,
-                watchTimeSeconds: nextWatchTimeSeconds || 0,
-                completed: nextCompleted,
-                lastWatchedAt: new Date(),
-            });
-        }
-
-        const completionChanged = wasCompleted !== nextCompleted;
-
-        // Calculate and update course progress
-        if (enrollment && completionChanged) {
-            const [[{ totalLessons }], [{ completedLessons }]] = await Promise.all([
-                db.select({ totalLessons: count() })
-                    .from(lessons)
-                    .where(eq(lessons.courseId, lesson.courseId)),
-                db.select({ completedLessons: count() })
-                    .from(lessonProgress)
-                    .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
-                    .where(
-                        and(
-                            eq(lessonProgress.userId, session.user.id),
-                            eq(lessons.courseId, lesson.courseId),
-                            eq(lessonProgress.completed, true)
-                        )
-                    ),
-            ]);
-
-            const progressPercent = totalLessons > 0
-                ? Math.round((completedLessons / totalLessons) * 100)
-                : 0;
-
-            await db
-                .update(enrollments)
-                .set({
-                    progressPercent,
-                    completedAt: progressPercent === 100 ? new Date() : null,
-                })
-                .where(eq(enrollments.id, enrollment.id));
-
-            // Auto-issue certificate on course completion
-            if (progressPercent === 100) {
-                try {
-                    const { isNew } = await issueCertificate(session.user.id, lesson.courseId);
-                    if (isNew) {
-                        logEvent('certificate.issued');
-                    }
-                } catch (certError) {
-                    logError(certError instanceof Error ? certError : new Error(String(certError)), { action: '[Certificate] Error issuing' });
-                }
-            }
-        }
-
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating progress' });
-        return NextResponse.json(
-            { error: "Failed to update progress" },
-            { status: 500 }
-        );
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const rateLimit = checkRateLimit(`progress:${session.user.id}`, rateLimits.general);
+    if (!rateLimit.success) return rateLimitResponse(rateLimit.resetTime);
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid progress update' }, { status: 400 });
+    }
+    const parsed = progressUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid progress update' }, { status: 400 });
+    }
+
+    const result = await updateLearningProgress({
+      userId: session.user.id,
+      ...parsed.data,
+    });
+    if (result.status === 'not_found') {
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+    }
+    if (result.status === 'forbidden') {
+      return NextResponse.json({ error: 'Not enrolled in this course' }, { status: 403 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    logError(error instanceof Error ? error : new Error(String(error)), {
+      action: 'Error updating progress',
+    });
+    return NextResponse.json(
+      { error: 'Failed to update progress' },
+      { status: 500 },
+    );
+  }
 }
 
 // GET /api/progress?courseId=xxx - Get course progress
 export async function GET(request: Request) {
-    try {
-        const session = await auth();
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        const { searchParams } = new URL(request.url);
-        const courseId = searchParams.get("courseId");
-
-        if (!courseId) {
-            return NextResponse.json(
-                { error: "Course ID required" },
-                { status: 400 }
-            );
-        }
-
-        // Get all lessons for this course
-        const courseLessons = await db
-            .select({ id: lessons.id })
-            .from(lessons)
-            .where(eq(lessons.courseId, courseId));
-
-        // Get progress for these lessons
-        const userProgress = await db
-            .select({
-                lessonId: lessonProgress.lessonId,
-                completed: lessonProgress.completed,
-                watchTimeSeconds: lessonProgress.watchTimeSeconds,
-            })
-            .from(lessonProgress)
-            .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
-            .where(
-                and(
-                    eq(lessonProgress.userId, session.user.id),
-                    eq(lessons.courseId, courseId)
-                )
-            );
-
-        const progressLookup = new Map(userProgress.map(p => [p.lessonId, p]));
-
-        const progressMap = courseLessons.map((lesson) => {
-            const p = progressLookup.get(lesson.id);
-            return {
-                lessonId: lesson.id,
-                completed: p?.completed || false,
-                watchTimeSeconds: p?.watchTimeSeconds || 0,
-            };
-        });
-
-        return NextResponse.json({ progress: progressMap });
-    } catch (error) {
-        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error getting progress' });
-        return NextResponse.json(
-            { error: "Failed to get progress" },
-            { status: 500 }
-        );
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const { searchParams } = new URL(request.url);
+    const courseId = searchParams.get('courseId');
+    if (!courseId) {
+      return NextResponse.json({ error: 'Course ID required' }, { status: 400 });
+    }
+
+    const courseLessons = await db
+      .select({ id: lessons.id })
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId));
+    const userProgress = await db
+      .select({
+        lessonId: lessonProgress.lessonId,
+        completed: lessonProgress.completed,
+        watchTimeSeconds: lessonProgress.watchTimeSeconds,
+      })
+      .from(lessonProgress)
+      .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+      .where(and(
+        eq(lessonProgress.userId, session.user.id),
+        eq(lessons.courseId, courseId),
+      ));
+    const progressLookup = new Map(userProgress.map((progress) => [progress.lessonId, progress]));
+    const progress = courseLessons.map((lesson) => ({
+      lessonId: lesson.id,
+      completed: progressLookup.get(lesson.id)?.completed || false,
+      watchTimeSeconds: progressLookup.get(lesson.id)?.watchTimeSeconds || 0,
+    }));
+
+    return NextResponse.json({ progress });
+  } catch (error) {
+    logError(error instanceof Error ? error : new Error(String(error)), {
+      action: 'Error getting progress',
+    });
+    return NextResponse.json(
+      { error: 'Failed to get progress' },
+      { status: 500 },
+    );
+  }
 }

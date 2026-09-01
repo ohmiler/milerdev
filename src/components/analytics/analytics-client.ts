@@ -2,11 +2,13 @@
 
 import type { ClientAnalyticsEvent } from '@/lib/analytics-contract';
 
-export function createProductExposureId(
+export function createAnalyticsExposureId(
   randomUUID: () => string = () => crypto.randomUUID(),
 ): string {
   return randomUUID();
 }
+
+export const createProductExposureId = createAnalyticsExposureId;
 
 export function trackClientAnalyticsEvent(event: ClientAnalyticsEvent): void {
   if (typeof window === 'undefined') return;

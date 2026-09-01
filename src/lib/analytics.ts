@@ -68,6 +68,7 @@ export async function recordClientAnalyticsEvent(
   if (parsed.data.eventName === 'course_viewed' || parsed.data.eventName === 'bundle_viewed') {
     return false;
   }
+  if (parsed.data.eventName === 'learning_workspace_started') return false;
 
   return insertAnalyticsEvent({
     ...parsed.data,
@@ -82,6 +83,8 @@ export async function recordServerAnalyticsEvent(input: ServerAnalyticsEvent): P
   if (
     parsed.data.eventName === 'purchase_completed'
     || parsed.data.eventName === 'free_enrollment_completed'
+    || parsed.data.eventName === 'lesson_completed'
+    || parsed.data.eventName === 'course_completed'
   ) return false;
   return insertAnalyticsEvent({ ...parsed.data, source: 'server' });
 }
