@@ -659,6 +659,34 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
 }));
 
 // =====================
+// WEB VITALS TABLE
+// =====================
+export const webVitals = mysqlTable('web_vitals', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    pageLoadId: varchar('page_load_id', { length: 100 }).notNull(),
+    metricName: varchar('metric_name', { length: 10, enum: ['LCP', 'INP', 'CLS'] }).notNull(),
+    routeFamily: varchar('route_family', {
+        length: 40,
+        enum: ['home', 'catalog', 'product_detail', 'purchase', 'authentication', 'account', 'learning', 'certificate', 'content', 'legal_support', 'other'],
+    }).notNull(),
+    deviceClass: varchar('device_class', { length: 10, enum: ['mobile', 'desktop'] }).notNull(),
+    releaseIdentity: varchar('release_identity', { length: 100 }).notNull(),
+    value: decimal('value', { precision: 16, scale: 4 }).notNull(),
+    rating: varchar('rating', { length: 20, enum: ['good', 'needs-improvement', 'poor'] }).notNull(),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()).notNull(),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()).notNull(),
+}, (table) => [
+    uniqueIndex('uq_web_vitals_page_metric').on(table.pageLoadId, table.metricName),
+    index('idx_web_vitals_updated_at').on(table.updatedAt),
+    index('idx_web_vitals_release_route_metric_device').on(
+        table.releaseIdentity,
+        table.routeFamily,
+        table.metricName,
+        table.deviceClass,
+    ),
+]);
+
+// =====================
 // MEASUREMENT OUTBOX TABLE
 // =====================
 export const measurementOutbox = mysqlTable('measurement_outbox', {
@@ -773,6 +801,8 @@ export type BundleCourse = typeof bundleCourses.$inferSelect;
 export type NewBundleCourse = typeof bundleCourses.$inferInsert;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
+export type WebVital = typeof webVitals.$inferSelect;
+export type NewWebVital = typeof webVitals.$inferInsert;
 export type MeasurementOutboxEntry = typeof measurementOutbox.$inferSelect;
 export type NewMeasurementOutboxEntry = typeof measurementOutbox.$inferInsert;
 export type RateLimitBucket = typeof rateLimitBuckets.$inferSelect;

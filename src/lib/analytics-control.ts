@@ -18,10 +18,11 @@ export const ANALYTICS_EVENT_CLASSES = [
   'commerce',
   'enrollment',
   'learning',
+  'performance',
 ] as const;
 
 export type AnalyticsEventClass = typeof ANALYTICS_EVENT_CLASSES[number];
-type AnalyticsEventName = ClientAnalyticsEvent['eventName'] | ServerAnalyticsEventName;
+type AnalyticsEventName = ClientAnalyticsEvent['eventName'] | ServerAnalyticsEventName | 'web_vitals';
 
 const ANALYTICS_ENABLED_KEY = 'analytics_enabled' as const;
 const ANALYTICS_GOVERNANCE_KEY = 'analytics_governance_decision' as const;
@@ -66,9 +67,10 @@ const eventClassByName: Record<AnalyticsEventName, AnalyticsEventClass> = {
   learning_workspace_started: 'learning',
   lesson_completed: 'learning',
   course_completed: 'learning',
+  web_vitals: 'performance',
 };
 
-for (const eventName of [...CLIENT_ANALYTICS_EVENT_NAMES, ...SERVER_ANALYTICS_EVENT_NAMES]) {
+for (const eventName of [...CLIENT_ANALYTICS_EVENT_NAMES, ...SERVER_ANALYTICS_EVENT_NAMES, 'web_vitals'] as const) {
   if (!eventClassByName[eventName]) throw new Error(`Missing analytics event class for ${eventName}`);
 }
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getAnalyticsControlState } from '@/lib/analytics-control';
 import { db } from '@/lib/db';
-import { analyticsEvents } from '@/lib/db/schema';
+import { analyticsEvents, webVitals } from '@/lib/db/schema';
 
 const DAY_MS = 24 * 60 * 60 * 1_000;
 const DEFAULT_BATCH_SIZE = 1_000;
@@ -15,7 +15,10 @@ const retentionRequestSchema = z.object({
 }).strict();
 
 export interface AnalyticsRetentionStore {
-  deleteRawEventsBefore(cutoff: Date, batchSize: number): Promise<number>;
+  deleteRawMeasurementsBefore(cutoff: Date, batchSize: number): Promise<{
+    analyticsEvents: number;
+    webVitals: number;
+  }>;
 }
 
 export class AnalyticsRetentionError extends Error {
@@ -38,8 +41,14 @@ export function createAnalyticsRetentionPolicy(store: AnalyticsRetentionStore) {
       const cutoff = new Date(
         parsed.data.now.getTime() - parsed.data.rawEventRetentionDays * DAY_MS,
       );
-      const deletedCount = await store.deleteRawEventsBefore(cutoff, parsed.data.batchSize);
-      return { cutoff, deletedCount, batchSize: parsed.data.batchSize };
+      const deleted = await store.deleteRawMeasurementsBefore(cutoff, parsed.data.batchSize);
+      return {
+        cutoff,
+        deletedCount: deleted.analyticsEvents + deleted.webVitals,
+        deletedAnalyticsEventCount: deleted.analyticsEvents,
+        deletedWebVitalCount: deleted.webVitals,
+        batchSize: parsed.data.batchSize,
+      };
     },
   };
 }
@@ -52,12 +61,21 @@ function affectedRows(result: unknown): number {
 }
 
 const drizzleAnalyticsRetentionStore: AnalyticsRetentionStore = {
-  async deleteRawEventsBefore(cutoff, batchSize) {
-    const result = await db
-      .delete(analyticsEvents)
-      .where(lt(analyticsEvents.createdAt, cutoff))
-      .limit(batchSize);
-    return affectedRows(result);
+  async deleteRawMeasurementsBefore(cutoff, batchSize) {
+    return db.transaction(async (tx) => {
+      const analyticsResult = await tx
+        .delete(analyticsEvents)
+        .where(lt(analyticsEvents.createdAt, cutoff))
+        .limit(batchSize);
+      const webVitalsResult = await tx
+        .delete(webVitals)
+        .where(lt(webVitals.updatedAt, cutoff))
+        .limit(batchSize);
+      return {
+        analyticsEvents: affectedRows(analyticsResult),
+        webVitals: affectedRows(webVitalsResult),
+      };
+    });
   },
 };
 

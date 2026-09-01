@@ -8,6 +8,8 @@ import { Toaster } from "@/components/ui/sonner";
 
 import { buildSiteJsonLd, serializeJsonLd, SITE_URL } from "@/lib/seo";
 
+import WebVitalsReporter from '@/components/analytics/WebVitalsReporter';
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -84,6 +86,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="antialiased">
+        <WebVitalsReporter />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
