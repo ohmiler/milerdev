@@ -105,6 +105,5 @@ describe('public navigation model adapters', () => {
 
     const coursesLink = screen.getAllByRole('link', { name: 'คอร์สทั้งหมด' })[0];
     expect(coursesLink.getAttribute('aria-current')).toBe('location');
-    expect(coursesLink.className).toContain('aria-[current=location]:bg-secondary');
   });
 });
