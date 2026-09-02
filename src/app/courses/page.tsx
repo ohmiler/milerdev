@@ -2,11 +2,11 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import BundleCard from '@/components/bundle/BundleCard';
 import CourseCard from '@/components/course/CourseCard';
 import CourseCatalogFilters from '@/components/course/CourseCatalogFilters';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Empty,
   EmptyContent,
@@ -16,6 +16,11 @@ import {
 } from '@/components/ui/empty';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
+import {
+  deriveBundleDecisionFacts,
+  type BundleCourseDecisionSource,
+  type BundleDecisionFacts,
+} from '@/lib/bundle-decision-facts';
 import { deriveCourseDecisionFacts, type CourseDecisionFacts } from '@/lib/course-decision-facts';
 import { and, asc, count, desc, eq, gt, like, sql } from 'drizzle-orm';
 
@@ -52,13 +57,8 @@ interface CourseListItem {
 interface BundleItem {
   id: string;
   title: string;
-  slug: string;
   description: string | null;
-  price: string;
-  courseCount: number;
-  totalOriginalPrice: number;
-  discount: number;
-  courses: { courseTitle: string }[];
+  decisionFacts: BundleDecisionFacts;
 }
 
 function getSingleParam(value: string | string[] | undefined): string {
@@ -103,6 +103,14 @@ async function getAllTags(): Promise<Tag[]> {
 }
 
 async function getPublishedBundles(): Promise<BundleItem[]> {
+  const lessonStatsSubquery = db
+    .select({
+      courseId: lessons.courseId,
+      lessonCount: count().as('bundle_lesson_count'),
+    })
+    .from(lessons)
+    .groupBy(lessons.courseId)
+    .as('bundle_lesson_stats');
   const rows = await db
     .select({
       id: bundles.id,
@@ -111,13 +119,20 @@ async function getPublishedBundles(): Promise<BundleItem[]> {
       description: bundles.description,
       price: bundles.price,
       createdAt: bundles.createdAt,
+      courseId: courses.id,
       courseTitle: courses.title,
+      courseSlug: courses.slug,
       coursePrice: courses.price,
+      coursePromoPrice: courses.promoPrice,
+      coursePromoStartsAt: courses.promoStartsAt,
+      coursePromoEndsAt: courses.promoEndsAt,
+      courseLessonCount: sql<number>`COALESCE(${lessonStatsSubquery.lessonCount}, 0)`.as('bundle_course_lesson_count'),
       orderIndex: bundleCourses.orderIndex,
     })
     .from(bundles)
     .leftJoin(bundleCourses, eq(bundles.id, bundleCourses.bundleId))
     .leftJoin(courses, eq(bundleCourses.courseId, courses.id))
+    .leftJoin(lessonStatsSubquery, eq(courses.id, lessonStatsSubquery.courseId))
     .where(eq(bundles.status, 'published'))
     .orderBy(asc(bundles.createdAt), asc(bundleCourses.orderIndex));
 
@@ -127,8 +142,7 @@ async function getPublishedBundles(): Promise<BundleItem[]> {
     slug: string;
     description: string | null;
     price: string;
-    courses: { courseTitle: string }[];
-    totalOriginalPrice: number;
+    courses: BundleCourseDecisionSource[];
   }>();
 
   for (const row of rows) {
@@ -139,23 +153,44 @@ async function getPublishedBundles(): Promise<BundleItem[]> {
       description: row.description,
       price: row.price,
       courses: [],
-      totalOriginalPrice: 0,
     };
 
-    if (row.courseTitle) {
-      existing.courses.push({ courseTitle: row.courseTitle });
-      existing.totalOriginalPrice += parseFloat(row.coursePrice || '0');
+    if (
+      row.courseId
+      && row.courseTitle
+      && row.courseSlug
+      && row.coursePrice !== null
+    ) {
+      existing.courses.push({
+        id: row.courseId,
+        title: row.courseTitle,
+        slug: row.courseSlug,
+        orderIndex: row.orderIndex,
+        regularPrice: row.coursePrice,
+        promotion: row.coursePromoPrice === null
+          ? null
+          : {
+              price: row.coursePromoPrice,
+              startsAt: row.coursePromoStartsAt,
+              endsAt: row.coursePromoEndsAt,
+            },
+        lessonCount: Number(row.courseLessonCount) || 0,
+      });
     }
 
     bundleMap.set(row.id, existing);
   }
 
+  const now = new Date();
   return Array.from(bundleMap.values()).map((bundle) => ({
-    ...bundle,
-    courseCount: bundle.courses.length,
-    discount: bundle.totalOriginalPrice > 0
-      ? Math.round((1 - parseFloat(bundle.price) / bundle.totalOriginalPrice) * 100)
-      : 0,
+    id: bundle.id,
+    title: bundle.title,
+    description: bundle.description,
+    decisionFacts: deriveBundleDecisionFacts({
+      slug: bundle.slug,
+      price: bundle.price,
+      courses: bundle.courses,
+    }, { now }),
   }));
 }
 
@@ -385,7 +420,16 @@ export default async function CoursesPage({ searchParams }: Props) {
           <section className="border-t bg-background py-14 sm:py-20" aria-labelledby="courses-bundles-title">
             <div className="container">
               <header className="mb-8 grid gap-4 md:grid-cols-[1fr_auto] md:items-end"><div><h2 id="courses-bundles-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div><Badge variant="secondary">{bundlesList.length} เส้นทาง</Badge></header>
-              <div className="grid gap-5 lg:grid-cols-2">{bundlesList.map((bundle) => <Link key={bundle.id} href={`/bundles/${bundle.slug}`} className="group rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"><Card className="h-full"><CardHeader><div className="flex items-center justify-between gap-3"><Badge>Bundle · {bundle.courseCount} คอร์ส</Badge>{bundle.discount > 0 ? <Badge variant="destructive">ประหยัด {bundle.discount}%</Badge> : null}</div><CardTitle className="mt-3 text-2xl group-hover:text-primary">{bundle.title}</CardTitle>{bundle.description ? <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{bundle.description}</p> : null}</CardHeader><CardContent><div className="flex flex-col gap-2 border-y py-4 text-sm">{bundle.courses.slice(0, 2).map((course, index) => <p key={`${bundle.id}-${index}`}>{String(index + 1).padStart(2, '0')} · {course.courseTitle}</p>)}{bundle.courses.length > 2 ? <p className="text-muted-foreground">+{bundle.courses.length - 2} คอร์ส</p> : null}</div><div className="mt-5 flex items-end justify-between gap-4"><div><strong className="text-2xl">฿{parseFloat(bundle.price).toLocaleString()}</strong><s className="ml-2 text-sm text-muted-foreground">฿{bundle.totalOriginalPrice.toLocaleString()}</s></div><span className="text-sm font-semibold text-primary">ดูรายละเอียด →</span></div></CardContent></Card></Link>)}</div>
+              <div className="grid gap-5 lg:grid-cols-2">
+                {bundlesList.map((bundle) => (
+                  <BundleCard
+                    key={bundle.id}
+                    title={bundle.title}
+                    description={bundle.description}
+                    decisionFacts={bundle.decisionFacts}
+                  />
+                ))}
+              </div>
             </div>
           </section>
         ) : null}
