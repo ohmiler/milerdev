@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import BundleEnrollButton, {
   BUNDLE_PAYMENT_CONTRACT,
 } from '@/components/bundle/BundleEnrollButton';
+import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
 
 vi.mock('next/image', () => ({ default: () => null }));
 vi.mock('next/navigation', () => ({
@@ -56,6 +57,28 @@ vi.mock('@/components/ui/Modal', () => ({
   ) : null,
 }));
 
+const DECISION_FACTS = deriveBundleDecisionFacts({
+  slug: 'full-stack',
+  price: 2490,
+  courses: [
+    {
+      id: 'course-1',
+      title: 'TypeScript',
+      slug: 'typescript',
+      orderIndex: 0,
+      regularPrice: 1800,
+      lessonCount: 8,
+    },
+    {
+      id: 'course-2',
+      title: 'Next.js',
+      slug: 'nextjs',
+      orderIndex: 1,
+      regularPrice: 1700,
+      lessonCount: 10,
+    },
+  ],
+}, { now: new Date('2026-09-02T05:00:00.000Z') });
 const jsonResponse = (body: unknown, ok = true) => ({
   ok,
   json: vi.fn().mockResolvedValue(body),
@@ -104,7 +127,7 @@ describe('bundle enrollment interactions', () => {
       <BundleEnrollButton
         bundleId="bundle-1"
         bundleSlug="full-stack"
-        price={2490}
+        decisionFacts={DECISION_FACTS}
       />,
     );
 
@@ -143,7 +166,7 @@ describe('bundle enrollment interactions', () => {
       <BundleEnrollButton
         bundleId="bundle-1"
         bundleSlug="full-stack"
-        price={2490}
+        decisionFacts={DECISION_FACTS}
       />,
     );
 
@@ -194,7 +217,7 @@ describe('bundle enrollment interactions', () => {
       <BundleEnrollButton
         bundleId="bundle-1"
         bundleSlug="full-stack"
-        price={2490}
+        decisionFacts={DECISION_FACTS}
       />,
     );
 
@@ -244,7 +267,7 @@ describe('bundle enrollment interactions', () => {
       <BundleEnrollButton
         bundleId="bundle-1"
         bundleSlug="full-stack"
-        price={2490}
+        decisionFacts={DECISION_FACTS}
       />,
     );
 
@@ -273,6 +296,25 @@ describe('bundle enrollment interactions', () => {
     });
   });
 
+  it('shows the shared current-price comparison before payment method selection', async () => {
+    const user = userEvent.setup();
+    render(
+      <BundleEnrollButton
+        bundleId="bundle-1"
+        bundleSlug="full-stack"
+        decisionFacts={DECISION_FACTS}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /2,490/ }));
+
+    const orderReview = screen.getByRole('dialog', { name: 'เลือกช่องทางชำระเงิน' });
+    expect(orderReview.textContent).toContain('ตรวจสอบรายการ Bundle');
+    expect(orderReview.textContent).toContain('ซื้อแยกวันนี้');
+    expect(orderReview.textContent).toContain('฿3,500');
+    expect(orderReview.textContent).toContain('ประหยัด ฿1,010 (29%)');
+  });
+
   it('preserves PromptPay intent and slip fields while locking verification', async () => {
     const verifyRequest = deferred<Response>();
     const fetchMock = vi.fn<
@@ -294,7 +336,7 @@ describe('bundle enrollment interactions', () => {
       <BundleEnrollButton
         bundleId="bundle-1"
         bundleSlug="full-stack"
-        price={2490}
+        decisionFacts={DECISION_FACTS}
       />,
     );
 

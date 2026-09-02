@@ -18,13 +18,17 @@ import { Spinner } from '@/components/ui/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
 import { useProductExposureId } from '@/components/analytics/AnalyticsViewEvent';
+import type { BundleDecisionFacts } from '@/lib/bundle-decision-facts';
+
+type BundleEnrollmentDecisionFacts = Pick<
+  BundleDecisionFacts,
+  'price' | 'ownership' | 'actions'
+>;
 
 interface BundleEnrollButtonProps {
   bundleId: string;
-  price: number;
   bundleSlug: string;
-  allEnrolled?: boolean;
-  available?: boolean;
+  decisionFacts: BundleEnrollmentDecisionFacts;
 }
 
 type PaymentStep = 'idle' | 'method' | 'transfer' | 'verifying';
@@ -44,11 +48,10 @@ export const BUNDLE_PAYMENT_CONTRACT = {
 
 export default function BundleEnrollButton({
   bundleId,
-  price,
   bundleSlug,
-  allEnrolled = false,
-  available = true,
+  decisionFacts,
 }: BundleEnrollButtonProps) {
+  const price = decisionFacts.price.bundle;
   const router = useRouter();
   const session = useSession()?.data;
   const exposureId = useProductExposureId();
@@ -255,34 +258,48 @@ export default function BundleEnrollButton({
     resetSlipState();
   };
 
-  if (enrolled || allEnrolled) {
+  const renderOwnershipNotice = () => decisionFacts.ownership.disclosure ? (
+    <Alert>
+      <CircleAlert aria-hidden="true" />
+      <AlertTitle>มีบางคอร์สอยู่ในบัญชีแล้ว</AlertTitle>
+      <AlertDescription>{decisionFacts.ownership.disclosure}</AlertDescription>
+    </Alert>
+  ) : null;
+
+  if (enrolled || decisionFacts.ownership.status === 'complete') {
     return (
       <Button asChild className="w-full">
-        <Link href="/dashboard">
+        <Link href={decisionFacts.actions.complete.href}>
           <CircleCheck data-icon="inline-start" aria-hidden="true" />
-          ลงทะเบียนครบแล้ว — เข้าเรียน
+          {decisionFacts.actions.complete.label}
         </Link>
       </Button>
     );
   }
 
-  if (!available) {
+  if (decisionFacts.actions.acquisition.kind === 'unavailable') {
     return (
-      <Empty className="border">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <CircleAlert aria-hidden="true" />
-          </EmptyMedia>
-          <EmptyTitle>Bundle นี้กำลังเตรียมเนื้อหา</EmptyTitle>
-          <EmptyDescription>จะเปิดรับสมัครเมื่อทุกคอร์สใน Bundle มีบทเรียนพร้อมแล้ว</EmptyDescription>
-        </EmptyHeader>
-        <Button type="button" className="w-full" disabled>ยังไม่เปิดรับสมัคร</Button>
-      </Empty>
+      <div className="flex flex-col gap-4">
+        {renderOwnershipNotice()}
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CircleAlert aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>Bundle นี้กำลังเตรียมเนื้อหา</EmptyTitle>
+            <EmptyDescription>จะเปิดรับสมัครเมื่อทุกคอร์สใน Bundle มีบทเรียนพร้อมแล้ว</EmptyDescription>
+          </EmptyHeader>
+          <Button type="button" className="w-full" disabled>{decisionFacts.actions.acquisition.label}</Button>
+        </Empty>
+      </div>
     );
   }
 
   return (
     <>
+      {decisionFacts.ownership.disclosure ? (
+        <div className="mb-4">{renderOwnershipNotice()}</div>
+      ) : null}
       <Button
         ref={enrollmentTriggerRef}
         className="w-full"
@@ -294,24 +311,45 @@ export default function BundleEnrollButton({
         {loading && <Spinner data-icon="inline-start" aria-hidden="true" />}
         {loading
           ? 'กำลังดำเนินการ...'
-          : price === 0
-            ? 'ลงทะเบียน Bundle ฟรี'
-            : `ซื้อ Bundle ฿${price.toLocaleString()}`}
+          : decisionFacts.actions.acquisition.label}
       </Button>
 
       <DialogShell
         isOpen={paymentStep === 'method'}
         onClose={() => setPaymentStep('idle')}
         title={'เลือกช่องทางชำระเงิน'}
-        description={<span>ยอดชำระ <strong>฿{price.toLocaleString()}</strong></span>}
+        description={<span>ยอดชำระ <strong>{decisionFacts.price.bundleFormatted}</strong></span>}
         body={(
-          <ToggleGroup
+          <div className="flex flex-col gap-4" data-payment-step="method">
+            <Card size="sm">
+              <CardHeader>
+                <CardTitle>ตรวจสอบรายการ Bundle</CardTitle>
+                <CardDescription>ยอดนี้อ้างอิงราคาซื้อแยกของแต่ละคอร์ส ณ ตอนนี้</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-3 text-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-muted-foreground">ซื้อแยกวันนี้</dt>
+                    <dd>{decisionFacts.price.separateCurrentFormatted}</dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-muted-foreground">ราคา Bundle</dt>
+                    <dd><strong>{decisionFacts.price.bundleFormatted}</strong></dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-muted-foreground">เปรียบเทียบ</dt>
+                    <dd><strong>{decisionFacts.price.comparison.label}</strong></dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
+            {renderOwnershipNotice()}
+            <ToggleGroup
             type="single"
             orientation="vertical"
             variant="outline"
             className="w-full"
             aria-label="ช่องทางชำระเงิน"
-            data-payment-step="method"
             onValueChange={(value) => {
               if (value === 'promptpay') void handlePromptPayPayment();
               if (value === 'stripe') {
@@ -343,7 +381,8 @@ export default function BundleEnrollButton({
                 <span>ชำระผ่าน Stripe (Visa, Mastercard)</span>
               </span>
             </ToggleGroupItem>
-          </ToggleGroup>
+            </ToggleGroup>
+          </div>
         )}
         dismissOnBackdrop={true}
         returnFocusRef={enrollmentTriggerRef}
