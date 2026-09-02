@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import Link from 'next/link';
 import { BookOpen, CircleCheck } from 'lucide-react';
 
@@ -25,7 +26,7 @@ export default function EmptyCourseWorkspace({
   paymentSuccess,
 }: EmptyCourseWorkspaceProps) {
   return (
-    <main id="main-content" tabIndex={-1} className="min-h-screen bg-background text-foreground">
+    <MainContent className="min-h-screen bg-background text-foreground">
       {paymentSuccess ? (
         <div className="mx-auto max-w-7xl px-4 pt-4">
           <Alert>
@@ -97,6 +98,6 @@ export default function EmptyCourseWorkspace({
           </Empty>
         </section>
       </div>
-    </main>
+    </MainContent>
   );
 }

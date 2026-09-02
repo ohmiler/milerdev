@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { ADMIN_NAVIGATION, getNavigationState } from '@/lib/navigation-model';
-import { UserAvatar, USER_MENU_LINKS } from './navigation-config';
+import { ACCOUNT_MENU_LINKS, MEMBER_UTILITY_LINKS, UserAvatar } from './navigation-config';
 
 const notificationTypeIcons: Record<string, LucideIcon> = {
     info: Info,
@@ -268,7 +268,22 @@ export default function UserNavigationMenus({
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
-                        {USER_MENU_LINKS.map((destination) => {
+                        {ACCOUNT_MENU_LINKS.map((destination) => {
+                            const state = getNavigationState(pathname, destination);
+                            const Icon = destination.icon;
+                            return (
+                                <DropdownMenuItem key={destination.href} variant="navigation" asChild>
+                                    <Link href={destination.href} aria-current={state.ariaCurrent}>
+                                        <Icon aria-hidden="true" />
+                                        {destination.label}
+                                    </Link>
+                                </DropdownMenuItem>
+                            );
+                        })}
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        {MEMBER_UTILITY_LINKS.map((destination) => {
                             const state = getNavigationState(pathname, destination);
                             const Icon = destination.icon;
                             return (

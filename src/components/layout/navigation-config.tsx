@@ -59,7 +59,6 @@ export const MEMBER_UTILITY_LINKS = MEMBER_UTILITY_NAVIGATION.map((destination) 
     icon: utilityIcons[destination.key],
 }));
 
-export const USER_MENU_LINKS = [...ACCOUNT_MENU_LINKS, ...MEMBER_UTILITY_LINKS];
 
 export function UserAvatar({
     image,

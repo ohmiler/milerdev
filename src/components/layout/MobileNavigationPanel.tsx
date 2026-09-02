@@ -4,21 +4,29 @@ import type { Session } from 'next-auth';
 import Link from 'next/link';
 import { LogIn, LogOut, ShieldCheck, UserRoundPlus } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
     ADMIN_NAVIGATION,
-    GUEST_NAVIGATION,
     getNavigationState,
+    LOGIN_NAVIGATION,
+    REGISTER_NAVIGATION,
 } from '@/lib/navigation-model';
-import { NAV_LINKS, UserAvatar, USER_MENU_LINKS } from './navigation-config';
+import {
+    ACCOUNT_MENU_LINKS,
+    MEMBER_UTILITY_LINKS,
+    NAV_LINKS,
+    UserAvatar,
+} from './navigation-config';
 
 interface MobileNavigationPanelProps {
     session: Session | null;
     sessionStatus: 'loading' | 'authenticated' | 'unauthenticated';
     isAdmin: boolean;
     pathname: string;
+    unreadCount: number;
     onClose: () => void;
     onLogout: () => void;
 }
@@ -28,10 +36,12 @@ export default function MobileNavigationPanel({
     sessionStatus,
     isAdmin,
     pathname,
+    unreadCount,
     onClose,
     onLogout,
 }: MobileNavigationPanelProps) {
     const hasMemberSession = sessionStatus === 'authenticated' && session;
+    const adminState = getNavigationState(pathname, ADMIN_NAVIGATION);
 
     return (
         <div className="flex flex-1 flex-col overflow-y-auto p-4" aria-label="เมนูหลัก">
@@ -71,8 +81,8 @@ export default function MobileNavigationPanel({
             {hasMemberSession ? (
                 <>
                     <Separator />
-                    <nav className="flex flex-col gap-1 py-2" aria-label="เมนูผู้ใช้">
-                        {USER_MENU_LINKS.map((destination) => {
+                    <nav className="flex flex-col gap-1 py-2" aria-label="เมนูบัญชีสมาชิก">
+                        {ACCOUNT_MENU_LINKS.map((destination) => {
                             const state = getNavigationState(pathname, destination);
                             const Icon = destination.icon;
                             return (
@@ -84,17 +94,32 @@ export default function MobileNavigationPanel({
                                 </Button>
                             );
                         })}
-                        {isAdmin ? (() => {
-                            const state = getNavigationState(pathname, ADMIN_NAVIGATION);
+                    </nav>
+                    <Separator />
+                    <nav className="flex flex-col gap-1 py-2" aria-label="เมนูสมาชิก">
+                        {MEMBER_UTILITY_LINKS.map((destination) => {
+                            const state = getNavigationState(pathname, destination);
+                            const Icon = destination.icon;
                             return (
-                                <Button asChild variant={state.active ? 'secondary' : 'ghost'} className="w-full justify-start">
-                                    <Link href={ADMIN_NAVIGATION.href} onClick={onClose} aria-current={state.ariaCurrent}>
-                                        <ShieldCheck data-icon="inline-start" aria-hidden="true" />
-                                        {ADMIN_NAVIGATION.label}
+                                <Button key={destination.href} asChild variant={state.active ? 'secondary' : 'ghost'} className="w-full justify-start">
+                                    <Link href={destination.href} onClick={onClose} aria-current={state.ariaCurrent}>
+                                        <Icon data-icon="inline-start" aria-hidden="true" />
+                                        <span className="flex-1 text-left">{destination.label}</span>
+                                        {destination.key === 'announcements' && unreadCount > 0 ? (
+                                            <Badge variant="destructive">{unreadCount > 9 ? '9+' : unreadCount}</Badge>
+                                        ) : null}
                                     </Link>
                                 </Button>
                             );
-                        })() : null}
+                        })}
+                        {isAdmin ? (
+                            <Button asChild variant={adminState.active ? 'secondary' : 'ghost'} className="w-full justify-start">
+                                <Link href={ADMIN_NAVIGATION.href} onClick={onClose} aria-current={adminState.ariaCurrent}>
+                                    <ShieldCheck data-icon="inline-start" aria-hidden="true" />
+                                    {ADMIN_NAVIGATION.label}
+                                </Link>
+                            </Button>
+                        ) : null}
                     </nav>
                     <Separator />
                     <Button type="button" variant="destructive" className="mt-3 w-full" onClick={onLogout}>
@@ -105,15 +130,15 @@ export default function MobileNavigationPanel({
             ) : sessionStatus === 'unauthenticated' ? (
                 <div className="grid gap-2 pt-4">
                     <Button asChild variant="outline">
-                        <Link href={GUEST_NAVIGATION[0].href} onClick={onClose}>
+                        <Link href={LOGIN_NAVIGATION.href} onClick={onClose}>
                             <LogIn data-icon="inline-start" aria-hidden="true" />
-                            {GUEST_NAVIGATION[0].label}
+                            {LOGIN_NAVIGATION.label}
                         </Link>
                     </Button>
                     <Button asChild>
-                        <Link href={GUEST_NAVIGATION[1].href} onClick={onClose}>
+                        <Link href={REGISTER_NAVIGATION.href} onClick={onClose}>
                             <UserRoundPlus data-icon="inline-start" aria-hidden="true" />
-                            {GUEST_NAVIGATION[1].label}
+                            {REGISTER_NAVIGATION.label}
                         </Link>
                     </Button>
                 </div>

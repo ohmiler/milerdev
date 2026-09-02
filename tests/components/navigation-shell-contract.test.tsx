@@ -1,7 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import LearningNavbar from '@/components/course/LearningNavbar';
+import MainContent from '@/components/layout/MainContent';
 import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 
 describe('canonical navigation shell contracts', () => {
@@ -10,7 +11,7 @@ describe('canonical navigation shell contracts', () => {
       <NavigationBreadcrumbs
         items={[
           { href: '/', label: 'หน้าแรก' },
-          { href: '/dashboard', label: 'บัญชีผู้เรียน' },
+          { href: '/dashboard', label: 'บัญชีสมาชิก' },
           { label: 'การชำระเงิน' },
         ]}
       />,
@@ -22,44 +23,31 @@ describe('canonical navigation shell contracts', () => {
     expect(html).toContain('การชำระเงิน');
   });
 
-  it('gives every public and learning shell a focusable main target', () => {
-    const files = [
-      'src/components/account/LearnerAccountShell.tsx',
-      'src/components/auth/AuthShell.tsx',
-      'src/components/proof/TransactionReceipt.tsx',
-      'src/components/status/StatusSurface.tsx',
-      'src/components/ui/RouteSkeletons.tsx',
-      'src/app/about/page.tsx',
-      'src/app/announcements/page.tsx',
-      'src/app/blog/[slug]/page.tsx',
-      'src/app/blog/page.tsx',
-      'src/app/bundles/[slug]/page.tsx',
-      'src/app/certificate/[code]/page.tsx',
-      'src/app/contact/page.tsx',
-      'src/app/courses/[slug]/loading.tsx',
-      'src/app/courses/[slug]/page.tsx',
-      'src/app/courses/page.tsx',
-      'src/app/faq/page.tsx',
-      'src/app/page.tsx',
-      'src/app/privacy/page.tsx',
-      'src/app/terms/page.tsx',
-      'src/components/course/LearnPageClient.tsx',
-      'src/app/courses/[slug]/learn/[lessonId]/loading.tsx',
-      'src/app/courses/[slug]/learn/EmptyCourseWorkspace.tsx',
-    ];
+  it('provides the shared focusable target used by public and learning skip links', () => {
+    const html = renderToStaticMarkup(<MainContent>เนื้อหาหลัก</MainContent>);
 
-    for (const file of files) {
-      const source = readFileSync(file, 'utf8');
-      const mainCount = source.match(/<main\b/g)?.length ?? 0;
-      expect(mainCount, file).toBeGreaterThan(0);
-      expect(source.match(/id="main-content"/g)?.length ?? 0, file).toBe(mainCount);
-      expect(source.match(/tabIndex=\{-1\}/g)?.length ?? 0, file).toBe(mainCount);
-    }
+    expect(html).toContain('<main');
+    expect(html).toContain('id="main-content"');
+    expect(html).toContain('tabindex="-1"');
   });
 
   it('keeps exactly one course-exit destination in the learning header', () => {
-    const source = readFileSync('src/components/course/LearningNavbar.tsx', 'utf8');
-    expect(source.match(/href=\{`\/courses\/\$\{courseSlug\}`\}/g)).toHaveLength(1);
-    expect(source.match(/data-learning-control="course-exit"/g)).toHaveLength(1);
+    const html = renderToStaticMarkup(
+      <LearningNavbar
+        courseSlug="sample-course"
+        courseTitle="Sample course"
+        lessonTitle="Sample lesson"
+        currentIndex={0}
+        totalCount={2}
+        progressPercent={0}
+        isEnrolled
+        sidebarCollapsed={false}
+        onToggleSidebar={vi.fn()}
+        onOpenSidebar={vi.fn()}
+      />,
+    );
+
+    expect(html.match(new RegExp('href="/courses/sample-course"', 'g'))).toHaveLength(1);
+    expect(html.match(/data-learning-control="course-exit"/g)).toHaveLength(1);
   });
 });

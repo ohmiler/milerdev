@@ -19,7 +19,7 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { GUEST_NAVIGATION, getNavigationState } from '@/lib/navigation-model';
+import { getNavigationState, LOGIN_NAVIGATION, REGISTER_NAVIGATION } from '@/lib/navigation-model';
 import MobileNavigationPanel from './MobileNavigationPanel';
 import { NAV_LINKS } from './navigation-config';
 import SkipToMainContent from './SkipToMainContent';
@@ -115,12 +115,12 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
                         ) : (
                             <>
                                 <Button asChild variant="ghost">
-                                    <Link href={GUEST_NAVIGATION[0].href}>{GUEST_NAVIGATION[0].label}</Link>
+                                    <Link href={LOGIN_NAVIGATION.href}>{LOGIN_NAVIGATION.label}</Link>
                                 </Button>
                                 <Button asChild>
-                                    <Link href={GUEST_NAVIGATION[1].href}>
+                                    <Link href={REGISTER_NAVIGATION.href}>
                                         <UserRoundPlus data-icon="inline-start" aria-hidden="true" />
-                                        {GUEST_NAVIGATION[1].label}
+                                        {REGISTER_NAVIGATION.label}
                                     </Link>
                                 </Button>
                             </>
@@ -168,6 +168,7 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
                                 sessionStatus={status}
                                 isAdmin={isAdmin}
                                 pathname={pathname}
+                                unreadCount={unreadCount}
                                 onClose={closeMobileMenu}
                                 onLogout={() => requestLogout(mobileMenuTriggerRef.current)}
                             />

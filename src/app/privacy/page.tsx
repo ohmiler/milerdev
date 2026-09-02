@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import LegalDocument, { LegalSection } from '@/components/content/LegalDocument';
@@ -25,7 +26,7 @@ export default function PrivacyPage() {
   return (
     <>
       <Navbar />
-      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
+      <MainContent className="bg-[var(--academy-canvas)]">
         <LegalDocument
           title="นโยบายความเป็นส่วนตัว"
           lede="ข้อมูลเกี่ยวกับสิ่งที่ MilerDev เก็บ เหตุผลที่ใช้ข้อมูล ผู้ให้บริการที่เกี่ยวข้อง และช่องทางสำหรับใช้สิทธิ์ของคุณ"
@@ -110,7 +111,7 @@ export default function PrivacyPage() {
             </ul>
           </LegalSection>
         </LegalDocument>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );

@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 // Image import removed - using native img for external URLs
@@ -230,7 +231,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
       <CourseDetailProvider>
         <AnalyticsViewEvent productType="course" productId={course.id}>
-          <main id="main-content" tabIndex={-1} className="min-h-screen bg-background text-foreground">
+          <MainContent className="min-h-screen bg-background text-foreground">
 
           <header className="bg-[radial-gradient(circle_at_12%_8%,var(--color-accent-soft),transparent_36%),linear-gradient(180deg,var(--academy-canvas),var(--background))]">
             <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:gap-14 lg:px-8 lg:py-20">
@@ -375,7 +376,7 @@ export default async function CourseDetailPage({ params }: Props) {
               </Card>
             )}
           </article>
-          </main>
+          </MainContent>
         </AnalyticsViewEvent>
       </CourseDetailProvider>
 

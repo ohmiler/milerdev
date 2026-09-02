@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
@@ -226,7 +227,7 @@ export default async function BlogPostPage({ params }: Props) {
       <script type={'application/ld+json'} dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <ReadingProgress />
       <Navbar />
-      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
+      <MainContent className="bg-[var(--academy-canvas)]">
         <header className="border-b bg-[radial-gradient(circle_at_84%_8%,var(--color-accent-soft),transparent_32%),var(--academy-canvas)] py-12 sm:py-16 lg:py-20">
           <div className="container">
             <NavigationBreadcrumbs
@@ -320,7 +321,7 @@ export default async function BlogPostPage({ params }: Props) {
             </aside>
           </div>
         </section>
-      </main>
+      </MainContent>
       <ScrollToTop />
       <Footer />
     </>

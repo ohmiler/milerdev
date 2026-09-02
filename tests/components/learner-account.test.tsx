@@ -22,7 +22,7 @@ describe('learner account contracts', () => {
       </LearnerAccountShell>,
     );
 
-    expect(html).toContain(`aria-label=${quote}เมนูบัญชีผู้เรียน${quote}`);
+    expect(html).toContain(`aria-label=${quote}เมนูบัญชีสมาชิก${quote}`);
     expect(html).toContain(`href=${quote}/dashboard${quote}`);
     expect(html).toContain(`href=${quote}/dashboard/certificates${quote}`);
     expect(html).toContain(`href=${quote}/dashboard/payments${quote}`);

@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -60,7 +61,7 @@ export default async function CertificatePage({ params }: Props) {
   return (
     <>
       <Navbar />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-muted/20 py-10 sm:py-14">
+      <MainContent className="min-h-screen bg-muted/20 py-10 sm:py-14">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <header className="mb-10 grid gap-6 border-b pb-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
             <div>
@@ -78,7 +79,7 @@ export default async function CertificatePage({ params }: Props) {
           </header>
           <CertificateCard cert={{ ...certificateData, certificateCode }} />
         </div>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );

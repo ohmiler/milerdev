@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 
@@ -28,14 +29,14 @@ export default function LearnerAccountShell({ children, current, title, descript
       ]
     : [
         { href: '/', label: 'หน้าแรก' },
-        { href: '/dashboard', label: 'บัญชีผู้เรียน' },
+        { href: '/dashboard', label: 'บัญชีสมาชิก' },
         { label: currentDestination.label },
       ];
 
   return (
     <>
       <Navbar />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-muted/20 py-10 sm:py-14">
+      <MainContent className="min-h-screen bg-muted/20 py-10 sm:py-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <header className="mb-10 flex flex-col gap-6 border-b pb-8 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -44,13 +45,13 @@ export default function LearnerAccountShell({ children, current, title, descript
               <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">{description}</p>
             </div>
             <p className="text-sm font-medium text-muted-foreground">
-              บัญชีผู้เรียน<br />
+              บัญชีสมาชิก<br />
               <span>ข้อมูลของคุณในที่เดียว</span>
             </p>
           </header>
 
           <div className="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
-            <aside className="h-fit lg:sticky lg:top-24" aria-label="เมนูบัญชีผู้เรียน">
+            <aside className="h-fit lg:sticky lg:top-24" aria-label="เมนูบัญชีสมาชิก">
               <Card size="sm">
                 <CardHeader>
                   <CardTitle className="text-sm text-muted-foreground">เมนูบัญชี</CardTitle>
@@ -82,7 +83,7 @@ export default function LearnerAccountShell({ children, current, title, descript
             <div className="min-w-0">{children}</div>
           </div>
         </div>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );

@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -205,7 +206,7 @@ export default async function BundleDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <Navbar />
       <AnalyticsViewEvent productType="bundle" productId={bundle.id}>
-        <main id="main-content" tabIndex={-1} className="min-h-screen bg-background text-foreground">
+        <MainContent className="min-h-screen bg-background text-foreground">
         <header className="border-b bg-muted/30">
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
             <NavigationBreadcrumbs
@@ -339,7 +340,7 @@ export default async function BundleDetailPage({ params }: Props) {
             </aside>
           </div>
         </section>
-        </main>
+        </MainContent>
       </AnalyticsViewEvent>
       <Footer />
     </>

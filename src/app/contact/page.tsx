@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import ContactForm from '@/components/contact/ContactForm';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
@@ -8,7 +9,7 @@ export default function ContactPage() {
   return (
     <>
       <Navbar />
-      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
+      <MainContent className="bg-[var(--academy-canvas)]">
         <PublicPageHeader
           variant="task"
           title="บอกเราได้ว่าคุณกำลังติดเรื่องไหน"
@@ -32,7 +33,7 @@ export default function ContactPage() {
             </Card>
           </div>
         </section>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );

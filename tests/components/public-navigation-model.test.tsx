@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -74,7 +74,7 @@ describe('public navigation model adapters', () => {
     await user.click(screen.getByRole('button', { name: 'เปิดเมนูหลัก' }));
     expect(await screen.findByLabelText('กำลังโหลดเมนูบัญชี')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'เข้าสู่ระบบ' })).toBeNull();
-    expect(screen.queryByRole('link', { name: 'สมัครเรียน' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'สมัครสมาชิก' })).toBeNull();
   });
 
   it('uses exact account active state in the authenticated mobile menu', async () => {
@@ -89,7 +89,22 @@ describe('public navigation model adapters', () => {
 
     await user.click(screen.getByRole('button', { name: 'เปิดเมนูหลัก' }));
     expect((await screen.findByRole('link', { name: 'การชำระเงิน' })).getAttribute('aria-current')).toBe('page');
-    expect(screen.getByRole('link', { name: 'ภาพรวมการเรียน' }).hasAttribute('aria-current')).toBe(false);
+    expect(screen.getByRole('link', { name: 'การเรียนของฉัน' }).hasAttribute('aria-current')).toBe(false);
     expect(screen.getByRole('link', { name: 'ใบรับรอง' }).hasAttribute('aria-current')).toBe(false);
+    const accountNavigation = screen.getByRole('navigation', { name: 'เมนูบัญชีสมาชิก' });
+    expect(within(accountNavigation).queryByRole('link', { name: 'ประกาศ' })).toBeNull();
+    const memberNavigation = screen.getByRole('navigation', { name: 'เมนูสมาชิก' });
+    expect(within(memberNavigation).getByRole('link', { name: 'ประกาศ' })).toBe(
+      screen.getByRole('link', { name: 'ประกาศ' }),
+    );
+  });
+
+  it('shows a desktop section cue for nested public routes', () => {
+    navigationMocks.pathname = '/courses/typescript-foundations';
+    renderNavigation();
+
+    const coursesLink = screen.getAllByRole('link', { name: 'คอร์สทั้งหมด' })[0];
+    expect(coursesLink.getAttribute('aria-current')).toBe('location');
+    expect(coursesLink.className).toContain('aria-[current=location]:bg-secondary');
   });
 });

@@ -2,7 +2,8 @@
 
 import type { MouseEvent } from 'react';
 
-export const MAIN_CONTENT_ID = 'main-content';
+import { MAIN_CONTENT_ID } from '@/lib/navigation-model';
+
 
 export default function SkipToMainContent() {
   const focusMainContent = (event: MouseEvent<HTMLAnchorElement>) => {

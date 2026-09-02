@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -13,7 +14,7 @@ interface StatusSurfaceProps {
 
 export default function StatusSurface({ code, routeLabel, title, description, note, children }: StatusSurfaceProps) {
   return (
-    <main id="main-content" tabIndex={-1} className="flex min-h-[calc(100vh-5rem)] items-center bg-[var(--academy-canvas)] px-4 py-16" data-status-surface={routeLabel}>
+    <MainContent className="flex min-h-[calc(100vh-5rem)] items-center bg-[var(--academy-canvas)] px-4 py-16" data-status-surface={routeLabel}>
       <Card className="mx-auto w-full max-w-5xl gap-0 overflow-hidden py-0 shadow-[var(--academy-shadow-card)] lg:grid lg:grid-cols-[.8fr_1.2fr]">
         <div className="flex min-h-72 items-center justify-center bg-[var(--academy-navy)] p-8 text-white sm:p-10" aria-hidden="true">
           <strong className="font-mono text-7xl font-semibold tracking-[-.08em] sm:text-8xl">{code}</strong>
@@ -26,6 +27,6 @@ export default function StatusSurface({ code, routeLabel, title, description, no
           <p className="text-sm leading-6 text-muted-foreground">{note}</p>
         </CardContent>
       </Card>
-    </main>
+    </MainContent>
   );
 }

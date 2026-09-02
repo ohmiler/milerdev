@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import Link from 'next/link';
 import FAQAccordion from '@/components/faq/FAQAccordion';
 import Footer from '@/components/layout/Footer';
@@ -19,7 +20,7 @@ export default function FAQPage() {
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(faqJsonLd) }}
       />
       <Navbar />
-      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
+      <MainContent className="bg-[var(--academy-canvas)]">
         <header className="border-b bg-[radial-gradient(circle_at_15%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
           <div className="container grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16">
             <div>
@@ -60,7 +61,7 @@ export default function FAQPage() {
             </div>
           </div>
         </section>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );

@@ -18,10 +18,10 @@ describe('canonical navigation model', () => {
     ]);
     expect(GUEST_NAVIGATION.map(({ href, label }) => ({ href, label }))).toEqual([
       { href: '/login', label: 'เข้าสู่ระบบ' },
-      { href: '/register', label: 'สมัครเรียน' },
+      { href: '/register', label: 'สมัครสมาชิก' },
     ]);
     expect(ACCOUNT_NAVIGATION.map(({ href, label }) => ({ href, label }))).toEqual([
-      { href: '/dashboard', label: 'ภาพรวมการเรียน' },
+      { href: '/dashboard', label: 'การเรียนของฉัน' },
       { href: '/dashboard/payments', label: 'การชำระเงิน' },
       { href: '/dashboard/certificates', label: 'ใบรับรอง' },
       { href: '/profile', label: 'โปรไฟล์' },
