@@ -35,6 +35,22 @@ export type LearningProgressUpdateResult =
     enrollmentId: string | null;
   };
 
+export function derivePersistedLearningProgress(
+  current: { completed: boolean; watchTimeSeconds: number },
+  update: Pick<LearningProgressUpdate, 'completed' | 'watchTimeSeconds'>,
+) {
+  const completed = update.completed ?? current.completed;
+  const watchTimeSeconds = update.watchTimeSeconds === undefined
+    ? current.watchTimeSeconds
+    : Math.max(current.watchTimeSeconds, update.watchTimeSeconds);
+
+  return {
+    completed,
+    watchTimeSeconds,
+    changed: completed !== current.completed || watchTimeSeconds !== current.watchTimeSeconds,
+  };
+}
+
 export async function retryLearningProgressTransaction<T>(
   operation: () => Promise<T>,
 ): Promise<T> {
@@ -135,13 +151,14 @@ export async function updateLearningProgress(
 
     const progressId = existingProgress?.id ?? createId();
     const wasCompleted = existingProgress?.completed === true;
-    const nextCompleted = input.completed ?? existingProgress?.completed ?? false;
-    const currentWatchTimeSeconds = Number(existingProgress?.watchTimeSeconds ?? 0);
-    const nextWatchTimeSeconds = input.watchTimeSeconds === undefined
-      ? currentWatchTimeSeconds
-      : Math.max(currentWatchTimeSeconds, input.watchTimeSeconds);
-    const progressChanged = nextWatchTimeSeconds !== currentWatchTimeSeconds
-      || nextCompleted !== (existingProgress?.completed ?? false);
+    const {
+      completed: nextCompleted,
+      watchTimeSeconds: nextWatchTimeSeconds,
+      changed: progressChanged,
+    } = derivePersistedLearningProgress({
+      completed: existingProgress?.completed ?? false,
+      watchTimeSeconds: Number(existingProgress?.watchTimeSeconds ?? 0),
+    }, input);
 
     if (existingProgress) {
       if (progressChanged) {

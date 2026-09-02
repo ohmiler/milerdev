@@ -31,13 +31,10 @@ import {
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import LearningWorkspaceAnalytics from '@/components/analytics/LearningWorkspaceAnalytics';
+import type { LearningCurriculumLesson } from '@/lib/learning-workspace';
 
-interface Lesson {
-  id: string;
-  title: string;
+interface CurrentLesson extends LearningCurriculumLesson {
   videoUrl: string | null;
-  videoDuration: number | null;
-  isFreePreview: boolean | null;
   content: string | null;
 }
 
@@ -49,14 +46,15 @@ interface Course {
 
 interface LearnPageClientProps {
   course: Course;
-  currentLesson: Lesson;
-  allLessons: Lesson[];
-  prevLesson: Lesson | null;
-  nextLesson: Lesson | null;
+  currentLesson: CurrentLesson;
+  allLessons: LearningCurriculumLesson[];
+  prevLesson: LearningCurriculumLesson | null;
+  nextLesson: LearningCurriculumLesson | null;
   currentIndex: number;
   isEnrolled: boolean;
   canTrackProgress: boolean;
   completedLessonIds: string[];
+  currentProgress: { completed: boolean; watchTimeSeconds: number };
 }
 
 const formatDuration = (seconds: number | null) => {
@@ -76,16 +74,17 @@ export default function LearnPageClient({
   isEnrolled,
   canTrackProgress,
   completedLessonIds: initialCompletedIds,
+  currentProgress,
 }: LearnPageClientProps) {
   const [mobileCurriculumOpen, setMobileCurriculumOpen] = useState(false);
   const [curriculumCollapsed, setCurriculumCollapsed] = useState(false);
   const [lessonSearch, setLessonSearch] = useState('');
-  const [lockedLesson, setLockedLesson] = useState<Lesson | null>(null);
+  const [lockedLesson, setLockedLesson] = useState<LearningCurriculumLesson | null>(null);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
   const [markingComplete, setMarkingComplete] = useState(false);
   const completionPendingRef = useRef(false);
-  const watchTimeRef = useRef(0);
-  const lastSyncRef = useRef(0);
+  const watchTimeRef = useRef(currentProgress.watchTimeSeconds);
+  const lastSyncRef = useRef(currentProgress.watchTimeSeconds);
   const isPlayingRef = useRef(false);
   const mobileCurriculumTriggerRef = useRef<HTMLElement | null>(null);
   const lockedLessonTriggerRef = useRef<HTMLElement | null>(null);
@@ -134,13 +133,13 @@ export default function LearnPageClient({
   }, [canTrackProgress, syncWatchTime]);
 
   useEffect(() => {
-    watchTimeRef.current = 0;
-    lastSyncRef.current = 0;
+    watchTimeRef.current = currentProgress.watchTimeSeconds;
+    lastSyncRef.current = currentProgress.watchTimeSeconds;
     isPlayingRef.current = false;
     completionPendingRef.current = false;
     setMarkingComplete(false);
     setLockedLesson(null);
-  }, [currentLesson.id]);
+  }, [currentLesson.id, currentProgress.watchTimeSeconds]);
 
   const completeCurrentLesson = useCallback(async () => {
     if (!isEnrolled || !canTrackProgress || completedIds.has(currentLesson.id) || completionPendingRef.current) return;
