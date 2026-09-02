@@ -17,7 +17,7 @@ interface CertificateData {
   issuedAt: string | null;
   revokedAt: string | null;
   courseSlug: string | null;
-  courseId: string;
+  courseId?: string;
   certificateTheme?: string | null;
   certificateHeaderImage?: string | null;
 }

@@ -3,7 +3,7 @@ import 'server-only';
 import { createId } from '@paralleldrive/cuid2';
 import { and, count, eq } from 'drizzle-orm';
 
-import { issueCertificate } from '@/lib/certificate';
+import { ensureCompletedCertificate } from '@/lib/certificate';
 import { db } from '@/lib/db';
 import {
   enrollments,
@@ -227,11 +227,11 @@ export async function updateLearningProgress(
 
   if (result.courseCompleted) {
     try {
-      const { isNew } = await issueCertificate(input.userId, result.courseId);
-      if (isNew) logEvent('certificate.issued');
+      const certificate = await ensureCompletedCertificate(input.userId, result.courseId);
+      if (certificate.kind === 'issued') logEvent('certificate.issued');
     } catch (error) {
       logError(error instanceof Error ? error : new Error(String(error)), {
-        action: '[Certificate] Error issuing',
+        action: 'certificate.issue.failed',
       });
     }
   }
