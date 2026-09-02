@@ -33,7 +33,6 @@ interface Certificate {
   courseTitle: string;
   completedAt: string;
   issuedAt: string;
-  courseId: string;
 }
 
 function formatDate(date: string) {

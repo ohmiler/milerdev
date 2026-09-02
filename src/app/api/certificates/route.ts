@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { certificates } from '@/lib/db/schema';
-import { eq, and, isNull, desc } from 'drizzle-orm';
 
-// GET /api/certificates - Get current user's certificates
+import { auth } from '@/lib/auth';
+import { getOwnerCertificateCollection } from '@/lib/certificate-credentials';
+import { logError } from '@/lib/error-handler';
+
+// GET /api/certificates - Get the current owner's certificate projection.
 export async function GET() {
   try {
     const session = await auth();
@@ -13,20 +12,30 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userCerts = await db
-      .select()
-      .from(certificates)
-      .where(
-        and(
-          eq(certificates.userId, session.user.id),
-          isNull(certificates.revokedAt)
-        )
-      )
-      .orderBy(desc(certificates.issuedAt));
+    const collection = await getOwnerCertificateCollection(session.user.id);
+    const legacyActiveCertificates = collection.items.flatMap((item) => (
+      item.kind === 'active'
+        ? [{
+          id: item.code,
+          certificateCode: item.code,
+          recipientName: item.recipientName,
+          courseTitle: item.courseTitle,
+          completedAt: item.completedAt,
+          issuedAt: item.issuedAt,
+        }]
+        : []
+    ));
 
-    return NextResponse.json({ certificates: userCerts });
+    return NextResponse.json({
+      collection,
+      // Temporary compatibility for the current dashboard. Issue #52 moves it
+      // to the status-aware collection and removes this active-only shape.
+      certificates: legacyActiveCertificates,
+    });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user certificates:' });
+    logError(error instanceof Error ? error : new Error(String(error)), {
+      action: 'certificate.collection.failed',
+    });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

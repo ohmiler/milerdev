@@ -5,9 +5,7 @@ import { BadgeCheck, CircleX } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CertificateCard from '@/components/certificate/CertificateCard';
-import { db } from '@/lib/db';
-import { certificates, courses } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { getPublicCertificateVerification } from '@/lib/certificate-credentials';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const dynamic = 'force-dynamic';
@@ -17,41 +15,8 @@ interface Props {
 }
 
 const getCertificate = cache(async (code: string) => {
-  const [cert] = await db
-    .select({
-      id: certificates.id,
-      certificateCode: certificates.certificateCode,
-      recipientName: certificates.recipientName,
-      courseTitle: certificates.courseTitle,
-      completedAt: certificates.completedAt,
-      issuedAt: certificates.issuedAt,
-      revokedAt: certificates.revokedAt,
-      certificateTheme: certificates.certificateTheme,
-      certificateHeaderImage: certificates.certificateHeaderImage,
-      userId: certificates.userId,
-      courseId: certificates.courseId,
-    })
-    .from(certificates)
-    .where(eq(certificates.certificateCode, code))
-    .limit(1);
-
-  if (!cert) return null;
-
-  const [course] = await db
-    .select({ slug: courses.slug })
-    .from(courses)
-    .where(eq(courses.id, cert.courseId))
-    .limit(1);
-
-  return {
-    ...cert,
-    completedAt: cert.completedAt.toISOString(),
-    issuedAt: cert.issuedAt ? cert.issuedAt.toISOString() : null,
-    revokedAt: cert.revokedAt ? cert.revokedAt.toISOString() : null,
-    certificateTheme: cert.certificateTheme || null,
-    certificateHeaderImage: cert.certificateHeaderImage || null,
-    courseSlug: course?.slug || null,
-  };
+  const result = await getPublicCertificateVerification(code);
+  return result.kind === 'not_found' ? null : result.credential;
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -90,6 +55,7 @@ export default async function CertificatePage({ params }: Props) {
   if (!cert) notFound();
 
   const isRevoked = !!cert.revokedAt;
+  const { code: certificateCode, ...certificateData } = cert;
 
   return (
     <>
@@ -110,7 +76,7 @@ export default async function CertificatePage({ params }: Props) {
               <AlertDescription>{isRevoked ? 'ใบรับรองนี้ถูกเพิกถอนแล้ว' : 'ใบรับรองนี้ตรวจสอบได้'}</AlertDescription>
             </Alert>
           </header>
-          <CertificateCard cert={cert} />
+          <CertificateCard cert={{ ...certificateData, certificateCode }} />
         </div>
       </main>
       <Footer />
