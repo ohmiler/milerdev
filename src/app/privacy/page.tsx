@@ -25,7 +25,7 @@ export default function PrivacyPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
         <LegalDocument
           title="นโยบายความเป็นส่วนตัว"
           lede="ข้อมูลเกี่ยวกับสิ่งที่ MilerDev เก็บ เหตุผลที่ใช้ข้อมูล ผู้ให้บริการที่เกี่ยวข้อง และช่องทางสำหรับใช้สิทธิ์ของคุณ"

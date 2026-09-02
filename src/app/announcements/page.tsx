@@ -14,7 +14,7 @@ export default function AnnouncementsPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
         <PublicContentHeader
           title="ประกาศที่ควรรู้ ก่อนเรียนต่อ"
           lede="ติดตามข่าวสาร การเปลี่ยนแปลงบริการ และข้อความสำคัญจากทีม MilerDev โดยระบบจะแสดงเฉพาะประกาศที่เกี่ยวข้องกับบัญชีของคุณ"

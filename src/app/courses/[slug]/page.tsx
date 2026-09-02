@@ -3,6 +3,7 @@ import Link from 'next/link';
 // Image import removed - using native img for external URLs
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
+import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 import Footer from '@/components/layout/Footer';
 import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
 import CourseArtwork from '@/components/course/CourseArtwork';
@@ -229,18 +230,19 @@ export default async function CourseDetailPage({ params }: Props) {
 
       <CourseDetailProvider>
         <AnalyticsViewEvent productType="course" productId={course.id}>
-          <main className="min-h-screen bg-background text-foreground">
+          <main id="main-content" tabIndex={-1} className="min-h-screen bg-background text-foreground">
 
           <header className="bg-[radial-gradient(circle_at_12%_8%,var(--color-accent-soft),transparent_36%),linear-gradient(180deg,var(--academy-canvas),var(--background))]">
             <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:gap-14 lg:px-8 lg:py-20">
               <div className="min-w-0 self-center">
-                <nav className="mb-7 flex flex-wrap items-center gap-2 text-sm text-muted-foreground [&_a:hover]:text-foreground" aria-label="เส้นทางนำทาง">
-                  <Link href="/">หน้าแรก</Link>
-                  <span aria-hidden="true">/</span>
-                  <Link href="/courses">คอร์สทั้งหมด</Link>
-                  <span aria-hidden="true">/</span>
-                  <span aria-current="page">{course.title}</span>
-                </nav>
+                <NavigationBreadcrumbs
+                  className="mb-7"
+                  items={[
+                    { href: '/', label: 'หน้าแรก' },
+                    { href: '/courses', label: 'คอร์สทั้งหมด' },
+                    { label: course.title },
+                  ]}
+                />
 
                 {course.tags.length > 0 && (
                   <div className="mb-5 flex flex-wrap gap-2" aria-label="หัวข้อคอร์ส">

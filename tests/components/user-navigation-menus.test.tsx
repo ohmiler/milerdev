@@ -23,7 +23,7 @@ describe('user navigation menus', () => {
           expires: '2099-01-01T00:00:00.000Z',
         } as Session}
         isAdmin={false}
-        isActive={() => false}
+        pathname="/"
         unreadCount={1}
         notifications={[{
           id: 'notification-1',
@@ -61,7 +61,7 @@ describe('user navigation menus', () => {
           expires: '2099-01-01T00:00:00.000Z',
         } as Session}
         isAdmin={false}
-        isActive={() => false}
+        pathname="/"
         unreadCount={0}
         notifications={[]}
         onMarkAsRead={vi.fn().mockResolvedValue(undefined)}

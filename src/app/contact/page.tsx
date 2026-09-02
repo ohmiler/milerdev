@@ -8,7 +8,7 @@ export default function ContactPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
         <PublicPageHeader
           variant="task"
           title="บอกเราได้ว่าคุณกำลังติดเรื่องไหน"

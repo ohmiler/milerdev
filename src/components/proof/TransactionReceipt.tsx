@@ -54,7 +54,7 @@ export default function TransactionReceipt({
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-muted/20 py-10 sm:py-14">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-muted/20 py-10 sm:py-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <header className="grid gap-6 border-b pb-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end">
             <div>

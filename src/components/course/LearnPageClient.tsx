@@ -286,7 +286,7 @@ export default function LearnPageClient({
       />
 
       <div className={cn('grid min-h-[calc(100dvh-4rem)]', !curriculumCollapsed && 'lg:grid-cols-[22.5rem_minmax(0,1fr)]')}>
-        <main className="min-w-0 px-4 py-6 sm:px-6 lg:order-2 lg:px-8 lg:py-10">
+        <main id="main-content" tabIndex={-1} className="min-w-0 px-4 py-6 sm:px-6 lg:order-2 lg:px-8 lg:py-10">
           <div className={cn('w-full max-w-6xl', curriculumCollapsed ? 'mx-auto' : 'mx-auto min-[1800px]:-translate-x-20 min-[2400px]:-translate-x-40')}>
             <header className="mb-6">
               <div className="flex flex-wrap items-center gap-2">

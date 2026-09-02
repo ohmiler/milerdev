@@ -25,7 +25,7 @@ export default function EmptyCourseWorkspace({
   paymentSuccess,
 }: EmptyCourseWorkspaceProps) {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-background text-foreground">
       {paymentSuccess ? (
         <div className="mx-auto max-w-7xl px-4 pt-4">
           <Alert>

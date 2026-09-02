@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function LearnLoading() {
   return (
-    <main className="min-h-screen bg-[var(--academy-canvas)] text-foreground" aria-busy="true" aria-label="กำลังเตรียมพื้นที่การเรียน">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-[var(--academy-canvas)] text-foreground" aria-busy="true" aria-label="กำลังเตรียมพื้นที่การเรียน">
       <header className="flex h-16 items-center gap-3 border-b bg-background px-4 sm:px-5" data-learning-loading="header">
         <Skeleton className="size-8 rounded-lg" data-learning-loading="curriculum-control" />
         <div className="hidden items-center gap-2 sm:flex" data-learning-loading="brand">

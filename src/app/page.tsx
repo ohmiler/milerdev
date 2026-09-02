@@ -179,7 +179,7 @@ export default async function HomePage() {
     <>
       <Navbar />
 
-      <main className="overflow-hidden bg-background text-foreground">
+      <main id="main-content" tabIndex={-1} className="overflow-hidden bg-background text-foreground">
         <HomeAnimations />
         <section
           data-home-section="hero"

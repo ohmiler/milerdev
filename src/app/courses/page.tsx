@@ -368,7 +368,7 @@ export default async function CoursesPage({ searchParams }: Props) {
   return (
     <>
       <Navbar />
-      <main key={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort })} className="bg-[var(--academy-canvas)]">
+      <main id="main-content" tabIndex={-1} key={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort })} className="bg-[var(--academy-canvas)]">
         <header className="border-b bg-[radial-gradient(circle_at_12%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
           <div className="container">
             <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16">

@@ -35,7 +35,7 @@ export default function AuthShell({
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)] px-4 py-10 sm:py-16 lg:py-20">
+      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)] px-4 py-10 sm:py-16 lg:py-20">
         <div className={cn('mx-auto w-full', showContextPanel ? 'grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,.9fr)_minmax(24rem,1.1fr)]' : 'max-w-lg', variant === 'register' && 'max-w-2xl')}>
           {showContextPanel ? <Card className="order-2 justify-center border-0 bg-[var(--academy-navy)] text-white shadow-[var(--academy-shadow-card)] lg:order-1" aria-labelledby={contextTitleId}>
             <CardHeader className="gap-6 p-7 sm:p-10">

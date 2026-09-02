@@ -25,7 +25,7 @@ export default function TermsPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
         <LegalDocument
           title="เงื่อนไขการใช้งาน"
           lede="ข้อตกลงเกี่ยวกับบัญชี การเข้าถึงบทเรียน การชำระเงิน ใบรับรอง และขอบเขตการใช้บริการ MilerDev"

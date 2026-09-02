@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import BundleEnrollButton from '@/components/bundle/BundleEnrollButton';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
+import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 import { auth } from '@/lib/auth';
 import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
 import { db } from '@/lib/db';
@@ -204,16 +205,17 @@ export default async function BundleDetailPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <Navbar />
       <AnalyticsViewEvent productType="bundle" productId={bundle.id}>
-        <main className="min-h-screen bg-background text-foreground">
+        <main id="main-content" tabIndex={-1} className="min-h-screen bg-background text-foreground">
         <header className="border-b bg-muted/30">
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-            <nav className="mb-10 flex flex-wrap items-center gap-2 text-sm text-muted-foreground [&_a:hover]:text-foreground" aria-label={'เส้นทางนำทาง'}>
-              <Link href={'/'}>หน้าแรก</Link>
-              <span aria-hidden={true}>/</span>
-              <Link href={'/courses'}>คอร์สทั้งหมด</Link>
-              <span aria-hidden={true}>/</span>
-              <span>ชุดคอร์ส</span>
-            </nav>
+            <NavigationBreadcrumbs
+              className="mb-10"
+              items={[
+                { href: '/', label: 'หน้าแรก' },
+                { href: '/courses', label: 'คอร์สทั้งหมด' },
+                { label: bundle.title },
+              ]}
+            />
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-end">
               <div>

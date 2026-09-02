@@ -41,7 +41,7 @@ export default function AboutPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <main id="main-content" tabIndex={-1} className="bg-[var(--academy-canvas)]">
         <PublicPageHeader
           variant="story"
           title="พื้นที่เรียนโค้ดสำหรับคนที่อยากสร้างจริง"

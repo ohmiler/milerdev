@@ -7,7 +7,7 @@ export default function CourseDetailLoading() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-background" aria-busy="true" aria-label="กำลังโหลดรายละเอียดคอร์ส">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-background" aria-busy="true" aria-label="กำลังโหลดรายละเอียดคอร์ส">
         <p className="sr-only" role="status" aria-live="polite">กำลังโหลดรายละเอียดคอร์ส</p>
         <div aria-hidden="true">
         <header className="border-b bg-muted/30">
