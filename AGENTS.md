@@ -61,7 +61,9 @@ Run the narrowest meaningful check after each change. Before handoff, run affect
 ## Git and deployment
 
 - A dirty worktree belongs to the user. Preserve unrelated changes and inspect overlapping diffs.
-- Do not create commits, push branches, merge pull requests, deploy, or rewrite history unless explicitly requested.
+- For issue-based work on a non-`master` feature branch, the agent is authorized without additional confirmation to create or switch to the branch, review and verify the change, stage only task-owned files, create Conventional Commits, push the feature branch, open or update a pull request linked to the issue, monitor CI and review feedback, and fix and push failures caused by the change.
+- Do not ask for confirmation for those normal feature-branch delivery actions after implementation is complete.
+- Never push directly to `master`, merge a pull request into `master`, deploy, force-push, rewrite history, or close an issue without its linked change being merged unless explicitly authorized.
 - Never use destructive reset, checkout, recursive deletion, or broad filesystem operations without exact authorization.
 - Stage only files belonging to the requested change and use Conventional Commits.
 - `master` is connected to Railway production. A push or merge to `master` can trigger a production rebuild and restart.
