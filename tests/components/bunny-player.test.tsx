@@ -38,6 +38,8 @@ describe('BunnyPlayer trusted adapter lifecycle', () => {
       />,
     );
 
+    expect(connectBunnyPlayer).not.toHaveBeenCalled();
+    fireEvent.load(screen.getByTitle('วิดีโอบทเรียน บทที่หนึ่ง'));
     await waitFor(() => expect(connectBunnyPlayer).toHaveBeenCalledOnce());
     expect(connectBunnyPlayer).toHaveBeenCalledWith(expect.objectContaining({
       frame: expect.objectContaining({
@@ -68,6 +70,7 @@ describe('BunnyPlayer trusted adapter lifecycle', () => {
         lessonTitle="บทที่หนึ่ง"
       />,
     );
+    fireEvent.load(screen.getByTitle('วิดีโอบทเรียน บทที่หนึ่ง'));
     await waitFor(() => expect(connectBunnyPlayer).toHaveBeenCalledOnce());
     const input = vi.mocked(connectBunnyPlayer).mock.calls[0][0];
 
@@ -91,6 +94,7 @@ describe('BunnyPlayer trusted adapter lifecycle', () => {
     await act(async () => {
       vi.advanceTimersByTime(8_000);
     });
+    expect(connectBunnyPlayer).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'ลองโหลดวิดีโออีกครั้ง' })).toBeTruthy();
   });
 });

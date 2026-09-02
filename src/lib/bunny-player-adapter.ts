@@ -46,6 +46,15 @@ export type BunnyPlayerConnection = {
   disconnect(): void;
 };
 
+const browserMessageHost: BunnyPlayerMessageHost = {
+  addEventListener(type, listener) {
+    window.addEventListener(type, listener);
+  },
+  removeEventListener(type, listener) {
+    window.removeEventListener(type, listener);
+  },
+};
+
 let listenerSequence = 0;
 
 function nextListenerId(label: string) {
@@ -110,7 +119,7 @@ export function connectBunnyPlayer(
     resumeAtSeconds?: number;
     callbacks: BunnyPlayerCallbacks;
   },
-  host: BunnyPlayerMessageHost = window as unknown as BunnyPlayerMessageHost,
+  host: BunnyPlayerMessageHost = browserMessageHost,
 ): BunnyPlayerConnection | null {
   const { frame, callbacks } = input;
   const origin = playerOrigin(frame.src);

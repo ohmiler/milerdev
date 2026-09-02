@@ -115,7 +115,7 @@ export default function BunnyPlayer({
   const videoType = useMemo(() => detectVideoType(finalUrl), [finalUrl]);
 
   useEffect(() => {
-    if (videoType !== 'bunny') return;
+    if (videoType !== 'bunny' || loadedUrl !== finalUrl) return;
     const frame = iframeRef.current;
     if (!frame) return;
     const connection = connectBunnyPlayer({
@@ -134,7 +134,7 @@ export default function BunnyPlayer({
       },
     });
     return () => connection?.disconnect();
-  }, [finalUrl, reloadNonce, resumeAtSeconds, videoType]);
+  }, [finalUrl, loadedUrl, reloadNonce, resumeAtSeconds, videoType]);
 
   const iframeLoaded = loadedUrl === finalUrl;
   const playerFailed = failedUrl === finalUrl;

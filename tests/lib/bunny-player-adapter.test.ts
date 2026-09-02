@@ -98,7 +98,7 @@ describe('trusted Bunny Player.js adapter', () => {
     expect(playListener).toBeTruthy();
 
     harness.emit({ context: 'player.js', event: 'play', listener: playListener }, {
-      source: { postMessage: vi.fn() } as unknown as MessageEventSource,
+      source: null,
     });
     harness.emit({ context: 'player.js', event: 'play', listener: playListener }, {
       origin: 'https://evil.example',
