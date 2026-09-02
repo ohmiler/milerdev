@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check, CircleCheck, FileText, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CircleCheck, FileText, LoaderCircle, Lock } from 'lucide-react';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
 import LearningCurriculum from './LearningCurriculum';
 import LearningNavbar from './LearningNavbar';
 import { sanitizeRichContent } from '@/lib/sanitize';
 import { showToast } from '@/components/ui/Toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -64,6 +65,13 @@ const formatDuration = (seconds: number | null) => {
   return `${minutes} นาที ${remainingSeconds < 10 ? '0' : ''}${remainingSeconds} วินาที`;
 };
 
+const formatResumeTime = (seconds: number) => {
+  const wholeSeconds = Math.max(0, Math.floor(seconds));
+  const minutes = Math.floor(wholeSeconds / 60);
+  const remainingSeconds = wholeSeconds % 60;
+  return String(minutes).padStart(2, '0') + ':' + String(remainingSeconds).padStart(2, '0');
+};
+
 export default function LearnPageClient({
   course,
   currentLesson,
@@ -81,8 +89,13 @@ export default function LearnPageClient({
   const [lessonSearch, setLessonSearch] = useState('');
   const [lockedLesson, setLockedLesson] = useState<LearningCurriculumLesson | null>(null);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
-  const [markingComplete, setMarkingComplete] = useState(false);
-  const completionPendingRef = useRef(false);
+  const [completionSaveState, setCompletionSaveState] = useState<'idle' | 'pending' | 'saved' | 'failed'>(
+    currentProgress.completed ? 'saved' : 'idle',
+  );
+  const [watchSyncFailed, setWatchSyncFailed] = useState(false);
+  const [resumedAtSeconds, setResumedAtSeconds] = useState<number | null>(null);
+  const completionRequestedRef = useRef(currentProgress.completed);
+  const watchSyncPendingRef = useRef(false);
   const watchTimeRef = useRef(currentProgress.watchTimeSeconds);
   const lastSyncRef = useRef(currentProgress.watchTimeSeconds);
   const isPlayingRef = useRef(false);
@@ -96,12 +109,32 @@ export default function LearnPageClient({
   const isReviewMode = isEnrolled && totalCount > 0 && completedCount === totalCount;
   const hasContent = Boolean(currentLesson.content?.trim());
   const duration = formatDuration(currentLesson.videoDuration);
+  const statusHeading = completionSaveState === 'pending'
+    ? 'กำลังบันทึกบทเรียน…'
+    : completionSaveState === 'failed'
+      ? 'ยังบันทึกบทนี้ไม่ได้'
+      : isReviewMode
+        ? 'เรียนครบแล้ว · กำลังทบทวน'
+        : isCurrentCompleted
+          ? 'เรียนจบบทนี้แล้ว'
+          : isEnrolled
+            ? 'เรียนตามจังหวะของคุณ'
+            : 'บทเรียนทดลองใช้ฟรี';
+  const statusDescription = completionSaveState === 'pending'
+    ? 'รอระบบยืนยันก่อนปิดหน้าหรือเปลี่ยนบทเรียน'
+    : completionSaveState === 'failed'
+      ? 'ยังไม่มีการยืนยันว่าเรียนจบ กดลองบันทึกอีกครั้งได้'
+      : isCurrentCompleted
+        ? 'คุณกลับมาทบทวนบทนี้ได้เสมอ'
+        : isEnrolled
+          ? 'เมื่อเรียนเนื้อหาครบแล้ว กดบันทึกว่าเรียนจบได้'
+          : 'ความคืบหน้าจะถูกบันทึกหลังจากสมัครและเข้าสู่ระบบ';
 
   const syncWatchTime = useCallback(async () => {
-    if (!canTrackProgress) return;
+    if (!canTrackProgress || watchSyncPendingRef.current) return false;
     const currentWatchTime = Math.floor(watchTimeRef.current);
-    if (currentWatchTime <= lastSyncRef.current) return;
-    lastSyncRef.current = currentWatchTime;
+    if (currentWatchTime <= lastSyncRef.current) return true;
+    watchSyncPendingRef.current = true;
 
     try {
       const response = await fetch('/api/progress', {
@@ -112,9 +145,15 @@ export default function LearnPageClient({
           watchTimeSeconds: currentWatchTime,
         }),
       });
-      if (!response.ok) lastSyncRef.current = 0;
+      if (!response.ok) throw new Error('Unable to save watch position');
+      lastSyncRef.current = currentWatchTime;
+      setWatchSyncFailed(false);
+      return true;
     } catch {
-      lastSyncRef.current = 0;
+      setWatchSyncFailed(true);
+      return false;
+    } finally {
+      watchSyncPendingRef.current = false;
     }
   }, [canTrackProgress, currentLesson.id]);
 
@@ -136,16 +175,19 @@ export default function LearnPageClient({
     watchTimeRef.current = currentProgress.watchTimeSeconds;
     lastSyncRef.current = currentProgress.watchTimeSeconds;
     isPlayingRef.current = false;
-    completionPendingRef.current = false;
-    setMarkingComplete(false);
+    watchSyncPendingRef.current = false;
+    completionRequestedRef.current = currentProgress.completed;
+    setCompletionSaveState(currentProgress.completed ? 'saved' : 'idle');
+    setWatchSyncFailed(false);
+    setResumedAtSeconds(null);
     setLockedLesson(null);
-  }, [currentLesson.id, currentProgress.watchTimeSeconds]);
+  }, [currentLesson.id, currentProgress.completed, currentProgress.watchTimeSeconds]);
 
   const completeCurrentLesson = useCallback(async () => {
-    if (!isEnrolled || !canTrackProgress || completedIds.has(currentLesson.id) || completionPendingRef.current) return;
+    if (!isEnrolled || !canTrackProgress || completionRequestedRef.current) return;
 
-    completionPendingRef.current = true;
-    setMarkingComplete(true);
+    completionRequestedRef.current = true;
+    setCompletionSaveState('pending');
     try {
       const response = await fetch('/api/progress', {
         method: 'POST',
@@ -156,22 +198,22 @@ export default function LearnPageClient({
           watchTimeSeconds: Math.floor(watchTimeRef.current) || undefined,
         }),
       });
-
       if (!response.ok) throw new Error('Unable to save lesson progress');
 
-      const nextCompletedCount = completedIds.size + 1;
+      const nextCompletedCount = completedCount + 1;
       setCompletedIds((current) => new Set(current).add(currentLesson.id));
+      setCompletionSaveState('saved');
+      setWatchSyncFailed(false);
       showToast(
         nextCompletedCount === totalCount ? 'เรียนครบทุกบทแล้ว พร้อมกลับมาทบทวนได้ทุกเมื่อ' : 'บันทึกว่าเรียนจบบทนี้แล้ว',
         'success',
       );
     } catch {
+      completionRequestedRef.current = false;
+      setCompletionSaveState('failed');
       showToast('บันทึกความคืบหน้าไม่สำเร็จ กรุณาลองอีกครั้ง', 'error');
-    } finally {
-      completionPendingRef.current = false;
-      setMarkingComplete(false);
     }
-  }, [canTrackProgress, completedIds, currentLesson.id, isEnrolled, totalCount]);
+  }, [canTrackProgress, completedCount, currentLesson.id, isEnrolled, totalCount]);
 
   const handleTimeUpdate = useCallback((currentTime: number) => {
     watchTimeRef.current = currentTime;
@@ -188,7 +230,11 @@ export default function LearnPageClient({
 
   const handleEnded = useCallback(() => {
     isPlayingRef.current = false;
-    void syncWatchTime().then(completeCurrentLesson);
+    if (completionRequestedRef.current) {
+      void syncWatchTime();
+      return;
+    }
+    void completeCurrentLesson();
   }, [completeCurrentLesson, syncWatchTime]);
 
   const openLockedDialog = useCallback((lessonId: string) => {
@@ -253,15 +299,25 @@ export default function LearnPageClient({
             </header>
 
             {currentLesson.videoUrl && (
-              <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-950 shadow-[0_22px_60px_-32px_rgba(15,23,42,0.65)] ring-1 ring-slate-950/10 [&_iframe]:h-full [&_iframe]:w-full">
-                <BunnyPlayer
-                  videoId={currentLesson.videoUrl}
-                  onTimeUpdate={handleTimeUpdate}
-                  onPlay={handlePlay}
-                  onPause={handlePause}
-                  onEnded={handleEnded}
-                />
-              </div>
+              <>
+                <div className="relative aspect-video overflow-hidden rounded-2xl bg-slate-950 shadow-[0_22px_60px_-32px_rgba(15,23,42,0.65)] ring-1 ring-slate-950/10 [&_iframe]:h-full [&_iframe]:w-full">
+                  <BunnyPlayer
+                    videoId={currentLesson.videoUrl}
+                    lessonTitle={currentLesson.title}
+                    resumeAtSeconds={currentProgress.watchTimeSeconds}
+                    onTimeUpdate={handleTimeUpdate}
+                    onPlay={handlePlay}
+                    onPause={handlePause}
+                    onEnded={handleEnded}
+                    onResume={setResumedAtSeconds}
+                  />
+                </div>
+                {resumedAtSeconds !== null && (
+                  <p role="status" aria-live="polite" className="mt-3 text-sm text-muted-foreground">
+                    กลับมาเรียนต่อที่ {formatResumeTime(resumedAtSeconds)}
+                  </p>
+                )}
+              </>
             )}
 
             <section className="mt-6 flex flex-col gap-4 rounded-2xl border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5" aria-label="สถานะบทเรียน">
@@ -269,26 +325,40 @@ export default function LearnPageClient({
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
                   {isCurrentCompleted ? <CircleCheck className="size-5" /> : <FileText className="size-5" />}
                 </span>
-                <div>
-                  <h2 className="font-heading text-base font-semibold">
-                    {isReviewMode ? 'เรียนครบแล้ว · กำลังทบทวน' : isCurrentCompleted ? 'เรียนจบบทนี้แล้ว' : isEnrolled ? 'เรียนตามจังหวะของคุณ' : 'บทเรียนทดลองฟรี'}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {isCurrentCompleted
-                      ? 'คุณกลับมาทบทวนบทนี้ได้เสมอ'
-                      : isEnrolled
-                        ? currentLesson.videoUrl ? 'ดูวิดีโอจนจบ หรือกดบันทึกเมื่อเรียนเนื้อหาครบแล้ว' : 'กดบันทึกเมื่ออ่านและฝึกตามเนื้อหาเรียบร้อยแล้ว'
-                        : 'ความคืบหน้าจะถูกบันทึกหลังจากสมัครและเข้าสู่ระบบ'}
-                  </p>
+                <div role="status" aria-live="polite">
+                  <h2 className="font-heading text-base font-semibold">{statusHeading}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{statusDescription}</p>
                 </div>
               </div>
               {isEnrolled && !isCurrentCompleted && (
-                <Button type="button" onClick={() => void completeCurrentLesson()} disabled={markingComplete}>
-                  <Check data-icon="inline-start" aria-hidden="true" />
-                  {markingComplete ? 'กำลังบันทึก...' : 'ทำเครื่องหมายว่าเรียนจบ'}
+                <Button
+                  type="button"
+                  onClick={() => void completeCurrentLesson()}
+                  disabled={completionSaveState === 'pending'}
+                >
+                  {completionSaveState === 'pending'
+                    ? <LoaderCircle className="animate-spin" data-icon="inline-start" aria-hidden="true" />
+                    : <Check data-icon="inline-start" aria-hidden="true" />}
+                  {completionSaveState === 'pending'
+                    ? 'กำลังบันทึก...'
+                    : completionSaveState === 'failed'
+                      ? 'ลองบันทึกอีกครั้ง'
+                      : 'ทำเครื่องหมายว่าเรียนจบ'}
                 </Button>
               )}
             </section>
+
+            {watchSyncFailed && canTrackProgress && (
+              <Alert className="mt-4">
+                <AlertTitle>ยังบันทึกตำแหน่งล่าสุดไม่ได้</AlertTitle>
+                <AlertDescription>
+                  <p>การเล่นวิดีโอยังดำเนินต่อได้ และคุณลองบันทึกตำแหน่งอีกครั้งได้</p>
+                  <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => void syncWatchTime()}>
+                    ลองบันทึกตำแหน่งอีกครั้ง
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {hasContent && (
               <Card className="mt-6" aria-labelledby="lesson-content-title">
