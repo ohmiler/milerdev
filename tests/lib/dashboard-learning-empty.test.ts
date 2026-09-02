@@ -1,0 +1,47 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  getDashboardLearning,
+  type DashboardLearningStore,
+} from '@/lib/dashboard-learning';
+
+describe('getDashboardLearning without enrollment', () => {
+  it('returns the canonical member presentation and preserves account counts', async () => {
+    const store: DashboardLearningStore = {
+      read: async () => ({
+        enrollments: [],
+        activeCertificateCount: 0,
+        paymentCount: 2,
+      }),
+    };
+
+    const dashboard = await getDashboardLearning('member-without-enrollment', store);
+
+    expect(dashboard).toEqual({
+      summary: {
+        courseCount: 0,
+        activeCourseCount: 0,
+        completedCourseCount: 0,
+        activeCertificateCount: 0,
+        paymentCount: 2,
+      },
+      primary: {
+        enrollment: 'none',
+        course: null,
+        progress: { completedLessons: 0, totalLessons: 0, percent: 0 },
+        continuation: 'none',
+        certificate: 'not_eligible',
+        status: {
+          label: 'ยังไม่มีคอร์สในการเรียนของฉัน',
+          description: 'เลือกดูรายละเอียดและบทเรียนของแต่ละคอร์สก่อนเริ่มเส้นทางแรก',
+        },
+        action: {
+          kind: 'view-catalog',
+          label: 'ดูคอร์สทั้งหมด',
+          href: '/courses',
+        },
+      },
+      remaining: [],
+    });
+  });
+});
