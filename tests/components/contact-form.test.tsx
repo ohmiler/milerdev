@@ -27,6 +27,7 @@ describe('Contact form contracts', () => {
     expect(source).toContain('_honey: honey');
     expect(source).toContain('_timestamp: formLoadTime.current');
     expect(source).toContain('aria-busy={isSubmitting}');
-    expect(source).toContain('disabled={isSubmitting}');
+    expect(source).toContain('pending={isSubmitting}');
+    expect(source).toContain('<PendingButton');
   });
 });

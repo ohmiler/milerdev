@@ -32,8 +32,12 @@ describe('public content contracts', () => {
 
     expect(loading).toContain('กำลังตรวจสอบประกาศล่าสุด');
     expect(loading).toContain('aria-live="polite"');
+    expect(loading).toContain('data-feedback-state="loading"');
     expect(empty).toContain('ยังไม่มีประกาศที่ต้องติดตาม');
+    expect(empty).toContain('data-feedback-state="empty"');
     expect(error).toContain('โหลดประกาศไม่สำเร็จ');
+    expect(error).toContain('data-feedback-state="error"');
+    expect(error).toContain('aria-live="assertive"');
     expect(error).toContain('<button');
     expect(error).toContain('ลองอีกครั้ง');
   });

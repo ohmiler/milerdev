@@ -1,4 +1,5 @@
 import MainContent from '@/components/layout/MainContent';
+import PublicPageHeader from '@/components/layout/PublicPageHeader';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
@@ -6,15 +7,9 @@ import Footer from '@/components/layout/Footer';
 import BundleCard from '@/components/bundle/BundleCard';
 import CourseCard from '@/components/course/CourseCard';
 import CourseCatalogFilters from '@/components/course/CourseCatalogFilters';
+import { FeedbackState } from '@/components/status/FeedbackState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from '@/components/ui/empty';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
 import {
@@ -370,14 +365,11 @@ export default async function CoursesPage({ searchParams }: Props) {
     <>
       <Navbar />
       <MainContent key={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort })} className="bg-[var(--academy-canvas)]">
-        <header className="border-b bg-[radial-gradient(circle_at_12%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
-          <div className="container">
-            <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16">
-              <h1 className="max-w-4xl text-4xl leading-[1.15] font-semibold tracking-[-.04em] text-balance sm:text-5xl lg:text-6xl">เลือกคอร์สที่พาไปถึงงานชิ้นถัดไป</h1>
-              <p className="max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">เปรียบเทียบหัวข้อ ราคา และบทเรียนที่เปิดให้ทดลอง แล้วเลือกจุดเริ่มต้นที่ตรงกับทักษะที่คุณอยากพัฒนาจริง</p>
-            </div>
-          </div>
-        </header>
+        <PublicPageHeader
+          title="เลือกคอร์สที่พาไปถึงงานชิ้นถัดไป"
+          description="เปรียบเทียบหัวข้อ ราคา และบทเรียนที่เปิดให้ทดลอง แล้วเลือกจุดเริ่มต้นที่ตรงกับทักษะที่คุณอยากพัฒนาจริง"
+          variant="catalog"
+        />
 
         <section id="course-catalog" className="py-14 sm:py-20" aria-labelledby="courses-catalog-title">
           <div className="container">
@@ -399,15 +391,13 @@ export default async function CoursesPage({ searchParams }: Props) {
             <div className="mb-6 flex items-center justify-between gap-4"><p className="font-semibold">{search ? `ผลการค้นหาสำหรับ “${search}”` : 'หลักสูตรที่เปิดให้เรียน'}</p><span className="text-sm text-muted-foreground">หน้า {pagination.page} / {Math.max(1, pagination.totalPages)}</span></div>
 
             {courseList.length === 0 ? (
-              <Empty className="border">
-                <EmptyHeader>
-                  <EmptyTitle>ไม่พบคอร์สตามเงื่อนไขนี้</EmptyTitle>
-                  <EmptyDescription>ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่</EmptyDescription>
-                </EmptyHeader>
-                <EmptyContent>
-                  <Button asChild><Link href="/courses">ดูคอร์สทั้งหมด</Link></Button>
-                </EmptyContent>
-              </Empty>
+              <FeedbackState
+                state="empty"
+                className="border"
+                title="ไม่พบคอร์สตามเงื่อนไขนี้"
+                description="ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่"
+                action={<Button asChild><Link href="/courses">ดูคอร์สทั้งหมด</Link></Button>}
+              />
             ) : (
               <>
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{courseList.map((course) => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} decisionFacts={course.decisionFacts} tags={course.tags} />)}</div>

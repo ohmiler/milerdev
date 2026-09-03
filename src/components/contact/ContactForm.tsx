@@ -1,12 +1,10 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { CircleAlert, CircleCheck } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { FeedbackState, PendingButton } from '@/components/status/FeedbackState';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 
 type SubmitStatus = 'idle' | 'success' | 'error';
@@ -52,14 +50,12 @@ export default function ContactForm() {
 
   if (submitStatus === 'success') {
     return (
-      <Alert role="status" aria-live="polite">
-        <CircleCheck aria-hidden="true" />
-        <AlertTitle>ส่งข้อความเรียบร้อย</AlertTitle>
-        <AlertDescription>
-          <p>ทีมได้รับรายละเอียดแล้ว และจะตอบกลับผ่านอีเมลที่คุณระบุ</p>
-          <Button className="mt-4" type="button" onClick={() => setSubmitStatus('idle')}>ส่งข้อความใหม่</Button>
-        </AlertDescription>
-      </Alert>
+      <FeedbackState
+        state="success"
+        title="ส่งข้อความเรียบร้อย"
+        description="ทีมได้รับรายละเอียดแล้ว และจะตอบกลับผ่านอีเมลที่คุณระบุ"
+        action={<Button type="button" onClick={() => setSubmitStatus('idle')}>ส่งข้อความใหม่</Button>}
+      />
     );
   }
 
@@ -73,7 +69,7 @@ export default function ContactForm() {
       </div>
 
       {submitStatus === 'error' && errorMessage ? (
-        <Alert variant="destructive"><CircleAlert aria-hidden="true" /><AlertTitle>ส่งข้อความไม่สำเร็จ</AlertTitle><AlertDescription>{errorMessage}</AlertDescription></Alert>
+        <FeedbackState state="error" title="ส่งข้อความไม่สำเร็จ" description={errorMessage} />
       ) : null}
 
       <FieldGroup className="gap-5">
@@ -102,10 +98,14 @@ export default function ContactForm() {
 
       <div className="flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="max-w-md text-xs leading-5 text-muted-foreground">เมื่อส่งข้อความ คุณยืนยันว่าข้อมูลที่ระบุสามารถใช้เพื่อติดต่อกลับได้</p>
-        <Button className="sm:min-w-44" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-          {isSubmitting && <Spinner data-icon="inline-start" aria-hidden="true" />}
-          {isSubmitting ? 'กำลังส่งข้อความ…' : 'ส่งข้อความถึงทีม'}
-        </Button>
+        <PendingButton
+          className="sm:min-w-44"
+          type="submit"
+          pending={isSubmitting}
+          pendingLabel="กำลังส่งข้อความ…"
+        >
+          ส่งข้อความถึงทีม
+        </PendingButton>
       </div>
     </form>
   );

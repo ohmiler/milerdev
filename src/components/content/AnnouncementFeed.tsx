@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { Megaphone } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { FeedbackState } from '@/components/status/FeedbackState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export interface Announcement {
@@ -46,35 +45,39 @@ interface AnnouncementFeedViewProps {
 export function AnnouncementFeedView({ status, announcements, onRetry }: AnnouncementFeedViewProps) {
   if (status === 'loading') {
     return (
-      <Card aria-busy="true">
-        <CardHeader className="sr-only">
-          <CardTitle role="status" aria-live="polite">กำลังตรวจสอบประกาศล่าสุด</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4" aria-hidden="true">
-          <Skeleton className="h-3 w-40" />
-          <Skeleton className="h-7 w-3/4" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-        </CardContent>
-      </Card>
+      <FeedbackState state="loading" title="กำลังตรวจสอบประกาศล่าสุด">
+        <Card>
+          <CardContent className="flex flex-col gap-4 pt-6">
+            <Skeleton className="h-3 w-40" />
+            <Skeleton className="h-7 w-3/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </CardContent>
+        </Card>
+      </FeedbackState>
     );
   }
 
   if (status === 'error') {
     return (
-      <Alert variant="destructive"><span aria-hidden="true">!</span><AlertTitle>โหลดประกาศไม่สำเร็จ</AlertTitle><AlertDescription>ยังแสดงข่าวสารล่าสุดไม่ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่</AlertDescription><Button className="mt-4" variant="outline" type="button" onClick={onRetry}>ลองอีกครั้ง ↻</Button></Alert>
+      <FeedbackState
+        state="error"
+        title="โหลดประกาศไม่สำเร็จ"
+        description="ยังแสดงข่าวสารล่าสุดไม่ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่"
+        action={<Button variant="outline" type="button" onClick={onRetry}>ลองอีกครั้ง ↻</Button>}
+      />
     );
   }
 
   if (announcements.length === 0) {
     return (
-      <Empty className="border" aria-live="polite">
-        <EmptyHeader>
-          <EmptyMedia variant="icon"><Megaphone aria-hidden="true" /></EmptyMedia>
-          <EmptyTitle>ยังไม่มีประกาศที่ต้องติดตาม</EmptyTitle>
-          <EmptyDescription>เมื่อมีข่าวสารใหม่จากทีม MilerDev ประกาศจะแสดงที่หน้านี้</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <FeedbackState
+        state="empty"
+        className="border"
+        icon={<Megaphone aria-hidden="true" />}
+        title="ยังไม่มีประกาศที่ต้องติดตาม"
+        description="เมื่อมีข่าวสารใหม่จากทีม MilerDev ประกาศจะแสดงที่หน้านี้"
+      />
     );
   }
 
