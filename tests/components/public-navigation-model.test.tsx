@@ -61,7 +61,12 @@ describe('public navigation model adapters', () => {
 
     const trigger = screen.getByRole('button', { name: 'เปิดเมนูหลัก' });
     await user.click(trigger);
-    expect(await screen.findByRole('dialog')).toBeTruthy();
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    await user.tab();
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    await user.tab({ shift: true });
+    expect(dialog.contains(document.activeElement)).toBe(true);
     await user.keyboard('{Escape}');
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
