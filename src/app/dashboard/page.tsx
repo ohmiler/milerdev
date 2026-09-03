@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import Footer from '@/components/layout/Footer';
-import Navbar from '@/components/layout/Navbar';
+import LearnerAccountShell from '@/components/account/LearnerAccountShell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,37 +48,12 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-muted/20 py-10 sm:py-14">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <header className="flex flex-col gap-6 border-b pb-8 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight">
-                สวัสดี, {member.name || 'สมาชิก'}
-              </h1>
-              <p className="mt-3 max-w-2xl leading-7 text-muted-foreground">
-                กลับมาเรียนต่อจากจุดล่าสุด หรือตรวจสอบสถานะการเรียนทั้งหมดในบัญชีของคุณ
-              </p>
-            </div>
-            <nav className="flex flex-wrap gap-2" aria-label="เมนูบัญชีสมาชิก">
-              <Button asChild variant="outline">
-                <Link href="/dashboard/certificates">
-                  ใบรับรอง <Badge variant="secondary">{summary.activeCertificateCount}</Badge>
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/dashboard/payments">
-                  การชำระเงิน <Badge variant="secondary">{summary.paymentCount}</Badge>
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/settings">ตั้งค่าบัญชี</Link>
-              </Button>
-            </nav>
-          </header>
-
-          {primary.course ? (
+    <LearnerAccountShell
+      current="dashboard"
+      title={`สวัสดี, ${member.name || 'สมาชิก'}`}
+      description="กลับมาเรียนต่อจากจุดล่าสุด หรือตรวจสอบสถานะการเรียนทั้งหมดในบัญชีของคุณ"
+    >
+      {primary.course ? (
             <section className="mt-10" aria-labelledby="dashboard-next-action-title">
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">
                 สิ่งที่ควรทำต่อ
@@ -215,9 +189,6 @@ export default async function DashboardPage() {
               )}
             </section>
           )}
-        </div>
-      </main>
-      <Footer />
-    </>
+    </LearnerAccountShell>
   );
 }

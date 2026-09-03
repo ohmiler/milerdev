@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import LegalDocument, { LegalSection } from '@/components/content/LegalDocument';
@@ -25,7 +26,7 @@ export default function TermsPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <MainContent className="bg-[var(--academy-canvas)]">
         <LegalDocument
           title="เงื่อนไขการใช้งาน"
           lede="ข้อตกลงเกี่ยวกับบัญชี การเข้าถึงบทเรียน การชำระเงิน ใบรับรอง และขอบเขตการใช้บริการ MilerDev"
@@ -101,7 +102,7 @@ export default function TermsPage() {
             </ul>
           </LegalSection>
         </LegalDocument>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );

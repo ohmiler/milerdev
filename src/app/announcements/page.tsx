@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
 import AnnouncementFeed from '@/components/content/AnnouncementFeed';
 import PublicContentHeader from '@/components/content/PublicContentHeader';
@@ -14,7 +15,7 @@ export default function AnnouncementsPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <MainContent className="bg-[var(--academy-canvas)]">
         <PublicContentHeader
           title="ประกาศที่ควรรู้ ก่อนเรียนต่อ"
           lede="ติดตามข่าวสาร การเปลี่ยนแปลงบริการ และข้อความสำคัญจากทีม MilerDev โดยระบบจะแสดงเฉพาะประกาศที่เกี่ยวข้องกับบัญชีของคุณ"
@@ -32,7 +33,7 @@ export default function AnnouncementsPage() {
             <AnnouncementFeed />
           </div>
         </section>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );

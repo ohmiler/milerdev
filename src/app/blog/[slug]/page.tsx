@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
@@ -9,6 +10,7 @@ import ShareButtons from '@/components/blog/ShareButtons';
 import TableOfContents from '@/components/blog/TableOfContents';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
+import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -225,14 +227,17 @@ export default async function BlogPostPage({ params }: Props) {
       <script type={'application/ld+json'} dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <ReadingProgress />
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <MainContent className="bg-[var(--academy-canvas)]">
         <header className="border-b bg-[radial-gradient(circle_at_84%_8%,var(--color-accent-soft),transparent_32%),var(--academy-canvas)] py-12 sm:py-16 lg:py-20">
           <div className="container">
-            <nav className="mb-8 flex min-w-0 items-center gap-2 overflow-hidden text-xs text-muted-foreground [&_a]:shrink-0 [&_a]:hover:text-foreground [&>span:last-child]:truncate" aria-label="เส้นทางนำทาง">
-              <Link href={'/'}>หน้าแรก</Link><span aria-hidden={true}>/</span>
-              <Link href={'/blog'}>บทความ</Link><span aria-hidden={true}>/</span>
-              <span>{post.title.slice(0, 40)}{post.title.length > 40 ? '…' : ''}</span>
-            </nav>
+            <NavigationBreadcrumbs
+              className="mb-8 text-xs"
+              items={[
+                { href: '/', label: 'หน้าแรก' },
+                { href: '/blog', label: 'บทความ' },
+                { label: `${post.title.slice(0, 40)}${post.title.length > 40 ? '…' : ''}` },
+              ]}
+            />
 
             <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(18rem,.75fr)] lg:items-end lg:gap-16">
               <div>
@@ -316,7 +321,7 @@ export default async function BlogPostPage({ params }: Props) {
             </aside>
           </div>
         </section>
-      </main>
+      </MainContent>
       <ScrollToTop />
       <Footer />
     </>

@@ -1,5 +1,6 @@
 'use client';
 
+import MainContent from '@/components/layout/MainContent';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, CircleCheck, FileText, LoaderCircle, Lock } from 'lucide-react';
@@ -286,7 +287,7 @@ export default function LearnPageClient({
       />
 
       <div className={cn('grid min-h-[calc(100dvh-4rem)]', !curriculumCollapsed && 'lg:grid-cols-[22.5rem_minmax(0,1fr)]')}>
-        <main className="min-w-0 px-4 py-6 sm:px-6 lg:order-2 lg:px-8 lg:py-10">
+        <MainContent className="min-w-0 px-4 py-6 sm:px-6 lg:order-2 lg:px-8 lg:py-10">
           <div className={cn('w-full max-w-6xl', curriculumCollapsed ? 'mx-auto' : 'mx-auto min-[1800px]:-translate-x-20 min-[2400px]:-translate-x-40')}>
             <header className="mb-6">
               <div className="flex flex-wrap items-center gap-2">
@@ -406,7 +407,7 @@ export default function LearnPageClient({
               ) : <span />}
             </nav>
           </div>
-        </main>
+        </MainContent>
 
         {!curriculumCollapsed && (
           <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] min-h-0 border-r bg-background lg:order-1 lg:block" aria-label="ลำดับบทเรียน">

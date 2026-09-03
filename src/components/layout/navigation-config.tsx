@@ -1,6 +1,8 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+    Award,
     BookOpen,
+    CreditCard,
     House,
     Info,
     Mail,
@@ -15,22 +17,48 @@ import {
     AvatarFallback,
     AvatarImage,
 } from '@/components/ui/avatar';
+import {
+    ACCOUNT_NAVIGATION,
+    MEMBER_UTILITY_NAVIGATION,
+    PUBLIC_NAVIGATION,
+} from '@/lib/navigation-model';
 
 export type NavigationIcon = LucideIcon;
 
-export const NAV_LINKS = [
-    { href: '/courses', label: 'คอร์สทั้งหมด', icon: BookOpen },
-    { href: '/blog', label: 'บทความ', icon: PenLine },
-    { href: '/about', label: 'เกี่ยวกับเรา', icon: Info },
-    { href: '/contact', label: 'ติดต่อ', icon: Mail },
-] as const;
+const publicIcons: Record<(typeof PUBLIC_NAVIGATION)[number]['key'], LucideIcon> = {
+    courses: BookOpen,
+    blog: PenLine,
+    about: Info,
+    contact: Mail,
+};
 
-export const USER_MENU_LINKS = [
-    { href: '/dashboard', label: 'แดชบอร์ด', icon: House },
-    { href: '/announcements', label: 'ประกาศ', icon: Megaphone },
-    { href: '/profile', label: 'โปรไฟล์', icon: User },
-    { href: '/settings', label: 'ตั้งค่า', icon: Settings },
-] as const;
+const accountIcons: Record<(typeof ACCOUNT_NAVIGATION)[number]['key'], LucideIcon> = {
+    dashboard: House,
+    payments: CreditCard,
+    certificates: Award,
+    profile: User,
+    settings: Settings,
+};
+
+const utilityIcons: Record<(typeof MEMBER_UTILITY_NAVIGATION)[number]['key'], LucideIcon> = {
+    announcements: Megaphone,
+};
+
+export const NAV_LINKS = PUBLIC_NAVIGATION.map((destination) => ({
+    ...destination,
+    icon: publicIcons[destination.key],
+}));
+
+export const ACCOUNT_MENU_LINKS = ACCOUNT_NAVIGATION.map((destination) => ({
+    ...destination,
+    icon: accountIcons[destination.key],
+}));
+
+export const MEMBER_UTILITY_LINKS = MEMBER_UTILITY_NAVIGATION.map((destination) => ({
+    ...destination,
+    icon: utilityIcons[destination.key],
+}));
+
 
 export function UserAvatar({
     image,

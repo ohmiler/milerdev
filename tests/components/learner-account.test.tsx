@@ -15,20 +15,20 @@ vi.mock('@/components/layout/Footer', () => ({ default: () => <div data-layout="
 const quote = String.fromCharCode(34);
 
 describe('learner account contracts', () => {
-  it('renders a shared, named account index with one current route and a Dashboard return path', () => {
+  it('renders a shared, named account index with one current route, one breadcrumb, and a Dashboard return path', () => {
     const html = renderToStaticMarkup(
       <LearnerAccountShell current="payments" title="Payments" description="Description">
         <div>Account content</div>
       </LearnerAccountShell>,
     );
 
-    expect(html).toContain(`aria-label=${quote}เมนูบัญชีผู้เรียน${quote}`);
+    expect(html).toContain(`aria-label=${quote}เมนูบัญชีสมาชิก${quote}`);
     expect(html).toContain(`href=${quote}/dashboard${quote}`);
     expect(html).toContain(`href=${quote}/dashboard/certificates${quote}`);
     expect(html).toContain(`href=${quote}/dashboard/payments${quote}`);
     expect(html).toContain(`href=${quote}/profile${quote}`);
     expect(html).toContain(`href=${quote}/settings${quote}`);
-    expect(html.match(new RegExp(`aria-current=${quote}page${quote}`, 'g'))).toHaveLength(1);
+    expect(html.match(new RegExp(`aria-current=${quote}page${quote}`, 'g'))).toHaveLength(2);
   });
 
   it('announces the initial record loading states', () => {

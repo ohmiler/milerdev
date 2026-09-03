@@ -41,7 +41,8 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { UserAvatar, USER_MENU_LINKS } from './navigation-config';
+import { ADMIN_NAVIGATION, getNavigationState } from '@/lib/navigation-model';
+import { ACCOUNT_MENU_LINKS, MEMBER_UTILITY_LINKS, UserAvatar } from './navigation-config';
 
 const notificationTypeIcons: Record<string, LucideIcon> = {
     info: Info,
@@ -63,7 +64,7 @@ export interface NavbarNotification {
 interface UserNavigationMenusProps {
     session: Session;
     isAdmin: boolean;
-    isActive: (href: string) => boolean;
+    pathname: string;
     unreadCount: number;
     notifications: NavbarNotification[];
     onMarkAsRead: (ids?: string[]) => Promise<void>;
@@ -75,7 +76,7 @@ interface UserNavigationMenusProps {
 export default function UserNavigationMenus({
     session,
     isAdmin,
-    isActive,
+    pathname,
     unreadCount,
     notifications,
     onMarkAsRead,
@@ -85,6 +86,7 @@ export default function UserNavigationMenus({
 }: UserNavigationMenusProps) {
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const userTriggerRef = useRef<HTMLButtonElement>(null);
+    const adminState = getNavigationState(pathname, ADMIN_NAVIGATION);
 
     useEffect(() => {
         return () => onNotificationsOpenChange(false);
@@ -266,22 +268,41 @@ export default function UserNavigationMenus({
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
-                        {USER_MENU_LINKS.map(({ href, label, icon: Icon }) => (
-                            <DropdownMenuItem key={href} variant="navigation" asChild>
-                                <Link href={href} aria-current={isActive(href) ? 'page' : undefined}>
-                                    <Icon aria-hidden="true" />
-                                    {label}
-                                </Link>
-                            </DropdownMenuItem>
-                        ))}
+                        {ACCOUNT_MENU_LINKS.map((destination) => {
+                            const state = getNavigationState(pathname, destination);
+                            const Icon = destination.icon;
+                            return (
+                                <DropdownMenuItem key={destination.href} variant="navigation" asChild>
+                                    <Link href={destination.href} aria-current={state.ariaCurrent}>
+                                        <Icon aria-hidden="true" />
+                                        {destination.label}
+                                    </Link>
+                                </DropdownMenuItem>
+                            );
+                        })}
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        {MEMBER_UTILITY_LINKS.map((destination) => {
+                            const state = getNavigationState(pathname, destination);
+                            const Icon = destination.icon;
+                            return (
+                                <DropdownMenuItem key={destination.href} variant="navigation" asChild>
+                                    <Link href={destination.href} aria-current={state.ariaCurrent}>
+                                        <Icon aria-hidden="true" />
+                                        {destination.label}
+                                    </Link>
+                                </DropdownMenuItem>
+                            );
+                        })}
                         {isAdmin && (
                             <DropdownMenuItem variant="navigation" asChild>
                                 <Link
-                                    href="/admin"
-                                    aria-current={isActive('/admin') ? 'page' : undefined}
+                                    href={ADMIN_NAVIGATION.href}
+                                    aria-current={adminState.ariaCurrent}
                                 >
                                     <ShieldCheck aria-hidden="true" />
-                                    Admin Panel
+                                    {ADMIN_NAVIGATION.label}
                                 </Link>
                             </DropdownMenuItem>
                         )}

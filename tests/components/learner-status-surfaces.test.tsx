@@ -40,7 +40,6 @@ describe('learner status surfaces', () => {
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('กำลังโหลดแดชบอร์ดการเรียน');
     expect(html).toContain('data-dashboard-loading="header"');
-    expect(html).toContain('data-dashboard-loading="account-navigation"');
     expect(html.match(/data-dashboard-loading-stat="true"/g)).toHaveLength(4);
     expect(html).toContain('data-dashboard-loading="continuation"');
     expect(html).toContain('data-dashboard-loading="course-index"');

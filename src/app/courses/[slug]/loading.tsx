@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +8,7 @@ export default function CourseDetailLoading() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-background" aria-busy="true" aria-label="กำลังโหลดรายละเอียดคอร์ส">
+      <MainContent className="min-h-screen bg-background" aria-busy="true" aria-label="กำลังโหลดรายละเอียดคอร์ส">
         <p className="sr-only" role="status" aria-live="polite">กำลังโหลดรายละเอียดคอร์ส</p>
         <div aria-hidden="true">
         <header className="border-b bg-muted/30">
@@ -31,7 +32,7 @@ export default function CourseDetailLoading() {
           <div className="flex flex-col gap-4"><Skeleton className="h-8 w-52" />{[1, 2, 3, 4].map((item) => <Skeleton className="h-16 w-full" key={item} />)}</div>
         </section>
         </div>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );

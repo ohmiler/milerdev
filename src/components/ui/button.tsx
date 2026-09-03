@@ -21,7 +21,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-secondary hover:text-secondary-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         navigation:
-          "bg-transparent text-muted-foreground hover:border-border hover:bg-secondary hover:text-secondary-foreground aria-[current=page]:bg-secondary aria-[current=page]:text-secondary-foreground aria-expanded:border-border aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-transparent text-muted-foreground hover:border-border hover:bg-secondary hover:text-secondary-foreground aria-[current=page]:bg-secondary aria-[current=page]:text-secondary-foreground aria-[current=location]:bg-secondary aria-[current=location]:text-secondary-foreground aria-expanded:border-border aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive dark:hover:bg-destructive/90 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",

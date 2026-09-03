@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 export const dynamic = 'force-dynamic';
 
 import Image from 'next/image';
@@ -179,7 +180,7 @@ export default async function HomePage() {
     <>
       <Navbar />
 
-      <main className="overflow-hidden bg-background text-foreground">
+      <MainContent className="overflow-hidden bg-background text-foreground">
         <HomeAnimations />
         <section
           data-home-section="hero"
@@ -479,7 +480,7 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-      </main>
+      </MainContent>
 
       <Footer />
     </>

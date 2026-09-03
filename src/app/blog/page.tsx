@@ -1,3 +1,4 @@
+import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
@@ -195,7 +196,7 @@ export default async function BlogPage({ searchParams }: Props) {
   return (
     <>
       <Navbar />
-      <main className="bg-[var(--academy-canvas)]">
+      <MainContent className="bg-[var(--academy-canvas)]">
         <header className="border-b bg-[radial-gradient(circle_at_82%_12%,var(--color-accent-soft),transparent_32%),var(--academy-canvas)] py-16 sm:py-20 lg:py-24">
           <div className="container"><div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr] lg:items-end lg:gap-16"><h1 className="text-4xl leading-[1.15] font-semibold tracking-[-.04em] text-balance sm:text-5xl lg:text-6xl">อ่านแนวคิด แล้วกลับไปเขียนโค้ด</h1><p className="max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">บทความภาษาไทยสำหรับนักพัฒนาที่ต้องการเข้าใจเครื่องมือ วิธีคิด และการสร้างซอฟต์แวร์จากงานจริง</p></div></div>
         </header>
@@ -239,7 +240,7 @@ export default async function BlogPage({ searchParams }: Props) {
             )}
           </div>
         </section>
-      </main>
+      </MainContent>
       <Footer />
     </>
   );
