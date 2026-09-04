@@ -1,37 +1,39 @@
 import MainContent from '@/components/layout/MainContent';
 import PublicPageHeader from '@/components/layout/PublicPageHeader';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import BundleCard from '@/components/bundle/BundleCard';
 import CourseCard from '@/components/course/CourseCard';
 import CourseCatalogFilters from '@/components/course/CourseCatalogFilters';
+import CourseCatalogPagination from '@/components/course/CourseCatalogPagination';
 import { FeedbackState } from '@/components/status/FeedbackState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/db';
-import { bundles, bundleCourses, courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
+import { bundles, bundleCourses, courses, courseTags, lessons, reviews, tags, users } from '@/lib/db/schema';
 import {
   deriveBundleDecisionFacts,
   type BundleCourseDecisionSource,
   type BundleDecisionFacts,
 } from '@/lib/bundle-decision-facts';
 import { deriveCourseDecisionFacts, type CourseDecisionFacts } from '@/lib/course-decision-facts';
-import { and, asc, count, desc, eq, gt, like, sql } from 'drizzle-orm';
+import {
+  buildCourseCatalogHref,
+  clampCourseCatalogPage,
+  normalizeCourseCatalogQuery,
+  type CourseCatalogPrice,
+  type CourseCatalogQueryInput,
+  type CourseCatalogSort,
+} from '@/lib/course-catalog-query';
+import { and, asc, avg, count, desc, eq, like, sql } from 'drizzle-orm';
 
 export const revalidate = 300;
 
-type SearchParamsInput = {
-  search?: string | string[];
-  price?: string | string[];
-  tag?: string | string[];
-  sort?: string | string[];
-  page?: string | string[];
-};
-
 type Props = {
-  searchParams?: Promise<SearchParamsInput>;
+  searchParams?: Promise<CourseCatalogQueryInput>;
 };
 
 interface Tag {
@@ -61,23 +63,6 @@ function getSingleParam(value: string | string[] | undefined): string {
   return Array.isArray(value) ? value[0] ?? '' : value ?? '';
 }
 
-function buildCoursesQuery(params: {
-  search?: string;
-  price?: string;
-  tag?: string;
-  sort?: string;
-  page?: number;
-}) {
-  const query = new URLSearchParams();
-  if (params.search) query.set('search', params.search);
-  if (params.price && params.price !== 'all') query.set('price', params.price);
-  if (params.tag && params.tag !== 'all') query.set('tag', params.tag);
-  if (params.sort && params.sort !== 'newest') query.set('sort', params.sort);
-  if (params.page && params.page > 1) query.set('page', String(params.page));
-  const output = query.toString();
-  return output ? `/courses?${output}` : '/courses';
-}
-
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const resolved = searchParams ? await searchParams : {};
   const search = getSingleParam(resolved.search).trim();
@@ -98,7 +83,7 @@ async function getAllTags(): Promise<Tag[]> {
   return db.select({ id: tags.id, name: tags.name, slug: tags.slug }).from(tags).orderBy(tags.name);
 }
 
-async function getPublishedBundles(): Promise<BundleItem[]> {
+async function getPublishedBundles(now: Date): Promise<BundleItem[]> {
   const lessonStatsSubquery = db
     .select({
       courseId: lessons.courseId,
@@ -177,7 +162,6 @@ async function getPublishedBundles(): Promise<BundleItem[]> {
     bundleMap.set(row.id, existing);
   }
 
-  const now = new Date();
   return Array.from(bundleMap.values()).map((bundle) => ({
     id: bundle.id,
     title: bundle.title,
@@ -194,17 +178,25 @@ async function getCoursesData(input: {
   page: number;
   limit: number;
   search: string;
-  priceFilter: string;
+  priceFilter: CourseCatalogPrice;
   tagSlug: string;
-  sort: string;
+  sort: CourseCatalogSort;
+  now: Date;
 }) {
-  const { page, limit, search, priceFilter, tagSlug, sort } = input;
+  const { page, limit, search, priceFilter, tagSlug, sort, now } = input;
   const offset = (page - 1) * limit;
   const conditions = [eq(courses.status, 'published')];
+  const effectivePrice = sql<string>`CASE
+    WHEN ${courses.promoPrice} IS NOT NULL
+      AND (${courses.promoStartsAt} IS NULL OR ${courses.promoStartsAt} <= ${now})
+      AND (${courses.promoEndsAt} IS NULL OR ${courses.promoEndsAt} >= ${now})
+    THEN ${courses.promoPrice}
+    ELSE ${courses.price}
+  END`;
 
   if (search) conditions.push(like(courses.title, `%${search}%`));
-  if (priceFilter === 'free') conditions.push(eq(courses.price, '0'));
-  else if (priceFilter === 'paid') conditions.push(gt(courses.price, '0'));
+  if (priceFilter === 'free') conditions.push(sql`${effectivePrice} = 0`);
+  else if (priceFilter === 'paid') conditions.push(sql`${effectivePrice} > 0`);
 
   if (tagSlug !== 'all') {
     conditions.push(
@@ -222,10 +214,10 @@ async function getCoursesData(input: {
       orderBy = asc(courses.createdAt);
       break;
     case 'price-low':
-      orderBy = asc(courses.price);
+      orderBy = asc(effectivePrice);
       break;
     case 'price-high':
-      orderBy = desc(courses.price);
+      orderBy = desc(effectivePrice);
       break;
     default:
       orderBy = desc(courses.createdAt);
@@ -243,6 +235,16 @@ async function getCoursesData(input: {
     .from(lessons)
     .groupBy(lessons.courseId)
     .as('lesson_stats');
+  const reviewStatsSubquery = db
+    .select({
+      courseId: reviews.courseId,
+      averageRating: avg(reviews.rating).as('average_rating'),
+      reviewCount: count().as('review_count'),
+    })
+    .from(reviews)
+    .where(and(eq(reviews.isHidden, false), eq(reviews.isVerified, true)))
+    .groupBy(reviews.courseId)
+    .as('review_stats');
 
   const [courseRows, totalResult] = await Promise.all([
     db
@@ -262,12 +264,15 @@ async function getCoursesData(input: {
         lessonCount: sql<number>`COALESCE(${lessonStatsSubquery.lessonCount}, 0)`.as('lesson_count'),
         totalDurationSeconds: sql<number>`COALESCE(${lessonStatsSubquery.totalDurationSeconds}, 0)`.as('total_duration_seconds'),
         freePreviewCount: sql<number>`COALESCE(${lessonStatsSubquery.freePreviewCount}, 0)`.as('free_preview_count'),
+        averageRating: reviewStatsSubquery.averageRating,
+        reviewCount: sql<number>`COALESCE(${reviewStatsSubquery.reviewCount}, 0)`.as('review_count'),
       })
       .from(courses)
       .leftJoin(users, eq(courses.instructorId, users.id))
       .leftJoin(lessonStatsSubquery, eq(courses.id, lessonStatsSubquery.courseId))
+      .leftJoin(reviewStatsSubquery, eq(courses.id, reviewStatsSubquery.courseId))
       .where(whereCondition)
-      .orderBy(orderBy)
+      .orderBy(orderBy, asc(courses.id))
       .limit(limit)
       .offset(offset),
     db.select({ total: count() }).from(courses).where(whereCondition),
@@ -293,7 +298,6 @@ async function getCoursesData(input: {
     tagsByCourse.get(row.courseId)!.push({ id: row.tagId, name: row.tagName, slug: row.tagSlug });
   }
 
-  const now = new Date();
   const formattedCourses: CourseListItem[] = courseRows.map((row) => {
     const lessonCount = Number(row.lessonCount) || 0;
     const totalDurationSeconds = Number(row.totalDurationSeconds) || 0;
@@ -322,6 +326,9 @@ async function getCoursesData(input: {
         knownDurationSeconds: totalDurationSeconds,
         freePreviewCount,
         instructor,
+        verifiedReview: Number(row.reviewCount) > 0
+          ? { average: row.averageRating ?? 0, count: Number(row.reviewCount) }
+          : null,
       }, { now }),
       tags: tagsByCourse.get(row.id) || [],
     };
@@ -340,11 +347,48 @@ async function getCoursesData(input: {
 
 export default async function CoursesPage({ searchParams }: Props) {
   const resolved = searchParams ? await searchParams : {};
-  const search = getSingleParam(resolved.search).trim();
-  const priceFilter = getSingleParam(resolved.price) || 'all';
-  const tagFilter = getSingleParam(resolved.tag) || 'all';
-  const sort = getSingleParam(resolved.sort) || 'newest';
-  const currentPage = Math.max(1, parseInt(getSingleParam(resolved.page) || '1', 10) || 1);
+  const allTagsPromise = getAllTags();
+  const allTags = await allTagsPromise;
+  const normalized = normalizeCourseCatalogQuery(
+    resolved,
+    allTags.map((tag) => tag.slug),
+  );
+
+  if (!normalized.isCanonical) {
+    redirect(buildCourseCatalogHref(normalized.query));
+  }
+
+  const catalogHref = buildCourseCatalogHref(normalized.query);
+  const showBundles = catalogHref === '/courses';
+  const now = new Date();
+  const [coursesData, bundlesList] = await Promise.all([
+    getCoursesData({
+      page: normalized.query.page,
+      limit: 12,
+      search: normalized.query.search,
+      priceFilter: normalized.query.price,
+      tagSlug: normalized.query.tag,
+      sort: normalized.query.sort,
+      now,
+    }),
+    showBundles ? getPublishedBundles(now) : Promise.resolve([]),
+  ]);
+  const canonicalPage = clampCourseCatalogPage(
+    normalized.query.page,
+    coursesData.pagination.totalPages,
+  );
+
+  if (canonicalPage !== normalized.query.page) {
+    redirect(buildCourseCatalogHref(normalized.query, { page: canonicalPage }));
+  }
+
+  const {
+    search,
+    price: priceFilter,
+    tag: tagFilter,
+    sort,
+    page: currentPage,
+  } = normalized.query;
   const hasActiveFilters = Boolean(
     search
       || priceFilter !== 'all'
@@ -352,19 +396,12 @@ export default async function CoursesPage({ searchParams }: Props) {
       || sort !== 'newest'
       || currentPage > 1,
   );
-
-  const [coursesData, allTags, bundlesList] = await Promise.all([
-    getCoursesData({ page: currentPage, limit: 12, search, priceFilter, tagSlug: tagFilter, sort }),
-    getAllTags(),
-    getPublishedBundles(),
-  ]);
-
   const { courses: courseList, pagination } = coursesData;
 
   return (
     <>
       <Navbar />
-      <MainContent key={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort })} className="bg-[var(--academy-canvas)]">
+      <MainContent key={catalogHref} className="bg-[var(--academy-canvas)]">
         <PublicPageHeader
           title="เลือกคอร์สที่พาไปถึงงานชิ้นถัดไป"
           description="เปรียบเทียบหัวข้อ ราคา และบทเรียนที่เปิดให้ทดลอง แล้วเลือกจุดเริ่มต้นที่ตรงกับทักษะที่คุณอยากพัฒนาจริง"
@@ -401,13 +438,16 @@ export default async function CoursesPage({ searchParams }: Props) {
             ) : (
               <>
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{courseList.map((course) => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} decisionFacts={course.decisionFacts} tags={course.tags} />)}</div>
-                {pagination.totalPages > 1 ? <nav className="mt-10 flex flex-wrap items-center justify-center gap-2" aria-label="หน้ารายการคอร์ส">{currentPage > 1 ? <Button variant="outline" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: currentPage - 1 })}>← ก่อนหน้า</Link></Button> : null}{Array.from({ length: Math.min(5, pagination.totalPages) }, (_, index) => { let pageNumber; if (pagination.totalPages <= 5) pageNumber = index + 1; else if (currentPage <= 3) pageNumber = index + 1; else if (currentPage >= pagination.totalPages - 2) pageNumber = pagination.totalPages - 4 + index; else pageNumber = currentPage - 2 + index; const isActive = currentPage === pageNumber; return <Button key={pageNumber} variant={isActive ? 'default' : 'outline'} size="icon-sm" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: pageNumber })} aria-current={isActive ? 'page' : undefined}>{pageNumber}</Link></Button>; })}{currentPage < pagination.totalPages ? <Button variant="outline" asChild><Link href={buildCoursesQuery({ search, price: priceFilter, tag: tagFilter, sort, page: currentPage + 1 })}>ถัดไป →</Link></Button> : null}</nav> : null}
+                <CourseCatalogPagination
+                  query={normalized.query}
+                  totalPages={pagination.totalPages}
+                />
               </>
             )}
           </div>
         </section>
 
-        {bundlesList.length > 0 ? (
+        {showBundles && bundlesList.length > 0 ? (
           <section className="border-t bg-background py-14 sm:py-20" aria-labelledby="courses-bundles-title">
             <div className="container">
               <header className="mb-8 grid gap-4 md:grid-cols-[1fr_auto] md:items-end"><div><h2 id="courses-bundles-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div><Badge variant="secondary">{bundlesList.length} เส้นทาง</Badge></header>

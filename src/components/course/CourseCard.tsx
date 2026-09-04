@@ -57,7 +57,7 @@ export default function CourseCard({
       <Card className="h-full gap-0 overflow-hidden py-0 transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-[var(--academy-shadow-card-hover)] motion-reduce:transform-none">
         <div className="relative aspect-[16/9] overflow-hidden bg-[var(--academy-navy)] md:aspect-auto md:min-h-52">
           {thumbnailUrl
-            ? <img src={thumbnailUrl} alt={title} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
+            ? <img src={thumbnailUrl} alt={title} width={640} height={360} sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw" loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
             : <CourseArtwork title={title} slug={slug} tags={tags} />}
           <div className="absolute top-4 left-4 flex flex-col items-start gap-2">
             {decisionFacts.readiness === 'preparing' ? <Badge variant="secondary">กำลังเตรียมเนื้อหา</Badge> : null}

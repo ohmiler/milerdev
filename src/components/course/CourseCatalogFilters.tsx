@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Banknote, ListFilter, Search, SlidersHorizontal, Tag, X } from 'lucide-react';
+import { Banknote, Search, SlidersHorizontal, Tag, X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,12 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import {
+  buildCourseCatalogHref,
+  type CourseCatalogPrice,
+  type CourseCatalogQuery,
+  type CourseCatalogSort,
+} from '@/lib/course-catalog-query';
 
 interface CatalogTag {
   id: string;
@@ -28,9 +34,9 @@ interface CatalogTag {
 interface CourseCatalogFiltersProps {
   tags: CatalogTag[];
   search: string;
-  priceFilter: string;
+  priceFilter: CourseCatalogPrice;
   tagFilter: string;
-  sort: string;
+  sort: CourseCatalogSort;
   totalCourses: number;
   hasActiveFilters: boolean;
 }
@@ -62,8 +68,14 @@ export default function CourseCatalogFilters({
     Boolean(search),
     priceFilter !== 'all',
     tagFilter !== 'all',
-    sort !== 'newest',
   ].filter(Boolean).length;
+  const query: CourseCatalogQuery = {
+    search,
+    price: priceFilter,
+    tag: tagFilter,
+    sort,
+    page: 1,
+  };
 
   const renderFields = (idPrefix: string, mobile = false) => (
     <form
@@ -183,15 +195,49 @@ export default function CourseCatalogFilters({
           ) : null}
         </div>
 
-        {activeFilterCount > 0 ? (
-          <div className="flex gap-2 overflow-x-auto pb-1" aria-label="ตัวกรองที่เลือก">
-            {search ? <Badge variant="secondary" className="shrink-0"><Search aria-hidden="true" />“{search}”</Badge> : null}
-            {priceFilter !== 'all' ? <Badge variant="secondary" className="shrink-0"><Banknote aria-hidden="true" />{PRICE_LABELS[priceFilter]}</Badge> : null}
-            {tagFilter !== 'all' ? <Badge variant="secondary" className="shrink-0"><Tag aria-hidden="true" />{selectedTag ?? tagFilter}</Badge> : null}
-            {sort !== 'newest' ? <Badge variant="secondary" className="shrink-0"><ListFilter aria-hidden="true" />{SORT_LABELS[sort]}</Badge> : null}
-          </div>
-        ) : null}
       </div>
+
+      {activeFilterCount > 0 ? (
+        <div className={'mt-4 flex flex-wrap items-center gap-2'} aria-label={'ตัวกรองที่เลือก'}>
+          <span className={'mr-1 text-xs font-medium text-muted-foreground'}>กำลังกรองด้วย</span>
+          {search ? (
+            <Badge asChild variant={'secondary'}>
+              <Link
+                href={buildCourseCatalogHref(query, { search: '', page: 1 })}
+                aria-label={`ลบคำค้น ${search}`}
+              >
+                <Search data-icon={'inline-start'} aria-hidden={'true'} />
+                “{search}”
+                <X data-icon={'inline-end'} aria-hidden={'true'} />
+              </Link>
+            </Badge>
+          ) : null}
+          {priceFilter !== 'all' ? (
+            <Badge asChild variant={'secondary'}>
+              <Link
+                href={buildCourseCatalogHref(query, { price: 'all', page: 1 })}
+                aria-label={`ลบตัวกรองราคา ${PRICE_LABELS[priceFilter]}`}
+              >
+                <Banknote data-icon={'inline-start'} aria-hidden={'true'} />
+                {PRICE_LABELS[priceFilter]}
+                <X data-icon={'inline-end'} aria-hidden={'true'} />
+              </Link>
+            </Badge>
+          ) : null}
+          {tagFilter !== 'all' ? (
+            <Badge asChild variant={'secondary'}>
+              <Link
+                href={buildCourseCatalogHref(query, { tag: 'all', page: 1 })}
+                aria-label={`ลบตัวกรองหัวข้อ ${selectedTag ?? tagFilter}`}
+              >
+                <Tag data-icon={'inline-start'} aria-hidden={'true'} />
+                {selectedTag ?? tagFilter}
+                <X data-icon={'inline-end'} aria-hidden={'true'} />
+              </Link>
+            </Badge>
+          ) : null}
+        </div>
+      ) : null}
     </aside>
   );
 }
