@@ -15,20 +15,30 @@ export default function AnnouncementsPage() {
   return (
     <>
       <Navbar />
-      <MainContent className="bg-[var(--academy-canvas)]">
+      <MainContent className={'bg-[var(--academy-canvas)]'}>
         <PublicContentHeader
-          title="ประกาศที่ควรรู้ ก่อนเรียนต่อ"
-          lede="ติดตามข่าวสาร การเปลี่ยนแปลงบริการ และข้อความสำคัญจากทีม MilerDev โดยระบบจะแสดงเฉพาะประกาศที่เกี่ยวข้องกับบัญชีของคุณ"
+          title={'ประกาศที่ควรรู้ ก่อนเรียนต่อ'}
+          lede={'ติดตามข่าวสาร การเปลี่ยนแปลงบริการ และข้อความสำคัญจากทีม MilerDev โดยแสดงประกาศล่าสุดที่เปิดใช้งานและตรงกับประเภทผู้ใช้งานของคุณ'}
           evidence={(
-            <Card><CardContent className="grid grid-cols-3 gap-3 pt-6 text-center text-sm"><div><dt className="text-xs text-muted-foreground">ลำดับ</dt><dd className="mt-2 font-semibold">ล่าสุดก่อน</dd></div><div><dt className="text-xs text-muted-foreground">จำนวน</dt><dd className="mt-2 font-semibold">สูงสุด 10</dd></div><div><dt className="text-xs text-muted-foreground">ขอบเขต</dt><dd className="mt-2 font-semibold">ตามบัญชี</dd></div></CardContent></Card>
+            <Card>
+              <CardContent className={'grid grid-cols-3 gap-3 pt-6 text-center text-sm'}>
+                <dl><dt className={'text-xs text-muted-foreground'}>ลำดับ</dt><dd className={'mt-2 font-semibold'}>ล่าสุดก่อน</dd></dl>
+                <dl><dt className={'text-xs text-muted-foreground'}>จำนวน</dt><dd className={'mt-2 font-semibold'}>สูงสุด 10</dd></dl>
+                <dl><dt className={'text-xs text-muted-foreground'}>ขอบเขต</dt><dd className={'mt-2 font-semibold'}>แสดงตามประเภทผู้ใช้งาน</dd></dl>
+              </CardContent>
+            </Card>
           )}
         />
-        <section className="py-14 sm:py-20" aria-labelledby="announcement-feed-title">
-          <div className="container grid gap-10 lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-14">
-            <aside className="top-24 lg:sticky">
-              <h2 id="announcement-feed-title" className="text-2xl font-semibold">ข่าวสารล่าสุด</h2>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">เรียงจากประกาศใหม่ไปเก่า พร้อมประเภท เวลาเผยแพร่ และผู้ประกาศเมื่อมีข้อมูล</p>
-              <dl className="mt-6 flex flex-col gap-3 border-y py-5 text-xs"><div className="flex justify-between gap-3"><dt className="font-medium text-primary">ทั่วไป</dt><dd className="text-muted-foreground">ข้อมูลทั่วไป</dd></div><div className="flex justify-between gap-3"><dt className="font-medium text-primary">ติดตาม</dt><dd className="text-muted-foreground">เรื่องที่ควรติดตาม</dd></div><div className="flex justify-between gap-3"><dt className="font-medium text-primary">สำคัญ</dt><dd className="text-muted-foreground">ประกาศสำคัญ</dd></div></dl>
+        <section className={'py-14 sm:py-20'} aria-labelledby={'announcement-feed-title'}>
+          <div className={'container grid gap-10 lg:grid-cols-[16rem_1fr] lg:items-start lg:gap-14'}>
+            <aside className={'top-24 lg:sticky'}>
+              <h2 id={'announcement-feed-title'} className={'text-2xl font-semibold'}>ข่าวสารล่าสุด</h2>
+              <p className={'mt-3 text-sm leading-6 text-muted-foreground'}>เรียงจากประกาศใหม่ไปเก่า พร้อมประเภท เวลาเผยแพร่ และผู้ประกาศเมื่อมีข้อมูล</p>
+              <dl className={'mt-6 flex flex-col gap-3 border-y py-5 text-xs'}>
+                <div className={'flex justify-between gap-3'}><dt className={'font-medium text-primary'}>ทั่วไป</dt><dd className={'text-muted-foreground'}>ข้อมูลทั่วไป</dd></div>
+                <div className={'flex justify-between gap-3'}><dt className={'font-medium text-primary'}>ติดตาม</dt><dd className={'text-muted-foreground'}>เรื่องที่ควรติดตาม</dd></div>
+                <div className={'flex justify-between gap-3'}><dt className={'font-medium text-primary'}>สำคัญ</dt><dd className={'text-muted-foreground'}>ประกาศสำคัญ</dd></div>
+              </dl>
             </aside>
             <AnnouncementFeed />
           </div>
