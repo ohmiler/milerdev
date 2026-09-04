@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { FAQ_CATEGORIES } from '@/app/faq/faq-data';
 import ContactForm from '@/components/contact/ContactForm';
-import FAQAccordion from '@/components/faq/FAQAccordion';
+import FAQAccordion, { FAQAnswer } from '@/components/faq/FAQAccordion';
 
 const quote = String.fromCharCode(34);
 
@@ -13,6 +13,24 @@ describe('studio and support page contracts', () => {
     expect(FAQ_CATEGORIES.flatMap((category) => category.items)).toHaveLength(13);
     expect(FAQ_CATEGORIES[3].items[0].a).toContain(`${quote}ลืมรหัสผ่าน${quote}`);
     expect(FAQ_CATEGORIES[3].items[2].a).toContain('milerdev.official@gmail.com');
+  });
+
+  it('keeps support answers structured around canonical destinations', () => {
+    const allItems = FAQ_CATEGORIES.flatMap((category) => category.items);
+    const beginner = allItems.find((item) => item.q === 'ต้องมีพื้นฐานการเขียนโปรแกรมก่อนไหม?');
+    const refund = allItems.find((item) => item.q === 'ขอคืนเงินได้ไหม?');
+    const forgotPassword = allItems.find((item) => item.q === 'ลืมรหัสผ่านทำอย่างไร?');
+    const changeEmail = allItems.find((item) => item.q === 'เปลี่ยนอีเมลหรือรหัสผ่านได้ไหม?');
+
+    expect(beginner?.link?.href).toBe('/courses');
+    expect(refund?.link?.href).toBe('/terms#terms-payment');
+    expect(forgotPassword?.link?.href).toBe('/forgot-password');
+    expect(changeEmail?.link?.href).toBe('/contact');
+    expect(refund?.a).not.toContain('ไม่มีนโยบายคืนเงิน');
+
+    const html = renderToStaticMarkup(<FAQAnswer item={refund!} />);
+    expect(html).toContain(`href=${quote}/terms#terms-payment${quote}`);
+    expect(html).toContain('อ่านเงื่อนไขการชำระเงิน');
   });
 
   it('renders closed FAQ disclosures with explicit controls and hidden regions', () => {

@@ -30,4 +30,14 @@ describe('Contact form contracts', () => {
     expect(source).toContain('pending={isSubmitting}');
     expect(source).toContain('<PendingButton');
   });
+
+  it('exposes accessible pending, error retry, success, and FAQ recovery states', () => {
+    const source = readFileSync('src/components/contact/ContactForm.tsx', 'utf8');
+
+    expect(source).toContain(`role={'status'}`);
+    expect(source).toContain(`aria-live={'polite'}`);
+    expect(source).toContain('ลองส่งข้อความอีกครั้ง');
+    expect(source).toContain('ส่งข้อความใหม่');
+    expect(source).toContain(`href={'/faq'}`);
+  });
 });

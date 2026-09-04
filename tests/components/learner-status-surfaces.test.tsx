@@ -18,6 +18,13 @@ describe('learner status surfaces', () => {
 
     expect(html).toContain('<h1');
     expect(html).toContain('ไม่พบหน้าที่คุณต้องการ');
+    expect(html).toContain(`href=${String.fromCharCode(34)}/contact${String.fromCharCode(34)}`);
+    expect(html.match(new RegExp(`data-slot=${String.fromCharCode(34)}button${String.fromCharCode(34)}`, 'g'))).toHaveLength(3);
+    const quote = String.fromCharCode(34);
+    const courseAction = html.indexOf(`href=${quote}/courses${quote}`);
+    const homeAction = html.indexOf(`href=${quote}/${quote}`);
+    expect(courseAction).toBeGreaterThan(-1);
+    expect(courseAction).toBeLessThan(homeAction);
     expect(html).toContain('href="/"');
     expect(html).toContain('href="/courses"');
     expect(html).toContain('Mock public navigation');
@@ -30,6 +37,7 @@ describe('learner status surfaces', () => {
     );
 
     expect(html).toContain('ลองใหม่อีกครั้ง');
+    expect(html).toContain('เกิดข้อผิดพลาด');
     expect(html).toContain('href="/"');
     expect(html).not.toContain('private database detail');
   });

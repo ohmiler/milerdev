@@ -19,18 +19,18 @@ export default function Error({
 
   return (
     <StatusSurface
-      code="ERR"
-      routeLabel="App / Recovery"
-      title="หน้านี้ทำงานต่อไม่ได้"
-      description="เกิดข้อผิดพลาดที่ไม่คาดคิดระหว่างเปิดหน้านี้ คุณสามารถลองประมวลผลอีกครั้งหรือกลับไปเริ่มจากหน้าหลัก"
-      note="รายละเอียดทางเทคนิคถูกเก็บไว้สำหรับการตรวจสอบและจะไม่แสดงบนหน้านี้"
+      code={'ERR'}
+      routeLabel={'App / Recovery'}
+      title={'เกิดข้อผิดพลาด'}
+      description={'หน้านี้ทำงานต่อไม่ได้ในขณะนี้ ลองประมวลผลอีกครั้งเพื่อทำงานเดิมต่อ หรือกลับไปเริ่มจากหน้าแรก'}
+      note={'รายละเอียดทางเทคนิคถูกเก็บไว้สำหรับการตรวจสอบและจะไม่แสดงบนหน้านี้'}
     >
-      <Button type="button" onClick={reset}>
-        <RotateCcw data-icon="inline-start" aria-hidden="true" />
+      <Button type={'button'} onClick={reset}>
+        <RotateCcw data-icon={'inline-start'} aria-hidden={true} />
         ลองใหม่อีกครั้ง
       </Button>
-      <Button asChild variant="outline">
-        <Link href="/">กลับหน้าหลัก</Link>
+      <Button asChild variant={'outline'}>
+        <Link href={'/'}>กลับหน้าแรก</Link>
       </Button>
     </StatusSurface>
   );

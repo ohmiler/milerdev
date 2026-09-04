@@ -1,9 +1,11 @@
 import MainContent from '@/components/layout/MainContent';
+import Link from 'next/link';
 import ContactForm from '@/components/contact/ContactForm';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import PublicPageHeader from '@/components/layout/PublicPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function ContactPage() {
   return (
@@ -29,7 +31,12 @@ export default function ContactPage() {
 
             <Card className="shadow-[var(--academy-shadow-card)]">
               <CardHeader><CardTitle id="contact-form-title" className="text-2xl sm:text-3xl">ส่งรายละเอียดให้ทีม MilerDev</CardTitle><p className="text-sm leading-6 text-muted-foreground">กรอกข้อมูลที่จำเป็น ทีมจะใช้ข้อมูลนี้เพื่อตอบกลับคำถามของคุณเท่านั้น</p></CardHeader>
-              <CardContent><ContactForm /></CardContent>
+              <CardContent className={'flex flex-col gap-5'}>
+                <Button asChild variant={'link'} className={'h-auto w-fit justify-start px-0 py-0'}>
+                  <Link href={'/faq'}>ลองดูคำถามที่พบบ่อยก่อน</Link>
+                </Button>
+                <ContactForm />
+              </CardContent>
             </Card>
           </div>
         </section>

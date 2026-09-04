@@ -43,6 +43,6 @@ export async function GET() {
     return NextResponse.json({ announcements: activeAnnouncements });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching announcements:' });
-    return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
+    return NextResponse.json({ error: 'โหลดประกาศไม่สำเร็จ' }, { status: 500 });
   }
 }
