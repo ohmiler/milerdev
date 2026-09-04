@@ -3,10 +3,11 @@ import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { reviews, courses, users, enrollments } from '@/lib/db/schema';
-import { eq, and, desc, sql, avg, count } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { stripHtml } from '@/lib/sanitize';
+import { getCourseReviewStats } from '@/lib/course-review-stats';
 
 type RouteParams = { params: Promise<{ slug: string }> };
 
@@ -41,6 +42,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const conditions = [
       eq(reviews.courseId, course.id),
       eq(reviews.isHidden, false),
+      eq(reviews.isVerified, true),
     ];
 
     if (filterRating) {
@@ -77,39 +79,18 @@ export async function GET(request: Request, { params }: RouteParams) {
         .select({ count: sql<number>`count(*)` })
         .from(reviews)
         .where(whereCondition),
-      db
-        .select({
-          avgRating: avg(reviews.rating),
-          totalReviews: count(),
-          star5: sql<number>`sum(case when rating = 5 then 1 else 0 end)`,
-          star4: sql<number>`sum(case when rating = 4 then 1 else 0 end)`,
-          star3: sql<number>`sum(case when rating = 3 then 1 else 0 end)`,
-          star2: sql<number>`sum(case when rating = 2 then 1 else 0 end)`,
-          star1: sql<number>`sum(case when rating = 1 then 1 else 0 end)`,
-        })
-        .from(reviews)
-        .where(and(eq(reviews.courseId, course.id), eq(reviews.isHidden, false))),
+      getCourseReviewStats(course.id),
     ]);
 
     const total = totalResult[0]?.count ?? 0;
-    const stats = statsResult[0];
+    const stats = statsResult;
 
     return NextResponse.json({
       reviews: reviewList.map(r => ({
         ...r,
         displayName: r.displayName || r.userName || 'ผู้ใช้',
       })),
-      stats: {
-        avgRating: stats?.avgRating ? parseFloat(String(stats.avgRating)) : 0,
-        totalReviews: stats?.totalReviews ?? 0,
-        distribution: {
-          5: stats?.star5 ?? 0,
-          4: stats?.star4 ?? 0,
-          3: stats?.star3 ?? 0,
-          2: stats?.star2 ?? 0,
-          1: stats?.star1 ?? 0,
-        },
-      },
+      stats,
       pagination: {
         page,
         limit,

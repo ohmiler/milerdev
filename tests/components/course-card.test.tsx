@@ -74,6 +74,16 @@ describe('shared Home and Catalog CourseCard decision evidence', () => {
     expect(html).not.toContain('<img');
   });
 
+  it('reserves responsive geometry for a real course thumbnail', () => {
+    const html = renderToStaticMarkup(
+      <CourseCard {...baseProps} thumbnailUrl="https://cdn.example.com/course.webp" />,
+    );
+
+    expect(html).toContain('width="640"');
+    expect(html).toContain('height="360"');
+    expect(html).toContain('sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"');
+  });
+
   it('keeps the regular price in the card footer instead of covering the thumbnail', () => {
     const html = renderToStaticMarkup(<CourseCard {...baseProps} />);
 

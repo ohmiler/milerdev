@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 interface CourseSectionItem {
   id: string;
@@ -20,6 +19,8 @@ export default function CourseSectionNav({ items }: CourseSectionNavProps) {
     const sections = items
       .map((item) => document.getElementById(item.id))
       .filter((section): section is HTMLElement => Boolean(section));
+
+    if (!('IntersectionObserver' in window)) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -49,15 +50,32 @@ export default function CourseSectionNav({ items }: CourseSectionNavProps) {
 
   return (
     <nav className="sticky top-[4.25rem] z-30 bg-background/92 backdrop-blur-xl supports-backdrop-filter:bg-background/80" aria-label="ส่วนต่าง ๆ ของคอร์ส">
-      <Tabs value={activeSection} onValueChange={navigateToSection} className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <TabsList variant="line" className="grid h-14 w-full grid-cols-4 rounded-none p-0 group-data-horizontal/tabs:h-14">
+      <div className="mx-auto max-w-5xl overflow-x-auto px-4 [scrollbar-width:none] sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden">
+        <div
+          className="grid h-14 min-w-max"
+          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+        >
           {items.map((item) => (
-            <TabsTrigger key={item.id} value={item.id} className="h-14 min-w-0 px-1 text-xs data-active:text-primary group-data-horizontal/tabs:after:inset-x-auto group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:left-[calc(50%-1rem)] after:w-8 after:rounded-full after:bg-primary sm:px-3 sm:text-sm">
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              aria-current={activeSection === item.id ? 'location' : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                navigateToSection(item.id);
+              }}
+              className={cn(
+                'relative inline-flex h-14 min-w-28 items-center justify-center px-3 text-center text-xs font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 motion-reduce:transition-none sm:min-w-0 sm:text-sm',
+                activeSection === item.id
+                  ? 'text-primary after:absolute after:inset-x-[calc(50%-1rem)] after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary'
+                  : null,
+              )}
+            >
               {item.label}
-            </TabsTrigger>
+            </a>
           ))}
-        </TabsList>
-      </Tabs>
+        </div>
+      </div>
     </nav>
   );
 }

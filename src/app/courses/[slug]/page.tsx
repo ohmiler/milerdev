@@ -1,4 +1,5 @@
 import MainContent from '@/components/layout/MainContent';
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 // Image import removed - using native img for external URLs
@@ -23,6 +24,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/u
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
+import { getCourseReviewStats } from '@/lib/course-review-stats';
 
 function normalizeUrl(url: string | null): string | null {
     if (!url || url.trim() === '') return null;
@@ -91,8 +93,8 @@ async function getCourse(slug: string) {
 
   if (!course) return null;
 
-  // Parallelize instructor, lessons, and tags queries
-  const [instructorResult, courseLessons, courseTagRows] = await Promise.all([
+  // Parallelize instructor, lessons, tags, and decision evidence queries
+  const [instructorResult, courseLessons, courseTagRows, reviewStats] = await Promise.all([
     course.instructorId
       ? db
           .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
@@ -110,6 +112,7 @@ async function getCourse(slug: string) {
       .from(courseTags)
       .innerJoin(tags, eq(courseTags.tagId, tags.id))
       .where(eq(courseTags.courseId, course.id)),
+    getCourseReviewStats(course.id),
   ]);
 
   return {
@@ -117,6 +120,7 @@ async function getCourse(slug: string) {
     instructor: instructorResult[0] || null,
     lessons: courseLessons,
     tags: courseTagRows,
+    reviewStats,
   };
 }
 
@@ -160,10 +164,17 @@ export default async function CourseDetailPage({ params }: Props) {
     knownDurationSeconds: totalSeconds,
     freePreviewCount,
     instructor: course.instructor ? { name: course.instructor.name } : null,
+    verifiedReview: course.reviewStats.totalReviews > 0
+      ? {
+          average: course.reviewStats.avgRating,
+          count: course.reviewStats.totalReviews,
+        }
+      : null,
   }, { now: new Date() });
   const displayPrice = decisionFacts.price.effective;
   const courseReady = decisionFacts.readiness === 'ready';
   const instructorName = decisionFacts.evidence.instructorName;
+  const verifiedReview = decisionFacts.evidence.verifiedReview;
   const instructorAvatarUrl = normalizeUrl(course.instructor?.avatarUrl || null);
 
   const courseSectionItems = [
@@ -266,6 +277,7 @@ export default async function CourseDetailPage({ params }: Props) {
                     {totalSeconds > 0 && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">เวลาวิดีโอ</dt><dd className="mt-1 font-semibold">{durationText}</dd></div>}
                     {freePreviewCount > 0 && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">ทดลองเรียน</dt><dd className="mt-1 font-semibold">{freePreviewCount} บทฟรี</dd></div>}
                     {instructorName && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">ผู้สอน</dt><dd className="mt-1 font-semibold">{instructorName}</dd></div>}
+                    {verifiedReview && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">รีวิวผู้เรียน</dt><dd className="mt-1 font-semibold"><a href="#course-reviews" className="underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">★ {verifiedReview.average.toFixed(1)} · {verifiedReview.count} รีวิว</a></dd></div>}
                   </dl>
                 </section>
               </div>
@@ -274,7 +286,7 @@ export default async function CourseDetailPage({ params }: Props) {
                 <Card className="overflow-hidden border-white/80 shadow-[var(--academy-shadow-float)] ring-1 ring-foreground/5">
                   <div className="relative bg-muted">
                     {normalizeUrl(course.thumbnailUrl) ? (
-                      <img src={normalizeUrl(course.thumbnailUrl)!} alt={course.title} className="aspect-video w-full object-cover" />
+                      <img src={normalizeUrl(course.thumbnailUrl)!} alt={course.title} width={1200} height={675} sizes="(min-width: 1024px) 40vw, 100vw" className="aspect-video w-full object-cover" />
                     ) : (
                       <div className="aspect-video overflow-hidden"><CourseArtwork title={course.title} slug={course.slug} tags={course.tags} /></div>
                     )}
@@ -344,7 +356,7 @@ export default async function CourseDetailPage({ params }: Props) {
                   <h2 className="text-3xl font-bold tracking-tight" id="course-instructor-title">รู้จักผู้สอน</h2>
                   <Card className="mt-6 border-border/80 shadow-[var(--academy-shadow-card)]"><CardContent className="flex items-center gap-5 p-6">
                     {instructorAvatarUrl ? (
-                      <img src={instructorAvatarUrl} alt="" className="size-16 rounded-2xl object-cover ring-4 ring-primary/10" />
+                      <img src={instructorAvatarUrl} alt="" width={64} height={64} className="size-16 rounded-2xl object-cover ring-4 ring-primary/10" />
                     ) : (
                       <span className="flex size-16 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground ring-4 ring-primary/10" aria-hidden="true">{instructorName.charAt(0)}</span>
                     )}
@@ -360,8 +372,10 @@ export default async function CourseDetailPage({ params }: Props) {
             <Separator />
 
             <section id="course-reviews" className="scroll-mt-24" aria-labelledby="course-reviews-title">
-              <h2 id="course-reviews-title" className="sr-only">รีวิวผู้เรียน</h2>
-              <div className="mt-5"><CourseReviewsWrapper courseSlug={course.slug} /></div>
+              <h2 id="course-reviews-title" className="text-3xl font-bold tracking-tight">รีวิวจากผู้เรียน</h2>
+              <Suspense fallback={<div className="mt-5 h-24 animate-pulse rounded-2xl bg-muted motion-reduce:animate-none" role="status" aria-label="กำลังโหลดรีวิว" />}>
+                <CourseReviewsWrapper courseSlug={course.slug} />
+              </Suspense>
             </section>
 
             {courseReady && (

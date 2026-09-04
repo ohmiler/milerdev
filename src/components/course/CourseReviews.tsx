@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MessageSquare, Star } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -16,6 +17,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  buildCourseReviewHref,
+  normalizeCourseReviewQuery,
+  type CourseReviewQuery,
+  type CourseReviewSort,
+} from '@/lib/course-review-query';
 import { cn } from '@/lib/utils';
 
 interface Review {
@@ -90,13 +97,23 @@ function ReviewBar({ count, total }: { count: number; total: number }) {
 }
 
 export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const reviewSortParam = searchParams.get('reviewSort') ?? undefined;
+  const reviewRatingParam = searchParams.get('reviewRating') ?? undefined;
+  const reviewPageParam = searchParams.get('reviewPage') ?? undefined;
+  const normalized = useMemo(() => normalizeCourseReviewQuery({
+    reviewSort: reviewSortParam,
+    reviewRating: reviewRatingParam,
+    reviewPage: reviewPageParam,
+  }), [reviewPageParam, reviewRatingParam, reviewSortParam]);
+  const { sort, rating: filterRating, page: currentPage } = normalized.query;
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sort, setSort] = useState('latest');
-  const [filterRating, setFilterRating] = useState<number | null>(null);
+  const [fetchError, setFetchError] = useState('');
 
   // Form
   const [showForm, setShowForm] = useState(false);
@@ -106,30 +123,50 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const fetchReviews = async () => {
+  const updateReviewQuery = useCallback((overrides: Partial<CourseReviewQuery>) => {
+    router.push(
+      buildCourseReviewHref(pathname, searchParams, normalized.query, overrides),
+      { scroll: false },
+    );
+  }, [normalized.query, pathname, router, searchParams]);
+
+  const fetchReviews = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
+    setFetchError('');
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         sort,
         ...(filterRating ? { rating: filterRating.toString() } : {}),
       });
-      const res = await fetch(`/api/courses/${courseSlug}/reviews?${params}`);
+      const res = await fetch(`/api/courses/${courseSlug}/reviews?${params}`, { signal });
+      if (!res.ok) throw new Error('Review request failed');
       const data = await res.json();
       setReviews(data.reviews || []);
       setStats(data.stats || null);
       setPagination(data.pagination || null);
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) return;
+      setFetchError('ไม่สามารถโหลดรีวิวได้ในขณะนี้');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, [courseSlug, currentPage, filterRating, sort]);
 
   useEffect(() => {
-    fetchReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, sort, filterRating]);
+    const controller = new AbortController();
+    void fetchReviews(controller.signal);
+    return () => controller.abort();
+  }, [fetchReviews]);
+
+  useEffect(() => {
+    if (!normalized.isCanonical) {
+      router.replace(
+        buildCourseReviewHref(pathname, searchParams, normalized.query),
+        { scroll: false },
+      );
+    }
+  }, [normalized.isCanonical, normalized.query, pathname, router, searchParams]);
 
   const handleSubmit = async () => {
     if (formRating === 0) {
@@ -153,8 +190,11 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
       setShowForm(false);
       setFormRating(0);
       setFormComment('');
-      setCurrentPage(1);
-      await fetchReviews();
+      if (currentPage === 1) {
+        await fetchReviews();
+      } else {
+        updateReviewQuery({ page: 1 });
+      }
     } catch {
       setSubmitError('เกิดข้อผิดพลาด กรุณาลองใหม่');
     } finally {
@@ -171,11 +211,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
   };
 
   return (
-    <section className="mt-8" aria-labelledby="course-reviews-title">
-      <h2 className="mb-5 text-2xl font-bold tracking-tight" id="course-reviews-title">
-        รีวิวจากผู้เรียน
-      </h2>
-
+    <div className="mt-5">
       {/* Stats Summary */}
       {stats && stats.totalReviews > 0 && (
         <Card className="mb-6">
@@ -196,7 +232,10 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => setFilterRating(filterRating === star ? null : star)}
+                  onClick={() => updateReviewQuery({
+                    rating: filterRating === star ? null : star,
+                    page: 1,
+                  })}
                   className="grid h-auto grid-cols-[1rem_1rem_minmax(0,1fr)_2rem] justify-normal gap-2"
                   data-muted={Boolean(filterRating && filterRating !== star)}
                   aria-pressed={filterRating === star}
@@ -217,7 +256,10 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
         <div className="flex flex-wrap gap-2">
           <NativeSelect
             value={sort}
-            onChange={(e) => { setSort(e.target.value); setCurrentPage(1); }}
+            onChange={(event) => updateReviewQuery({
+              sort: event.target.value as CourseReviewSort,
+              page: 1,
+            })}
             aria-label="เรียงรีวิว"
           >
             <NativeSelectOption value="latest">ล่าสุด</NativeSelectOption>
@@ -229,7 +271,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => setFilterRating(null)}
+              onClick={() => updateReviewQuery({ rating: null, page: 1 })}
             >
               ล้างตัวกรอง ({filterRating} ดาว) ✕
             </Button>
@@ -309,6 +351,16 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
         <div className="grid gap-3" role="status" aria-label="กำลังโหลดรีวิว">
           <Skeleton className="h-24 w-full" /><Skeleton className="h-24 w-full" />
         </div>
+      ) : fetchError ? (
+        <Alert variant="destructive">
+          <AlertTitle>โหลดรีวิวไม่สำเร็จ</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>{fetchError}</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => void fetchReviews()}>
+              ลองโหลดรีวิวอีกครั้ง
+            </Button>
+          </AlertDescription>
+        </Alert>
       ) : reviews.length === 0 ? (
         <Empty className="border">
           <EmptyHeader>
@@ -368,7 +420,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => updateReviewQuery({ page: Math.max(1, currentPage - 1) })}
                 disabled={currentPage === 1}
               >
                 ก่อนหน้า
@@ -384,7 +436,9 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+                onClick={() => updateReviewQuery({
+                  page: Math.min(pagination.totalPages, currentPage + 1),
+                })}
                 disabled={currentPage === pagination.totalPages}
               >
                 ถัดไป
@@ -393,6 +447,6 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
           </PaginationContent>
         </Pagination>
       )}
-    </section>
+    </div>
   );
 }
