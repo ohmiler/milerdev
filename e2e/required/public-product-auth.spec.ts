@@ -99,6 +99,18 @@ test('mobile guest returns to the exact Bundle after registration', async ({ pag
 
   await page.goto(destination);
   await expect(page.getByRole('heading', { level: 1, name: bundle!.title })).toBeVisible();
+  await expect(page.getByRole('main').getByText('ชุดคอร์ส · 2 คอร์ส', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', {
+    level: 3,
+    name: E2E_FIXTURES.courses.paid.title,
+  })).toBeVisible();
+  await expect(page.getByRole('heading', {
+    level: 3,
+    name: E2E_FIXTURES.courses.free.title,
+  })).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'สรุปและสมัครชุดคอร์ส' })
+    .getByText('ซื้อแยกวันนี้', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: /Bundle/ }).first().click();
   await registerAndReturnTo(page, destination, 'Mobile Bundle');
 
