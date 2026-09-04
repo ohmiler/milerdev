@@ -55,6 +55,12 @@ const lowlight = createLowlight({
 const MAX_PROCESSED_HTML_CACHE_BYTES = 2 * 1024 * 1024;
 const processedHtmlCache = new SizeBoundedStringLruCache(MAX_PROCESSED_HTML_CACHE_BYTES);
 
+export interface BlogTableOfContentsItem {
+  id: string;
+  text: string;
+  level: 2 | 3;
+}
+
 type HastNode = {
   type: string;
   tagName?: string;
@@ -181,6 +187,59 @@ export function sanitizeRichContent(html: string): string {
     });
 }
 
+function createHeadingId(text: string, index: number): string {
+    const slug = text
+        .normalize('NFKC')
+        .toLocaleLowerCase('th-TH')
+        .replace(/[^\p{L}\p{M}\p{N}]+/gu, '-')
+        .replace(/^-+|-+$/g, '');
+
+    return `section-${slug || index + 1}`;
+}
+
+/**
+ * Add deterministic anchors after sanitization so article HTML and the TOC
+ * share one server-authored source of truth before hydration.
+ */
+export function addStableBlogHeadingIds(html: string): string {
+    const seenIds = new Map<string, number>();
+    let headingIndex = 0;
+
+    return html.replace(
+        /<(h[23])([^>]*)>([\s\S]*?)<\/\1>/gi,
+        (_match, tag: 'h2' | 'h3', attributes: string, content: string) => {
+            const text = stripHtml(content);
+            const baseId = createHeadingId(text, headingIndex);
+            const occurrence = (seenIds.get(baseId) ?? 0) + 1;
+            const id = occurrence === 1 ? baseId : `${baseId}-${occurrence}`;
+
+            seenIds.set(baseId, occurrence);
+            headingIndex += 1;
+
+            return `<${tag}${attributes} id='${id}' tabindex='-1'>${content}</${tag}>`;
+        },
+    );
+}
+
+export function getBlogTableOfContents(html: string): BlogTableOfContentsItem[] {
+    const items: BlogTableOfContentsItem[] = [];
+    const headingPattern = /<h([23])[^>]*\sid='([^']+)'[^>]*>([\s\S]*?)<\/h\1>/gi;
+    let match: RegExpExecArray | null;
+
+    while ((match = headingPattern.exec(html)) !== null) {
+        const text = stripHtml(match[3]);
+        if (!text) continue;
+
+        items.push({
+            id: match[2],
+            text,
+            level: Number(match[1]) as 2 | 3,
+        });
+    }
+
+    return items;
+}
+
 function getCachedProcessedHtml(cacheKey: string, compute: () => string): string {
     const existing = processedHtmlCache.get(cacheKey);
     if (existing !== undefined) return existing;
@@ -192,7 +251,9 @@ function getCachedProcessedHtml(cacheKey: string, compute: () => string): string
 
 export function getProcessedBlogContent(html: string): string {
     return getCachedProcessedHtml(`blog:${html}`, () =>
-        sanitizeRichContent(highlightCodeBlocks(enhanceBlogContent(html)))
+        addStableBlogHeadingIds(
+            sanitizeRichContent(highlightCodeBlocks(enhanceBlogContent(html)))
+        )
     );
 }
 
