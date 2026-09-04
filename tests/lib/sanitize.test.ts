@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+    getBlogTableOfContents,
+    getProcessedBlogContent,
     highlightCodeBlocks,
     sanitizeRichContent,
 } from '@/lib/sanitize';
@@ -40,5 +42,21 @@ describe('rich content processing', () => {
         expect(result).toContain('<a>link</a>');
         expect(result).not.toContain('<script');
         expect(result).not.toContain('javascript:');
+    });
+
+    it('creates stable unique Thai heading anchors before hydration', () => {
+        const input = '<h2 id=unsafe>เริ่มเขียนโค้ด</h2><h3>ลองทีละส่วน</h3><h2>เริ่มเขียนโค้ด</h2>';
+        const first = getProcessedBlogContent(input);
+        const second = getProcessedBlogContent(input);
+
+        expect(second).toBe(first);
+        expect(first).toContain(`id='section-เริ่มเขียนโค้ด' tabindex='-1'`);
+        expect(first).toContain(`id='section-เริ่มเขียนโค้ด-2' tabindex='-1'`);
+        expect(first).not.toContain('id=unsafe');
+        expect(getBlogTableOfContents(first)).toEqual([
+            { id: 'section-เริ่มเขียนโค้ด', text: 'เริ่มเขียนโค้ด', level: 2 },
+            { id: 'section-ลองทีละส่วน', text: 'ลองทีละส่วน', level: 3 },
+            { id: 'section-เริ่มเขียนโค้ด-2', text: 'เริ่มเขียนโค้ด', level: 2 },
+        ]);
     });
 });
