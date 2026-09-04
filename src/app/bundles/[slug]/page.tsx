@@ -1,19 +1,29 @@
 import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import BundleCourseRow from '@/components/bundle/BundleCourseRow';
+import BundleEvidenceSummary from '@/components/bundle/BundleEvidenceSummary';
 import BundleEnrollButton from '@/components/bundle/BundleEnrollButton';
+import BundlePriceSummary from '@/components/bundle/BundlePriceSummary';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 import { auth } from '@/lib/auth';
 import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
 import { db } from '@/lib/db';
-import { bundleCourses, bundles, courses, enrollments, lessons } from '@/lib/db/schema';
+import {
+  bundleCourses,
+  bundles,
+  courses,
+  enrollments,
+  lessons,
+  reviews,
+  users,
+} from '@/lib/db/schema';
 import { getExcerpt } from '@/lib/sanitize';
 import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
 import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
-import { and, asc, count, eq, inArray } from 'drizzle-orm';
+import { and, asc, avg, count, eq, inArray, sql } from 'drizzle-orm';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +49,27 @@ async function getBundle(slug: string) {
 
   if (!bundle || bundle.status !== 'published') return null;
 
+  const lessonStatsSubquery = db
+    .select({
+      courseId: lessons.courseId,
+      lessonCount: count().as('bundle_detail_lesson_count'),
+      totalDurationSeconds: sql<number>`COALESCE(SUM(${lessons.videoDuration}), 0)`.as('bundle_detail_duration_seconds'),
+      freePreviewCount: sql<number>`COALESCE(SUM(CASE WHEN ${lessons.isFreePreview} = 1 THEN 1 ELSE 0 END), 0)`.as('bundle_detail_preview_count'),
+    })
+    .from(lessons)
+    .groupBy(lessons.courseId)
+    .as('bundle_detail_lesson_stats');
+  const reviewStatsSubquery = db
+    .select({
+      courseId: reviews.courseId,
+      averageRating: avg(reviews.rating).as('bundle_detail_average_rating'),
+      reviewCount: count().as('bundle_detail_review_count'),
+    })
+    .from(reviews)
+    .where(and(eq(reviews.isHidden, false), eq(reviews.isVerified, true)))
+    .groupBy(reviews.courseId)
+    .as('bundle_detail_review_stats');
+
   const bCourses = await db
     .select({
       courseId: bundleCourses.courseId,
@@ -52,9 +83,18 @@ async function getBundle(slug: string) {
       courseThumbnail: courses.thumbnailUrl,
       courseDescription: courses.description,
       courseStatus: courses.status,
+      courseInstructorName: users.name,
+      courseLessonCount: sql<number>`COALESCE(${lessonStatsSubquery.lessonCount}, 0)`.as('bundle_detail_course_lesson_count'),
+      courseDurationSeconds: sql<number>`COALESCE(${lessonStatsSubquery.totalDurationSeconds}, 0)`.as('bundle_detail_course_duration_seconds'),
+      coursePreviewCount: sql<number>`COALESCE(${lessonStatsSubquery.freePreviewCount}, 0)`.as('bundle_detail_course_preview_count'),
+      courseAverageRating: reviewStatsSubquery.averageRating,
+      courseReviewCount: sql<number>`COALESCE(${reviewStatsSubquery.reviewCount}, 0)`.as('bundle_detail_course_review_count'),
     })
     .from(bundleCourses)
     .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
+    .leftJoin(users, eq(courses.instructorId, users.id))
+    .leftJoin(lessonStatsSubquery, eq(courses.id, lessonStatsSubquery.courseId))
+    .leftJoin(reviewStatsSubquery, eq(courses.id, reviewStatsSubquery.courseId))
     .where(eq(bundleCourses.bundleId, bundle.id))
     .orderBy(asc(bundleCourses.orderIndex));
 
@@ -67,19 +107,9 @@ async function getBundle(slug: string) {
     return null;
   }
 
-  const coursesWithLessons = await Promise.all(
-    bCourses.map(async (course) => {
-      const [result] = await db
-        .select({ lessonCount: count() })
-        .from(lessons)
-        .where(eq(lessons.courseId, course.courseId));
-      return { ...course, lessonCount: result?.lessonCount || 0 };
-    }),
-  );
-
   return {
     ...bundle,
-    courses: coursesWithLessons,
+    courses: bCourses,
   };
 }
 
@@ -103,7 +133,18 @@ function getBundleDecisionFacts(
             startsAt: course.coursePromoStartsAt,
             endsAt: course.coursePromoEndsAt,
           },
-      lessonCount: course.lessonCount,
+      lessonCount: Number(course.courseLessonCount) || 0,
+      knownDurationSeconds: Number(course.courseDurationSeconds) || 0,
+      freePreviewCount: Number(course.coursePreviewCount) || 0,
+      instructor: course.courseInstructorName
+        ? { name: course.courseInstructorName }
+        : null,
+      verifiedReview: Number(course.courseReviewCount) > 0
+        ? {
+            average: course.courseAverageRating ?? 0,
+            count: Number(course.courseReviewCount),
+          }
+        : null,
       owned: options.ownedCourseIds?.has(course.courseId) ?? false,
     })),
   }, { now: options.now });
@@ -218,35 +259,22 @@ export default async function BundleDetailPage({ params }: Props) {
               ]}
             />
 
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-end">
+            <div className={'flex flex-col gap-8'}>
               <div>
-                <Badge variant="outline">LEARNING PATH / {String(decisionFacts.evidence.courseCount).padStart(2, '0')} COURSES</Badge>
-                <h1 className="mt-5 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">{bundle.title}</h1>
-                {bundle.description ? <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground">{bundle.description}</p> : null}
+                <Badge variant={'outline'}>
+                  ชุดคอร์ส · {decisionFacts.evidence.courseCount} คอร์ส
+                </Badge>
+                <h1 className={'mt-5 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl'}>
+                  {bundle.title}
+                </h1>
+                {bundle.description ? (
+                  <p className={'mt-5 max-w-3xl text-lg leading-8 text-muted-foreground'}>
+                    {bundle.description}
+                  </p>
+                ) : null}
               </div>
 
-              <dl className="grid grid-cols-2 gap-3" aria-label={'ข้อมูลชุดคอร์ส'}>
-                <div className="flex flex-col gap-1 rounded-lg border bg-background p-4">
-                  <dt className="text-sm text-muted-foreground">คอร์ส</dt>
-                  <dd className="text-lg font-semibold">{decisionFacts.evidence.courseCount}</dd>
-                </div>
-                <div className="flex flex-col gap-1 rounded-lg border bg-background p-4">
-                  <dt className="text-sm text-muted-foreground">บทเรียน</dt>
-                  <dd className="text-lg font-semibold">{decisionFacts.evidence.totalLessons}</dd>
-                </div>
-                <div className="flex flex-col gap-1 rounded-lg border bg-background p-4">
-                  <dt className="text-sm text-muted-foreground">ราคาชุด</dt>
-                  <dd className="text-lg font-semibold">{decisionFacts.price.isFree ? 'ฟรี' : decisionFacts.price.bundleFormatted}</dd>
-                </div>
-                <div className="flex flex-col gap-1 rounded-lg border bg-background p-4">
-                  <dt className="text-sm text-muted-foreground">เทียบซื้อแยกวันนี้</dt>
-                  <dd className="text-lg font-semibold">
-                    {decisionFacts.price.comparison.kind === 'savings'
-                      ? `${decisionFacts.price.comparison.percent}%`
-                      : decisionFacts.price.comparison.kind === 'equal' ? 'เท่ากัน' : 'ซื้อแยกถูกกว่า'}
-                  </dd>
-                </div>
-              </dl>
+              <BundleEvidenceSummary evidence={decisionFacts.evidence} />
             </div>
           </div>
         </header>
@@ -264,36 +292,14 @@ export default async function BundleDetailPage({ params }: Props) {
               <ol className="grid gap-5">
                 {decisionFacts.courses.map((course, index) => {
                   const courseContent = courseContentById.get(course.id);
-                  const thumbnail = normalizeUrl(courseContent?.courseThumbnail ?? null);
                   return (
                     <li key={course.id}>
-                      <Card className="overflow-hidden transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
-                      <Link className="grid sm:grid-cols-[12rem_minmax(0,1fr)]" href={`/courses/${course.slug}`}>
-                        <div
-                          className="flex min-h-40 items-start bg-slate-900 bg-cover bg-center p-4"
-                          style={thumbnail ? { backgroundImage: `url(${thumbnail})` } : undefined}
-                          aria-hidden={true}
-                        >
-                          <Badge>{String(index + 1).padStart(2, '0')}</Badge>
-                        </div>
-                        <div className="p-5">
-                          <div className="mb-3 flex flex-wrap justify-between gap-2 text-xs font-semibold text-muted-foreground">
-                            <span>คอร์สที่ {index + 1}</span>
-                            <span>{course.lessonCount} บทเรียน</span>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-xl font-semibold tracking-tight">{course.title}</h3>
-                            {course.owned ? <Badge variant="secondary">มีสิทธิ์เรียนแล้ว</Badge> : null}
-                          </div>
-                          {courseContent?.courseDescription ? (
-                            <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{getExcerpt(courseContent.courseDescription, 120)}</p>
-                          ) : null}
-                          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
-                            <span>ซื้อแยกวันนี้ {course.price.effectiveFormatted}</span>
-                            <strong>ดูรายละเอียด <span aria-hidden={true}>→</span></strong>
-                          </div>
-                        </div>
-                      </Link></Card>
+                      <BundleCourseRow
+                        course={course}
+                        description={courseContent?.courseDescription ?? null}
+                        thumbnailUrl={courseContent?.courseThumbnail ?? null}
+                        position={index + 1}
+                      />
                     </li>
                   );
                 })}
@@ -307,33 +313,24 @@ export default async function BundleDetailPage({ params }: Props) {
                 </CardHeader>
 
                 <CardContent className="flex flex-col gap-6">
-                <div className="rounded-lg bg-muted p-5">
-                  <span className="text-sm text-muted-foreground">ราคาชุดคอร์ส</span>
-                  <strong className="mt-1 block text-3xl tracking-tight">{decisionFacts.price.isFree ? 'ฟรี' : decisionFacts.price.bundleFormatted}</strong>
-                  <p className="mt-2 flex flex-col gap-1 text-sm">
-                    <span className="text-muted-foreground">ซื้อแยกวันนี้ {decisionFacts.price.separateCurrentFormatted}</span>
-                    <b className={decisionFacts.price.comparison.kind === 'savings' ? 'text-primary' : undefined}>
-                      {decisionFacts.price.comparison.label}
-                    </b>
-                  </p>
-                </div>
+                  <BundlePriceSummary price={decisionFacts.price} />
 
-                <dl className="grid gap-3 text-sm [&_div]:flex [&_div]:justify-between [&_div]:gap-4 [&_dt]:text-muted-foreground [&_dd]:font-medium">
-                  <div><dt>คอร์สทั้งหมด</dt><dd>{decisionFacts.evidence.courseCount} คอร์ส</dd></div>
-                  <div><dt>เนื้อหาทั้งหมด</dt><dd>{decisionFacts.evidence.totalLessons} บทเรียน</dd></div>
-                  <div><dt>Certificate</dt><dd>ทุกคอร์ส</dd></div>
-                  <div><dt>การเข้าถึง</dt><dd>ตลอดชีพ</dd></div>
-                </dl>
+                  <dl className="grid gap-3 text-sm [&_div]:flex [&_div]:justify-between [&_div]:gap-4 [&_dt]:text-muted-foreground [&_dd]:font-medium">
+                    <div><dt>คอร์สทั้งหมด</dt><dd>{decisionFacts.evidence.courseCount} คอร์ส</dd></div>
+                    <div><dt>เนื้อหาทั้งหมด</dt><dd>{decisionFacts.evidence.totalLessons} บทเรียน</dd></div>
+                    <div><dt>Certificate</dt><dd>ทุกคอร์ส</dd></div>
+                    <div><dt>การเข้าถึง</dt><dd>ตลอดชีพ</dd></div>
+                  </dl>
 
-                <BundleEnrollButton
-                  bundleId={bundle.id}
-                  bundleSlug={bundle.slug}
-                  decisionFacts={{
-                    price: decisionFacts.price,
-                    ownership: decisionFacts.ownership,
-                    actions: decisionFacts.actions,
-                  }}
-                />
+                  <BundleEnrollButton
+                    bundleId={bundle.id}
+                    bundleSlug={bundle.slug}
+                    decisionFacts={{
+                      price: decisionFacts.price,
+                      ownership: decisionFacts.ownership,
+                      actions: decisionFacts.actions,
+                    }}
+                  />
                 </CardContent>
                 <CardFooter><p className="text-xs leading-5 text-muted-foreground">ตรวจสอบคอร์สและยอดชำระก่อนยืนยัน ระบบจะเปิดสิทธิ์หลังการชำระเงินได้รับการตรวจสอบแล้ว</p></CardFooter>
               </Card>

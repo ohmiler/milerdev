@@ -92,7 +92,7 @@ describe('bundle enrollment purchase contract', () => {
     );
 
     expect(html).toContain(`href=${quote}/dashboard${quote}`);
-    expect(html).toContain('ลงทะเบียนครบแล้ว');
+    expect(html).toContain('ไปการเรียนของฉัน');
     expect(html).not.toContain('<button');
   });
 

@@ -237,7 +237,7 @@ describe('bundle enrollment interactions', () => {
     expect(verifyButton.disabled).toBe(false);
 
     await user.click(verifyButton);
-    expect(await screen.findByRole('link', { name: /เข้าเรียน/ })).toBeTruthy();
+    expect(await screen.findByRole('link', { name: /ไปการเรียนของฉัน/ })).toBeTruthy();
 
     const verificationCalls = fetchMock.mock.calls.filter(([input]) => (
       urlOf(input) === BUNDLE_PAYMENT_CONTRACT.slipEndpoint

@@ -21,7 +21,7 @@ export default function BundleCard({ title, description, decisionFacts }: Bundle
       <Card className="h-full">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <Badge>Bundle · {decisionFacts.evidence.courseCount} คอร์ส</Badge>
+            <Badge>ชุดคอร์ส · {decisionFacts.evidence.courseCount} คอร์ส</Badge>
             {decisionFacts.readiness === 'preparing' ? (
               <Badge variant="secondary">กำลังเตรียมเนื้อหา</Badge>
             ) : (
