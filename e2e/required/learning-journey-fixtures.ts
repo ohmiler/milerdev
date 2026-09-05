@@ -2,7 +2,7 @@ import mysql, { type RowDataPacket } from 'mysql2/promise';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { and, eq, like } from 'drizzle-orm';
 import { parseE2EFixtureTarget } from '../../scripts/e2e-fixture-target';
-import { courses, lessons, users, enrollments } from '../../src/lib/db/schema';
+import { courses, lessons, users, enrollments, lessonProgress } from '../../src/lib/db/schema';
 import { E2E_FIXTURES } from '../fixtures';
 
 export async function seedLearningJourney(userId: string) {
@@ -21,6 +21,7 @@ export async function seedLearningJourney(userId: string) {
       await tx.insert(courses).values({ id, slug, title: 'คอร์สทดสอบการเรียนภาษาไทย', price: '0.00', status: 'published', instructorId: E2E_FIXTURES.users.instructor.id });
       await tx.insert(lessons).values(lessonIds.map((lessonId, index) => ({ id: lessonId, courseId: id, title: `บทเรียน คำสั่ง ${index + 1}`, orderIndex: index + 1, isFreePreview: index === 0, content: index === 0 ? '<p>เนื้อหาการเรียนภาษาไทย</p>' : null, videoUrl: index === 1 ? 'https://iframe.mediadelivery.net/embed/123/00000000-0000-0000-0000-000000000001' : null })));
       await tx.insert(enrollments).values({ id: crypto.randomUUID(), userId, courseId: id });
+      await tx.insert(lessonProgress).values({ id: crypto.randomUUID(), userId, lessonId: lessonIds[1], watchTimeSeconds: 37, completed: false });
     });
     return { slug, lessonIds };
   } finally { await connection.end(); }
