@@ -48,14 +48,14 @@ test('learning keeps failed completion recoverable and mobile locked navigation 
   });
   await page.goto(`/courses/${fixture.slug}/learn/${fixture.lessonIds[1]}`);
   await expect(page.getByRole('main').getByText('กลับมาเรียนต่อที่ 00:37')).toBeVisible();
-  await page.frameLocator('iframe').getByRole('button', { name: 'Simulate player failure' }).click();
-  await expect(page.getByText('ยังเล่นวิดีโอนี้ไม่ได้')).toBeVisible();
+  await page.getByRole('main').frameLocator('iframe').getByRole('button', { name: 'Simulate player failure' }).click();
+  await expect(page.getByRole('main').getByText('ยังเล่นวิดีโอนี้ไม่ได้')).toBeVisible();
   await page.getByRole('button', { name: 'ลองโหลดวิดีโออีกครั้ง' }).click();
-  await expect(page.frameLocator('iframe').getByRole('button', { name: 'Simulate player failure' })).toBeVisible();
+  await expect(page.getByRole('main').frameLocator('iframe').getByRole('button', { name: 'Simulate player failure' })).toBeVisible();
   await page.getByRole('button', { name: 'ทำเครื่องหมายว่าเรียนจบ' }).click();
   await expect(page.getByRole('heading', { name: 'เรียนจบบทนี้แล้ว' })).toBeVisible();
   await page.goto(`/courses/${fixture.slug}/learn/${fixture.lessonIds[2]}`);
-  await expect(page.getByText('บทเรียนนี้ยังไม่มีเนื้อหา')).toBeVisible();
+  await expect(page.getByRole('main').getByText('บทเรียนนี้ยังไม่มีเนื้อหา')).toBeVisible();
   await page.getByRole('button', { name: 'ทำเครื่องหมายว่าเรียนจบ' }).click();
   await expect(page.getByRole('heading', { name: 'เรียนครบแล้ว · กำลังทบทวน' })).toBeVisible();
   const guest = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
