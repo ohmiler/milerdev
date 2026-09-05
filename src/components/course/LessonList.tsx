@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { normalizeLessonSearch } from '@/lib/lesson-search';
 import { BookOpen, Check, Lock, SearchX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,32 +49,25 @@ export default function LessonList({
     const index = lessons.findIndex((lesson) => lesson.id === currentLessonId);
     return index >= 0 ? Math.floor(index / LESSONS_PER_PAGE) : 0;
   }, [lessons, currentLessonId]);
-  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const normalizedSearch = normalizeLessonSearch(searchQuery);
   const isSearching = normalizedSearch !== '';
-  const [pagination, setPagination] = useState({
-    lessonId: currentLessonId,
-    page: currentLessonPage,
-  });
-  const page = isSearching
-    ? 0
-    : pagination.lessonId === currentLessonId
-      ? pagination.page
-      : currentLessonPage;
+  const [pagination, setPagination] = useState({ lessonId: currentLessonId, search: normalizedSearch, page: currentLessonPage });
   const filteredLessons = isSearching
-    ? lessons.filter((lesson) => lesson.title.toLowerCase().includes(normalizedSearch))
+    ? lessons.filter((lesson) => normalizeLessonSearch(lesson.title).includes(normalizedSearch))
     : lessons;
   const totalPages = Math.ceil(filteredLessons.length / LESSONS_PER_PAGE);
-  const paginatedLessons = isSearching
-    ? filteredLessons
-    : filteredLessons.slice(page * LESSONS_PER_PAGE, (page + 1) * LESSONS_PER_PAGE);
+  const requestedPage = pagination.lessonId === currentLessonId && pagination.search === normalizedSearch
+    ? pagination.page : isSearching ? 0 : currentLessonPage;
+  const page = Math.max(0, Math.min(requestedPage, totalPages - 1));
+  const paginatedLessons = filteredLessons.slice(page * LESSONS_PER_PAGE, (page + 1) * LESSONS_PER_PAGE);
 
   useEffect(() => {
-    currentItemRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    currentItemRef.current?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, [currentLessonId]);
 
   if (lessons.length === 0) {
     return (
-      <Empty className="border">
+      <Empty className="border" role="status">
         <EmptyHeader>
           <EmptyMedia variant="icon"><BookOpen aria-hidden="true" /></EmptyMedia>
           <EmptyTitle>ยังไม่มีบทเรียน</EmptyTitle>
@@ -85,7 +79,7 @@ export default function LessonList({
 
   if (filteredLessons.length === 0) {
     return (
-      <Empty className="border">
+      <Empty className="border" role="status">
         <EmptyHeader>
           <EmptyMedia variant="icon"><SearchX aria-hidden="true" /></EmptyMedia>
           <EmptyTitle>ไม่พบบทเรียนที่ตรงกับ &ldquo;{searchQuery}&rdquo;</EmptyTitle>
@@ -97,6 +91,7 @@ export default function LessonList({
 
   return (
     <div>
+      <p role="status" aria-live="polite" className="mb-3 text-sm text-muted-foreground">{isSearching ? "ผลการค้นหา" : "ทั้งหมด"} {filteredLessons.length} บท · แสดง {page * LESSONS_PER_PAGE + 1}–{Math.min((page + 1) * LESSONS_PER_PAGE, filteredLessons.length)}</p>
       <ol className="grid gap-2">
         {paginatedLessons.map((lesson) => {
           const originalIndex = lessons.findIndex((item) => item.id === lesson.id);
@@ -143,13 +138,13 @@ export default function LessonList({
         })}
       </ol>
 
-      {!isSearching && totalPages > 1 && (
+      {totalPages > 1 && (
         <nav className="mt-4 flex items-center justify-between gap-3 border-t pt-4" aria-label="หน้ารายการบทเรียน">
-          <Button size="icon-sm" variant="ghost" type="button" onClick={() => setPagination({ lessonId: currentLessonId, page: Math.max(0, page - 1) })} disabled={page === 0} aria-label="หน้าบทเรียนก่อนหน้า">
+          <Button size="icon" className="min-h-11 min-w-11" variant="ghost" type="button" onClick={() => setPagination({ lessonId: currentLessonId, search: normalizedSearch, page: Math.max(0, page - 1) })} disabled={page === 0} aria-label="หน้าบทเรียนก่อนหน้า">
             ←
           </Button>
           <span className="text-xs tabular-nums text-muted-foreground">หน้า {page + 1} / {totalPages}</span>
-          <Button size="icon-sm" variant="ghost" type="button" onClick={() => setPagination({ lessonId: currentLessonId, page: Math.min(totalPages - 1, page + 1) })} disabled={page === totalPages - 1} aria-label="หน้าบทเรียนถัดไป">
+          <Button size="icon" className="min-h-11 min-w-11" variant="ghost" type="button" onClick={() => setPagination({ lessonId: currentLessonId, search: normalizedSearch, page: Math.min(totalPages - 1, page + 1) })} disabled={page === totalPages - 1} aria-label="หน้าบทเรียนถัดไป">
             →
           </Button>
         </nav>

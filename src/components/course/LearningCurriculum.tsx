@@ -3,6 +3,7 @@
 import { BookOpen, Check, Lock, Search } from 'lucide-react';
 import LessonList from './LessonList';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
 interface Lesson {
@@ -84,9 +85,10 @@ export default function LearningCurriculum({
             placeholder="ค้นหาบทเรียน..."
           />
         </InputGroup>
+        {searchQuery && <Button type="button" variant="ghost" className="mt-2 min-h-11" onClick={() => onSearchChange('')}>ล้างคำค้น</Button>}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4">
         <LessonList
           lessons={lessons}
           courseSlug={courseSlug}
