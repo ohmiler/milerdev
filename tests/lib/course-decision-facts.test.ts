@@ -118,3 +118,9 @@ describe('ProductDecisionFacts for Course', () => {
     expect(missingEvidence.evidence.verifiedReview).toBeNull();
   });
 });
+
+it('preserves satang in shared price presentation', () => {
+  const facts = deriveCourseDecisionFacts(courseSource({ regularPrice: '490.25' }), { now: NOW });
+  expect(facts.price.effectiveFormatted).toBe('฿490.25');
+  expect(facts.price.regularFormatted).toBe('฿490.25');
+});

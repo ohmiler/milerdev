@@ -41,7 +41,7 @@ export default function BundleEnrollButton({ bundleId, bundleSlug, decisionFacts
       router.push(`/login?callbackUrl=/bundles/${bundleSlug}`);
       return;
     }
-    if (decisionFacts.price.bundle > 0) {
+    if (!decisionFacts.price.isFree) {
       trackClientAnalyticsEvent({ eventName: 'checkout_opened', bundleId, placement: 'bundle_detail' });
       setOpen(true);
       return;
