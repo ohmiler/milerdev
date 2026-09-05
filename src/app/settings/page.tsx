@@ -1,9 +1,9 @@
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ArrowUpRight } from 'lucide-react';
-import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { eq, sql } from 'drizzle-orm';
+import { requireMember } from '@/lib/member-access';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
@@ -21,14 +21,15 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
-  const session = await auth();
-  if (!session?.user) redirect('/login');
+  const member = await requireMember('/settings');
 
   const [user] = await db
-    .select({ passwordHash: users.passwordHash })
+    .select({ hasPassword: sql<number>`${users.passwordHash} is not null` })
     .from(users)
-    .where(eq(users.id, session.user.id))
+    .where(eq(users.id, member.id))
     .limit(1);
+
+  if (!user) notFound();
 
   return (
     <LearnerAccountShell
@@ -62,7 +63,7 @@ export default async function SettingsPage() {
           <CardDescription>เปลี่ยนรหัสผ่านสำหรับบัญชีที่เข้าสู่ระบบด้วยอีเมล</CardDescription>
         </CardHeader>
         <CardContent>
-          <PasswordSettingsForm hasPassword={Boolean(user?.passwordHash)} />
+          <PasswordSettingsForm hasPassword={Boolean(user.hasPassword)} />
         </CardContent>
       </Card>
     </LearnerAccountShell>

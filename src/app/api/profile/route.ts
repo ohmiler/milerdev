@@ -4,17 +4,21 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { getProfileNameError } from '@/lib/profile-policy';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const updateProfileSchema = z.object({
-    name: z.string().min(2, 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร').max(100).optional(),
-});
+    name: z.string().trim().superRefine((name, context) => {
+        const error = getProfileNameError(name);
+        if (error) context.addIssue({ code: 'custom', message: error });
+    }),
+}).strict();
 
 // PUT /api/profile - Update user profile
 export async function PUT(request: Request) {
     try {
         const session = await auth();
-        if (!session?.user) {
+        if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -38,14 +42,14 @@ export async function PUT(request: Request) {
         await db
             .update(users)
             .set({
-                name: name || null,
+                name,
                 updatedAt: new Date(),
             })
             .where(eq(users.id, session.user.id));
 
-        return NextResponse.json({ message: 'อัพเดทโปรไฟล์สำเร็จ' });
-    } catch (error) {
-        console.error('Error updating profile:', error);
+        return NextResponse.json({ message: 'อัปเดตโปรไฟล์สำเร็จ', user: { name } });
+    } catch {
+        console.error('Error updating profile');
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
             { status: 500 }
@@ -57,7 +61,7 @@ export async function PUT(request: Request) {
 export async function GET() {
     try {
         const session = await auth();
-        if (!session?.user) {
+        if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -78,9 +82,9 @@ export async function GET() {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        return NextResponse.json({ user });
-    } catch (error) {
-        console.error('Error getting profile:', error);
+        return NextResponse.json({ user }, { headers: { 'Cache-Control': 'private, no-store' } });
+    } catch {
+        console.error('Error getting profile');
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด' },
             { status: 500 }

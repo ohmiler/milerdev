@@ -12,6 +12,8 @@ import SettingsLoading from '@/app/settings/loading';
 vi.mock('@/components/layout/Navbar', () => ({ default: () => <div data-layout="navbar" /> }));
 vi.mock('@/components/layout/Footer', () => ({ default: () => <div data-layout="footer" /> }));
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }), usePathname: () => '/profile' }));
+
 const quote = String.fromCharCode(34);
 
 describe('learner account contracts', () => {
@@ -66,7 +68,7 @@ describe('learner account contracts', () => {
 
   it('keeps profile mutation fields and immutable email semantics', () => {
     const html = renderToStaticMarkup(
-      <ProfileForm user={{ id: 'user-1', name: 'Miler', email: 'miler@example.com', avatarUrl: null }} />,
+      <ProfileForm user={{ name: 'Miler', email: 'miler@example.com' }} />,
     );
     const source = readFileSync('src/app/profile/ProfileForm.tsx', 'utf8');
 
