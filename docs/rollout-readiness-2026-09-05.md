@@ -10,7 +10,7 @@ Scope: GitHub #25, final contract/qualification #54. This report covers applicat
 | Exact payment recovery #50 | #80 | Owner-scoped immutable attempt records, Stripe return replay and exact PromptPay resumption; payment and enrollment facts remain separate. |
 | Learner account #51 | #81 | Server guards before private rendering, minimal profile fields, saved/dirty/error states, certificate name snapshot explanation, shared password policy and fresh login after session invalidation. |
 | Certificates #52 | #82 | Canonical active/revoked/missing collection, explicit idempotent repair, privacy-minimized public verification, status-aware noindex metadata and verifiable PNG/share recovery. |
-| Learning #53 | #83 | Minimal authorized lesson projection, trusted playback resume, persistent completion recovery, Thai search with 20-item pagination and mobile focus/locked navigation. |
+| Learning #53 | #83 | Minimal authorized lesson projection, trusted playback resume (including iframe load before hydration), persistent completion recovery, Thai search with 20-item pagination and mobile focus/locked navigation. |
 | Contract #54 | This change | Remove duplicated course/bundle price interpretation and use canonical formatting without losing satang; final deterministic verification and remaining operational gates. |
 
 ## Contract audit
@@ -24,7 +24,7 @@ Scope: GitHub #25, final contract/qualification #54. This report covers applicat
 
 ## Deterministic verification
 
-Final full-suite and latest-head CI evidence will be recorded after dependency reconciliation. Existing checked suites cover owner isolation, immutable historical amounts, payment replay, certificate repair/revocation, private route returns, fresh login, search boundaries, trusted player messages and progress recovery.
+Local final verification passes 1,058 tests across 198 files, ESLint, TypeScript, Thai admin text validation, git diff --check and production build with placeholder build configuration. Dependency CI: #81 run 33974377994 and #82 run 33974843393 pass all gates. Final #83/#84 CI evidence is recorded in their pull requests after master reconciliation. Checked suites cover owner isolation, immutable historical amounts, payment replay, certificate repair/revocation, private route returns, fresh login, search boundaries, trusted player messages and progress recovery.
 
 Required browser coverage includes course/bundle checkout and exact recovery, account registration/profile/password, certificate active/revoked/not-found and actual PNG download, content-only and empty lessons, trusted video resume/failure retry, persisted progress failure recovery, review mode, mobile Sheet/locked-dialog focus, Thai layouts and reduced-motion preference.
 
