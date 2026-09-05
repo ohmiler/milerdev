@@ -14,8 +14,8 @@ test('public certificate distinguishes revoked and missing proof and exports a v
       await page.setViewportSize({ width, height: 900 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     }
-    await expect(page.getByRole('document').getByRole('link')).toHaveAttribute('href', new RegExp(`/certificate/${E2E_FIXTURES.certificates[kind].code}$`));
-    await expect(page.getByRole('document')).toContainText('สถานะใบรับรองอาจเปลี่ยนแปลง');
+    await expect(page.getByRole('main').getByRole('document').getByRole('link')).toHaveAttribute('href', new RegExp(`/certificate/${E2E_FIXTURES.certificates[kind].code}$`));
+    await expect(page.getByRole('main').getByRole('document')).toContainText('สถานะใบรับรองอาจเปลี่ยนแปลง');
   }
   const downloadButton = page.getByRole('button', { name: 'ดาวน์โหลด PNG' });
   await downloadButton.focus();
