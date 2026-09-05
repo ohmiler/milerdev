@@ -34,6 +34,7 @@ export type BunnyPlayerMessageHost = {
 };
 
 export type BunnyPlayerCallbacks = {
+  onReady?: () => void;
   onPlay?: () => void;
   onPause?: () => void;
   onTimeUpdate?: (seconds: number, duration: number) => void;
@@ -206,6 +207,7 @@ export function connectBunnyPlayer(
       const value = message.value as { src?: unknown; events?: unknown; methods?: unknown };
       if (value.src !== frame.src) return;
       ready = true;
+      callbacks.onReady?.();
       unsubscribe('ready');
       const supportedEvents = stringSet(value.events);
       const supportedMethods = stringSet(value.methods);
