@@ -87,6 +87,17 @@ describe('PromptPay intent creation boundary', () => {
     expect(body.expiresAt).toBeTruthy();
   });
 
+  it('rejects a stale reviewed amount without inserting an attempt', async () => {
+    selectQueue.push(
+      [{ id: 'course-1', title: 'Course', price: '990.00', promoPrice: null, promoStartsAt: null, promoEndsAt: null, status: 'published' }],
+      [{ lessonCount: 1 }], [],
+    );
+    const { POST } = await import('@/app/api/promptpay/intents/route');
+    const response = await POST(request({ courseId: 'course-1', expectedAmount: '490.00' }));
+    expect(response.status).toBe(409);
+    expect(inserted).toHaveLength(0);
+  });
+
   it('does not create an intent for an archived course', async () => {
     selectQueue.push([{
       id: 'course-1', title: 'Course', price: '990.00', promoPrice: null,

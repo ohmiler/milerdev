@@ -14,6 +14,7 @@ import { measurementRecorder } from '@/lib/measurement-recorder';
 const stripeBundleCheckoutRequestSchema = z.object({
     bundleId: z.string().trim().min(1).max(36),
     exposureId: analyticsExposureIdSchema.optional(),
+    expectedAmount: z.string().regex(/^\d{1,8}\.\d{2}$/).optional(),
 }).strict();
 
 
@@ -109,6 +110,10 @@ export async function POST(request: Request) {
         }
 
         const courseNames = bCourses.map(c => c.courseTitle).join(', ');
+
+        if (parsed.data.expectedAmount !== undefined && parsed.data.expectedAmount !== priceNumber.toFixed(2)) {
+            return NextResponse.json({ error: 'ราคาเปลี่ยนแปลง กรุณาตรวจสอบรายการและยืนยันยอดใหม่' }, { status: 409 });
+        }
 
         // A checkout session is an immutable payment attempt. Reusing and repricing
         // an older pending row would let multiple Stripe sessions point at mutable
