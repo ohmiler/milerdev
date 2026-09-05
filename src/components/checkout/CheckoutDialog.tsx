@@ -145,7 +145,7 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
       });
       const data = await response.json();
       if (!response.ok) {
-        if (response.status >= 500) setUncertain(true);
+        if (response.status >= 500 && method !== 'free') setUncertain(true);
         setReview(null);
         setError(data.error || 'ยังเริ่มรายการไม่ได้ กรุณาตรวจสอบรายการอีกครั้ง');
         return;
@@ -163,8 +163,11 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
         setError('ยังยืนยันผลการเริ่มรายการไม่ได้ กรุณาดูประวัติการชำระเงินก่อนลองใหม่');
       }
     } catch {
-      setUncertain(true);
-      setError('การเชื่อมต่อขาดหาย ยังยืนยันผลรายการไม่ได้ อย่าชำระซ้ำ กรุณาดูประวัติการชำระเงิน');
+      setReview(null);
+      setUncertain(method !== 'free');
+      setError(method === 'free'
+        ? 'ยังยืนยันผลการลงทะเบียนไม่ได้ กรุณาตรวจสอบรายการอีกครั้งเพื่อดูสิทธิ์เรียนล่าสุด'
+        : 'การเชื่อมต่อขาดหาย ยังยืนยันผลรายการไม่ได้ อย่าชำระซ้ำ กรุณาดูประวัติการชำระเงิน');
     } finally {
       busyRef.current = false;
       setLoading(false);
@@ -181,7 +184,7 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
       if (!response.ok || !data.presentation) throw new Error();
       setPresentation(data.presentation);
       setUncertain(!data.canSubmitSlip);
-      if (data.canSubmitSlip) setError(null);
+      setError(null);
       if (data.presentation.payment.state === 'completed-ready') {
         onEnrolled();
         onClose();
@@ -303,14 +306,14 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
                   </Field>
                 </FieldGroup>
               ) : null}
-              {!review && (error || couponError) && !uncertain ? <Button type="button" variant="outline" disabled={pending} onClick={() => refreshReview()}>ตรวจสอบรายการใหม่โดยไม่ใช้คูปอง</Button> : null}
+              {!review && (error || couponError) && !uncertain ? <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => refreshReview()}>ตรวจสอบรายการใหม่โดยไม่ใช้คูปอง</Button> : null}
               {review?.action === 'unavailable' ? <Alert><AlertTitle>ยังไม่เปิดรับสมัคร</AlertTitle><AlertDescription>สินค้านี้ยังไม่พร้อมรับการลงทะเบียน กรุณากลับมาตรวจสอบภายหลัง</AlertDescription></Alert> : null}
               {review?.action === 'owned' ? <Button asChild><Link href="/dashboard">ไปการเรียนของฉัน</Link></Button> : null}
               {review?.action === 'pay' && !uncertain ? <div className="flex flex-col gap-3" role="group" aria-label="ช่องทางชำระเงิน">
                 <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('stripe')}><CreditCard data-icon="inline-start" aria-hidden="true" />ชำระด้วยบัตรผ่าน Stripe</Button>
                 <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('promptpay')}><Smartphone data-icon="inline-start" aria-hidden="true" />โอนเงิน / PromptPay</Button>
               </div> : null}
-              {review?.action === 'enroll-free' && !uncertain ? <Button type="button" disabled={pending} onClick={() => startPayment('free')}>{review.coupon ? 'ลงทะเบียนเรียนฟรี (คูปอง 100%)' : 'ยืนยันลงทะเบียนเรียนฟรี'}</Button> : null}
+              {review?.action === 'enroll-free' && !uncertain ? <Button type="button" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('free')}>{review.coupon ? 'ลงทะเบียนเรียนฟรี (คูปอง 100%)' : 'ยืนยันลงทะเบียนเรียนฟรี'}</Button> : null}
               {loading ? <p role="status"><Spinner aria-hidden="true" />กำลังดำเนินการ...</p> : null}
             </>
           )}

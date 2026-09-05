@@ -189,3 +189,17 @@ it('does not claim learning access from a successful slip response while access 
   expect(enrolled).not.toHaveBeenCalled();
   expect(screen.queryByRole('button', { name: 'ตรวจสอบและชำระเงิน' })).toBeNull();
 });
+
+it('recovers an uncertain free enrollment by reading current ownership rather than prompting for payment', async () => {
+  const fetchMock = vi.fn().mockResolvedValueOnce(response({ review: review('course', { action: 'enroll-free', price: { original: '0.00', discount: '0.00', amountDue: '0.00', currency: 'THB' } }) }))
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValueOnce(response({ review: review('course', { action: 'owned' }) }));
+  vi.stubGlobal('fetch', fetchMock);
+  const user = userEvent.setup(); mount('course');
+  await user.click(await screen.findByRole('button', { name: 'ยืนยันลงทะเบียนเรียนฟรี' }));
+  expect(await screen.findByText(/ยังยืนยันผลการลงทะเบียนไม่ได้/)).toBeTruthy();
+  expect(enrolled).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'ตรวจสอบรายการใหม่โดยไม่ใช้คูปอง' }));
+  expect(await screen.findByRole('link', { name: 'ไปการเรียนของฉัน' })).toBeTruthy();
+  expect(screen.queryByRole('link', { name: 'ดูประวัติการชำระเงิน' })).toBeNull();
+});
