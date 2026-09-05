@@ -1,42 +1,15 @@
 import { NextResponse } from 'next/server';
-import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { payments, courses, bundles } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { loadPaymentRecords } from '@/lib/payment-records';
 
-// GET /api/payments - Get current user's payment history
+const headers = { 'Cache-Control': 'private, no-store' };
+
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const userPayments = await db
-      .select({
-        id: payments.id,
-        amount: payments.amount,
-        currency: payments.currency,
-        method: payments.method,
-        status: payments.status,
-        createdAt: payments.createdAt,
-        courseId: payments.courseId,
-        courseTitle: courses.title,
-        courseSlug: courses.slug,
-        bundleId: payments.bundleId,
-        bundleTitle: bundles.title,
-        bundleSlug: bundles.slug,
-      })
-      .from(payments)
-      .leftJoin(courses, eq(payments.courseId, courses.id))
-      .leftJoin(bundles, eq(payments.bundleId, bundles.id))
-      .where(eq(payments.userId, session.user.id))
-      .orderBy(desc(payments.createdAt));
-
-    return NextResponse.json({ payments: userPayments });
-  } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user payments:' });
-    return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers });
+    return NextResponse.json({ payments: await loadPaymentRecords(session.user.id) }, { headers });
+  } catch {
+    return NextResponse.json({ error: 'ยังตรวจสอบรายการไม่ได้ กรุณาลองใหม่' }, { status: 503, headers });
   }
 }

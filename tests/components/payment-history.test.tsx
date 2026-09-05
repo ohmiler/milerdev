@@ -3,7 +3,10 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { paymentRecord } from '../fixtures/payment-record';
 import PaymentHistory from '@/app/dashboard/payments/PaymentHistory';
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 describe('payment history', () => {
   afterEach(() => {
@@ -16,34 +19,8 @@ describe('payment history', () => {
       ok: true,
       json: vi.fn().mockResolvedValue({
         payments: [
-          {
-            id: 'payment-1',
-            amount: '900719925474099.91',
-            currency: 'THB',
-            method: 'promptpay',
-            status: 'completed',
-            createdAt: '2026-08-30T00:00:00.000Z',
-            courseId: 'course-1',
-            courseTitle: 'TypeScript',
-            courseSlug: 'typescript',
-            bundleId: null,
-            bundleTitle: null,
-            bundleSlug: null,
-          },
-          {
-            id: 'payment-2',
-            amount: '0.01',
-            currency: 'THB',
-            method: 'stripe',
-            status: 'completed',
-            createdAt: '2026-08-30T00:00:00.000Z',
-            courseId: null,
-            courseTitle: null,
-            courseSlug: null,
-            bundleId: 'bundle-1',
-            bundleTitle: 'Full stack',
-            bundleSlug: 'full-stack',
-          },
+          paymentRecord({ id: 'payment-1', amount: '900719925474099.91', status: 'completed' }),
+          paymentRecord({ id: 'payment-2', amount: '0.01', status: 'completed' }),
         ],
       }),
     }));

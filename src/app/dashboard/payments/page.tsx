@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
+import { requireMember } from '@/lib/member-access';
 import PaymentHistory from './PaymentHistory';
 
 export const metadata: Metadata = {
@@ -7,14 +8,15 @@ export const metadata: Metadata = {
   description: 'ตรวจสอบรายการและสถานะการชำระเงินสำหรับคอร์สเรียนของคุณ',
 };
 
-export default function UserPaymentsPage() {
+export default async function UserPaymentsPage() {
+  const member = await requireMember('/dashboard/payments');
   return (
     <LearnerAccountShell
       current="payments"
       title="ประวัติการชำระเงิน"
       description="ติดตามยอดชำระ วิธีชำระ และสถานะของทุกรายการที่เชื่อมกับบัญชีผู้เรียนของคุณ"
     >
-      <PaymentHistory />
+      <PaymentHistory key={member.id} />
     </LearnerAccountShell>
   );
 }

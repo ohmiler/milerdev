@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { DrizzleQueryError } from 'drizzle-orm';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 
 describe('isDuplicateKeyError', () => {
@@ -28,4 +29,19 @@ describe('isDuplicateKeyError', () => {
         expect(isDuplicateKeyError('string')).toBe(false);
         expect(isDuplicateKeyError(42)).toBe(false);
     });
+});
+
+it('recognizes the actual Drizzle wrapper used when Stripe replays an existing enrollment', () => {
+    const mysql = Object.assign(new Error('duplicate key'), { code: 'ER_DUP_ENTRY', errno: 1062 });
+    expect(isDuplicateKeyError(new DrizzleQueryError('fixture insert', [], mysql))).toBe(true);
+});
+it('does not mistake query parameters in a Drizzle wrapper for a duplicate-key error', () => {
+    const mysql = Object.assign(new Error('connection unavailable'), { code: 'ECONNREFUSED' });
+    expect(isDuplicateKeyError(new DrizzleQueryError('fixture insert', ['Duplicate entry'], mysql))).toBe(false);
+});
+
+it('terminates cyclic causes and keeps non-duplicate driver errors visible', () => {
+    const cyclic = new Error('query'); cyclic.cause = cyclic;
+    expect(isDuplicateKeyError(cyclic)).toBe(false);
+    expect(isDuplicateKeyError(Object.assign(new Error('Duplicate entry in a query parameter'), { code: 'ER_NO_REFERENCED_ROW_2' }))).toBe(false);
 });

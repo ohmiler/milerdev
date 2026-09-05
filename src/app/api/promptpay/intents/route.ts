@@ -54,6 +54,9 @@ export async function POST(request: Request) {
     }
 
     const now = new Date();
+    // Match DATETIME(0) precision before insert: MySQL rounds fractional seconds up.
+    // Using the same stored time for expiry avoids briefly treating a new intent as future-dated.
+    const intentCreatedAt = new Date(Math.floor(now.getTime() / 1000) * 1000);
     const paymentId = crypto.randomUUID();
     const result = await db.transaction(async (tx) => {
       if (parsed.data.courseId) {
@@ -127,7 +130,7 @@ export async function POST(request: Request) {
           method: 'promptpay',
           itemTitle: course.title,
           status: 'pending',
-          createdAt: now,
+          createdAt: intentCreatedAt,
         });
         return { amount, itemTitle: course.title };
       }
@@ -190,7 +193,7 @@ export async function POST(request: Request) {
         method: 'promptpay',
         itemTitle: bundle.title,
         status: 'pending',
-        createdAt: now,
+        createdAt: intentCreatedAt,
       });
       return { amount, itemTitle: bundle.title };
     });
@@ -199,7 +202,7 @@ export async function POST(request: Request) {
       paymentId,
       amount: result.amount,
       itemTitle: result.itemTitle,
-      expiresAt: new Date(now.getTime() + PROMPTPAY_INTENT_TTL_MS).toISOString(),
+      expiresAt: new Date(intentCreatedAt.getTime() + PROMPTPAY_INTENT_TTL_MS).toISOString(),
     }, { status: 201 });
   } catch (error) {
     const status = typeof error === 'object' && error && 'status' in error

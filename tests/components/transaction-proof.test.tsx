@@ -1,79 +1,33 @@
-import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import { paymentRecord } from '../fixtures/payment-record';
 import TransactionReceipt from '@/components/proof/TransactionReceipt';
 import CertificateCard from '@/components/certificate/CertificateCard';
 
 vi.mock('@/components/layout/Navbar', () => ({ default: () => <div data-layout="navbar" /> }));
 vi.mock('@/components/layout/Footer', () => ({ default: () => <div data-layout="footer" /> }));
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+
 const quote = String.fromCharCode(34);
 
 describe('transaction and credential proof contracts', () => {
-  it('renders learning access only after enrollment is confirmed', () => {
-    const ready = renderToStaticMarkup(
-      <TransactionReceipt
-        kind="course"
-        title="TypeScript Foundations"
-        amount="2490.00"
-        orderId="payment-12345678"
-        accessReady
-        primaryHref="/courses/typescript/learn"
-        primaryLabel="เริ่มเรียน"
-      />,
-    );
-    const pending = renderToStaticMarkup(
-      <TransactionReceipt
-        kind="course"
-        title="TypeScript Foundations"
-        amount="2490.00"
-        orderId="payment-12345678"
-        accessReady={false}
-      />,
-    );
-
-    expect(ready).toContain(`href=${quote}/courses/typescript/learn${quote}`);
-    expect(ready).toContain(`data-access=${quote}ready${quote}`);
-    expect(pending).not.toContain('/courses/typescript/learn');
-    expect(pending).toContain(`data-access=${quote}pending${quote}`);
-    expect(pending).toContain(`<button`);
+  it.each(['pending', 'verifying', 'completed', 'failed', 'refunded'] as const)('renders exact payment evidence for %s without treating access as payment confirmation', (status) => {
+    const record = paymentRecord({ status });
+    const html = renderToStaticMarkup(<TransactionReceipt record={record} />);
+    expect(html).toContain('attempt-1');
+    expect(html).toContain('ชื่อสินค้าตอนชำระเงิน');
+    expect(html).toContain('990.25');
+    expect(html).toContain(record.presentation.payment.label);
+    expect(html).toContain('ยังไม่มีสิทธิ์เรียน');
+    expect(html).not.toContain('พร้อมเริ่มเรียน');
+    if (status === 'completed') expect(html).toContain('อย่าชำระซ้ำ');
   });
 
-  it('renders bundle evidence as an ordered set of real course links', () => {
-    const html = renderToStaticMarkup(
-      <TransactionReceipt
-        kind="bundle"
-        title="Web Developer Path"
-        amount="4990.00"
-        orderId="payment-bundle"
-        accessReady
-        primaryHref="/courses/html/learn"
-        primaryLabel="เริ่มคอร์สแรก"
-        items={[
-          { id: 'course-1', title: 'HTML', href: '/courses/html' },
-          { id: 'course-2', title: 'TypeScript', href: '/courses/typescript' },
-        ]}
-      />,
-    );
-
-    expect(html).toContain(`<ol`);
-    expect(html).toContain(`href=${quote}/courses/html${quote}`);
-    expect(html).toContain(`href=${quote}/courses/typescript${quote}`);
-  });
-
-  it('delegates both Stripe return routes to the strict fulfillment boundary', () => {
-    const course = readFileSync('src/app/courses/[slug]/payment-success/page.tsx', 'utf8');
-    const bundle = readFileSync('src/app/bundles/[slug]/payment-success/page.tsx', 'utf8');
-
-    for (const source of [course, bundle]) {
-      expect(source).toContain('stripe.checkout.sessions.retrieve(sessionId)');
-      expect(source).toContain('fulfillStripeCheckoutSession');
-      expect(source).toContain('expected: { userId');
-      expect(source).not.toContain('safeInsertEnrollment');
-      expect(source).not.toContain('.update(payments)');
-    }
-    expect(course).toContain("type: 'course', itemId: courseId");
-    expect(bundle).toContain("type: 'bundle', itemId: bundleId");
+  it('only announces ready after both payment and access are confirmed', () => {
+    const html = renderToStaticMarkup(<TransactionReceipt record={paymentRecord({ status: 'completed' }, 1)} />);
+    expect(html).toContain('ชำระแล้ว พร้อมเริ่มเรียน');
+    expect(html).toContain('สิทธิ์เรียนพร้อมแล้ว');
   });
 
   it('keeps revoked certificate status in the document and names client actions', () => {

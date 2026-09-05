@@ -47,12 +47,12 @@ for (const type of ['course', 'bundle'] as const) {
 
     // Cancellation is advisory: the query does not claim payment or grant access.
     await page.goto(`${destination}?payment=cancelled`);
-    await expect(page.getByText('กลับจากหน้าชำระเงิน', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText('กลับจากหน้าชำระเงิน', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { level: 1, name: fixture.title })).toBeVisible();
     await page.goBack();
     await expect(page).toHaveURL(new RegExp(fixture.slug + '$'));
     await page.goForward();
-    await expect(page.getByText('กลับจากหน้าชำระเงิน', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText('กลับจากหน้าชำระเงิน', { exact: true })).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await trigger.click();
