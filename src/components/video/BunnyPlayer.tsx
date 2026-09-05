@@ -115,13 +115,15 @@ export default function BunnyPlayer({
   const videoType = useMemo(() => detectVideoType(finalUrl), [finalUrl]);
 
   useEffect(() => {
-    if (videoType !== 'bunny' || loadedUrl !== finalUrl) return;
+    // The iframe may finish loading before hydration attaches onLoad.
+    if (videoType !== 'bunny') return;
     const frame = iframeRef.current;
     if (!frame) return;
     const connection = connectBunnyPlayer({
       frame,
       resumeAtSeconds,
       callbacks: {
+        onReady: () => setLoadedUrl(finalUrl),
         onTimeUpdate: (seconds, duration) => callbacksRef.current.onTimeUpdate?.(seconds, duration),
         onPlay: () => callbacksRef.current.onPlay?.(),
         onPause: () => callbacksRef.current.onPause?.(),
