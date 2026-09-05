@@ -51,6 +51,7 @@ for (const type of ['course', 'bundle'] as const) {
     await expect(page.getByText(fixture.id, { exact: true })).toBeVisible();
     await expect(page.getByText(fixture.latest, { exact: true })).toBeVisible();
     await expect(page.getByText('ชำระเงินไม่สำเร็จ', { exact: true })).toBeVisible();
+    await expect(page.getByText('คืนเงินแล้ว', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'กลับไปเลือกวิธีชำระเงิน' })).toHaveCount(0);
 
     const guest = await browser.newContext({ baseURL });
@@ -63,8 +64,9 @@ for (const type of ['course', 'bundle'] as const) {
     // A second authenticated owner cannot read the record or fulfill the first owner's return.
     await page.context().clearCookies();
     await register(page);
-    const foreign = await page.goto(`/dashboard/payments/${fixture.id}`);
-    expect(foreign?.status()).toBe(404);
+    await page.goto(`/dashboard/payments/${fixture.id}`);
+    await expect(page.getByRole('heading', { name: 'ไม่พบหน้าที่คุณต้องการ' })).toBeVisible();
+    await expect(page.getByText(fixture.id, { exact: true })).toHaveCount(0);
     await page.goto(`${path}?session_id=${fixture.sessionId}`);
     await expect(page.getByRole('heading', { level: 1, name: 'ยังยืนยันรายการนี้ไม่ได้' })).toBeVisible();
     await expect(page.getByText(fixture.id, { exact: true })).toHaveCount(0);

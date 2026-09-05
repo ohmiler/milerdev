@@ -28,6 +28,7 @@ export default function PaymentRecordDetails({ record, onRefresh, showDetailsLin
     </CardContent>
     <CardFooter className="flex flex-wrap gap-3">
       <PaymentRecoveryAction record={record} onRefresh={onRefresh} />
+      {p.recovery.kind !== 'contact' && ['completed-access-pending', 'verifying', 'unconfirmed'].includes(p.payment.state) ? <Button asChild variant="outline" className="h-auto min-h-11 whitespace-normal"><Link href="mailto:milerdev.official@gmail.com">ติดต่อพร้อมเลขอ้างอิง</Link></Button> : null}
       {showDetailsLink ? <Button asChild variant="outline" className="h-auto min-h-11 whitespace-normal"><Link href={`/dashboard/payments/${encodeURIComponent(record.id)}`}>รายละเอียดรายการ</Link></Button> : null}
     </CardFooter>
   </Card>;
