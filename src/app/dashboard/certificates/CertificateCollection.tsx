@@ -1,9 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Award, CircleAlert, Copy } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import type { OwnerCertificateCollection } from '@/lib/certificate-credentials';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -26,21 +27,15 @@ import {
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface Certificate {
-  id: string;
-  certificateCode: string;
-  recipientName: string;
-  courseTitle: string;
-  completedAt: string;
-  issuedAt: string;
-}
-
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 export default function CertificateCollection() {
-  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [collection, setCollection] = useState<OwnerCertificateCollection | null>(null);
+  const [repairing, setRepairing] = useState<string | null>(null);
+  const repairBusy = useRef(false);
+  const [recoveryMessage, setRecoveryMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -58,7 +53,8 @@ export default function CertificateCollection() {
         const response = await fetch('/api/certificates', { signal: controller.signal });
         if (!response.ok) throw new Error('Certificate request failed');
         const data = await response.json();
-        setCertificates(Array.isArray(data.certificates) ? data.certificates : []);
+        if (!data.collection || !Array.isArray(data.collection.items)) throw new Error('Invalid collection');
+        setCollection(data.collection);
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === 'AbortError') return;
         setError(true);
@@ -71,15 +67,42 @@ export default function CertificateCollection() {
     return () => controller.abort();
   }, [reloadKey]);
 
-  async function copyCertificateLink(certificate: Certificate) {
+  async function copyCertificateLink(code: string) {
     try {
-      const url = `${window.location.origin}/certificate/${certificate.certificateCode}`;
+      const url = `${window.location.origin}/certificate/${code}`;
       await navigator.clipboard.writeText(url);
       toast.success('คัดลอกลิงก์ใบรับรองแล้ว');
     } catch {
       toast.error('ไม่สามารถคัดลอกลิงก์ได้', {
         description: 'กรุณาเปิดใบรับรองแล้วคัดลอกที่อยู่จากเบราว์เซอร์',
       });
+    }
+  }
+
+  async function repair(courseSlug: string) {
+    if (repairBusy.current) return;
+    repairBusy.current = true;
+    setRepairing(courseSlug);
+    setRecoveryMessage('');
+    try {
+      const response = await fetch('/api/certificates/repair', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseSlug }),
+      });
+      const data = await response.json();
+      const kind = data.result?.kind;
+      if (response.ok && (kind === 'issued' || kind === 'ready')) {
+        setRecoveryMessage('ตรวจสอบใบรับรองสำเร็จ'); retry();
+      } else if (kind === 'revoked') {
+        setRecoveryMessage('ใบรับรองถูกเพิกถอนแล้ว กรุณาติดต่อทีมงาน'); retry();
+      } else if (kind === 'not_completed') {
+        setRecoveryMessage('ยังไม่พบข้อมูลเรียนจบ กรุณากลับไปตรวจสอบการเรียน');
+      } else {
+        setRecoveryMessage(response.status === 429 ? 'ตรวจสอบถี่เกินไป กรุณารอสักครู่แล้วลองใหม่' : 'ยังออกใบรับรองไม่ได้ กรุณาลองใหม่หรือติดต่อทีมงาน');
+      }
+    } catch {
+      setRecoveryMessage('ยังยืนยันผลไม่ได้ กรุณาโหลดข้อมูลอีกครั้งก่อนลองใหม่');
+    } finally {
+      repairBusy.current = false; setRepairing(null);
     }
   }
 
@@ -112,7 +135,7 @@ export default function CertificateCollection() {
     );
   }
 
-  if (certificates.length === 0) {
+  if (!collection || collection.items.length === 0) {
     return (
       <Empty>
         <EmptyHeader>
@@ -120,7 +143,7 @@ export default function CertificateCollection() {
           <EmptyTitle>ยังไม่มีใบรับรอง</EmptyTitle>
           <EmptyDescription>เรียนบทเรียนให้ครบตามเงื่อนไขของคอร์ส แล้วใบรับรองที่ออกให้จะถูกรวมไว้ที่นี่</EmptyDescription>
         </EmptyHeader>
-        <EmptyContent><Button asChild><Link href="/courses">เลือกคอร์สเรียน</Link></Button></EmptyContent>
+        <EmptyContent><Button asChild><Link href={collection?.summary.hasEnrollment ? "/dashboard" : "/courses"}>{collection?.summary.hasEnrollment ? "กลับไปเรียนต่อ" : "เลือกคอร์สเรียน"}</Link></Button></EmptyContent>
       </Empty>
     );
   }
@@ -132,12 +155,13 @@ export default function CertificateCollection() {
           <Badge variant="outline">ใบรับรองที่ตรวจสอบได้</Badge>
           <h2 id="certificate-records-title" className="font-heading text-xl font-semibold">ใบรับรองทั้งหมด</h2>
         </div>
-        <p className="text-sm text-muted-foreground">{certificates.length} ใบ</p>
+        <p className="text-sm text-muted-foreground">{collection.summary.activeCount} ใช้งานได้ · {collection.summary.revokedCount} เพิกถอน · {collection.summary.missingCount} รอใบรับรอง</p>
       </div>
 
+      {recoveryMessage && <Alert role="status"><AlertDescription>{recoveryMessage}</AlertDescription></Alert>}
       <div className="grid gap-3">
-        {certificates.map((certificate, index) => (
-          <Card size="sm" key={certificate.id}>
+        {collection.items.map((certificate, index) => (
+          <Card size="sm" key={certificate.kind === 'missing' ? certificate.courseSlug : certificate.code}>
             <CardHeader>
               <CardTitle>{certificate.courseTitle}</CardTitle>
               <CardDescription>
@@ -145,21 +169,23 @@ export default function CertificateCollection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Badge variant="secondary">{certificate.certificateCode}</Badge>
+              <Badge variant={certificate.kind === 'revoked' ? 'destructive' : 'secondary'}>{certificate.kind === 'active' ? 'ใช้งานได้' : certificate.kind === 'revoked' ? 'เพิกถอนแล้ว' : 'เรียนจบแล้ว ยังไม่มีใบรับรอง'}</Badge>
+              {certificate.kind !== 'missing' && <p className="mt-2 break-all text-sm">{certificate.code}</p>}
             </CardContent>
             <CardFooter className="flex-wrap gap-2">
-              <Button asChild>
-                <Link href={`/certificate/${certificate.certificateCode}`}>ดูใบรับรอง</Link>
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => void copyCertificateLink(certificate)}
-                aria-label={`คัดลอกลิงก์ใบรับรอง ${certificate.courseTitle}`}
-              >
-                <Copy data-icon="inline-start" aria-hidden="true" />
-                คัดลอกลิงก์
-              </Button>
+              {certificate.kind === 'missing' ? (
+                <Button type="button" disabled={repairing !== null} aria-busy={repairing === certificate.courseSlug} onClick={() => void repair(certificate.courseSlug)}>
+                  {repairing === certificate.courseSlug ? 'กำลังตรวจสอบ...' : 'ตรวจสอบและออกใบรับรอง'}
+                </Button>
+              ) : (
+                <>
+                  <Button asChild><Link href={`/certificate/${certificate.code}`}>ตรวจสอบใบรับรอง</Link></Button>
+                  {certificate.kind === 'active' && <Button variant="outline" type="button" onClick={() => void copyCertificateLink(certificate.code)} aria-label={`คัดลอกลิงก์ใบรับรอง ${certificate.courseTitle}`}>
+                    <Copy data-icon="inline-start" aria-hidden="true" />คัดลอกลิงก์
+                  </Button>}
+                </>
+              )}
+              {certificate.kind === 'revoked' || certificate.kind === 'missing' ? <Button asChild variant="outline"><Link href="/contact">ติดต่อทีมงาน</Link></Button> : null}
             </CardFooter>
           </Card>
         ))}

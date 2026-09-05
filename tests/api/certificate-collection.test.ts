@@ -22,7 +22,7 @@ describe('GET /api/certificates', () => {
     expect(getOwnerCertificateCollectionMock).not.toHaveBeenCalled();
   });
 
-  it('returns the owner projection and a minimal active-only compatibility list', async () => {
+  it('returns only the status-aware owner projection', async () => {
     authMock.mockResolvedValue({ user: { id: 'member-1' } });
     getOwnerCertificateCollectionMock.mockResolvedValue({
       summary: {
@@ -98,16 +98,7 @@ describe('GET /api/certificates', () => {
           },
         ],
       },
-      certificates: [
-        {
-          id: 'CERT-ACTIVE',
-          certificateCode: 'CERT-ACTIVE',
-          recipientName: 'Learner',
-          courseTitle: 'TypeScript',
-          completedAt: '2026-08-01T00:00:00.000Z',
-          issuedAt: '2026-08-02T00:00:00.000Z',
-        },
-      ],
+
     });
   });
 });
