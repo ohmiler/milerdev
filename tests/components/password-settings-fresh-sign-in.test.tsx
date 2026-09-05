@@ -5,12 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import PasswordSettingsForm from '@/components/settings/PasswordSettingsForm';
 
-const mocks = vi.hoisted(() => ({ signOut: vi.fn() }));
+const mocks = vi.hoisted(() => ({ signOut: vi.fn(), replace: vi.fn(), refresh: vi.fn() }));
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: mocks.replace, refresh: mocks.refresh }) }));
 
 vi.mock('next-auth/react', () => ({ signOut: mocks.signOut }));
 
 describe('PasswordSettingsForm fresh sign-in', () => {
-  beforeEach(() => { mocks.signOut.mockReset(); });
+  beforeEach(() => { mocks.signOut.mockReset(); mocks.replace.mockReset(); mocks.refresh.mockReset(); });
 
   afterEach(() => {
     cleanup();
@@ -42,9 +44,11 @@ describe('PasswordSettingsForm fresh sign-in', () => {
 
     await waitFor(() => {
       expect(mocks.signOut).toHaveBeenCalledWith({
-        callbackUrl: '/login?reason=password-changed',
+        redirect: false,
       });
     });
+    if (!signOutFails) expect(mocks.replace).toHaveBeenCalledWith('/login?reason=password-changed');
+    else expect(mocks.replace).not.toHaveBeenCalled();
     expect(await screen.findByRole('link', { name: 'เข้าสู่ระบบใหม่' })).toBeTruthy();
     expect(screen.queryByLabelText('รหัสผ่านใหม่')).toBeNull();
     expect(fetchMock).toHaveBeenCalledWith('/api/auth/change-password', expect.objectContaining({
