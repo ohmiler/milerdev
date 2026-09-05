@@ -17,6 +17,7 @@ import {
   lessons,
   payments,
 } from '@/lib/db/schema';
+import { loadPromptPayPresentation } from '@/lib/promptpay-presentation';
 import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/promptpay-intent';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
@@ -24,6 +25,7 @@ const intentSchema = z.object({
   courseId: z.string().min(1).max(36).optional(),
   bundleId: z.string().min(1).max(36).optional(),
   couponId: z.string().min(1).max(36).optional(),
+  expectedAmount: z.string().regex(/^\d{1,8}\.\d{2}$/).optional(),
 }).strict().superRefine((value, context) => {
   if (Boolean(value.courseId) === Boolean(value.bundleId)) {
     context.addIssue({ code: 'custom', message: 'Exactly one payment target is required' });
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
     const rateLimit = checkRateLimit(`promptpay-intent:${session.user.id}`, rateLimits.sensitive);
     if (!rateLimit.success) return rateLimitResponse(rateLimit.resetTime);
 
-    const parsed = intentSchema.safeParse(await request.json());
+    const parsed = intentSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid payment target' }, { status: 400 });
     }
@@ -110,7 +112,11 @@ export async function POST(request: Request) {
           couponId = coupon.id;
         }
 
+        amount = Math.round(amount * 100) / 100;
         if (!Number.isFinite(amount) || amount <= 0) unavailable('PAYMENT_AMOUNT_INVALID', 400);
+        if (parsed.data.expectedAmount !== undefined && parsed.data.expectedAmount !== amount.toFixed(2)) {
+          unavailable('ราคาเปลี่ยนแปลง กรุณาตรวจสอบรายการและยืนยันยอดใหม่');
+        }
         await tx.insert(payments).values({
           id: paymentId,
           userId: session.user.id,
@@ -172,6 +178,9 @@ export async function POST(request: Request) {
 
       const amount = Number(bundle.price);
       if (!Number.isFinite(amount) || amount <= 0) unavailable('PAYMENT_AMOUNT_INVALID', 400);
+      if (parsed.data.expectedAmount !== undefined && parsed.data.expectedAmount !== amount.toFixed(2)) {
+        unavailable('ราคาเปลี่ยนแปลง กรุณาตรวจสอบรายการและยืนยันยอดใหม่');
+      }
       await tx.insert(payments).values({
         id: paymentId,
         userId: session.user.id,
@@ -199,5 +208,21 @@ export async function POST(request: Request) {
     const message = error instanceof Error && status !== 500 ? error.message : 'Failed to create payment intent';
     if (status === 500) console.error('Error creating PromptPay intent:', error);
     return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function GET(request: Request) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบ' }, { status: 401 });
+  const limit = checkRateLimit(`promptpay-status:${session.user.id}`, rateLimits.sensitive);
+  if (!limit.success) return rateLimitResponse(limit.resetTime);
+  const parsed = z.string().min(1).max(36).safeParse(new URL(request.url).searchParams.get('paymentId'));
+  if (!parsed.success) return NextResponse.json({ error: 'ข้อมูลรายการไม่ถูกต้อง' }, { status: 400 });
+  try {
+    const result = await loadPromptPayPresentation(session.user.id, parsed.data);
+    if (!result) return NextResponse.json({ error: 'ไม่พบรายการ' }, { status: 404 });
+    return NextResponse.json(result, { headers: { 'Cache-Control': 'private, no-store' } });
+  } catch {
+    return NextResponse.json({ error: 'ยังตรวจสอบสถานะไม่ได้' }, { status: 503 });
   }
 }

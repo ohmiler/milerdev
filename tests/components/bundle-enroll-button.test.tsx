@@ -58,6 +58,7 @@ describe('bundle enrollment purchase contract', () => {
       enrollEndpoint: '/api/bundles/enroll',
       stripeEndpoint: '/api/stripe/bundle-checkout',
       intentEndpoint: '/api/promptpay/intents',
+      reviewEndpoint: '/api/checkout/review',
       slipEndpoint: '/api/bundles/slip/verify',
       slipFields: {
         file: 'slip',
@@ -106,7 +107,7 @@ describe('bundle enrollment purchase contract', () => {
     );
 
     expect(html).toContain('Bundle นี้กำลังเตรียมเนื้อหา');
-    expect(html).toContain('disabled');
+    expect(html).not.toContain('<button');
     expect(html).not.toContain('ซื้อ Bundle');
   });
 

@@ -16,6 +16,7 @@ const stripeCheckoutRequestSchema = z.object({
     courseId: z.string().trim().min(1).max(36),
     couponId: z.string().trim().min(1).max(36).optional(),
     exposureId: analyticsExposureIdSchema.optional(),
+    expectedAmount: z.string().regex(/^\d{1,8}\.\d{2}$/).optional(),
 }).strict();
 
 
@@ -105,11 +106,20 @@ export async function POST(request: Request) {
             }
         }
 
+        if (couponId && appliedCouponId !== couponId) {
+            return NextResponse.json({ error: 'คูปองนี้ใช้ไม่ได้แล้ว กรุณาตรวจสอบรายการใหม่' }, { status: 400 });
+        }
+
+        priceNumber = Math.round(priceNumber * 100) / 100;
         if (priceNumber <= 0) {
             return NextResponse.json(
                 { error: "This course is free" },
                 { status: 400 }
             );
+        }
+
+        if (parsed.data.expectedAmount !== undefined && parsed.data.expectedAmount !== priceNumber.toFixed(2)) {
+            return NextResponse.json({ error: 'ราคาเปลี่ยนแปลง กรุณาตรวจสอบรายการและยืนยันยอดใหม่' }, { status: 409 });
         }
 
         // A checkout session is an immutable payment attempt. Reusing and repricing

@@ -1,3 +1,4 @@
+import PaymentCancellationNotice from '@/components/checkout/PaymentCancellationNotice';
 import MainContent from '@/components/layout/MainContent';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
@@ -35,6 +36,7 @@ function normalizeUrl(url: string | null): string | null {
 export const revalidate = 3600;
 
 interface Props {
+  searchParams?: Promise<{ payment?: string | string[] }>;
   params: Promise<{ slug: string }>;
 }
 
@@ -124,8 +126,9 @@ async function getCourse(slug: string) {
   };
 }
 
-export default async function CourseDetailPage({ params }: Props) {
+export default async function CourseDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const cancelled = (await searchParams)?.payment === 'cancelled';
   const course = await getCourse(slug);
 
   if (!course) {
@@ -243,6 +246,7 @@ export default async function CourseDetailPage({ params }: Props) {
       <CourseDetailProvider>
         <AnalyticsViewEvent productType="course" productId={course.id}>
           <MainContent className="min-h-screen bg-background text-foreground">
+          {cancelled ? <PaymentCancellationNotice /> : null}
 
           <header className="bg-[radial-gradient(circle_at_12%_8%,var(--color-accent-soft),transparent_36%),linear-gradient(180deg,var(--academy-canvas),var(--background))]">
             <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:gap-14 lg:px-8 lg:py-20">

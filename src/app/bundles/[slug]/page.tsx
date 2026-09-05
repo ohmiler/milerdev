@@ -1,3 +1,4 @@
+import PaymentCancellationNotice from '@/components/checkout/PaymentCancellationNotice';
 import MainContent from '@/components/layout/MainContent';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -31,6 +32,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 export const dynamic = 'force-dynamic';
 
 interface Props {
+  searchParams?: Promise<{ payment?: string | string[] }>;
   params: Promise<{ slug: string }>;
 }
 
@@ -184,8 +186,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function BundleDetailPage({ params }: Props) {
+export default async function BundleDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const cancelled = (await searchParams)?.payment === 'cancelled';
   const bundle = await getBundle(slug);
 
   if (!bundle) notFound();
@@ -248,6 +251,7 @@ export default async function BundleDetailPage({ params }: Props) {
       <Navbar />
       <AnalyticsViewEvent productType="bundle" productId={bundle.id}>
         <MainContent className="min-h-screen bg-background text-foreground">
+          {cancelled ? <PaymentCancellationNotice /> : null}
         <header className="border-b bg-muted/30">
           <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
             <NavigationBreadcrumbs
