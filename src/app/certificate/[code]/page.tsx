@@ -23,14 +23,15 @@ const getCertificate = cache(async (code: string) => {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params;
   const cert = await getCertificate(code);
-  if (!cert) return { title: 'ไม่พบใบรับรอง' };
+  if (!cert) return { title: 'ไม่พบใบรับรอง', robots: { index: false, follow: false } };
 
-  const title = `ใบรับรอง - ${cert.recipientName}`;
-  const description = `ใบรับรองสำเร็จหลักสูตร "${cert.courseTitle}" โดย ${cert.recipientName} จาก MilerDev`;
+  const title = cert.revokedAt ? 'ใบรับรองถูกเพิกถอนแล้ว' : `ใบรับรอง - ${cert.recipientName}`;
+  const description = cert.revokedAt ? 'ใบรับรองนี้ถูกเพิกถอนแล้ว ไม่สามารถใช้เป็นหลักฐานที่ยังใช้งานได้' : `ใบรับรองสำเร็จหลักสูตร "${cert.courseTitle}" โดย ${cert.recipientName} จาก MilerDev`;
 
   return {
     title,
     description,
+    robots: { index: false, follow: false },
     alternates: {
       canonical: `/certificate/${code}`,
     },
@@ -73,7 +74,7 @@ export default async function CertificatePage({ params }: Props) {
               data-verification-status={isRevoked ? 'revoked' : 'valid'}
             >
               {isRevoked ? <CircleX aria-hidden="true" /> : <BadgeCheck aria-hidden="true" />}
-              <AlertTitle>{isRevoked ? 'REVOKED CREDENTIAL' : 'VERIFIED CREDENTIAL'}</AlertTitle>
+              <AlertTitle>{isRevoked ? 'เพิกถอนแล้ว' : 'ตรวจสอบแล้ว ใช้งานได้'}</AlertTitle>
               <AlertDescription>{isRevoked ? 'ใบรับรองนี้ถูกเพิกถอนแล้ว' : 'ใบรับรองนี้ตรวจสอบได้'}</AlertDescription>
             </Alert>
           </header>
