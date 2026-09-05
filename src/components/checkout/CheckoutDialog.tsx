@@ -29,9 +29,12 @@ type Props = {
   exposureId: string | null | undefined;
   returnFocusRef: RefObject<HTMLButtonElement | null>;
   onEnrolled: () => void;
+  resumePaymentId?: string;
 };
 
-export default function CheckoutDialog({ open, onClose, target, exposureId, returnFocusRef, onEnrolled }: Props) {
+export default function CheckoutDialog({ open, onClose, target, exposureId, returnFocusRef, onEnrolled, resumePaymentId }: Props) {
+  const [resumeVersion, setResumeVersion] = useState(0);
+  const [resumeChecked, setResumeChecked] = useState(false);
   const [review, setReview] = useState<OrderReview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
     : { stripe: '/api/stripe/bundle-checkout', slip: '/api/bundles/slip/verify', enroll: '/api/bundles/enroll' };
 
   useEffect(() => {
-    if (!open || intent) return;
+    if (!open || intent || resumePaymentId) return;
     const controller = new AbortController();
     const version = ++reviewRequest.current;
     // Every fresh opening revalidates product/ownership facts. Coupons are reapplied explicitly.
@@ -72,7 +75,31 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
       if (!controller.signal.aborted && version === reviewRequest.current) setError(reason instanceof Error ? reason.message : 'ยังตรวจสอบรายการไม่ได้');
     });
     return () => controller.abort();
-  }, [open, intent, target.type, target.id]);
+  }, [open, intent, target.type, target.id, resumePaymentId]);
+
+  useEffect(() => {
+    if (!open || !resumePaymentId) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setUncertain(true);
+    setError(null);
+    fetch(`${CHECKOUT_CONTRACT.intentEndpoint}?paymentId=${encodeURIComponent(resumePaymentId)}`, { cache: 'no-store', signal: controller.signal })
+      .then(async (response) => {
+        const data = await response.json();
+        const p: PaymentPresentation | undefined = data.presentation;
+        if (!response.ok || p?.attempt?.id !== resumePaymentId || p.attempt.method !== 'promptpay'
+          || p.target.type !== target.type || p.target.id !== target.id || !p.quote || !p.attempt.expiresAt) throw new Error();
+        if (controller.signal.aborted) return;
+        setIntent({ paymentId: p.attempt.id, amount: Number(p.quote.amountDue), itemTitle: p.target.title || 'รายการเดิม', expiresAt: p.attempt.expiresAt });
+        setExpired(Date.now() >= new Date(p.attempt.expiresAt).getTime());
+        setPresentation(p);
+        setUncertain(!data.canSubmitSlip);
+        setResumeChecked(true);
+      }).catch(() => {
+        if (!controller.signal.aborted) setError('ยังเปิดรายการเดิมไม่ได้ กรุณาตรวจสถานะในประวัติการชำระเงิน อย่าชำระซ้ำ');
+      }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [open, resumePaymentId, resumeVersion, target.id, target.type]);
 
   useEffect(() => {
     if (!intent) return;
@@ -97,6 +124,7 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
     setCouponCode('');
     setSlipFile(null);
     setSlipPreview(null);
+    setResumeChecked(false);
     onClose();
   };
 
@@ -130,7 +158,7 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
   };
 
   const startPayment = async (method: 'stripe' | 'promptpay' | 'free') => {
-    if (busyRef.current || !review || intent) return;
+    if (busyRef.current || !review || intent || resumePaymentId) return;
     busyRef.current = true;
     setLoading(true);
     setError(null);
@@ -253,12 +281,12 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
   return (
     <DialogShell
       isOpen={open} onClose={close} returnFocusRef={returnFocusRef} size="wide"
-      title={intent ? 'โอนเงินและแนบสลิป' : 'เลือกช่องทางชำระเงิน'}
+      title={resumePaymentId ? 'แนบสลิปในรายการเดิม' : intent ? 'โอนเงินและแนบสลิป' : 'เลือกช่องทางชำระเงิน'}
       description={intent ? 'ใช้รายการและยอดนี้ในการตรวจสอบสลิป หากโอนแล้วอย่าชำระซ้ำ' : 'ทบทวนสินค้า ยอดชำระ และสิทธิ์เรียนก่อนเลือกวิธีชำระเงิน'}
       body={(
         <div className="flex min-w-0 flex-col gap-4" aria-busy={pending}>
           {error ? <Alert variant="destructive"><AlertTitle>ยังดำเนินการไม่สำเร็จ</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
-          {intent ? (
+          {resumePaymentId && !resumeChecked ? <><p role="status">{error ? 'ยังไม่พร้อมเปิดรายการเดิม' : 'กำลังตรวจสอบรายการเดิม'}</p>{error ? <Button type="button" variant="outline" disabled={loading} onClick={() => setResumeVersion((version) => version + 1)}>ตรวจสอบรายการเดิมอีกครั้ง</Button> : null}</> : intent ? (
             <>
               <p className="break-words font-medium">{intent.itemTitle}</p>
               <dl className="grid gap-3 text-sm [&>div]:flex [&>div]:flex-wrap [&>div]:justify-between [&>div]:gap-2 [&_dd]:min-w-0 [&_dd]:break-all">
@@ -271,11 +299,11 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
               {verifying ? <p role="status">กำลังตรวจสอบสลิป กรุณารอผล อย่าชำระหรือส่งสลิปซ้ำ</p> : null}
               {!expired && !uncertain ? (
                 <>
-                  <dl className="grid gap-2 text-sm [&_dd]:break-words">
+                  {!resumePaymentId ? <dl className="grid gap-2 text-sm [&_dd]:break-words">
                     <div><dt>ธนาคาร</dt><dd>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</dd></div>
                     <div><dt>เลขบัญชี</dt><dd>{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</dd></div>
                     <div><dt>ชื่อบัญชี</dt><dd>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</dd></div>
-                  </dl>
+                  </dl> : null}
                   <p className="text-sm text-muted-foreground">แนบเฉพาะสลิปของรายการนี้ สลิปมีข้อมูลส่วนบุคคลและจะส่งให้ผู้ให้บริการตรวจสอบการโอนเงิน กรุณาอย่าส่งเอกสารอื่นหรือข้อมูลที่ไม่เกี่ยวข้อง</p>
                   <Field data-invalid={Boolean(slipError) || undefined}>
                     <FieldLabel htmlFor={slipId}>แนบสลิปการโอนเงิน</FieldLabel>
@@ -317,12 +345,12 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
               {loading ? <p role="status"><Spinner aria-hidden="true" />กำลังดำเนินการ...</p> : null}
             </>
           )}
-          {(intent || uncertain) ? <Button asChild variant="outline"><Link href="/dashboard/payments">ดูประวัติการชำระเงิน</Link></Button> : null}
+          {(intent || uncertain || resumePaymentId) ? <Button asChild variant="outline"><Link href="/dashboard/payments">ดูประวัติการชำระเงิน</Link></Button> : null}
         </div>
       )}
     >
       <Button type="button" variant="outline" disabled={pending} onClick={close}>{intent ? 'ปิดและเก็บรายการไว้' : 'ยกเลิก'}</Button>
-      {intent && !expired && !uncertain ? <Button type="button" disabled={pending || !slipFile} aria-busy={verifying} onClick={verifySlip}>{verifying ? <><Spinner data-icon="inline-start" aria-hidden="true" />กำลังตรวจสอบสลิป...</> : 'ตรวจสอบและชำระเงิน'}</Button> : null}
+      {intent && (!resumePaymentId || resumeChecked) && !expired && !uncertain ? <Button type="button" disabled={pending || !slipFile} aria-busy={verifying} onClick={verifySlip}>{verifying ? <><Spinner data-icon="inline-start" aria-hidden="true" />กำลังตรวจสอบสลิป...</> : 'ตรวจสอบและชำระเงิน'}</Button> : null}
     </DialogShell>
   );
 }

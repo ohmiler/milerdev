@@ -5,6 +5,7 @@ import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CheckoutDialog from '@/components/checkout/CheckoutDialog';
+import { paymentRecord } from '../fixtures/payment-record';
 import type { OrderReview } from '@/lib/order-review';
 
 vi.mock('next/image', () => ({ default: () => null }));
@@ -202,4 +203,38 @@ it('recovers an uncertain free enrollment by reading current ownership rather th
   await user.click(screen.getByRole('button', { name: 'ตรวจสอบรายการใหม่โดยไม่ใช้คูปอง' }));
   expect(await screen.findByRole('link', { name: 'ไปการเรียนของฉัน' })).toBeTruthy();
   expect(screen.queryByRole('link', { name: 'ดูประวัติการชำระเงิน' })).toBeNull();
+});
+
+describe.each(['course', 'bundle'] as const)('%s history resumption', (type) => {
+  function mountResume() { return render(<CheckoutDialog open onClose={close} target={{ type, id: type === 'course' ? 'course-1' : 'bundle-1' }} resumePaymentId="attempt-1" exposureId={null} returnFocusRef={createRef<HTMLButtonElement>()} onEnrolled={enrolled} />); }
+  function status(canSubmitSlip: boolean, state: 'pending' | 'verifying' | 'completed' = 'pending') {
+    return { ...paymentRecord({ method: 'promptpay', status: state, ...(type === 'bundle' ? { bundleId: 'bundle-1', courseId: null } : {}) }), canSubmitSlip };
+  }
+  it('rechecks the exact attempt before enabling upload and never creates a quote, bank prompt or new payment', async () => {
+    const pending = deferred();
+    const fetchMock = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue(response({ error: 'สลิปไม่ผ่าน' }, 400));
+    vi.stubGlobal('fetch', fetchMock); const user = userEvent.setup(); mountResume();
+    expect(screen.queryByLabelText('แนบสลิปการโอนเงิน')).toBeNull();
+    await act(async () => pending.resolve(response(status(true))));
+    await user.upload(await screen.findByLabelText('แนบสลิปการโอนเงิน'), new File(['proof'], 'proof.png', { type: 'image/png' }));
+    expect(screen.queryByText('เลขบัญชี')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Stripe/ })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'ตรวจสอบและชำระเงิน' }));
+    await screen.findByText('สลิปไม่ผ่าน');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/promptpay/intents?paymentId=attempt-1');
+    expect((fetchMock.mock.calls[1][1].body as FormData).get('paymentId')).toBe('attempt-1');
+    expect(fetchMock.mock.calls.some(([url]) => url === '/api/checkout/review' || url === '/api/promptpay/intents')).toBe(false);
+  });
+  it.each(['verifying', 'completed'] as const)('does not expose slip upload if fresh status is %s', async (state) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(status(false, state)))); mountResume();
+    await screen.findByText('attempt-1');
+    expect(screen.queryByLabelText('แนบสลิปการโอนเงิน')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'ตรวจสอบและชำระเงิน' })).toBeNull();
+  });
+  it('keeps a foreign or expired/missing resume failure out of new checkout', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ error: 'Not found' }, 404))); mountResume();
+    await screen.findByText(/ยังเปิดรายการเดิมไม่ได้/);
+    expect(screen.queryByRole('button', { name: /Stripe/ })).toBeNull();
+    expect(screen.queryByLabelText('แนบสลิปการโอนเงิน')).toBeNull();
+  });
 });

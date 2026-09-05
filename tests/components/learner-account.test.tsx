@@ -57,7 +57,7 @@ describe('learner account contracts', () => {
 
     expect(payments).toContain("fetch('/api/payments'");
     expect(payments).toContain('if (!response.ok)');
-    expect(payments).toContain("verifying: { label:");
+    expect(payments).toContain("PaymentRecordDetails");
     expect(certificates).toContain("fetch('/api/certificates'");
     expect(certificates).toContain('if (!response.ok)');
     expect(certificates).toContain('await navigator.clipboard.writeText(url)');

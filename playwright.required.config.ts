@@ -33,6 +33,7 @@ export default defineConfig({
     env: {
       ...process.env,
       NEXT_TELEMETRY_DISABLED: '1',
+      STRIPE_SECRET_KEY: 'sk_test_required_e2e_placeholder',
       NODE_OPTIONS: serverNodeOptions,
     },
   },

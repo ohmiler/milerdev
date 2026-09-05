@@ -48,6 +48,7 @@ type PaymentState =
   | 'cancelled-return';
 
 type RecoveryKind =
+  | 'resume'
   | 'restart'
   | 'refresh'
   | 'contact'
