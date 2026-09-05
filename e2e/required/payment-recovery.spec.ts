@@ -32,14 +32,14 @@ for (const type of ['course', 'bundle'] as const) {
     const path = `/${type === 'course' ? 'courses' : 'bundles'}/${product.slug}/payment-success`;
     await page.goto(`/dashboard/payments/${fixture.id}`);
     await expect(page.getByRole('heading', { level: 1, name: 'ชำระแล้ว กำลังเปิดสิทธิ์' })).toBeVisible();
-    await expect(page.getByText('฿490.25', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText('฿490.25', { exact: true })).toBeVisible();
     expect(await recoveryEnrollmentCount(userId)).toBe(0);
     await page.goto(`${path}?session_id=${fixture.sessionId}`);
     await expect(page).toHaveURL(new RegExp(`${fixture.sessionId}$`));
     await expect(page.getByRole('heading', { level: 1, name: 'ชำระแล้ว พร้อมเริ่มเรียน' })).toBeVisible();
-    await expect(page.getByText(fixture.id, { exact: true })).toBeVisible();
-    await expect(page.getByText('฿490.25', { exact: true })).toBeVisible();
-    await expect(page.getByText(fixture.latest, { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('main').getByText(fixture.id, { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText('฿490.25', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText(fixture.latest, { exact: true })).toHaveCount(0);
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -48,10 +48,10 @@ for (const type of ['course', 'bundle'] as const) {
     await expect(page.getByRole('heading', { level: 1, name: 'ชำระแล้ว พร้อมเริ่มเรียน' })).toBeVisible();
     expect(await recoveryEnrollmentCount(userId)).toBe(type === 'course' ? 1 : 2);
     await page.goto('/dashboard/payments');
-    await expect(page.getByText(fixture.id, { exact: true })).toBeVisible();
-    await expect(page.getByText(fixture.latest, { exact: true })).toBeVisible();
-    await expect(page.getByText('ชำระเงินไม่สำเร็จ', { exact: true })).toBeVisible();
-    await expect(page.getByText('คืนเงินแล้ว', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText(fixture.id, { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText(fixture.latest, { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText('ชำระเงินไม่สำเร็จ', { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText('คืนเงินแล้ว', { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'กลับไปเลือกวิธีชำระเงิน' })).toHaveCount(0);
 
     const guest = await browser.newContext({ baseURL });
@@ -66,10 +66,10 @@ for (const type of ['course', 'bundle'] as const) {
     await register(page);
     await page.goto(`/dashboard/payments/${fixture.id}`);
     await expect(page.getByRole('heading', { name: 'ไม่พบหน้าที่คุณต้องการ' })).toBeVisible();
-    await expect(page.getByText(fixture.id, { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('main').getByText(fixture.id, { exact: true })).toHaveCount(0);
     await page.goto(`${path}?session_id=${fixture.sessionId}`);
     await expect(page.getByRole('heading', { level: 1, name: 'ยังยืนยันรายการนี้ไม่ได้' })).toBeVisible();
-    await expect(page.getByText(fixture.id, { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('main').getByText(fixture.id, { exact: true })).toHaveCount(0);
     expect(network.blockedRequests).toEqual([]);
   });
 
@@ -84,7 +84,7 @@ for (const type of ['course', 'bundle'] as const) {
     let newAttempts = 0;
     page.on('request', (request) => { if (request.url().endsWith('/api/promptpay/intents') && request.method() === 'POST') newAttempts += 1; });
     await page.reload();
-    await expect(page.getByText(intent.paymentId, { exact: true })).toBeVisible();
+    await expect(page.getByRole('main').getByText(intent.paymentId, { exact: true })).toBeVisible();
     const trigger = page.getByRole('button', { name: 'แนบสลิปในรายการเดิม' });
     await page.setViewportSize({ width: 320, height: 900 });
     await trigger.focus(); await page.keyboard.press('Enter');

@@ -42,6 +42,7 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { auth } from '@/lib/auth';
+import { assertPromptPayIntentClaim, PROMPTPAY_INTENT_TTL_MS, type PromptPayIntentRecord } from '@/lib/promptpay-intent';
 
 const studentSession = { user: { id: 'student-1' } };
 
@@ -85,6 +86,29 @@ describe('PromptPay intent creation boundary', () => {
     const body = await response.json();
     expect(body.paymentId).toBeTruthy();
     expect(body.expiresAt).toBeTruthy();
+  });
+
+  it.each(['course', 'bundle'] as const)('keeps a new %s attempt claimable after MySQL DATETIME(0) storage rounding', async (type) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-05T12:00:00.750Z'));
+    try {
+      if (type === 'course') selectQueue.push(
+        [{ id: 'course-1', title: 'Course', price: '990.00', promoPrice: null, status: 'published' }], [{ lessonCount: 1 }], [],
+      );
+      else selectQueue.push(
+        [{ id: 'course-1', status: 'published' }, { id: 'course-2', status: 'published' }],
+        [{ courseId: 'course-1', lessonCount: 1 }, { courseId: 'course-2', lessonCount: 1 }],
+        [{ id: 'bundle-1', title: 'Bundle', price: '990.00', status: 'published' }], [],
+      );
+      const { POST } = await import('@/app/api/promptpay/intents/route');
+      const response = await POST(request(type === 'course' ? { courseId: 'course-1' } : { bundleId: 'bundle-1' }));
+      expect(response.status).toBe(201);
+      const values = inserted[0];
+      const storedTime = new Date(Math.round((values.createdAt as Date).getTime() / 1000) * 1000);
+      const stored = { courseId: null, bundleId: null, ...values, createdAt: storedTime } as PromptPayIntentRecord;
+      expect(assertPromptPayIntentClaim(stored, { userId: 'student-1', targetType: type }).status).toBe('claimable');
+      expect((await response.json()).expiresAt).toBe(new Date(storedTime.getTime() + PROMPTPAY_INTENT_TTL_MS).toISOString());
+    } finally { vi.useRealTimers(); }
   });
 
   it('rejects a stale reviewed amount without inserting an attempt', async () => {
