@@ -24,7 +24,7 @@ test('account preserves private destinations, saves a profile, and requires fres
   await expect(page.getByRole('status').filter({ hasText: 'อัปเดตโปรไฟล์สำเร็จ' })).toBeVisible();
   await page.reload();
   await expect(page.getByLabel('ชื่อ', { exact: true })).toHaveValue('ผู้เรียน ทดสอบชื่อใบรับรอง');
-  await expect(page.getByText(/ใบรับรองที่ออกแล้วจะเก็บชื่อ/)).toBeVisible();
+  await expect(page.getByRole('main').getByText(/ใบรับรองที่ออกแล้วจะเก็บชื่อ/)).toBeVisible();
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -38,7 +38,7 @@ test('account preserves private destinations, saves a profile, and requires fres
   await page.locator('button[type=submit]').click();
   await page.waitForURL(/\/login/);
   const session = await (await page.request.get('/api/auth/session')).json();
-  expect(session.user).toBeUndefined();
+  expect(session?.user).toBeUndefined();
   await page.locator('input[name=email]').fill(email);
   await page.locator('input[name=password]').fill(nextPassword);
   await page.locator('button[type=submit]').click();
