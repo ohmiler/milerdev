@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getPasswordPolicyError } from '@/lib/password-policy';
 import PasswordPolicyFeedback from '@/components/auth/PasswordPolicyFeedback';
 import { CircleAlert, CircleCheck, Info } from 'lucide-react';
@@ -27,6 +28,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { PasswordInput } from '@/components/auth/AuthFormLayout';
 
 export default function PasswordSettingsForm({ hasPassword }: { hasPassword: boolean }) {
+  const router = useRouter();
   const busy = useRef(false);
   const [openItem, setOpenItem] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -77,7 +79,9 @@ export default function PasswordSettingsForm({ hasPassword }: { hasPassword: boo
         resetForm();
         setSuccess(true);
         try {
-          await signOut({ callbackUrl: '/login?reason=password-changed' });
+          await signOut({ redirect: false });
+          router.replace('/login?reason=password-changed');
+          router.refresh();
         } catch {
           // The password mutation succeeded; retain the fresh sign-in action.
         }
