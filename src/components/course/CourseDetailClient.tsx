@@ -80,7 +80,6 @@ export default function CourseDetailClient({
 }: CourseDetailClientProps) {
   const { status, isEnrolled, setEnrollmentStatus } = useEnrollment();
   const price = decisionFacts.price.effective;
-  const originalPrice = decisionFacts.price.regular;
   const promoLabel = decisionFacts.promotion.label;
   const courseReady = decisionFacts.readiness === 'ready';
 
@@ -135,13 +134,13 @@ export default function CourseDetailClient({
               <span>ชำระครั้งเดียว</span>
             </div>
             <div className="mt-2 flex items-baseline gap-3 text-3xl font-bold tracking-tight">
-              {price === 0 ? (
+              {decisionFacts.price.isFree ? (
                 <strong className="text-primary">ฟรี</strong>
               ) : (
                 <>
-                  <strong>฿{price.toLocaleString()}</strong>
-                  {originalPrice > price && (
-                    <del className="text-base font-normal text-muted-foreground">฿{originalPrice.toLocaleString()}</del>
+                  <strong>{decisionFacts.price.effectiveFormatted}</strong>
+                  {decisionFacts.promotion.isActive && (
+                    <del className="text-base font-normal text-muted-foreground">{decisionFacts.price.regularFormatted}</del>
                   )}
                 </>
               )}
@@ -166,7 +165,7 @@ export default function CourseDetailClient({
         {status !== 'checking' && (
           <>
             <p className="text-sm leading-6 text-muted-foreground">
-              {price === 0
+              {decisionFacts.price.isFree
                 ? 'เริ่มเรียนได้ทันทีหลังลงทะเบียน'
                 : 'เลือกชำระด้วยบัตรหรือ PromptPay ในขั้นตอนถัดไป'}
             </p>
