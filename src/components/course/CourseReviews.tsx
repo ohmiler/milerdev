@@ -211,15 +211,15 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
   };
 
   return (
-    <div className="mt-5">
+    <div>
       {/* Stats Summary */}
       {stats && stats.totalReviews > 0 && (
-        <Card className="mb-6">
+        <Card className="mb-6 gap-0">
           <CardHeader className="sr-only">
             <CardTitle>สรุปคะแนนรีวิว</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-[12rem_minmax(0,1fr)]">
-            <div className="grid content-center justify-items-center gap-2 border-b pb-5 md:border-r md:border-b-0 md:pr-6 md:pb-0">
+          <CardContent className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-6">
+            <div className="grid content-center justify-items-center gap-2 border-r pr-3 sm:pr-6">
               <div className="text-4xl font-bold tracking-tight">{stats.avgRating.toFixed(1)}</div>
               <StarRating rating={Math.round(stats.avgRating)} />
               <div className="text-sm text-muted-foreground">{stats.totalReviews} รีวิว</div>
@@ -379,33 +379,23 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
           )}
         </Empty>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="divide-y">
           {reviews.map(review => (
-            <article key={review.id}>
-              <Card size="sm">
-                <CardHeader className="flex-row items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar size="lg">
-                      <AvatarFallback>{review.displayName?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <strong>{review.displayName}</strong>
-                        {review.isVerified && <Badge variant="secondary">ผู้เรียนจริง</Badge>}
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {formatDate(review.createdAt)}
-                      </div>
+            <article key={review.id} className="py-6 first:pt-2">
+              <header className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar><AvatarFallback>{review.displayName?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback></Avatar>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <strong className="text-sm font-medium wrap-anywhere">{review.displayName}</strong>
+                      {review.isVerified && <Badge variant="secondary">ผู้เรียนจริง</Badge>}
                     </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{formatDate(review.createdAt)}</p>
                   </div>
-                  <StarRating rating={review.rating} />
-                </CardHeader>
-                {review.comment && (
-                  <CardContent>
-                    <p className="leading-7 text-muted-foreground">{review.comment}</p>
-                  </CardContent>
-                )}
-              </Card>
+                </div>
+                <StarRating rating={review.rating} />
+              </header>
+              {review.comment && <p className="mt-4 text-sm leading-8 whitespace-pre-wrap text-muted-foreground wrap-anywhere">{review.comment}</p>}
             </article>
           ))}
         </div>

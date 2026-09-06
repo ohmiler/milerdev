@@ -2,11 +2,12 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { BookOpen, Lock } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Toggle } from '@/components/ui/toggle';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 
 interface Lesson {
@@ -30,8 +31,15 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const hasMore = lessons.length > INITIAL_SHOW;
-  const visibleLessons = showAll ? lessons : lessons.slice(0, INITIAL_SHOW);
+  const [freeOnly, setFreeOnly] = useState(false);
+  const listId = useId();
+  const freePreviewCount = lessons.filter((lesson) => lesson.isFreePreview).length;
+  const filterActive = freeOnly && freePreviewCount > 0;
+  const hasMore = !filterActive && lessons.length > INITIAL_SHOW;
+  const indexedLessons = lessons.map((lesson, index) => ({ lesson, index }));
+  const visibleLessons = filterActive
+    ? indexedLessons.filter(({ lesson }) => lesson.isFreePreview)
+    : showAll ? indexedLessons : indexedLessons.slice(0, INITIAL_SHOW);
 
   const handleLessonClick = (lesson: Lesson) => {
     if (lesson.isFreePreview || isEnrolled) {
@@ -66,25 +74,33 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
 
   return (
     <div>
-      <ol className="divide-y bg-card">
-        {visibleLessons.map((lesson, index) => {
+      {freePreviewCount > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <Toggle size="sm" variant="outline" pressed={filterActive} onPressedChange={setFreeOnly} aria-controls={listId}>
+            ดูเฉพาะ {freePreviewCount} บทฟรี
+          </Toggle>
+          <p className="text-xs text-muted-foreground" role="status">{filterActive ? 'แสดงบททดลองเรียนฟรีทั้งหมด' : 'เลือกดูบททดลองก่อนสมัครเรียนได้'}</p>
+        </div>
+      )}
+      <ol id={listId} className="divide-y overflow-hidden rounded-xl border bg-card">
+        {visibleLessons.map(({ lesson, index }) => {
           const duration = formatDuration(lesson.videoDuration);
           return (
-            <li key={lesson.id}>
+            <li key={lesson.id} value={index + 1}>
               <Button
                 type="button"
                 variant="ghost"
-                className="grid h-auto min-h-16 w-full grid-cols-[2.5rem_minmax(0,1fr)_auto] justify-normal gap-3 px-4 py-3 text-left whitespace-normal"
+                className="grid h-auto min-h-16 w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] justify-normal gap-3 rounded-none px-3 py-3 text-left whitespace-normal focus-visible:ring-inset sm:px-4"
                 onClick={() => handleLessonClick(lesson)}
                 aria-label={`${lesson.title}, ${lesson.isFreePreview ? 'ดูฟรี' : isEnrolled ? 'เปิดบทเรียน' : 'ต้องสมัครเรียนก่อน'}`}
               >
                 <span className="text-center font-mono text-xs text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
-                <span className="min-w-0"><strong className="line-clamp-2 block text-sm leading-5">{lesson.title}</strong>{duration && <span className="mt-1 block text-xs text-muted-foreground">{duration}</span>}
+                <span className="min-w-0"><strong className="block text-sm leading-6 font-medium wrap-anywhere">{lesson.title}</strong>{duration && <span className="mt-1 block text-xs text-muted-foreground">{duration}</span>}
                 </span>
                 {lesson.isFreePreview ? (
                   <Badge variant="secondary">ดูฟรี</Badge>
                 ) : isEnrolled ? (
-                  <Badge>เปิดบทเรียน</Badge>
+                  <Badge variant="outline">เปิดบทเรียน</Badge>
                 ) : (
                   <Badge variant="outline"><Lock data-icon="inline-end" aria-hidden="true" /> ล็อก</Badge>
                 )}
@@ -95,7 +111,7 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
       </ol>
 
       {hasMore && (
-        <Button type="button" variant="outline" className="mt-4 w-full" onClick={() => setShowAll((current) => !current)} aria-expanded={showAll}>
+        <Button type="button" variant="outline" className="mt-4 w-full" onClick={() => setShowAll((current) => !current)} aria-expanded={showAll} aria-controls={listId}>
           {showAll ? 'ย่อรายการบทเรียน' : `ดูอีก ${lessons.length - INITIAL_SHOW} บทเรียน`}
         </Button>
       )}

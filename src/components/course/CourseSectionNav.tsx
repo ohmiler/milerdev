@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface CourseSectionItem {
   id: string;
   label: string;
+  count?: number;
 }
 
 interface CourseSectionNavProps {
@@ -42,18 +44,17 @@ export default function CourseSectionNav({ items }: CourseSectionNavProps) {
     if (!section) return;
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const sectionTop = section.getBoundingClientRect().top + window.scrollY - 118;
+    const sectionTop = section.getBoundingClientRect().top + window.scrollY - 148;
     window.scrollTo({ top: sectionTop, behavior: reduceMotion ? 'auto' : 'smooth' });
     window.history.replaceState(null, '', `#${sectionId}`);
     setActiveSection(sectionId);
   };
 
   return (
-    <nav className="sticky top-[4.25rem] z-30 bg-background/92 backdrop-blur-xl supports-backdrop-filter:bg-background/80" aria-label="ส่วนต่าง ๆ ของคอร์ส">
-      <div className="mx-auto max-w-5xl overflow-x-auto px-4 [scrollbar-width:none] sm:px-6 lg:px-8 [&::-webkit-scrollbar]:hidden">
+    <nav className="sticky top-[4.25rem] z-30 border-y bg-background/92 backdrop-blur-xl supports-backdrop-filter:bg-background/80" aria-label="ส่วนต่าง ๆ ของคอร์ส">
+      <div className="mx-auto max-w-[1204px] overflow-x-auto px-5 sm:px-8">
         <div
-          className="grid h-14 min-w-max"
-          style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+          className="flex h-14 min-w-max gap-6 sm:gap-9"
         >
           {items.map((item) => (
             <a
@@ -61,17 +62,19 @@ export default function CourseSectionNav({ items }: CourseSectionNavProps) {
               href={`#${item.id}`}
               aria-current={activeSection === item.id ? 'location' : undefined}
               onClick={(event) => {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                 event.preventDefault();
                 navigateToSection(item.id);
               }}
               className={cn(
-                'relative inline-flex h-14 min-w-28 items-center justify-center px-3 text-center text-xs font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 motion-reduce:transition-none sm:min-w-0 sm:text-sm',
+                'relative inline-flex h-14 items-center justify-center gap-2 text-center text-xs font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 motion-reduce:transition-none sm:min-w-0 sm:text-sm',
                 activeSection === item.id
-                  ? 'text-primary after:absolute after:inset-x-[calc(50%-1rem)] after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary'
+                  ? 'text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary'
                   : null,
               )}
             >
               {item.label}
+              {item.count !== undefined && item.count > 0 && <Badge variant="outline">{item.count}</Badge>}
             </a>
           ))}
         </div>
