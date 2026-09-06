@@ -23,7 +23,9 @@ import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import CourseDetailSection from '@/components/course/CourseDetailSection';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Star } from 'lucide-react';
 import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
 import { getCourseReviewStats } from '@/lib/course-review-stats';
 
@@ -182,9 +184,9 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
 
   const courseSectionItems = [
     { id: 'course-overview', label: 'รายละเอียดคอร์ส' },
-    { id: 'course-curriculum', label: 'เนื้อหาคอร์ส' },
+    { id: 'course-curriculum', label: 'เนื้อหาคอร์ส', count: course.lessons.length },
     ...(instructorName ? [{ id: 'course-instructor', label: 'ผู้สอน' }] : []),
-    { id: 'course-reviews', label: 'รีวิวผู้เรียน' },
+    { id: 'course-reviews', label: 'รีวิวผู้เรียน', count: verifiedReview?.count },
   ];
 
   const courseJsonLd = {
@@ -249,10 +251,10 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
           {cancelled ? <PaymentCancellationNotice /> : null}
 
           <header className="bg-[radial-gradient(circle_at_12%_8%,var(--color-accent-soft),transparent_36%),linear-gradient(180deg,var(--academy-canvas),var(--background))]">
-            <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:gap-14 lg:px-8 lg:py-20">
+            <div className="mx-auto grid max-w-[1204px] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_20rem] md:gap-9 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-20 lg:py-14">
               <div className="min-w-0 self-center">
                 <NavigationBreadcrumbs
-                  className="mb-7"
+                  className="mb-8"
                   items={[
                     { href: '/', label: 'หน้าแรก' },
                     { href: '/courses', label: 'คอร์สทั้งหมด' },
@@ -263,31 +265,39 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
                 {course.tags.length > 0 && (
                   <div className="mb-5 flex flex-wrap gap-2" aria-label="หัวข้อคอร์ส">
                     {course.tags.map((tag: { id: string; name: string; slug: string }) => (
-                      <Link key={tag.id} href={`/courses?tag=${tag.slug}`} className="inline-flex rounded-full border bg-background px-3 py-1 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary">
+                      <Link key={tag.id} href={`/courses?tag=${tag.slug}`} className="inline-flex rounded-md border bg-card px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
                         {tag.name}
                       </Link>
                     ))}
                   </div>
                 )}
 
-                <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-balance sm:text-5xl">{course.title}</h1>
+                <h1 className="max-w-3xl text-4xl leading-[1.15] font-bold tracking-[-.04em] text-balance lg:text-5xl xl:text-[3.5rem]">{course.title}</h1>
                 {course.description && (
-                  <p className="mt-5 max-w-3xl text-lg leading-8 text-muted-foreground text-pretty">{getExcerpt(course.description, 200)}</p>
+                  <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground text-pretty">{getExcerpt(course.description, 200)}</p>
                 )}
 
-                <section className="mt-8" aria-label="ข้อมูลประกอบการตัดสินใจ">
-                  <dl className="flex w-fit max-w-full divide-x overflow-x-auto rounded-2xl border bg-background/80 text-sm shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {courseReady && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">บทเรียน</dt><dd className="mt-1 font-semibold">{course.lessons.length} บท</dd></div>}
-                    {totalSeconds > 0 && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">เวลาวิดีโอ</dt><dd className="mt-1 font-semibold">{durationText}</dd></div>}
-                    {freePreviewCount > 0 && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">ทดลองเรียน</dt><dd className="mt-1 font-semibold">{freePreviewCount} บทฟรี</dd></div>}
-                    {instructorName && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">ผู้สอน</dt><dd className="mt-1 font-semibold">{instructorName}</dd></div>}
-                    {verifiedReview && <div className="shrink-0 px-4 py-3"><dt className="text-muted-foreground">รีวิวผู้เรียน</dt><dd className="mt-1 font-semibold"><a href="#course-reviews" className="underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">★ {verifiedReview.average.toFixed(1)} · {verifiedReview.count} รีวิว</a></dd></div>}
-                  </dl>
-                </section>
+                {verifiedReview && (
+                  <a href="#course-reviews" className="mt-6 inline-flex flex-wrap items-center gap-2 text-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+                    <Star className="size-4 fill-primary text-primary" aria-hidden="true" />
+                    <strong>{verifiedReview.average.toFixed(1)} / 5</strong>
+                    <span className="text-muted-foreground">จาก {verifiedReview.count} รีวิว</span>
+                  </a>
+                )}
+                {(courseReady || totalSeconds > 0 || freePreviewCount > 0) && (
+                  <section className="mt-7" aria-label="ข้อมูลประกอบการตัดสินใจ">
+                    <Separator className="mb-5" />
+                    <dl className="flex flex-wrap gap-x-7 gap-y-4">
+                      {courseReady && <div><dt className="text-xs text-muted-foreground">บทเรียน</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{course.lessons.length} <span className="text-sm font-normal">บท</span></dd></div>}
+                      {totalSeconds > 0 && <div><dt className="text-xs text-muted-foreground">วิดีโอทั้งหมด</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{durationText}</dd></div>}
+                      {freePreviewCount > 0 && <div><dt className="text-xs text-muted-foreground">ทดลองเรียนฟรี</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{freePreviewCount} <span className="text-sm font-normal">บท</span></dd></div>}
+                    </dl>
+                  </section>
+                )}
               </div>
 
-              <aside className="lg:sticky lg:top-24 lg:self-start" aria-label="ตัวอย่างและการสมัครเรียน">
-                <Card className="overflow-hidden border-white/80 shadow-[var(--academy-shadow-float)] ring-1 ring-foreground/5">
+              <aside className="w-full max-w-lg justify-self-center md:self-center" aria-label="ตัวอย่างและการสมัครเรียน">
+                <Card className="gap-0 overflow-hidden py-0 shadow-[var(--academy-shadow-card)]">
                   <div className="relative bg-muted">
                     {normalizeUrl(course.thumbnailUrl) ? (
                       <img src={normalizeUrl(course.thumbnailUrl)!} alt={course.title} width={1200} height={675} sizes="(min-width: 1024px) 40vw, 100vw" className="aspect-video w-full object-cover" />
@@ -296,7 +306,7 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
                     )}
                     {signedPreviewVideoUrl && <CoursePreviewVideo previewVideoUrl={signedPreviewVideoUrl} />}
                   </div>
-                  <CardContent id="course-action" className="scroll-mt-24 p-6">
+                  <CardContent id="course-action" className="scroll-mt-40 p-6">
                     <CourseDetailClient
                       courseId={course.id}
                       courseSlug={course.slug}
@@ -313,86 +323,54 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
 
           <CourseSectionNav items={courseSectionItems} />
 
-          <article className="mx-auto flex max-w-5xl flex-col gap-12 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-            <section id="course-overview" className="scroll-mt-24" aria-labelledby="course-overview-title">
-              <h2 className="text-3xl font-bold tracking-tight" id="course-overview-title">รายละเอียดคอร์ส</h2>
+          <article className="mx-auto max-w-[1204px] px-5 sm:px-8">
+            <CourseDetailSection id="course-overview" eyebrow="ภาพรวมคอร์ส" title="รายละเอียดคอร์ส">
               {course.description ? (
-                <div className="rich-content mt-6 max-w-3xl" dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }} />
+                <div className="rich-content text-sm leading-8 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:leading-8 [&_li]:leading-8" dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }} />
               ) : (
-                <Empty className="mt-6 border p-6">
+                <Empty className="border p-6">
                   <EmptyHeader>
                     <EmptyTitle>กำลังเตรียมรายละเอียดคอร์ส</EmptyTitle>
                     <EmptyDescription>คอร์สนี้ยังไม่มีรายละเอียดเพิ่มเติม</EmptyDescription>
                   </EmptyHeader>
                 </Empty>
               )}
-            </section>
-
+            </CourseDetailSection>
             <Separator />
-
-            <section id="course-curriculum" className="scroll-mt-24" aria-labelledby="course-curriculum-title">
-              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold tracking-tight" id="course-curriculum-title">เส้นทางการเรียน</h2>
-                </div>
-                {courseReady && (
-                  <p className="text-sm text-muted-foreground">
-                    {course.lessons.length} บท{totalSeconds > 0 ? ` · ${durationText}` : ''}{freePreviewCount > 0 ? ` · ทดลองฟรี ${freePreviewCount} บท` : ''}
-                  </p>
-                )}
+            <CourseDetailSection id="course-curriculum" eyebrow="เนื้อหาคอร์ส" title="มองเห็นเส้นทางก่อนเริ่มเรียน" description="เรียนตามลำดับ หรือกลับมาทบทวนบทที่ต้องการ">
+              <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
+                <h3 className="text-base font-semibold">รายการบทเรียนทั้งหมด</h3>
+                {courseReady && <p className="text-xs text-muted-foreground">{course.lessons.length} บท{totalSeconds > 0 ? ' · ' + durationText : ''}</p>}
               </div>
-              <Accordion type="single" collapsible defaultValue="course-lessons" className="border-border/80 bg-card">
-                <AccordionItem value="course-lessons" className="border-0 data-open:bg-transparent">
-                  <AccordionTrigger className="border-0 border-b px-5 py-4 text-base font-semibold no-underline hover:no-underline sm:px-6">
-                    รายการบทเรียนทั้งหมด
-                  </AccordionTrigger>
-                  <AccordionContent className="-mx-4 pb-0">
-                    <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} lessons={course.lessons} />
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </section>
-
+              <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} lessons={course.lessons} />
+            </CourseDetailSection>
             {instructorName && (
               <>
                 <Separator />
-                <section id="course-instructor" className="scroll-mt-24" aria-labelledby="course-instructor-title">
-                  <h2 className="text-3xl font-bold tracking-tight" id="course-instructor-title">รู้จักผู้สอน</h2>
-                  <Card className="mt-6 border-border/80 shadow-[var(--academy-shadow-card)]"><CardContent className="flex items-center gap-5 p-6">
-                    {instructorAvatarUrl ? (
-                      <img src={instructorAvatarUrl} alt="" width={64} height={64} className="size-16 rounded-2xl object-cover ring-4 ring-primary/10" />
-                    ) : (
-                      <span className="flex size-16 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground ring-4 ring-primary/10" aria-hidden="true">{instructorName.charAt(0)}</span>
-                    )}
-                    <div className="grid gap-1">
-                      <span className="text-sm text-muted-foreground">ผู้สอนและดูแลเนื้อหาคอร์สนี้</span>
-                      <strong className="text-lg">{instructorName}</strong>
-                    </div>
-                  </CardContent></Card>
-                </section>
+                <CourseDetailSection id="course-instructor" eyebrow="ผู้สอน" title="รู้จักผู้สอน">
+                  <Card className="py-0">
+                    <CardContent className="flex items-center gap-5 p-6">
+                      {instructorAvatarUrl ? (
+                        <img src={instructorAvatarUrl} alt="" width={64} height={64} className="size-16 shrink-0 rounded-2xl object-cover" />
+                      ) : (
+                        <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-secondary text-xl font-bold text-secondary-foreground" aria-hidden="true">{instructorName.charAt(0)}</span>
+                      )}
+                      <div className="grid min-w-0 gap-1">
+                        <span className="text-sm text-muted-foreground">ผู้สอนและดูแลเนื้อหาคอร์สนี้</span>
+                        <strong className="text-lg wrap-anywhere">{instructorName}</strong>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </CourseDetailSection>
               </>
             )}
-
             <Separator />
-
-            <section id="course-reviews" className="scroll-mt-24" aria-labelledby="course-reviews-title">
-              <h2 id="course-reviews-title" className="text-3xl font-bold tracking-tight">รีวิวจากผู้เรียน</h2>
-              <Suspense fallback={<div className="mt-5 h-24 animate-pulse rounded-2xl bg-muted motion-reduce:animate-none" role="status" aria-label="กำลังโหลดรีวิว" />}>
+            <CourseDetailSection id="course-reviews" eyebrow="เสียงจากผู้เรียน" title="รีวิวจากผู้เรียน" description="ประสบการณ์จากผู้ที่เรียนคอร์สนี้">
+              <Suspense fallback={<div role="status" aria-label="กำลังโหลดรีวิว"><Skeleton className="h-32 w-full" /></div>}>
                 <CourseReviewsWrapper courseSlug={course.slug} />
               </Suspense>
-            </section>
-
-            {courseReady && (
-              <Card className="border-primary/20 bg-primary/5 shadow-none">
-                <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold">พร้อมเริ่มเรียนแล้วหรือยัง?</h2>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">กลับไปสมัครคอร์ส หรือเข้าเรียนต่อได้จากตรงนี้</p>
-                  </div>
-                  <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} renderMode="final-action" />
-                </CardContent>
-              </Card>
-            )}
+            </CourseDetailSection>
+            {courseReady && <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} renderMode="final-action" />}
           </article>
           </MainContent>
         </AnalyticsViewEvent>

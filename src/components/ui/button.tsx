@@ -20,6 +20,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-secondary hover:text-secondary-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        coursePreview: "bg-transparent text-primary hover:bg-background/15",
         navigation:
           "bg-transparent text-muted-foreground hover:border-border hover:bg-secondary hover:text-secondary-foreground aria-[current=page]:bg-secondary aria-[current=page]:text-secondary-foreground aria-[current=location]:bg-secondary aria-[current=location]:text-secondary-foreground aria-expanded:border-border aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         destructive:

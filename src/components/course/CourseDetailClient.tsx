@@ -2,10 +2,10 @@
 
 import { createContext, useContext, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { BookOpen, Check, CircleCheck } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, CircleCheck } from 'lucide-react';
 import EnrollButton from '@/components/course/EnrollButton';
 import CourseLessonList from '@/components/course/CourseLessonList';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -111,11 +111,16 @@ export default function CourseDetailClient({
           <Alert variant="success">
             <CircleCheck aria-hidden="true" />
             <AlertTitle>คุณมีสิทธิ์เรียนคอร์สนี้แล้ว</AlertTitle>
-            <AlertDescription>กลับไปยังบทเรียนและเรียนต่อจากจุดที่ค้างไว้ได้เลย</AlertDescription>
+
           </Alert>
+          <div>
+            <h2 className="text-xl font-semibold">พร้อมกลับมาเรียนต่อ?</h2>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">เลือกบทที่ต้องการ แล้วเรียนในจังหวะของคุณ</p>
+          </div>
           <Button asChild className="w-full">
             <Link href={decisionFacts.actions.learner.href!}>{decisionFacts.actions.learner.label}</Link>
           </Button>
+          <a href="#course-curriculum" className="text-center text-xs text-muted-foreground underline underline-offset-4 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">ดูรายการบทเรียนทั้งหมด</a>
         </div>
       );
     }
@@ -183,18 +188,20 @@ export default function CourseDetailClient({
   if (renderMode === 'final-action') {
     if (status === 'checking' || (!courseReady && status !== 'enrolled')) return null;
 
-    if (status === 'enrolled') {
-      return (
-        <Button asChild>
-          <Link href={decisionFacts.actions.learner.href!}>{decisionFacts.actions.learner.label}</Link>
-        </Button>
-      );
-    }
-
     return (
-      <Button asChild>
-        <a href="#course-action">{decisionFacts.actions.member.label}</a>
-      </Button>
+      <section className="mb-12 flex flex-col gap-6 rounded-2xl border border-primary/15 bg-primary/5 p-6 sm:mb-16 sm:flex-row sm:items-center sm:justify-between sm:p-9" aria-labelledby="course-final-title">
+        <div className="min-w-0">
+          <h2 id="course-final-title" className="text-xl font-semibold text-balance">{isEnrolled ? 'กลับไปลงมือทำต่อได้เลย' : 'พร้อมเริ่มเรียนแล้วหรือยัง?'}</h2>
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">{isEnrolled ? 'คอร์สของคุณพร้อมให้กลับมาเรียนและทบทวน' : 'ทบทวนรายละเอียด แล้วเลือกเริ่มเรียนในจังหวะของคุณ'}</p>
+        </div>
+        <Button asChild className="shrink-0">
+          {isEnrolled ? (
+            <Link href={decisionFacts.actions.learner.href!}>{decisionFacts.actions.learner.label}<ArrowRight data-icon="inline-end" aria-hidden="true" /></Link>
+          ) : (
+            <a href="#course-action">{decisionFacts.actions.member.label}<ArrowRight data-icon="inline-end" aria-hidden="true" /></a>
+          )}
+        </Button>
+      </section>
     );
   }
 
