@@ -241,12 +241,12 @@ export default function LearnPageClient({
   const openLockedDialog = useCallback((lessonId: string) => {
     const lesson = allLessons.find((item) => item.id === lessonId);
     if (!lesson) return;
-    lockedLessonTriggerRef.current = document.activeElement instanceof HTMLElement
+    lockedLessonTriggerRef.current = mobileCurriculumOpen ? mobileCurriculumTriggerRef.current : document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
     setMobileCurriculumOpen(false);
     setLockedLesson(lesson);
-  }, [allLessons]);
+  }, [allLessons, mobileCurriculumOpen]);
 
   const openMobileCurriculum = useCallback((returnFocus: HTMLElement | null) => {
     mobileCurriculumTriggerRef.current = returnFocus;
@@ -338,7 +338,7 @@ export default function LearnPageClient({
                   disabled={completionSaveState === 'pending'}
                 >
                   {completionSaveState === 'pending'
-                    ? <LoaderCircle className="animate-spin" data-icon="inline-start" aria-hidden="true" />
+                    ? <LoaderCircle className="animate-spin motion-reduce:animate-none" data-icon="inline-start" aria-hidden="true" />
                     : <Check data-icon="inline-start" aria-hidden="true" />}
                   {completionSaveState === 'pending'
                     ? 'กำลังบันทึก...'
@@ -382,15 +382,19 @@ export default function LearnPageClient({
               </Empty>
             )}
 
-            <nav className="mt-8 grid grid-cols-2 gap-3 border-t pt-6" aria-label="เปลี่ยนบทเรียน">
-              {prevLesson ? (
+            <nav className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 border-t pt-6" aria-label="เปลี่ยนบทเรียน">
+              {prevLesson && (isEnrolled || prevLesson.isFreePreview) ? (
                 <Button asChild variant="outline" className="h-auto min-h-12 justify-start px-4 py-3">
                   <Link href={`/courses/${course.slug}/learn/${prevLesson.id}`}>
                     <ArrowLeft data-icon="inline-start" aria-hidden="true" />
                     <span className="min-w-0 text-left"><small className="block text-xs font-normal text-muted-foreground">บทก่อนหน้า</small><strong className="block truncate text-sm">{prevLesson.title}</strong></span>
                   </Link>
                 </Button>
-              ) : <span />}
+              ) : prevLesson ? (
+                <Button type="button" variant="outline" className="h-auto min-h-12 justify-start px-4 py-3" onClick={() => openLockedDialog(prevLesson.id)}>
+                  <Lock data-icon="inline-start" aria-hidden="true" />บทก่อนหน้า · {prevLesson.title}
+                </Button>
+              ) : <span className="hidden sm:block" />}
 
               {nextLesson && (isEnrolled || nextLesson.isFreePreview) ? (
                 <Button asChild className="h-auto min-h-12 justify-end px-4 py-3">

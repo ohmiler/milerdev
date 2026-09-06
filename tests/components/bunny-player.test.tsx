@@ -38,9 +38,9 @@ describe('BunnyPlayer trusted adapter lifecycle', () => {
       />,
     );
 
-    expect(connectBunnyPlayer).not.toHaveBeenCalled();
+    expect(connectBunnyPlayer).toHaveBeenCalledOnce();
     fireEvent.load(screen.getByTitle('วิดีโอบทเรียน บทที่หนึ่ง'));
-    await waitFor(() => expect(connectBunnyPlayer).toHaveBeenCalledOnce());
+    await waitFor(() => expect(connectBunnyPlayer).toHaveBeenCalledTimes(2));
     expect(connectBunnyPlayer).toHaveBeenCalledWith(expect.objectContaining({
       frame: expect.objectContaining({
         src: 'https://iframe.mediadelivery.net/embed/123/video-one',
@@ -57,8 +57,8 @@ describe('BunnyPlayer trusted adapter lifecycle', () => {
         {...callbacks}
       />,
     );
-    expect(disconnect).toHaveBeenCalledOnce();
-    expect(connectBunnyPlayer).toHaveBeenCalledOnce();
+    expect(disconnect).toHaveBeenCalledTimes(2);
+    expect(connectBunnyPlayer).toHaveBeenCalledTimes(2);
     expect(screen.getByTitle('วิดีโอบทเรียน บทที่สอง')).toBeTruthy();
   });
 
@@ -71,8 +71,8 @@ describe('BunnyPlayer trusted adapter lifecycle', () => {
       />,
     );
     fireEvent.load(screen.getByTitle('วิดีโอบทเรียน บทที่หนึ่ง'));
-    await waitFor(() => expect(connectBunnyPlayer).toHaveBeenCalledOnce());
-    const input = vi.mocked(connectBunnyPlayer).mock.calls[0][0];
+    await waitFor(() => expect(connectBunnyPlayer).toHaveBeenCalledTimes(2));
+    const input = vi.mocked(connectBunnyPlayer).mock.calls.at(-1)![0];
 
     act(() => input.callbacks.onError?.());
     const retry = screen.getByRole('button', { name: 'ลองโหลดวิดีโออีกครั้ง' });
@@ -94,7 +94,14 @@ describe('BunnyPlayer trusted adapter lifecycle', () => {
     await act(async () => {
       vi.advanceTimersByTime(8_000);
     });
-    expect(connectBunnyPlayer).not.toHaveBeenCalled();
+    expect(connectBunnyPlayer).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'ลองโหลดวิดีโออีกครั้ง' })).toBeTruthy();
   });
+});
+
+it('connects a preloaded iframe even when its load event happened before hydration', () => {
+  vi.mocked(connectBunnyPlayer).mockClear();
+  render(<BunnyPlayer videoId="https://iframe.mediadelivery.net/embed/123/preloaded" resumeAtSeconds={37} />);
+  expect(connectBunnyPlayer).toHaveBeenCalledWith(expect.objectContaining({ resumeAtSeconds: 37 }));
+  cleanup();
 });
