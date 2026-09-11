@@ -4,12 +4,13 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db";
 import * as schema from "./db/schema";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
-import { authorizeGoogleSignIn, createGoogleProvider } from "./auth-google";
+import { and, eq } from "drizzle-orm";
+import { authorizeGoogleSignIn, createGoogleProvider, getGoogleLinkingRequestContext } from "./auth-google";
 import { applyJwtSessionPolicy, exposeAuthorizedSession } from "./auth-session";
 import { authorizeCredentials } from "./auth-credentials";
 import { consumeAuthRateLimit } from "./auth-rate-limit";
 import { resolveSafeAuthRedirect } from "./safe-auth-return";
+import { restrictAccountLinking } from "@/lib/auth-account-linking";
 
 const EXPECTED_AUTH_ERROR_TYPES = new Set(["CredentialsSignin", "MissingCSRF"]);
 
@@ -34,16 +35,16 @@ function logAuthError(error: Error): void {
     }
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const { handlers, signIn, signOut, auth } = NextAuth((request) => ({
     trustHost: true,
     logger: {
         error: logAuthError,
     },
-    adapter: DrizzleAdapter(db, {
+    adapter: restrictAccountLinking(DrizzleAdapter(db, {
         usersTable: schema.users,
         accountsTable: schema.accounts,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any),
+    } as any)),
     session: {
         strategy: "jwt",
         maxAge: 7 * 24 * 60 * 60, // 7 days
@@ -75,30 +76,42 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ],
     callbacks: {
         async redirect({ url, baseUrl }) {
+            const { recoveryRedirect } = getGoogleLinkingRequestContext(request);
+            // Only this server-built recovery URL may enter an auth page.
+            // Ordinary callback destinations still use the existing loop guard.
+            if (url === recoveryRedirect) return new URL(recoveryRedirect, baseUrl).toString();
             return resolveSafeAuthRedirect(url, baseUrl);
         },
-        async signIn({ account, profile, user }) {
+        async signIn({ account, profile }) {
             if (account?.provider === "google") {
-                return authorizeGoogleSignIn(profile, user?.id, async ({ email, userId }) => {
-                    const userById = userId
-                        ? await db.query.users.findFirst({
-                            where: eq(schema.users.id, userId),
-                            columns: { deactivatedAt: true },
-                        })
-                        : null;
-                    return userById ?? db.query.users.findFirst({
+                const { hasSessionCookie, recoveryRedirect } = getGoogleLinkingRequestContext(request);
+                const decision = await authorizeGoogleSignIn(profile, account.providerAccountId, {
+                    hasSessionCookie,
+                    loadLinkedUser: async (providerAccountId) => {
+                        const linked = await db.query.accounts.findFirst({
+                            where: and(
+                                eq(schema.accounts.provider, "google"),
+                                eq(schema.accounts.providerAccountId, providerAccountId),
+                            ),
+                            with: { user: { columns: { deactivatedAt: true } } },
+                        });
+                        return linked?.user;
+                    },
+                    loadUserByEmail: (email) => db.query.users.findFirst({
                         where: eq(schema.users.email, email),
                         columns: { deactivatedAt: true },
-                    });
+                    }),
                 });
+                return decision === "recover" ? recoveryRedirect : decision === "allow";
             }
 
             return true;
         },
-        async jwt({ token, user }) {
+        async jwt({ token, user, account }) {
             return applyJwtSessionPolicy({
                 token,
                 user,
+                accountProvider: account?.provider,
                 loadUserState: async (userId) => db.query.users.findFirst({
                     where: eq(schema.users.id, userId),
                     columns: {
@@ -117,4 +130,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         signIn: "/login",
         error: "/login",
     },
-});
+}));
