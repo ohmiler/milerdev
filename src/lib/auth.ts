@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db";
 import * as schema from "./db/schema";
-import bcrypt from "bcryptjs";
+import { verifyPassword } from "@/lib/password-storage";
 import { and, eq } from "drizzle-orm";
 import { authorizeGoogleSignIn, createGoogleProvider, getGoogleLinkingRequestContext } from "./auth-google";
 import { applyJwtSessionPolicy, exposeAuthorizedSession } from "./auth-session";
@@ -66,7 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth((request) => ({
                     findUserByEmail: async (email) => db.query.users.findFirst({
                         where: eq(schema.users.email, email),
                     }),
-                    comparePassword: (password, passwordHash) => bcrypt.compare(
+                    comparePassword: (password, passwordHash) => verifyPassword(
                         password,
                         passwordHash
                     ),

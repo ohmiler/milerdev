@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq, and, gt, isNull, sql } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
+import { hashNewPassword } from '@/lib/password-storage';
 import { z } from 'zod';
 import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import {
@@ -10,21 +10,12 @@ import {
     consumeAuthRateLimit,
 } from '@/lib/auth-rate-limit';
 import { createHash } from 'crypto';
-import {
-    PASSWORD_LOWERCASE_PATTERN,
-    PASSWORD_MIN_LENGTH,
-    PASSWORD_NUMBER_PATTERN,
-    PASSWORD_UPPERCASE_PATTERN,
-} from '@/lib/password-policy';
+import { newPasswordSchema } from '@/lib/password-validation';
+import { PasswordSecurityError } from '@/lib/password-errors';
 
 const confirmResetSchema = z.object({
     token: z.string().min(1, 'Token ไม่ถูกต้อง'),
-    newPassword: z
-        .string()
-        .min(PASSWORD_MIN_LENGTH, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
-        .regex(PASSWORD_UPPERCASE_PATTERN, 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว')
-        .regex(PASSWORD_LOWERCASE_PATTERN, 'รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว')
-        .regex(PASSWORD_NUMBER_PATTERN, 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว'),
+    newPassword: newPasswordSchema,
 });
 
 function invalidResetLinkResponse() {
@@ -88,7 +79,7 @@ export async function POST(request: Request) {
         }
 
         // Hash new password and clear reset token
-        const passwordHash = await bcrypt.hash(newPassword, 12);
+        const passwordHash = await hashNewPassword(newPassword);
 
         const updateResult = await db
             .update(users)
@@ -113,7 +104,8 @@ export async function POST(request: Request) {
         return NextResponse.json({
             message: 'ตั้งรหัสผ่านใหม่สำเร็จ',
         });
-    } catch {
+    } catch (error) {
+        if (error instanceof PasswordSecurityError) return NextResponse.json({ error: error.message }, { status: error.status });
         console.error('Password reset confirmation failed');
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },

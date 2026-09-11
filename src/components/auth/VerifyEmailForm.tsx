@@ -57,9 +57,9 @@ export default function VerifyEmailForm({ registerHref, loginHref }: { registerH
     {error && <AuthError>{error}</AuthError>}
     <form onSubmit={submit} className="flex flex-col gap-5" aria-busy={loading}>
       <AuthField htmlFor="verify-name" label="ชื่อ-นามสกุล"><Input id="verify-name" name="name" autoComplete="name" required minLength={2} maxLength={100} value={name} onChange={(event) => setName(event.target.value)} /></AuthField>
-      <AuthField htmlFor="verify-password" label="รหัสผ่าน"><PasswordInput id="verify-password" name="password" autoComplete="new-password" required maxLength={72} visible={visible} onVisibilityChange={() => setVisible((value) => !value)} value={password} onChange={(event) => setPassword(event.target.value)} /></AuthField>
+      <AuthField htmlFor="verify-password" label="รหัสผ่าน"><PasswordInput id="verify-password" name="password" autoComplete="new-password" required visible={visible} onVisibilityChange={() => setVisible((value) => !value)} value={password} onChange={(event) => setPassword(event.target.value)} /></AuthField>
       <PasswordPolicyFeedback password={password} id="verify-password-policy" />
-      <AuthField htmlFor="verify-confirm" label="ยืนยันรหัสผ่าน"><Input id="verify-confirm" name="confirmPassword" type="password" autoComplete="new-password" required maxLength={72} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></AuthField>
+      <AuthField htmlFor="verify-confirm" label="ยืนยันรหัสผ่าน"><Input id="verify-confirm" name="confirmPassword" type="password" autoComplete="new-password" required value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></AuthField>
       <p className="text-sm">การสร้างบัญชีหมายถึงคุณยอมรับ <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว</Link></p>
       <Button type="submit" disabled={loading}>{loading ? 'กำลังสร้างบัญชี...' : 'ยืนยันอีเมลและสร้างบัญชี'}</Button>
     </form>

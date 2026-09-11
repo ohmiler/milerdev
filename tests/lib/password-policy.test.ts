@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest';
-
-import { getPasswordPolicy, getPasswordPolicyError } from '@/lib/password-policy';
-
-describe('password policy', () => {
-  it('uses the required account password rules and keeps special characters recommended', () => {
-    expect(getPasswordPolicyError('short')).toBe('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
-    expect(getPasswordPolicyError('lowercase1')).toBe('รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว');
-    expect(getPasswordPolicyError('UPPERCASE1')).toBe('รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว');
-    expect(getPasswordPolicyError('NoNumbers')).toBe('รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว');
-    expect(getPasswordPolicyError('Required1')).toBe('');
-    expect(getPasswordPolicy('Required1').checks.special).toBe(false);
+import { getPasswordPolicyError } from '@/lib/password-policy';
+describe('new password policy', () => {
+  it.each(['\u1100\u1161\u11a8'.repeat(128), 'a'.repeat(15), 'ก'.repeat(128), '🔐'.repeat(128), 'a long passphrase with spaces', 'e\u0301'.repeat(15)])('accepts full Unicode passphrases: %s', (value) => {
+    expect(getPasswordPolicyError(value)).toBe('');
+  });
+  it.each(['short', 'a'.repeat(129), '🔐'.repeat(129), 'a'.repeat(15) + '\u0000', 'a'.repeat(15) + '\ud800'])('rejects invalid input', (value) => {
+    expect(getPasswordPolicyError(value)).not.toBe('');
   });
 });

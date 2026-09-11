@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import * as schema from '../src/lib/db/schema';
-import { hash } from 'bcryptjs';
+import { hashNewPassword } from '../src/lib/password-storage';
 
 async function createAdminUser() {
   try {
@@ -9,7 +9,7 @@ async function createAdminUser() {
     const connection = mysql.createPool(process.env.DATABASE_URL!);
     const db = drizzle(connection, { schema, mode: 'default' });
     
-    const hashedPassword = await hash('admin123', 10);
+    const hashedPassword = await hashNewPassword(process.env.INITIAL_ADMIN_PASSWORD ?? '');
 
     await db.insert(schema.users).values({
       email: 'admin@milerdev.com',
@@ -21,12 +21,12 @@ async function createAdminUser() {
 
     console.log('✅ Admin user created successfully!');
     console.log('📧 Email: admin@milerdev.com');
-    console.log('🔑 Password: admin123');
     console.log('👤 Role: admin');
-  } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+  } catch {
+    process.exitCode = 1;
+    console.error('❌ Error creating admin user:');
   } finally {
-    process.exit(0);
+    process.exit(process.exitCode ?? 0);
   }
 }
 

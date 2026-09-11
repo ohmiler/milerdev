@@ -1,11 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock bcryptjs
-vi.mock('bcryptjs', () => ({
-    default: {
-        hash: vi.fn().mockResolvedValue('$2a$12$hashedpassword'),
-        compare: vi.fn(),
-    },
+vi.mock('@/lib/password-storage', () => ({
+    hashNewPassword: vi.fn().mockResolvedValue('$argon2id$test-hash'),
+    verifyPassword: vi.fn(),
 }));
 
 // Mock auth
@@ -93,12 +90,12 @@ vi.mock('@/lib/db', () => ({
 
 import { auth } from '@/lib/auth';
 import { sendPasswordResetEmail } from '@/lib/email';
-import bcrypt from 'bcryptjs';
+import * as passwordStorage from '@/lib/password-storage';
 import { consumeAuthRateLimit } from '@/lib/auth-rate-limit';
 
 const mockedAuth = vi.mocked(auth);
 const mockedSendPasswordResetEmail = vi.mocked(sendPasswordResetEmail);
-const mockedBcrypt = vi.mocked(bcrypt);
+const mockedBcrypt = vi.mocked(passwordStorage);
 const mockedRateLimit = vi.mocked(consumeAuthRateLimit);
 
 function makeRequest(url: string, body: Record<string, unknown>, method = 'POST') {
@@ -293,7 +290,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
 
     it('should reject invalid token', async () => {
         mockDbState.selectResult = [];
-        const res = await callResetConfirm({ token: 'invalid-token', newPassword: 'NewPass1' });
+        const res = await callResetConfirm({ token: 'invalid-token', newPassword: 'NewPassphrase123!' });
         expect(res.status).toBe(400);
         const data = await res.json();
         expect(data.kind).toBe('invalid_or_expired_link');
@@ -302,7 +299,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
 
     it('should reset password with valid token', async () => {
         mockDbState.selectResult = [{ id: 'user-1', resetToken: 'valid-token', resetExpires: new Date(Date.now() + 3600000), deactivatedAt: null }];
-        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
+        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPassphrase123!' });
         expect(res.status).toBe(200);
         // Verify token is cleared
         expect(mockDbState.updateSet).toHaveProperty('resetToken', null);
@@ -320,7 +317,7 @@ describe('POST /api/auth/reset-password/confirm', () => {
         }];
         mockDbState.updateAffectedRows = 0;
 
-        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
+        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPassphrase123!' });
 
         expect(res.status).toBe(400);
         const data = await res.json();
@@ -336,12 +333,12 @@ describe('POST /api/auth/reset-password/confirm', () => {
             deactivatedAt: new Date('2026-07-24T00:00:00.000Z'),
         }];
 
-        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
+        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPassphrase123!' });
 
         expect(res.status).toBe(400);
         expect(await res.json()).toMatchObject({ kind: 'invalid_or_expired_link' });
         expect(mockDbState.updateSet).toBeNull();
-        expect(mockedBcrypt.hash).not.toHaveBeenCalled();
+        expect(mockedBcrypt.hashNewPassword).not.toHaveBeenCalled();
     });
 
     it('should reject weak new password', async () => {
@@ -350,13 +347,13 @@ describe('POST /api/auth/reset-password/confirm', () => {
     });
 
     it('should reject empty token', async () => {
-        const res = await callResetConfirm({ token: '', newPassword: 'NewPass1' });
+        const res = await callResetConfirm({ token: '', newPassword: 'NewPassphrase123!' });
         expect(res.status).toBe(400);
     });
 
     it('should return 429 when rate limited', async () => {
         mockedRateLimit.mockResolvedValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
-        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPass1' });
+        const res = await callResetConfirm({ token: 'valid-token', newPassword: 'NewPassphrase123!' });
         expect(res.status).toBe(429);
     });
 });
@@ -381,7 +378,7 @@ describe('POST /api/auth/change-password', () => {
 
     it('should return 401 for unauthenticated user', async () => {
         mockedAuth.mockResolvedValue(null as never);
-        const res = await callChangePassword({ currentPassword: 'Old1234!', newPassword: 'New1234!' });
+        const res = await callChangePassword({ currentPassword: 'Old passphrase 1234!', newPassword: 'New passphrase 1234!' });
         expect(res.status).toBe(401);
     });
 
@@ -391,9 +388,9 @@ describe('POST /api/auth/change-password', () => {
             expires: new Date(Date.now() + 86400000).toISOString(),
         } as never);
         mockDbState.selectResult = [{ id: 'user-1', passwordHash: '$2a$12$existing' }];
-        mockedBcrypt.compare.mockResolvedValueOnce(false as never); // current password wrong
+        mockedBcrypt.verifyPassword.mockResolvedValueOnce(false as never); // current password wrong
 
-        const res = await callChangePassword({ currentPassword: 'Wrong1234', newPassword: 'New1234!' });
+        const res = await callChangePassword({ currentPassword: 'Wrong1234', newPassword: 'New passphrase 1234!' });
         expect(res.status).toBe(400);
         const data = await res.json();
         expect(data.error).toContain('ไม่ถูกต้อง');
@@ -405,11 +402,11 @@ describe('POST /api/auth/change-password', () => {
             expires: new Date(Date.now() + 86400000).toISOString(),
         } as never);
         mockDbState.selectResult = [{ id: 'user-1', passwordHash: '$2a$12$existing' }];
-        mockedBcrypt.compare
+        mockedBcrypt.verifyPassword
             .mockResolvedValueOnce(true as never)  // current password correct
             .mockResolvedValueOnce(true as never);  // new password same as old
 
-        const res = await callChangePassword({ currentPassword: 'Old1234!', newPassword: 'Old1234!' });
+        const res = await callChangePassword({ currentPassword: 'Old passphrase 1234!', newPassword: 'Old passphrase 1234!' });
         expect(res.status).toBe(400);
         const data = await res.json();
         expect(data.error).toContain('ไม่เหมือนรหัสผ่านเดิม');
@@ -421,11 +418,11 @@ describe('POST /api/auth/change-password', () => {
             expires: new Date(Date.now() + 86400000).toISOString(),
         } as never);
         mockDbState.selectResult = [{ id: 'user-1', passwordHash: '$2a$12$existing' }];
-        mockedBcrypt.compare
+        mockedBcrypt.verifyPassword
             .mockResolvedValueOnce(true as never)   // current password correct
             .mockResolvedValueOnce(false as never);  // new password different
 
-        const res = await callChangePassword({ currentPassword: 'Old1234!', newPassword: 'New1234!' });
+        const res = await callChangePassword({ currentPassword: 'Old passphrase 1234!', newPassword: 'New passphrase 1234!' });
         expect(res.status).toBe(200);
         // Verify reset token is cleared
         expect(mockDbState.updateSet).toHaveProperty('resetToken', null);
@@ -441,7 +438,7 @@ describe('POST /api/auth/change-password', () => {
         } as never);
         mockDbState.selectResult = [{ id: 'user-1', passwordHash: null }];
 
-        const res = await callChangePassword({ currentPassword: 'Old1234!', newPassword: 'New1234!' });
+        const res = await callChangePassword({ currentPassword: 'Old passphrase 1234!', newPassword: 'New passphrase 1234!' });
         expect(res.status).toBe(400);
         const data = await res.json();
         expect(data.error).toContain('Google');
@@ -452,7 +449,7 @@ describe('POST /api/auth/change-password', () => {
             user: { id: 'user-1', role: 'student' },
             expires: new Date(Date.now() + 86400000).toISOString(),
         } as never);
-        const res = await callChangePassword({ currentPassword: 'Old1234!', newPassword: 'weak' });
+        const res = await callChangePassword({ currentPassword: 'Old passphrase 1234!', newPassword: 'weak' });
         expect(res.status).toBe(400);
     });
 
@@ -462,7 +459,7 @@ describe('POST /api/auth/change-password', () => {
             expires: new Date(Date.now() + 86400000).toISOString(),
         } as never);
         mockedRateLimit.mockResolvedValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });
-        const res = await callChangePassword({ currentPassword: 'Old1234!', newPassword: 'New1234!' });
+        const res = await callChangePassword({ currentPassword: 'Old passphrase 1234!', newPassword: 'New passphrase 1234!' });
         expect(res.status).toBe(429);
     });
 });

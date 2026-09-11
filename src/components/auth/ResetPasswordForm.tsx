@@ -115,7 +115,7 @@ export default function ResetPasswordForm({
                 if (passwordError) setPasswordError('');
               }}
               required
-              minLength={8}
+              minLength={15}
               autoComplete={'new-password'}
               placeholder={'••••••••'}
               aria-invalid={Boolean(passwordError) || undefined}
@@ -141,7 +141,7 @@ export default function ResetPasswordForm({
               if (confirmPasswordError) setConfirmPasswordError('');
             }}
             required
-            minLength={8}
+            minLength={15}
             autoComplete={'new-password'}
             placeholder={'••••••••'}
             aria-invalid={Boolean(confirmPasswordError) || undefined}

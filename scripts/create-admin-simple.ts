@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import { hashNewPassword } from '../src/lib/password-storage';
 import mysql, { RowDataPacket } from 'mysql2/promise';
 import dotenv from 'dotenv';
 
@@ -6,7 +6,7 @@ dotenv.config({ path: '.env.local' });
 
 async function createAdmin() {
   const email = 'admin@milerdev.com';
-  const password = 'admin123';
+  const password = process.env.INITIAL_ADMIN_PASSWORD ?? '';
   const name = 'Admin User';
 
   // Create connection
@@ -30,7 +30,7 @@ async function createAdmin() {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await hashNewPassword(password);
 
     // Create admin
     await connection.execute(
@@ -40,10 +40,9 @@ async function createAdmin() {
 
     console.log('✅ Admin user created successfully!');
     console.log(`📧 Email: ${email}`);
-    console.log(`🔑 Password: ${password}`);
   } finally {
     await connection.end();
   }
 }
 
-createAdmin().catch(console.error);
+createAdmin().catch(() => { console.error('Admin creation failed'); process.exitCode = 1; });

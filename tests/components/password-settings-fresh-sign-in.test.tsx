@@ -35,10 +35,10 @@ describe('PasswordSettingsForm fresh sign-in', () => {
       target: { value: 'CurrentPassword1' },
     });
     fireEvent.change(screen.getByLabelText('รหัสผ่านใหม่'), {
-      target: { value: 'NewPassword2' },
+      target: { value: 'NewPassphrase123!' },
     });
     fireEvent.change(screen.getByLabelText('ยืนยันรหัสผ่านใหม่'), {
-      target: { value: 'NewPassword2' },
+      target: { value: 'NewPassphrase123!' },
     });
     fireEvent.submit(screen.getByLabelText('รหัสผ่านใหม่').closest('form')!);
 
@@ -55,7 +55,7 @@ describe('PasswordSettingsForm fresh sign-in', () => {
       method: 'POST',
       body: JSON.stringify({
         currentPassword: 'CurrentPassword1',
-        newPassword: 'NewPassword2',
+        newPassword: 'NewPassphrase123!',
       }),
     }));
   });
