@@ -1,3 +1,4 @@
+import { completeRegistration } from './email-registration-helper';
 import { expect, test, type Page } from '@playwright/test';
 import { E2E_FIXTURES } from '../fixtures';
 import { installRequiredE2EProviderMocks } from './provider-mock-adapter.mjs';
@@ -10,11 +11,7 @@ async function register(page: Page) {
   const id = crypto.randomUUID().replaceAll('-', '');
   const password = 'Aa1!' + id;
   await page.goto('/register?callbackUrl=%2Fdashboard%2Fpayments');
-  await page.locator('input[name=name]').fill('ผู้ซื้อทดสอบการติดตามรายการ');
-  await page.locator('input[name=email]').fill(`payment-recovery-${id}@example.test`);
-  await page.locator('input[name=password]').fill(password);
-  await page.locator('input[name=confirmPassword]').fill(password);
-  await page.locator('button[type=submit]').click();
+  await completeRegistration(page, { name: 'Payment Recovery Buyer', email: `payment-recovery-${id}@example.test`, password });
   await page.waitForURL('**/dashboard/payments');
   const session = await (await page.request.get('/api/auth/session')).json();
   expect(typeof session.user.id).toBe('string');

@@ -1,3 +1,4 @@
+import { completeRegistration } from './email-registration-helper';
 import { expect, test, type Page } from '@playwright/test';
 
 import { E2E_FIXTURES } from '../fixtures';
@@ -14,11 +15,7 @@ async function registerAndReturnTo(page: Page, destination: string, journeyName:
   await expect(page).toHaveURL(/\/register\?/);
   expect(new URL(page.url()).searchParams.get('callbackUrl')).toBe(destination);
 
-  await page.locator('input[name=name]').fill('Safe Return ' + journeyName);
-  await page.locator('input[name=email]').fill('safe-return-' + uniqueId + '@example.test');
-  await page.locator('input[name=password]').fill(generatedPassword);
-  await page.locator('input[name=confirmPassword]').fill(generatedPassword);
-  await page.locator('button[type=submit]').click();
+  await completeRegistration(page, { name: 'Safe Return ' + journeyName, email: 'safe-return-' + uniqueId + '@example.test', password: generatedPassword });
 
   await page.waitForURL((url) => url.pathname === destination);
   expect(new URL(page.url()).pathname).toBe(destination);
