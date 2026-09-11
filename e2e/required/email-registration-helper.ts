@@ -42,8 +42,13 @@ function startMailbox() {
 // The test mailbox holds links only in memory; no token values are printed.
 export async function completeRegistration(page: Page, identity: { name: string; email: string; password: string }) {
   await startMailbox();
+  await expect(page).toHaveURL(/\/register(?:\?|$)/);
   await page.locator('input[name=email]').fill(identity.email);
-  await page.locator('button[type=submit]').click();
+  const [registrationResponse] = await Promise.all([
+    page.waitForResponse((response) => new URL(response.url()).pathname === '/api/auth/register' && response.request().method() === 'POST'),
+    page.locator('button[type=submit]').click(),
+  ]);
+  expect(registrationResponse.status(), 'Registration request status').toBe(200);
   await expect(page.getByText('ตรวจสอบคำขอแล้ว', { exact: true })).toBeVisible();
   await expect.poll(() => mailbox.has(identity.email), { message: 'Verification email reaches the local mailbox' }).toBe(true);
   const link = mailbox.get(identity.email)!;
