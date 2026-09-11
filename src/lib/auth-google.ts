@@ -1,4 +1,5 @@
 import Google, { type GoogleProfile } from 'next-auth/providers/google';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
 
 const GOOGLE_ISSUER = 'https://accounts.google.com';
 const GOOGLE_BARE_ISSUER = 'accounts.google.com';
@@ -12,18 +13,48 @@ type ExistingGoogleUserState = {
     deactivatedAt: Date | null;
 };
 
-type LoadExistingGoogleUser = (identity: {
-    email: string;
-    userId?: string;
-}) => Promise<ExistingGoogleUserState | null | undefined>;
+type GoogleSignInDependencies = {
+    hasSessionCookie: boolean;
+    loadLinkedUser: (providerAccountId: string) => Promise<ExistingGoogleUserState | null | undefined>;
+    loadUserByEmail: (email: string) => Promise<ExistingGoogleUserState | null | undefined>;
+};
+
+export function getGoogleLinkingRequestContext(request?: Pick<Request, 'headers' | 'url'>) {
+    let hasSessionCookie = false;
+    let returnTo: unknown;
+    for (const cookie of request?.headers.get('cookie')?.split(';') ?? []) {
+        const separator = cookie.indexOf('=');
+        if (separator < 0) continue;
+        const name = cookie.slice(0, separator).trim();
+        if (/^(?:__Secure-)?authjs\.session-token(?:\.\d+)?$/.test(name)) {
+            // Presence is only a reason to deny implicit linking, never proof
+            // of identity. Include expired/revoked and chunked cookies.
+            hasSessionCookie = true;
+        }
+        if (name === 'authjs.callback-url' || name === '__Secure-authjs.callback-url') {
+            try {
+                const value = decodeURIComponent(cookie.slice(separator + 1));
+                const target = new URL(value, request!.url);
+                returnTo = target.origin === new URL(request!.url).origin ? target.pathname : undefined;
+            } catch {
+                returnTo = undefined;
+            }
+        }
+    }
+    const { pathname } = resolveSafeAuthReturn(returnTo);
+    return {
+        hasSessionCookie,
+        recoveryRedirect: `${createAuthReturnHref('/login', pathname)}&error=OAuthAccountNotLinked`,
+    };
+}
 
 export function createGoogleProvider({ clientId, clientSecret }: GoogleProviderConfig) {
     return Google<GoogleProfile>({
         clientId,
         clientSecret,
-        // Google includes email_verified in its signed OIDC profile. The signIn
-        // callback still rejects unverified profiles before automatic linking.
-        allowDangerousEmailAccountLinking: true,
+        // A verified Google email does not prove ownership of an existing
+        // password credential created before email ownership was established.
+        allowDangerousEmailAccountLinking: false,
     });
 }
 
@@ -37,19 +68,20 @@ export function isTrustedGoogleProfile(profile: unknown): profile is Pick<Google
 
 export async function authorizeGoogleSignIn(
     profile: unknown,
-    userId: string | undefined,
-    loadExistingUser: LoadExistingGoogleUser,
-): Promise<boolean> {
-    if (!isTrustedGoogleProfile(profile)) return false;
+    providerAccountId: string,
+    dependencies: GoogleSignInDependencies,
+): Promise<'allow' | 'recover' | 'deny'> {
+    if (!isTrustedGoogleProfile(profile) || !providerAccountId) return 'deny';
 
     try {
-        const existingUser = await loadExistingUser({
-            email: profile.email.toLowerCase().trim(),
-            ...(userId ? { userId } : {}),
-        });
-        return !existingUser || existingUser.deactivatedAt === null;
+        const linkedUser = await dependencies.loadLinkedUser(providerAccountId);
+        if (linkedUser) return linkedUser.deactivatedAt === null ? 'allow' : 'deny';
+
+        const existingUser = await dependencies.loadUserByEmail(profile.email.toLowerCase().trim());
+        if (existingUser && existingUser.deactivatedAt !== null) return 'deny';
+        return existingUser || dependencies.hasSessionCookie ? 'recover' : 'allow';
     } catch {
-        return false;
+        return 'deny';
     }
 }
 

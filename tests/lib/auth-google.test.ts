@@ -3,19 +3,20 @@ import { describe, expect, it, vi } from 'vitest';
 import {
     authorizeGoogleSignIn,
     createGoogleProvider,
+    getGoogleLinkingRequestContext,
     isTrustedGoogleProfile,
     normalizeGoogleCallbackIssuer,
 } from '@/lib/auth-google';
 
 describe('Google auth policy', () => {
-    it('enables account linking for the Google provider', () => {
+    it('requires recovery instead of automatically linking matching email addresses', () => {
         const provider = createGoogleProvider({
             clientId: 'google-client-id',
             clientSecret: 'google-client-secret',
         });
 
         expect(provider.id).toBe('google');
-        expect(provider.options?.allowDangerousEmailAccountLinking).toBe(true);
+        expect(provider.options?.allowDangerousEmailAccountLinking).toBe(false);
     });
 
     it('trusts only Google profiles with a verified email address', () => {
@@ -39,16 +40,22 @@ describe('Google auth policy', () => {
         expect(unrelatedUrl.searchParams.get('iss')).toBe('accounts.google.com');
     });
 
-    it('allows new and active Google identities but denies inactive existing users', async () => {
+    it.each([
+        { linked: null, existing: null, cookie: false, expected: 'allow' },
+        { linked: { deactivatedAt: null }, existing: null, cookie: true, expected: 'allow' },
+        { linked: { deactivatedAt: new Date() }, existing: null, cookie: false, expected: 'deny' },
+        { linked: null, existing: { deactivatedAt: null }, cookie: false, expected: 'recover' },
+        { linked: null, existing: { deactivatedAt: new Date() }, cookie: false, expected: 'deny' },
+        { linked: null, existing: null, cookie: true, expected: 'recover' },
+    ])('returns $expected for linked=$linked existing=$existing cookie=$cookie', async ({ linked, existing, cookie, expected }) => {
         const profile = { email: 'student@example.com', email_verified: true };
-
-        await expect(authorizeGoogleSignIn(profile, undefined, async () => null)).resolves.toBe(true);
-        await expect(authorizeGoogleSignIn(profile, 'user-1', async () => ({
-            deactivatedAt: null,
-        }))).resolves.toBe(true);
-        await expect(authorizeGoogleSignIn(profile, 'user-1', async () => ({
-            deactivatedAt: new Date('2026-07-24T00:00:00.000Z'),
-        }))).resolves.toBe(false);
+        const loadLinkedUser = vi.fn().mockResolvedValue(linked);
+        const loadUserByEmail = vi.fn().mockResolvedValue(existing);
+        await expect(authorizeGoogleSignIn(profile, 'google-subject', {
+            hasSessionCookie: cookie, loadLinkedUser, loadUserByEmail,
+        })).resolves.toBe(expected);
+        expect(loadLinkedUser).toHaveBeenCalledWith('google-subject');
+        if (linked) expect(loadUserByEmail).not.toHaveBeenCalled();
     });
 
     it('fails Google sign-in closed on untrusted profiles or account lookup failure', async () => {
@@ -56,15 +63,35 @@ describe('Google auth policy', () => {
 
         await expect(authorizeGoogleSignIn(
             { email: 'student@example.com', email_verified: false },
-            undefined,
-            lookup,
-        )).resolves.toBe(false);
+            'google-subject',
+            { hasSessionCookie: false, loadLinkedUser: lookup, loadUserByEmail: lookup },
+        )).resolves.toBe('deny');
         expect(lookup).not.toHaveBeenCalled();
 
         await expect(authorizeGoogleSignIn(
             { email: 'student@example.com', email_verified: true },
-            undefined,
-            lookup,
-        )).resolves.toBe(false);
+            'google-subject',
+            { hasSessionCookie: false, loadLinkedUser: lookup, loadUserByEmail: lookup },
+        )).resolves.toBe('deny');
+    });
+
+    it.each(['authjs.session-token', '__Secure-authjs.session-token', '__Secure-authjs.session-token.0'])
+    ('treats %s presence as a linking restriction, not authentication', (cookieName) => {
+        const request = new Request('https://example.test/api/auth/callback/google', {
+            headers: { cookie: `${cookieName}=untrusted; authjs.callback-url=${encodeURIComponent('https://example.test/courses/typescript')}` },
+        });
+        expect(getGoogleLinkingRequestContext(request)).toEqual({
+            hasSessionCookie: true,
+            recoveryRedirect: '/login?callbackUrl=%2Fcourses%2Ftypescript&error=OAuthAccountNotLinked',
+        });
+    });
+
+    it.each(['https://evil.test/courses/x', '//evil.test/courses/x', '/api/auth/signout', '/login', '%malformed'])
+    ('rejects unsafe recovery destination %s', (destination) => {
+        const context = getGoogleLinkingRequestContext(new Request('https://example.test/api/auth/callback/google', {
+            headers: { cookie: `authjs.callback-url=${encodeURIComponent(destination)}; authjs.state=some-state` },
+        }));
+        expect(context.hasSessionCookie).toBe(false);
+        expect(context.recoveryRedirect).toBe('/login?callbackUrl=%2Fdashboard&error=OAuthAccountNotLinked');
     });
 });

@@ -13,7 +13,7 @@ import { GoogleIcon } from './AuthIcons';
 import { AuthDivider, AuthError, AuthField, AuthFootnote, AuthNotice, PasswordInput } from './AuthFormLayout';
 
 export const AUTH_ERROR_MESSAGES: Record<string, string> = {
-  OAuthAccountNotLinked: 'อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านก่อน แล้วจึงเชื่อมบัญชี Google ภายหลัง',
+  OAuthAccountNotLinked: 'ยังไม่สามารถเชื่อม Google กับบัญชีเดิมได้ หากมีบัญชีด้วยอีเมลนี้ ให้ตั้งรหัสผ่านใหม่ผ่านอีเมล แล้วเข้าสู่ระบบด้วยรหัสผ่านใหม่',
   AccessDenied: 'ไม่สามารถเข้าสู่ระบบได้ กรุณาลองใหม่อีกครั้ง',
   Configuration: 'ระบบเข้าสู่ระบบ Google ยังตั้งค่าไม่สมบูรณ์ กรุณาลองใหม่อีกครั้งภายหลัง',
   Verification: 'ลิงก์เข้าสู่ระบบไม่ถูกต้องหรือหมดอายุแล้ว',
@@ -78,7 +78,17 @@ export default function LoginForm({
   return (
     <>
       {arrivalMessage && <AuthNotice>{arrivalMessage}</AuthNotice>}
-      {error && <AuthError>{error}</AuthError>}
+      {error && (
+        <AuthError>
+          {error}
+          {searchParams.get('error') === 'OAuthAccountNotLinked' && (
+            <div className="mt-3 space-y-2">
+              <Link href={forgotPasswordHref}>ตั้งรหัสผ่านใหม่ผ่านอีเมล</Link>
+              <p>หากกำลังใช้บัญชีอื่นอยู่ ให้ออกจากระบบก่อนลองเข้า Google อีกครั้ง</p>
+            </div>
+          )}
+        </AuthError>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5" aria-busy={loading}>
         <FieldGroup className="gap-5">

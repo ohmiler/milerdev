@@ -35,6 +35,20 @@ vi.mock('@/components/auth/AuthShell', () => ({
 }));
 
 describe('auth safe-return integration', () => {
+  it('offers email recovery for a Google collision while preserving the safe destination', async () => {
+    mocks.searchParams = new URLSearchParams('error=OAuthAccountNotLinked');
+    const returnTo = resolveSafeAuthReturn('/courses/typescript-foundations').pathname;
+    const recoveryHref = createAuthReturnHref('/forgot-password', returnTo);
+    const { findByRole, queryByText } = render(
+      <LoginForm returnTo={returnTo} registerHref="/register" forgotPasswordHref={recoveryHref} />,
+    );
+    const recoveryLink = await findByRole('link', { name: 'ตั้งรหัสผ่านใหม่ผ่านอีเมล' });
+    expect(recoveryLink.getAttribute('href')).toBe(recoveryHref);
+    expect(recoveryLink.closest('[role="alert"]')).not.toBeNull();
+    expect(queryByText('ดำเนินการสำเร็จ')).toBeNull();
+    expect(mocks.signIn).not.toHaveBeenCalled();
+  });
+
   beforeEach(() => {
     mocks.push.mockReset();
     mocks.refresh.mockReset();
