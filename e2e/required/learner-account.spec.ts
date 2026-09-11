@@ -1,3 +1,4 @@
+import { completeRegistration } from './email-registration-helper';
 import { expect, test } from '@playwright/test';
 import { installRequiredE2EProviderMocks } from './provider-mock-adapter.mjs';
 
@@ -12,11 +13,7 @@ test('account preserves private destinations, saves a profile, and requires fres
   const id = crypto.randomUUID().replaceAll('-', '');
   const email = `account-journey-${id}@example.test`;
   const password = 'Aa1!' + id;
-  await page.getByRole('main').locator('input[name=name]').fill('ผู้เรียนทดสอบ');
-  await page.getByRole('main').locator('input[name=email]').fill(email);
-  await page.getByRole('main').locator('input[name=password]').fill(password);
-  await page.getByRole('main').locator('input[name=confirmPassword]').fill(password);
-  await page.getByRole('main').locator('button[type=submit]').click();
+  await completeRegistration(page, { name: 'Account Journey Member', email, password });
   await page.waitForURL('**/profile');
   await expect(page.getByRole('button', { name: 'บันทึกการเปลี่ยนแปลง' })).toBeDisabled();
   await page.getByLabel('ชื่อ', { exact: true }).fill('ผู้เรียน ทดสอบชื่อใบรับรอง');

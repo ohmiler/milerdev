@@ -1,3 +1,4 @@
+import { completeRegistration } from './email-registration-helper';
 import { expect, test, type Page } from '@playwright/test';
 import { E2E_FIXTURES } from '../fixtures';
 import { installRequiredE2EProviderMocks } from './provider-mock-adapter.mjs';
@@ -6,11 +7,7 @@ async function registerBuyer(page: Page, destination: string) {
   const unique = crypto.randomUUID().replaceAll('-', '');
   const password = 'Aa1!' + unique;
   await page.goto(`/register?callbackUrl=${encodeURIComponent(destination)}`);
-  await page.locator('input[name=name]').fill('ผู้ซื้อทดสอบรายการ ' + unique.slice(0, 6));
-  await page.locator('input[name=email]').fill(`order-review-${unique}@example.test`);
-  await page.locator('input[name=password]').fill(password);
-  await page.locator('input[name=confirmPassword]').fill(password);
-  await page.locator('button[type=submit]').click();
+  await completeRegistration(page, { name: 'Order Review Buyer', email: `order-review-${unique}@example.test`, password });
   await page.waitForURL((url) => url.pathname === destination);
 }
 

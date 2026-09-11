@@ -1,109 +1,41 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
+import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
-import {
-    authRateLimitUnavailableResponse,
-    consumeAuthRateLimit,
-} from '@/lib/auth-rate-limit';
-import { sendWelcomeEmail } from '@/lib/email';
-import {
-  PASSWORD_LOWERCASE_PATTERN,
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_NUMBER_PATTERN,
-  PASSWORD_UPPERCASE_PATTERN,
-} from '@/lib/password-policy';
+import { authRateLimitUnavailableResponse, consumeAuthRateLimit } from '@/lib/auth-rate-limit';
+import { REGISTRATION_ACCEPTED, requestEmailRegistration } from '@/lib/email-registration';
 
-// Validation schema
-const registerSchema = z.object({
-    name: z.string().min(2, 'ชื่อต้องมีอย่างน้อย 2 ตัวอักษร').max(100),
-    email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
-    password: z
-        .string()
-        .min(PASSWORD_MIN_LENGTH, 'รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร')
-        .regex(PASSWORD_UPPERCASE_PATTERN, 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว')
-        .regex(PASSWORD_LOWERCASE_PATTERN, 'รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว')
-        .regex(PASSWORD_NUMBER_PATTERN, 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว'),
+const schema = z.object({
+    email: z.string().trim().email('รูปแบบอีเมลไม่ถูกต้อง').max(255),
+    callbackUrl: z.unknown().optional(),
 });
 
 export async function POST(request: Request) {
-  try {
-    const genericRegisterMessage = 'ตรวจสอบคำขอแล้ว';
-
-    // Rate limiting - 5 requests per minute per IP
-    const clientIP = getClientIP(request);
-    const rateLimit = await consumeAuthRateLimit({
-      namespace: 'register',
-      identifier: clientIP,
-      ...rateLimits.auth,
-    }).catch(() => null);
-
-    if (!rateLimit) {
-      return authRateLimitUnavailableResponse();
+    try {
+        const ipLimit = await consumeAuthRateLimit({
+            namespace: 'register', identifier: getClientIP(request), ...rateLimits.auth,
+        }).catch(() => null);
+        if (!ipLimit) return authRateLimitUnavailableResponse();
+        if (!ipLimit.success) return rateLimitResponse(ipLimit.resetTime);
+        const validation = schema.safeParse(await request.json().catch(() => null));
+        if (!validation.success) return NextResponse.json({ error: 'กรุณากรอกอีเมลให้ถูกต้อง' }, { status: 400 });
+        const email = validation.data.email.toLowerCase();
+        const identifier = createHash('sha256').update(email).digest('hex');
+        // Same neutral response for all account states and mailbox throttling.
+        for (const limit of [
+            { namespace: 'register-email-minute', maxRequests: 1, windowMs: 60_000 },
+            { namespace: 'register-email-hour', maxRequests: 3, windowMs: 3_600_000 },
+        ]) {
+            const result = await consumeAuthRateLimit({ ...limit, identifier }).catch(() => null);
+            if (!result) return authRateLimitUnavailableResponse();
+            if (!result.success) return NextResponse.json(REGISTRATION_ACCEPTED);
+        }
+        // Ignore password/name/role from old clients: the mailbox holder must
+        // choose fresh credentials when redeeming the emailed token.
+        await requestEmailRegistration(email, validation.data.callbackUrl);
+        return NextResponse.json(REGISTRATION_ACCEPTED);
+    } catch {
+        console.error('[Registration] Request failed');
+        return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
     }
-    
-    if (!rateLimit.success) {
-      return rateLimitResponse(rateLimit.resetTime);
-    }
-
-    const body = await request.json();
-    
-    // Validate input
-    const validation = registerSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error.issues[0].message },
-        { status: 400 }
-      );
-    }
-    
-    const { name, password } = validation.data;
-    const email = validation.data.email.toLowerCase().trim();
-
-    // Check if user exists
-    const [existingUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (existingUser) {
-      // Return generic message to prevent email enumeration
-      return NextResponse.json(
-        { message: genericRegisterMessage },
-        { status: 200 }
-      );
-    }
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Create user
-    await db.insert(users).values({
-      name,
-      email,
-      passwordHash,
-      role: 'student',
-    });
-
-    // Send welcome email (non-blocking)
-    sendWelcomeEmail({ email, name }).catch((err) =>
-      console.error('Failed to send welcome email:', err)
-    );
-
-    return NextResponse.json(
-      { message: genericRegisterMessage },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Registration error:', error);
-    return NextResponse.json(
-      { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
-      { status: 500 }
-    );
-  }
 }
-

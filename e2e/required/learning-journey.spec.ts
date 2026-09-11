@@ -1,3 +1,4 @@
+import { completeRegistration } from './email-registration-helper';
 import { expect, test } from '@playwright/test';
 import { installRequiredE2EProviderMocks } from './provider-mock-adapter.mjs';
 import { seedLearningJourney } from './learning-journey-fixtures';
@@ -9,11 +10,7 @@ test('learning keeps failed completion recoverable and mobile locked navigation 
   await page.context().setExtraHTTPHeaders({ 'x-real-ip': '192.0.2.90' });
   const id = crypto.randomUUID().replaceAll('-', '');
   await page.goto('/register');
-  await page.locator('input[name=name]').fill('ผู้เรียนทดสอบ');
-  await page.locator('input[name=email]').fill(`learning-journey-${id}@example.test`);
-  await page.locator('input[name=password]').fill('Aa1!' + id);
-  await page.locator('input[name=confirmPassword]').fill('Aa1!' + id);
-  await page.locator('button[type=submit]').click();
+  await completeRegistration(page, { name: 'Learning Journey Member', email: `learning-journey-${id}@example.test`, password: 'Aa1!' + id });
   await page.waitForURL('**/dashboard');
   const session = await (await page.request.get('/api/auth/session')).json();
   const fixture = await seedLearningJourney(session.user.id);
