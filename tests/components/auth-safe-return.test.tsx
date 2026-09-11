@@ -97,7 +97,7 @@ describe('auth safe-return integration', () => {
     });
   });
 
-  it('uses the same bundle destination for Register credentials, Google, and Login link', async () => {
+  it('preserves the bundle destination for verification, Google, and Login', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({ ok: true, json: vi.fn().mockResolvedValue({ success: true }) }),
@@ -125,10 +125,7 @@ describe('auth safe-return integration', () => {
     );
 
     for (const [name, value] of [
-      ['name', 'Test Learner'],
       ['email', 'learner@example.com'],
-      ['password', 'StrongPass1!'],
-      ['confirmPassword', 'StrongPass1!'],
     ]) {
       fireEvent.change(container.querySelector(`input[name=${name}]`)!, {
         target: { value },
@@ -137,7 +134,8 @@ describe('auth safe-return integration', () => {
     fireEvent.submit(container.querySelector('form')!);
 
     await waitFor(() => {
-      expect(mocks.push).toHaveBeenCalledWith('/bundles/full-stack');
+      expect(fetch).toHaveBeenCalledWith('/api/auth/register', expect.objectContaining({ body: JSON.stringify({ email: 'learner@example.com', callbackUrl: '/bundles/full-stack' }) }));
+      expect(mocks.push).not.toHaveBeenCalled();
     });
   });
 
@@ -184,10 +182,7 @@ describe('auth safe-return integration', () => {
     );
 
     for (const [name, value] of [
-      ['name', 'Test Member'],
       ['email', 'private@example.com'],
-      ['password', 'StrongPass1!'],
-      ['confirmPassword', 'StrongPass1!'],
     ]) {
       fireEvent.change(view.container.querySelector(`input[name=${name}]`)!, {
         target: { value },
@@ -219,14 +214,13 @@ describe('auth safe-return integration', () => {
 
     fireEvent.submit(view.container.querySelector('form')!);
 
-    const nameInput = view.container.querySelector('input[name=name]') as HTMLInputElement;
+    const emailInput = view.container.querySelector('input[name=email]') as HTMLInputElement;
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(nameInput.getAttribute('aria-invalid')).toBe('true');
-    expect(nameInput.getAttribute('aria-describedby')).toBe('register-name-error');
-    expect(document.activeElement).toBe(nameInput);
-    expect(nameInput.closest('form')?.noValidate).toBe(true);
-    expect(document.getElementById('register-name-error')?.textContent).toBe('กรุณากรอกชื่ออย่างน้อย 2 ตัวอักษร');
-    expect(view.getByText('มีตัวพิมพ์ใหญ่')).toBeTruthy();
+    expect(emailInput.getAttribute('aria-invalid')).toBe('true');
+    expect(emailInput.getAttribute('aria-describedby')).toBe('register-email-error');
+    expect(document.activeElement).toBe(emailInput);
+    expect(emailInput.closest('form')?.noValidate).toBe(true);
+    expect(document.getElementById('register-email-error')?.textContent).toBe('กรุณากรอกอีเมลให้ถูกต้อง');
     expect(view.getByRole('link', { name: 'ข้อกำหนดการใช้งาน' }).getAttribute('href')).toBe('/terms');
     expect(view.getByRole('link', { name: 'นโยบายความเป็นส่วนตัว' }).getAttribute('href')).toBe('/privacy');
   });
@@ -247,10 +241,7 @@ describe('auth safe-return integration', () => {
     );
 
     for (const [name, value] of [
-      ['name', 'Test Member'],
       ['email', 'private@example.com'],
-      ['password', 'StrongPass1!'],
-      ['confirmPassword', 'StrongPass1!'],
     ]) {
       fireEvent.change(view.container.querySelector(`input[name=${name}]`)!, {
         target: { value },

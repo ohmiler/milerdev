@@ -38,6 +38,18 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 // =====================
+// Pending requests have no credentials, session, user or enrollment.
+// =====================
+export const emailRegistrations = mysqlTable('email_registrations', {
+    tokenHash: char('token_hash', { length: 64 }).primaryKey(),
+    email: varchar('email', { length: 255 }).notNull(),
+    returnTo: varchar('return_to', { length: 2048 }).notNull(),
+    expiresAt: datetime('expires_at').notNull(),
+}, (table) => [
+    index('idx_email_registrations_email').on(table.email),
+    index('idx_email_registrations_expiry').on(table.expiresAt),
+]);
+
 // ACCOUNTS TABLE (OAuth — NextAuth)
 // =====================
 export const accounts = mysqlTable('accounts', {
