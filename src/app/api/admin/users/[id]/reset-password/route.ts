@@ -4,7 +4,10 @@ import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
+import { hashNewPassword } from '@/lib/password-storage';
+import { newPasswordSchema } from '@/lib/password-validation';
+import { PasswordSecurityError } from '@/lib/password-errors';
+import { z } from 'zod';
 import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
@@ -20,20 +23,9 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     const { id } = await params;
     const body = await request.json();
-    const { newPassword } = body;
-
-    if (!newPassword || newPassword.length < 8) {
-      return NextResponse.json(
-        { error: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร' },
-        { status: 400 }
-      );
-    }
-    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-      return NextResponse.json(
-        { error: 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก และตัวเลขอย่างน้อย 1 ตัว' },
-        { status: 400 }
-      );
-    }
+    const validation = z.object({ newPassword: newPasswordSchema }).safeParse(body);
+    if (!validation.success) return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+    const { newPassword } = validation.data;
 
     // Check if user exists
     const [user] = await db
@@ -47,7 +39,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     // Hash and update password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await hashNewPassword(newPassword);
     const updateResult = await db
       .update(users)
       .set({
@@ -76,7 +68,8 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error resetting password:' });
+    if (error instanceof PasswordSecurityError) return NextResponse.json({ error: error.message }, { status: error.status });
+    logError(new Error('Password reset failed'), { action: 'Error resetting password:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

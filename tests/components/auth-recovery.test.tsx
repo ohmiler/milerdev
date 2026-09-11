@@ -36,7 +36,7 @@ describe('account recovery UI contracts', () => {
 
     expect(source).toContain("name={'password'}");
     expect(source).toContain("name={'confirmPassword'}");
-    expect(source.match(/minLength=\{8\}/g)).toHaveLength(2);
+    expect(source.match(/minLength=\{15\}/g)).toHaveLength(2);
     expect(source.match(/autoComplete=\{'new-password'\}/g)).toHaveLength(2);
   });
 });

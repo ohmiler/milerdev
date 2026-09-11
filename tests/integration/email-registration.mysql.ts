@@ -2,6 +2,10 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { randomBytes } from 'node:crypto';
 import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { verifyPassword } from '@/lib/password-storage';
+import { assertPasswordNotCompromised } from '@/lib/password-screening';
+import { PasswordSecurityError } from '@/lib/password-errors';
+vi.mock('@/lib/password-screening', () => ({ assertPasswordNotCompromised: vi.fn().mockResolvedValue(undefined) }));
 import { emailRegistrations, users } from '@/lib/db/schema';
 
 const mocks = vi.hoisted(() => ({ send: vi.fn().mockResolvedValue(true) }));
@@ -37,6 +41,16 @@ afterAll(async () => {
 });
 
 describe('real MySQL registration ownership and concurrency', () => {
+    it.each(['compromised', 'screening_unavailable'] as const)('preserves an unclaimed token on %s and allows a successful retry', async (kind) => {
+        const { email, token } = await issue();
+        vi.mocked(assertPasswordNotCompromised).mockRejectedValueOnce(new PasswordSecurityError(kind, 'Safe test failure'));
+        await expect(service.completeEmailRegistration(token, 'Owner', 'OwnerPassphrase1!')).rejects.toMatchObject({ kind });
+        expect(await findUser(email)).toBeUndefined();
+        const pending = await db.select().from(emailRegistrations).where(eq(emailRegistrations.email, email));
+        expect(pending).toHaveLength(1);
+        expect(await service.completeEmailRegistration(token, 'Owner', 'OwnerPassphrase1!')).not.toBeNull();
+        expect(await verifyPassword('OwnerPassphrase1!', (await findUser(email)).passwordHash!)).toBe(true);
+    });
     it('runs the request and confirmation HTTP handlers with real persistence and rate limits', async () => {
         const email = mailbox();
         const { POST: requestRegistration } = await import('@/app/api/auth/register/route');
@@ -49,8 +63,8 @@ describe('real MySQL registration ownership and concurrency', () => {
         const token = tokenFor(email);
         expect((await confirmRegistration(request({ token, name: 'Owner', password: 'OwnerPassword1!' }))).status).toBe(200);
         const user = await findUser(email);
-        expect(await bcrypt.compare('AttackerPassword1!', user.passwordHash!)).toBe(false);
-        expect(await bcrypt.compare('OwnerPassword1!', user.passwordHash!)).toBe(true);
+        expect(await verifyPassword('AttackerPassword1!', user.passwordHash!)).toBe(false);
+        expect(await verifyPassword('OwnerPassword1!', user.passwordHash!)).toBe(true);
         expect(user.role).toBe('student');
         expect((await confirmRegistration(request({ token, name: 'Replay', password: 'ReplayPassword1!' }))).status).toBe(400);
     });
@@ -64,13 +78,13 @@ describe('real MySQL registration ownership and concurrency', () => {
         const user = await findUser(email);
         expect(user.emailVerifiedAt).toBeInstanceOf(Date);
         expect(user.role).toBe('student');
-        expect(await bcrypt.compare('OwnerPassword1!', user.passwordHash!)).toBe(true);
+        expect(await verifyPassword('OwnerPassword1!', user.passwordHash!)).toBe(true);
         expect(await service.completeEmailRegistration(token, 'Replay', 'ReplayPassword1!')).toBeNull();
     });
     it('allows only one simultaneous redemption of the same token', async () => {
         const { email, token } = await issue();
         const results = await Promise.all([
-            service.completeEmailRegistration(token, 'First', 'FirstPassword1!'),
+            service.completeEmailRegistration(token, 'First', 'FirstPassphrase1!'),
             service.completeEmailRegistration(token, 'Second', 'SecondPassword1!'),
         ]);
         expect(results.filter(Boolean)).toHaveLength(1);
@@ -83,13 +97,13 @@ describe('real MySQL registration ownership and concurrency', () => {
         expect(second).not.toBe(token);
         expect(await db.select().from(emailRegistrations).where(eq(emailRegistrations.email, email))).toHaveLength(2);
         const results = await Promise.all([
-            service.completeEmailRegistration(token, 'First', 'FirstPassword1!'),
+            service.completeEmailRegistration(token, 'First', 'FirstPassphrase1!'),
             service.completeEmailRegistration(second, 'Second', 'SecondPassword1!'),
         ]);
         expect(results.filter(Boolean)).toHaveLength(1);
         const user = await findUser(email);
-        const winner = results[0] ? 'FirstPassword1!' : 'SecondPassword1!';
-        expect(await bcrypt.compare(winner, user.passwordHash!)).toBe(true);
+        const winner = results[0] ? 'FirstPassphrase1!' : 'SecondPassword1!';
+        expect(await verifyPassword(winner, user.passwordHash!)).toBe(true);
     });
     it('rejects an expired token without creating a user', async () => {
         const { email, token } = await issue();
@@ -100,7 +114,7 @@ describe('real MySQL registration ownership and concurrency', () => {
     it('does not attach password credentials if Google creates the email first', async () => {
         const { email, token } = await issue();
         await db.insert(users).values({ email, name: 'Google Owner', passwordHash: null });
-        expect(await service.completeEmailRegistration(token, 'Other', 'OtherPassword1!')).toBeNull();
+        expect(await service.completeEmailRegistration(token, 'Other', 'OtherPassphrase1!')).toBeNull();
         const user = await findUser(email);
         expect(user.passwordHash).toBeNull(); expect(user.name).toBe('Google Owner');
     });
@@ -113,7 +127,7 @@ describe('real MySQL registration ownership and concurrency', () => {
         const { authorizeCredentials } = await import('@/lib/auth-credentials');
         const sessionUser = await authorizeCredentials({ email, password: 'LegacyPassword1!' }, new Request('http://localhost'), {
             consumeRateLimit: async () => ({ success: true, remaining: 1, resetTime: Date.now() + 60000 }),
-            findUserByEmail: () => findUser(email), comparePassword: bcrypt.compare,
+            findUserByEmail: () => findUser(email), comparePassword: verifyPassword,
         });
         expect(sessionUser?.email).toBe(email);
         expect((await findUser(email)).emailVerifiedAt).toBeNull();

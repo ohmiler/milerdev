@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import { hashNewPassword } from '../src/lib/password-storage';
 import mysql, { type RowDataPacket } from 'mysql2/promise';
 
 import {
@@ -110,8 +110,8 @@ async function main(): Promise<void> {
         }
 
         const [adminPasswordHash, studentPasswordHash] = await Promise.all([
-            bcrypt.hash(adminPassword!, 12),
-            bcrypt.hash(studentPassword!, 12),
+            hashNewPassword(adminPassword!),
+            hashNewPassword(studentPassword!),
         ]);
         const now = new Date();
 

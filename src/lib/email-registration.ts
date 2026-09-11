@@ -1,6 +1,6 @@
 import 'server-only';
 import { createHash, randomBytes } from 'node:crypto';
-import bcrypt from 'bcryptjs';
+import { hashNewPassword } from '@/lib/password-storage';
 import { and, eq, gt, lte } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { emailRegistrations, users } from '@/lib/db/schema';
@@ -44,10 +44,10 @@ export async function completeEmailRegistration(token: string, name: string, pas
         eq(emailRegistrations.tokenHash, tokenHash), gt(emailRegistrations.expiresAt, new Date()),
     )).limit(1);
     if (!pending) return null;
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await hashNewPassword(password);
     try {
         return await db.transaction(async (tx) => {
-            // Atomic one-use claim, expiry rechecked after bcrypt. Rollback
+            // Atomic one-use claim, expiry rechecked after password screening and hashing. Rollback
             // restores the claim if persistence fails; GET never consumes it.
             const claim = await tx.delete(emailRegistrations).where(and(
                 eq(emailRegistrations.tokenHash, tokenHash), gt(emailRegistrations.expiresAt, new Date()),

@@ -77,7 +77,7 @@ describe('public content contracts', () => {
     expect(privacySource.match(/<LegalSection/g)).toHaveLength(9);
     expect(privacySource).toContain('อัปเดตล่าสุด: 1 มกราคม 2568');
     expect(privacySource).toContain('เราไม่เก็บข้อมูลบัตรเครดิต');
-    expect(privacySource).toContain('การเข้ารหัสรหัสผ่านด้วย bcrypt');
+    expect(privacySource).toContain('Argon2id สำหรับรหัสผ่านที่ตั้งใหม่');
     expect(privacySource).toContain('milerdev.official@gmail.com');
 
     expect(termsSource.match(/<LegalSection/g)).toHaveLength(9);

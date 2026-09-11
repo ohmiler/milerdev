@@ -7,6 +7,9 @@ installRequiredE2EServerProviderMocks();
 const guardedFetch = globalThis.fetch;
 globalThis.fetch = function emailMockFetch(input, init) {
   const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
+  if (url.origin === 'https://api.pwnedpasswords.com' && /^\/range\/[A-F0-9]{5}$/.test(url.pathname)) {
+    return Promise.resolve(new Response(`${'0'.repeat(35)}:0\r\n`, { status: 200 }));
+  }
   if (process.env.RESEND_API_KEY === 're_required_email_verification_placeholder'
       && url.origin === 'https://api.resend.com' && url.pathname === '/emails') {
     return guardedFetch('http://127.0.0.1:4318/emails', init);

@@ -3,12 +3,13 @@ import { z } from 'zod';
 import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { authRateLimitUnavailableResponse, consumeAuthRateLimit } from '@/lib/auth-rate-limit';
 import { completeEmailRegistration } from '@/lib/email-registration';
-import { getPasswordPolicyError } from '@/lib/password-policy';
+import { newPasswordSchema } from '@/lib/password-validation';
+import { PasswordSecurityError } from '@/lib/password-errors';
 
 const schema = z.object({
     token: z.string().regex(/^[a-f0-9]{64}$/),
     name: z.string().trim().min(2).max(100),
-    password: z.string().min(8).max(72).refine((value) => !getPasswordPolicyError(value)),
+    password: newPasswordSchema,
 });
 
 export async function POST(request: Request) {
@@ -27,7 +28,8 @@ export async function POST(request: Request) {
             error: 'ลิงก์ไม่ถูกต้อง หมดอายุ หรืออีเมลนี้มีบัญชีแล้ว กรุณาขอลิงก์ใหม่หรือเข้าสู่ระบบ',
         }, { status: 400 });
         return NextResponse.json({ message: 'ยืนยันอีเมลและสร้างบัญชีแล้ว', ...result });
-    } catch {
+    } catch (error) {
+        if (error instanceof PasswordSecurityError) return NextResponse.json({ error: error.message }, { status: error.status });
         console.error('[Registration] Confirmation failed');
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
     }

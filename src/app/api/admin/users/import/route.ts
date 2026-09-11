@@ -5,7 +5,9 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import bcrypt from 'bcryptjs';
+import { hashNewPassword } from '@/lib/password-storage';
+import { PasswordSecurityError } from '@/lib/password-errors';
+import { parseUserImportCsv } from '@/lib/user-import-csv';
 import { randomBytes } from 'crypto';
 
 function generateSecurePassword(length: number = 16): string {
@@ -37,7 +39,9 @@ export async function POST(request: Request) {
 
     // Read CSV content
     const content = await file.text();
-    const lines = content.split('\n').filter(line => line.trim());
+    let lines: string[][];
+    try { lines = parseUserImportCsv(content); }
+    catch { return NextResponse.json({ error: 'รูปแบบไฟล์ CSV ไม่ถูกต้อง' }, { status: 400 }); }
 
     if (lines.length < 2) {
       return NextResponse.json(
@@ -47,7 +51,7 @@ export async function POST(request: Request) {
     }
 
     // Parse header
-    const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
+    const header = lines[0].map(h => h.trim().toLowerCase());
     const emailIndex = header.findIndex(h => h === 'email' || h === 'อีเมล');
     const nameIndex = header.findIndex(h => h === 'name' || h === 'ชื่อ');
     const roleIndex = header.findIndex(h => h === 'role' || h === 'บทบาท');
@@ -69,7 +73,7 @@ export async function POST(request: Request) {
 
     // Process each row
     for (let i = 1; i < lines.length; i++) {
-      const row = lines[i].split(',').map(cell => cell.trim().replace(/"/g, ''));
+      const row = lines[i];
       const email = row[emailIndex]?.trim().toLowerCase();
 
       if (!email || !email.includes('@')) {
@@ -91,8 +95,8 @@ export async function POST(request: Request) {
       }
 
       // Parse data
-      const name = nameIndex !== -1 ? row[nameIndex] : null;
-      let role = roleIndex !== -1 ? row[roleIndex]?.toLowerCase() : 'student';
+      const name = nameIndex !== -1 ? row[nameIndex]?.trim() : null;
+      let role = roleIndex !== -1 ? row[roleIndex]?.trim().toLowerCase() : 'student';
       
       // Validate role
       if (!['admin', 'instructor', 'student'].includes(role)) {
@@ -103,9 +107,8 @@ export async function POST(request: Request) {
       const password = passwordIndex !== -1 && row[passwordIndex] 
         ? row[passwordIndex] 
         : generateSecurePassword();
-      const passwordHash = await bcrypt.hash(password, 12);
-
       try {
+        const passwordHash = await hashNewPassword(password);
         await db.insert(users).values({
           id: createId(),
           email,
@@ -116,7 +119,12 @@ export async function POST(request: Request) {
           updatedAt: new Date(),
         });
         results.success++;
-      } catch {
+      } catch (error) {
+        if (error instanceof PasswordSecurityError) {
+          results.failed++;
+          results.errors.push(`แถว ${i + 1}: ${error.message}`);
+          continue;
+        }
         results.failed++;
         results.errors.push(`แถว ${i + 1}: ไม่สามารถสร้างผู้ใช้ได้`);
       }
@@ -126,8 +134,8 @@ export async function POST(request: Request) {
       message: 'นำเข้าข้อมูลเสร็จสิ้น',
       results,
     });
-  } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error importing users:' });
+  } catch {
+    logError(new Error('User import failed'), { action: 'Error importing users:' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล' },
       { status: 500 }

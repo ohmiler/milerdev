@@ -52,7 +52,7 @@ describe('email registration HTTP boundary', () => {
         expect((await requestRegistration(request({ email }))).status).toBe(400);
         expect(mocks.request).not.toHaveBeenCalled();
     });
-    it.each([{ ...valid, token: 'bad' }, { ...valid, name: 'x' }, { ...valid, password: 'weak' }, { ...valid, password: 'A1' + 'a'.repeat(80) }])('rejects invalid confirmation', async (body) => {
+    it.each([{ ...valid, token: 'bad' }, { ...valid, name: 'x' }, { ...valid, password: 'weak' }, { ...valid, password: 'A1' + 'a'.repeat(128) }])('rejects invalid confirmation', async (body) => {
         expect((await confirmRegistration(request(body))).status).toBe(400);
         expect(mocks.complete).not.toHaveBeenCalled();
     });

@@ -32,10 +32,10 @@ describe('ResetPasswordForm', () => {
     render(<ResetPasswordForm token={'opaque-token'} forgotPasswordHref={'/forgot-password'} loginHref={'/login'} successLoginHref={'/login?reason=password-reset'} />);
 
     fireEvent.change(screen.getByLabelText('รหัสผ่านใหม่'), {
-      target: { value: 'NewPassword1' },
+      target: { value: 'NewPassphrase123!' },
     });
     fireEvent.change(screen.getByLabelText('ยืนยันรหัสผ่านใหม่'), {
-      target: { value: 'NewPassword1' },
+      target: { value: 'NewPassphrase123!' },
     });
     fireEvent.submit(screen.getByLabelText('รหัสผ่านใหม่').closest('form')!);
 
@@ -67,10 +67,10 @@ describe('ResetPasswordForm', () => {
     render(<ResetPasswordForm token={'opaque-token'} forgotPasswordHref={'/forgot-password?callbackUrl=%2Fcourses%2Ftypescript-foundations'} loginHref={'/login?callbackUrl=%2Fcourses%2Ftypescript-foundations'} successLoginHref={'/login?callbackUrl=%2Fcourses%2Ftypescript-foundations&reason=password-reset'} />);
 
     fireEvent.change(screen.getByLabelText('รหัสผ่านใหม่'), {
-      target: { value: 'NewPassword1' },
+      target: { value: 'NewPassphrase123!' },
     });
     fireEvent.change(screen.getByLabelText('ยืนยันรหัสผ่านใหม่'), {
-      target: { value: 'NewPassword1' },
+      target: { value: 'NewPassphrase123!' },
     });
     fireEvent.submit(screen.getByLabelText('รหัสผ่านใหม่').closest('form')!);
 
@@ -83,7 +83,7 @@ describe('ResetPasswordForm', () => {
     );
     expect(fetchMock).toHaveBeenCalledWith('/api/auth/reset-password/confirm', expect.objectContaining({
       method: 'POST',
-      body: JSON.stringify({ token: 'opaque-token', newPassword: 'NewPassword1' }),
+      body: JSON.stringify({ token: 'opaque-token', newPassword: 'NewPassphrase123!' }),
     }));
   });
 
@@ -102,8 +102,7 @@ describe('ResetPasswordForm', () => {
     expect(password.getAttribute('aria-invalid')).toBe('true');
     expect(document.activeElement).toBe(password);
     expect(password.closest('form')?.noValidate).toBe(true);
-    expect(screen.getByText('มีตัวพิมพ์ใหญ่')).toBeTruthy();
-    expect(screen.getByText('มีตัวเลข')).toBeTruthy();
-    expect(screen.getByText('รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว')).toBeTruthy();
+    expect(screen.getByText('ยาว 15–128 ตัวอักษร')).toBeTruthy();
+    expect(screen.getByText('ใช้รหัสผ่านยาว 15–128 ตัวอักษร')).toBeTruthy();
   });
 });
