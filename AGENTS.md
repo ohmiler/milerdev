@@ -90,6 +90,10 @@ Run the narrowest meaningful check for each logical change. For application code
 
 Issues and specs are tracked in GitHub Issues for `ohmiler/milerdev`. See `docs/agents/issue-tracker.md`.
 
+### Development workflow
+
+See `docs/workflow/README.md` for the working sequence, verification scope, CI gates, and the interactive workflow map. Git and production permissions above remain authoritative.
+
 ### Domain docs
 
 This repository uses a single-context domain documentation layout. See `docs/agents/domain.md`.
