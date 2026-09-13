@@ -73,8 +73,8 @@ export default function ConsentProvider({ children }: { children: ReactNode }) {
   }
 
   const actions = <>
-    <Button variant="outline" disabled={pending} onClick={() => void choose(false)}>ใช้เฉพาะที่จำเป็น</Button>
-    <Button variant="outline" disabled={pending} onClick={() => void choose(true)}>ยอมรับสถิติ</Button>
+    <Button variant="outline" disabled={pending} onClick={() => void choose(false)}>ไม่อนุญาต</Button>
+    <Button variant="outline" disabled={pending} onClick={() => void choose(true)}>อนุญาต</Button>
   </>;
 
   return <>
@@ -82,8 +82,8 @@ export default function ConsentProvider({ children }: { children: ReactNode }) {
     {ready && !consent.decided && !open ? <aside aria-label="ตัวเลือกความเป็นส่วนตัว" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 p-3 sm:p-5">
       <Card className="pointer-events-auto mx-auto max-h-[calc(100dvh-2rem)] max-w-3xl overflow-y-auto shadow-lg">
         <CardHeader>
-          <CardTitle>เลือกความเป็นส่วนตัวของคุณ</CardTitle>
-          <CardDescription>เราใช้คุกกี้ที่จำเป็นเพื่อให้บริการ สถิติส่วนเสริมของ MilerDev เริ่มเมื่อคุณยินยอม ปฏิเสธแล้วยังสมัคร ซื้อคอร์ส และเรียนได้ตามปกติ ตัวเลือกนี้ไม่ควบคุมข้อมูลทางเทคนิคที่ตัวเล่น Bunny ส่งเพื่อให้บริการวิดีโอ</CardDescription>
+          <CardTitle>อนุญาตให้เราเก็บสถิติเพื่อปรับปรุงเว็บไซต์ไหม?</CardTitle>
+          <CardDescription>ไม่อนุญาตก็ซื้อคอร์สและเรียนได้ตามปกติ เปลี่ยนใจได้ทุกเมื่อ</CardDescription>
         </CardHeader>
         <CardContent><Link href="/privacy">อ่านนโยบายความเป็นส่วนตัว</Link>{error ? <p role="alert">{error}</p> : null}</CardContent>
         <CardFooter className="flex flex-wrap gap-2">
@@ -93,10 +93,10 @@ export default function ConsentProvider({ children }: { children: ReactNode }) {
     </aside> : null}
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent onCloseAutoFocus={(event) => { event.preventDefault(); trigger.current?.focus(); }}>
-        <DialogHeader><DialogTitle>ตั้งค่าความเป็นส่วนตัว</DialogTitle><DialogDescription>เปลี่ยนตัวเลือกได้ทุกเมื่อ การถอนจะหยุดสถิติส่วนเสริมของ MilerDev ในอนาคต ข้อมูลชำระเงินและความคืบหน้าที่จำเป็นต่อบริการยังคงอยู่ ตัวเลือกนี้ไม่ควบคุมข้อมูลทางเทคนิคที่ตัวเล่น Bunny ส่งเพื่อให้บริการวิดีโอ</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>ตั้งค่าความเป็นส่วนตัว</DialogTitle><DialogDescription>เลือกว่าจะให้ MilerDev เก็บสถิติการใช้งานหรือไม่ เปลี่ยนใจได้ทุกเมื่อ โดยยังซื้อคอร์สและเรียนได้ตามปกติ</DialogDescription></DialogHeader>
         <FieldGroup>
           <Field><FieldLabel>จำเป็นต่อบริการ — เปิดเสมอ</FieldLabel><FieldDescription>การเข้าสู่ระบบ ความปลอดภัย และการจดจำตัวเลือกนี้</FieldDescription></Field>
-          <Field><FieldLabel htmlFor="analytics-consent">สถิติส่วนเสริมของ MilerDev</FieldLabel><FieldDescription id="analytics-consent-description">ช่วยวิเคราะห์การใช้งาน การเรียน การซื้อ และประสิทธิภาพเว็บ หากเข้าสู่ระบบ การเลือกครั้งนี้จะแทนตัวเลือกสถิติเดิมของบัญชี อุปกรณ์อื่นต้องเลือกใหม่</FieldDescription><Switch id="analytics-consent" checked={analytics} onCheckedChange={setAnalytics} disabled={pending} aria-describedby="analytics-consent-description" /></Field>
+          <Field><FieldLabel htmlFor="analytics-consent">อนุญาตให้เก็บสถิติ</FieldLabel><FieldDescription id="analytics-consent-description">ช่วยให้เราปรับปรุงการใช้งาน การเรียน การซื้อ และความเร็วของเว็บ หากเข้าสู่ระบบ ตัวเลือกนี้จะใช้กับบัญชีของคุณ อุปกรณ์อื่นต้องเลือกใหม่</FieldDescription><Switch id="analytics-consent" checked={analytics} onCheckedChange={setAnalytics} disabled={pending} aria-describedby="analytics-consent-description" /></Field>
         </FieldGroup>
         <Link href="/privacy">รายละเอียดการใช้ข้อมูล</Link>
         {error ? <p role="alert">{error}</p> : null}

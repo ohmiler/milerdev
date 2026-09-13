@@ -44,7 +44,7 @@ export async function completeRegistration(page: Page, identity: { name: string;
   await startMailbox();
   await expect(page).toHaveURL(/\/register(?:\?|$)/);
   const consent = page.getByRole('complementary', { name: 'ตัวเลือกความเป็นส่วนตัว' });
-  await consent.getByRole('button', { name: 'ใช้เฉพาะที่จำเป็น', exact: true }).click();
+  await consent.getByRole('button', { name: 'ไม่อนุญาต', exact: true }).click();
   await expect(consent).not.toBeVisible();
   await page.locator('#register-email').fill(identity.email);
   const [registrationResponse] = await Promise.all([
@@ -70,6 +70,6 @@ export async function completeRegistration(page: Page, identity: { name: string;
   await page.locator('button[type=submit]').click();
   await page.waitForURL((url) => url.pathname !== '/login');
   // The anonymous choice is not promoted to the newly authenticated account.
-  await consent.getByRole('button', { name: 'ใช้เฉพาะที่จำเป็น', exact: true }).click();
+  await consent.getByRole('button', { name: 'ไม่อนุญาต', exact: true }).click();
   await expect(consent).not.toBeVisible();
 }
