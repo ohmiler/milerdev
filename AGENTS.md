@@ -31,7 +31,14 @@ Use npm because the repository has `package-lock.json`.
 - `npm run db:generate`: generate Drizzle migrations.
 - `npm run db:migrate`: run migrations.
 
-Run the narrowest meaningful check after each change. Before handoff, run affected tests, lint, and build when practical.
+Run the narrowest meaningful check for each logical change. For application code, run affected tests, lint, and build before handoff when practical. Documentation-only changes need content, link, and diff checks; they do not require the application test suite or build. Run the full suite or broader checks when shared behavior, high-risk paths, or CI requirements warrant them. After a passing check, rerun it only for a relevant change, failure, or unresolved concern.
+
+## Working autonomy and completion
+
+- Resolve routine implementation and testing choices from the user's request, agreed spec, and existing patterns. State material assumptions and continue; ask when missing information changes scope, important behavior, or an authorization boundary.
+- Use authorization already given in the conversation without asking again. This does not expand the requested scope or the Git, secrets, data, and production permissions below.
+- Skills guide the work within those boundaries. Explicit user instructions take precedence over skill workflow preferences. If a skill causes a pause or permission request, link the exact file, quote the relevant instruction, and explain why existing authorization does not cover the next action.
+- Complete implementation, relevant verification, and fixes caused by the change before handoff. For issue-based feature-branch work, continue through the authorized PR and CI workflow below. Report unrelated failures and genuine blockers without expanding the task or claiming unverified success.
 
 ## Secrets and data
 
