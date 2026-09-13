@@ -83,7 +83,7 @@ export default function ConsentProvider({ children }: { children: ReactNode }) {
       <Card className="pointer-events-auto mx-auto max-h-[calc(100dvh-2rem)] max-w-3xl overflow-y-auto shadow-lg">
         <CardHeader>
           <CardTitle>เลือกความเป็นส่วนตัวของคุณ</CardTitle>
-          <CardDescription>เราใช้คุกกี้ที่จำเป็นเพื่อให้บริการ ส่วนสถิติการใช้งานจะเริ่มเมื่อคุณยินยอม ปฏิเสธแล้วยังสมัคร ซื้อคอร์ส และเรียนได้ตามปกติ</CardDescription>
+          <CardDescription>เราใช้คุกกี้ที่จำเป็นเพื่อให้บริการ สถิติส่วนเสริมของ MilerDev เริ่มเมื่อคุณยินยอม ปฏิเสธแล้วยังสมัคร ซื้อคอร์ส และเรียนได้ตามปกติ ตัวเลือกนี้ไม่ควบคุมข้อมูลทางเทคนิคที่ตัวเล่น Bunny ส่งเพื่อให้บริการวิดีโอ</CardDescription>
         </CardHeader>
         <CardContent><Link href="/privacy">อ่านนโยบายความเป็นส่วนตัว</Link>{error ? <p role="alert">{error}</p> : null}</CardContent>
         <CardFooter className="flex flex-wrap gap-2">
@@ -93,10 +93,10 @@ export default function ConsentProvider({ children }: { children: ReactNode }) {
     </aside> : null}
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent onCloseAutoFocus={(event) => { event.preventDefault(); trigger.current?.focus(); }}>
-        <DialogHeader><DialogTitle>ตั้งค่าความเป็นส่วนตัว</DialogTitle><DialogDescription>เปลี่ยนตัวเลือกได้ทุกเมื่อ การถอนจะหยุดสถิติในอนาคต ข้อมูลชำระเงินและความคืบหน้าที่จำเป็นต่อบริการยังคงอยู่</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>ตั้งค่าความเป็นส่วนตัว</DialogTitle><DialogDescription>เปลี่ยนตัวเลือกได้ทุกเมื่อ การถอนจะหยุดสถิติส่วนเสริมของ MilerDev ในอนาคต ข้อมูลชำระเงินและความคืบหน้าที่จำเป็นต่อบริการยังคงอยู่ ตัวเลือกนี้ไม่ควบคุมข้อมูลทางเทคนิคที่ตัวเล่น Bunny ส่งเพื่อให้บริการวิดีโอ</DialogDescription></DialogHeader>
         <FieldGroup>
           <Field><FieldLabel>จำเป็นต่อบริการ — เปิดเสมอ</FieldLabel><FieldDescription>การเข้าสู่ระบบ ความปลอดภัย และการจดจำตัวเลือกนี้</FieldDescription></Field>
-          <Field><FieldLabel htmlFor="analytics-consent">สถิติการใช้งาน</FieldLabel><FieldDescription id="analytics-consent-description">ช่วยวิเคราะห์การใช้งาน การเรียน การซื้อ และประสิทธิภาพเว็บ หากเข้าสู่ระบบ การเลือกครั้งนี้จะแทนตัวเลือกสถิติเดิมของบัญชี อุปกรณ์อื่นต้องเลือกใหม่</FieldDescription><Switch id="analytics-consent" checked={analytics} onCheckedChange={setAnalytics} disabled={pending} aria-describedby="analytics-consent-description" /></Field>
+          <Field><FieldLabel htmlFor="analytics-consent">สถิติส่วนเสริมของ MilerDev</FieldLabel><FieldDescription id="analytics-consent-description">ช่วยวิเคราะห์การใช้งาน การเรียน การซื้อ และประสิทธิภาพเว็บ หากเข้าสู่ระบบ การเลือกครั้งนี้จะแทนตัวเลือกสถิติเดิมของบัญชี อุปกรณ์อื่นต้องเลือกใหม่</FieldDescription><Switch id="analytics-consent" checked={analytics} onCheckedChange={setAnalytics} disabled={pending} aria-describedby="analytics-consent-description" /></Field>
         </FieldGroup>
         <Link href="/privacy">รายละเอียดการใช้ข้อมูล</Link>
         {error ? <p role="alert">{error}</p> : null}
