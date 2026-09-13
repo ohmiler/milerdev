@@ -1,0 +1,243 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "MilerDev · พัฒนา Software ร่วมกับ AI",
+    "quality_profile": "showcase",
+    "animation": "none",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "lanes": [
+    {
+      "id": "author",
+      "label": "คน + AI · เตรียมและพัฒนา"
+    },
+    {
+      "id": "verify",
+      "label": "CI + ผู้ตรวจ · ยืนยันคุณภาพ"
+    },
+    {
+      "id": "release",
+      "label": "เจ้าของระบบ · ส่งมอบ"
+    },
+    {
+      "id": "recovery",
+      "label": "เมื่อพบปัญหา",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "scope",
+    "implement",
+    "pr",
+    "ci",
+    "review",
+    "authorize",
+    "deploy",
+    "observe"
+  ],
+  "nodes": [
+    {
+      "id": "scope",
+      "lane": "author",
+      "col": 0,
+      "type": "frontend",
+      "label": "กำหนดโจทย์",
+      "sublabel": "Issue + เกณฑ์รับงาน"
+    },
+    {
+      "id": "implement",
+      "lane": "author",
+      "col": 1,
+      "type": "backend",
+      "label": "พัฒนาบน branch",
+      "sublabel": "AI ทำตามกติกา repo"
+    },
+    {
+      "id": "pr",
+      "lane": "author",
+      "col": 2,
+      "type": "frontend",
+      "label": "เปิด PR",
+      "sublabel": "diff + หลักฐานทดสอบ"
+    },
+    {
+      "id": "ci",
+      "lane": "verify",
+      "col": 2,
+      "type": "backend",
+      "label": "ตรวจด้วย CI",
+      "sublabel": "types · tests · build"
+    },
+    {
+      "id": "review",
+      "lane": "verify",
+      "col": 3,
+      "type": "security",
+      "label": "Review ผลกระทบ",
+      "sublabel": "เข้มตามความเสี่ยง"
+    },
+    {
+      "id": "authorize",
+      "lane": "release",
+      "col": 3,
+      "type": "security",
+      "label": "อนุมัติ merge",
+      "sublabel": "เจ้าของอนุญาตก่อน"
+    },
+    {
+      "id": "deploy",
+      "lane": "release",
+      "col": 4,
+      "type": "cloud",
+      "label": "Deploy",
+      "sublabel": "master → Railway"
+    },
+    {
+      "id": "observe",
+      "lane": "release",
+      "col": 5,
+      "type": "backend",
+      "label": "ตรวจหลัง deploy",
+      "sublabel": "Smoke + บริการจริง",
+      "width": 160
+    },
+    {
+      "id": "repair",
+      "lane": "recovery",
+      "col": 2,
+      "type": "backend",
+      "label": "แก้และตรวจใหม่",
+      "sublabel": "หยุดส่งงานที่ไม่ผ่าน"
+    },
+    {
+      "id": "recover",
+      "lane": "recovery",
+      "col": 5,
+      "type": "security",
+      "label": "กู้คืนอย่างมีแผน",
+      "sublabel": "fix / revert ผ่าน PR",
+      "width": 160
+    }
+  ],
+  "edges": [
+    {
+      "from": "scope",
+      "to": "implement",
+      "role": "main"
+    },
+    {
+      "from": "implement",
+      "to": "pr",
+      "role": "main"
+    },
+    {
+      "from": "pr",
+      "to": "ci",
+      "role": "main"
+    },
+    {
+      "from": "ci",
+      "to": "review",
+      "role": "main",
+      "label": "ผ่าน"
+    },
+    {
+      "from": "review",
+      "to": "authorize",
+      "role": "main",
+      "label": "พร้อม"
+    },
+    {
+      "from": "authorize",
+      "to": "deploy",
+      "role": "main",
+      "label": "merge"
+    },
+    {
+      "from": "deploy",
+      "to": "observe",
+      "role": "main"
+    },
+    {
+      "from": "ci",
+      "to": "repair",
+      "role": "error",
+      "label": "ไม่ผ่าน",
+      "variant": "security"
+    },
+    {
+      "from": "review",
+      "to": "repair",
+      "role": "error",
+      "label": "ต้องแก้",
+      "variant": "security"
+    },
+    {
+      "from": "repair",
+      "to": "implement",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "from": "observe",
+      "to": "recover",
+      "role": "error",
+      "label": "พบปัญหา",
+      "variant": "security"
+    },
+    {
+      "from": "recover",
+      "to": "scope",
+      "role": "return",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          752,
+          545
+        ],
+        [
+          4,
+          545
+        ],
+        [
+          4,
+          119
+        ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "มีใช้อยู่แล้ว",
+      "items": [
+        "CI: lint / types / admin-text / tests / build",
+        "MySQL แยก + mock providers + E2E",
+        "Production Smoke หลัง deploy"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "ข้อเสนอ · ยังไม่บังคับครบ",
+      "items": [
+        "Review งานเสี่ยงสูง: approval ปัจจุบัน 0",
+        "ตั้ง required E2E gate โดยตรงใน GitHub",
+        "ยืนยันบริการจริงและซ้อม restore"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "ขอบเขตความรับผิดชอบ",
+      "items": [
+        "คนรับผิดชอบคุณภาพและอนุมัติ production",
+        "ย้อนโค้ดไม่เท่ากับย้อนฐานข้อมูล",
+        "แผนผังแนวทาง ณ 13 ก.ย. 2026 ไม่ใช่สถานะสด"
+      ]
+    }
+  ]
+}
