@@ -1,10 +1,17 @@
 # Maintaining project skills
 
-The project tracks customized copies of six skills from
+The project tracks eight skills from
 [Matt Pocock's skills](https://github.com/mattpocock/skills): `code-review`,
-`diagnosing-bugs`, `grill-with-docs`, `implement`, `tdd`, and `to-spec`.
+`codebase-design`, `diagnosing-bugs`, `domain-modeling`, `grill-with-docs`,
+`implement`, `tdd`, and `to-spec`.
 Their supporting files and invocation metadata are included with each skill.
 Other locally installed skills are outside this snapshot.
+
+Six skills have local workflow adaptations described below. `codebase-design`
+and `domain-modeling` were added from the existing local installation without
+editing their instructions. They supply the interface vocabulary and domain
+documentation formats referenced by the customized skills. The root project's
+existing `CONTEXT.md` is separate project content and is not part of this import.
 
 The upstream MIT notice is preserved in
 [mattpocock-skills.LICENSE](../../.agents/licenses/mattpocock-skills.LICENSE).
@@ -43,6 +50,8 @@ passed six cases in an isolated repository: committed, staged, unstaged, combine
 uncommitted, branch plus unfinished work, and untracked files.
 
 The bundled skill validator accepted `tdd`, `diagnosing-bugs`, and `code-review`.
+It also accepted the added `codebase-design` and `domain-modeling` skills; their
+local reference links, supporting files, and YAML metadata were checked.
 For `implement`, `to-spec`, and `grill-with-docs`, it rejected the existing
 `disable-model-invocation` frontmatter field on both the original and edited
 copies. The existing explicit invocation policy was retained.
