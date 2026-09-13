@@ -1,6 +1,6 @@
 # Privacy: retention and embedded video review
 
-Reviewed 2026-09-13. The owner approved the optional-data retention durations in this conversation on that date. Production cleanup execution and scheduling are not authorized or enabled by that approval. The video section is a source-code inventory, not a production network audit.
+Reviewed 2026-09-13. The owner approved the optional-data retention durations in this conversation on that date. Production cleanup execution and scheduling are not authorized or enabled by that approval. The video section includes a source-code inventory and a limited, owner-authorized public-video observation; it is not a complete production network audit.
 
 ## Approved retention for optional measurement
 
@@ -46,7 +46,7 @@ A separate daily Railway count-only service configuration is prepared in [deploy
 
 | Provider supported in code | Current implementation | Follow-up |
 | --- | --- | --- |
-| Bunny Stream | Direct `iframe.mediadelivery.net` embed; Player.js messages support progress and playback recovery | Inspect the actual library settings and a designated test video. Separate required delivery/progress from optional vendor statistics. |
+| Bunny Stream | Direct `iframe.mediadelivery.net` embed; Player.js messages support progress and playback recovery | Public test observed; see [findings](research/bunny-stream-privacy-2026-09-13.md). Actual library settings and endpoint-specific telemetry purpose/retention remain unverified. |
 | YouTube | `www.youtube-nocookie.com/embed/…` (Privacy Enhanced Mode), allowed by the page CSP | Inspect live requests and document the remaining data transfer. This is not a no-data-transfer guarantee. |
 | Vimeo | `player.vimeo.com/video/…` with `dnt=1` | Inspect live existing-cookie and security-cookie behavior. |
 | Other URL | Falls back to supplied URL | Inventory the allowed hosts before promising coverage of all third-party media. |
