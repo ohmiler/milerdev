@@ -2,6 +2,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
 import { db } from '@/lib/db';
+import { lockActiveConsent } from '@/lib/privacy-consent';
 import { analyticsEvents, measurementOutbox, payments } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 
@@ -21,7 +22,7 @@ export interface PurchaseMeasurementStore {
   ensurePurchaseOutbox(paymentId: string): Promise<void>;
   projectPendingPurchase(
     payment: PurchaseProjection,
-  ): Promise<'projected' | 'duplicate' | 'already_projected'>;
+  ): Promise<'projected' | 'duplicate' | 'already_projected' | 'ineligible'>;
   recordProjectionFailure(paymentId: string): Promise<void>;
 }
 
@@ -91,30 +92,25 @@ const drizzlePurchaseMeasurementStore: PurchaseMeasurementStore = {
     return payment ?? null;
   },
 
-  async ensurePurchaseOutbox(paymentId) {
-    try {
-      await db.insert(measurementOutbox).values({
-        eventName: 'purchase_completed',
-        paymentId,
-      });
-    } catch (error) {
-      if (!isDuplicateKeyError(error)) throw error;
-    }
+  async ensurePurchaseOutbox() {
+    // Only the authoritative transition may capture consent. Never backfill old payments.
   },
 
   async projectPendingPurchase(payment) {
     return db.transaction(async (tx) => {
       const [outbox] = await tx
-        .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt })
+        .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt, consentId: measurementOutbox.consentId })
         .from(measurementOutbox)
         .where(and(
           eq(measurementOutbox.eventName, 'purchase_completed'),
           eq(measurementOutbox.paymentId, payment.paymentId),
           isNull(measurementOutbox.projectedAt),
         ))
-        .limit(1);
+        .limit(1)
+        .for('update');
 
       if (!outbox) return 'already_projected';
+      if (!(await lockActiveConsent(tx, outbox.consentId))) return 'ineligible';
 
       let duplicate = false;
       try {

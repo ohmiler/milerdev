@@ -1,3 +1,4 @@
+vi.mock('@/lib/privacy-consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { projectPurchase } = vi.hoisted(() => ({

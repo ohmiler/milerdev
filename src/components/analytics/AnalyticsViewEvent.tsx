@@ -14,6 +14,7 @@ import {
   trackClientAnalyticsEvent,
 } from '@/components/analytics/analytics-client';
 import type { ClientAnalyticsEvent } from '@/lib/analytics-contract';
+import { useConsentStatus, canSendAnalytics } from '@/components/privacy/consent-client';
 
 const ProductExposureContext = createContext<string | null>(null);
 
@@ -32,12 +33,14 @@ export default function AnalyticsViewEvent({
   productId,
   children,
 }: AnalyticsViewEventProps) {
+  const consent = useConsentStatus();
   const exposureRef = useRef<{ key: string; id: string } | null>(null);
   const deliveredKeyRef = useRef<string | null>(null);
   const [attribution, setAttribution] = useState<{ key: string; id: string } | null>(null);
   const key = `${productType}:${productId}`;
 
   useEffect(() => {
+    if (!canSendAnalytics()) { deliveredKeyRef.current = null; exposureRef.current = null; return; }
     if (deliveredKeyRef.current === key) return;
 
     if (exposureRef.current?.key !== key) {
@@ -62,9 +65,9 @@ export default function AnalyticsViewEvent({
     deliveredKeyRef.current = key;
     setAttribution({ key, id: exposureId });
     trackClientAnalyticsEvent(event);
-  }, [key, productId, productType]);
+  }, [key, productId, productType, consent]);
 
-  const attributedExposureId = attribution?.key === key ? attribution.id : null;
+  const attributedExposureId = consent.analytics && attribution?.key === key ? attribution.id : null;
   return (
     <ProductExposureContext.Provider value={attributedExposureId}>
       {children}

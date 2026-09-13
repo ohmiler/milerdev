@@ -7,6 +7,7 @@ import {
 } from '@/lib/analytics';
 import { clientAnalyticsEventSchema } from '@/lib/analytics-contract';
 import { auth } from '@/lib/auth';
+import { withBrowserConsent } from '@/lib/privacy-consent';
 import { logEvent } from '@/lib/error-handler';
 import { measurementRecorder } from '@/lib/measurement-recorder';
 import { learningMeasurementRecorder } from '@/lib/learning-measurement';
@@ -30,6 +31,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (!(await isAnalyticsEventEnabled(parsed.data.eventName))) return new NextResponse(null, { status: 204 });
+    const consentSession = await auth();
+    return await withBrowserConsent(consentSession?.user?.id ?? null, async () => {
     if (parsed.data.eventName === 'course_viewed' || parsed.data.eventName === 'bundle_viewed') {
       const productType = parsed.data.eventName === 'course_viewed' ? 'course' : 'bundle';
       const productId = productType === 'course' ? parsed.data.courseId : parsed.data.bundleId;
@@ -55,7 +59,7 @@ export async function POST(request: Request) {
       if (!(await isAnalyticsEventEnabled('learning_workspace_started'))) {
         return new NextResponse(null, { status: 204 });
       }
-      const session = await auth();
+      const session = consentSession;
       if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -78,8 +82,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Analytics target not found' }, { status: 404 });
     }
 
-    const session = await auth();
+    const session = consentSession;
     await recordClientAnalyticsEvent(parsed.data, session?.user?.id ?? null);
+    return new NextResponse(null, { status: 204 });
+    }, () => new NextResponse(null, { status: 204 }));
   } catch {
     logEvent('analytics.client_event_failed', 'warn');
   }

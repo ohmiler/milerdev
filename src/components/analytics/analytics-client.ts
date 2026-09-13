@@ -1,6 +1,7 @@
 'use client';
 
 import type { ClientAnalyticsEvent } from '@/lib/analytics-contract';
+import { canSendAnalytics } from '@/components/privacy/consent-client';
 
 export function createAnalyticsExposureId(
   randomUUID: () => string = () => crypto.randomUUID(),
@@ -11,7 +12,7 @@ export function createAnalyticsExposureId(
 export const createProductExposureId = createAnalyticsExposureId;
 
 export function trackClientAnalyticsEvent(event: ClientAnalyticsEvent): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !canSendAnalytics()) return;
 
   const body = JSON.stringify(event);
   if (

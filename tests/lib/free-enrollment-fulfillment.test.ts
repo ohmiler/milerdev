@@ -1,3 +1,4 @@
+vi.mock('@/lib/privacy-consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -23,6 +24,7 @@ vi.mock('@/lib/enrollment-measurement-projector', () => ({
 }));
 
 import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
+import { getMemberConsentId } from '@/lib/privacy-consent';
 
 function transactionAdapter() {
   return {
@@ -52,6 +54,13 @@ function transactionAdapter() {
 }
 
 describe('free enrollment fulfillment', () => {
+  it('grants free access without creating an optional fact when consent is absent', async () => {
+    vi.mocked(getMemberConsentId).mockResolvedValueOnce(null);
+    const result = await fulfillFreeEnrollment({ userId: 'student-1', courseIds: ['course-1'] });
+    expect(result.status).toBe('fulfilled');
+    expect(result.created).toHaveLength(1);
+    expect(insertedRows.some((row) => row.eventName)).toBe(false);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     insertedRows.length = 0;

@@ -19,6 +19,7 @@
     "db:preflight:oauth-accounts": "tsx scripts/check-oauth-account-duplicates.ts",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:migrate:local": "tsx src/lib/db/migrate.ts",
+    "privacy:retention": "tsx scripts/privacy-retention.ts",
     "db:rehearse:user-lifecycle": "tsx scripts/rehearse-user-lifecycle-migration.ts",
     "db:rehearse:course-lifecycle": "tsx scripts/rehearse-course-lifecycle-migration.ts",
     "db:fixtures:user-lifecycle-smoke": "tsx scripts/create-user-lifecycle-smoke-fixtures.ts",

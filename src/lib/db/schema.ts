@@ -29,6 +29,19 @@ export const users = mysqlTable('users', {
     index('idx_users_deactivated_at').on(table.deactivatedAt),
 ]);
 
+export const privacyConsents = mysqlTable('privacy_consents', {
+    id: varchar('id', { length: 64 }).primaryKey(),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }),
+    version: int('version').notNull(),
+    analytics: boolean('analytics').notNull(),
+    createdAt: datetime('created_at', { fsp: 3 }).notNull(),
+    expiresAt: datetime('expires_at', { fsp: 3 }).notNull(),
+    revokedAt: datetime('revoked_at', { fsp: 3 }),
+}, (table) => [
+    index('idx_privacy_consents_user').on(table.userId),
+    index('idx_privacy_consents_expiry').on(table.expiresAt),
+]);
+
 export const usersRelations = relations(users, ({ many }) => ({
     enrollments: many(enrollments),
     payments: many(payments),
@@ -709,6 +722,7 @@ export const webVitals = mysqlTable('web_vitals', {
 // =====================
 export const measurementOutbox = mysqlTable('measurement_outbox', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    consentId: varchar('consent_id', { length: 64 }),
     eventName: varchar('event_name', { length: 100, enum: ['purchase_completed', 'free_enrollment_completed', 'lesson_completed', 'course_completed'] }).notNull(),
     paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id),
     enrollmentId: varchar('enrollment_id', { length: 36 }).references(() => enrollments.id),

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ConsentSettingsButton from '@/components/privacy/ConsentSettingsButton';
 import { Separator } from '@/components/ui/separator';
 
 function FacebookIcon() {
@@ -65,6 +66,7 @@ export default function Footer() {
         <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 MilerDev. สงวนลิขสิทธิ์ทั้งหมด</p>
           <p>เรียนให้เข้าใจ แล้วสร้างในแบบของคุณ</p>
+          <ConsentSettingsButton />
         </div>
       </div>
     </footer>

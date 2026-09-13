@@ -1,3 +1,5 @@
+import { withBrowserConsent } from '@/lib/privacy-consent';
+import { getMeasurementDatabase } from '@/lib/measurement-database';
 import { NextResponse } from "next/server";
 import { z } from 'zod';
 import { auth } from "@/lib/auth";
@@ -126,32 +128,37 @@ export async function POST(request: Request) {
         // an older pending row would let multiple Stripe sessions point at mutable
         // local state and can strand a successfully paid session.
 
-        let attributedExposureId: string | null = null;
-        if (exposureId) {
-            try {
-                attributedExposureId = await measurementRecorder.resolveProductExposureAttribution({
-                    exposureId,
-                    productType: 'course',
-                    productId: course.id,
-                });
-            } catch {
-                logEvent('analytics.payment_attribution_failed', 'warn');
-            }
-        }
-
         const paymentId = crypto.randomUUID();
-        await db.insert(payments).values({
+        const paymentValues: typeof payments.$inferInsert = {
             id: paymentId,
             userId: session.user.id,
             courseId: course.id,
             couponId: appliedCouponId,
             amount: priceNumber.toFixed(2),
             currency: "THB",
-            attributedExposureId,
+            attributedExposureId: null,
             method: "stripe",
             itemTitle: course.title,
             status: "pending",
-        });
+        };
+        let insertedWithConsent = false;
+        if (exposureId) {
+            try {
+                insertedWithConsent = await withBrowserConsent(session.user.id, async () => {
+                    const attributedExposureId = await measurementRecorder.resolveProductExposureAttribution({
+                        exposureId,
+                        productType: 'course',
+                        productId: course.id,
+                    });
+                    // Hold the receipt lock until the attributed payment write commits.
+                    await getMeasurementDatabase().insert(payments).values({ ...paymentValues, attributedExposureId });
+                    return true;
+                }, () => false);
+            } catch {
+                logEvent('analytics.payment_attribution_failed', 'warn');
+            }
+        }
+        if (!insertedWithConsent) await db.insert(payments).values(paymentValues);
 
         // Create Stripe checkout session
         const checkoutSession = await stripe.checkout.sessions.create({

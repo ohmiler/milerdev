@@ -1,6 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '@/lib/db';
+import { getMemberConsentId } from '@/lib/privacy-consent';
 import {
   bundleCourses,
   bundles,
@@ -178,7 +179,9 @@ export async function fulfillPromptPayIntent({
       }
     }
 
-    await tx.insert(measurementOutbox).values({
+    const consentId = await getMemberConsentId(tx, payment.userId);
+    if (consentId) await tx.insert(measurementOutbox).values({
+      consentId,
       eventName: 'purchase_completed',
       paymentId: payment.id,
     });
