@@ -5,6 +5,7 @@ import { and, count, eq } from 'drizzle-orm';
 
 import { ensureCompletedCertificate } from '@/lib/certificate';
 import { db } from '@/lib/db';
+import { getMemberConsentId } from '@/lib/privacy-consent';
 import {
   enrollments,
   lessonProgress,
@@ -85,13 +86,17 @@ type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 async function enqueueLearningMilestone(
   tx: DatabaseTransaction,
   input: LearningMilestoneIdentity & {
+    userId: string;
     enrollmentId: string;
     courseId: string;
     lessonId: string | null;
   },
 ) {
   try {
+    const consentId = await getMemberConsentId(tx, input.userId);
+    if (!consentId) return;
     await tx.insert(measurementOutbox).values({
+      consentId,
       eventName: input.eventName,
       paymentId: null,
       enrollmentId: null,
@@ -223,6 +228,7 @@ export async function updateLearningProgress(
     });
     for (const milestone of milestones) {
       await enqueueLearningMilestone(tx, {
+        userId: input.userId,
         ...milestone,
         enrollmentId: enrollment.id,
         courseId: lesson.courseId,

@@ -8,6 +8,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
 import PasswordSettingsForm from '@/components/settings/PasswordSettingsForm';
+import ConsentSettingsButton from '@/components/privacy/ConsentSettingsButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +38,10 @@ export default async function SettingsPage() {
       title="ตั้งค่าบัญชี"
       description="จัดการข้อมูลที่แสดงในบัญชีและควบคุมความปลอดภัยของการเข้าสู่ระบบ"
     >
+      <Card>
+        <CardHeader><CardTitle>ความเป็นส่วนตัว</CardTitle><CardDescription>เลือกหรือถอนความยินยอมสำหรับสถิติส่วนเสริม</CardDescription></CardHeader>
+        <CardContent><ConsentSettingsButton /></CardContent>
+      </Card>
       <Card aria-labelledby="account-settings-title">
         <CardHeader>
           <Badge variant="outline">บัญชี</Badge>

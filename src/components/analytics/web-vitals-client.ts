@@ -1,5 +1,7 @@
 'use client';
 
+import { canSendPageVitals } from '@/components/privacy/consent-client';
+
 import {
   WEB_VITAL_NAMES,
   type WebVitalDeviceClass,
@@ -70,6 +72,7 @@ export function initializeWebVitalsPageLoadContext(releaseIdentity: string): voi
 export function reportWebVitalMetric(metric: BrowserWebVitalMetric): void {
   if (
     typeof window === 'undefined'
+    || !canSendPageVitals()
     || !CORE_WEB_VITAL_NAMES.has(metric.name)
     || !Number.isFinite(metric.value)
   ) return;

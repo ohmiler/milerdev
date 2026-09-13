@@ -8,6 +8,7 @@ import {
   type ServerAnalyticsEventName,
 } from '@/lib/analytics-contract';
 import { db } from '@/lib/db';
+import { getMeasurementDatabase } from '@/lib/measurement-database';
 import { auditLogs, settings } from '@/lib/db/schema';
 
 export const ANALYTICS_CONTROL_CACHE_MAX_AGE_MS = 5_000;
@@ -321,7 +322,7 @@ async function writeSettingWithAudit(tx: DatabaseTransaction, input: AnalyticsCo
 
 const drizzleAnalyticsControlStore: AnalyticsControlStore = {
   async read() {
-    const rows = await db
+    const rows = await getMeasurementDatabase()
       .select({ key: settings.key, value: settings.value, updatedAt: settings.updatedAt })
       .from(settings)
       .where(inArray(settings.key, [...ANALYTICS_CONTROL_KEYS]));

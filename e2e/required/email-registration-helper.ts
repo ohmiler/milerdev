@@ -43,10 +43,13 @@ function startMailbox() {
 export async function completeRegistration(page: Page, identity: { name: string; email: string; password: string }) {
   await startMailbox();
   await expect(page).toHaveURL(/\/register(?:\?|$)/);
-  await page.locator('input[name=email]').fill(identity.email);
+  const consent = page.getByRole('complementary', { name: 'ตัวเลือกความเป็นส่วนตัว' });
+  await consent.getByRole('button', { name: 'ไม่อนุญาต', exact: true }).click();
+  await expect(consent).not.toBeVisible();
+  await page.locator('#register-email').fill(identity.email);
   const [registrationResponse] = await Promise.all([
     page.waitForResponse((response) => new URL(response.url()).pathname === '/api/auth/register' && response.request().method() === 'POST'),
-    page.locator('button[type=submit]').click(),
+    page.locator('form').filter({ has: page.locator('#register-email') }).locator('button[type=submit]').click(),
   ]);
   expect(registrationResponse.status(), 'Registration request status').toBe(200);
   await expect(page.getByText('ตรวจสอบคำขอแล้ว', { exact: true })).toBeVisible();
@@ -62,7 +65,11 @@ export async function completeRegistration(page: Page, identity: { name: string;
   await page.locator('button[type=submit]').click();
   await expect(page.getByText('ยืนยันอีเมลและสร้างบัญชีแล้ว', { exact: true })).toBeVisible();
   await page.getByRole('main').getByRole('link', { name: 'เข้าสู่ระบบ', exact: true }).click();
-  await page.locator('input[name=email]').fill(identity.email);
+  await page.locator('#login-email').fill(identity.email);
   await page.locator('input[name=password]').fill(identity.password);
   await page.locator('button[type=submit]').click();
+  await page.waitForURL((url) => url.pathname !== '/login');
+  // The anonymous choice is not promoted to the newly authenticated account.
+  await consent.getByRole('button', { name: 'ไม่อนุญาต', exact: true }).click();
+  await expect(consent).not.toBeVisible();
 }

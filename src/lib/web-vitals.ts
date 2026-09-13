@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
 import { db } from '@/lib/db';
+import { getMeasurementDatabase } from '@/lib/measurement-database';
 import { webVitals } from '@/lib/db/schema';
 import {
   WEB_VITAL_DEVICE_CLASSES,
@@ -100,7 +101,7 @@ export function createWebVitalsRecorder(input: {
   };
 }
 
-export function createDrizzleWebVitalsStore(database: typeof db): WebVitalsStore {
+export function createDrizzleWebVitalsStore(database: Pick<typeof db, 'insert'>): WebVitalsStore {
   return {
     async upsert(metric) {
       await database
@@ -127,7 +128,9 @@ export function createDrizzleWebVitalsStore(database: typeof db): WebVitalsStore
   };
 }
 
-const drizzleWebVitalsStore = createDrizzleWebVitalsStore(db);
+const drizzleWebVitalsStore: WebVitalsStore = {
+  upsert: (metric) => createDrizzleWebVitalsStore(getMeasurementDatabase()).upsert(metric),
+};
 
 export const webVitalsRecorder = createWebVitalsRecorder({
   store: drizzleWebVitalsStore,
