@@ -9,6 +9,15 @@ import BunnyPlayer from '@/components/video/BunnyPlayer';
 import { connectBunnyPlayer } from '@/lib/bunny-player-adapter';
 
 describe('BunnyPlayer trusted adapter lifecycle', () => {
+  it.each([
+    ['https://www.youtube.com/watch?v=video-one', 'https://www.youtube-nocookie.com/embed/video-one?autoplay=1&rel=0'],
+    ['https://www.youtube-nocookie.com/embed/video-one', 'https://www.youtube-nocookie.com/embed/video-one?autoplay=1&rel=0'],
+    ['https://vimeo.com/123456', 'https://player.vimeo.com/video/123456?dnt=1&autoplay=1'],
+  ])('uses provider privacy options for %s without requiring analytics consent', (videoId, expectedUrl) => {
+    render(<BunnyPlayer videoId={videoId} autoplay />);
+    expect(screen.getByTitle('วิดีโอตัวอย่างหลักสูตร').getAttribute('src')).toBe(expectedUrl);
+    expect(connectBunnyPlayer).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });

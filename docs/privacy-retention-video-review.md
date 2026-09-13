@@ -40,13 +40,15 @@ Recommended release schedule is daily, with repeated bounded passes if a backlog
 
 ## Embedded video inventory
 
+A separate daily Railway count-only service configuration is prepared in [deployment/privacy-retention](../deployment/privacy-retention/README.md). It is not activated and cannot be substituted for the web-service configuration. Production apply mode still needs explicit operation approval.
+
 [BunnyPlayer](../src/components/video/BunnyPlayer.tsx) builds Bunny, YouTube and Vimeo iframe URLs and assigns `src` when rendered. `loading="lazy"` is a browser performance hint, not consent enforcement. The current first-party analytics switch does not control those iframe requests.
 
 | Provider supported in code | Current implementation | Follow-up |
 | --- | --- | --- |
 | Bunny Stream | Direct `iframe.mediadelivery.net` embed; Player.js messages support progress and playback recovery | Inspect the actual library settings and a designated test video. Separate required delivery/progress from optional vendor statistics. |
-| YouTube | `www.youtube.com/embed/…` | Consider Privacy Enhanced Mode and explicit loading of external media. Test playback and document the remaining data transfer. |
-| Vimeo | `player.vimeo.com/video/…` without DNT | Consider DNT and explicit loading of external media; test existing-cookie and security-cookie behavior. |
+| YouTube | `www.youtube-nocookie.com/embed/…` (Privacy Enhanced Mode), allowed by the page CSP | Inspect live requests and document the remaining data transfer. This is not a no-data-transfer guarantee. |
+| Vimeo | `player.vimeo.com/video/…` with `dnt=1` | Inspect live existing-cookie and security-cookie behavior. |
 | Other URL | Falls back to supplied URL | Inventory the allowed hosts before promising coverage of all third-party media. |
 
 Google documents `youtube-nocookie.com` as Privacy Enhanced Mode, limiting personalization; it does not establish that loading the player sends no data. [YouTube embedding documentation](https://support.google.com/youtube/answer/171780?hl=en).
