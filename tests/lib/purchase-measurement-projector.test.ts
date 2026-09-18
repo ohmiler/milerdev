@@ -26,8 +26,7 @@ class MemoryPurchaseMeasurementStore implements PurchaseMeasurementStore {
     return this.payment?.paymentId === paymentId ? this.payment : null;
   }
 
-  async ensurePurchaseOutbox(paymentId: string) {
-    if (this.outbox.has(paymentId)) return;
+  seedCommittedOutbox(paymentId: string) {
     this.outbox.set(paymentId, {
       id: `outbox:${paymentId}`,
       paymentId,
@@ -79,12 +78,24 @@ describe('purchase measurement projector', () => {
     expect(store.payment?.status).toBe('completed');
   });
 
-  it.each(['promptpay', 'bank_transfer'] as const)(
+  it('does not backfill an outbox or fact for a completed payment without a committed outbox', async () => {
+    const store = new MemoryPurchaseMeasurementStore();
+    const projector = createPurchaseMeasurementProjector({ store, isEventEnabled: async () => true });
+
+    await expect(projector.projectPurchase('pay-1')).resolves.toEqual({ status: 'already_projected' });
+    await expect(projector.projectPurchase('pay-1')).resolves.toEqual({ status: 'already_projected' });
+    expect(store.outbox.size).toBe(0);
+    expect(store.facts.size).toBe(0);
+    expect(store.payment?.status).toBe('completed');
+  });
+
+  it.each(['stripe', 'promptpay', 'bank_transfer'] as const)(
     'projects an authoritative completed %s payment as a paid purchase',
     async (method) => {
       const store = new MemoryPurchaseMeasurementStore();
       if (!store.payment) throw new Error('missing fixture');
       store.payment = { ...store.payment, method };
+      store.seedCommittedOutbox('pay-1');
       const projector = createPurchaseMeasurementProjector({
         store,
         isEventEnabled: async () => true,
@@ -108,6 +119,7 @@ describe('purchase measurement projector', () => {
   it('treats an existing payment fact as a successful idempotent projection', async () => {
     const store = new MemoryPurchaseMeasurementStore();
     store.facts.add('pay-1');
+    store.seedCommittedOutbox('pay-1');
     const projector = createPurchaseMeasurementProjector({
       store,
       isEventEnabled: async () => true,
@@ -120,6 +132,8 @@ describe('purchase measurement projector', () => {
 
   it('keeps the committed payment recoverable when projection fails, then retries to one fact', async () => {
     const store = new MemoryPurchaseMeasurementStore();
+    store.seedCommittedOutbox('pay-1');
+    const committedOutbox = store.outbox.get('pay-1');
     const projector = createPurchaseMeasurementProjector({
       store,
       isEventEnabled: async () => true,
@@ -130,9 +144,15 @@ describe('purchase measurement projector', () => {
     expect(store.payment?.status).toBe('completed');
     expect(store.facts.size).toBe(0);
     expect(store.failures).toBe(1);
+    expect(committedOutbox?.projected).toBe(false);
+    expect(store.outbox.get('pay-1')).toBe(committedOutbox);
 
     store.failProjection = false;
     await expect(projector.projectPurchase('pay-1')).resolves.toEqual({ status: 'projected' });
     expect(store.facts).toEqual(new Set(['pay-1']));
+    await expect(projector.projectPurchase('pay-1')).resolves.toEqual({ status: 'already_projected' });
+    expect(store.outbox.size).toBe(1);
+    expect(store.outbox.get('pay-1')).toBe(committedOutbox);
+    expect(store.facts.size).toBe(1);
   });
 });

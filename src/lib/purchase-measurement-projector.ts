@@ -19,7 +19,7 @@ export type PurchaseProjection = {
 
 export interface PurchaseMeasurementStore {
   readCompletedPayment(paymentId: string): Promise<PurchaseProjection | null>;
-  ensurePurchaseOutbox(paymentId: string): Promise<void>;
+  // Project only an existing committed outbox; never backfill old payments.
   projectPendingPurchase(
     payment: PurchaseProjection,
   ): Promise<'projected' | 'duplicate' | 'already_projected' | 'ineligible'>;
@@ -58,7 +58,6 @@ export function createPurchaseMeasurementProjector(input: {
         const payment = await input.store.readCompletedPayment(paymentId);
         if (!isEligiblePaidPurchase(payment)) return { status: 'ineligible' };
 
-        await input.store.ensurePurchaseOutbox(paymentId);
         const status = await input.store.projectPendingPurchase(payment);
         return { status };
       } catch {
@@ -90,10 +89,6 @@ const drizzlePurchaseMeasurementStore: PurchaseMeasurementStore = {
       .where(eq(payments.id, paymentId))
       .limit(1);
     return payment ?? null;
-  },
-
-  async ensurePurchaseOutbox() {
-    // Only the authoritative transition may capture consent. Never backfill old payments.
   },
 
   async projectPendingPurchase(payment) {
