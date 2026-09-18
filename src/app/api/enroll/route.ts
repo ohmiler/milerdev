@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { enrollments, courses, payments, coupons, couponUsages } from "@/lib/db/schema";
-import { eq, and, count } from "drizzle-orm";
+import { enrollments, payments } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/email";
 import { z } from "zod";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
-import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
+import { resolveCourseAcquisition } from "@/lib/course-acquisition";
 import { safeInsertEnrollment } from "@/lib/db/safe-insert";
-import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/course-availability";
+import { COURSE_NOT_READY } from "@/lib/course-availability";
 import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
 
 // Validation schema
@@ -44,51 +44,28 @@ export async function POST(request: Request) {
         
         const { courseId, paymentId, couponId } = validation.data;
 
-        // Check if course exists
-        const course = await db.query.courses.findFirst({
-            where: eq(courses.id, courseId),
-            with: { lessons: { columns: { id: true } } },
+        const decision = await resolveCourseAcquisition({
+            kind: 'enroll', userId: session.user.id, courseId, couponId, paymentId,
         });
-
-        if (!course || course.status !== 'published') {
+        if (decision.kind === 'not_found') {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
-
-        // Check if already enrolled
-        const existingEnrollment = await db.query.enrollments.findFirst({
-            where: and(
-                eq(enrollments.userId, session.user.id),
-                eq(enrollments.courseId, courseId)
-            ),
-        });
-
-        if (existingEnrollment) {
-            return NextResponse.json(
-                { error: "Already enrolled in this course" },
-                { status: 400 }
-            );
+        if (decision.kind === 'owned') {
+            return NextResponse.json({ error: "Already enrolled in this course" }, { status: 400 });
         }
-
-        // Calculate effective price (use promo price if active)
-        const originalPrice = parseFloat(course.price || '0');
-        const now = new Date();
-        const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
-        const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
-        const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
-        const isPromoActive = hasPromo && promoStartOk && promoEndOk;
-        const coursePrice = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
-
-        const isPaidFulfillmentAttempt = coursePrice > 0 && Boolean(paymentId);
-        if (!isPaidFulfillmentAttempt) {
-            try {
-                requireCourseHasLessons(course.lessons.length);
-            } catch {
-                return NextResponse.json({ error: COURSE_NOT_READY }, { status: 409 });
-            }
+        if (decision.kind === 'not_ready') {
+            return NextResponse.json({ error: COURSE_NOT_READY }, { status: 409 });
         }
+        if (decision.kind === 'coupon_not_found') {
+            return NextResponse.json({ error: 'คูปองไม่ถูกต้อง' }, { status: 400 });
+        }
+        if (decision.kind === 'invalid_coupon') {
+            return NextResponse.json({ error: decision.message }, { status: 400 });
+        }
+        const { course, coupon } = decision;
 
-        // If course is paid, verify payment
-        if (coursePrice > 0 && paymentId) {
+        if (decision.action === 'verify-payment') {
+            if (!paymentId) return NextResponse.json({ error: "Valid payment required" }, { status: 402 });
             const payment = await db.query.payments.findFirst({
                 where: and(
                     eq(payments.id, paymentId),
@@ -104,32 +81,8 @@ export async function POST(request: Request) {
                     { status: 402 }
                 );
             }
-        } else if (coursePrice > 0 && couponId) {
-            // Coupon-based free enrollment — validate coupon makes it free
-            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
-            if (!coupon) {
-                return NextResponse.json({ error: 'คูปองไม่ถูกต้อง' }, { status: 400 });
-            }
-
-            const [userUsage] = await db.select({ count: count() }).from(couponUsages)
-                .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
-
-            const eligibility = validateCouponEligibility(coupon, {
-                targetCourseId: courseId,
-                userUsageCount: userUsage?.count || 0,
-                coursePrice,
-            });
-            if (!eligibility.valid) {
-                return NextResponse.json({ error: eligibility.error }, { status: 400 });
-            }
-
-            const discount = calculateDiscount(
-                coursePrice,
-                coupon.discountType as 'percentage' | 'fixed',
-                coupon.discountValue,
-                coupon.maxDiscount,
-            );
-            if (discount < coursePrice) {
+        } else if (coupon) {
+            if (decision.action !== 'enroll-free') {
                 return NextResponse.json({ error: 'คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ' }, { status: 402 });
             }
             const fulfillment = await fulfillFreeEnrollment({
@@ -137,7 +90,7 @@ export async function POST(request: Request) {
                 courseIds: [courseId],
                 coupon: {
                     id: coupon.id,
-                    discountAmount: String(Math.min(discount, coursePrice)),
+                    discountAmount: coupon.discountAmount,
                 },
             });
             const createdEnrollment = fulfillment.created[0];
@@ -158,7 +111,7 @@ export async function POST(request: Request) {
             }
 
             return NextResponse.json(enrollment, { status: 201 });
-        } else if (coursePrice > 0) {
+        } else if (decision.action === 'pay') {
             return NextResponse.json(
                 { error: "Payment required for this course" },
                 { status: 402 }
@@ -166,7 +119,7 @@ export async function POST(request: Request) {
         }
 
         // Create enrollment (free course or paid with payment verification)
-        const freeFulfillment = coursePrice <= 0
+        const freeFulfillment = decision.action === 'enroll-free'
             ? await fulfillFreeEnrollment({ userId: session.user.id, courseIds: [courseId] })
             : null;
         const paidEnrollment = freeFulfillment

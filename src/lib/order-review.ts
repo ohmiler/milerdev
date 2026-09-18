@@ -2,10 +2,9 @@ import 'server-only';
 
 import { and, count, eq, inArray } from 'drizzle-orm';
 import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
-import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
-import { calculateDiscount, validateCouponEligibility } from '@/lib/coupon';
+import { resolveCourseAcquisition } from '@/lib/course-acquisition';
 import { db } from '@/lib/db';
-import { bundleCourses, bundles, coupons, couponUsages, courses, enrollments, lessons } from '@/lib/db/schema';
+import { bundleCourses, bundles, courses, enrollments, lessons } from '@/lib/db/schema';
 
 export type OrderReview = {
   target: { type: 'course' | 'bundle'; id: string; title: string; href: string };
@@ -26,43 +25,24 @@ export async function loadOrderReview(
 ): Promise<OrderReview> {
   const now = new Date();
   if (input.courseId) {
-    const course = await db.query.courses.findFirst({
-      where: and(eq(courses.id, input.courseId), eq(courses.status, 'published')),
-      with: { lessons: { columns: { id: true } } },
+    const decision = await resolveCourseAcquisition({
+      kind: 'review', userId, courseId: input.courseId, couponCode: input.couponCode,
     });
-    if (!course) throw new OrderReviewError('ไม่พบคอร์สที่เปิดขาย', 404);
-    const owned = await db.query.enrollments.findFirst({
-      where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, course.id)),
-      columns: { id: true },
-    });
-    const facts = deriveCourseDecisionFacts({
-      slug: course.slug, regularPrice: course.price, lessonCount: course.lessons.length,
-      promotion: course.promoPrice === null ? null : {
-        price: course.promoPrice, startsAt: course.promoStartsAt, endsAt: course.promoEndsAt,
-      },
-    }, { now });
-    let coupon: OrderReview['coupon'] = null;
-    let amount = facts.price.effective;
-    if (input.couponCode) {
-      const record = await db.query.coupons.findFirst({ where: eq(coupons.code, input.couponCode.toUpperCase()) });
-      if (!record) throw new OrderReviewError('ไม่พบคูปองนี้');
-      const [usage] = await db.select({ count: count() }).from(couponUsages)
-        .where(and(eq(couponUsages.couponId, record.id), eq(couponUsages.userId, userId)));
-      const eligibility = validateCouponEligibility(record, {
-        targetCourseId: course.id, userUsageCount: usage?.count ?? 0, coursePrice: amount,
-      });
-      if (!eligibility.valid) throw new OrderReviewError(eligibility.error || 'คูปองนี้ใช้ไม่ได้');
-      amount = Math.max(0, amount - calculateDiscount(amount, record.discountType, record.discountValue, record.maxDiscount));
-      amount = Math.round(amount * 100) / 100;
-      coupon = { id: record.id, code: record.code, description: record.description };
+    if (decision.kind !== 'ready') {
+      if (decision.kind === 'not_found') throw new OrderReviewError('ไม่พบคอร์สที่เปิดขาย', 404);
+      if (decision.kind === 'coupon_not_found') throw new OrderReviewError('ไม่พบคูปองนี้');
+      if (decision.kind === 'invalid_coupon') throw new OrderReviewError(decision.message);
+      throw new OrderReviewError('คอร์สนี้ยังไม่พร้อมรับการลงทะเบียน', 409);
     }
+    const { course, coupon, action } = decision;
+    if (action === 'verify-payment') throw new Error('Order review cannot verify a payment');
     return {
-      target: { type: 'course', id: course.id, title: course.title, href: facts.actions.discovery.href },
-      price: { original: facts.price.effective.toFixed(2), discount: (facts.price.effective - amount).toFixed(2), amountDue: amount.toFixed(2), currency: 'THB' },
-      coupon,
-      access: { ownedCount: owned ? 1 : 0, totalCount: 1, description: owned ? 'คุณมีสิทธิ์เรียนคอร์สนี้แล้ว' : 'ได้รับสิทธิ์เรียนคอร์สนี้เมื่อระบบยืนยันการชำระเงิน หรือยืนยันการลงทะเบียนเรียนฟรีแล้ว' },
+      target: { type: 'course', id: course.id, title: course.title, href: `/courses/${course.slug}` },
+      price: decision.price,
+      coupon: coupon ? { id: coupon.id, code: coupon.code, description: coupon.description } : null,
+      access: { ownedCount: action === 'owned' ? 1 : 0, totalCount: 1, description: action === 'owned' ? 'คุณมีสิทธิ์เรียนคอร์สนี้แล้ว' : 'ได้รับสิทธิ์เรียนคอร์สนี้เมื่อระบบยืนยันการชำระเงิน หรือยืนยันการลงทะเบียนเรียนฟรีแล้ว' },
       comparison: null,
-      action: owned ? 'owned' : facts.readiness !== 'ready' ? 'unavailable' : amount === 0 ? 'enroll-free' : 'pay',
+      action,
     };
   }
 

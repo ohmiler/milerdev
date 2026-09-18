@@ -5,11 +5,10 @@ import { z } from 'zod';
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
-import { courses, payments, coupons, couponUsages, enrollments } from "@/lib/db/schema";
-import { eq, and, count } from "drizzle-orm";
-import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
+import { payments } from "@/lib/db/schema";
+import { resolveCourseAcquisition } from "@/lib/course-acquisition";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
-import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/course-availability";
+import { COURSE_NOT_READY } from "@/lib/course-availability";
 import { analyticsExposureIdSchema } from '@/lib/analytics-contract';
 import { logEvent } from '@/lib/error-handler';
 import { measurementRecorder } from '@/lib/measurement-recorder';
@@ -41,86 +40,28 @@ export async function POST(request: Request) {
         }
         const { courseId, couponId, exposureId } = parsed.data;
 
-        // Get course details
-        const course = await db.query.courses.findFirst({
-            where: eq(courses.id, courseId),
-            with: { lessons: { columns: { id: true } } },
+        const decision = await resolveCourseAcquisition({
+            kind: 'checkout', userId: session.user.id, courseId, couponId,
         });
-
-        if (!course || course.status !== 'published') {
+        if (decision.kind === 'not_found') {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
-
-        // Check if already enrolled — prevent paying for a course the user already has
-        const existingEnrollment = await db.query.enrollments.findFirst({
-            where: and(
-                eq(enrollments.userId, session.user.id),
-                eq(enrollments.courseId, courseId)
-            ),
-        });
-        if (existingEnrollment) {
-            return NextResponse.json(
-                { error: "คุณลงทะเบียนคอร์สนี้แล้ว" },
-                { status: 400 }
-            );
+        if (decision.kind === 'owned') {
+            return NextResponse.json({ error: "คุณลงทะเบียนคอร์สนี้แล้ว" }, { status: 400 });
         }
-
-        try {
-            requireCourseHasLessons(course.lessons.length);
-        } catch {
+        if (decision.kind === 'not_ready') {
             return NextResponse.json({ error: COURSE_NOT_READY }, { status: 409 });
         }
-
-        const originalPrice = parseFloat(course.price.toString());
-
-        // Check if promotion is active
-        const now = new Date();
-        const hasPromo = course.promoPrice !== null && course.promoPrice !== undefined;
-        const promoStartOk = !course.promoStartsAt || new Date(course.promoStartsAt) <= now;
-        const promoEndOk = !course.promoEndsAt || new Date(course.promoEndsAt) >= now;
-        const isPromoActive = hasPromo && promoStartOk && promoEndOk;
-        let priceNumber = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
-
-        // Apply coupon discount if provided
-        let appliedCouponId: string | null = null;
-        if (couponId) {
-            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
-            if (coupon) {
-                const [userUsage] = await db.select({ count: count() }).from(couponUsages)
-                    .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
-
-                const eligibility = validateCouponEligibility(coupon, {
-                    targetCourseId: courseId,
-                    userUsageCount: userUsage?.count || 0,
-                    coursePrice: priceNumber,
-                });
-
-                if (eligibility.valid) {
-                    const discount = calculateDiscount(
-                        priceNumber,
-                        coupon.discountType as 'percentage' | 'fixed',
-                        coupon.discountValue,
-                        coupon.maxDiscount,
-                    );
-                    priceNumber = Math.max(0, priceNumber - discount);
-                    appliedCouponId = coupon.id;
-                }
-            }
-        }
-
-        if (couponId && appliedCouponId !== couponId) {
+        if (decision.kind !== 'ready') {
             return NextResponse.json({ error: 'คูปองนี้ใช้ไม่ได้แล้ว กรุณาตรวจสอบรายการใหม่' }, { status: 400 });
         }
-
-        priceNumber = Math.round(priceNumber * 100) / 100;
-        if (priceNumber <= 0) {
-            return NextResponse.json(
-                { error: "This course is free" },
-                { status: 400 }
-            );
+        const { course } = decision;
+        const appliedCouponId = decision.coupon?.id ?? null;
+        const priceNumber = Number(decision.price.amountDue);
+        if (decision.action === 'enroll-free') {
+            return NextResponse.json({ error: "This course is free" }, { status: 400 });
         }
-
-        if (parsed.data.expectedAmount !== undefined && parsed.data.expectedAmount !== priceNumber.toFixed(2)) {
+        if (parsed.data.expectedAmount !== undefined && parsed.data.expectedAmount !== decision.price.amountDue) {
             return NextResponse.json({ error: 'ราคาเปลี่ยนแปลง กรุณาตรวจสอบรายการและยืนยันยอดใหม่' }, { status: 409 });
         }
 
@@ -134,7 +75,7 @@ export async function POST(request: Request) {
             userId: session.user.id,
             courseId: course.id,
             couponId: appliedCouponId,
-            amount: priceNumber.toFixed(2),
+            amount: decision.price.amountDue,
             currency: "THB",
             attributedExposureId: null,
             method: "stripe",
