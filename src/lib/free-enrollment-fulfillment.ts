@@ -10,7 +10,7 @@ import { enrollmentMeasurementProjector } from '@/lib/enrollment-measurement-pro
 type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export class FreeEnrollmentFulfillmentError extends Error {
-  constructor(readonly code: 'INVALID_FREE_ENROLLMENT' | 'COUPON_LIMIT_EXCEEDED') {
+  constructor(readonly code: 'INVALID_FREE_ENROLLMENT' | 'COUPON_LIMIT_EXCEEDED' | 'ENROLLMENT_REVOKED') {
     super(code);
     this.name = 'FreeEnrollmentFulfillmentError';
   }
@@ -34,10 +34,11 @@ async function insertEnrollment(
     await tx.insert(enrollments).values({ id, userId, courseId });
   } catch (error) {
     if (!isDuplicateKeyError(error)) throw error;
-    const [existing] = await tx.select({ id: enrollments.id }).from(enrollments)
+    const [existing] = await tx.select({ id: enrollments.id, revokedAt: enrollments.revokedAt }).from(enrollments)
       .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)))
       .limit(1);
     if (!existing) throw error;
+    if (existing.revokedAt) throw new FreeEnrollmentFulfillmentError('ENROLLMENT_REVOKED');
     return { id: existing.id, courseId, created: false };
   }
 

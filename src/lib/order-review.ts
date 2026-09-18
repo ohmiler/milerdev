@@ -29,6 +29,7 @@ export async function loadOrderReview(
       kind: 'review', userId, courseId: input.courseId, couponCode: input.couponCode,
     });
     if (decision.kind !== 'ready') {
+      if (decision.kind === 'revoked') throw new OrderReviewError('สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ', 403);
       if (decision.kind === 'not_found') throw new OrderReviewError('ไม่พบคอร์สที่เปิดขาย', 404);
       if (decision.kind === 'coupon_not_found') throw new OrderReviewError('ไม่พบคูปองนี้');
       if (decision.kind === 'invalid_coupon') throw new OrderReviewError(decision.message);
@@ -58,8 +59,9 @@ export async function loadOrderReview(
   const ids = included.map(({ course }) => course.id);
   const [lessonCounts, owned] = ids.length ? await Promise.all([
     db.select({ courseId: lessons.courseId, count: count() }).from(lessons).where(inArray(lessons.courseId, ids)).groupBy(lessons.courseId),
-    db.select({ courseId: enrollments.courseId }).from(enrollments).where(and(eq(enrollments.userId, userId), inArray(enrollments.courseId, ids))),
+    db.select({ courseId: enrollments.courseId, revokedAt: enrollments.revokedAt }).from(enrollments).where(and(eq(enrollments.userId, userId), inArray(enrollments.courseId, ids))),
   ]) : [[], []];
+  if (owned.some((row) => row.revokedAt)) throw new OrderReviewError('สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ', 403);
   const counts = new Map(lessonCounts.map((row) => [row.courseId, row.count]));
   const ownedIds = new Set(owned.map((row) => row.courseId));
   const facts = deriveBundleDecisionFacts({ slug: bundle.slug, price: bundle.price, courses: included.map(({ course, orderIndex }) => ({

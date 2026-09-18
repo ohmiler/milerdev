@@ -47,6 +47,7 @@ export async function safeInsertEnrollment(userId: string, courseId: string): Pr
             const existing = await db.query.enrollments.findFirst({
                 where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)),
             });
+            if (existing?.revokedAt) throw new Error('ENROLLMENT_REVOKED');
             if (existing) {
                 return { created: false, enrollment: { id: existing.id, userId, courseId } };
             }

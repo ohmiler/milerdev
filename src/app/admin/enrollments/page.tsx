@@ -1,10 +1,11 @@
 'use client';
 
-import { CircleCheck, FileUp, GraduationCap, Plus, Search, Trash2, X } from 'lucide-react';
+import { AdminEnrollmentAccessDialog } from '@/components/admin/AdminEnrollmentAccessDialog';
+
+import { CircleCheck, FileUp, GraduationCap, Plus, Search, RotateCcw, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
-import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
   AdminEmptyState,
   AdminErrorState,
@@ -34,6 +35,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { showToast } from '@/components/ui/Toast';
 
 interface Enrollment {
+  revokedAt: string | null;
   id: string;
   userId: string | null;
   courseId: string | null;
@@ -155,20 +157,20 @@ export default function AdminEnrollmentsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAddModal]);
 
-  const confirmDeleteEnrollment = async () => {
+  const confirmDeleteEnrollment = async (reason: string) => {
     if (!deleteTarget) return;
     const enrollmentId = deleteTarget.id;
     setUpdating(enrollmentId);
     setDeleteError('');
     try {
-      const response = await fetch(`/api/admin/enrollments/${enrollmentId}`, { method: 'DELETE' });
+      const response = await fetch(`/api/admin/enrollments/${enrollmentId}`, { method: deleteTarget.revokedAt ? 'PATCH' : 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'ลบการลงทะเบียนไม่สำเร็จ');
+      if (!response.ok) throw new Error(data.error || 'เปลี่ยนสิทธิ์เรียนไม่สำเร็จ');
       setDeleteTarget(null);
       await fetchEnrollments();
-      showToast('ลบการลงทะเบียนสำเร็จ', 'success');
+      showToast(data.message || 'เปลี่ยนสิทธิ์เรียนสำเร็จ', 'success');
     } catch (caughtError) {
-      setDeleteError(caughtError instanceof Error ? caughtError.message : 'ลบการลงทะเบียนไม่สำเร็จ กรุณาลองใหม่');
+      setDeleteError(caughtError instanceof Error ? caughtError.message : 'เปลี่ยนสิทธิ์เรียนไม่สำเร็จ กรุณาลองใหม่');
     } finally {
       setUpdating(null);
     }
@@ -330,7 +332,7 @@ export default function AdminEnrollmentsPage() {
                         {enrollment.userId ? <Link href={`/admin/users/${enrollment.userId}`} className="font-medium text-primary hover:underline">{enrollment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-medium">{enrollment.userName || 'ไม่ระบุชื่อ'}</div>}
                         <div className="mt-1 text-xs text-muted-foreground">{enrollment.userEmail || '-'}</div>
                       </TableCell>
-                      <TableCell className="max-w-64 truncate">{enrollment.courseTitle || '-'}</TableCell>
+                      <TableCell className="max-w-64 truncate">{enrollment.courseTitle || '-'}{enrollment.revokedAt ? ' · ถอนสิทธิ์แล้ว' : ''}</TableCell>
                       <TableCell>
                         <div className="flex min-w-32 items-center gap-3">
                           <Progress value={progress} className="w-24" aria-label={`ความคืบหน้า ${progress}%`} />
@@ -345,8 +347,8 @@ export default function AdminEnrollmentsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end">
-                          <Button variant="ghost" size="icon-sm" disabled={updating === enrollment.id} onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอน ${enrollment.userName || enrollment.userEmail || 'ผู้ใช้'} ออกจากคอร์ส`}>
-                            <Trash2 aria-hidden />
+                          <Button variant="ghost" size="icon-sm" disabled={updating === enrollment.id} onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`${enrollment.revokedAt ? 'คืนสิทธิ์' : 'ถอนสิทธิ์'} ${enrollment.userName || enrollment.userEmail || 'ผู้ใช้'}`}>
+                            {enrollment.revokedAt ? <RotateCcw aria-hidden /> : <Trash2 aria-hidden />}
                           </Button>
                         </div>
                       </TableCell>
@@ -400,16 +402,14 @@ export default function AdminEnrollmentsPage() {
         </DialogContent>
       </Dialog>
 
-      <AdminConfirmActionDialog
+      <AdminEnrollmentAccessDialog
+        key={deleteTarget?.id || 'closed'}
         open={Boolean(deleteTarget)}
-        title="ถอนสิทธิ์การลงทะเบียน"
-        description="ผู้เรียนจะเสียสิทธิ์เข้าคอร์สและข้อมูลความคืบหน้าที่ผูกกับการลงทะเบียนนี้อาจถูกลบ"
-        target={deleteTarget ? <span>{deleteTarget.userName || deleteTarget.userEmail || 'ผู้ใช้'} · {deleteTarget.courseTitle || 'ไม่ระบุคอร์ส'}</span> : null}
-        confirmLabel="ถอนสิทธิ์"
-        pending={Boolean(deleteTarget && updating === deleteTarget.id)}
-        pendingLabel="กำลังถอนสิทธิ์"
+        restoring={Boolean(deleteTarget?.revokedAt)}
+        target={deleteTarget?.courseTitle || 'คอร์สที่ไม่ระบุชื่อ'}
+        pending={Boolean(updating)}
         error={deleteError || undefined}
-        onConfirm={() => void confirmDeleteEnrollment()}
+        onConfirm={(reason) => void confirmDeleteEnrollment(reason)}
         onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(''); } }}
       />
     </div>

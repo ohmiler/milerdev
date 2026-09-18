@@ -35,7 +35,7 @@ const intentSchema = z.object({
   }
 });
 
-function unavailable(code: string, status: 400 | 404 | 409 = 409): never {
+function unavailable(code: string, status: 400 | 403 | 404 | 409 = 409): never {
   throw Object.assign(new Error(code), { status });
 }
 
@@ -74,13 +74,14 @@ export async function POST(request: Request) {
           unavailable(COURSE_NOT_READY);
         }
 
-        const [existingEnrollment] = await tx.select({ id: enrollments.id })
+        const [existingEnrollment] = await tx.select({ id: enrollments.id, revokedAt: enrollments.revokedAt })
           .from(enrollments)
           .where(and(
             eq(enrollments.userId, session.user.id),
             eq(enrollments.courseId, course.id),
           ))
           .limit(1);
+        if (existingEnrollment?.revokedAt) unavailable('สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ', 403);
         if (existingEnrollment) unavailable('ALREADY_ENROLLED', 400);
 
         const originalPrice = Number(course.price);
@@ -171,9 +172,10 @@ export async function POST(request: Request) {
         .for('update');
       if (!bundle || bundle.status !== 'published') unavailable('BUNDLE_NOT_AVAILABLE', 404);
 
-      const enrolledRows = await tx.select({ courseId: enrollments.courseId })
+      const enrolledRows = await tx.select({ courseId: enrollments.courseId, revokedAt: enrollments.revokedAt })
         .from(enrollments)
         .where(eq(enrollments.userId, session.user.id));
+      if (enrolledRows.some((row) => row.revokedAt && includedCourses.some((course) => course.id === row.courseId))) unavailable('สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ', 403);
       const enrolledIds = new Set(enrolledRows.map((row) => row.courseId));
       if (includedCourses.every((course) => enrolledIds.has(course.id))) {
         unavailable('ALREADY_ENROLLED', 400);

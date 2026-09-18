@@ -106,7 +106,7 @@ export async function GET(request: Request) {
 
       case 'enrollments': {
         csvStream = buildBatchedCsvStream(
-          'ID,วันที่ลงทะเบียน,ความคืบหน้า(%),วันที่เรียนจบ,ชื่อผู้ใช้,อีเมล,คอร์ส\n',
+          'ID,วันที่ลงทะเบียน,ความคืบหน้า(%),วันที่เรียนจบ,วันที่ถอนสิทธิ์,ชื่อผู้ใช้,อีเมล,คอร์ส\n',
           (offset, limit) =>
             db
               .select({
@@ -114,6 +114,7 @@ export async function GET(request: Request) {
                 enrolledAt: enrollments.enrolledAt,
                 progressPercent: enrollments.progressPercent,
                 completedAt: enrollments.completedAt,
+                revokedAt: enrollments.revokedAt,
                 userName: users.name,
                 userEmail: users.email,
                 courseTitle: courses.title,
@@ -125,7 +126,7 @@ export async function GET(request: Request) {
               .orderBy(desc(enrollments.enrolledAt))
               .limit(limit)
               .offset(offset),
-          (row) => `${csvSafe(row.id)},${csvSafe(row.enrolledAt?.toISOString())},${row.progressPercent || 0},${csvSafe(row.completedAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`
+          (row) => `${csvSafe(row.id)},${csvSafe(row.enrolledAt?.toISOString())},${row.progressPercent || 0},${csvSafe(row.completedAt?.toISOString())},${csvSafe(row.revokedAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`
         );
         filename = `enrollments-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;

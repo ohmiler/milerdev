@@ -3,7 +3,7 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { auditLogs, payments, enrollments, bundleCourses, courses, bundles } from '@/lib/db/schema';
-import { eq, and, ne, sql } from 'drizzle-orm';
+import { isNull, eq, and, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { notify } from '@/lib/notify';
 import { fulfillManualPayment } from '@/lib/payment-fulfillment';
@@ -179,7 +179,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
           const hasOtherEntitlement = (directPayment?.count || 0) > 0 || (bundlePayment?.count || 0) > 0;
           if (!hasOtherEntitlement) {
             await tx.delete(enrollments).where(
-              and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, courseId))
+              and(isNull(enrollments.revokedAt), eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, courseId))
             );
           }
         }

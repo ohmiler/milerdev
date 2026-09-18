@@ -101,9 +101,10 @@ export async function POST(request: Request) {
                     .from(enrollments)
                     .where(and(eq(enrollments.userId, session.user.id), eq(enrollments.courseId, c.courseId)))
                     .limit(1);
-                return !!enrollment;
+                return enrollment?.revokedAt ? 'revoked' : !!enrollment;
             })
         );
+        if (enrollmentChecks.includes('revoked')) return NextResponse.json({ error: 'สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ' }, { status: 403 });
         if (enrollmentChecks.every(Boolean)) {
             return NextResponse.json(
                 { error: "คุณลงทะเบียนคอร์สทั้งหมดใน Bundle นี้แล้ว" },

@@ -42,6 +42,7 @@ type PaymentState =
   | 'verifying'
   | 'completed-ready'
   | 'completed-access-pending'
+  | 'completed-access-revoked'
   | 'failed'
   | 'refunded'
   | 'unconfirmed'

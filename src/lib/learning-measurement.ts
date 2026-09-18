@@ -174,6 +174,7 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
       .from(enrollments)
       .innerJoin(lessons, eq(lessons.courseId, enrollments.courseId))
       .where(and(
+        isNull(enrollments.revokedAt),
         eq(enrollments.userId, userId),
         eq(lessons.id, lessonId),
       ))

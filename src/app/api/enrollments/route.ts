@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, courses, lessons } from '@/lib/db/schema';
-import { eq, and, count, desc } from 'drizzle-orm';
+import { isNull, eq, and, count, desc } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
@@ -24,7 +24,7 @@ export async function GET() {
       })
       .from(enrollments)
       .innerJoin(courses, eq(enrollments.courseId, courses.id))
-      .where(eq(enrollments.userId, session.user.id))
+      .where(and(isNull(enrollments.revokedAt), eq(enrollments.userId, session.user.id)))
       .orderBy(desc(enrollments.enrolledAt));
 
     // Format result
@@ -84,6 +84,7 @@ export async function POST(request: Request) {
       )
       .limit(1);
 
+    if (existingEnrollment?.revokedAt) return NextResponse.json({ error: 'สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ' }, { status: 403 });
     if (existingEnrollment) {
       return NextResponse.json(
         { error: 'คุณลงทะเบียนคอร์สนี้แล้ว', enrollment: existingEnrollment },
@@ -144,6 +145,9 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof Error && error.message === 'ENROLLMENT_REVOKED') {
+      return NextResponse.json({ error: 'สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ' }, { status: 403 });
+    }
     console.error('Error creating enrollment:', error);
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },

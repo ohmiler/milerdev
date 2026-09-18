@@ -256,6 +256,10 @@ describe('admin payment mutation boundaries', () => {
 
     expect(response.status).toBe(200);
     expect(mocks.transactionDelete).toHaveBeenCalledTimes(1);
+    const { MySqlDialect } = await import('drizzle-orm/mysql-core');
+    const predicate = mocks.transactionDelete.mock.results[0].value.where.mock.calls[0][0];
+    expect(new MySqlDialect().sqlToQuery(predicate).sql).toContain('`enrollments`.`revoked_at` is null');
+
   });
 
   it('does not revoke entitlement when the refund transition loses a race', async () => {

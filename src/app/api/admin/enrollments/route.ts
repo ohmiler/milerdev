@@ -4,8 +4,8 @@ import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { enrollments, users, courses } from '@/lib/db/schema';
 import { desc, eq, sql, and, like, or } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
-import { logAudit } from '@/lib/auditLog';
+import { adminEnrollmentGrantSchema, grantAdminEnrollment } from '@/lib/admin-enrollment';
+import { getAuditContext } from '@/lib/auditLog';
 
 // GET /api/admin/enrollments - Get all enrollments
 export async function GET(request: Request) {
@@ -48,6 +48,7 @@ export async function GET(request: Request) {
           enrolledAt: enrollments.enrolledAt,
           progressPercent: enrollments.progressPercent,
           completedAt: enrollments.completedAt,
+          revokedAt: enrollments.revokedAt,
           userName: users.name,
           userEmail: users.email,
           courseTitle: courses.title,
@@ -116,45 +117,18 @@ export async function POST(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
-    const { session } = authResult;
 
-    const body = await request.json();
-    const { userId, courseId } = body;
-
-    if (!userId || !courseId) {
-      return NextResponse.json({ error: 'กรุณาระบุผู้ใช้และคอร์ส' }, { status: 400 });
-    }
-
-    // Check if already enrolled
-    const [existing] = await db
-      .select()
-      .from(enrollments)
-      .where(and(
-        eq(enrollments.userId, userId),
-        eq(enrollments.courseId, courseId)
-      ))
-      .limit(1);
-
-    if (existing) {
-      return NextResponse.json({ error: 'ผู้ใช้ลงทะเบียนคอร์สนี้แล้ว' }, { status: 400 });
-    }
-
-    // Create enrollment
-    const enrollmentId = createId();
-    await db.insert(enrollments).values({
-      id: enrollmentId,
-      userId,
-      courseId,
-      enrolledAt: new Date(),
-      progressPercent: 0,
+    const body = await request.json().catch(() => null);
+    const parsed = adminEnrollmentGrantSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: 'กรุณาระบุผู้ใช้และคอร์ส' }, { status: 400 });
+    const result = await grantAdminEnrollment({
+      ...parsed.data, actorId: authResult.session.user.id, context: await getAuditContext(),
     });
-
-    await logAudit({ userId: session.user.id, action: 'create', entityType: 'enrollment', entityId: enrollmentId, newValue: `user: ${userId}, course: ${courseId}` });
-
-    return NextResponse.json(
-      { message: 'เพิ่มการลงทะเบียนสำเร็จ', enrollmentId },
-      { status: 201 }
-    );
+    if (result.kind === 'user_not_found' || result.kind === 'course_not_found') {
+      return NextResponse.json({ error: 'ไม่พบผู้ใช้หรือคอร์ส' }, { status: 404 });
+    }
+    if (result.kind === 'existing') return NextResponse.json({ error: 'ผู้ใช้ลงทะเบียนคอร์สนี้แล้ว' }, { status: 400 });
+    return NextResponse.json({ message: result.kind === 'restored' ? 'คืนสิทธิ์เรียนสำเร็จ' : 'ลงทะเบียนสำเร็จ', enrollmentId: result.enrollmentId }, { status: 201 });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating enrollment:' });
     return NextResponse.json(

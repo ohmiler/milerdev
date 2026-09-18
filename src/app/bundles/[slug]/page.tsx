@@ -24,7 +24,7 @@ import {
 import { getExcerpt } from '@/lib/sanitize';
 import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
 import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
-import { and, asc, avg, count, eq, inArray, sql } from 'drizzle-orm';
+import { isNull, and, asc, avg, count, eq, inArray, sql } from 'drizzle-orm';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -200,6 +200,7 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
       .select({ courseId: enrollments.courseId })
       .from(enrollments)
       .where(and(
+        isNull(enrollments.revokedAt),
         eq(enrollments.userId, session.user.id),
         inArray(enrollments.courseId, bundle.courses.map((course) => course.courseId)),
       ));

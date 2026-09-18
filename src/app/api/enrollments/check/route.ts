@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { isNull, eq, and } from 'drizzle-orm';
 
 // GET /api/enrollments/check?courseId=xxx - Check if user is enrolled
 export async function GET(request: Request) {
@@ -24,6 +24,7 @@ export async function GET(request: Request) {
       .from(enrollments)
       .where(
         and(
+          isNull(enrollments.revokedAt),
           eq(enrollments.userId, session.user.id),
           eq(enrollments.courseId, courseId)
         )

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, eq } from 'drizzle-orm';
+import { isNull, and, asc, eq } from 'drizzle-orm';
 import sanitizeHtml from 'sanitize-html';
 
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny';
@@ -118,6 +118,7 @@ const databaseStore: LearningWorkspaceStore = {
       .select({ id: enrollments.id })
       .from(enrollments)
       .where(and(
+        isNull(enrollments.revokedAt),
         eq(enrollments.userId, memberId),
         eq(enrollments.courseId, courseId),
       ))

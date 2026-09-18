@@ -21,7 +21,7 @@ type AcquisitionInput = { userId: string; courseId: string } & (
 
 export type CourseAcquisitionStore = {
   readCourse(courseId: string): Promise<Course | null>;
-  hasEnrollment(userId: string, courseId: string): Promise<boolean>;
+  hasEnrollment(userId: string, courseId: string): Promise<boolean | 'revoked'>;
   readCoupon(selection: CouponSelection): Promise<Coupon | null>;
   readCouponUsage(userId: string, couponId: string): Promise<number>;
 };
@@ -29,6 +29,7 @@ export type CourseAcquisitionStore = {
 type AcquisitionDecision =
   | { kind: 'not_found' }
   | { kind: 'owned' }
+  | { kind: 'revoked' }
   | { kind: 'not_ready' }
   | { kind: 'coupon_not_found' }
   | { kind: 'invalid_coupon'; message: string }
@@ -48,9 +49,10 @@ const databaseStore: CourseAcquisitionStore = {
     }) ?? null;
   },
   async hasEnrollment(userId, courseId) {
-    return Boolean(await db.query.enrollments.findFirst({
+    const enrollment = await db.query.enrollments.findFirst({
       where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)),
-    }));
+    });
+    return enrollment?.revokedAt ? 'revoked' : Boolean(enrollment);
   },
   async readCoupon(selection) {
     if ('code' in selection) {
@@ -75,6 +77,7 @@ export async function resolveCourseAcquisition(
   const course = await store.readCourse(input.courseId);
   if (!course || course.status !== 'published') return { kind: 'not_found' };
   const owned = await store.hasEnrollment(input.userId, course.id);
+  if (owned === 'revoked') return { kind: 'revoked' };
   if (owned && input.kind !== 'review') return { kind: 'owned' };
 
   const facts = deriveCourseDecisionFacts({

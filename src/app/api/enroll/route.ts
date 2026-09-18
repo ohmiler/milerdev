@@ -3,7 +3,7 @@ import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { enrollments, payments } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { isNull, eq, and } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/email";
 import { z } from "zod";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
@@ -47,6 +47,9 @@ export async function POST(request: Request) {
         const decision = await resolveCourseAcquisition({
             kind: 'enroll', userId: session.user.id, courseId, couponId, paymentId,
         });
+        if (decision.kind === 'revoked') {
+            return NextResponse.json({ error: 'สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ' }, { status: 403 });
+        }
         if (decision.kind === 'not_found') {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
@@ -148,6 +151,9 @@ export async function POST(request: Request) {
 
         return NextResponse.json(enrollment, { status: 201 });
     } catch (error) {
+        if (error instanceof Error && error.message === 'ENROLLMENT_REVOKED') {
+            return NextResponse.json({ error: 'สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ' }, { status: 403 });
+        }
         if (error instanceof Error && error.message === 'COUPON_LIMIT_EXCEEDED') {
             return NextResponse.json({ error: 'คูปองนี้ถูกใช้ครบจำนวนแล้ว' }, { status: 400 });
         }
@@ -179,6 +185,7 @@ export async function GET(request: Request) {
 
         const enrollment = await db.query.enrollments.findFirst({
             where: and(
+                isNull(enrollments.revokedAt),
                 eq(enrollments.userId, session.user.id),
                 eq(enrollments.courseId, courseId)
             ),

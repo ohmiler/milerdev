@@ -144,4 +144,29 @@ describe('Stripe purchase transactional outbox', () => {
     expect(projectPurchase).toHaveBeenCalledTimes(1);
     expect(projectPurchase).toHaveBeenCalledWith('pay-1');
   });
+  it('preserves a revoked enrollment on paid replay instead of updating or replacing it', async () => {
+    const { enrollments } = await import('@/lib/db/schema');
+    paymentState.status = 'completed';
+    isDuplicateKeyError.mockReturnValue(true);
+    const tx = transactionAdapter();
+    let duplicateAttempted = false;
+    dbTransaction.mockImplementation(async (work) => work({
+      ...tx,
+      insert(table: unknown) {
+        if (table === enrollments) return { values: async () => {
+          duplicateAttempted = true;
+          throw new Error('existing revoked enrollment');
+        } };
+        return tx.insert();
+      },
+      update(table: unknown) {
+        expect(table).not.toBe(enrollments);
+        return tx.update();
+      },
+    }));
+    expect((await fulfillStripeCheckoutSession({ session: session as never })).status).toBe('already_fulfilled');
+    expect(duplicateAttempted).toBe(true);
+    expect(insertedRows.some((row) => row.userId && row.courseId)).toBe(false);
+  });
+
 });

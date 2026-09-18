@@ -23,11 +23,12 @@ export async function loadPaymentRecords(userId: string): Promise<PaymentRecord[
   if (!rows.length) return [];
   const bundleIds = [...new Set(rows.flatMap((row) => row.bundleId ? [row.bundleId] : []))];
   const [owned, included] = await Promise.all([
-    db.select({ courseId: enrollments.courseId }).from(enrollments).where(eq(enrollments.userId, userId)),
+    db.select({ courseId: enrollments.courseId, revokedAt: enrollments.revokedAt }).from(enrollments).where(eq(enrollments.userId, userId)),
     bundleIds.length ? db.select({ bundleId: bundleCourses.bundleId, courseId: bundleCourses.courseId })
       .from(bundleCourses).where(inArray(bundleCourses.bundleId, bundleIds)) : Promise.resolve([]),
   ]);
-  const ownedIds = new Set(owned.map((row) => row.courseId));
+  const ownedIds = new Set(owned.filter((row) => !row.revokedAt).map((row) => row.courseId));
+  const revokedIds = new Set(owned.filter((row) => row.revokedAt).map((row) => row.courseId));
   const now = new Date();
   return rows.map((attempt, index) => {
     const type = attempt.bundleId ? 'bundle' : 'course';
@@ -41,11 +42,22 @@ export async function loadPaymentRecords(userId: string): Promise<PaymentRecord[
       // An empty/deleted bundle never implies access readiness.
       access: { enrolledCount: courseIds.filter((courseId) => ownedIds.has(courseId)).length, totalCount: Math.max(1, courseIds.length) },
     }, { now });
+    const accessRevoked = courseIds.some((courseId) => revokedIds.has(courseId));
+    if (accessRevoked) {
+      presentation.recovery = contact;
+      presentation.payment.preventDuplicatePayment = true;
+      if (attempt.status === 'completed') {
+        presentation.payment.state = 'completed-access-revoked';
+        presentation.payment.label = 'ชำระแล้ว · สิทธิ์เรียนถูกถอน';
+        presentation.payment.heading = 'สิทธิ์เรียนถูกถอนโดยผู้ดูแล';
+        presentation.payment.description = 'ข้อมูลการชำระเงินและความคืบหน้ายังคงอยู่ กรุณาติดต่อผู้ดูแลเพื่อขอคืนสิทธิ์';
+      }
+    }
     const conflictingAttempt = rows.some((other, otherIndex) => other.id !== attempt.id
       && other.courseId === attempt.courseId && other.bundleId === attempt.bundleId
       && (other.status === 'completed' || other.status === 'verifying' || (other.status === 'pending' && otherIndex < index)));
     let canSubmitSlip = false;
-    if (presentation.attempt && courseIds.length && presentation.access.state !== 'ready' && !conflictingAttempt) {
+    if (!accessRevoked && presentation.attempt && courseIds.length && presentation.access.state !== 'ready' && !conflictingAttempt) {
       try {
         canSubmitSlip = assertPromptPayIntentClaim(attempt, { userId, targetType: type, now }).status === 'claimable';
       } catch { /* Only a currently eligible, owner-checked PromptPay attempt may resume. */ }

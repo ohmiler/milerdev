@@ -6,7 +6,7 @@ import { loadPromptPayPresentation } from '@/lib/promptpay-presentation';
 const mocks = vi.hoisted(() => ({ select: vi.fn(), exact: vi.fn(), paymentWhere: vi.fn(), accessWhere: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: { select: mocks.select, query: { payments: { findFirst: mocks.exact } } } }));
 const attempt = { id: 'attempt-1', userId: 'member-1', courseId: 'course-1', bundleId: null, itemTitle: 'ชื่อเดิม', amount: '990.25', currency: 'THB', method: 'promptpay', status: 'pending', createdAt: new Date(), courseSlug: 'thai', bundleSlug: null };
-function setup(rows = [attempt], owned: { courseId: string }[] = [], included: { bundleId: string; courseId: string }[] = []) {
+function setup(rows = [attempt], owned: { courseId: string; revokedAt?: Date | null }[] = [], included: { bundleId: string; courseId: string }[] = []) {
   const query = { leftJoin: () => query, where: mocks.paymentWhere, orderBy: async () => rows };
   mocks.paymentWhere.mockReturnValue(query);
   mocks.accessWhere.mockResolvedValue(owned);
@@ -63,5 +63,17 @@ describe('owner-scoped payment recovery records', () => {
   it('filters a non-PromptPay record out of the slip status endpoint', async () => {
     setup([{ ...attempt, method: 'stripe' }]);
     expect(await loadPromptPayPresentation('member-1', 'attempt-1')).toBeNull();
+  });
+});
+
+it('shows explicit revocation instead of promising automatic access repair', async () => {
+  setup([{ ...attempt, status: 'completed' }], [{ courseId: 'course-1', revokedAt: new Date() }]);
+  expect((await loadPaymentRecords('member-1'))[0]).toMatchObject({
+    canSubmitSlip: false,
+    presentation: {
+      access: { state: 'none', enrolledCount: 0 },
+      payment: { state: 'completed-access-revoked', preventDuplicatePayment: true },
+      recovery: { kind: 'contact' },
+    },
   });
 });

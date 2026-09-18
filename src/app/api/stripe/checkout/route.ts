@@ -43,6 +43,9 @@ export async function POST(request: Request) {
         const decision = await resolveCourseAcquisition({
             kind: 'checkout', userId: session.user.id, courseId, couponId,
         });
+        if (decision.kind === 'revoked') {
+            return NextResponse.json({ error: 'สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ' }, { status: 403 });
+        }
         if (decision.kind === 'not_found') {
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }

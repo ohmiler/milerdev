@@ -54,7 +54,7 @@ const databaseDashboardLearningStore: DashboardLearningStore = {
         })
         .from(enrollments)
         .innerJoin(courses, eq(enrollments.courseId, courses.id))
-        .where(eq(enrollments.userId, memberId)),
+        .where(and(isNull(enrollments.revokedAt), eq(enrollments.userId, memberId))),
       db
         .select({ count: count() })
         .from(certificates)

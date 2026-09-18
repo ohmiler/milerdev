@@ -149,3 +149,19 @@ describe('free enrollment fulfillment', () => {
     }));
   });
 });
+
+it('does not restore a revoked enrollment through free fulfillment or create a second fact', async () => {
+  duplicateCourses.add('course-1');
+  insertedRows.length = 0;
+  projectEnrollment.mockClear();
+  const tx = transactionAdapter();
+  tx.select.mockReturnValue({
+    from: vi.fn(() => ({ where: vi.fn(() => ({
+      limit: vi.fn(async () => [{ id: 'existing-enrollment', revokedAt: new Date() }]),
+    })) })),
+  });
+  dbTransaction.mockImplementation(async (work) => work(tx));
+  await expect(fulfillFreeEnrollment({ userId: 'student-1', courseIds: ['course-1'] })).rejects.toThrow('ENROLLMENT_REVOKED');
+  expect(insertedRows).toEqual([]);
+  expect(projectEnrollment).not.toHaveBeenCalled();
+});

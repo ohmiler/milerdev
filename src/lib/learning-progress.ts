@@ -130,6 +130,7 @@ export async function updateLearningProgress(
       .select({
         id: enrollments.id,
         completedAt: enrollments.completedAt,
+        revokedAt: enrollments.revokedAt,
       })
       .from(enrollments)
       .where(and(
@@ -138,7 +139,7 @@ export async function updateLearningProgress(
       ))
       .limit(1)
       .for('update');
-    if (!enrollment && !lesson.isFreePreview) return { status: 'forbidden' };
+    if (enrollment?.revokedAt || (!enrollment && !lesson.isFreePreview)) return { status: 'forbidden' };
 
     const [existingProgress] = await tx
       .select({

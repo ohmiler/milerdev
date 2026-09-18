@@ -195,3 +195,11 @@ describe('course acquisition across real callers', () => {
     expectNoAcquisition();
   });
 });
+
+it('blocks revoked access in review, checkout, and paid recovery without creating payment', async () => {
+  fixtures.enrollment.mockResolvedValue({ id: 'enrollment-1', revokedAt: new Date() });
+  await expect(loadOrderReview('member-1', target)).rejects.toMatchObject({ status: 403 });
+  expect((await checkout(request(target))).status).toBe(403);
+  expect((await enroll(request({ ...target, paymentId: 'old-payment' }))).status).toBe(403);
+  expectNoAcquisition();
+});

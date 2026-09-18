@@ -1,6 +1,8 @@
 'use client';
 
-import { ArrowLeft, BookOpen, Plus, Search, Trash2 } from 'lucide-react';
+import { AdminEnrollmentAccessDialog } from '@/components/admin/AdminEnrollmentAccessDialog';
+
+import { ArrowLeft, BookOpen, Plus, Search, RotateCcw, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -45,6 +47,7 @@ interface UserInfo {
 }
 
 interface Enrollment {
+  revokedAt: string | null;
   id: string;
   courseId: string | null;
   enrolledAt: string | null;
@@ -110,16 +113,16 @@ export default function AdminUserDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const handleUnenroll = async () => {
+  const handleUnenroll = async (reason: string) => {
     if (!deleteTarget) return;
     setDeleting(true);
     setDeleteError('');
     try {
-      const response = await fetch(`/api/admin/enrollments/${deleteTarget.id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/admin/enrollments/${deleteTarget.id}`, { method: deleteTarget.revokedAt ? 'PATCH' : 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'ถอนสิทธิ์การลงทะเบียนไม่สำเร็จ');
       setDeleteTarget(null);
-      showToast('ถอนสิทธิ์การลงทะเบียนสำเร็จ', 'success');
+      showToast(data.message || 'เปลี่ยนสิทธิ์เรียนสำเร็จ', 'success');
       await fetchUserData();
     } catch (caughtError) {
       setDeleteError(caughtError instanceof Error ? caughtError.message : 'ถอนสิทธิ์ไม่สำเร็จ');
@@ -214,7 +217,7 @@ export default function AdminUserDetailPage() {
       ) : null}
 
       <section className="grid gap-4 sm:grid-cols-3" aria-label="สรุปการเรียนของผู้ใช้">
-        <AdminMetricCard label="คอร์สที่ลงทะเบียน" value={enrollments.length.toLocaleString('th-TH')} detail="สิทธิ์เรียนที่ยังอยู่ในบัญชี" tone="info" />
+        <AdminMetricCard label="คอร์สที่ลงทะเบียน" value={enrollments.length.toLocaleString('th-TH')} detail="รวมประวัติที่ถอนสิทธิ์แล้ว" tone="info" />
         <AdminMetricCard label="เรียนจบ" value={completedCount.toLocaleString('th-TH')} detail="คอร์สที่มีวันที่เรียนจบแล้ว" tone="success" />
         <AdminMetricCard label="กำลังเรียน" value={inProgressCount.toLocaleString('th-TH')} detail="เริ่มเรียนแล้วแต่ยังไม่จบ" tone="warning" />
       </section>
@@ -230,11 +233,11 @@ export default function AdminUserDetailPage() {
                 const progress = enrollment.progressPercent || 0;
                 return (
                   <TableRow key={enrollment.id}>
-                    <TableCell><div className="font-medium">{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}</div>{enrollment.coursePrice ? <div className="mt-1 text-xs text-muted-foreground">{formatPrice(enrollment.coursePrice)}</div> : null}</TableCell>
+                    <TableCell><div className="font-medium">{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}{enrollment.revokedAt ? ' · ถอนสิทธิ์แล้ว' : ''}</div>{enrollment.coursePrice ? <div className="mt-1 text-xs text-muted-foreground">{formatPrice(enrollment.coursePrice)}</div> : null}</TableCell>
                     <TableCell><div className="flex min-w-32 items-center gap-3"><Progress value={progress} className="w-24" aria-label={`ความคืบหน้า ${progress}%`} /><span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{progress}%</span></div></TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(enrollment.enrolledAt)}</TableCell>
                     <TableCell><AdminStatusBadge tone={enrollment.completedAt ? 'success' : progress > 0 ? 'warning' : 'neutral'}>{enrollment.completedAt ? 'เรียนจบ' : progress > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}</AdminStatusBadge></TableCell>
-                    <TableCell><div className="flex justify-end"><Button variant="ghost" size="icon-sm" onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอนสิทธิ์คอร์ส ${enrollment.courseTitle || ''}`}><Trash2 aria-hidden /></Button></div></TableCell>
+                    <TableCell><div className="flex justify-end"><Button variant="ghost" size="icon-sm" onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`${enrollment.revokedAt ? 'คืนสิทธิ์' : 'ถอนสิทธิ์'}คอร์ส ${enrollment.courseTitle || ''}`}>{enrollment.revokedAt ? <RotateCcw aria-hidden /> : <Trash2 aria-hidden />}</Button></div></TableCell>
                   </TableRow>
                 );
               })}
@@ -243,7 +246,7 @@ export default function AdminUserDetailPage() {
         )}
       </AdminSection>
 
-      <AdminSection title="จัดการสิทธิ์คอร์ส" description="เพิ่มคอร์สโดยผู้ดูแล หรือถอนสิทธิ์พร้อมคำเตือนเรื่องข้อมูลความคืบหน้า">
+      <AdminSection title="จัดการสิทธิ์คอร์ส" description="เพิ่ม ถอน หรือคืนสิทธิ์เรียน โดยเก็บความคืบหน้าและใบรับรองเดิม">
         <div className="grid gap-5 lg:grid-cols-2">
           <CoursePickerPanel title={`คอร์สที่เพิ่มได้ (${availableCourses.length})`} search={searchAvailable} onSearchChange={setSearchAvailable} placeholder="ค้นหาคอร์สที่เพิ่มได้">
             {filteredAvailable.length ? filteredAvailable.map((course) => (
@@ -254,27 +257,25 @@ export default function AdminUserDetailPage() {
             )) : <div className="p-6 text-center text-sm text-muted-foreground">ไม่มีคอร์สที่สามารถเพิ่มได้</div>}
           </CoursePickerPanel>
 
-          <CoursePickerPanel title={`คอร์สที่มีสิทธิ์ (${enrollments.length})`} search={searchEnrolled} onSearchChange={setSearchEnrolled} placeholder="ค้นหาคอร์สที่มีสิทธิ์">
+          <CoursePickerPanel title={`ประวัติการลงทะเบียน (${enrollments.length})`} search={searchEnrolled} onSearchChange={setSearchEnrolled} placeholder="ค้นหาประวัติการลงทะเบียน">
             {filteredEnrolled.length ? filteredEnrolled.map((enrollment) => (
               <div key={enrollment.id} className="flex items-center justify-between gap-3 border-b px-3 py-3 last:border-0">
-                <div className="min-w-0"><div className="truncate font-medium">{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}</div><div className="mt-1 text-xs text-muted-foreground">{enrollment.progressPercent || 0}% · {enrollment.completedAt ? 'เรียนจบ' : 'กำลังเรียน'}</div></div>
-                <Button variant="ghost" size="icon-sm" onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอนสิทธิ์ ${enrollment.courseTitle || ''}`}><Trash2 aria-hidden /></Button>
+                <div className="min-w-0"><div className="truncate font-medium">{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}{enrollment.revokedAt ? ' · ถอนสิทธิ์แล้ว' : ''}</div><div className="mt-1 text-xs text-muted-foreground">{enrollment.progressPercent || 0}% · {enrollment.completedAt ? 'เรียนจบ' : 'กำลังเรียน'}</div></div>
+                <Button variant="ghost" size="icon-sm" onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`${enrollment.revokedAt ? 'คืนสิทธิ์' : 'ถอนสิทธิ์'} ${enrollment.courseTitle || ''}`}>{enrollment.revokedAt ? <RotateCcw aria-hidden /> : <Trash2 aria-hidden />}</Button>
               </div>
             )) : <div className="p-6 text-center text-sm text-muted-foreground">ยังไม่มีคอร์สที่ลงทะเบียน</div>}
           </CoursePickerPanel>
         </div>
       </AdminSection>
 
-      <AdminConfirmActionDialog
+      <AdminEnrollmentAccessDialog
+        key={deleteTarget?.id || 'closed'}
         open={Boolean(deleteTarget)}
-        title="ถอนสิทธิ์การลงทะเบียน"
-        description="สิทธิ์เข้าเรียนและข้อมูลความคืบหน้าที่ผูกกับการลงทะเบียนนี้อาจถูกลบ"
+        restoring={Boolean(deleteTarget?.revokedAt)}
         target={deleteTarget?.courseTitle || 'คอร์สที่ไม่ระบุชื่อ'}
-        confirmLabel="ถอนสิทธิ์"
         pending={deleting}
-        pendingLabel="กำลังถอนสิทธิ์"
         error={deleteError || undefined}
-        onConfirm={() => void handleUnenroll()}
+        onConfirm={(reason) => void handleUnenroll(reason)}
         onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(''); } }}
       />
       <AdminConfirmActionDialog

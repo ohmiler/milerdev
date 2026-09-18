@@ -41,6 +41,7 @@ export interface CourseEnrollmentRecord {
   enrolledAt: Date | string | null;
   progressPercent: number | null;
   completedAt: Date | string | null;
+  revokedAt?: Date | string | null;
   userId: string;
   userName: string | null;
   userEmail: string;
@@ -82,6 +83,7 @@ function getInitial(name: string | null, email: string) {
 
 function getEnrollmentState(enrollment: CourseEnrollmentRecord) {
   const progress = Math.min(100, Math.max(0, Number(enrollment.progressPercent || 0)));
+  if (enrollment.revokedAt) return { label: 'ถอนสิทธิ์แล้ว', tone: 'warning' as const, progress };
   if (enrollment.completedAt) return { label: 'เรียนจบ', tone: 'success' as const, progress };
   if (progress > 0) return { label: 'กำลังเรียน', tone: 'info' as const, progress };
   return { label: 'ยังไม่เริ่ม', tone: 'neutral' as const, progress };

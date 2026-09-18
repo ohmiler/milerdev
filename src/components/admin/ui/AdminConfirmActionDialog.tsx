@@ -22,6 +22,7 @@ type AdminConfirmActionDialogProps = {
   title: ReactNode;
   description: ReactNode;
   target?: ReactNode;
+  children?: ReactNode;
   confirmLabel: ReactNode;
   cancelLabel?: ReactNode;
   pendingLabel?: ReactNode;
@@ -37,6 +38,7 @@ export function AdminConfirmActionDialog({
   title,
   description,
   target,
+  children,
   confirmLabel,
   cancelLabel = 'ยกเลิก',
   pendingLabel = 'กำลังดำเนินการ',
@@ -66,6 +68,7 @@ export function AdminConfirmActionDialog({
           <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm font-medium text-foreground">{target}</div>
         ) : null}
 
+        {children}
         {error ? (
           <Alert variant="destructive">
             <CircleAlert aria-hidden />

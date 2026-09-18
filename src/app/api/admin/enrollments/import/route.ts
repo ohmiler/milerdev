@@ -3,7 +3,8 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { enrollments, users, courses } from '@/lib/db/schema';
-import { createId } from '@paralleldrive/cuid2';
+import { grantAdminEnrollment } from '@/lib/admin-enrollment';
+import { getAuditContext } from '@/lib/auditLog';
 
 // POST /api/admin/enrollments/import - Import enrollments from LearnDash CSV
 export async function POST(request: Request) {
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
       existingEnrollments.map(e => `${e.userId}:${e.courseId}`)
     );
 
+    const context = await getAuditContext();
     // Process rows
     let success = 0;
     let skipped = 0;
@@ -164,14 +166,11 @@ export async function POST(request: Request) {
       const progressPercent = isCompleted ? 100 : 0;
 
       try {
-        await db.insert(enrollments).values({
-          id: createId(),
-          userId,
-          courseId,
-          enrolledAt,
-          progressPercent,
-          completedAt: completedAt || (isCompleted ? new Date() : null),
+        const result = await grantAdminEnrollment({
+          actorId: authResult.session.user.id, context, userId, courseId,
+          importHistory: { enrolledAt, progressPercent, completedAt: completedAt || (isCompleted ? new Date() : null) },
         });
+        if (result.kind !== 'created') { skipped++; continue; }
         existingSet.add(key);
         success++;
       } catch (err) {

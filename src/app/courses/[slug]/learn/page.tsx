@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
-import { and, asc, eq } from 'drizzle-orm';
+import { isNull, and, asc, eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, lessonProgress, lessons, courses } from '@/lib/db/schema';
@@ -31,7 +31,7 @@ async function getCourseWithAccess(slug: string, userId: string) {
   const [enrollment] = await db
     .select()
     .from(enrollments)
-    .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, course.id)))
+    .where(and(isNull(enrollments.revokedAt), eq(enrollments.userId, userId), eq(enrollments.courseId, course.id)))
     .limit(1);
 
   if (!enrollment) return null;

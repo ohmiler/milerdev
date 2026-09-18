@@ -155,6 +155,9 @@ export async function POST(request: Request) {
             totalSkipped: skipped.length,
         }, { status: 201 });
     } catch (error) {
+        if (error instanceof Error && error.message === 'ENROLLMENT_REVOKED') {
+            return NextResponse.json({ error: 'สิทธิ์เรียนถูกถอน กรุณาติดต่อผู้ดูแลระบบ' }, { status: 403 });
+        }
         console.error('Error enrolling in bundle:', error);
         return NextResponse.json({ error: 'Failed to enroll in bundle' }, { status: 500 });
     }

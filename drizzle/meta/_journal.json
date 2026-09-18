@@ -162,6 +162,13 @@
       "when": 1789290862327,
       "tag": "0022_lucky_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1789750646211,
+      "tag": "0023_light_scarecrow",
+      "breakpoints": true
     }
   ]
 }
