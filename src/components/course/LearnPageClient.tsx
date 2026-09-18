@@ -1,14 +1,14 @@
 'use client';
 
 import MainContent from '@/components/layout/MainContent';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, CircleCheck, FileText, LoaderCircle, Lock } from 'lucide-react';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
 import LearningCurriculum from './LearningCurriculum';
 import LearningNavbar from './LearningNavbar';
 import { sanitizeRichContent } from '@/lib/sanitize';
-import { showToast } from '@/components/ui/Toast';
+import { useLearningProgress } from '@/components/course/use-learning-progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -88,18 +88,24 @@ export default function LearnPageClient({
   const [mobileCurriculumOpen, setMobileCurriculumOpen] = useState(false);
   const [curriculumCollapsed, setCurriculumCollapsed] = useState(false);
   const [lessonSearch, setLessonSearch] = useState('');
-  const [lockedLesson, setLockedLesson] = useState<LearningCurriculumLesson | null>(null);
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set(initialCompletedIds));
-  const [completionSaveState, setCompletionSaveState] = useState<'idle' | 'pending' | 'saved' | 'failed'>(
-    currentProgress.completed ? 'saved' : 'idle',
-  );
-  const [watchSyncFailed, setWatchSyncFailed] = useState(false);
-  const [resumedAtSeconds, setResumedAtSeconds] = useState<number | null>(null);
-  const completionRequestedRef = useRef(currentProgress.completed);
-  const watchSyncPendingRef = useRef(false);
-  const watchTimeRef = useRef(currentProgress.watchTimeSeconds);
-  const lastSyncRef = useRef(currentProgress.watchTimeSeconds);
-  const isPlayingRef = useRef(false);
+  const [lockedSelection, setLockedSelection] = useState<{
+    sourceLessonId: string;
+    lesson: LearningCurriculumLesson;
+  } | null>(null);
+  if (lockedSelection && lockedSelection.sourceLessonId !== currentLesson.id) setLockedSelection(null);
+  const lockedLesson = lockedSelection?.lesson ?? null;
+  const {
+    completedIds, completionSaveState, watchSyncFailed, resumedAtSeconds,
+    completeCurrentLesson, syncWatchTime, player,
+  } = useLearningProgress({
+    courseId: course.id,
+    lessonId: currentLesson.id,
+    canTrackProgress,
+    isEnrolled,
+    completedLessonIds: initialCompletedIds,
+    totalLessons: allLessons.length,
+    currentProgress,
+  });
   const mobileCurriculumTriggerRef = useRef<HTMLElement | null>(null);
   const lockedLessonTriggerRef = useRef<HTMLElement | null>(null);
 
@@ -131,113 +137,6 @@ export default function LearnPageClient({
           ? 'เมื่อเรียนเนื้อหาครบแล้ว กดบันทึกว่าเรียนจบได้'
           : 'ความคืบหน้าจะถูกบันทึกหลังจากสมัครและเข้าสู่ระบบ';
 
-  const syncWatchTime = useCallback(async () => {
-    if (!canTrackProgress || watchSyncPendingRef.current) return false;
-    const currentWatchTime = Math.floor(watchTimeRef.current);
-    if (currentWatchTime <= lastSyncRef.current) return true;
-    watchSyncPendingRef.current = true;
-
-    try {
-      const response = await fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lessonId: currentLesson.id,
-          watchTimeSeconds: currentWatchTime,
-        }),
-      });
-      if (!response.ok) throw new Error('Unable to save watch position');
-      lastSyncRef.current = currentWatchTime;
-      setWatchSyncFailed(false);
-      return true;
-    } catch {
-      setWatchSyncFailed(true);
-      return false;
-    } finally {
-      watchSyncPendingRef.current = false;
-    }
-  }, [canTrackProgress, currentLesson.id]);
-
-  useEffect(() => {
-    if (!canTrackProgress) return;
-    const syncInterval = window.setInterval(() => {
-      if (isPlayingRef.current && watchTimeRef.current > lastSyncRef.current) {
-        void syncWatchTime();
-      }
-    }, 30_000);
-
-    return () => {
-      window.clearInterval(syncInterval);
-      if (watchTimeRef.current > lastSyncRef.current) void syncWatchTime();
-    };
-  }, [canTrackProgress, syncWatchTime]);
-
-  useEffect(() => {
-    watchTimeRef.current = currentProgress.watchTimeSeconds;
-    lastSyncRef.current = currentProgress.watchTimeSeconds;
-    isPlayingRef.current = false;
-    watchSyncPendingRef.current = false;
-    completionRequestedRef.current = currentProgress.completed;
-    setCompletionSaveState(currentProgress.completed ? 'saved' : 'idle');
-    setWatchSyncFailed(false);
-    setResumedAtSeconds(null);
-    setLockedLesson(null);
-  }, [currentLesson.id, currentProgress.completed, currentProgress.watchTimeSeconds]);
-
-  const completeCurrentLesson = useCallback(async () => {
-    if (!isEnrolled || !canTrackProgress || completionRequestedRef.current) return;
-
-    completionRequestedRef.current = true;
-    setCompletionSaveState('pending');
-    try {
-      const response = await fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lessonId: currentLesson.id,
-          completed: true,
-          watchTimeSeconds: Math.floor(watchTimeRef.current) || undefined,
-        }),
-      });
-      if (!response.ok) throw new Error('Unable to save lesson progress');
-
-      const nextCompletedCount = completedCount + 1;
-      setCompletedIds((current) => new Set(current).add(currentLesson.id));
-      setCompletionSaveState('saved');
-      setWatchSyncFailed(false);
-      showToast(
-        nextCompletedCount === totalCount ? 'เรียนครบทุกบทแล้ว พร้อมกลับมาทบทวนได้ทุกเมื่อ' : 'บันทึกว่าเรียนจบบทนี้แล้ว',
-        'success',
-      );
-    } catch {
-      completionRequestedRef.current = false;
-      setCompletionSaveState('failed');
-      showToast('บันทึกความคืบหน้าไม่สำเร็จ กรุณาลองอีกครั้ง', 'error');
-    }
-  }, [canTrackProgress, completedCount, currentLesson.id, isEnrolled, totalCount]);
-
-  const handleTimeUpdate = useCallback((currentTime: number) => {
-    watchTimeRef.current = currentTime;
-  }, []);
-
-  const handlePlay = useCallback(() => {
-    isPlayingRef.current = true;
-  }, []);
-
-  const handlePause = useCallback(() => {
-    isPlayingRef.current = false;
-    void syncWatchTime();
-  }, [syncWatchTime]);
-
-  const handleEnded = useCallback(() => {
-    isPlayingRef.current = false;
-    if (completionRequestedRef.current) {
-      void syncWatchTime();
-      return;
-    }
-    void completeCurrentLesson();
-  }, [completeCurrentLesson, syncWatchTime]);
-
   const openLockedDialog = useCallback((lessonId: string) => {
     const lesson = allLessons.find((item) => item.id === lessonId);
     if (!lesson) return;
@@ -245,8 +144,8 @@ export default function LearnPageClient({
       ? document.activeElement
       : null;
     setMobileCurriculumOpen(false);
-    setLockedLesson(lesson);
-  }, [allLessons, mobileCurriculumOpen]);
+    setLockedSelection({ sourceLessonId: currentLesson.id, lesson });
+  }, [allLessons, currentLesson.id, mobileCurriculumOpen]);
 
   const openMobileCurriculum = useCallback((returnFocus: HTMLElement | null) => {
     mobileCurriculumTriggerRef.current = returnFocus;
@@ -306,11 +205,7 @@ export default function LearnPageClient({
                     videoId={currentLesson.videoUrl}
                     lessonTitle={currentLesson.title}
                     resumeAtSeconds={currentProgress.watchTimeSeconds}
-                    onTimeUpdate={handleTimeUpdate}
-                    onPlay={handlePlay}
-                    onPause={handlePause}
-                    onEnded={handleEnded}
-                    onResume={setResumedAtSeconds}
+                    {...player}
                   />
                 </div>
                 {resumedAtSeconds !== null && (
@@ -439,7 +334,7 @@ export default function LearnPageClient({
         </SheetContent>
       </Sheet>
 
-      <AlertDialog open={Boolean(lockedLesson)} onOpenChange={(open) => { if (!open) setLockedLesson(null); }}>
+      <AlertDialog open={Boolean(lockedLesson)} onOpenChange={(open) => { if (!open) setLockedSelection(null); }}>
         <AlertDialogContent
           onCloseAutoFocus={(event) => {
             if (!lockedLessonTriggerRef.current) return;

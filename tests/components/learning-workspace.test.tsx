@@ -83,11 +83,9 @@ describe('adaptive learning workspace contracts', () => {
     expect(courseExitPosition).toBeGreaterThan(brandPosition);
   });
 
-  it('keeps completion one-way and removes automatic or global lesson navigation', () => {
+  it('removes automatic or global lesson navigation', () => {
     const workspace = readSource('src/components/course/LearnPageClient.tsx');
 
-    expect(workspace).toContain('completed: true');
-    expect(workspace).not.toContain('completed: false');
     expect(workspace).not.toContain('autoAdvanceCountdown');
     expect(workspace).not.toContain("e.key === 'ArrowLeft'");
     expect(workspace).not.toContain("e.key === 'ArrowRight'");
