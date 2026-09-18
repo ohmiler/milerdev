@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
@@ -9,7 +9,7 @@ import {
   serverAnalyticsEventSchema,
 } from '@/lib/analytics-contract';
 import { getMeasurementDatabase } from '@/lib/measurement-database';
-import { lockActiveConsent } from '@/lib/privacy-consent';
+import { projectMeasurementOutbox, recordMeasurementProjectionFailure } from '@/lib/measurement-outbox-projection';
 import {
   analyticsEvents,
   enrollments,
@@ -262,67 +262,16 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
 
   async projectPendingMilestone(milestone) {
     const event = parseLearningMilestoneEvent(milestone);
-    return getMeasurementDatabase().transaction(async (tx) => {
-      const [outbox] = await tx
-        .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt, consentId: measurementOutbox.consentId })
-        .from(measurementOutbox)
-        .where(and(
-          eq(measurementOutbox.eventName, milestone.eventName),
-          eq(measurementOutbox.learningFactId, milestone.factId),
-          isNull(measurementOutbox.projectedAt),
-        ))
-        .limit(1)
-        .for('update');
-      if (!outbox) return 'already_projected';
-      if (!(await lockActiveConsent(tx, outbox.consentId))) return 'ineligible';
-
-      let duplicate = false;
-      try {
-        await tx.insert(analyticsEvents).values({
-          eventName: event.eventName,
-          exposureId: null,
-          source: 'server',
-          userId: null,
-          courseId: event.courseId ?? null,
-          bundleId: null,
-          paymentId: null,
-          enrollmentId: null,
-          learningFactId: event.factId ?? null,
-          learningEnrollmentId: event.learningEnrollmentId ?? null,
-          lessonId: event.lessonId ?? null,
-          metadata: null,
-          ipAddress: null,
-          userAgent: null,
-          createdAt: outbox.createdAt,
-        });
-      } catch (error) {
-        if (!isDuplicateKeyError(error)) throw error;
-        duplicate = true;
-      }
-
-      await tx.update(measurementOutbox).set({
-        attemptCount: sql`${measurementOutbox.attemptCount} + 1`,
-        lastAttemptAt: new Date(),
-        lastErrorCode: null,
-        projectedAt: new Date(),
-      }).where(and(
-        eq(measurementOutbox.id, outbox.id),
-        isNull(measurementOutbox.projectedAt),
-      ));
-      return duplicate ? 'duplicate' : 'projected';
+    return projectMeasurementOutbox(getMeasurementDatabase(), {
+      eventName: milestone.eventName, factId: milestone.factId,
+      courseId: event.courseId ?? null,
+      learningEnrollmentId: event.learningEnrollmentId ?? null,
+      lessonId: event.lessonId ?? null,
     });
   },
 
   async recordProjectionFailure(identity) {
-    await getMeasurementDatabase().update(measurementOutbox).set({
-      attemptCount: sql`${measurementOutbox.attemptCount} + 1`,
-      lastAttemptAt: new Date(),
-      lastErrorCode: 'projection_failed',
-    }).where(and(
-      eq(measurementOutbox.eventName, identity.eventName),
-      eq(measurementOutbox.learningFactId, identity.factId),
-      isNull(measurementOutbox.projectedAt),
-    ));
+    await recordMeasurementProjectionFailure(getMeasurementDatabase(), identity);
   },
 };
 

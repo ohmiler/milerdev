@@ -1,10 +1,9 @@
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
 import { db } from '@/lib/db';
-import { lockActiveConsent } from '@/lib/privacy-consent';
-import { analyticsEvents, enrollments, measurementOutbox } from '@/lib/db/schema';
-import { isDuplicateKeyError } from '@/lib/db/safe-insert';
+import { projectMeasurementOutbox, recordMeasurementProjectionFailure } from '@/lib/measurement-outbox-projection';
+import { enrollments } from '@/lib/db/schema';
 
 export type FreeEnrollmentProjection = {
   enrollmentId: string;
@@ -66,63 +65,14 @@ const drizzleEnrollmentMeasurementStore: EnrollmentMeasurementStore = {
   },
 
   async projectPendingEnrollment(enrollment) {
-    return db.transaction(async (tx) => {
-      const [outbox] = await tx
-        .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt, consentId: measurementOutbox.consentId })
-        .from(measurementOutbox)
-        .where(and(
-          eq(measurementOutbox.eventName, 'free_enrollment_completed'),
-          eq(measurementOutbox.enrollmentId, enrollment.enrollmentId),
-          isNull(measurementOutbox.projectedAt),
-        ))
-        .limit(1)
-        .for('update');
-      if (!outbox) return 'already_projected';
-      if (!(await lockActiveConsent(tx, outbox.consentId))) return 'ineligible';
-
-      let duplicate = false;
-      try {
-        await tx.insert(analyticsEvents).values({
-          eventName: 'free_enrollment_completed',
-          source: 'server',
-          userId: enrollment.userId,
-          courseId: enrollment.courseId,
-          bundleId: null,
-          paymentId: null,
-          enrollmentId: enrollment.enrollmentId,
-          metadata: null,
-          ipAddress: null,
-          userAgent: null,
-          createdAt: outbox.createdAt,
-        });
-      } catch (error) {
-        if (!isDuplicateKeyError(error)) throw error;
-        duplicate = true;
-      }
-
-      await tx.update(measurementOutbox).set({
-        attemptCount: sql`${measurementOutbox.attemptCount} + 1`,
-        lastAttemptAt: new Date(),
-        lastErrorCode: null,
-        projectedAt: new Date(),
-      }).where(and(
-        eq(measurementOutbox.id, outbox.id),
-        isNull(measurementOutbox.projectedAt),
-      ));
-      return duplicate ? 'duplicate' : 'projected';
+    return projectMeasurementOutbox(db, {
+      eventName: 'free_enrollment_completed', enrollmentId: enrollment.enrollmentId,
+      userId: enrollment.userId, courseId: enrollment.courseId,
     });
   },
 
   async recordProjectionFailure(enrollmentId) {
-    await db.update(measurementOutbox).set({
-      attemptCount: sql`${measurementOutbox.attemptCount} + 1`,
-      lastAttemptAt: new Date(),
-      lastErrorCode: 'projection_failed',
-    }).where(and(
-      eq(measurementOutbox.eventName, 'free_enrollment_completed'),
-      eq(measurementOutbox.enrollmentId, enrollmentId),
-      isNull(measurementOutbox.projectedAt),
-    ));
+    await recordMeasurementProjectionFailure(db, { eventName: 'free_enrollment_completed', enrollmentId });
   },
 };
 
