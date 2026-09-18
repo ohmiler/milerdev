@@ -38,6 +38,7 @@ vi.mock('@/components/video/BunnyPlayer', () => ({
 }));
 
 import LearnPageClient from '@/components/course/LearnPageClient';
+import { showToast } from '@/components/ui/Toast';
 
 function renderWorkspace(currentProgress = { completed: false, watchTimeSeconds: 37 }) {
   return render(
@@ -91,6 +92,7 @@ describe('learning progress save recovery', () => {
     resolveResponse(new Response(JSON.stringify({ success: true }), { status: 200 }));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'เรียนครบแล้ว · กำลังทบทวน' })).toBeTruthy());
     expect(fetch).toHaveBeenCalledOnce();
+    expect(showToast).toHaveBeenCalledWith('เรียนครบทุกบทแล้ว พร้อมกลับมาทบทวนได้ทุกเมื่อ', 'success');
     expect(JSON.parse(vi.mocked(fetch).mock.calls[0][1]?.body as string)).toMatchObject({
       lessonId: 'lesson-1',
       completed: true,
@@ -106,6 +108,7 @@ describe('learning progress save recovery', () => {
     fireEvent.click(screen.getByRole('button', { name: 'emit ended' }));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'ยังบันทึกบทนี้ไม่ได้' })).toBeTruthy());
     expect(screen.queryByRole('heading', { name: 'เรียนจบบทนี้แล้ว' })).toBeNull();
+    expect(showToast).toHaveBeenCalledWith('บันทึกความคืบหน้าไม่สำเร็จ กรุณาลองอีกครั้ง', 'error');
 
     fireEvent.click(screen.getByRole('button', { name: 'ลองบันทึกอีกครั้ง' }));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'เรียนครบแล้ว · กำลังทบทวน' })).toBeTruthy());
