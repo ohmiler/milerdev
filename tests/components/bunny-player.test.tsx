@@ -3,10 +3,10 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/bunny-player-adapter', () => ({ connectBunnyPlayer: vi.fn() }));
+vi.mock('@/lib/bunny/player-adapter', () => ({ connectBunnyPlayer: vi.fn() }));
 
 import BunnyPlayer from '@/components/video/BunnyPlayer';
-import { connectBunnyPlayer } from '@/lib/bunny-player-adapter';
+import { connectBunnyPlayer } from '@/lib/bunny/player-adapter';
 
 describe('BunnyPlayer trusted adapter lifecycle', () => {
   it.each([

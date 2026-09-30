@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   connectBunnyPlayer,
   type BunnyPlayerMessageHost,
-} from '@/lib/bunny-player-adapter';
+} from '@/lib/bunny/player-adapter';
 
 type PlayerMessage = {
   context: string;

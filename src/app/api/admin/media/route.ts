@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { media } from '@/lib/db/schema';
 import { and, desc, eq, sql, like } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { uploadToBunny } from '@/lib/bunny-storage';
+import { uploadToBunny } from '@/lib/bunny/storage';
 
 // GET /api/admin/media - Get all media files
 export async function GET(request: Request) {
