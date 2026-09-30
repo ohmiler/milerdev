@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatCourseDuration } from '@/lib/course-duration';
+import { formatCourseDuration } from '@/lib/courses/duration';
 
 describe('formatCourseDuration', () => {
   it.each([

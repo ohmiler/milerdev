@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type { BundleDecisionFacts } from '@/lib/bundle-decision-facts';
-import { formatCourseDuration } from '@/lib/course-duration';
+import { formatCourseDuration } from '@/lib/courses/duration';
 import { getExcerpt } from '@/lib/sanitize';
 
 type BundleCourseRowProps = {
