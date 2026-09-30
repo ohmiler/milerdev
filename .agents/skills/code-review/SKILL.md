@@ -1,9 +1,9 @@
 ---
 name: code-review
-description: "Review a PR, branch, or uncommitted changes against repository standards and the requested spec."
+description: "Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes: Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/spec asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to \"review since X\"."
 ---
 
-Two-axis review of the change requested by the user:
+Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 
 - **Standards**: does the code conform to this repo's documented coding standards?
 - **Spec**: does the code faithfully implement the originating issue / spec?
@@ -14,27 +14,22 @@ The issue tracker should have been provided to you. If `docs/agents/issue-tracke
 
 ## Process
 
-### 1. Pin the review scope
+### 1. Pin the fixed point
 
-Honor an explicit commit, branch, tag, PR, or working-tree scope. Otherwise infer the scope from the current request and PR context: use the PR base for a PR review, and `HEAD` for a review explicitly limited to uncommitted work. State the selected scope. Ask only when plausible alternatives would materially change what is reviewed; do not assume the tracking branch is the PR base.
+Whatever the user said is the fixed point (a commit SHA, branch name, tag, `main`, `HEAD~5`, etc.). If they didn't specify one, ask for it.
 
-Choose commands that cover that scope:
+Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
 
-- Committed branch/PR changes: resolve `git merge-base <base> HEAD`, then compare that SHA to `HEAD`; record relevant commits with `git log <base>..HEAD --oneline`.
-- Uncommitted changes: `git diff HEAD` includes staged and unstaged tracked changes. For an explicitly staged-only review use `git diff --cached`; for unstaged-only use `git diff`.
-- Branch changes plus unfinished work: compare the resolved merge-base SHA to the working tree with `git diff <merge-base-sha>`.
-- For scopes including new files, list them with `git ls-files --others --exclude-standard` and read task-relevant files allowed by the repository's data rules. Git diff does not include untracked files. Do not stage files to make them reviewable.
-
-Verify refs resolve and inspect `git status --short`. Record the commands, resolved SHAs, and included files for both reviewers. If the requested scope has no changes, report that; untracked files can still make a working-tree review non-empty. An unavailable explicit ref is a blocker for that comparison, not permission to substitute another base.
+Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here, not inside two parallel sub-agents.
 
 ### 2. Identify the spec source
 
 Look for the originating spec, in this order:
 
 1. Issue references in the commit messages (`#123`, `Closes #45`, GitLab `!67`, etc.), fetched via the workflow in `docs/agents/issue-tracker.md`.
-2. The user's request, agreed conversation requirements, or a path supplied by the user.
+2. A path the user passed as an argument.
 3. A spec file under `docs/`, `specs/`, or `.scratch/` matching the branch name or feature.
-4. If nothing is found, continue the Standards review and report the Spec axis as "no spec available". Ask for a missing spec only when necessary to resolve a material question; do not block independent review or invent requirements.
+4. If nothing is found, ask the user where the spec is. If they say there isn't one, the **Spec** sub-agent will skip and report "no spec available".
 
 ### 3. Identify the standards sources
 

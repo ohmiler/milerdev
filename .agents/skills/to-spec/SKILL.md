@@ -4,7 +4,7 @@ description: "Turn the current conversation into a spec and publish it to the pr
 disable-model-invocation: true
 ---
 
-Produce a spec from the current conversation and relevant codebase context. Use decisions already made; ask only about unresolved requirements that materially affect scope or behavior, and continue drafting independent sections.
+This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user; just synthesize what you already know.
 
 The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
 
@@ -12,11 +12,11 @@ The issue tracker and triage label vocabulary should have been provided to you. 
 
 1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching.
 
-2. Describe the public interfaces through which the requested behavior will be tested. Prefer existing tests and interfaces, with enough coverage for the feature's risk boundaries.
+2. Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
 
-Use previously agreed testing decisions without reconfirmation. Ask only if a new interface or unresolved behavior needs a consequential decision.
+Check with the user that these seams match their expectations.
 
-3. Write the spec using the template below, with detail proportional to the work. Publish when the user has authorized publication, using the configured tracker. Apply `ready-for-agent` only when consequential requirements are resolved; an incomplete draft should identify its open questions.
+3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
 
 <spec-template>
 
@@ -30,7 +30,7 @@ The solution to the problem, from the user's perspective.
 
 ## User Stories
 
-A concise list of distinct user stories covering the agreed scope. Each user story should be in the format of:
+A LONG, numbered list of user stories. Each user story should be in the format of:
 
 1. As an <actor>, I want a <feature>, so that <benefit>
 
@@ -38,7 +38,7 @@ A concise list of distinct user stories covering the agreed scope. Each user sto
 1. As a mobile bank customer, I want to see balance on my accounts, so that I can make better informed decisions about my spending
 </user-story-example>
 
-Include relevant failure and authorization cases without inventing additional features or padding the list.
+This list of user stories should be extremely extensive and cover all aspects of the feature.
 
 ## Implementation Decisions
 

@@ -1,13 +1,13 @@
 ---
 name: diagnosing-bugs
-description: Investigate bugs and performance regressions using reproducible evidence or explicitly qualified static analysis.
+description: Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", or reports something broken/throwing/failing/slow.
 ---
 
 # Diagnosing Bugs
 
-A discipline for hard bugs. Adapt the depth of investigation to the uncertainty and risk; use a direct diagnosis for an obvious failure and explain material verification gaps.
+A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
+When exploring the codebase, read `GLOSSARY.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
 
 ## Redact
 
@@ -17,9 +17,9 @@ If the redacted output is not enough to diagnose the bug, say so and ask the use
 
 ## Phase 1: Build a feedback loop
 
-Prefer a tight pass/fail signal that catches the reported symptom. Use source inspection to find the relevant path and design that signal. A reproduction strengthens a diagnosis, but inability to run one does not prevent useful static analysis.
+**This is the skill.** Everything else is mechanical. If you have a **tight** pass/fail signal for the bug (one that goes red on _this_ bug), you will find the cause; bisection, hypothesis-testing, and instrumentation all just consume it. If you don't have one, no amount of staring at code will save you.
 
-Keep reproduction effort proportional to the task. When local execution is unavailable, use the static-analysis path below rather than retrying the same blocked setup indefinitely.
+Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give up.**
 
 ### Ways to construct one, in roughly this order
 
@@ -52,9 +52,7 @@ The goal is not a clean repro but a **higher reproduction rate**. Loop the trigg
 
 ### When you genuinely cannot build a loop
 
-List what you tried and what cannot be verified. Continue inspecting relevant source, tests, and permitted artifacts; label hypotheses separately from observed facts. Create an isolated mock or fixture when useful. Ask for the minimum missing information only when it blocks further progress, and continue independent analysis.
-
-This fallback grants no access to production data, secrets, real payment payloads, or production instrumentation. Follow the repository's authorization boundaries. A source-supported local fix can proceed within the request, but report unverified behavior explicitly and do not claim the original symptom is resolved without evidence.
+Stop and say so explicitly. List what you tried. Ask the user for: (a) access to whatever environment reproduces it, (b) a redacted captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or (c) permission to add temporary production instrumentation. Do **not** proceed to hypothesise without a loop.
 
 ### Completion criterion: a tight loop that goes red
 
@@ -65,7 +63,7 @@ Phase 1 is done when the loop is **tight** and **red-capable**: you can name **o
 - [ ] **Fast**: seconds, not minutes.
 - [ ] **Agent-runnable**: you can run it unattended; a human in the loop only via `scripts/hitl-loop.template.sh`.
 
-If no runnable reproduction is available, continue through hypothesis and source analysis with the verification gap recorded. The criteria above describe a verified reproduction, not a prerequisite for reading code.
+If you catch yourself reading code to build a theory before this command exists, **stop: jumping straight to a hypothesis is the exact failure this skill prevents.** No red-capable command, no Phase 2.
 
 ## Phase 2: Reproduce + minimise
 
@@ -85,11 +83,11 @@ Why bother: a minimal repro shrinks the hypothesis space in Phase 3 (fewer movin
 
 Done when **every remaining element is load-bearing**: removing any one of them makes the loop go green.
 
-Minimise enough to distinguish plausible causes. When reproduction is unavailable, skip runtime minimisation and trace the smallest relevant source path instead.
+Do not proceed until you have reproduced **and** minimised.
 
 ## Phase 3: Hypothesise
 
-Consider alternative causes when the evidence is ambiguous, ranking them by supporting evidence. Do not manufacture a fixed number of hypotheses for an obvious failure.
+Generate **3–5 ranked hypotheses** before testing any of them. Single-hypothesis generation anchors on the first plausible idea.
 
 Each hypothesis must be **falsifiable**: state the prediction it makes.
 
@@ -131,10 +129,10 @@ If a correct seam exists:
 
 ## Phase 6: Cleanup
 
-Before handoff, distinguish verified fixes from static findings and incomplete verification:
+Required before declaring done:
 
-- [ ] Re-run the original reproduction when available; otherwise state that the original symptom remains unverified
-- [ ] Report regression test results, or the reason a meaningful test could not be written or run
+- [ ] Original repro no longer reproduces (re-run the Phase 1 loop)
+- [ ] Regression test passes (or absence of seam is documented)
 - [ ] All `[DEBUG-...]` instrumentation removed (`grep` the prefix)
 - [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
 - [ ] The hypothesis that turned out correct is stated in the commit / PR message, so the next debugger learns
