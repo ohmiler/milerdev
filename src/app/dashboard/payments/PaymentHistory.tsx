@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 import PaymentRecordDetails from '@/components/proof/PaymentRecordDetails';
-import type { PaymentRecord } from '@/lib/payment-records';
+import type { PaymentRecord } from '@/lib/commerce/payment-records';
 
 const ZERO_SATANG = BigInt(0);
 const SATANG_PER_BAHT = BigInt(100);

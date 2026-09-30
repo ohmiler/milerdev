@@ -14,14 +14,14 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimits: { sensitive: { maxRequests: 10, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/coupon', () => ({
+vi.mock('@/lib/commerce/coupon', () => ({
   calculateDiscount: vi.fn(),
   validateCouponEligibility: vi.fn(),
 }));
 vi.mock('@/lib/analytics/measurement-recorder', () => ({
   measurementRecorder: { resolveProductExposureAttribution },
 }));
-vi.mock('@/lib/stripe', () => ({
+vi.mock('@/lib/commerce/stripe', () => ({
   stripe: {
     checkout: {
       sessions: {

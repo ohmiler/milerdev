@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateDiscount, isCouponFullDiscount, validateCouponEligibility } from '@/lib/coupon';
+import { calculateDiscount, isCouponFullDiscount, validateCouponEligibility } from '@/lib/commerce/coupon';
 
 describe('Coupon Business Logic', () => {
     describe('calculateDiscount', () => {

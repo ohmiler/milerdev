@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen, Clock3, PlayCircle, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { getExcerpt } from '@/lib/sanitize';
-import type { CourseDecisionFacts } from '@/lib/course-decision-facts';
+import type { CourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 import { formatCourseDuration } from '@/lib/courses/duration';
 import CourseArtwork from '@/components/course/CourseArtwork';
 

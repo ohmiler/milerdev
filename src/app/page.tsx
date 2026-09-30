@@ -43,7 +43,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { db } from '@/lib/db';
 import { courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
-import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
+import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 
 async function getLatestCourses() {
   const lessonStatsSq = db

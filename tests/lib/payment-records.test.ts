@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MySqlDialect } from 'drizzle-orm/mysql-core';
-import { loadPaymentRecord, loadPaymentRecords } from '@/lib/payment-records';
-import { loadPromptPayPresentation } from '@/lib/promptpay-presentation';
+import { loadPaymentRecord, loadPaymentRecords } from '@/lib/commerce/payment-records';
+import { loadPromptPayPresentation } from '@/lib/commerce/promptpay-presentation';
 
 const mocks = vi.hoisted(() => ({ select: vi.fn(), exact: vi.fn(), paymentWhere: vi.fn(), accessWhere: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: { select: mocks.select, query: { payments: { findFirst: mocks.exact } } } }));

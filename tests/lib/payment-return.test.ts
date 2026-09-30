@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadPaymentReturn } from '@/lib/payment-return';
+import { loadPaymentReturn } from '@/lib/commerce/payment-return';
 import { paymentRecord } from '../fixtures/payment-record';
 
 const mocks = vi.hoisted(() => ({ product: vi.fn(), retrieve: vi.fn(), fulfill: vi.fn(), record: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: { query: { courses: { findFirst: mocks.product }, bundles: { findFirst: mocks.product } } } }));
-vi.mock('@/lib/stripe', () => ({ stripe: { checkout: { sessions: { retrieve: mocks.retrieve } } } }));
-vi.mock('@/lib/payment-fulfillment', () => ({ fulfillStripeCheckoutSession: mocks.fulfill }));
-vi.mock('@/lib/payment-records', () => ({ loadPaymentRecord: mocks.record }));
+vi.mock('@/lib/commerce/stripe', () => ({ stripe: { checkout: { sessions: { retrieve: mocks.retrieve } } } }));
+vi.mock('@/lib/commerce/payment-fulfillment', () => ({ fulfillStripeCheckoutSession: mocks.fulfill }));
+vi.mock('@/lib/commerce/payment-records', () => ({ loadPaymentRecord: mocks.record }));
 const session = { id: 'cs_test_return', payment_status: 'paid', metadata: { paymentId: 'attempt-1', userId: 'member-1', type: 'course', courseId: 'course-1' } };
 beforeEach(() => {
   vi.resetAllMocks();

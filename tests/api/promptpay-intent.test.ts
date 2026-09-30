@@ -6,7 +6,7 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimits: { sensitive: { maxRequests: 10, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/coupon', () => ({
+vi.mock('@/lib/commerce/coupon', () => ({
   calculateDiscount: vi.fn(),
   validateCouponEligibility: vi.fn(),
 }));
@@ -42,7 +42,7 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { auth } from '@/lib/auth';
-import { assertPromptPayIntentClaim, PROMPTPAY_INTENT_TTL_MS, type PromptPayIntentRecord } from '@/lib/promptpay-intent';
+import { assertPromptPayIntentClaim, PROMPTPAY_INTENT_TTL_MS, type PromptPayIntentRecord } from '@/lib/commerce/promptpay-intent';
 
 const studentSession = { user: { id: 'student-1' } };
 

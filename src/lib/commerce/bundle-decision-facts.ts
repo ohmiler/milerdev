@@ -2,7 +2,7 @@ import {
   deriveCourseDecisionFacts,
   type CourseDecisionFacts,
   type CourseDecisionSource,
-} from '@/lib/course-decision-facts';
+} from '@/lib/commerce/course-decision-facts';
 
 type BundleAcquisitionActionDescriptor = {
   kind: 'enroll-free' | 'start-checkout' | 'unavailable';

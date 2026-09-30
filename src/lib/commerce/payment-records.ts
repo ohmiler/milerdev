@@ -3,8 +3,8 @@ import 'server-only';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { bundleCourses, bundles, courses, enrollments, payments } from '@/lib/db/schema';
-import { derivePaymentPresentation, type PaymentPresentation } from '@/lib/payment-presentation';
-import { assertPromptPayIntentClaim } from '@/lib/promptpay-intent';
+import { derivePaymentPresentation, type PaymentPresentation } from '@/lib/commerce/payment-presentation';
+import { assertPromptPayIntentClaim } from '@/lib/commerce/promptpay-intent';
 
 export type PaymentRecord = { id: string; presentation: PaymentPresentation; canSubmitSlip: boolean };
 const contact = { kind: 'contact', label: 'ติดต่อพร้อมเลขอ้างอิง', href: 'mailto:milerdev.official@gmail.com' } as const;

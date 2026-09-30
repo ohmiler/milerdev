@@ -10,7 +10,7 @@ import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 import { auth } from '@/lib/auth';
-import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 import { db } from '@/lib/db';
 import {
   bundleCourses,
@@ -22,7 +22,7 @@ import {
   users,
 } from '@/lib/db/schema';
 import { getExcerpt } from '@/lib/sanitize';
-import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
+import { requirePublishedBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import { and, asc, avg, count, eq, inArray, sql } from 'drizzle-orm';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';

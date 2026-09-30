@@ -1,9 +1,9 @@
 import 'server-only';
 
 import { and, count, eq, inArray } from 'drizzle-orm';
-import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
-import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
-import { calculateDiscount, validateCouponEligibility } from '@/lib/coupon';
+import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
+import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
+import { calculateDiscount, validateCouponEligibility } from '@/lib/commerce/coupon';
 import { db } from '@/lib/db';
 import { bundleCourses, bundles, coupons, couponUsages, courses, enrollments, lessons } from '@/lib/db/schema';
 

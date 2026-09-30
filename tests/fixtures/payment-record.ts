@@ -1,5 +1,5 @@
-import { derivePaymentPresentation, type ServerPaymentAttempt } from '@/lib/payment-presentation';
-import type { PaymentRecord } from '@/lib/payment-records';
+import { derivePaymentPresentation, type ServerPaymentAttempt } from '@/lib/commerce/payment-presentation';
+import type { PaymentRecord } from '@/lib/commerce/payment-records';
 
 export function paymentRecord(overrides: Partial<ServerPaymentAttempt> = {}, enrolledCount = 0): PaymentRecord {
   const attempt: ServerPaymentAttempt = {

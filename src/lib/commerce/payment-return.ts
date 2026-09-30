@@ -3,10 +3,10 @@ import 'server-only';
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { bundles, courses } from '@/lib/db/schema';
-import { stripe } from '@/lib/stripe';
-import { fulfillStripeCheckoutSession } from '@/lib/payment-fulfillment';
-import { loadPaymentRecord } from '@/lib/payment-records';
-import { derivePaymentPresentation } from '@/lib/payment-presentation';
+import { stripe } from '@/lib/commerce/stripe';
+import { fulfillStripeCheckoutSession } from '@/lib/commerce/payment-fulfillment';
+import { loadPaymentRecord } from '@/lib/commerce/payment-records';
+import { derivePaymentPresentation } from '@/lib/commerce/payment-presentation';
 
 export function isStripeReturnId(value: unknown): value is string {
   return typeof value === 'string' && /^cs_[a-zA-Z0-9_-]{1,240}$/.test(value);

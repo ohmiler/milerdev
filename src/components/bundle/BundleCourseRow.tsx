@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type { BundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import type { BundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 import { formatCourseDuration } from '@/lib/courses/duration';
 import { getExcerpt } from '@/lib/sanitize';
 

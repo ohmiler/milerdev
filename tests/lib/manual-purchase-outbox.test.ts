@@ -16,7 +16,7 @@ vi.mock('@/lib/analytics/purchase-measurement-projector', () => ({
   purchaseMeasurementProjector: { projectPurchase },
 }));
 
-import { fulfillManualPayment } from '@/lib/payment-fulfillment';
+import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
 
 const payment = () => ({
   id: 'payment-1',

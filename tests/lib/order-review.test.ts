@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadOrderReview } from '@/lib/order-review';
+import { loadOrderReview } from '@/lib/commerce/order-review';
 
 const mocks = vi.hoisted(() => ({ course: vi.fn(), bundle: vi.fn(), enrollment: vi.fn(), coupon: vi.fn(), select: vi.fn(), insert: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: { query: { courses: { findFirst: mocks.course }, bundles: { findFirst: mocks.bundle }, enrollments: { findFirst: mocks.enrollment }, coupons: { findFirst: mocks.coupon } }, select: mocks.select, insert: mocks.insert } }));

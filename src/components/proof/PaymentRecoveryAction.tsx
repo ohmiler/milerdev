@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import type { PaymentRecord } from '@/lib/payment-records';
+import type { PaymentRecord } from '@/lib/commerce/payment-records';
 
 const CheckoutDialog = dynamic(() => import('@/components/checkout/CheckoutDialog'));
 

@@ -1,4 +1,4 @@
-import { handlePromptPaySlip } from '@/lib/promptpay-slip-handler';
+import { handlePromptPaySlip } from '@/lib/commerce/promptpay-slip-handler';
 
 export function POST(request: Request) {
   return handlePromptPaySlip(request, 'bundle');

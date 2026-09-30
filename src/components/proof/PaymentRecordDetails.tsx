@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { PaymentRecord } from '@/lib/payment-records';
+import type { PaymentRecord } from '@/lib/commerce/payment-records';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';

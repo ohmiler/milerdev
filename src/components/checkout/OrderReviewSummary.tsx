@@ -1,4 +1,4 @@
-import type { OrderReview } from '@/lib/order-review';
+import type { OrderReview } from '@/lib/commerce/order-review';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function formatOrderAmount(amount: string | number) {

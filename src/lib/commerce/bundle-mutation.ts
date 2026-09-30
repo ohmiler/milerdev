@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { createAuditLogValues, type AuditContext } from '@/lib/auditLog';
-import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
+import { requirePublishedBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { db } from '@/lib/db';
 import {
   auditLogs,

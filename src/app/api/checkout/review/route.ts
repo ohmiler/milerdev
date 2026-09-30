@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
-import { loadOrderReview, OrderReviewError } from '@/lib/order-review';
+import { loadOrderReview, OrderReviewError } from '@/lib/commerce/order-review';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const reviewSchema = z.object({

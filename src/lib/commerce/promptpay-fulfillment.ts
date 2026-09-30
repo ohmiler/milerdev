@@ -18,7 +18,7 @@ import { purchaseMeasurementProjector } from '@/lib/analytics/purchase-measureme
 import {
   assertPromptPayIntentClaim,
   PromptPayIntentError,
-} from '@/lib/promptpay-intent';
+} from '@/lib/commerce/promptpay-intent';
 
 type TargetType = 'course' | 'bundle';
 type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];

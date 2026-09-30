@@ -8,8 +8,8 @@ import {
   claimPromptPayIntent,
   fulfillPromptPayIntent,
   releasePromptPayIntent,
-} from '@/lib/promptpay-fulfillment';
-import { PromptPayIntentError } from '@/lib/promptpay-intent';
+} from '@/lib/commerce/promptpay-fulfillment';
+import { PromptPayIntentError } from '@/lib/commerce/promptpay-intent';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const allowedTypes = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);

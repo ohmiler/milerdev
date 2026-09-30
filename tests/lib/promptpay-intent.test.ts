@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   PROMPTPAY_INTENT_TTL_MS,
   assertPromptPayIntentClaim,
-} from '@/lib/promptpay-intent';
+} from '@/lib/commerce/promptpay-intent';
 
 const now = new Date('2026-07-25T00:30:00.000Z');
 const pendingIntent = {

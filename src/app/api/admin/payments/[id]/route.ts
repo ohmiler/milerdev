@@ -6,7 +6,7 @@ import { auditLogs, payments, enrollments, bundleCourses, courses, bundles } fro
 import { eq, and, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { notify } from '@/lib/notifications/notify';
-import { fulfillManualPayment } from '@/lib/payment-fulfillment';
+import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

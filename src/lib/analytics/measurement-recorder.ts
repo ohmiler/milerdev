@@ -2,7 +2,7 @@ import { count, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
-import { requireReadyBundleCourses } from '@/lib/bundle-commerce';
+import { requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { requireCourseHasLessons } from '@/lib/courses/availability';
 import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import {

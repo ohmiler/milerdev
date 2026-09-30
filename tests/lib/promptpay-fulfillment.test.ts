@@ -43,7 +43,7 @@ vi.mock('@/lib/db', () => ({
 vi.mock('@/lib/analytics/purchase-measurement-projector', () => ({
   purchaseMeasurementProjector: { projectPurchase },
 }));
-import { fulfillPromptPayIntent } from '@/lib/promptpay-fulfillment';
+import { fulfillPromptPayIntent } from '@/lib/commerce/promptpay-fulfillment';
 
 const payment = {
   id: 'payment-1',

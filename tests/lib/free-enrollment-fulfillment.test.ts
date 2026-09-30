@@ -23,7 +23,7 @@ vi.mock('@/lib/analytics/enrollment-measurement-projector', () => ({
   enrollmentMeasurementProjector: { projectEnrollment },
 }));
 
-import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
+import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
 import { getMemberConsentId } from '@/lib/privacy-consent';
 
 function transactionAdapter() {

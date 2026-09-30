@@ -3,7 +3,7 @@ import MainContent from '@/components/layout/MainContent';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
-import type { PaymentRecord } from '@/lib/payment-records';
+import type { PaymentRecord } from '@/lib/commerce/payment-records';
 import PaymentRecordDetails from './PaymentRecordDetails';
 
 export default function TransactionReceipt({ record }: { record: PaymentRecord }) {

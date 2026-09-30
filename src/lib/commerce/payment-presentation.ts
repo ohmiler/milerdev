@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/promptpay-intent';
+import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/commerce/promptpay-intent';
 
 export type PaymentTarget = {
   type: 'course' | 'bundle';

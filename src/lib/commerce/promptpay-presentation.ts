@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { loadPaymentRecord } from '@/lib/payment-records';
+import { loadPaymentRecord } from '@/lib/commerce/payment-records';
 
 export async function loadPromptPayPresentation(userId: string, paymentId: string) {
   const record = await loadPaymentRecord(userId, paymentId);

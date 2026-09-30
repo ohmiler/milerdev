@@ -26,7 +26,7 @@ import { Separator } from '@/components/ui/separator';
 import CourseDetailSection from '@/components/course/CourseDetailSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star } from 'lucide-react';
-import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
+import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 import { getCourseReviewStats } from '@/lib/courses/review-stats';
 
 function normalizeUrl(url: string | null): string | null {
