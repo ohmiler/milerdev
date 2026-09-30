@@ -54,3 +54,7 @@ next-env.d.ts
 
 # local database exports
 scripts/wordpress-export.sql
+
+# generated Playwright artifacts
+/output/
+/.playwright-cli/

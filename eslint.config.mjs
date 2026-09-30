@@ -21,6 +21,9 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "blob-report/**",
     "test-results/**",
+    // Generated local artifacts
+    "output/**",
+    ".playwright-cli/**",
     // Utility scripts
     "scripts/**",
     // Local agent tooling and generated review state
