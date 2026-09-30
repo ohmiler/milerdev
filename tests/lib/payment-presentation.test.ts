@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { derivePaymentPresentation } from '@/lib/payment-presentation';
+import { derivePaymentPresentation } from '@/lib/commerce/payment-presentation';
 
 const NOW = new Date('2026-09-02T07:00:00.000Z');
 

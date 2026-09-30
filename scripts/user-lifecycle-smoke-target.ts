@@ -1,4 +1,4 @@
-import { getPasswordPolicyError } from '../src/lib/password-policy';
+import { getPasswordPolicyError } from '../src/lib/auth/password-policy';
 
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 

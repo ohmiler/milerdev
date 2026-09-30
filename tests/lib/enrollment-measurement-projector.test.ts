@@ -4,7 +4,7 @@ import {
   createEnrollmentMeasurementProjector,
   type EnrollmentMeasurementStore,
   type FreeEnrollmentProjection,
-} from '@/lib/enrollment-measurement-projector';
+} from '@/lib/analytics/enrollment-measurement-projector';
 
 class MemoryEnrollmentMeasurementStore implements EnrollmentMeasurementStore {
   enrollment: FreeEnrollmentProjection | null = {

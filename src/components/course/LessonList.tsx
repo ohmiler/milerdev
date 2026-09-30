@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { normalizeLessonSearch } from '@/lib/lesson-search';
+import { normalizeLessonSearch } from '@/lib/learning/lesson-search';
 import { BookOpen, Check, Lock, SearchX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

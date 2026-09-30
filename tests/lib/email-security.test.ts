@@ -104,7 +104,7 @@ describe('email SMTP security boundary', () => {
 
     it('puts registration tokens in the fragment and sends no chosen password', async () => {
         const { sendRegistrationVerificationEmail } = await import('@/lib/notifications/email');
-        const { resolveSafeAuthReturn } = await import('@/lib/safe-auth-return');
+        const { resolveSafeAuthReturn } = await import('@/lib/auth/safe-auth-return');
         await sendRegistrationVerificationEmail({ email: 'owner@example.test', token: 'a'.repeat(64), returnTo: resolveSafeAuthReturn('/courses').pathname });
         const html = mocks.sendMail.mock.calls[0][0].html;
         expect(html).toContain('#token=' + 'a'.repeat(64));

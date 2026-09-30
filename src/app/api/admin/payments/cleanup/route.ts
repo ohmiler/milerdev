@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 
 // Payment attempts are immutable financial records. Retention or archival must
 // use an explicit, separately reviewed policy instead of deleting rows in bulk.

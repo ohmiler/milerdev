@@ -8,7 +8,7 @@ const { insert, insertValues } = vi.hoisted(() => {
   };
 });
 
-vi.mock('@/lib/analytics-control', () => ({
+vi.mock('@/lib/analytics/control', () => ({
   getAnalyticsControlState: vi.fn(),
   isAnalyticsEventEnabled: vi.fn(),
   resetAnalyticsControlCache: vi.fn(),
@@ -17,11 +17,11 @@ vi.mock('@/lib/db', () => ({ db: { insert, select: vi.fn() } }));
 vi.mock('@/lib/db/safe-insert', () => ({ isDuplicateKeyError: vi.fn().mockReturnValue(false) }));
 vi.mock('@/lib/error-handler', () => ({ logEvent: vi.fn() }));
 
-import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
+import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
 import {
   recordClientAnalyticsEvent,
   recordServerAnalyticsEvent,
-} from '@/lib/analytics';
+} from '@/lib/analytics/events';
 
 const checkoutEvent = {
   eventName: 'checkout_opened' as const,

@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { auditLogs, bundles, courses, payments, users } from '@/lib/db/schema';
 import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/notifications/email';
-import { fulfillManualPayment } from '@/lib/payment-fulfillment';
+import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
 import { notify } from '@/lib/notifications/notify';
 
 const MAX_RETRIES = 5;

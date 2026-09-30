@@ -1,9 +1,9 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import PaymentReturnPage from '@/components/proof/PaymentReturnPage';
-import { createAuthReturnHref, resolveSafeAuthRedirect } from '@/lib/safe-auth-return';
+import { createAuthReturnHref, resolveSafeAuthRedirect } from '@/lib/auth/safe-auth-return';
 const mocks = vi.hoisted(() => ({ member: vi.fn(), load: vi.fn(), redirect: vi.fn() }));
-vi.mock('@/lib/member-access', () => ({ requireMember: mocks.member }));
-vi.mock('@/lib/payment-return', () => ({ isStripeReturnId: (id: unknown) => typeof id === 'string' && /^cs_[a-zA-Z0-9_-]{1,240}$/.test(id), loadPaymentReturn: mocks.load }));
+vi.mock('@/lib/auth/member-access', () => ({ requireMember: mocks.member }));
+vi.mock('@/lib/commerce/payment-return', () => ({ isStripeReturnId: (id: unknown) => typeof id === 'string' && /^cs_[a-zA-Z0-9_-]{1,240}$/.test(id), loadPaymentReturn: mocks.load }));
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect, notFound: () => { throw new Error('not found'); } }));
 beforeEach(() => { vi.resetAllMocks(); mocks.redirect.mockImplementation(() => { throw new Error('redirect'); }); });
 it.each(['course', 'bundle'] as const)('preserves the exact %s return through canonicalization and auth', async (type) => {

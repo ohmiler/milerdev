@@ -7,7 +7,7 @@ import {
   type LearningMeasurementStore,
   type LearningMilestoneIdentity,
   type LearningMilestoneProjection,
-} from '@/lib/learning-measurement';
+} from '@/lib/learning/measurement';
 
 const exposureId = '123e4567-e89b-42d3-a456-426614174000';
 

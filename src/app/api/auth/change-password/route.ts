@@ -2,16 +2,16 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
-import { hashNewPassword, verifyPassword } from '@/lib/password-storage';
+import { hashNewPassword, verifyPassword } from '@/lib/auth/password-storage';
 import { z } from 'zod';
-import { newPasswordSchema } from '@/lib/password-validation';
-import { PasswordSecurityError } from '@/lib/password-errors';
+import { newPasswordSchema } from '@/lib/auth/password-validation';
+import { PasswordSecurityError } from '@/lib/auth/password-errors';
 import { auth } from '@/lib/auth';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,
-} from '@/lib/auth-rate-limit';
+} from '@/lib/auth/rate-limit';
 
 const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, 'กรุณากรอกรหัสผ่านปัจจุบัน'),

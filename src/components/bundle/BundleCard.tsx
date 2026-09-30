@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { BundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import type { BundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 type BundleCardProps = {
   title: string;

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import type { SafeAuthReturnPath } from '@/lib/safe-auth-return';
+import type { SafeAuthReturnPath } from '@/lib/auth/safe-auth-return';
 import { GoogleIcon } from './AuthIcons';
 import { AuthDivider, AuthError, AuthField, AuthFootnote, AuthNotice, PasswordInput } from './AuthFormLayout';
 

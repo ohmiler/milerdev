@@ -6,7 +6,7 @@ import {
     getGoogleLinkingRequestContext,
     isTrustedGoogleProfile,
     normalizeGoogleCallbackIssuer,
-} from '@/lib/auth-google';
+} from '@/lib/auth/google';
 
 describe('Google auth policy', () => {
     it('requires recovery instead of automatically linking matching email addresses', () => {

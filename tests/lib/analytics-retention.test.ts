@@ -4,7 +4,7 @@ import {
   AnalyticsRetentionError,
   createAnalyticsRetentionPolicy,
   type AnalyticsRetentionStore,
-} from '@/lib/analytics-retention';
+} from '@/lib/analytics/retention';
 
 class MemoryAnalyticsRetentionStore implements AnalyticsRetentionStore {
   calls: Array<{ cutoff: Date; batchSize: number }> = [];

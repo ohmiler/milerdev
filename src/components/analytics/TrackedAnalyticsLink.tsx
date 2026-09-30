@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { ComponentProps, MouseEvent } from 'react';
 
-import type { ClientAnalyticsEvent } from '@/lib/analytics-contract';
+import type { ClientAnalyticsEvent } from '@/lib/analytics/contract';
 import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
 
 type Props = ComponentProps<typeof Link> & {

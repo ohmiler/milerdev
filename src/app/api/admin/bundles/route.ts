@@ -5,7 +5,7 @@ import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { desc, eq, asc } from 'drizzle-orm';
 import { getAuditContext } from '@/lib/auditLog';
-import { BundleMutationError, createBundleWithIntegrity } from '@/lib/bundle-mutation';
+import { BundleMutationError, createBundleWithIntegrity } from '@/lib/commerce/bundle-mutation';
 import { adminBundleMutationSchema } from '@/lib/validations/bundle';
 
 // GET /api/admin/bundles - List all bundles with their courses

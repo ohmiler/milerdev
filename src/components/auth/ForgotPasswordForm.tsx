@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { getAuthPublicError } from '@/lib/auth-public-error';
-import type { SafeAuthReturnPath } from '@/lib/safe-auth-return';
+import { getAuthPublicError } from '@/lib/auth/public-error';
+import type { SafeAuthReturnPath } from '@/lib/auth/safe-auth-return';
 import { AuthError, AuthField, AuthFootnote, RecoveryState } from './AuthFormLayout';
 
 export default function ForgotPasswordForm({

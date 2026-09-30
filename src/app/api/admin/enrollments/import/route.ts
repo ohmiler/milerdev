@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logError } from '@/lib/error-handler';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { enrollments, users, courses } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';

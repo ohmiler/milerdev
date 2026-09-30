@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setConsentState, saveConsent, refreshConsent, suspendConsent } from '@/components/privacy/consent-client';
 import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
-import { UNKNOWN_CONSENT } from '@/lib/privacy-consent-contract';
+import { UNKNOWN_CONSENT } from '@/lib/privacy/consent-contract';
 
 describe('optional browser collection', () => {
   afterEach(() => { setConsentState(UNKNOWN_CONSENT); vi.unstubAllGlobals(); });

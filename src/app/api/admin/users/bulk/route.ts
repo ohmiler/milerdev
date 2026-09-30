@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getAuditContext } from '@/lib/auditLog';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { logError } from '@/lib/error-handler';
 import { UserLifecycleError, userLifecycleService } from '@/lib/users/lifecycle';
 import { adminBulkUserActionSchema } from '@/lib/validations/admin';

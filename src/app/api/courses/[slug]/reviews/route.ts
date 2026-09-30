@@ -5,8 +5,8 @@ import { db } from '@/lib/db';
 import { reviews, courses, users, enrollments } from '@/lib/db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
-import { stripHtml } from '@/lib/sanitize';
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
+import { stripHtml } from '@/lib/security/sanitize';
 import { getCourseReviewStats } from '@/lib/courses/review-stats';
 
 type RouteParams = { params: Promise<{ slug: string }> };

@@ -5,7 +5,7 @@ import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
 import { getAuditContext } from '@/lib/auditLog';
-import { BundleMutationError, updateBundleWithIntegrity } from '@/lib/bundle-mutation';
+import { BundleMutationError, updateBundleWithIntegrity } from '@/lib/commerce/bundle-mutation';
 import { adminBundleMutationSchema } from '@/lib/validations/bundle';
 
 interface Props {

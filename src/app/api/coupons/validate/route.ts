@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { coupons, couponUsages, courses } from '@/lib/db/schema';
 import { eq, and, count } from 'drizzle-orm';
-import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 // POST /api/coupons/validate - Validate a coupon code
 export async function POST(request: Request) {

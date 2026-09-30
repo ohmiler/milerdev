@@ -1,4 +1,4 @@
-vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
+vi.mock('@/lib/privacy/consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { paymentInsert, resolveProductExposureAttribution } = vi.hoisted(() => ({
@@ -9,19 +9,19 @@ const { paymentInsert, resolveProductExposureAttribution } = vi.hoisted(() => ({
 vi.mock('@/lib/auth', () => ({
   auth: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
 }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn().mockReturnValue({ success: true, remaining: 9, resetTime: Date.now() + 60_000 }),
   rateLimits: { sensitive: { maxRequests: 10, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/coupon', () => ({
+vi.mock('@/lib/commerce/coupon', () => ({
   calculateDiscount: vi.fn(),
   validateCouponEligibility: vi.fn(),
 }));
-vi.mock('@/lib/measurement-recorder', () => ({
+vi.mock('@/lib/analytics/measurement-recorder', () => ({
   measurementRecorder: { resolveProductExposureAttribution },
 }));
-vi.mock('@/lib/stripe', () => ({
+vi.mock('@/lib/commerce/stripe', () => ({
   stripe: {
     checkout: {
       sessions: {
@@ -59,8 +59,8 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { db } from '@/lib/db';
-import { withBrowserConsent } from '@/lib/privacy-consent';
-import { measurementTransaction } from '@/lib/measurement-database';
+import { withBrowserConsent } from '@/lib/privacy/consent';
+import { measurementTransaction } from '@/lib/analytics/measurement-database';
 
 const exposureId = '11111111-1111-4111-8111-111111111111';
 

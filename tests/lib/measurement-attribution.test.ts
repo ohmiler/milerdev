@@ -4,7 +4,7 @@ import {
   createMeasurementRecorder,
   type MeasurementStore,
   type ProductExposureRow,
-} from '@/lib/measurement-recorder';
+} from '@/lib/analytics/measurement-recorder';
 
 class AttributionStore implements MeasurementStore {
   constructor(private readonly exposure: ProductExposureRow | null) {}

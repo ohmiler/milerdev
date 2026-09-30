@@ -1,20 +1,20 @@
-vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
+vi.mock('@/lib/privacy/consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/analytics', () => ({
+vi.mock('@/lib/analytics/events', () => ({
   isAnalyticsEventEnabled: vi.fn().mockResolvedValue(true),
   isPublishedAnalyticsTarget: vi.fn().mockResolvedValue(true),
   recordClientAnalyticsEvent: vi.fn().mockResolvedValue(true),
 }));
-vi.mock('@/lib/measurement-recorder', () => ({
+vi.mock('@/lib/analytics/measurement-recorder', () => ({
   measurementRecorder: { recordProductExposure: vi.fn() },
 }));
-vi.mock('@/lib/learning-measurement', () => ({
+vi.mock('@/lib/learning/measurement', () => ({
   learningMeasurementRecorder: { recordWorkspaceStart: vi.fn() },
 }));
 vi.mock('@/lib/error-handler', () => ({ logEvent: vi.fn() }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn().mockReturnValue({
     success: true,
     remaining: 99,
@@ -25,10 +25,10 @@ vi.mock('@/lib/rate-limit', () => ({
   rateLimitResponse: vi.fn(),
 }));
 
-import { isAnalyticsEventEnabled, recordClientAnalyticsEvent } from '@/lib/analytics';
+import { isAnalyticsEventEnabled, recordClientAnalyticsEvent } from '@/lib/analytics/events';
 import { auth } from '@/lib/auth';
-import { learningMeasurementRecorder } from '@/lib/learning-measurement';
-import { measurementRecorder } from '@/lib/measurement-recorder';
+import { learningMeasurementRecorder } from '@/lib/learning/measurement';
+import { measurementRecorder } from '@/lib/analytics/measurement-recorder';
 
 const exposure = {
   eventName: 'course_viewed',

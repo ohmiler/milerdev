@@ -46,7 +46,7 @@ const dbMock = vi.hoisted(() => ({
     })),
 }));
 
-vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: mocks.requireAdmin }));
+vi.mock('@/lib/auth/helpers', () => ({ requireAdmin: mocks.requireAdmin }));
 vi.mock('@/lib/error-handler', () => ({ logError: mocks.logError }));
 vi.mock('@/lib/db', () => ({ db: dbMock }));
 vi.mock('bcryptjs', () => ({ default: { hash: mocks.hash } }));

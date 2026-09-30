@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { logError } from '@/lib/error-handler';
-import { measurementQualificationService } from '@/lib/measurement-qualification';
+import { measurementQualificationService } from '@/lib/analytics/measurement-qualification';
 
 export async function GET() {
   const authResult = await requireAdmin();

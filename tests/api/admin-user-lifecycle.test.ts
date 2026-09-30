@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
     getAuditContext: vi.fn(),
 }));
 
-vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: mocks.requireAdmin }));
+vi.mock('@/lib/auth/helpers', () => ({ requireAdmin: mocks.requireAdmin }));
 vi.mock('@/lib/db', () => ({ db: {} }));
 vi.mock('@/lib/auditLog', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/lib/auditLog')>()),

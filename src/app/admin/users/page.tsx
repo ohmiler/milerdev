@@ -1,6 +1,6 @@
 'use client';
 
-import { getPasswordPolicyError } from '@/lib/password-policy';
+import { getPasswordPolicyError } from '@/lib/auth/password-policy';
 
 import { Eye, EyeOff, FileDown, FileUp, KeyRound, Pencil, Search, Users } from 'lucide-react';
 import Link from 'next/link';

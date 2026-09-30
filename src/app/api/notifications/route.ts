@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { notifications } from '@/lib/db/schema';
 import { desc, eq, sql, and, lt } from 'drizzle-orm';
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rate-limit';
 
 const NOTIFICATIONS_READ_RATE_LIMIT = { maxRequests: 60, windowMs: 60 * 1000 };
 const NOTIFICATIONS_WRITE_RATE_LIMIT = { maxRequests: 20, windowMs: 60 * 1000 };

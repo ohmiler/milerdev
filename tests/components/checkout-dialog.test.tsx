@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CheckoutDialog from '@/components/checkout/CheckoutDialog';
 import { paymentRecord } from '../fixtures/payment-record';
-import type { OrderReview } from '@/lib/order-review';
+import type { OrderReview } from '@/lib/commerce/order-review';
 
 vi.mock('next/image', () => ({ default: () => null }));
 vi.mock('@/components/ui/DialogShell', () => ({ default: ({ isOpen, title, body, children, onClose }: { isOpen: boolean; title: string; body: ReactNode; children: ReactNode; onClose: () => void }) => isOpen ? <section role="dialog" aria-label={title}><button onClick={onClose}>Close</button>{body}{children}</section> : null }));

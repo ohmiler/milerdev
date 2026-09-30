@@ -8,7 +8,7 @@ const { authMock, redirectMock } = vi.hoisted(() => ({
 vi.mock('@/lib/auth', () => ({ auth: authMock }));
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
 
-import { requireMember } from '@/lib/member-access';
+import { requireMember } from '@/lib/auth/member-access';
 
 describe('requireMember', () => {
   beforeEach(() => {

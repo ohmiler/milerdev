@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import * as dotenv from 'dotenv';
 import { createId } from '@paralleldrive/cuid2';
-import { hashNewPassword } from '../src/lib/password-storage';
+import { hashNewPassword } from '../src/lib/auth/password-storage';
 
 // Load .env.local only in development
 if (!process.env.DATABASE_URL) {

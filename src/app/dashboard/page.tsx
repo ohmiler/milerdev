@@ -21,8 +21,8 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Progress } from '@/components/ui/progress';
-import { getDashboardLearning } from '@/lib/dashboard-learning';
-import { requireMember } from '@/lib/member-access';
+import { getDashboardLearning } from '@/lib/learning/dashboard';
+import { requireMember } from '@/lib/auth/member-access';
 
 export const metadata: Metadata = {
   title: 'แดชบอร์ด',

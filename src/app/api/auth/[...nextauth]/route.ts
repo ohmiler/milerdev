@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { handlers } from "@/lib/auth";
-import { normalizeGoogleCallbackIssuer } from "@/lib/auth-google";
+import { normalizeGoogleCallbackIssuer } from "@/lib/auth/google";
 
 function normalizeGoogleIssuer(request: NextRequest): NextRequest {
     const url = new URL(request.url);

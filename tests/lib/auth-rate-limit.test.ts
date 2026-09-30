@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
     consumeAuthRateLimit,
     createRateLimitKey,
-} from '@/lib/auth-rate-limit';
+} from '@/lib/auth/rate-limit';
 
 describe('distributed auth rate limiter', () => {
     it('creates namespace-bound HMAC keys without retaining the identifier', () => {

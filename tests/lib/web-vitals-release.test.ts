@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getWebVitalsReleaseIdentity } from '@/lib/web-vitals-release';
+import { getWebVitalsReleaseIdentity } from '@/lib/analytics/web-vitals-release';
 
 describe('Web Vitals release identity', () => {
   it('prefers the release that rendered the page', () => {

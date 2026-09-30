@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LessonList from '@/components/course/LessonList';
-import { normalizeLessonSearch } from '@/lib/lesson-search';
+import { normalizeLessonSearch } from '@/lib/learning/lesson-search';
 beforeEach(() => { Element.prototype.scrollIntoView = vi.fn(); });
 afterEach(cleanup);
 const lessons = (count: number) => Array.from({ length: count }, (_, index) => ({ id: `lesson-${index}`, title: `บทเรียน คำสั่ง ${index + 1}`, videoDuration: null, isFreePreview: true }));

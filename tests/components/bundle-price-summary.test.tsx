@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import BundlePriceSummary from '@/components/bundle/BundlePriceSummary';
-import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 describe('BundlePriceSummary', () => {
   it('uses current separate prices for savings and regular prices as secondary context', () => {

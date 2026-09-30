@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
-import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
+import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),

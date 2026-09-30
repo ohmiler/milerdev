@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { requireMember } from '@/lib/member-access';
-import { loadPaymentRecord } from '@/lib/payment-records';
+import { requireMember } from '@/lib/auth/member-access';
+import { loadPaymentRecord } from '@/lib/commerce/payment-records';
 import TransactionReceipt from '@/components/proof/TransactionReceipt';
 
 export const dynamic = 'force-dynamic';

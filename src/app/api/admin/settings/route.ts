@@ -8,12 +8,12 @@ import {
   recordAnalyticsGovernanceDecision,
   setAnalyticsOperationalEnabled,
   type AnalyticsGovernanceDecisionInput,
-} from '@/lib/analytics-control';
-import { requireAdmin } from '@/lib/auth-helpers';
+} from '@/lib/analytics/control';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { auditLogs, settings } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';
-import { getClientIP } from '@/lib/rate-limit';
+import { getClientIP } from '@/lib/security/rate-limit';
 
 const defaultSettings = [
   { key: 'site_name', value: 'Course Platform', type: 'string', description: 'ชื่อเว็บไซต์' },

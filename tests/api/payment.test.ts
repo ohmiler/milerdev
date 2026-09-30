@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
 
-vi.mock('@/lib/stripe', () => ({
+vi.mock('@/lib/commerce/stripe', () => ({
     stripe: {
         checkout: {
             sessions: {
@@ -28,7 +28,7 @@ vi.mock('@paralleldrive/cuid2', () => ({
     createId: vi.fn().mockReturnValue('mock-cuid'),
 }));
 
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
     checkRateLimit: vi.fn().mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 }),
     getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
     rateLimits: {
@@ -41,7 +41,7 @@ vi.mock('@/lib/rate-limit', () => ({
     ),
 }));
 
-vi.mock('@/lib/coupon', () => ({
+vi.mock('@/lib/commerce/coupon', () => ({
     calculateDiscount: vi.fn().mockReturnValue(0),
     validateCouponEligibility: vi.fn().mockReturnValue({ valid: true }),
     isCouponFullDiscount: vi.fn().mockReturnValue(false),
@@ -143,9 +143,9 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { auth } from '@/lib/auth';
-import { stripe } from '@/lib/stripe';
-import { checkRateLimit } from '@/lib/rate-limit';
-import { calculateDiscount, validateCouponEligibility } from '@/lib/coupon';
+import { stripe } from '@/lib/commerce/stripe';
+import { checkRateLimit } from '@/lib/security/rate-limit';
+import { calculateDiscount, validateCouponEligibility } from '@/lib/commerce/coupon';
 import { db } from '@/lib/db';
 
 const mockedAuth = vi.mocked(auth);

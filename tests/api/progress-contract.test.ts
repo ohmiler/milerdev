@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: {} }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
-vi.mock('@/lib/learning-progress', () => ({ updateLearningProgress: vi.fn() }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/learning/progress', () => ({ updateLearningProgress: vi.fn() }));
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn().mockReturnValue({
     success: true,
     remaining: 99,
@@ -15,7 +15,7 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 import { auth } from '@/lib/auth';
-import { updateLearningProgress } from '@/lib/learning-progress';
+import { updateLearningProgress } from '@/lib/learning/progress';
 
 async function post(body: unknown) {
   const { POST } = await import('@/app/api/progress/route');

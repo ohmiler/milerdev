@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import BundleCard from '@/components/bundle/BundleCard';
-import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 function decisionFacts(overrides: {
   bundlePrice?: string;

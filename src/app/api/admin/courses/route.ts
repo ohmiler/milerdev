@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';

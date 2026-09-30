@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise';
 
-import { countDuplicateOAuthAccountGroups } from '../src/lib/oauth-account-integrity';
+import { countDuplicateOAuthAccountGroups } from '../src/lib/auth/oauth-account-integrity';
 
 async function main() {
     const databaseUrl = process.env.DATABASE_URL;

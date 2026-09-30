@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/lib/auth';
-import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
+import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/courses/availability';
-import { calculateDiscount, validateCouponEligibility } from '@/lib/coupon';
+import { calculateDiscount, validateCouponEligibility } from '@/lib/commerce/coupon';
 import { db } from '@/lib/db';
 import {
   bundleCourses,
@@ -17,9 +17,9 @@ import {
   lessons,
   payments,
 } from '@/lib/db/schema';
-import { loadPromptPayPresentation } from '@/lib/promptpay-presentation';
-import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/promptpay-intent';
-import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { loadPromptPayPresentation } from '@/lib/commerce/promptpay-presentation';
+import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/commerce/promptpay-intent';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 const intentSchema = z.object({
   courseId: z.string().min(1).max(36).optional(),

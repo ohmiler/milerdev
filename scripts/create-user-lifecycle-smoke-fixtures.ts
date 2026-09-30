@@ -1,4 +1,4 @@
-import { hashNewPassword } from '../src/lib/password-storage';
+import { hashNewPassword } from '../src/lib/auth/password-storage';
 import mysql, { type RowDataPacket } from 'mysql2/promise';
 
 import {

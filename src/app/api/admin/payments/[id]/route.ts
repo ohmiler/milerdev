@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { logError } from '@/lib/error-handler';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { auditLogs, payments, enrollments, bundleCourses, courses, bundles } from '@/lib/db/schema';
 import { eq, and, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { notify } from '@/lib/notifications/notify';
-import { fulfillManualPayment } from '@/lib/payment-fulfillment';
+import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
-import { requireMember } from '@/lib/member-access';
-import { isStripeReturnId, loadPaymentReturn } from '@/lib/payment-return';
+import { requireMember } from '@/lib/auth/member-access';
+import { isStripeReturnId, loadPaymentReturn } from '@/lib/commerce/payment-return';
 import TransactionReceipt from './TransactionReceipt';
 
 export type PaymentReturnPageProps = {

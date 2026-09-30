@@ -5,12 +5,12 @@ const mocks = vi.hoisted(() => ({
     claim: vi.fn(), txInsert: vi.fn(), txValues: vi.fn(), send: vi.fn(), hash: vi.fn(),
 }));
 vi.mock('@/lib/notifications/email', () => ({ sendRegistrationVerificationEmail: mocks.send }));
-vi.mock('@/lib/password-storage', () => ({ hashNewPassword: mocks.hash }));
+vi.mock('@/lib/auth/password-storage', () => ({ hashNewPassword: mocks.hash }));
 vi.mock('@/lib/db', () => ({ db: {
     select: () => ({ from: () => ({ where: () => ({ limit: mocks.select }) }) }),
     insert: mocks.insert, delete: mocks.remove, transaction: mocks.transaction,
 } }));
-import { completeEmailRegistration, hashRegistrationToken, requestEmailRegistration } from '@/lib/email-registration';
+import { completeEmailRegistration, hashRegistrationToken, requestEmailRegistration } from '@/lib/auth/email-registration';
 
 beforeEach(() => {
     vi.clearAllMocks();

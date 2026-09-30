@@ -5,12 +5,12 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/notifications/email';
 import { randomBytes, createHash } from 'crypto';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,
-} from '@/lib/auth-rate-limit';
-import { resolveSafeAuthReturn } from '@/lib/safe-auth-return';
+} from '@/lib/auth/rate-limit';
+import { resolveSafeAuthReturn } from '@/lib/auth/safe-auth-return';
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const DUPLICATE_RESET_SUPPRESSION_MS = 5 * 60 * 1000;

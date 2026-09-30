@@ -1,4 +1,4 @@
-vi.mock('@/lib/privacy-consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
+vi.mock('@/lib/privacy/consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -19,12 +19,12 @@ vi.mock('@/lib/db', () => ({ db: { transaction: dbTransaction } }));
 vi.mock('@/lib/db/safe-insert', () => ({
   isDuplicateKeyError: vi.fn((error: unknown) => error instanceof Error && error.message === 'duplicate'),
 }));
-vi.mock('@/lib/enrollment-measurement-projector', () => ({
+vi.mock('@/lib/analytics/enrollment-measurement-projector', () => ({
   enrollmentMeasurementProjector: { projectEnrollment },
 }));
 
-import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
-import { getMemberConsentId } from '@/lib/privacy-consent';
+import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
+import { getMemberConsentId } from '@/lib/privacy/consent';
 
 function transactionAdapter() {
   return {

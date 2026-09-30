@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rate-limit';
 
 // Allowed image hosts for proxy (prevent open proxy abuse / SSRF)
 const ALLOWED_HOSTS = [

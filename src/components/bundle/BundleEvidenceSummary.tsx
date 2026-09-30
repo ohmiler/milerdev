@@ -1,5 +1,5 @@
-import type { BundleDecisionFacts } from '@/lib/bundle-decision-facts';
-import { formatCourseDuration } from '@/lib/course-duration';
+import type { BundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
+import { formatCourseDuration } from '@/lib/courses/duration';
 
 type BundleEvidenceSummaryProps = {
   evidence: BundleDecisionFacts['evidence'];

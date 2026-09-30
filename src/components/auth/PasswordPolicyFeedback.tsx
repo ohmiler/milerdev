@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getPasswordPolicy } from '@/lib/password-policy';
+import { getPasswordPolicy } from '@/lib/auth/password-policy';
 import { Check, X } from 'lucide-react';
 
 function Requirement({

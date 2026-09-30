@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { BlogTableOfContentsItem } from '@/lib/sanitize';
+import type { BlogTableOfContentsItem } from '@/lib/security/sanitize';
 import { cn } from '@/lib/utils';
 
 interface Props {

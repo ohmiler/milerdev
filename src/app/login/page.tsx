@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import AuthShell from '@/components/auth/AuthShell';
 import LoginForm from '@/components/auth/LoginForm';
 import { Skeleton } from '@/components/ui/skeleton';
-import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/auth/safe-auth-return';
 
 export default async function LoginPage({
   searchParams,

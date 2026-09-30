@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { logError } from '@/lib/error-handler';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { hashNewPassword } from '@/lib/password-storage';
-import { PasswordSecurityError } from '@/lib/password-errors';
+import { hashNewPassword } from '@/lib/auth/password-storage';
+import { PasswordSecurityError } from '@/lib/auth/password-errors';
 import { parseUserImportCsv } from '@/lib/users/import-csv';
 import { randomBytes } from 'crypto';
 

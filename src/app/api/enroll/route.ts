@@ -6,11 +6,11 @@ import { enrollments, courses, payments, coupons, couponUsages } from "@/lib/db/
 import { eq, and, count } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/notifications/email";
 import { z } from "zod";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
-import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
+import { calculateDiscount, validateCouponEligibility } from "@/lib/commerce/coupon";
 import { safeInsertEnrollment } from "@/lib/db/safe-insert";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
-import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
+import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
 
 // Validation schema
 const enrollSchema = z.object({

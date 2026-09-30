@@ -4,8 +4,8 @@ import type { Adapter, AdapterAccount, AdapterUser } from 'next-auth/adapters';
 // Exercise the installed Auth.js state machine, including its cookie path.
 // Deliberately relative: this internal module is not a public package export.
 import { handleLoginOrRegister } from '../../node_modules/@auth/core/lib/actions/callback/handle-login.js';
-import { restrictAccountLinking } from '@/lib/auth-account-linking';
-import { createGoogleProvider } from '@/lib/auth-google';
+import { restrictAccountLinking } from '@/lib/auth/account-linking';
+import { createGoogleProvider } from '@/lib/auth/google';
 
 const existing: AdapterUser = {
     id: 'pre-registered-user', email: 'owner@example.test',
