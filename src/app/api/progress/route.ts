@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { lessonProgress, lessons } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';
-import { updateLearningProgress } from '@/lib/learning-progress';
+import { updateLearningProgress } from '@/lib/learning/progress';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const progressUpdateSchema = z.object({

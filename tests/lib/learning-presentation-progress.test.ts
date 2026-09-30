@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deriveLearningPresentation,
   type LearningPresentationSource,
-} from '@/lib/learning-presentation';
+} from '@/lib/learning/presentation';
 
 const lessons = [
   { id: 'lesson-1', title: 'เริ่มต้น TypeScript', orderIndex: 1 },

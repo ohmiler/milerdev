@@ -21,7 +21,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Progress } from '@/components/ui/progress';
-import { getDashboardLearning } from '@/lib/dashboard-learning';
+import { getDashboardLearning } from '@/lib/learning/dashboard';
 import { requireMember } from '@/lib/member-access';
 
 export const metadata: Metadata = {

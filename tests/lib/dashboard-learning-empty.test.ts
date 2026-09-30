@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getDashboardLearning,
   type DashboardLearningStore,
-} from '@/lib/dashboard-learning';
+} from '@/lib/learning/dashboard';
 
 describe('getDashboardLearning without enrollment', () => {
   it('returns the canonical member presentation and preserves account counts', async () => {

@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { courses, lessons } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import LearnPageClient from '@/components/course/LearnPageClient';
-import { getLearningWorkspaceProjection } from '@/lib/learning-workspace';
+import { getLearningWorkspaceProjection } from '@/lib/learning/workspace';
 
 export const dynamic = 'force-dynamic';
 

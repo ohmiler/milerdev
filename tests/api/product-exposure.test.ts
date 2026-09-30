@@ -10,7 +10,7 @@ vi.mock('@/lib/analytics', () => ({
 vi.mock('@/lib/measurement-recorder', () => ({
   measurementRecorder: { recordProductExposure: vi.fn() },
 }));
-vi.mock('@/lib/learning-measurement', () => ({
+vi.mock('@/lib/learning/measurement', () => ({
   learningMeasurementRecorder: { recordWorkspaceStart: vi.fn() },
 }));
 vi.mock('@/lib/error-handler', () => ({ logEvent: vi.fn() }));
@@ -27,7 +27,7 @@ vi.mock('@/lib/rate-limit', () => ({
 
 import { isAnalyticsEventEnabled, recordClientAnalyticsEvent } from '@/lib/analytics';
 import { auth } from '@/lib/auth';
-import { learningMeasurementRecorder } from '@/lib/learning-measurement';
+import { learningMeasurementRecorder } from '@/lib/learning/measurement';
 import { measurementRecorder } from '@/lib/measurement-recorder';
 
 const exposure = {

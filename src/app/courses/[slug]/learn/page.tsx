@@ -4,7 +4,7 @@ import { and, asc, eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, lessonProgress, lessons, courses } from '@/lib/db/schema';
-import { selectContinuationLesson } from '@/lib/learning-continuation';
+import { selectContinuationLesson } from '@/lib/learning/continuation';
 import EmptyCourseWorkspace from './EmptyCourseWorkspace';
 
 export const metadata: Metadata = {

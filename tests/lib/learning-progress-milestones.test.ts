@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   deriveLearningMilestoneIdentities,
   retryLearningProgressTransaction,
-} from '@/lib/learning-progress';
+} from '@/lib/learning/progress';
 
 const base = {
   progressId: 'progress-1',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { derivePersistedLearningProgress } from '@/lib/learning-progress';
+import { derivePersistedLearningProgress } from '@/lib/learning/progress';
 
 describe('learning progress persistence boundary', () => {
   it('keeps watch position monotonic when a stale client reports a lower value', () => {

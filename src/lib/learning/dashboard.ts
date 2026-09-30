@@ -15,8 +15,8 @@ import {
   deriveLearningPresentation,
   type LearningPresentation,
   type LearningPresentationSource,
-} from '@/lib/learning-presentation';
-import { sortCoursesByLearningActivity } from '@/lib/learning-continuation';
+} from '@/lib/learning/presentation';
+import { sortCoursesByLearningActivity } from '@/lib/learning/continuation';
 
 type DashboardLearningRead = {
   enrollments: LearningPresentationSource[];

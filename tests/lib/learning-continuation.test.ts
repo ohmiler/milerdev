@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   selectContinuationLesson,
   sortCoursesByLearningActivity,
-} from '@/lib/learning-continuation';
+} from '@/lib/learning/continuation';
 
 const lessons = [
   { id: 'lesson-1', orderIndex: 1 },

@@ -17,7 +17,7 @@ import { logError, logEvent } from '@/lib/error-handler';
 import {
   learningMeasurementProjector,
   type LearningMilestoneIdentity,
-} from '@/lib/learning-measurement';
+} from '@/lib/learning/measurement';
 
 export type LearningProgressUpdate = {
   userId: string;

@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import LearningWorkspaceAnalytics from '@/components/analytics/LearningWorkspaceAnalytics';
-import type { LearningCurriculumLesson } from '@/lib/learning-workspace';
+import type { LearningCurriculumLesson } from '@/lib/learning/workspace';
 
 interface CurrentLesson extends LearningCurriculumLesson {
   videoUrl: string | null;

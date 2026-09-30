@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   getLearningWorkspaceProjection,
   type LearningWorkspaceStore,
-} from '@/lib/learning-workspace';
+} from '@/lib/learning/workspace';
 
 function workspaceStore(): LearningWorkspaceStore {
   return {

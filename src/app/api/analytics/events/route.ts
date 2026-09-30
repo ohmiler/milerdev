@@ -10,7 +10,7 @@ import { auth } from '@/lib/auth';
 import { withBrowserConsent } from '@/lib/privacy-consent';
 import { logEvent } from '@/lib/error-handler';
 import { measurementRecorder } from '@/lib/measurement-recorder';
-import { learningMeasurementRecorder } from '@/lib/learning-measurement';
+import { learningMeasurementRecorder } from '@/lib/learning/measurement';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {

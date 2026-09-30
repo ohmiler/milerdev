@@ -3,7 +3,7 @@ import 'server-only';
 import {
   selectContinuationLesson,
   type ContinuationProgress,
-} from '@/lib/learning-continuation';
+} from '@/lib/learning/continuation';
 
 export type LearningPresentationSource = {
   course: {
