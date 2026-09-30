@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
-import { sendPasswordResetEmail } from '@/lib/email';
+import { sendPasswordResetEmail } from '@/lib/notifications/email';
 import { randomBytes, createHash } from 'crypto';
 import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import {

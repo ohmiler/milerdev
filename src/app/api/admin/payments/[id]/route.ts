@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { auditLogs, payments, enrollments, bundleCourses, courses, bundles } from '@/lib/db/schema';
 import { eq, and, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { notify } from '@/lib/notify';
+import { notify } from '@/lib/notifications/notify';
 import { fulfillManualPayment } from '@/lib/payment-fulfillment';
 
 interface RouteParams {

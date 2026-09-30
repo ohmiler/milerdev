@@ -39,7 +39,7 @@ vi.mock('@/lib/auditLog', () => ({
 }));
 
 // Mock email
-vi.mock('@/lib/email', () => ({
+vi.mock('@/lib/notifications/email', () => ({
     sendEnrollmentEmail: vi.fn().mockResolvedValue(undefined),
     sendPaymentConfirmation: vi.fn().mockResolvedValue(undefined),
     sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),

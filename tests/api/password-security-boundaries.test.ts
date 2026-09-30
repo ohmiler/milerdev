@@ -10,7 +10,7 @@ vi.mock('bcryptjs', () => ({ default: { compare: mocks.compare } }));
 vi.mock('@/lib/auth', () => ({ auth: mocks.auth }));
 vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: mocks.admin }));
 vi.mock('@/lib/auditLog', () => ({ logAudit: vi.fn() }));
-vi.mock('@/lib/email', () => ({ sendRegistrationVerificationEmail: vi.fn() }));
+vi.mock('@/lib/notifications/email', () => ({ sendRegistrationVerificationEmail: vi.fn() }));
 vi.mock('@/lib/auth-rate-limit', () => ({
   consumeAuthRateLimit: vi.fn().mockResolvedValue({ success: true }),
   authRateLimitUnavailableResponse: vi.fn(),
