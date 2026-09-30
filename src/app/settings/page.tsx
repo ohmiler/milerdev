@@ -1,13 +1,14 @@
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ArrowUpRight } from 'lucide-react';
-import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { eq, sql } from 'drizzle-orm';
+import { requireMember } from '@/lib/member-access';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
 import PasswordSettingsForm from '@/components/settings/PasswordSettingsForm';
+import ConsentSettingsButton from '@/components/privacy/ConsentSettingsButton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,14 +22,15 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
-  const session = await auth();
-  if (!session?.user) redirect('/login');
+  const member = await requireMember('/settings');
 
   const [user] = await db
-    .select({ passwordHash: users.passwordHash })
+    .select({ hasPassword: sql<number>`${users.passwordHash} is not null` })
     .from(users)
-    .where(eq(users.id, session.user.id))
+    .where(eq(users.id, member.id))
     .limit(1);
+
+  if (!user) notFound();
 
   return (
     <LearnerAccountShell
@@ -36,6 +38,10 @@ export default async function SettingsPage() {
       title="ตั้งค่าบัญชี"
       description="จัดการข้อมูลที่แสดงในบัญชีและควบคุมความปลอดภัยของการเข้าสู่ระบบ"
     >
+      <Card>
+        <CardHeader><CardTitle>ความเป็นส่วนตัว</CardTitle><CardDescription>เลือกหรือถอนความยินยอมสำหรับสถิติส่วนเสริม</CardDescription></CardHeader>
+        <CardContent><ConsentSettingsButton /></CardContent>
+      </Card>
       <Card aria-labelledby="account-settings-title">
         <CardHeader>
           <Badge variant="outline">บัญชี</Badge>
@@ -62,7 +68,7 @@ export default async function SettingsPage() {
           <CardDescription>เปลี่ยนรหัสผ่านสำหรับบัญชีที่เข้าสู่ระบบด้วยอีเมล</CardDescription>
         </CardHeader>
         <CardContent>
-          <PasswordSettingsForm hasPassword={Boolean(user?.passwordHash)} />
+          <PasswordSettingsForm hasPassword={Boolean(user.hasPassword)} />
         </CardContent>
       </Card>
     </LearnerAccountShell>

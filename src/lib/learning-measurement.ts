@@ -8,7 +8,8 @@ import {
   analyticsExposureIdSchema,
   serverAnalyticsEventSchema,
 } from '@/lib/analytics-contract';
-import { db } from '@/lib/db';
+import { getMeasurementDatabase } from '@/lib/measurement-database';
+import { lockActiveConsent } from '@/lib/privacy-consent';
 import {
   analyticsEvents,
   enrollments,
@@ -53,7 +54,7 @@ export interface LearningMeasurementStore {
   ): Promise<LearningMilestoneIdentity[]>;
   projectPendingMilestone(
     milestone: LearningMilestoneProjection,
-  ): Promise<'projected' | 'duplicate' | 'already_projected'>;
+  ): Promise<'projected' | 'duplicate' | 'already_projected' | 'ineligible'>;
   recordProjectionFailure(identity: LearningMilestoneIdentity): Promise<void>;
 }
 
@@ -164,7 +165,7 @@ export function createLearningMeasurementProjector(input: {
 
 const drizzleLearningMeasurementStore: LearningMeasurementStore = {
   async readAuthorizedWorkspace(userId, lessonId) {
-    const [workspace] = await db
+    const [workspace] = await getMeasurementDatabase()
       .select({
         enrollmentId: enrollments.id,
         courseId: enrollments.courseId,
@@ -182,7 +183,7 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
 
   async insertWorkspaceStart(input) {
     try {
-      await db.insert(analyticsEvents).values({
+      await getMeasurementDatabase().insert(analyticsEvents).values({
         eventName: 'learning_workspace_started',
         exposureId: input.exposureId,
         source: 'client',
@@ -206,7 +207,7 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
   },
 
   async readPendingMilestone(identity) {
-    const [milestone] = await db
+    const [milestone] = await getMeasurementDatabase()
       .select({
         eventName: measurementOutbox.eventName,
         factId: measurementOutbox.learningFactId,
@@ -242,7 +243,7 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
   },
 
   async listPendingMilestones(enrollmentId) {
-    const pending = await db
+    const pending = await getMeasurementDatabase()
       .select({
         eventName: measurementOutbox.eventName,
         factId: measurementOutbox.learningFactId,
@@ -261,9 +262,9 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
 
   async projectPendingMilestone(milestone) {
     const event = parseLearningMilestoneEvent(milestone);
-    return db.transaction(async (tx) => {
+    return getMeasurementDatabase().transaction(async (tx) => {
       const [outbox] = await tx
-        .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt })
+        .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt, consentId: measurementOutbox.consentId })
         .from(measurementOutbox)
         .where(and(
           eq(measurementOutbox.eventName, milestone.eventName),
@@ -273,6 +274,7 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
         .limit(1)
         .for('update');
       if (!outbox) return 'already_projected';
+      if (!(await lockActiveConsent(tx, outbox.consentId))) return 'ineligible';
 
       let duplicate = false;
       try {
@@ -312,7 +314,7 @@ const drizzleLearningMeasurementStore: LearningMeasurementStore = {
   },
 
   async recordProjectionFailure(identity) {
-    await db.update(measurementOutbox).set({
+    await getMeasurementDatabase().update(measurementOutbox).set({
       attemptCount: sql`${measurementOutbox.attemptCount} + 1`,
       lastAttemptAt: new Date(),
       lastErrorCode: 'projection_failed',

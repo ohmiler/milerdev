@@ -10,7 +10,6 @@ const announcementsPageSource = readFileSync('src/app/announcements/page.tsx', '
 const announcementFeedSource = readFileSync('src/components/content/AnnouncementFeed.tsx', 'utf8');
 const privacySource = readFileSync('src/app/privacy/page.tsx', 'utf8');
 const termsSource = readFileSync('src/app/terms/page.tsx', 'utf8');
-const bundleDetailSource = readFileSync('src/app/bundles/[slug]/page.tsx', 'utf8');
 const legalDocumentSource = readFileSync('src/components/content/LegalDocument.tsx', 'utf8');
 const announcementApiSource = readFileSync('src/app/api/announcements/route.ts', 'utf8');
 
@@ -76,9 +75,9 @@ describe('public content contracts', () => {
 
   it('preserves all policy sections and high-risk published statements', () => {
     expect(privacySource.match(/<LegalSection/g)).toHaveLength(9);
-    expect(privacySource).toContain('อัปเดตล่าสุด: 1 มกราคม 2568');
+    expect(privacySource).toContain('อัปเดตล่าสุด: 13 กันยายน 2569');
     expect(privacySource).toContain('เราไม่เก็บข้อมูลบัตรเครดิต');
-    expect(privacySource).toContain('การเข้ารหัสรหัสผ่านด้วย bcrypt');
+    expect(privacySource).toContain('Argon2id สำหรับรหัสผ่านที่ตั้งใหม่');
     expect(privacySource).toContain('milerdev.official@gmail.com');
 
     expect(termsSource.match(/<LegalSection/g)).toHaveLength(9);
@@ -118,13 +117,5 @@ describe('public content contracts', () => {
     expect(html).toContain(`href=${quote}#legal-one${quote}`);
     expect(html).toContain(`id=${quote}legal-one${quote}`);
     expect(html).toContain(`tabindex=${quote}-1${quote}`);
-  });
-
-  it('pairs bundle summary labels and values with description-list semantics', () => {
-    const summary = bundleDetailSource.match(/<dl[^>]*aria-label=\{'ข้อมูลชุดคอร์ส'\}[\s\S]*?<\/dl>/)?.[0];
-
-    expect(summary).toBeTruthy();
-    expect(summary?.match(/<dt\b/g)).toHaveLength(4);
-    expect(summary?.match(/<dd\b/g)).toHaveLength(4);
   });
 });

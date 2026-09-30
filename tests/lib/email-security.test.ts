@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
     createTransport: vi.fn(),
     sendMail: vi.fn(),
+    resendSend: vi.fn(),
     logError: vi.fn(),
     logEvent: vi.fn(),
 }));
@@ -14,7 +15,7 @@ vi.mock('nodemailer', () => ({
 }));
 
 vi.mock('resend', () => ({
-    Resend: vi.fn(),
+    Resend: vi.fn().mockImplementation(() => ({ emails: { send: mocks.resendSend } })),
 }));
 
 vi.mock('@/lib/error-handler', () => ({
@@ -99,5 +100,24 @@ describe('email SMTP security boundary', () => {
             html: expect.any(String),
         }));
         expect(mocks.logEvent).toHaveBeenCalledWith('email.smtp.sent');
+    });
+
+    it('puts registration tokens in the fragment and sends no chosen password', async () => {
+        const { sendRegistrationVerificationEmail } = await import('@/lib/email');
+        const { resolveSafeAuthReturn } = await import('@/lib/safe-auth-return');
+        await sendRegistrationVerificationEmail({ email: 'owner@example.test', token: 'a'.repeat(64), returnTo: resolveSafeAuthReturn('/courses').pathname });
+        const html = mocks.sendMail.mock.calls[0][0].html;
+        expect(html).toContain('#token=' + 'a'.repeat(64));
+        expect(html).not.toContain('?token=');
+        expect(html).toContain('callbackUrl=%2Fcourses');
+    });
+
+    it('recognizes Resend resolved errors without logging provider payloads', async () => {
+        process.env.RESEND_API_KEY = 'test-placeholder';
+        mocks.resendSend.mockResolvedValue({ data: null, error: { message: 'private body' } });
+        const { sendWelcomeEmail } = await import('@/lib/email');
+        expect(await sendWelcomeEmail({ email: 'owner@example.test', name: 'Owner' })).toBe(false);
+        expect(mocks.logEvent).toHaveBeenCalledWith('email.provider.rejected', 'warn');
+        expect(JSON.stringify(mocks.logEvent.mock.calls)).not.toContain('private body');
     });
 });

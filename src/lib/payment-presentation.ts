@@ -48,6 +48,7 @@ type PaymentState =
   | 'cancelled-return';
 
 type RecoveryKind =
+  | 'resume'
   | 'restart'
   | 'refresh'
   | 'contact'
@@ -208,7 +209,7 @@ function describePayment(
           isConfirmed: false,
           label: 'รอแนบสลิป',
           heading: 'รายการนี้ยังรอหลักฐานการชำระเงิน',
-          description: 'หากโอนเงินแล้วอย่าชำระซ้ำ กรุณาติดต่อพร้อมเลขอ้างอิงจนกว่าจะมี resume contract ที่ตรวจ owner ได้',
+          description: 'หากโอนเงินแล้วอย่าชำระซ้ำ กรุณาแนบสลิปในรายการเดิมหรือติดต่อพร้อมเลขอ้างอิง',
           preventDuplicatePayment: true,
         },
         recovery: {

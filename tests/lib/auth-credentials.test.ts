@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { authorizeCredentials } from '@/lib/auth-credentials';
+import { applyJwtSessionPolicy } from '@/lib/auth-session';
+import type { JWT } from 'next-auth/jwt';
 
 const request = new Request('https://example.test/api/auth/callback/credentials', {
     method: 'POST',
@@ -22,6 +24,7 @@ function createDependencies() {
             name: 'Learner',
             role: 'student',
             passwordHash: 'stored-hash',
+            sessionVersion: 2,
             deactivatedAt: null,
         }),
         comparePassword: vi.fn().mockResolvedValue(true),
@@ -29,6 +32,51 @@ function createDependencies() {
 }
 
 describe('credentials authorization rate-limit boundary', () => {
+    it.each([undefined, -1, 1.5, NaN])('rejects invalid credential version %s', async (sessionVersion) => {
+        const dependencies = createDependencies();
+        const user = await dependencies.findUserByEmail();
+        dependencies.findUserByEmail.mockResolvedValue({ ...user, sessionVersion });
+        await expect(authorizeCredentials(
+            { email: user.email, password: 'Password1' }, request, dependencies,
+        )).resolves.toBeNull();
+        expect(dependencies.comparePassword).not.toHaveBeenCalled();
+    });
+
+    it('cannot mint a current JWT from an old password when reset completes during bcrypt', async () => {
+        const dependencies = createDependencies();
+        let version = 2;
+        dependencies.comparePassword.mockImplementation(async () => {
+            // The owner completes reset after the old password hash was loaded.
+            version = 3;
+            return true;
+        });
+        const user = await authorizeCredentials(
+            { email: 'learner@example.test', password: 'OldPassword1' }, request, dependencies,
+        );
+        expect(user?.sessionVersion).toBe(2);
+        const loadUserState = async () => ({ role: 'student', sessionVersion: version, deactivatedAt: null });
+        await expect(applyJwtSessionPolicy({
+            token: {} as JWT, user: user!, accountProvider: 'credentials', loadUserState,
+        })).resolves.toBeNull();
+        await expect(applyJwtSessionPolicy({
+            token: { id: 'user-1', sessionVersion: 2 } as JWT, loadUserState,
+        })).resolves.toBeNull();
+
+        dependencies.findUserByEmail.mockResolvedValue({
+            ...(await dependencies.findUserByEmail()), passwordHash: 'new-hash', sessionVersion: 3,
+        });
+        dependencies.comparePassword.mockImplementation(async (password) => password === 'NewPassword1');
+        await expect(authorizeCredentials(
+            { email: 'learner@example.test', password: 'OldPassword1' }, request, dependencies,
+        )).resolves.toBeNull();
+        const recoveredUser = await authorizeCredentials(
+            { email: 'learner@example.test', password: 'NewPassword1' }, request, dependencies,
+        );
+        await expect(applyJwtSessionPolicy({
+            token: {} as JWT, user: recoveredUser!, accountProvider: 'credentials', loadUserState,
+        })).resolves.toMatchObject({ id: 'user-1', sessionVersion: 3 });
+    });
+
     it('rejects empty credential fields without consuming a bucket', async () => {
         const dependencies = createDependencies();
 
@@ -100,6 +148,7 @@ describe('credentials authorization rate-limit boundary', () => {
             email: 'learner@example.test',
             name: 'Learner',
             role: 'student',
+            sessionVersion: 2,
         });
     });
 

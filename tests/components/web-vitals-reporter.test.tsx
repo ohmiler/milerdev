@@ -1,5 +1,10 @@
 // @vitest-environment jsdom
 
+vi.mock('@/components/privacy/consent-client', async (original) => ({ ...await original<typeof import('@/components/privacy/consent-client')>(), canSendPageVitals: () => true }));
+import { setConsentState } from '@/components/privacy/consent-client';
+import { beforeEach as beforeConsentTest } from 'vitest';
+beforeConsentTest(() => setConsentState({ analytics: true, decided: true, expiresAt: new Date(Date.now() + 60_000).toISOString() }));
+
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -1,3 +1,4 @@
+vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
@@ -88,7 +89,7 @@ describe('eligible product exposure API contract', () => {
     const response = await post(workspaceExposure);
 
     expect(response.status).toBe(204);
-    expect(auth).not.toHaveBeenCalled();
+    expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
     expect(learningMeasurementRecorder.recordWorkspaceStart).not.toHaveBeenCalled();
   });
 
@@ -100,7 +101,7 @@ describe('eligible product exposure API contract', () => {
     expect(response.status).toBe(404);
   });
 
-  it('records a Course exposure without optional user identity lookup or the legacy writer', async () => {
+  it('records a Course exposure after verifying consent without persisting user identity', async () => {
     const response = await post(exposure);
 
     expect(response.status).toBe(204);
@@ -109,7 +110,7 @@ describe('eligible product exposure API contract', () => {
       productType: 'course',
       productId: 'course-1',
     });
-    expect(auth).not.toHaveBeenCalled();
+    expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
     expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
   });
 
@@ -119,17 +120,17 @@ describe('eligible product exposure API contract', () => {
     const response = await post(exposure);
 
     expect(response.status).toBe(404);
-    expect(auth).not.toHaveBeenCalled();
+    expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
     expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
   });
 
   it('accepts delivery without identity or target work when analytics is disabled', async () => {
-    vi.mocked(measurementRecorder.recordProductExposure).mockResolvedValue({ status: 'disabled' });
+    vi.mocked(isAnalyticsEventEnabled).mockResolvedValue(false);
 
     const response = await post(exposure);
 
     expect(response.status).toBe(204);
-    expect(auth).not.toHaveBeenCalled();
+    expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
     expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
   });
 });

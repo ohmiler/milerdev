@@ -27,7 +27,7 @@ const documentSecurityHeaders: Record<string, string> = {
         "img-src 'self' data: blob: https: http:",
         "font-src 'self' https://fonts.gstatic.com",
         "connect-src 'self' https://api.stripe.com https://*.bunny.net https://*.bunnyinfra.net",
-        "frame-src 'self' https://js.stripe.com https://*.bunny.net https://iframe.mediadelivery.net https://www.youtube.com https://player.vimeo.com",
+        "frame-src 'self' https://js.stripe.com https://*.bunny.net https://iframe.mediadelivery.net https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
         "frame-ancestors 'self'",
         "object-src 'none'",
         "base-uri 'self'",

@@ -56,7 +56,7 @@ export default function LearningNavbar({
             type="button"
             size="icon-sm"
             variant="outline"
-            className="lg:hidden"
+            className="min-h-11 min-w-11 lg:hidden"
             onClick={(event) => onOpenSidebar(event.currentTarget)}
             aria-label="เปิดรายการบทเรียน"
             title="เปิดรายการบทเรียน"
@@ -82,7 +82,7 @@ export default function LearningNavbar({
             <span className="tabular-nums">{currentIndex + 1} / {totalCount}</span>
           </div>
 
-          <Button asChild size="icon-sm" variant="ghost" className="lg:h-9 lg:w-auto lg:px-3">
+          <Button asChild size="icon-sm" variant="ghost" className="min-h-11 min-w-11 lg:w-auto lg:px-3">
             <Link
               href={`/courses/${courseSlug}`}
               aria-label={`ออกจากบทเรียนและกลับไปยังคอร์ส ${courseTitle}`}

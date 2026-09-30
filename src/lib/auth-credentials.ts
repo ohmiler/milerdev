@@ -10,6 +10,7 @@ type CredentialUser = {
     role: string;
     passwordHash: string | null;
     deactivatedAt: Date | null;
+    sessionVersion: number;
 };
 
 type AuthorizeCredentialsDependencies = {
@@ -59,6 +60,8 @@ export async function authorizeCredentials(
         return null;
     }
     if (!user?.passwordHash || user.deactivatedAt !== null) return null;
+    const verifiedSessionVersion = user.sessionVersion;
+    if (!Number.isSafeInteger(verifiedSessionVersion) || verifiedSessionVersion < 0) return null;
 
     let isValidPassword: boolean;
     try {
@@ -76,5 +79,6 @@ export async function authorizeCredentials(
         email: user.email,
         name: user.name,
         role: user.role,
+        sessionVersion: verifiedSessionVersion,
     };
 }

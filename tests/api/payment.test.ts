@@ -303,6 +303,23 @@ describe('POST /api/stripe/checkout', () => {
         expect(createCall?.[1]).toEqual({ idempotencyKey: `checkout:${paymentId}` });
     });
 
+    it('does not create a payment or provider session after the reviewed price changes', async () => {
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+        const res = await callCheckout({ courseId: 'course-1', expectedAmount: '490.00' });
+        expect(res.status).toBe(409);
+        expect(db.insert).not.toHaveBeenCalled();
+        expect(mockedStripe.checkout.sessions.create).not.toHaveBeenCalled();
+    });
+
+    it('does not silently discard a missing coupon and charge the full price', async () => {
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+        mockDb.selectResults = [];
+        const res = await callCheckout({ courseId: 'course-1', couponId: 'missing-coupon' });
+        expect(res.status).toBe(400);
+        expect(db.insert).not.toHaveBeenCalled();
+        expect(mockedStripe.checkout.sessions.create).not.toHaveBeenCalled();
+    });
+
     // Note: coupon discount logic is thoroughly tested in tests/lib/coupon.test.ts
     // Complex multi-chain DB mocks for coupon flows are fragile in integration tests
 });

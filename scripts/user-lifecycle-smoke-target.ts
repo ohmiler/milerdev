@@ -1,3 +1,5 @@
+import { getPasswordPolicyError } from '../src/lib/password-policy';
+
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 export type UserLifecycleSmokeTarget = {
@@ -43,15 +45,7 @@ export function parseUserLifecycleSmokeTarget(
 }
 
 export function validateUserLifecycleSmokePassword(password: string | undefined): void {
-    if (
-        !password
-        || password.length < 8
-        || !/[A-Z]/.test(password)
-        || !/[a-z]/.test(password)
-        || !/[0-9]/.test(password)
-    ) {
-        throw new Error(
-            'Smoke fixture passwords require at least 8 characters with upper, lower, and number',
-        );
+    if (!password || getPasswordPolicyError(password)) {
+        throw new Error('Smoke fixture passwords must satisfy the shared password policy');
     }
 }

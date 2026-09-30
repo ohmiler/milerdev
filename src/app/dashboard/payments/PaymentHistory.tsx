@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { ComponentProps } from 'react';
-import { CircleAlert, CreditCard, ReceiptText } from 'lucide-react';
+import { CircleAlert, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -10,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -25,50 +23,11 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
-
-interface Payment {
-  id: string;
-  amount: string;
-  currency: string;
-  method: string;
-  status: string;
-  createdAt: string;
-  courseId: string | null;
-  courseTitle: string | null;
-  courseSlug: string | null;
-  bundleId: string | null;
-  bundleTitle: string | null;
-  bundleSlug: string | null;
-}
-
-const methodLabels: Record<string, string> = {
-  promptpay: 'พร้อมเพย์',
-  stripe: 'บัตรเครดิต/เดบิต',
-  bank_transfer: 'โอนเงิน',
-};
-
-type BadgeVariant = ComponentProps<typeof Badge>['variant'];
-
-const statusConfig: Record<string, { label: string; variant: BadgeVariant }> = {
-  completed: { label: 'สำเร็จ', variant: 'secondary' },
-  pending: { label: 'รอดำเนินการ', variant: 'outline' },
-  verifying: { label: 'กำลังตรวจสอบ', variant: 'default' },
-  failed: { label: 'ไม่สำเร็จ', variant: 'destructive' },
-  refunded: { label: 'คืนเงินแล้ว', variant: 'secondary' },
-};
+import PaymentRecordDetails from '@/components/proof/PaymentRecordDetails';
+import type { PaymentRecord } from '@/lib/payment-records';
 
 const ZERO_SATANG = BigInt(0);
 const SATANG_PER_BAHT = BigInt(100);
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString('th-TH', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 function parseThbSatang(amount: string) {
   const match = /^([+-]?)(\d+)(?:\.(\d{1,2}))?$/.exec(amount.trim());
@@ -89,19 +48,8 @@ function formatThbSatang(value: bigint) {
   return `${isNegative ? '-' : ''}${formattedBaht}.${satang}`;
 }
 
-function formatAmount(amount: string, currency: string) {
-  if (currency === 'THB') {
-    const satang = parseThbSatang(amount);
-    if (satang !== null) return `฿${formatThbSatang(satang)}`;
-  }
-
-  const value = Number.parseFloat(amount);
-  if (!Number.isFinite(value)) return `${amount} ${currency}`;
-  return `${value.toLocaleString('th-TH', { minimumFractionDigits: 2 })} ${currency}`;
-}
-
 export default function PaymentHistory() {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -116,10 +64,10 @@ export default function PaymentHistory() {
       setError(false);
 
       try {
-        const response = await fetch('/api/payments', { signal: controller.signal });
+        const response = await fetch('/api/payments', { signal: controller.signal, cache: 'no-store' });
         if (!response.ok) throw new Error('Payment request failed');
         const data = await response.json();
-        setPayments(Array.isArray(data.payments) ? data.payments : []);
+        if (!controller.signal.aborted) setPayments(Array.isArray(data.payments) ? data.payments : []);
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === 'AbortError') return;
         setError(true);
@@ -132,10 +80,10 @@ export default function PaymentHistory() {
     return () => controller.abort();
   }, [reloadKey]);
 
-  const completed = payments.filter((payment) => payment.status === 'completed');
+  const completed = payments.filter((payment) => payment.presentation.payment.isConfirmed);
   const totalSpentSatang = completed.reduce((sum, payment) => {
-    if (payment.currency !== 'THB') return sum;
-    return sum + (parseThbSatang(payment.amount) ?? ZERO_SATANG);
+    if (!payment.presentation.quote) return sum;
+    return sum + (parseThbSatang(payment.presentation.quote.amountDue) ?? ZERO_SATANG);
   }, ZERO_SATANG);
 
   if (loading) {
@@ -198,31 +146,7 @@ export default function PaymentHistory() {
         </div>
 
         <div className="grid gap-3">
-          {payments.map((payment, index) => {
-            const status = statusConfig[payment.status] ?? statusConfig.pending;
-            const title = payment.courseTitle ?? payment.bundleTitle;
-            const href = payment.courseSlug
-              ? `/courses/${payment.courseSlug}`
-              : payment.bundleSlug ? `/bundles/${payment.bundleSlug}` : null;
-
-            return (
-              <Card size="sm" key={payment.id}>
-                <CardHeader>
-                  <CardTitle>
-                    {title && href ? <Link href={href}>{title}</Link> : title ?? 'รายการนี้ไม่มีหน้าสินค้าแล้ว'}
-                  </CardTitle>
-                  <CardDescription>
-                    {String(index + 1).padStart(2, '0')} · {methodLabels[payment.method] ?? payment.method} · {formatDate(payment.createdAt)}
-                  </CardDescription>
-                  <CardAction><Badge variant={status.variant}>{status.label}</Badge></CardAction>
-                </CardHeader>
-                <CardContent className="flex items-center gap-2">
-                  <ReceiptText aria-hidden="true" />
-                  <strong>{formatAmount(payment.amount, payment.currency)}</strong>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {payments.map((record) => <PaymentRecordDetails key={record.id} record={record} onRefresh={retry} showDetailsLink />)}
         </div>
       </section>
     </div>

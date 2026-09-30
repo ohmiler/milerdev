@@ -1,5 +1,6 @@
 import {
   deriveCourseDecisionFacts,
+  type CourseDecisionFacts,
   type CourseDecisionSource,
 } from '@/lib/course-decision-facts';
 
@@ -23,6 +24,10 @@ export type BundleCourseDecisionSource = {
   regularPrice: number | string;
   promotion?: CourseDecisionSource['promotion'];
   lessonCount: number;
+  knownDurationSeconds?: number | null;
+  freePreviewCount?: number | null;
+  instructor?: CourseDecisionSource['instructor'];
+  verifiedReview?: CourseDecisionSource['verifiedReview'];
   owned?: boolean;
 };
 
@@ -47,12 +52,16 @@ export type BundleDecisionFacts = {
     bundleFormatted: string;
     separateCurrent: number;
     separateCurrentFormatted: string;
+    separateRegular: number;
+    separateRegularFormatted: string;
     isFree: boolean;
     comparison: BundlePriceComparison;
   };
   evidence: {
     courseCount: number;
     totalLessons: number;
+    knownDurationSeconds: number | null;
+    freePreviewCount: number;
   };
   courses: Array<{
     id: string;
@@ -62,6 +71,7 @@ export type BundleDecisionFacts = {
     readiness: 'ready' | 'preparing';
     lessonCount: number;
     owned: boolean;
+    evidence: CourseDecisionFacts['evidence'];
     price: {
       regular: number;
       effective: number;
@@ -174,6 +184,10 @@ export function deriveBundleDecisionFacts(
       regularPrice: course.regularPrice,
       promotion: course.promotion,
       lessonCount: course.lessonCount,
+      knownDurationSeconds: course.knownDurationSeconds,
+      freePreviewCount: course.freePreviewCount,
+      instructor: course.instructor,
+      verifiedReview: course.verifiedReview,
     }, options);
 
     return {
@@ -184,6 +198,7 @@ export function deriveBundleDecisionFacts(
       readiness: decisionFacts.readiness,
       lessonCount: decisionFacts.evidence.lessonCount,
       owned: course.owned === true,
+      evidence: decisionFacts.evidence,
       price: {
         regular: decisionFacts.price.regular,
         effective: decisionFacts.price.effective,
@@ -199,6 +214,10 @@ export function deriveBundleDecisionFacts(
     0,
   );
   const separateCurrent = fromCurrencyUnits(separateCurrentUnits);
+  const separateRegular = fromCurrencyUnits(courses.reduce(
+    (total, course) => total + toCurrencyUnits(course.price.regular),
+    0,
+  ));
   const comparison = comparisonFor(bundlePrice, separateCurrent);
   const readiness = courses.length > 0 && courses.every((course) => course.readiness === 'ready')
     ? 'ready'
@@ -225,12 +244,22 @@ export function deriveBundleDecisionFacts(
       bundleFormatted,
       separateCurrent,
       separateCurrentFormatted: thbFormatter.format(separateCurrent),
+      separateRegular,
+      separateRegularFormatted: thbFormatter.format(separateRegular),
       isFree: bundlePrice === 0,
       comparison,
     },
     evidence: {
       courseCount: courses.length,
       totalLessons: courses.reduce((total, course) => total + course.lessonCount, 0),
+      knownDurationSeconds: courses.reduce(
+        (total, course) => total + (course.evidence.knownDurationSeconds ?? 0),
+        0,
+      ) || null,
+      freePreviewCount: courses.reduce(
+        (total, course) => total + course.evidence.freePreviewCount,
+        0,
+      ),
     },
     courses,
     ownership: {
@@ -250,7 +279,7 @@ export function deriveBundleDecisionFacts(
       acquisition,
       complete: {
         kind: 'continue-learning',
-        label: 'ลงทะเบียนครบแล้ว — เข้าเรียน',
+        label: 'ไปการเรียนของฉัน',
         href: '/dashboard',
       },
     },

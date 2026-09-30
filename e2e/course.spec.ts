@@ -54,9 +54,9 @@ test.describe('Course Browsing', () => {
 // API SECURITY — direct API call tests
 // ============================================================
 test.describe('API Security', () => {
-  test('register API rejects weak password', async ({ page }) => {
-    const res = await page.request.post('/api/auth/register', {
-      data: { name: 'Test', email: 'weak@test.com', password: 'weak' },
+  test('registration confirmation rejects weak password', async ({ page }) => {
+    const res = await page.request.post('/api/auth/register/confirm', {
+      data: { token: 'a'.repeat(64), name: 'Test', password: 'weak' },
     });
     expect(res.status()).toBe(400);
   });

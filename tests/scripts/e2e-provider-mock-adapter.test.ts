@@ -71,6 +71,20 @@ describe('required E2E provider mock adapter', () => {
     });
   });
 
+  it('supplies an exact paid Stripe session through the real SDK without external traffic', () => {
+    const result = runWithRequiredE2EGuard(`
+      import Stripe from 'stripe';
+      const data = { u: 'test-owner', p: 'test-payment', t: 'course', i: 'test-course', a: 49025 };
+      const id = 'cs_e2e_' + Buffer.from(JSON.stringify(data)).toString('base64url');
+      const stripe = new Stripe('sk_test_required_e2e_placeholder', { maxNetworkRetries: 0 });
+      const session = await stripe.checkout.sessions.retrieve(id);
+      console.log(JSON.stringify({ paymentId: session.metadata.paymentId, amount: session.amount_total, state: session.payment_status }));
+    `);
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout.trim())).toEqual({ paymentId: 'test-payment', amount: 49025, state: 'paid' });
+  });
+
   it('returns a deterministic SMTP error without opening an external socket', () => {
     const result = runWithRequiredE2EGuard(
       "const net = await import('node:net'); net.default.connect(587, 'smtp.example.com')",
