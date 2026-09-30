@@ -6,7 +6,7 @@ import { BadgeCheck, CircleX } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CertificateCard from '@/components/certificate/CertificateCard';
-import { getPublicCertificateVerification } from '@/lib/certificate-credentials';
+import { getPublicCertificateVerification } from '@/lib/certificates/credentials';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const dynamic = 'force-dynamic';

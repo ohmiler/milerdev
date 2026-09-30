@@ -6,7 +6,7 @@ const { getPublicCertificateVerificationMock } = vi.hoisted(() => ({
   getPublicCertificateVerificationMock: vi.fn(),
 }));
 
-vi.mock('@/lib/certificate-credentials', () => ({
+vi.mock('@/lib/certificates/credentials', () => ({
   getPublicCertificateVerification: getPublicCertificateVerificationMock,
 }));
 vi.mock('@/lib/db', () => ({ db: {} }));

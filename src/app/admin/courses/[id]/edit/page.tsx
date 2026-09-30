@@ -32,7 +32,7 @@ import { transitionAdminCourse } from '@/lib/courses/admin-lifecycle-client';
 import {
   DEFAULT_CERTIFICATE_COLOR,
   normalizeCertificateColor,
-} from '@/lib/certificate-color';
+} from '@/lib/certificates/color';
 import type { CourseLifecycleAction, CourseStatus } from '@/lib/courses/lifecycle';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });

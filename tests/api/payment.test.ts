@@ -47,7 +47,7 @@ vi.mock('@/lib/coupon', () => ({
     isCouponFullDiscount: vi.fn().mockReturnValue(false),
 }));
 
-vi.mock('@/lib/certificate', () => ({
+vi.mock('@/lib/certificates/issuance', () => ({
     issueCertificate: vi.fn().mockResolvedValue({ certificate: { certificateCode: 'CERT-001' }, isNew: true }),
 }));
 

@@ -3,7 +3,7 @@ import 'server-only';
 import { createId } from '@paralleldrive/cuid2';
 import { and, count, eq } from 'drizzle-orm';
 
-import { ensureCompletedCertificate } from '@/lib/certificate';
+import { ensureCompletedCertificate } from '@/lib/certificates/issuance';
 import { db } from '@/lib/db';
 import { getMemberConsentId } from '@/lib/privacy-consent';
 import {

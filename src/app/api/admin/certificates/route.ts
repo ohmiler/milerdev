@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { certificates, users } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
-import { issueCertificate } from '@/lib/certificate';
+import { issueCertificate } from '@/lib/certificates/issuance';
 
 // GET /api/admin/certificates - List all certificates
 export async function GET(request: Request) {

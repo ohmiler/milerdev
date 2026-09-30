@@ -5,7 +5,7 @@ import { courses, courseTags } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { desc, eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
-import { normalizeCertificateColor } from '@/lib/certificate-color';
+import { normalizeCertificateColor } from '@/lib/certificates/color';
 import { createCourseSchema, validateBody } from '@/lib/validations/admin';
 
 // GET /api/admin/courses - List all courses

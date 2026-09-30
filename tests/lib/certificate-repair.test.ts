@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   repairOwnerCertificate,
   type CertificateRepairAdapter,
-} from '@/lib/certificate-credentials';
+} from '@/lib/certificates/credentials';
 
 describe('repairOwnerCertificate', () => {
   it('issues a completed missing credential once and returns ready on replay', async () => {

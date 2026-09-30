@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getOwnerCertificateCollection,
   type CertificateProjectionStore,
-} from '@/lib/certificate-credentials';
+} from '@/lib/certificates/credentials';
 
 describe('getOwnerCertificateCollection', () => {
   it('returns active, revoked, and completed-without-certificate descriptors without internal fields', async () => {
