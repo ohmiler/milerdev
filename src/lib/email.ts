@@ -89,7 +89,7 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
         // Try Resend first (HTTP API — works on Railway)
         const resend = getResend();
         if (resend) {
-            await resend.emails.send({
+            const result = await resend.emails.send({
                 from: EMAIL_FROM,
                 to,
                 subject,
@@ -103,6 +103,10 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
                     },
                 }),
             });
+            if (result.error) {
+                logEvent('email.provider.rejected', 'warn');
+                return false;
+            }
             logEvent('email.resend.sent');
             return true;
         }
@@ -130,11 +134,9 @@ async function sendEmail(to: string, subject: string, html: string, options?: { 
         });
         logEvent('email.smtp.sent');
         return true;
-    } catch (error) {
-        logError(
-            error instanceof Error ? error : new Error(String(error)),
-            { action: 'email.send.failed' }
-        );
+    } catch {
+        // Provider errors can contain recipients, message bodies or tokens.
+        logError(new Error('Email delivery failed'), { action: 'email.send.failed' });
         return false;
     }
 }
@@ -278,6 +280,21 @@ export async function sendEnrollmentEmail({
 /**
  * Send password reset email
  */
+export async function sendRegistrationVerificationEmail({ email, token, returnTo }: {
+    email: string; token: string; returnTo: SafeAuthReturnPath;
+}) {
+    const url = new URL('/verify-email', APP_URL);
+    url.searchParams.set('callbackUrl', returnTo);
+    // Fragments do not reach HTTP access logs or Referer headers.
+    url.hash = `token=${token}`;
+    return sendEmail(email, 'ยืนยันอีเมลเพื่อสมัครสมาชิก - MilerDev', emailLayout(`
+      <h2>ยืนยันอีเมลเพื่อสมัครสมาชิก</h2>
+      <p>เปิดลิงก์ด้านล่าง แล้วตั้งชื่อและรหัสผ่านของคุณเพื่อสร้างบัญชี ลิงก์มีอายุ 30 นาทีและใช้ได้ครั้งเดียว</p>
+      ${button('ยืนยันอีเมลและตั้งรหัสผ่าน', url.toString().replaceAll('&', '&amp;'))}
+      <p>หากคุณไม่ได้สมัครสมาชิก ให้เพิกเฉยอีเมลนี้ ระบบยังไม่ได้สร้างบัญชีหรือเปิดใช้รหัสผ่านใด ๆ</p>
+    `));
+}
+
 export async function sendPasswordResetEmail({
     email,
     name,

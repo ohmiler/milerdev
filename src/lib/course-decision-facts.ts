@@ -71,7 +71,8 @@ export type CourseDecisionFacts = {
 const thbFormatter = new Intl.NumberFormat('th-TH', {
   style: 'currency',
   currency: 'THB',
-  maximumFractionDigits: 0,
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
 });
 
 function toNonNegativeAmount(value: number | string): number {

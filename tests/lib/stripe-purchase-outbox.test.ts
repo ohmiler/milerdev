@@ -1,3 +1,4 @@
+vi.mock('@/lib/privacy-consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { dbTransaction, insertedRows, paymentState, projectPurchase, isDuplicateKeyError } = vi.hoisted(() => ({
@@ -17,6 +18,7 @@ vi.mock('@/lib/purchase-measurement-projector', () => ({
 }));
 
 import { fulfillStripeCheckoutSession } from '@/lib/payment-fulfillment';
+import { getMemberConsentId } from '@/lib/privacy-consent';
 
 const payment = () => ({
   id: 'pay-1',
@@ -75,6 +77,15 @@ function transactionAdapter() {
 }
 
 describe('Stripe purchase transactional outbox', () => {
+  it('grants access without consent and never queues that old purchase after a later opt-in', async () => {
+    vi.mocked(getMemberConsentId).mockResolvedValueOnce(null);
+    expect((await fulfillStripeCheckoutSession({ session: session as never })).status).toBe('fulfilled');
+    expect(insertedRows).toContainEqual(expect.objectContaining({ userId: 'user-1', courseId: 'course-1' }));
+    expect(insertedRows.some((row) => row.eventName)).toBe(false);
+    paymentState.status = 'completed';
+    await fulfillStripeCheckoutSession({ session: session as never });
+    expect(insertedRows.some((row) => row.eventName)).toBe(false);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     insertedRows.length = 0;

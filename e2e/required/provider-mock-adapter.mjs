@@ -1,3 +1,4 @@
+import { paymentReturnMock } from './payment-provider-fixtures.mjs';
 import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
@@ -37,7 +38,11 @@ function providerForSocket(hostname, port) {
     || (SMTP_PORTS.has(Number(port)) ? 'smtp' : null);
 }
 
-function providerMockDefinition(provider) {
+function providerMockDefinition(provider, path) {
+  if (provider === 'stripe') {
+    const payment = paymentReturnMock(path);
+    if (payment) return payment;
+  }
   const body = JSON.stringify({
     error: MOCK_ERROR,
     provider,
@@ -117,12 +122,15 @@ export async function installRequiredE2EProviderMocks(page, appBaseUrl) {
 }
 
 class RequiredE2EProviderRequest extends Writable {
-  constructor(provider, callback) {
+  constructor(provider, callback, path) {
     super();
     this.provider = provider;
+    this.path = path;
     this.headers = new Map();
     this.responded = false;
     if (callback) this.once('response', callback);
+    // Stripe's Node adapter waits for a connected socket before ending its request.
+    queueMicrotask(() => this.emit('socket', { connecting: false }));
   }
 
   _write(_chunk, _encoding, callback) {
@@ -175,7 +183,7 @@ class RequiredE2EProviderRequest extends Writable {
     if (this.responded || this.destroyed) return;
     this.responded = true;
 
-    const mock = providerMockDefinition(this.provider);
+    const mock = providerMockDefinition(this.provider, this.path);
     const headers = {
       ...mock.headers,
       'content-length': String(Buffer.byteLength(mock.body)),
@@ -191,8 +199,8 @@ class RequiredE2EProviderRequest extends Writable {
   }
 }
 
-function createProviderRequest(provider, callback) {
-  return new RequiredE2EProviderRequest(provider, callback);
+function createProviderRequest(provider, callback, path) {
+  return new RequiredE2EProviderRequest(provider, callback, path);
 }
 
 function createSmtpSocket() {
@@ -222,13 +230,14 @@ function assertLocalHostname(hostname) {
 function requestTarget(input, defaultProtocol) {
   if (typeof input === 'string' || input instanceof URL) {
     const parsed = new URL(String(input), `${defaultProtocol}//localhost`);
-    return { hostname: parsed.hostname, port: parsed.port };
+    return { hostname: parsed.hostname, port: parsed.port, path: parsed.pathname + parsed.search };
   }
 
   if (input && typeof input === 'object') {
     return {
       hostname: input.hostname || input.host || 'localhost',
       port: input.port,
+      path: input.path,
     };
   }
 
@@ -238,11 +247,11 @@ function requestTarget(input, defaultProtocol) {
 function guardHttpModule(module, defaultProtocol) {
   const originalRequest = module.request;
   module.request = function guardedRequest(input) {
-    const { hostname } = requestTarget(input, defaultProtocol);
+    const { hostname, path } = requestTarget(input, defaultProtocol);
     const provider = providerForHostname(hostname);
     if (provider) {
       const callback = [...arguments].findLast((argument) => typeof argument === 'function');
-      return createProviderRequest(provider, callback);
+      return createProviderRequest(provider, callback, path);
     }
 
     assertLocalHostname(hostname);
@@ -300,10 +309,10 @@ export function installRequiredE2EServerProviderMocks() {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = function guardedFetch(input) {
       const target = typeof input === 'string' || input instanceof URL ? input : input.url;
-      const { hostname } = requestTarget(target, 'http:');
+      const { hostname, path } = requestTarget(target, 'http:');
       const provider = providerForHostname(hostname);
       if (provider) {
-        const mock = providerMockDefinition(provider);
+        const mock = providerMockDefinition(provider, path);
         return Promise.resolve(new Response(mock.body, {
           status: mock.status,
           headers: mock.headers,

@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import * as dotenv from 'dotenv';
 import { createId } from '@paralleldrive/cuid2';
-import { hash } from 'bcryptjs';
+import { hashNewPassword } from '../src/lib/password-storage';
 
 // Load .env.local only in development
 if (!process.env.DATABASE_URL) {
@@ -14,6 +14,11 @@ async function main() {
         throw new Error('DATABASE_URL is not set');
     }
 
+    // Screen all initial credentials before any database operation.
+    const adminPassword = await hashNewPassword(process.env.INITIAL_ADMIN_PASSWORD ?? '');
+    const instructorPassword = await hashNewPassword(process.env.INITIAL_INSTRUCTOR_PASSWORD ?? '');
+    const studentPassword = await hashNewPassword(process.env.INITIAL_STUDENT_PASSWORD ?? '');
+
     const connection = await mysql.createConnection(process.env.DATABASE_URL);
     const db = drizzle(connection);
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -24,37 +29,31 @@ async function main() {
     // 1. ADMIN USER
     // =====================
     const adminId = createId();
-    const adminPassword = await hash('admin1234', 10);
     await connection.execute(
         `INSERT IGNORE INTO users (id, email, password_hash, name, role, email_verified_at, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [adminId, 'admin@milerdev.com', adminPassword, 'Admin MilerDev', 'admin', now, now, now]
     );
-    console.log('✅ Admin user: admin@milerdev.com / admin1234');
 
     // =====================
     // 2. INSTRUCTOR USER
     // =====================
     const instructorId = createId();
-    const instructorPassword = await hash('instructor1234', 10);
     await connection.execute(
         `INSERT IGNORE INTO users (id, email, password_hash, name, role, email_verified_at, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [instructorId, 'instructor@milerdev.com', instructorPassword, 'Instructor Demo', 'instructor', now, now, now]
     );
-    console.log('✅ Instructor user: instructor@milerdev.com / instructor1234');
 
     // =====================
     // 3. STUDENT USER
     // =====================
     const studentId = createId();
-    const studentPassword = await hash('student1234', 10);
     await connection.execute(
         `INSERT IGNORE INTO users (id, email, password_hash, name, role, email_verified_at, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [studentId, 'student@milerdev.com', studentPassword, 'Student Demo', 'student', now, now, now]
     );
-    console.log('✅ Student user: student@milerdev.com / student1234');
 
     // =====================
     // 4. COURSES
@@ -183,14 +182,11 @@ async function main() {
     // DONE
     // =====================
     console.log('\n🎉 Seed complete! You can now login with:');
-    console.log('   Admin:      admin@milerdev.com / admin1234');
-    console.log('   Instructor: instructor@milerdev.com / instructor1234');
-    console.log('   Student:    student@milerdev.com / student1234');
 
     await connection.end();
 }
 
-main().catch((err) => {
-    console.error('Seed failed:', err);
+main().catch(() => {
+    console.error('Seed failed');
     process.exit(1);
 });

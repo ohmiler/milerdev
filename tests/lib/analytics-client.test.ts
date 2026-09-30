@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
 
+import { setConsentState } from '@/components/privacy/consent-client';
+import { beforeEach as beforeConsentTest } from 'vitest';
+beforeConsentTest(() => setConsentState({ analytics: true, decided: true, expiresAt: new Date(Date.now() + 60_000).toISOString() }));
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {

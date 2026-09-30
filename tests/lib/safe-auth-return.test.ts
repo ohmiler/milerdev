@@ -54,6 +54,8 @@ describe('SafeReturnIntent', () => {
     '/register',
     '/forgot-password',
     '/reset-password/token',
+    '/verify-email',
+    '/verify-email/anything',
     '/courses/%2e%2e/login',
     '/courses/../login',
   ])('falls back for unsafe destination %j', (destination) => {

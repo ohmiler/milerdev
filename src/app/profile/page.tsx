@@ -1,7 +1,7 @@
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { eq, count } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireMember } from '@/lib/member-access';
 import { db } from '@/lib/db';
 import { users, enrollments } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 async function getUserProfile(userId: string) {
-  const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  const [user] = await db.select({ id: users.id, name: users.name, email: users.email, avatarUrl: users.avatarUrl, role: users.role, createdAt: users.createdAt }).from(users).where(eq(users.id, userId)).limit(1);
   if (!user) return null;
 
   const [enrollmentStats] = await db
@@ -37,11 +37,9 @@ function getRoleLabel(role: string) {
 }
 
 export default async function ProfilePage() {
-  const session = await auth();
-  if (!session?.user) redirect('/login');
-
-  const user = await getUserProfile(session.user.id);
-  if (!user) redirect('/login');
+  const member = await requireMember('/profile');
+  const user = await getUserProfile(member.id);
+  if (!user) notFound();
 
   const memberSince = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'short' })
@@ -80,7 +78,7 @@ export default async function ProfilePage() {
           <CardTitle id="edit-profile-title">แก้ไขข้อมูล</CardTitle>
           <CardDescription>อัปเดตชื่อที่ใช้แสดงในบัญชีผู้เรียน</CardDescription>
         </CardHeader>
-        <CardContent><ProfileForm user={user} /></CardContent>
+        <CardContent><ProfileForm user={{ name: user.name, email: user.email }} /></CardContent>
       </Card>
     </LearnerAccountShell>
   );

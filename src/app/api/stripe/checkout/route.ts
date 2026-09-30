@@ -1,3 +1,5 @@
+import { withBrowserConsent } from '@/lib/privacy-consent';
+import { getMeasurementDatabase } from '@/lib/measurement-database';
 import { NextResponse } from "next/server";
 import { z } from 'zod';
 import { auth } from "@/lib/auth";
@@ -16,6 +18,7 @@ const stripeCheckoutRequestSchema = z.object({
     courseId: z.string().trim().min(1).max(36),
     couponId: z.string().trim().min(1).max(36).optional(),
     exposureId: analyticsExposureIdSchema.optional(),
+    expectedAmount: z.string().regex(/^\d{1,8}\.\d{2}$/).optional(),
 }).strict();
 
 
@@ -105,6 +108,11 @@ export async function POST(request: Request) {
             }
         }
 
+        if (couponId && appliedCouponId !== couponId) {
+            return NextResponse.json({ error: 'คูปองนี้ใช้ไม่ได้แล้ว กรุณาตรวจสอบรายการใหม่' }, { status: 400 });
+        }
+
+        priceNumber = Math.round(priceNumber * 100) / 100;
         if (priceNumber <= 0) {
             return NextResponse.json(
                 { error: "This course is free" },
@@ -112,36 +120,45 @@ export async function POST(request: Request) {
             );
         }
 
+        if (parsed.data.expectedAmount !== undefined && parsed.data.expectedAmount !== priceNumber.toFixed(2)) {
+            return NextResponse.json({ error: 'ราคาเปลี่ยนแปลง กรุณาตรวจสอบรายการและยืนยันยอดใหม่' }, { status: 409 });
+        }
+
         // A checkout session is an immutable payment attempt. Reusing and repricing
         // an older pending row would let multiple Stripe sessions point at mutable
         // local state and can strand a successfully paid session.
 
-        let attributedExposureId: string | null = null;
-        if (exposureId) {
-            try {
-                attributedExposureId = await measurementRecorder.resolveProductExposureAttribution({
-                    exposureId,
-                    productType: 'course',
-                    productId: course.id,
-                });
-            } catch {
-                logEvent('analytics.payment_attribution_failed', 'warn');
-            }
-        }
-
         const paymentId = crypto.randomUUID();
-        await db.insert(payments).values({
+        const paymentValues: typeof payments.$inferInsert = {
             id: paymentId,
             userId: session.user.id,
             courseId: course.id,
             couponId: appliedCouponId,
             amount: priceNumber.toFixed(2),
             currency: "THB",
-            attributedExposureId,
+            attributedExposureId: null,
             method: "stripe",
             itemTitle: course.title,
             status: "pending",
-        });
+        };
+        let insertedWithConsent = false;
+        if (exposureId) {
+            try {
+                insertedWithConsent = await withBrowserConsent(session.user.id, async () => {
+                    const attributedExposureId = await measurementRecorder.resolveProductExposureAttribution({
+                        exposureId,
+                        productType: 'course',
+                        productId: course.id,
+                    });
+                    // Hold the receipt lock until the attributed payment write commits.
+                    await getMeasurementDatabase().insert(payments).values({ ...paymentValues, attributedExposureId });
+                    return true;
+                }, () => false);
+            } catch {
+                logEvent('analytics.payment_attribution_failed', 'warn');
+            }
+        }
+        if (!insertedWithConsent) await db.insert(payments).values(paymentValues);
 
         // Create Stripe checkout session
         const checkoutSession = await stripe.checkout.sessions.create({

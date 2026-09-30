@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { getPasswordPolicy } from '@/lib/password-policy';
 import { Check, X } from 'lucide-react';
 
@@ -40,17 +39,13 @@ export default function PasswordPolicyFeedback({
   return (
     <Card id={id} aria-live={'polite'}>
       <CardHeader>
-        <CardTitle>ความแข็งแกร่งของรหัสผ่าน</CardTitle>
-        <CardDescription>{password ? policy.label : 'ยังไม่ได้ระบุ'}</CardDescription>
+        <CardTitle>ข้อกำหนดรหัสผ่านใหม่</CardTitle>
+        <CardDescription>ใช้วลียาวที่เดายาก เว้นวรรคและภาษาไทยได้ ระบบจะตรวจรหัสผ่านที่พบในข้อมูลรั่วไหลเมื่อส่งคำขอ</CardDescription>
       </CardHeader>
       <CardContent className={'flex flex-col gap-4'}>
-        <Progress value={policy.percentage} aria-label={`ความแข็งแกร่ง ${policy.percentage}%`} />
         <ul className={'grid gap-2 sm:grid-cols-2'}>
-          <Requirement passed={policy.checks.length}>อย่างน้อย 8 ตัวอักษร</Requirement>
-          <Requirement passed={policy.checks.uppercase}>มีตัวพิมพ์ใหญ่</Requirement>
-          <Requirement passed={policy.checks.lowercase}>มีตัวพิมพ์เล็ก</Requirement>
-          <Requirement passed={policy.checks.number}>มีตัวเลข</Requirement>
-          <Requirement passed={policy.checks.special}>อักขระพิเศษ (แนะนำ)</Requirement>
+          <Requirement passed={policy.checks.length}>ยาว 15–128 ตัวอักษร</Requirement>
+          <Requirement passed={policy.checks.characters}>ไม่มีอักขระควบคุมหรืออักขระที่ไม่สมบูรณ์</Requirement>
         </ul>
       </CardContent>
     </Card>

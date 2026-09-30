@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { getExcerpt } from '@/lib/sanitize';
 import type { CourseDecisionFacts } from '@/lib/course-decision-facts';
+import { formatCourseDuration } from '@/lib/course-duration';
 import CourseArtwork from '@/components/course/CourseArtwork';
 
 interface Tag { id: string; name: string; slug: string }
@@ -23,16 +24,6 @@ function normalizeUrl(url: string | null): string | null {
   return url.startsWith('http') ? url : `https://${url}`;
 }
 
-function formatCourseDuration(totalSeconds?: number): string | null {
-  if (!totalSeconds || totalSeconds < 60) return null;
-  const totalMinutes = Math.floor(totalSeconds / 60);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours > 0 && minutes > 0) return `${hours} ชม. ${minutes} นาที`;
-  if (hours > 0) return `${hours} ชม.`;
-  return `${minutes} นาที`;
-}
-
 export default function CourseCard({
   title,
   slug,
@@ -49,7 +40,7 @@ export default function CourseCard({
   const instructorName = evidence.instructorName;
   const lessonCount = evidence.lessonCount;
   const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
-  const durationText = formatCourseDuration(evidence.knownDurationSeconds ?? undefined);
+  const durationText = formatCourseDuration(evidence.knownDurationSeconds);
   const hasFreePreview = evidence.freePreviewCount > 0;
 
   return (

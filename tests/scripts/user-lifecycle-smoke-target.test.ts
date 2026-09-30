@@ -26,7 +26,7 @@ describe('user lifecycle smoke target guard', () => {
     });
 
     it('requires passwords matching the credential policy', () => {
-        expect(() => validateUserLifecycleSmokePassword('Valid123')).not.toThrow();
+        expect(() => validateUserLifecycleSmokePassword('a long valid passphrase')).not.toThrow();
         expect(() => validateUserLifecycleSmokePassword('short1A')).toThrow();
         expect(() => validateUserLifecycleSmokePassword('lowercase1')).toThrow();
         expect(() => validateUserLifecycleSmokePassword('UPPERCASE1')).toThrow();
