@@ -31,8 +31,8 @@ vi.mock('@/lib/db', () => ({
         delete: mocks.dbDelete,
     },
 }));
-vi.mock('@/lib/course-lifecycle', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('@/lib/course-lifecycle')>()),
+vi.mock('@/lib/courses/lifecycle', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/lib/courses/lifecycle')>()),
     courseLifecycleService: { transition: mocks.transition },
 }));
 
@@ -109,7 +109,7 @@ describe('Admin course lifecycle API', () => {
     });
 
     it('maps published bundle dependencies to a conflict with safe details', async () => {
-        const { CourseLifecycleError } = await import('@/lib/course-lifecycle');
+        const { CourseLifecycleError } = await import('@/lib/courses/lifecycle');
         mocks.transition.mockRejectedValue(new CourseLifecycleError(
             'PUBLISHED_BUNDLE_DEPENDENCY',
             409,

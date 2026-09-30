@@ -21,7 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { getBlogTableOfContents, getProcessedBlogContent } from '@/lib/sanitize';
-import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
+import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import { and, eq, ne, sql } from 'drizzle-orm';
 
 export const revalidate = 3600;

@@ -6,7 +6,7 @@ import {
   buildSiteJsonLd,
   getSiteUrl,
   serializeJsonLd,
-} from '@/lib/seo';
+} from '@/lib/content/seo';
 import robots from '@/app/robots';
 
 describe('SEO helpers', () => {

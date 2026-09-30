@@ -9,7 +9,7 @@ import { z } from "zod";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 import { safeInsertEnrollment } from "@/lib/db/safe-insert";
-import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/course-availability";
+import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
 import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
 
 // Validation schema

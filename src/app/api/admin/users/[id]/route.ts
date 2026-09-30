@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';
-import { UserLifecycleError, userLifecycleService } from '@/lib/user-lifecycle';
+import { UserLifecycleError, userLifecycleService } from '@/lib/users/lifecycle';
 import { adminUserLifecycleSchema, adminUserUpdateSchema } from '@/lib/validations/admin';
 
 interface RouteParams {

@@ -257,7 +257,7 @@ async function exerciseLifecycleBehavior(
   process.env.DATABASE_URL = databaseUrl;
   process.env.DB_CONNECTION_LIMIT = '4';
   const { CourseLifecycleError, courseLifecycleService } =
-    await import('../src/lib/course-lifecycle');
+    await import('../src/lib/courses/lifecycle');
   const context = { ipAddress: '127.0.0.1', userAgent: 'course-lifecycle-rehearsal' };
 
   const archive = await courseLifecycleService.transition({

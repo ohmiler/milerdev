@@ -6,7 +6,7 @@ import {
     getLifecyclePresentation,
     lifecycleDeactivationDialog,
     lifecycleMutationFeedback,
-} from '@/lib/admin-user-lifecycle-ui';
+} from '@/lib/users/admin-lifecycle-ui';
 
 describe('Admin user lifecycle UI contract', () => {
     it('maps active and inactive states to truthful reversible actions', () => {
