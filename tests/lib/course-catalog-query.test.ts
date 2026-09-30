@@ -5,7 +5,7 @@ import {
   clampCourseCatalogPage,
   getCourseCatalogPageItems,
   normalizeCourseCatalogQuery,
-} from '@/lib/course-catalog-query';
+} from '@/lib/courses/catalog-query';
 
 describe('Course catalog URL contract', () => {
   it('normalizes unsupported facets and duplicate values to the default catalog', () => {

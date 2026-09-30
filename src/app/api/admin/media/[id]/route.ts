@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { media } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { deleteFromBunny } from '@/lib/bunny-storage';
+import { deleteFromBunny } from '@/lib/bunny/storage';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

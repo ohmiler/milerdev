@@ -5,7 +5,7 @@ import { TriangleAlert, VideoOff } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { connectBunnyPlayer, type BunnyPlayerCallbacks } from '@/lib/bunny-player-adapter';
+import { connectBunnyPlayer, type BunnyPlayerCallbacks } from '@/lib/bunny/player-adapter';
 import { cn } from '@/lib/utils';
 
 interface BunnyPlayerProps {

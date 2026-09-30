@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCourseReviewHref,
   normalizeCourseReviewQuery,
-} from '@/lib/course-review-query';
+} from '@/lib/courses/review-query';
 
 describe('course review URL state', () => {
   it('normalizes invalid and duplicate review parameters to defaults', () => {

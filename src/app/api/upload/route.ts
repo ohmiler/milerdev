@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { createId } from "@paralleldrive/cuid2";
-import { uploadToBunny } from "@/lib/bunny-storage";
+import { uploadToBunny } from "@/lib/bunny/storage";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';

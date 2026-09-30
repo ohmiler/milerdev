@@ -23,7 +23,7 @@ import {
   type CourseCatalogPrice,
   type CourseCatalogQuery,
   type CourseCatalogSort,
-} from '@/lib/course-catalog-query';
+} from '@/lib/courses/catalog-query';
 
 interface CatalogTag {
   id: string;
