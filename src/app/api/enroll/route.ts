@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { enrollments, courses, payments, coupons, couponUsages } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
-import { sendEnrollmentEmail } from "@/lib/email";
+import { sendEnrollmentEmail } from "@/lib/notifications/email";
 import { z } from "zod";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";

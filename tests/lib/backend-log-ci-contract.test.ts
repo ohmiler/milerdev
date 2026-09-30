@@ -9,7 +9,7 @@ function source(path: string): string {
 
 describe('backend production logging contract', () => {
     it('does not log recipient or subject data from email delivery', () => {
-        const email = source('src/lib/email.ts');
+        const email = source('src/lib/notifications/email.ts');
 
         expect(email).not.toMatch(/console\.(?:log|warn|error)\([^\n]*(?:\bto\b|subject)/);
         expect(email).toContain("logEvent('email.resend.sent')");

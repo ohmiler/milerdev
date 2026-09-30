@@ -54,7 +54,7 @@ describe('email SMTP security boundary', () => {
     });
 
     it('keeps attacker-controlled contact content out of Nodemailer raw and remote-content options', async () => {
-        const { sendContactNotification } = await import('@/lib/email');
+        const { sendContactNotification } = await import('@/lib/notifications/email');
         const payload = '<img src="file:///etc/passwd"><script>alert(1)</script>';
 
         await sendContactNotification({
@@ -87,7 +87,7 @@ describe('email SMTP security boundary', () => {
     });
 
     it('preserves the ordinary SMTP fallback behavior', async () => {
-        const { sendWelcomeEmail } = await import('@/lib/email');
+        const { sendWelcomeEmail } = await import('@/lib/notifications/email');
 
         await expect(sendWelcomeEmail({
             email: 'student@example.test',
@@ -103,7 +103,7 @@ describe('email SMTP security boundary', () => {
     });
 
     it('puts registration tokens in the fragment and sends no chosen password', async () => {
-        const { sendRegistrationVerificationEmail } = await import('@/lib/email');
+        const { sendRegistrationVerificationEmail } = await import('@/lib/notifications/email');
         const { resolveSafeAuthReturn } = await import('@/lib/safe-auth-return');
         await sendRegistrationVerificationEmail({ email: 'owner@example.test', token: 'a'.repeat(64), returnTo: resolveSafeAuthReturn('/courses').pathname });
         const html = mocks.sendMail.mock.calls[0][0].html;
@@ -115,7 +115,7 @@ describe('email SMTP security boundary', () => {
     it('recognizes Resend resolved errors without logging provider payloads', async () => {
         process.env.RESEND_API_KEY = 'test-placeholder';
         mocks.resendSend.mockResolvedValue({ data: null, error: { message: 'private body' } });
-        const { sendWelcomeEmail } = await import('@/lib/email');
+        const { sendWelcomeEmail } = await import('@/lib/notifications/email');
         expect(await sendWelcomeEmail({ email: 'owner@example.test', name: 'Owner' })).toBe(false);
         expect(mocks.logEvent).toHaveBeenCalledWith('email.provider.rejected', 'warn');
         expect(JSON.stringify(mocks.logEvent.mock.calls)).not.toContain('private body');

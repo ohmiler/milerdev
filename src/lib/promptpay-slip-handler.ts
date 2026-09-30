@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
-import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/email';
+import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/notifications/email';
 import { logError } from '@/lib/error-handler';
 import {
   claimPromptPayIntent,

@@ -6,7 +6,7 @@ import { announcements, users } from '@/lib/db/schema';
 import { desc, eq, sql, and } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
-import { notify } from '@/lib/notify';
+import { notify } from '@/lib/notifications/notify';
 
 // GET /api/admin/announcements - Get all announcements
 export async function GET(request: Request) {
