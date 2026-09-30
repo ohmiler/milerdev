@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/lib/auth';
-import { repairOwnerCertificate } from '@/lib/certificate-credentials';
+import { repairOwnerCertificate } from '@/lib/certificates/credentials';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const repairSchema = z.object({

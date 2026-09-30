@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import {
   isHtmlCertificateColor,
   normalizeCertificateColor,
-} from '@/lib/certificate-color';
+} from '@/lib/certificates/color';
 import { cn } from '@/lib/utils';
 
 const PRESET_COLORS = [

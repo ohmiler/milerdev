@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Award, CircleAlert, Copy } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import type { OwnerCertificateCollection } from '@/lib/certificate-credentials';
+import type { OwnerCertificateCollection } from '@/lib/certificates/credentials';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';

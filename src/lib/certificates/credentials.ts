@@ -2,7 +2,7 @@ import 'server-only';
 
 import { and, asc, eq } from 'drizzle-orm';
 
-import { ensureCompletedCertificate } from '@/lib/certificate';
+import { ensureCompletedCertificate } from '@/lib/certificates/issuance';
 import { db } from '@/lib/db';
 import { certificates, courses, enrollments } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';

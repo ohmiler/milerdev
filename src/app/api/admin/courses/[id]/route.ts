@@ -2,7 +2,7 @@ import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { getAuditContext, logAudit } from '@/lib/auditLog';
 import { requireAdmin } from '@/lib/auth-helpers';
-import { normalizeCertificateColor } from '@/lib/certificate-color';
+import { normalizeCertificateColor } from '@/lib/certificates/color';
 import { CourseLifecycleError, courseLifecycleService } from '@/lib/course-lifecycle';
 import { db } from '@/lib/db';
 import { courses, courseTags, tags } from '@/lib/db/schema';

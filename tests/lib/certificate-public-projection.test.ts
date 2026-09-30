@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getPublicCertificateVerification,
   type CertificateProjectionStore,
-} from '@/lib/certificate-credentials';
+} from '@/lib/certificates/credentials';
 
 function storeFor(
   fact: Awaited<ReturnType<CertificateProjectionStore['readPublic']>>,

@@ -25,7 +25,7 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { DEFAULT_CERTIFICATE_COLOR } from '@/lib/certificate-color';
+import { DEFAULT_CERTIFICATE_COLOR } from '@/lib/certificates/color';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });

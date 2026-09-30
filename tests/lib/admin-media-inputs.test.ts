@@ -4,7 +4,7 @@ import {
   DEFAULT_CERTIFICATE_COLOR,
   isHtmlCertificateColor,
   normalizeCertificateColor,
-} from '@/lib/certificate-color';
+} from '@/lib/certificates/color';
 import { normalizeImageUrl } from '@/lib/url';
 
 describe('admin media input normalization', () => {

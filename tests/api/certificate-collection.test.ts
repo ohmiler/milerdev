@@ -6,7 +6,7 @@ const { authMock, getOwnerCertificateCollectionMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/auth', () => ({ auth: authMock }));
-vi.mock('@/lib/certificate-credentials', () => ({
+vi.mock('@/lib/certificates/credentials', () => ({
   getOwnerCertificateCollection: getOwnerCertificateCollectionMock,
 }));
 

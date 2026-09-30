@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   repairOwnerCertificate,
   type CertificateRepairAdapter,
-} from '@/lib/certificate-credentials';
+} from '@/lib/certificates/credentials';
 
 describe('repairOwnerCertificate completion authority', () => {
   it('does not issue when the owner has no authoritative completion', async () => {

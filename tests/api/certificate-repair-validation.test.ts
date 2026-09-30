@@ -7,7 +7,7 @@ const { authMock, checkRateLimitMock, repairOwnerCertificateMock } = vi.hoisted(
 }));
 
 vi.mock('@/lib/auth', () => ({ auth: authMock }));
-vi.mock('@/lib/certificate-credentials', () => ({
+vi.mock('@/lib/certificates/credentials', () => ({
   repairOwnerCertificate: repairOwnerCertificateMock,
 }));
 vi.mock('@/lib/rate-limit', () => ({

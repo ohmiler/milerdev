@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
-import { getOwnerCertificateCollection } from '@/lib/certificate-credentials';
+import { getOwnerCertificateCollection } from '@/lib/certificates/credentials';
 import { logError } from '@/lib/error-handler';
 
 // GET /api/certificates - Get the current owner's certificate projection.
