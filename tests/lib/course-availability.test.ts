@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/course-availability';
+import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/courses/availability';
 
 describe('course enrollment availability', () => {
   it('accepts a course with at least one lesson', () => {
