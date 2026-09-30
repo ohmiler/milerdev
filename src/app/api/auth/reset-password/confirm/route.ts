@@ -2,16 +2,16 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq, and, gt, isNull, sql } from 'drizzle-orm';
-import { hashNewPassword } from '@/lib/password-storage';
+import { hashNewPassword } from '@/lib/auth/password-storage';
 import { z } from 'zod';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,
-} from '@/lib/auth-rate-limit';
+} from '@/lib/auth/rate-limit';
 import { createHash } from 'crypto';
-import { newPasswordSchema } from '@/lib/password-validation';
-import { PasswordSecurityError } from '@/lib/password-errors';
+import { newPasswordSchema } from '@/lib/auth/password-validation';
+import { PasswordSecurityError } from '@/lib/auth/password-errors';
 
 const confirmResetSchema = z.object({
     token: z.string().min(1, 'Token ไม่ถูกต้อง'),

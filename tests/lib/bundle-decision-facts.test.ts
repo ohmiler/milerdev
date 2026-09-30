@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deriveBundleDecisionFacts,
   type BundleCourseDecisionSource,
-} from '@/lib/bundle-decision-facts';
+} from '@/lib/commerce/bundle-decision-facts';
 
 const NOW = new Date('2026-09-02T05:00:00.000Z');
 

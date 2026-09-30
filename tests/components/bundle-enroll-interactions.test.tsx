@@ -3,7 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import BundleEnrollButton from '@/components/bundle/BundleEnrollButton';
-import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 const mocks = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn(), member: true }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push, refresh: mocks.refresh }) }));

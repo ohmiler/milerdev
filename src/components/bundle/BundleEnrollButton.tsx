@@ -13,7 +13,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { Spinner } from '@/components/ui/spinner';
 import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
 import { useProductExposureId } from '@/components/analytics/AnalyticsViewEvent';
-import type { BundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import type { BundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 interface BundleEnrollButtonProps {
   bundleId: string;

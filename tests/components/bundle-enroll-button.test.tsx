@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import BundleEnrollButton, { BUNDLE_PAYMENT_CONTRACT } from '@/components/bundle/BundleEnrollButton';
-import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 const push = vi.fn();
 const refresh = vi.fn();

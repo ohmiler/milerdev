@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { deriveLearningPresentation } from '@/lib/learning-presentation';
+import { deriveLearningPresentation } from '@/lib/learning/presentation';
 
 describe('LearningPresentation', () => {
   it('keeps a member without enrollment distinct from a learner', () => {

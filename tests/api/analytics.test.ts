@@ -1,20 +1,20 @@
-vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
+vi.mock('@/lib/privacy/consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/analytics', () => ({
+vi.mock('@/lib/analytics/events', () => ({
   isAnalyticsEventEnabled: vi.fn(),
   isPublishedAnalyticsTarget: vi.fn(),
   recordClientAnalyticsEvent: vi.fn(),
 }));
-vi.mock('@/lib/measurement-recorder', () => ({
+vi.mock('@/lib/analytics/measurement-recorder', () => ({
   measurementRecorder: { recordProductExposure: vi.fn() },
 }));
-vi.mock('@/lib/learning-measurement', () => ({
+vi.mock('@/lib/learning/measurement', () => ({
   learningMeasurementRecorder: { recordWorkspaceStart: vi.fn() },
 }));
 vi.mock('@/lib/error-handler', () => ({ logEvent: vi.fn() }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn(),
   getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
   rateLimits: { general: { maxRequests: 100, windowMs: 60_000 } },
@@ -25,10 +25,10 @@ import {
   isAnalyticsEventEnabled,
   isPublishedAnalyticsTarget,
   recordClientAnalyticsEvent,
-} from '@/lib/analytics';
+} from '@/lib/analytics/events';
 import { auth } from '@/lib/auth';
-import { withBrowserConsent } from '@/lib/privacy-consent';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { withBrowserConsent } from '@/lib/privacy/consent';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 const validEvent = {
   eventName: 'checkout_opened',

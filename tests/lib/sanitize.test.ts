@@ -4,7 +4,7 @@ import {
     getProcessedBlogContent,
     highlightCodeBlocks,
     sanitizeRichContent,
-} from '@/lib/sanitize';
+} from '@/lib/security/sanitize';
 
 describe('rich content processing', () => {
     const quote = String.fromCharCode(34);

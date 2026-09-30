@@ -11,8 +11,8 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import OrderReviewSummary, { formatOrderAmount } from './OrderReviewSummary';
-import type { OrderReview } from '@/lib/order-review';
-import type { PaymentPresentation } from '@/lib/payment-presentation';
+import type { OrderReview } from '@/lib/commerce/order-review';
+import type { PaymentPresentation } from '@/lib/commerce/payment-presentation';
 
 export const CHECKOUT_CONTRACT = {
   reviewEndpoint: '/api/checkout/review',

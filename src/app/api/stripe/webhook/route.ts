@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
-import { stripe } from '@/lib/stripe';
+import { stripe } from '@/lib/commerce/stripe';
 import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/notifications/email';
 import { logError, logEvent } from '@/lib/error-handler';
-import { fulfillStripeCheckoutSession } from '@/lib/payment-fulfillment';
+import { fulfillStripeCheckoutSession } from '@/lib/commerce/payment-fulfillment';
 
 export async function POST(request: Request) {
   const body = await request.text();

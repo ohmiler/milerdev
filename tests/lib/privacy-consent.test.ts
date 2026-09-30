@@ -15,8 +15,8 @@ vi.mock('@/lib/db', () => {
   return { db: chain };
 });
 import { db } from '@/lib/db';
-import { readBrowserConsent, saveBrowserConsent, lockActiveConsent } from '@/lib/privacy-consent';
-import { CONSENT_VERSION, UNKNOWN_CONSENT, isConsentCurrent } from '@/lib/privacy-consent-contract';
+import { readBrowserConsent, saveBrowserConsent, lockActiveConsent } from '@/lib/privacy/consent';
+import { CONSENT_VERSION, UNKNOWN_CONSENT, isConsentCurrent } from '@/lib/privacy/consent-contract';
 
 const valid = () => ({ id: 'receipt', userId: 'user-1', version: CONSENT_VERSION, analytics: true, revokedAt: null, expiresAt: new Date(Date.now() + 60_000) });
 

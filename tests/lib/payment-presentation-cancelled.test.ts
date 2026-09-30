@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { derivePaymentPresentation } from '@/lib/payment-presentation';
+import { derivePaymentPresentation } from '@/lib/commerce/payment-presentation';
 
 describe('PaymentPresentation cancelled return', () => {
   it('keeps selected product context without inventing an attempt or current-price proof', () => {

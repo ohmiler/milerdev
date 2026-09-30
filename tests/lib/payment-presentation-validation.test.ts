@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   derivePaymentPresentation,
   type ServerPaymentAttempt,
-} from '@/lib/payment-presentation';
+} from '@/lib/commerce/payment-presentation';
 
 const NOW = new Date('2026-09-02T07:00:00.000Z');
 

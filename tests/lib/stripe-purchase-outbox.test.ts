@@ -1,4 +1,4 @@
-vi.mock('@/lib/privacy-consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
+vi.mock('@/lib/privacy/consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { dbTransaction, insertedRows, paymentState, projectPurchase, isDuplicateKeyError } = vi.hoisted(() => ({
@@ -13,12 +13,12 @@ vi.mock('@/lib/db/safe-insert', () => ({
   isDuplicateKeyError,
 }));
 vi.mock('@/lib/db', () => ({ db: { transaction: dbTransaction } }));
-vi.mock('@/lib/purchase-measurement-projector', () => ({
+vi.mock('@/lib/analytics/purchase-measurement-projector', () => ({
   purchaseMeasurementProjector: { projectPurchase },
 }));
 
-import { fulfillStripeCheckoutSession } from '@/lib/payment-fulfillment';
-import { getMemberConsentId } from '@/lib/privacy-consent';
+import { fulfillStripeCheckoutSession } from '@/lib/commerce/payment-fulfillment';
+import { getMemberConsentId } from '@/lib/privacy/consent';
 
 const payment = () => ({
   id: 'pay-1',

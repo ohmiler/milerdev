@@ -4,10 +4,10 @@ import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses, lessons, payments } from '@/lib/db/schema';
 import { eq, and, count, inArray } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/notifications/email';
-import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';
-import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
-import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
+import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
+import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
 
 // POST /api/bundles/enroll - Enroll in all courses of a bundle
 export async function POST(request: Request) {

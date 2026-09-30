@@ -18,8 +18,8 @@ import {
   deriveBundleDecisionFacts,
   type BundleCourseDecisionSource,
   type BundleDecisionFacts,
-} from '@/lib/bundle-decision-facts';
-import { deriveCourseDecisionFacts, type CourseDecisionFacts } from '@/lib/course-decision-facts';
+} from '@/lib/commerce/bundle-decision-facts';
+import { deriveCourseDecisionFacts, type CourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 import {
   buildCourseCatalogHref,
   clampCourseCatalogPage,

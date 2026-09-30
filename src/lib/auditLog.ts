@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { auditLogs } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { headers } from 'next/headers';
-import { getClientIPFromHeaders } from '@/lib/rate-limit';
+import { getClientIPFromHeaders } from '@/lib/security/rate-limit';
 
 export interface AuditLogParams {
   userId: string;

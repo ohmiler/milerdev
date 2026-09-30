@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from 'vitest';
 import { GET } from '@/app/api/payments/route';
 const mocks = vi.hoisted(() => ({ auth: vi.fn(), records: vi.fn() }));
 vi.mock('@/lib/auth', () => ({ auth: mocks.auth }));
-vi.mock('@/lib/payment-records', () => ({ loadPaymentRecords: mocks.records }));
+vi.mock('@/lib/commerce/payment-records', () => ({ loadPaymentRecords: mocks.records }));
 beforeEach(() => vi.resetAllMocks());
 it('rejects anonymous history before any private read', async () => {
   mocks.auth.mockResolvedValue(null);

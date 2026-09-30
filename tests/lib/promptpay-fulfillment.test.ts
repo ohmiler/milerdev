@@ -1,4 +1,4 @@
-vi.mock('@/lib/privacy-consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
+vi.mock('@/lib/privacy/consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { projectPurchase } = vi.hoisted(() => ({
@@ -40,10 +40,10 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('@/lib/purchase-measurement-projector', () => ({
+vi.mock('@/lib/analytics/purchase-measurement-projector', () => ({
   purchaseMeasurementProjector: { projectPurchase },
 }));
-import { fulfillPromptPayIntent } from '@/lib/promptpay-fulfillment';
+import { fulfillPromptPayIntent } from '@/lib/commerce/promptpay-fulfillment';
 
 const payment = {
   id: 'payment-1',

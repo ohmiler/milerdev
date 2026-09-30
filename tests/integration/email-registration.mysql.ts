@@ -2,16 +2,16 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { randomBytes } from 'node:crypto';
 import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { verifyPassword } from '@/lib/password-storage';
-import { assertPasswordNotCompromised } from '@/lib/password-screening';
-import { PasswordSecurityError } from '@/lib/password-errors';
-vi.mock('@/lib/password-screening', () => ({ assertPasswordNotCompromised: vi.fn().mockResolvedValue(undefined) }));
+import { verifyPassword } from '@/lib/auth/password-storage';
+import { assertPasswordNotCompromised } from '@/lib/auth/password-screening';
+import { PasswordSecurityError } from '@/lib/auth/password-errors';
+vi.mock('@/lib/auth/password-screening', () => ({ assertPasswordNotCompromised: vi.fn().mockResolvedValue(undefined) }));
 import { emailRegistrations, users } from '@/lib/db/schema';
 
 const mocks = vi.hoisted(() => ({ send: vi.fn().mockResolvedValue(true) }));
 vi.mock('@/lib/notifications/email', () => ({ sendRegistrationVerificationEmail: mocks.send }));
 let db: typeof import('@/lib/db').db;
-let service: typeof import('@/lib/email-registration');
+let service: typeof import('@/lib/auth/email-registration');
 const suffix = randomBytes(6).toString('hex');
 const addresses: string[] = [];
 const mailbox = () => { const address = `registration-${suffix}-${addresses.length}@example.test`; addresses.push(address); return address; };
@@ -27,7 +27,7 @@ beforeAll(async () => {
         throw new Error('Registration integration tests require a dedicated loopback E2E database');
     }
     ({ db } = await import('@/lib/db'));
-    service = await import('@/lib/email-registration');
+    service = await import('@/lib/auth/email-registration');
     await db.execute(sql`SELECT 1`);
 });
 afterAll(async () => {
@@ -124,7 +124,7 @@ describe('real MySQL registration ownership and concurrency', () => {
         await db.insert(users).values({ email, name: 'Legacy', passwordHash });
         await service.requestEmailRegistration(email, '/courses');
         expect(mocks.send.mock.calls.some(([input]) => input.email === email)).toBe(false);
-        const { authorizeCredentials } = await import('@/lib/auth-credentials');
+        const { authorizeCredentials } = await import('@/lib/auth/credentials');
         const sessionUser = await authorizeCredentials({ email, password: 'LegacyPassword1!' }, new Request('http://localhost'), {
             consumeRateLimit: async () => ({ success: true, remaining: 1, resetTime: Date.now() + 60000 }),
             findUserByEmail: () => findUser(email), comparePassword: verifyPassword,

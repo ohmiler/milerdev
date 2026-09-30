@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getLearningWorkspaceProjection,
   type LearningWorkspaceStore,
-} from '@/lib/learning-workspace';
+} from '@/lib/learning/workspace';
 
 function enrolledStore(overrides: Partial<LearningWorkspaceStore> = {}): LearningWorkspaceStore {
   return {

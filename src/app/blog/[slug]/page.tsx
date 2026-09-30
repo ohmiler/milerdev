@@ -20,7 +20,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
-import { getBlogTableOfContents, getProcessedBlogContent } from '@/lib/sanitize';
+import { getBlogTableOfContents, getProcessedBlogContent } from '@/lib/security/sanitize';
 import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import { and, eq, ne, sql } from 'drizzle-orm';
 

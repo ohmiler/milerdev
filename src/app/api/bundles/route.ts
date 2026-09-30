@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
-import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
+import { requirePublishedBundleCourses } from '@/lib/commerce/bundle-commerce';
 
 // GET /api/bundles - List published bundles
 export async function GET() {

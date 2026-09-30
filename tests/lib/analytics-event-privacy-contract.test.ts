@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   clientAnalyticsEventSchema,
   serverAnalyticsEventSchema,
-} from '@/lib/analytics-contract';
+} from '@/lib/analytics/contract';
 
 describe('analytics privacy contracts', () => {
   it('rejects prohibited client fields even when the base event is valid', () => {

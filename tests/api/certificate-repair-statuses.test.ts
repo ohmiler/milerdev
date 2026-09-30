@@ -10,7 +10,7 @@ vi.mock('@/lib/auth', () => ({ auth: authMock }));
 vi.mock('@/lib/certificates/credentials', () => ({
   repairOwnerCertificate: repairOwnerCertificateMock,
 }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: checkRateLimitMock,
   rateLimits: { sensitive: { maxRequests: 5, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(() => new Response(null, { status: 429 })),

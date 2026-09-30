@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getAuthPublicError } from '@/lib/auth-public-error';
-import type { SafeAuthReturnPath } from '@/lib/safe-auth-return';
+import { getAuthPublicError } from '@/lib/auth/public-error';
+import type { SafeAuthReturnPath } from '@/lib/auth/safe-auth-return';
 import { GoogleIcon } from './AuthIcons';
 import { AuthDivider, AuthError, AuthField, AuthFootnote, RecoveryState } from './AuthFormLayout';
 

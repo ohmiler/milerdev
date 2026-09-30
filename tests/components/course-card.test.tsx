@@ -4,7 +4,7 @@ import CourseCard from '@/components/course/CourseCard';
 import {
   deriveCourseDecisionFacts,
   type CourseDecisionSource,
-} from '@/lib/course-decision-facts';
+} from '@/lib/commerce/course-decision-facts';
 
 const NOW = new Date('2026-09-01T05:00:00.000Z');
 

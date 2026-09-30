@@ -1,25 +1,25 @@
-vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
+vi.mock('@/lib/privacy/consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/analytics-control', () => ({ isAnalyticsEventEnabled: vi.fn() }));
-vi.mock('@/lib/web-vitals', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/web-vitals')>();
+vi.mock('@/lib/analytics/control', () => ({ isAnalyticsEventEnabled: vi.fn() }));
+vi.mock('@/lib/analytics/web-vitals', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/analytics/web-vitals')>();
   return {
     ...actual,
     webVitalsRecorder: { record: vi.fn() },
   };
 });
 vi.mock('@/lib/error-handler', () => ({ logEvent: vi.fn() }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn(),
   getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
   rateLimits: { general: { maxRequests: 100, windowMs: 60_000 } },
   rateLimitResponse: vi.fn().mockReturnValue(new Response(null, { status: 429 })),
 }));
 
-import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
-import { checkRateLimit } from '@/lib/rate-limit';
-import { webVitalsRecorder } from '@/lib/web-vitals';
+import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
+import { checkRateLimit } from '@/lib/security/rate-limit';
+import { webVitalsRecorder } from '@/lib/analytics/web-vitals';
 
 const validReport = {
   pageLoadId: 'v4-1720000000000-123456789',

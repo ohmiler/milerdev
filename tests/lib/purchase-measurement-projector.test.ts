@@ -4,7 +4,7 @@ import {
   createPurchaseMeasurementProjector,
   type PurchaseMeasurementStore,
   type PurchaseProjection,
-} from '@/lib/purchase-measurement-projector';
+} from '@/lib/analytics/purchase-measurement-projector';
 
 class MemoryPurchaseMeasurementStore implements PurchaseMeasurementStore {
   payment: PurchaseProjection | null = {

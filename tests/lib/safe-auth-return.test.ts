@@ -4,7 +4,7 @@ import {
   createAuthReturnHref,
   resolveSafeAuthRedirect,
   resolveSafeAuthReturn,
-} from '@/lib/safe-auth-return';
+} from '@/lib/auth/safe-auth-return';
 
 describe('SafeReturnIntent', () => {
   it('preserves a single-slash internal pathname', () => {

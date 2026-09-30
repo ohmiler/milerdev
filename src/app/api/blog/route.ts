@@ -3,7 +3,7 @@ import { logError } from '@/lib/error-handler';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { eq, desc, and, like, count, sql } from 'drizzle-orm';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 // GET /api/blog - Get published blog posts with pagination
 export async function GET(request: Request) {

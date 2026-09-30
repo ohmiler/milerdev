@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
 import { Spinner } from '@/components/ui/spinner';
-import { getAuthPublicError } from '@/lib/auth-public-error';
-import { getPasswordPolicyError } from '@/lib/password-policy';
+import { getAuthPublicError } from '@/lib/auth/public-error';
+import { getPasswordPolicyError } from '@/lib/auth/password-policy';
 import { AuthError, AuthField, AuthFootnote, PasswordInput, RecoveryState } from './AuthFormLayout';
 import PasswordPolicyFeedback from './PasswordPolicyFeedback';
 

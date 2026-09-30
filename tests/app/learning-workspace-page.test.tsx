@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: {} }));
-vi.mock('@/lib/learning-workspace', () => ({ getLearningWorkspaceProjection: vi.fn() }));
+vi.mock('@/lib/learning/workspace', () => ({ getLearningWorkspaceProjection: vi.fn() }));
 vi.mock('next/navigation', () => ({
   notFound: vi.fn(() => { throw new Error('NEXT_NOT_FOUND'); }),
   redirect: vi.fn((destination: string) => { throw new Error(`NEXT_REDIRECT:${destination}`); }),
@@ -10,7 +10,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/components/course/LearnPageClient', () => ({ default: () => null }));
 
 import { auth } from '@/lib/auth';
-import { getLearningWorkspaceProjection } from '@/lib/learning-workspace';
+import { getLearningWorkspaceProjection } from '@/lib/learning/workspace';
 
 describe('lesson learning workspace page', () => {
   beforeEach(() => {

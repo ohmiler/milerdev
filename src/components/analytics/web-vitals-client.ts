@@ -8,7 +8,7 @@ import {
   type WebVitalName,
   type WebVitalRating,
   type WebVitalRouteFamily,
-} from '@/lib/web-vitals-contract';
+} from '@/lib/analytics/web-vitals-contract';
 
 const CORE_WEB_VITAL_NAMES = new Set<string>(WEB_VITAL_NAMES);
 

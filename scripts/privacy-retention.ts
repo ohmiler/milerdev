@@ -1,5 +1,5 @@
 import mysql from 'mysql2/promise';
-import { PRIVACY_RETENTION_POLICY, runPrivacyRetention } from '../src/lib/privacy-retention';
+import { PRIVACY_RETENTION_POLICY, runPrivacyRetention } from '../src/lib/privacy/retention';
 
 async function main() {
   const args = process.argv.slice(2);

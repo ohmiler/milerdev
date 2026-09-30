@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   requirePublishedBundleCourses,
   requireReadyBundleCourses,
-} from '@/lib/bundle-commerce';
+} from '@/lib/commerce/bundle-commerce';
 
 describe('bundle commerce integrity', () => {
   it('accepts a non-empty bundle only when every child is published', () => {

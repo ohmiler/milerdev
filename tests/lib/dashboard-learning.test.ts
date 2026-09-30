@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   getDashboardLearning,
   type DashboardLearningStore,
-} from '@/lib/dashboard-learning';
+} from '@/lib/learning/dashboard';
 
 describe('getDashboardLearning', () => {
   it('returns a minimal presentation without private source fields', async () => {

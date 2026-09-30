@@ -1,21 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PasswordSecurityError } from '@/lib/password-errors';
+import { PasswordSecurityError } from '@/lib/auth/password-errors';
 const mocks = vi.hoisted(() => ({
   select: vi.fn(), update: vi.fn(), insert: vi.fn(), transaction: vi.fn(),
   screen: vi.fn(), hash: vi.fn(), compare: vi.fn(), admin: vi.fn(), auth: vi.fn(),
 }));
-vi.mock('@/lib/password-screening', () => ({ assertPasswordNotCompromised: mocks.screen }));
+vi.mock('@/lib/auth/password-screening', () => ({ assertPasswordNotCompromised: mocks.screen }));
 vi.mock('argon2', () => ({ default: { argon2id: 2, hash: mocks.hash } }));
 vi.mock('bcryptjs', () => ({ default: { compare: mocks.compare } }));
 vi.mock('@/lib/auth', () => ({ auth: mocks.auth }));
-vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: mocks.admin }));
+vi.mock('@/lib/auth/helpers', () => ({ requireAdmin: mocks.admin }));
 vi.mock('@/lib/auditLog', () => ({ logAudit: vi.fn() }));
 vi.mock('@/lib/notifications/email', () => ({ sendRegistrationVerificationEmail: vi.fn() }));
-vi.mock('@/lib/auth-rate-limit', () => ({
+vi.mock('@/lib/auth/rate-limit', () => ({
   consumeAuthRateLimit: vi.fn().mockResolvedValue({ success: true }),
   authRateLimitUnavailableResponse: vi.fn(),
 }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   getClientIP: () => '127.0.0.1', rateLimits: { auth: {} }, rateLimitResponse: vi.fn(),
 }));
 vi.mock('@/lib/db', () => ({ db: {

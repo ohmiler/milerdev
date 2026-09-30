@@ -1,0 +1,230 @@
+import { count, eq } from 'drizzle-orm';
+import { z } from 'zod';
+
+import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
+import { requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
+import { requireCourseHasLessons } from '@/lib/courses/availability';
+import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
+import {
+  analyticsEvents,
+  bundleCourses,
+  bundles,
+  courses,
+  lessons,
+} from '@/lib/db/schema';
+import { isDuplicateKeyError } from '@/lib/db/safe-insert';
+
+export type ProductType = 'course' | 'bundle';
+type ProductStatus = 'draft' | 'published' | 'archived';
+
+const productExposureFactSchema = z.object({
+  exposureId: z.string().uuid().regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  ),
+  productType: z.enum(['course', 'bundle']),
+  productId: z.string().trim().min(1).max(36),
+}).strict();
+
+export type ProductEligibility =
+  | {
+    productType: 'course';
+    productId: string;
+    status: ProductStatus;
+    lessonCount: number;
+  }
+  | {
+    productType: 'bundle';
+    productId: string;
+    status: ProductStatus;
+    courses: Array<{
+      id: string;
+      status: ProductStatus;
+      lessonCount: number;
+    }>;
+  };
+
+export type ProductExposureRow = {
+  exposureId: string;
+  eventName: 'course_viewed' | 'bundle_viewed';
+  courseId: string | null;
+  bundleId: string | null;
+  placement: 'course_detail' | 'bundle_detail';
+};
+
+export type ProductExposureAttributionRow = {
+  exposureId: string | null;
+  eventName: string;
+  courseId: string | null;
+  bundleId: string | null;
+};
+
+export interface MeasurementStore {
+  readProductEligibility(
+    productType: ProductType,
+    productId: string,
+  ): Promise<ProductEligibility | null>;
+  insertProductExposure(row: ProductExposureRow): Promise<'inserted' | 'duplicate'>;
+  readProductExposure(exposureId: string): Promise<ProductExposureAttributionRow | null>;
+}
+
+export interface MeasurementRecorder {
+  recordProductExposure(fact: {
+    exposureId: string;
+    productType: ProductType;
+    productId: string;
+  }): Promise<{ status: 'recorded' | 'duplicate' | 'disabled' | 'ineligible' }>;
+  resolveProductExposureAttribution(input: {
+    exposureId: string;
+    productType: ProductType;
+    productId: string;
+  }): Promise<string | null>;
+}
+
+export class MeasurementRecorderError extends Error {
+  constructor(readonly code: 'INVALID_FACT') {
+    super(code);
+    this.name = 'MeasurementRecorderError';
+  }
+}
+
+function isEligibleProduct(eligibility: ProductEligibility | null): boolean {
+  if (!eligibility || eligibility.status !== 'published') return false;
+
+  try {
+    if (eligibility.productType === 'course') {
+      requireCourseHasLessons(eligibility.lessonCount);
+    } else {
+      requireReadyBundleCourses(eligibility.courses);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function createMeasurementRecorder(input: {
+  store: MeasurementStore;
+  isEventEnabled(eventName: ProductExposureRow['eventName']): Promise<boolean>;
+}): MeasurementRecorder {
+  return {
+    async recordProductExposure(fact) {
+      const parsed = productExposureFactSchema.safeParse(fact);
+      if (!parsed.success) throw new MeasurementRecorderError('INVALID_FACT');
+
+      const eventName = parsed.data.productType === 'course' ? 'course_viewed' : 'bundle_viewed';
+      if (!(await input.isEventEnabled(eventName))) return { status: 'disabled' };
+
+      const eligibility = await input.store.readProductEligibility(
+        parsed.data.productType,
+        parsed.data.productId,
+      );
+      if (!isEligibleProduct(eligibility)) return { status: 'ineligible' };
+
+      const inserted = await input.store.insertProductExposure({
+        exposureId: parsed.data.exposureId,
+        eventName,
+        courseId: parsed.data.productType === 'course' ? parsed.data.productId : null,
+        bundleId: parsed.data.productType === 'bundle' ? parsed.data.productId : null,
+        placement: parsed.data.productType === 'course' ? 'course_detail' : 'bundle_detail',
+      });
+      return { status: inserted === 'inserted' ? 'recorded' : 'duplicate' };
+    },
+
+    async resolveProductExposureAttribution(attribution) {
+      const parsed = productExposureFactSchema.safeParse(attribution);
+      if (!parsed.success) return null;
+
+      const eventName = parsed.data.productType === 'course' ? 'course_viewed' : 'bundle_viewed';
+      if (!(await input.isEventEnabled(eventName))) return null;
+
+      const exposure = await input.store.readProductExposure(parsed.data.exposureId);
+      if (!exposure || exposure.exposureId !== parsed.data.exposureId) return null;
+      if (exposure.eventName !== eventName) return null;
+
+      const targetMatches = parsed.data.productType === 'course'
+        ? exposure.courseId === parsed.data.productId && exposure.bundleId === null
+        : exposure.bundleId === parsed.data.productId && exposure.courseId === null;
+      return targetMatches ? parsed.data.exposureId : null;
+    },
+  };
+}
+
+const drizzleMeasurementStore: MeasurementStore = {
+  async readProductEligibility(productType, productId) {
+    if (productType === 'course') {
+      const [row] = await getMeasurementDatabase()
+        .select({
+          productId: courses.id,
+          status: courses.status,
+          lessonCount: count(lessons.id),
+        })
+        .from(courses)
+        .leftJoin(lessons, eq(lessons.courseId, courses.id))
+        .where(eq(courses.id, productId))
+        .groupBy(courses.id, courses.status)
+        .limit(1);
+      return row ? { productType: 'course', ...row } : null;
+    }
+
+    const [bundleRows, courseRows] = await Promise.all([
+      getMeasurementDatabase()
+        .select({ productId: bundles.id, status: bundles.status })
+        .from(bundles)
+        .where(eq(bundles.id, productId))
+        .limit(1),
+      getMeasurementDatabase()
+        .select({
+          id: courses.id,
+          status: courses.status,
+          lessonCount: count(lessons.id),
+        })
+        .from(bundleCourses)
+        .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
+        .leftJoin(lessons, eq(lessons.courseId, courses.id))
+        .where(eq(bundleCourses.bundleId, productId))
+        .groupBy(courses.id, courses.status),
+    ]);
+    const bundle = bundleRows[0];
+    return bundle ? { productType: 'bundle', ...bundle, courses: courseRows } : null;
+  },
+
+  async insertProductExposure(row) {
+    try {
+      await getMeasurementDatabase().insert(analyticsEvents).values({
+        exposureId: row.exposureId,
+        eventName: row.eventName,
+        source: 'client',
+        userId: null,
+        courseId: row.courseId,
+        bundleId: row.bundleId,
+        paymentId: null,
+        metadata: JSON.stringify({ placement: row.placement }),
+        ipAddress: null,
+        userAgent: null,
+      });
+      return 'inserted';
+    } catch (error) {
+      if (isDuplicateKeyError(error)) return 'duplicate';
+      throw error;
+    }
+  },
+
+  async readProductExposure(exposureId) {
+    const [row] = await getMeasurementDatabase()
+      .select({
+        exposureId: analyticsEvents.exposureId,
+        eventName: analyticsEvents.eventName,
+        courseId: analyticsEvents.courseId,
+        bundleId: analyticsEvents.bundleId,
+      })
+      .from(analyticsEvents)
+      .where(eq(analyticsEvents.exposureId, exposureId))
+      .limit(1);
+    return row ?? null;
+  },
+};
+
+export const measurementRecorder = createMeasurementRecorder({
+  store: drizzleMeasurementStore,
+  isEventEnabled: isAnalyticsEventEnabled,
+});

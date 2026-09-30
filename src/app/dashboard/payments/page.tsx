@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
-import { requireMember } from '@/lib/member-access';
+import { requireMember } from '@/lib/auth/member-access';
 import PaymentHistory from './PaymentHistory';
 
 export const metadata: Metadata = {

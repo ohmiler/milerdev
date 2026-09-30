@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
+import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 
 const NOW = new Date('2026-09-01T05:00:00.000Z');
 

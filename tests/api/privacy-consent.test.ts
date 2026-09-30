@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-vi.mock('@/lib/privacy-consent', () => ({ readBrowserConsent: vi.fn(), saveBrowserConsent: vi.fn() }));
-vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: () => ({ success: true }), getClientIP: () => '127.0.0.1', rateLimits: { general: {} }, rateLimitResponse: vi.fn() }));
+vi.mock('@/lib/privacy/consent', () => ({ readBrowserConsent: vi.fn(), saveBrowserConsent: vi.fn() }));
+vi.mock('@/lib/security/rate-limit', () => ({ checkRateLimit: () => ({ success: true }), getClientIP: () => '127.0.0.1', rateLimits: { general: {} }, rateLimitResponse: vi.fn() }));
 import { auth } from '@/lib/auth';
-import { readBrowserConsent, saveBrowserConsent } from '@/lib/privacy-consent';
+import { readBrowserConsent, saveBrowserConsent } from '@/lib/privacy/consent';
 import { GET, POST } from '@/app/api/privacy/consent/route';
 
 describe('privacy choice endpoint', () => {

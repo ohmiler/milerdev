@@ -15,7 +15,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Spinner } from '@/components/ui/spinner';
-import type { CourseDecisionFacts } from '@/lib/course-decision-facts';
+import type { CourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 
 export type EnrollmentStatus = 'checking' | 'enrolled' | 'not-enrolled';
 

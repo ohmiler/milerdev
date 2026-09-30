@@ -8,7 +8,7 @@ import {
   type AnalyticsControlStore,
   type AnalyticsControlWrite,
   type AnalyticsGovernanceDecisionInput,
-} from '@/lib/analytics-control';
+} from '@/lib/analytics/control';
 
 const auditContext = { ipAddress: '127.0.0.1', userAgent: 'vitest' };
 

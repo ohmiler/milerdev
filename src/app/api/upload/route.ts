@@ -4,7 +4,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { uploadToBunny } from "@/lib/bunny/storage";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rate-limit';
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB

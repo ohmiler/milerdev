@@ -1,6 +1,6 @@
 'use client';
 
-import type { ClientAnalyticsEvent } from '@/lib/analytics-contract';
+import type { ClientAnalyticsEvent } from '@/lib/analytics/contract';
 import { canSendAnalytics } from '@/components/privacy/consent-client';
 
 export function createAnalyticsExposureId(

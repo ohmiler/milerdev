@@ -1,17 +1,17 @@
-import { withBrowserConsent } from '@/lib/privacy-consent';
-import { getMeasurementDatabase } from '@/lib/measurement-database';
+import { withBrowserConsent } from '@/lib/privacy/consent';
+import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { NextResponse } from "next/server";
 import { z } from 'zod';
 import { auth } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { stripe } from "@/lib/commerce/stripe";
 import { db } from "@/lib/db";
 import { bundles, bundleCourses, courses, enrollments, lessons, payments } from "@/lib/db/schema";
 import { eq, asc, and, count, inArray } from "drizzle-orm";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
-import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
-import { analyticsExposureIdSchema } from '@/lib/analytics-contract';
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
+import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
+import { analyticsExposureIdSchema } from '@/lib/analytics/contract';
 import { logEvent } from '@/lib/error-handler';
-import { measurementRecorder } from '@/lib/measurement-recorder';
+import { measurementRecorder } from '@/lib/analytics/measurement-recorder';
 
 const stripeBundleCheckoutRequestSchema = z.object({
     bundleId: z.string().trim().min(1).max(36),

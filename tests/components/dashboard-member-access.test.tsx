@@ -6,8 +6,8 @@ const { getDashboardLearning, requireMember } = vi.hoisted(() => ({
   requireMember: vi.fn(),
 }));
 
-vi.mock('@/lib/member-access', () => ({ requireMember }));
-vi.mock('@/lib/dashboard-learning', () => ({ getDashboardLearning }));
+vi.mock('@/lib/auth/member-access', () => ({ requireMember }));
+vi.mock('@/lib/learning/dashboard', () => ({ getDashboardLearning }));
 vi.mock('@/components/layout/Navbar', () => ({
   default: () => <div data-layout="navbar" />,
 }));

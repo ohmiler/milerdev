@@ -31,7 +31,7 @@ vi.mock('@/lib/db', () => ({
 import {
   BundleMutationError,
   createBundleWithIntegrity,
-} from '@/lib/bundle-mutation';
+} from '@/lib/commerce/bundle-mutation';
 
 const input = {
   title: 'Bundle',

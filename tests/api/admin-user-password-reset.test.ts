@@ -7,8 +7,8 @@ const mocks = vi.hoisted(() => ({
     updateSet: null as Record<string, unknown> | null,
 }));
 
-vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: mocks.requireAdmin }));
-vi.mock('@/lib/password-storage', () => ({ hashNewPassword: mocks.hash }));
+vi.mock('@/lib/auth/helpers', () => ({ requireAdmin: mocks.requireAdmin }));
+vi.mock('@/lib/auth/password-storage', () => ({ hashNewPassword: mocks.hash }));
 vi.mock('@/lib/auditLog', () => ({ logAudit: mocks.logAudit }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
 vi.mock('@/lib/db', () => ({

@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { lessons } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
-import { sanitizeRichContent } from '@/lib/sanitize';
+import { sanitizeRichContent } from '@/lib/security/sanitize';
 
 interface RouteParams {
   params: Promise<{ lessonId: string }>;

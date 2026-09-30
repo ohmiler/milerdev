@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { getClientIPFromHeaders } from '@/lib/client-ip';
+import { getClientIPFromHeaders } from '@/lib/security/client-ip';
 
 type ProxyGlobal = typeof globalThis & {
     __milerdevProxyCleanupStarted?: boolean;

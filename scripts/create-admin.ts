@@ -1,4 +1,4 @@
-import { hashNewPassword } from '../src/lib/password-storage';
+import { hashNewPassword } from '../src/lib/auth/password-storage';
 import { db } from '../src/lib/db';
 import { users } from '../src/lib/db/schema';
 import dotenv from 'dotenv';

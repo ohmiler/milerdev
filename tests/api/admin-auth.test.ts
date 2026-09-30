@@ -46,7 +46,7 @@ vi.mock('@/lib/notifications/email', () => ({
 }));
 
 // Mock coupon
-vi.mock('@/lib/coupon', () => ({
+vi.mock('@/lib/commerce/coupon', () => ({
     calculateDiscount: vi.fn().mockReturnValue(0),
 }));
 

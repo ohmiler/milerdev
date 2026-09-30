@@ -1,11 +1,11 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { auth } from '@/lib/auth';
 import { POST } from '@/app/api/checkout/review/route';
-import { loadOrderReview } from '@/lib/order-review';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { loadOrderReview } from '@/lib/commerce/order-review';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
-vi.mock('@/lib/order-review', () => ({ loadOrderReview: vi.fn(), OrderReviewError: class extends Error {} }));
-vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: vi.fn(() => ({ success: true })), rateLimits: { sensitive: {} }, rateLimitResponse: () => new Response(null, { status: 429 }) }));
+vi.mock('@/lib/commerce/order-review', () => ({ loadOrderReview: vi.fn(), OrderReviewError: class extends Error {} }));
+vi.mock('@/lib/security/rate-limit', () => ({ checkRateLimit: vi.fn(() => ({ success: true })), rateLimits: { sensitive: {} }, rateLimitResponse: () => new Response(null, { status: 429 }) }));
 const request = (body: unknown) => new Request('http://localhost/api/checkout/review', { method: 'POST', body: JSON.stringify(body) });
 beforeEach(() => { vi.clearAllMocks(); vi.mocked(auth).mockResolvedValue({ user: { id: 'member-1' } } as never); vi.mocked(checkRateLimit).mockReturnValue({ success: true } as never); });
 

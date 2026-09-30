@@ -1,18 +1,18 @@
-import { withBrowserConsent } from '@/lib/privacy-consent';
-import { getMeasurementDatabase } from '@/lib/measurement-database';
+import { withBrowserConsent } from '@/lib/privacy/consent';
+import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { NextResponse } from "next/server";
 import { z } from 'zod';
 import { auth } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { stripe } from "@/lib/commerce/stripe";
 import { db } from "@/lib/db";
 import { courses, payments, coupons, couponUsages, enrollments } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
-import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { calculateDiscount, validateCouponEligibility } from "@/lib/commerce/coupon";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
-import { analyticsExposureIdSchema } from '@/lib/analytics-contract';
+import { analyticsExposureIdSchema } from '@/lib/analytics/contract';
 import { logEvent } from '@/lib/error-handler';
-import { measurementRecorder } from '@/lib/measurement-recorder';
+import { measurementRecorder } from '@/lib/analytics/measurement-recorder';
 
 const stripeCheckoutRequestSchema = z.object({
     courseId: z.string().trim().min(1).max(36),

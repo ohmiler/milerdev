@@ -6,7 +6,7 @@ import {
   type AnalyticsControlStore,
   type AnalyticsControlWrite,
   type AnalyticsGovernanceDecisionInput,
-} from '@/lib/analytics-control';
+} from '@/lib/analytics/control';
 
 class RevisionStore implements AnalyticsControlStore {
   snapshot: AnalyticsControlSnapshot = { operational: null, governance: null };

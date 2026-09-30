@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn(() => ({ success: true, resetTime: Date.now() + 60_000 })),
   rateLimits: { sensitive: { maxRequests: 10, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock('@/lib/notifications/email', () => ({
   sendPaymentConfirmation: vi.fn(() => Promise.resolve()),
 }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
-vi.mock('@/lib/promptpay-fulfillment', () => ({
+vi.mock('@/lib/commerce/promptpay-fulfillment', () => ({
   claimPromptPayIntent: vi.fn(),
   fulfillPromptPayIntent: vi.fn(),
   releasePromptPayIntent: vi.fn(() => Promise.resolve()),
@@ -22,8 +22,8 @@ import {
   claimPromptPayIntent,
   fulfillPromptPayIntent,
   releasePromptPayIntent,
-} from '@/lib/promptpay-fulfillment';
-import { PromptPayIntentError } from '@/lib/promptpay-intent';
+} from '@/lib/commerce/promptpay-fulfillment';
+import { PromptPayIntentError } from '@/lib/commerce/promptpay-intent';
 
 const session = {
   user: { id: 'student-1', name: 'Student', email: 'student@example.test' },

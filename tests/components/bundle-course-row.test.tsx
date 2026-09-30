@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import BundleCourseRow from '@/components/bundle/BundleCourseRow';
-import { deriveBundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 const NOW = new Date('2026-09-02T05:00:00.000Z');
 

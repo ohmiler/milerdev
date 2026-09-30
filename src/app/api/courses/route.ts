@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { courses, users, lessons, courseTags, tags } from "@/lib/db/schema";
 import { eq, desc, asc, and, count, like, gt, sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 
 // GET /api/courses - Get all published courses with filters and pagination
 export async function GET(request: Request) {

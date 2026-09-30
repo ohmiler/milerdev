@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { loadPaymentRecords } from '@/lib/payment-records';
+import { loadPaymentRecords } from '@/lib/commerce/payment-records';
 
 const headers = { 'Cache-Control': 'private, no-store' };
 

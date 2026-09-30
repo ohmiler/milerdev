@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth';
 import { notificationPubSub } from '@/lib/notifications/pubsub';
-import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

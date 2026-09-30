@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deriveLearningPresentation,
   type LearningPresentationSource,
-} from '@/lib/learning-presentation';
+} from '@/lib/learning/presentation';
 
 const baseSource: Omit<LearningPresentationSource, 'certificate'> = {
   course: {

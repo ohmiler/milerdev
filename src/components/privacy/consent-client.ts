@@ -1,7 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { UNKNOWN_CONSENT, type ConsentStatus } from '@/lib/privacy-consent-contract';
+import { UNKNOWN_CONSENT, type ConsentStatus } from '@/lib/privacy/consent-contract';
 
 let state: ConsentStatus = UNKNOWN_CONSENT;
 let revision = 0;

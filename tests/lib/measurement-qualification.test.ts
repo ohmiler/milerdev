@@ -8,7 +8,7 @@ import {
   type MeasurementPaymentRow,
   type MeasurementQualificationQueries,
   type MeasurementWebVitalRow,
-} from '@/lib/measurement-qualification';
+} from '@/lib/analytics/measurement-qualification';
 
 const window = {
   start: new Date('2026-08-17T17:00:00.000Z'),

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import AuthShell from '@/components/auth/AuthShell';
 import VerifyEmailForm from '@/components/auth/VerifyEmailForm';
-import { createAuthReturnHref } from '@/lib/safe-auth-return';
+import { createAuthReturnHref } from '@/lib/auth/safe-auth-return';
 
 export const metadata: Metadata = {
   title: 'ยืนยันอีเมล', robots: { index: false, follow: false }, referrer: 'no-referrer',

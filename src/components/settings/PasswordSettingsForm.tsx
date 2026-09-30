@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getPasswordPolicyError } from '@/lib/password-policy';
+import { getPasswordPolicyError } from '@/lib/auth/password-policy';
 import PasswordPolicyFeedback from '@/components/auth/PasswordPolicyFeedback';
 import { CircleAlert, CircleCheck, Info } from 'lucide-react';
 import { signOut } from 'next-auth/react';

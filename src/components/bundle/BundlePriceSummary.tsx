@@ -1,4 +1,4 @@
-import type { BundleDecisionFacts } from '@/lib/bundle-decision-facts';
+import type { BundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 type BundlePriceSummaryProps = {
   price: BundleDecisionFacts['price'];
