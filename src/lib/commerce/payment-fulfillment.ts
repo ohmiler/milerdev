@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { and, eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { getMemberConsentId } from '@/lib/privacy-consent';
+import { getMemberConsentId } from '@/lib/privacy/consent';
 import {
   bundleCourses,
   bundles,

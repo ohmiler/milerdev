@@ -1,4 +1,4 @@
-vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
+vi.mock('@/lib/privacy/consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { paymentInsert, resolveProductExposureAttribution } = vi.hoisted(() => ({
@@ -59,7 +59,7 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { db } from '@/lib/db';
-import { withBrowserConsent } from '@/lib/privacy-consent';
+import { withBrowserConsent } from '@/lib/privacy/consent';
 import { measurementTransaction } from '@/lib/analytics/measurement-database';
 
 const exposureId = '11111111-1111-4111-8111-111111111111';

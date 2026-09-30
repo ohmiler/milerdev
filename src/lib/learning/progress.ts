@@ -5,7 +5,7 @@ import { and, count, eq } from 'drizzle-orm';
 
 import { ensureCompletedCertificate } from '@/lib/certificates/issuance';
 import { db } from '@/lib/db';
-import { getMemberConsentId } from '@/lib/privacy-consent';
+import { getMemberConsentId } from '@/lib/privacy/consent';
 import {
   enrollments,
   lessonProgress,

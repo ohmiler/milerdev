@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { readBrowserConsent, saveBrowserConsent } from '@/lib/privacy-consent';
-import { CONSENT_COOKIE, CONSENT_MAX_AGE_SECONDS, consentChoiceSchema } from '@/lib/privacy-consent-contract';
+import { readBrowserConsent, saveBrowserConsent } from '@/lib/privacy/consent';
+import { CONSENT_COOKIE, CONSENT_MAX_AGE_SECONDS, consentChoiceSchema } from '@/lib/privacy/consent-contract';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const headers = { 'Cache-Control': 'private, no-store' };

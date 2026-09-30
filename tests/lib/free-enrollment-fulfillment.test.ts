@@ -1,4 +1,4 @@
-vi.mock('@/lib/privacy-consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
+vi.mock('@/lib/privacy/consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -24,7 +24,7 @@ vi.mock('@/lib/analytics/enrollment-measurement-projector', () => ({
 }));
 
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
-import { getMemberConsentId } from '@/lib/privacy-consent';
+import { getMemberConsentId } from '@/lib/privacy/consent';
 
 function transactionAdapter() {
   return {

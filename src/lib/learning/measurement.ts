@@ -9,7 +9,7 @@ import {
   serverAnalyticsEventSchema,
 } from '@/lib/analytics/contract';
 import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
-import { lockActiveConsent } from '@/lib/privacy-consent';
+import { lockActiveConsent } from '@/lib/privacy/consent';
 import {
   analyticsEvents,
   enrollments,

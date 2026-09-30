@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { withBrowserConsent } from '@/lib/privacy-consent';
+import { withBrowserConsent } from '@/lib/privacy/consent';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
 import { logEvent } from '@/lib/error-handler';

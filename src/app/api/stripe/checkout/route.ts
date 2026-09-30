@@ -1,4 +1,4 @@
-import { withBrowserConsent } from '@/lib/privacy-consent';
+import { withBrowserConsent } from '@/lib/privacy/consent';
 import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { NextResponse } from "next/server";
 import { z } from 'zod';

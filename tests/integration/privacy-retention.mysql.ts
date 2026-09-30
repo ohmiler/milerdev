@@ -4,7 +4,7 @@ import { drizzle, type MySql2Database } from 'drizzle-orm/mysql2';
 import { eq, inArray } from 'drizzle-orm';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { analyticsEvents, measurementOutbox, payments, privacyConsents, users } from '@/lib/db/schema';
-import { privacyRetentionCutoffs, runPrivacyRetention } from '@/lib/privacy-retention';
+import { privacyRetentionCutoffs, runPrivacyRetention } from '@/lib/privacy/retention';
 
 const userId = randomUUID();
 const eventIds = [randomUUID(), randomUUID()];

@@ -1,4 +1,4 @@
-vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
+vi.mock('@/lib/privacy/consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
@@ -27,7 +27,7 @@ import {
   recordClientAnalyticsEvent,
 } from '@/lib/analytics/events';
 import { auth } from '@/lib/auth';
-import { withBrowserConsent } from '@/lib/privacy-consent';
+import { withBrowserConsent } from '@/lib/privacy/consent';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 const validEvent = {

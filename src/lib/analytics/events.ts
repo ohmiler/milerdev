@@ -17,7 +17,7 @@ import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { analyticsEvents, bundles, courses } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { logEvent } from '@/lib/error-handler';
-import { getMemberConsentId, lockActiveConsent } from '@/lib/privacy-consent';
+import { getMemberConsentId, lockActiveConsent } from '@/lib/privacy/consent';
 import { measurementTransaction } from '@/lib/analytics/measurement-database';
 
 export async function isAnalyticsEnabled(): Promise<boolean> {

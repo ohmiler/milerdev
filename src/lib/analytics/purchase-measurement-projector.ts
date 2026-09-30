@@ -2,7 +2,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
 import { db } from '@/lib/db';
-import { lockActiveConsent } from '@/lib/privacy-consent';
+import { lockActiveConsent } from '@/lib/privacy/consent';
 import { analyticsEvents, measurementOutbox, payments } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 

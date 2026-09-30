@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import { measurementTransaction } from '@/lib/analytics/measurement-database';
 import { privacyConsents, users } from '@/lib/db/schema';
-import { CONSENT_COOKIE, CONSENT_MAX_AGE_SECONDS, CONSENT_VERSION, isConsentCurrent, UNKNOWN_CONSENT, type ConsentStatus } from '@/lib/privacy-consent-contract';
+import { CONSENT_COOKIE, CONSENT_MAX_AGE_SECONDS, CONSENT_VERSION, isConsentCurrent, UNKNOWN_CONSENT, type ConsentStatus } from '@/lib/privacy/consent-contract';
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type ConsentDatabase = Pick<Transaction, 'select' | 'insert' | 'update'>;

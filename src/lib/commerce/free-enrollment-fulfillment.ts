@@ -2,7 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 import { db } from '@/lib/db';
-import { getMemberConsentId } from '@/lib/privacy-consent';
+import { getMemberConsentId } from '@/lib/privacy/consent';
 import { couponUsages, coupons, enrollments, measurementOutbox } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { enrollmentMeasurementProjector } from '@/lib/analytics/enrollment-measurement-projector';
