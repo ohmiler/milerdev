@@ -9,7 +9,7 @@ import {
     type UserLifecycleTransaction,
     type UserMutationExpectation,
     type UserMutationPatch,
-} from '@/lib/user-lifecycle';
+} from '@/lib/users/lifecycle';
 
 const auditContext = { ipAddress: null, userAgent: 'vitest' };
 

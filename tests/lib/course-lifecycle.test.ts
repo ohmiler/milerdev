@@ -9,7 +9,7 @@ import {
     type CourseLifecycleTransaction,
     type CourseStatus,
     type PublishedBundleReference,
-} from '@/lib/course-lifecycle';
+} from '@/lib/courses/lifecycle';
 
 const auditContext = { ipAddress: null, userAgent: 'vitest' };
 

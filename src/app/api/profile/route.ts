@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getProfileNameError } from '@/lib/profile-policy';
+import { getProfileNameError } from '@/lib/users/profile-policy';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 
 const updateProfileSchema = z.object({

@@ -52,7 +52,7 @@ import {
   lifecycleMutationFeedback,
   type AdminUserLifecycleAction as AdminUserLifecycleActionName,
   type AuthoritativeLifecycleUser,
-} from '@/lib/admin-user-lifecycle-ui';
+} from '@/lib/users/admin-lifecycle-ui';
 
 interface User {
   id: string;

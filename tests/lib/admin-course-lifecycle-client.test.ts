@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { transitionAdminCourse } from '@/lib/admin-course-lifecycle-client';
+import { transitionAdminCourse } from '@/lib/courses/admin-lifecycle-client';
 
 describe('Admin course lifecycle client', () => {
   it('sends the expected state and returns the authoritative course status', async () => {

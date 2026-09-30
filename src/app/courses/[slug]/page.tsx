@@ -16,7 +16,7 @@ import CoursePreviewVideo from '@/components/course/CoursePreviewVideo';
 import { db } from '@/lib/db';
 import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc, and } from 'drizzle-orm';
-import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny';
+import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
 import { getExcerpt, getSanitizedRichContentCached } from '@/lib/sanitize';
 import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
@@ -27,7 +27,7 @@ import CourseDetailSection from '@/components/course/CourseDetailSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star } from 'lucide-react';
 import { deriveCourseDecisionFacts } from '@/lib/course-decision-facts';
-import { getCourseReviewStats } from '@/lib/course-review-stats';
+import { getCourseReviewStats } from '@/lib/courses/review-stats';
 
 function normalizeUrl(url: string | null): string | null {
     if (!url || url.trim() === '') return null;

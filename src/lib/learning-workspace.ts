@@ -3,7 +3,7 @@ import 'server-only';
 import { and, asc, eq } from 'drizzle-orm';
 import sanitizeHtml from 'sanitize-html';
 
-import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny';
+import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
 import { db } from '@/lib/db';
 import { courses, enrollments, lessonProgress, lessons } from '@/lib/db/schema';
 

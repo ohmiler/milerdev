@@ -22,7 +22,7 @@ import {
   normalizeCourseReviewQuery,
   type CourseReviewQuery,
   type CourseReviewSort,
-} from '@/lib/course-review-query';
+} from '@/lib/courses/review-query';
 import { cn } from '@/lib/utils';
 
 interface Review {

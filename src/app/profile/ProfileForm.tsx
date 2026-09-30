@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getProfileNameError, PROFILE_NAME_MAX_LENGTH } from '@/lib/profile-policy';
+import { getProfileNameError, PROFILE_NAME_MAX_LENGTH } from '@/lib/users/profile-policy';
 import { CircleAlert, CircleCheck } from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

@@ -2,7 +2,7 @@ import type {
   CourseLifecycleAction,
   CourseStatus,
   PublishedBundleReference,
-} from '@/lib/course-lifecycle';
+} from '@/lib/courses/lifecycle';
 
 type LifecycleResponse = {
   error?: string;
