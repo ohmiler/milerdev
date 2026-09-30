@@ -6,7 +6,7 @@ import {
   type MeasurementStore,
   type ProductEligibility,
   type ProductExposureRow,
-} from '@/lib/measurement-recorder';
+} from '@/lib/analytics/measurement-recorder';
 
 class MemoryMeasurementStore implements MeasurementStore {
   eligibility = new Map<string, ProductEligibility>();

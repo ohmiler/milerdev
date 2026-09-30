@@ -13,7 +13,7 @@ import {
   createProductExposureId,
   trackClientAnalyticsEvent,
 } from '@/components/analytics/analytics-client';
-import type { ClientAnalyticsEvent } from '@/lib/analytics-contract';
+import type { ClientAnalyticsEvent } from '@/lib/analytics/contract';
 import { useConsentStatus, canSendAnalytics } from '@/components/privacy/consent-client';
 
 const ProductExposureContext = createContext<string | null>(null);

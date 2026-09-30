@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { withBrowserConsent } from '@/lib/privacy-consent';
 
-import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
+import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
 import { logEvent } from '@/lib/error-handler';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
-import { webVitalReportSchema, webVitalsRecorder } from '@/lib/web-vitals';
+import { webVitalReportSchema, webVitalsRecorder } from '@/lib/analytics/web-vitals';
 
 export async function POST(request: Request) {
   const clientIP = getClientIP(request);

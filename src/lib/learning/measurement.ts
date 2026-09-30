@@ -3,12 +3,12 @@ import 'server-only';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
+import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
 import {
   analyticsExposureIdSchema,
   serverAnalyticsEventSchema,
-} from '@/lib/analytics-contract';
-import { getMeasurementDatabase } from '@/lib/measurement-database';
+} from '@/lib/analytics/contract';
+import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { lockActiveConsent } from '@/lib/privacy-consent';
 import {
   analyticsEvents,

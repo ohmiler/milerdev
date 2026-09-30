@@ -6,7 +6,7 @@ import {
     WEB_VITAL_NAMES,
     WEB_VITAL_RATINGS,
     WEB_VITAL_ROUTE_FAMILIES,
-} from '@/lib/web-vitals-contract';
+} from '@/lib/analytics/web-vitals-contract';
 
 // =====================
 // USERS TABLE

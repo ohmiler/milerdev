@@ -4,8 +4,8 @@ import {
   WEB_VITAL_DEVICE_CLASSES,
   WEB_VITAL_NAMES,
   type WebVitalName,
-} from '@/lib/web-vitals-contract';
-import { webVitalReportSchema } from '@/lib/web-vitals';
+} from '@/lib/analytics/web-vitals-contract';
+import { webVitalReportSchema } from '@/lib/analytics/web-vitals';
 import {
   LEARNER_OBSERVATION_DAYS,
   MEASUREMENT_DAY_MS,
@@ -14,7 +14,7 @@ import {
   type MeasurementPaymentRow,
   type MeasurementWebVitalRow,
   type MeasurementWindow,
-} from '@/lib/measurement-qualification-contract';
+} from '@/lib/analytics/measurement-qualification-contract';
 import {
   exposureTargetMatchesPayment,
   hasValidEventMetadata,
@@ -27,9 +27,9 @@ import {
   isWithin,
   isWorkspaceStart,
   paymentTargetMatchesEvent,
-} from '@/lib/measurement-qualification-validation';
+} from '@/lib/analytics/measurement-qualification-validation';
 
-export * from '@/lib/measurement-qualification-contract';
+export * from '@/lib/analytics/measurement-qualification-contract';
 
 const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1_000;
 const BASELINE_DAYS = 14;

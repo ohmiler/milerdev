@@ -2,7 +2,7 @@ import type {
   MeasurementEventRow,
   MeasurementPaymentRow,
   MeasurementWindow,
-} from '@/lib/measurement-qualification-contract';
+} from '@/lib/analytics/measurement-qualification-contract';
 
 export function isWithin(
   value: Date | null,

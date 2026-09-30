@@ -3,7 +3,7 @@ import 'server-only';
 import {
   WEB_VITAL_RELEASE_IDENTITY_MAX_LENGTH,
   WEB_VITAL_RELEASE_IDENTITY_PATTERN,
-} from '@/lib/web-vitals-contract';
+} from '@/lib/analytics/web-vitals-contract';
 
 type ReleaseEnvironment = Partial<Record<
   'RAILWAY_GIT_COMMIT_SHA' | 'VERCEL_GIT_COMMIT_SHA' | 'GITHUB_SHA',

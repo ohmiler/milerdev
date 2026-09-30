@@ -1,7 +1,7 @@
 import { lt } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { getAnalyticsControlState } from '@/lib/analytics-control';
+import { getAnalyticsControlState } from '@/lib/analytics/control';
 import { db } from '@/lib/db';
 import { analyticsEvents, webVitals } from '@/lib/db/schema';
 

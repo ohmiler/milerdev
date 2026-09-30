@@ -2,9 +2,9 @@ import 'server-only';
 
 import { z } from 'zod';
 
-import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
+import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
 import { db } from '@/lib/db';
-import { getMeasurementDatabase } from '@/lib/measurement-database';
+import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { webVitals } from '@/lib/db/schema';
 import {
   WEB_VITAL_DEVICE_CLASSES,
@@ -15,7 +15,7 @@ import {
   WEB_VITAL_ROUTE_FAMILIES,
   type WebVitalName,
   type WebVitalRating,
-} from '@/lib/web-vitals-contract';
+} from '@/lib/analytics/web-vitals-contract';
 
 const MAX_DURATION_MS = 600_000;
 const MAX_CLS = 10;

@@ -13,7 +13,7 @@ vi.mock('@/lib/db/safe-insert', () => ({
   isDuplicateKeyError,
 }));
 vi.mock('@/lib/db', () => ({ db: { transaction: dbTransaction } }));
-vi.mock('@/lib/purchase-measurement-projector', () => ({
+vi.mock('@/lib/analytics/purchase-measurement-projector', () => ({
   purchaseMeasurementProjector: { projectPurchase },
 }));
 

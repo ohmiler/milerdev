@@ -18,7 +18,7 @@ vi.mock('@/lib/coupon', () => ({
   calculateDiscount: vi.fn(),
   validateCouponEligibility: vi.fn(),
 }));
-vi.mock('@/lib/measurement-recorder', () => ({
+vi.mock('@/lib/analytics/measurement-recorder', () => ({
   measurementRecorder: { resolveProductExposureAttribution },
 }));
 vi.mock('@/lib/stripe', () => ({
@@ -60,7 +60,7 @@ vi.mock('@/lib/db', () => ({
 
 import { db } from '@/lib/db';
 import { withBrowserConsent } from '@/lib/privacy-consent';
-import { measurementTransaction } from '@/lib/measurement-database';
+import { measurementTransaction } from '@/lib/analytics/measurement-database';
 
 const exposureId = '11111111-1111-4111-8111-111111111111';
 

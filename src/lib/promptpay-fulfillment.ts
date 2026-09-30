@@ -14,7 +14,7 @@ import {
   type Payment,
 } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
-import { purchaseMeasurementProjector } from '@/lib/purchase-measurement-projector';
+import { purchaseMeasurementProjector } from '@/lib/analytics/purchase-measurement-projector';
 import {
   assertPromptPayIntentClaim,
   PromptPayIntentError,

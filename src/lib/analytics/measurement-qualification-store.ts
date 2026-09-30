@@ -11,7 +11,7 @@ import {
   type MeasurementQualificationStore,
   type MeasurementWebVitalRow,
   type MeasurementWindow,
-} from '@/lib/measurement-qualification-report';
+} from '@/lib/analytics/measurement-qualification-report';
 
 const BASELINE_EVENT_NAMES = [
   'course_viewed',

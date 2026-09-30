@@ -4,7 +4,7 @@ import {
   getAnalyticsControlState,
   isAnalyticsEventEnabled,
   resetAnalyticsControlCache,
-} from '@/lib/analytics-control';
+} from '@/lib/analytics/control';
 import {
   clientAnalyticsEventSchema,
   serverAnalyticsEventSchema,
@@ -12,13 +12,13 @@ import {
   type ClientAnalyticsEvent,
   type ServerAnalyticsEvent,
   type ServerAnalyticsEventName,
-} from '@/lib/analytics-contract';
-import { getMeasurementDatabase } from '@/lib/measurement-database';
+} from '@/lib/analytics/contract';
+import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { analyticsEvents, bundles, courses } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { logEvent } from '@/lib/error-handler';
 import { getMemberConsentId, lockActiveConsent } from '@/lib/privacy-consent';
-import { measurementTransaction } from '@/lib/measurement-database';
+import { measurementTransaction } from '@/lib/analytics/measurement-database';
 
 export async function isAnalyticsEnabled(): Promise<boolean> {
   return (await getAnalyticsControlState()).effectiveEnabled;

@@ -1,7 +1,7 @@
 import type {
   WebVitalDeviceClass,
   WebVitalName,
-} from '@/lib/web-vitals-contract';
+} from '@/lib/analytics/web-vitals-contract';
 
 export const MEASUREMENT_DAY_MS = 24 * 60 * 60 * 1_000;
 export const LEARNER_OBSERVATION_DAYS = 7;

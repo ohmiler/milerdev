@@ -6,9 +6,9 @@ import {
   SERVER_ANALYTICS_EVENT_NAMES,
   type ClientAnalyticsEvent,
   type ServerAnalyticsEventName,
-} from '@/lib/analytics-contract';
+} from '@/lib/analytics/contract';
 import { db } from '@/lib/db';
-import { getMeasurementDatabase } from '@/lib/measurement-database';
+import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { auditLogs, settings } from '@/lib/db/schema';
 
 export const ANALYTICS_CONTROL_CACHE_MAX_AGE_MS = 5_000;

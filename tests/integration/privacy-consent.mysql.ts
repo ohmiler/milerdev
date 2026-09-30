@@ -7,7 +7,7 @@ vi.mock('next/headers', () => ({ cookies: async () => ({ get: () => ({ value: fi
 
 import { db } from '@/lib/db';
 import { users, analyticsEvents } from '@/lib/db/schema';
-import { getMeasurementDatabase, measurementTransaction } from '@/lib/measurement-database';
+import { getMeasurementDatabase, measurementTransaction } from '@/lib/analytics/measurement-database';
 import { saveBrowserConsent, readBrowserConsent, withBrowserConsent, getMemberConsentId, lockActiveConsent } from '@/lib/privacy-consent';
 
 const userId = randomUUID();

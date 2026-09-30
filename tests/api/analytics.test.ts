@@ -2,12 +2,12 @@ vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/analytics', () => ({
+vi.mock('@/lib/analytics/events', () => ({
   isAnalyticsEventEnabled: vi.fn(),
   isPublishedAnalyticsTarget: vi.fn(),
   recordClientAnalyticsEvent: vi.fn(),
 }));
-vi.mock('@/lib/measurement-recorder', () => ({
+vi.mock('@/lib/analytics/measurement-recorder', () => ({
   measurementRecorder: { recordProductExposure: vi.fn() },
 }));
 vi.mock('@/lib/learning/measurement', () => ({
@@ -25,7 +25,7 @@ import {
   isAnalyticsEventEnabled,
   isPublishedAnalyticsTarget,
   recordClientAnalyticsEvent,
-} from '@/lib/analytics';
+} from '@/lib/analytics/events';
 import { auth } from '@/lib/auth';
 import { withBrowserConsent } from '@/lib/privacy-consent';
 import { checkRateLimit } from '@/lib/rate-limit';

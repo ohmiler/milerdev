@@ -19,7 +19,7 @@ vi.mock('@/lib/db', () => ({ db: { transaction: dbTransaction } }));
 vi.mock('@/lib/db/safe-insert', () => ({
   isDuplicateKeyError: vi.fn((error: unknown) => error instanceof Error && error.message === 'duplicate'),
 }));
-vi.mock('@/lib/enrollment-measurement-projector', () => ({
+vi.mock('@/lib/analytics/enrollment-measurement-projector', () => ({
   enrollmentMeasurementProjector: { projectEnrollment },
 }));
 

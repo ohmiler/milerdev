@@ -7,7 +7,7 @@ import {
   webVitalReportSchema,
   type StoredWebVital,
   type WebVitalsStore,
-} from '@/lib/web-vitals';
+} from '@/lib/analytics/web-vitals';
 
 const validReport = {
   pageLoadId: 'v4-1720000000000-123456789',

@@ -4,12 +4,12 @@ import {
   isAnalyticsEventEnabled,
   isPublishedAnalyticsTarget,
   recordClientAnalyticsEvent,
-} from '@/lib/analytics';
-import { clientAnalyticsEventSchema } from '@/lib/analytics-contract';
+} from '@/lib/analytics/events';
+import { clientAnalyticsEventSchema } from '@/lib/analytics/contract';
 import { auth } from '@/lib/auth';
 import { withBrowserConsent } from '@/lib/privacy-consent';
 import { logEvent } from '@/lib/error-handler';
-import { measurementRecorder } from '@/lib/measurement-recorder';
+import { measurementRecorder } from '@/lib/analytics/measurement-recorder';
 import { learningMeasurementRecorder } from '@/lib/learning/measurement';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 

@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { getMemberConsentId } from '@/lib/privacy-consent';
 import { couponUsages, coupons, enrollments, measurementOutbox } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
-import { enrollmentMeasurementProjector } from '@/lib/enrollment-measurement-projector';
+import { enrollmentMeasurementProjector } from '@/lib/analytics/enrollment-measurement-projector';
 
 type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
