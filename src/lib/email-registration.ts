@@ -4,7 +4,7 @@ import { hashNewPassword } from '@/lib/password-storage';
 import { and, eq, gt, lte } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { emailRegistrations, users } from '@/lib/db/schema';
-import { sendRegistrationVerificationEmail } from '@/lib/email';
+import { sendRegistrationVerificationEmail } from '@/lib/notifications/email';
 import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
 
 export const REGISTRATION_TTL_MS = 30 * 60 * 1000;

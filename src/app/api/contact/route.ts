@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
-import { sendContactNotification } from '@/lib/email';
+import { sendContactNotification } from '@/lib/notifications/email';
 
 const contactSchema = z.object({
     name: z.string().min(2, 'กรุณากรอกชื่อ').max(100),

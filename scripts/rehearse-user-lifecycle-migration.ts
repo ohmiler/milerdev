@@ -272,7 +272,7 @@ async function exerciseLifecycleBehavior(
 ): Promise<{ activeAdminCount: number; concurrencySuccessCount: number; studentInactive: boolean }> {
     process.env.DATABASE_URL = databaseUrl;
     process.env.DB_CONNECTION_LIMIT = '4';
-    const { userLifecycleService } = await import('../src/lib/user-lifecycle');
+    const { userLifecycleService } = await import('../src/lib/users/lifecycle');
     const auditContext = { ipAddress: '127.0.0.1', userAgent: 'user-lifecycle-rehearsal' };
 
     const first = await userLifecycleService.setLifecycle({
@@ -381,7 +381,7 @@ async function verifyExistingUpgradeBehavior(
 
     process.env.DATABASE_URL = databaseUrl;
     process.env.DB_CONNECTION_LIMIT = '4';
-    const { UserLifecycleError, userLifecycleService } = await import('../src/lib/user-lifecycle');
+    const { UserLifecycleError, userLifecycleService } = await import('../src/lib/users/lifecycle');
     const auditContext = { ipAddress: '127.0.0.1', userAgent: 'user-lifecycle-rehearsal' };
     const outcomes = await Promise.allSettled([
         userLifecycleService.setLifecycle({

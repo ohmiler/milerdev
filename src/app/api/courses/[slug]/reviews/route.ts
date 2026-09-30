@@ -7,7 +7,7 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { stripHtml } from '@/lib/sanitize';
-import { getCourseReviewStats } from '@/lib/course-review-stats';
+import { getCourseReviewStats } from '@/lib/courses/review-stats';
 
 type RouteParams = { params: Promise<{ slug: string }> };
 

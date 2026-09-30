@@ -14,8 +14,8 @@ vi.mock('@/lib/auditLog', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@/lib/auditLog')>()),
     getAuditContext: mocks.getAuditContext,
 }));
-vi.mock('@/lib/user-lifecycle', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('@/lib/user-lifecycle')>()),
+vi.mock('@/lib/users/lifecycle', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@/lib/users/lifecycle')>()),
     userLifecycleService: {
         setLifecycle: mocks.setLifecycle,
         updateRoles: mocks.updateRoles,
@@ -163,7 +163,7 @@ describe('Admin user lifecycle API', () => {
     });
 
     it('returns a conflict code when the last-active-admin invariant blocks a request', async () => {
-        const { UserLifecycleError } = await import('@/lib/user-lifecycle');
+        const { UserLifecycleError } = await import('@/lib/users/lifecycle');
         mocks.setLifecycle.mockRejectedValue(
             new UserLifecycleError('LAST_ACTIVE_ADMIN', 409),
         );

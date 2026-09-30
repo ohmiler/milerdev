@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { notifications, users } from '@/lib/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import { notificationPubSub } from '@/lib/notification-pubsub';
+import { notificationPubSub } from '@/lib/notifications/pubsub';
 
 // GET /api/admin/notifications - Get all notifications (admin view)
 export async function GET(request: Request) {

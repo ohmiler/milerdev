@@ -6,9 +6,9 @@ import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { certificates, courses, enrollments, users } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
-import { sendCertificateEmail } from '@/lib/email';
+import { sendCertificateEmail } from '@/lib/notifications/email';
 import { logError } from '@/lib/error-handler';
-import { notify } from '@/lib/notify';
+import { notify } from '@/lib/notifications/notify';
 
 type CertificateRecord = typeof certificates.$inferSelect;
 type IssuanceAuthority = 'explicit_admin_intent' | 'verified_completion';

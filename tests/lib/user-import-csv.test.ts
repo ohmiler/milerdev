@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseUserImportCsv } from '@/lib/user-import-csv';
+import { parseUserImportCsv } from '@/lib/users/import-csv';
 describe('credential CSV parsing', () => {
   it('preserves password spaces, commas, quotes and CRLF records', () => {
     expect(parseUserImportCsv('email,password\r\na@example.test,"  a long,""quoted"" phrase  "\r\n'))

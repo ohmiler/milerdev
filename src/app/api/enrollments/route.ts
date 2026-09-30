@@ -3,10 +3,10 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, courses, lessons } from '@/lib/db/schema';
 import { eq, and, count, desc } from 'drizzle-orm';
-import { sendEnrollmentEmail } from '@/lib/email';
+import { sendEnrollmentEmail } from '@/lib/notifications/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import { fulfillFreeEnrollment } from '@/lib/free-enrollment-fulfillment';
-import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/course-availability';
+import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/courses/availability';
 
 // GET /api/enrollments - Get user's enrollments
 export async function GET() {

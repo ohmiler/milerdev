@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { hashNewPassword } from '@/lib/password-storage';
 import { PasswordSecurityError } from '@/lib/password-errors';
-import { parseUserImportCsv } from '@/lib/user-import-csv';
+import { parseUserImportCsv } from '@/lib/users/import-csv';
 import { randomBytes } from 'crypto';
 
 function generateSecurePassword(length: number = 16): string {

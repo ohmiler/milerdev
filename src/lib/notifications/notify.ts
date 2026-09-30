@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { notifications, users } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
-import { notificationPubSub } from '@/lib/notification-pubsub';
+import { notificationPubSub } from '@/lib/notifications/pubsub';
 import { eq } from 'drizzle-orm';
 
 interface NotifyOptions {

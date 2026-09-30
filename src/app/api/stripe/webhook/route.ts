@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
-import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/email';
+import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/notifications/email';
 import { logError, logEvent } from '@/lib/error-handler';
 import { fulfillStripeCheckoutSession } from '@/lib/payment-fulfillment';
 

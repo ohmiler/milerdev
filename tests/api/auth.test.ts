@@ -11,7 +11,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 // Mock email
-vi.mock('@/lib/email', () => ({
+vi.mock('@/lib/notifications/email', () => ({
     sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
     sendPasswordResetEmail: vi.fn().mockResolvedValue(true),
 }));
@@ -89,7 +89,7 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { auth } from '@/lib/auth';
-import { sendPasswordResetEmail } from '@/lib/email';
+import { sendPasswordResetEmail } from '@/lib/notifications/email';
 import * as passwordStorage from '@/lib/password-storage';
 import { consumeAuthRateLimit } from '@/lib/auth-rate-limit';
 

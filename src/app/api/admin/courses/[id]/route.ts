@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getAuditContext, logAudit } from '@/lib/auditLog';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { normalizeCertificateColor } from '@/lib/certificates/color';
-import { CourseLifecycleError, courseLifecycleService } from '@/lib/course-lifecycle';
+import { CourseLifecycleError, courseLifecycleService } from '@/lib/courses/lifecycle';
 import { db } from '@/lib/db';
 import { courses, courseTags, tags } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';

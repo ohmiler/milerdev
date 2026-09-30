@@ -27,7 +27,7 @@ import {
   type CourseCatalogPrice,
   type CourseCatalogQueryInput,
   type CourseCatalogSort,
-} from '@/lib/course-catalog-query';
+} from '@/lib/courses/catalog-query';
 import { and, asc, avg, count, desc, eq, like, sql } from 'drizzle-orm';
 
 export const revalidate = 300;

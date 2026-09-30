@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { toPng } from 'html-to-image';
-import { absoluteUrl } from '@/lib/seo';
+import { absoluteUrl } from '@/lib/content/seo';
 import styles from './CertificateArtifact.module.css';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

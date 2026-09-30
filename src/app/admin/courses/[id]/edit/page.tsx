@@ -28,12 +28,12 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
 import { showToast } from '@/components/ui/Toast';
-import { transitionAdminCourse } from '@/lib/admin-course-lifecycle-client';
+import { transitionAdminCourse } from '@/lib/courses/admin-lifecycle-client';
 import {
   DEFAULT_CERTIFICATE_COLOR,
   normalizeCertificateColor,
 } from '@/lib/certificates/color';
-import type { CourseLifecycleAction, CourseStatus } from '@/lib/course-lifecycle';
+import type { CourseLifecycleAction, CourseStatus } from '@/lib/courses/lifecycle';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });

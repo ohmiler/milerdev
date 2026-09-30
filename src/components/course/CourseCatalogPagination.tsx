@@ -11,7 +11,7 @@ import {
   buildCourseCatalogHref,
   getCourseCatalogPageItems,
   type CourseCatalogQuery,
-} from '@/lib/course-catalog-query';
+} from '@/lib/courses/catalog-query';
 
 interface CourseCatalogPaginationProps {
   query: CourseCatalogQuery;

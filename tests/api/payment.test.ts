@@ -19,7 +19,7 @@ vi.mock('@/lib/stripe', () => ({
     },
 }));
 
-vi.mock('@/lib/email', () => ({
+vi.mock('@/lib/notifications/email', () => ({
     sendPaymentConfirmation: vi.fn().mockResolvedValue(undefined),
     sendEnrollmentEmail: vi.fn().mockResolvedValue(undefined),
 }));

@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
     select: vi.fn(), insert: vi.fn(), remove: vi.fn(), values: vi.fn(), transaction: vi.fn(),
     claim: vi.fn(), txInsert: vi.fn(), txValues: vi.fn(), send: vi.fn(), hash: vi.fn(),
 }));
-vi.mock('@/lib/email', () => ({ sendRegistrationVerificationEmail: mocks.send }));
+vi.mock('@/lib/notifications/email', () => ({ sendRegistrationVerificationEmail: mocks.send }));
 vi.mock('@/lib/password-storage', () => ({ hashNewPassword: mocks.hash }));
 vi.mock('@/lib/db', () => ({ db: {
     select: () => ({ from: () => ({ where: () => ({ limit: mocks.select }) }) }),

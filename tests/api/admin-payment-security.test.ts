@@ -46,8 +46,8 @@ function transactionSelectChain() {
 vi.mock('@/lib/auth', () => ({ auth: mocks.auth }));
 vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: mocks.requireAdmin }));
 vi.mock('@/lib/auditLog', () => ({ logAudit: mocks.logAudit }));
-vi.mock('@/lib/notify', () => ({ notify: vi.fn().mockResolvedValue(undefined) }));
-vi.mock('@/lib/email', () => ({
+vi.mock('@/lib/notifications/notify', () => ({ notify: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('@/lib/notifications/email', () => ({
   sendEnrollmentEmail: vi.fn().mockResolvedValue(undefined),
   sendPaymentConfirmation: vi.fn().mockResolvedValue(undefined),
 }));

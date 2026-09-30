@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   getLifecyclePresentation,
   type AdminUserLifecycleStatus,
-} from '@/lib/admin-user-lifecycle-ui';
+} from '@/lib/users/admin-lifecycle-ui';
 
 export function AdminUserLifecycleBadge({
   status,

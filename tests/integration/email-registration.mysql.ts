@@ -9,7 +9,7 @@ vi.mock('@/lib/password-screening', () => ({ assertPasswordNotCompromised: vi.fn
 import { emailRegistrations, users } from '@/lib/db/schema';
 
 const mocks = vi.hoisted(() => ({ send: vi.fn().mockResolvedValue(true) }));
-vi.mock('@/lib/email', () => ({ sendRegistrationVerificationEmail: mocks.send }));
+vi.mock('@/lib/notifications/email', () => ({ sendRegistrationVerificationEmail: mocks.send }));
 let db: typeof import('@/lib/db').db;
 let service: typeof import('@/lib/email-registration');
 const suffix = randomBytes(6).toString('hex');

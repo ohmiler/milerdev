@@ -9,7 +9,7 @@ function source(path: string): string {
 
 describe('backend production logging contract', () => {
     it('does not log recipient or subject data from email delivery', () => {
-        const email = source('src/lib/email.ts');
+        const email = source('src/lib/notifications/email.ts');
 
         expect(email).not.toMatch(/console\.(?:log|warn|error)\([^\n]*(?:\bto\b|subject)/);
         expect(email).toContain("logEvent('email.resend.sent')");
@@ -19,7 +19,7 @@ describe('backend production logging contract', () => {
     it('does not log certificate, payment, event, or raw Bunny response identifiers', () => {
         const progress = source('src/app/api/progress/route.ts');
         const webhook = source('src/app/api/stripe/webhook/route.ts');
-        const bunny = source('src/lib/bunny-storage.ts');
+        const bunny = source('src/lib/bunny/storage.ts');
 
         expect(progress).not.toMatch(/console\.log\([^\n]*(?:certificateCode|user\.id)/);
         expect(webhook).not.toMatch(/console\.(?:log|warn|error)\([^\n]*(?:event\.id|payment\.id|paymentId)/);
