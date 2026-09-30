@@ -18,7 +18,7 @@ import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc, and } from 'drizzle-orm';
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
 import { getExcerpt, getSanitizedRichContentCached } from '@/lib/sanitize';
-import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
+import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';

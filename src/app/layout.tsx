@@ -8,7 +8,7 @@ import NotificationProvider from "@/components/notifications/NotificationProvide
 import ThemeSurface from "@/components/theme/ThemeSurface";
 import { Toaster } from "@/components/ui/sonner";
 
-import { buildSiteJsonLd, serializeJsonLd, SITE_URL } from "@/lib/seo";
+import { buildSiteJsonLd, serializeJsonLd, SITE_URL } from "@/lib/content/seo";
 import { getWebVitalsReleaseIdentity } from "@/lib/web-vitals-release";
 
 const inter = Inter({

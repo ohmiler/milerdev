@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
 import { courses, bundles, blogPosts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { absoluteUrl, SITE_URL } from '@/lib/seo';
+import { absoluteUrl, SITE_URL } from '@/lib/content/seo';
 
 export const dynamic = 'force-dynamic';
 

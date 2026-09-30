@@ -7,7 +7,7 @@ import { FAQ_CATEGORIES } from './faq-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { buildFaqPageJsonLd, serializeJsonLd } from '@/lib/seo';
+import { buildFaqPageJsonLd, serializeJsonLd } from '@/lib/content/seo';
 
 const questionCount = FAQ_CATEGORIES.reduce((total, category) => total + category.items.length, 0);
 const faqJsonLd = buildFaqPageJsonLd(FAQ_CATEGORIES.flatMap((category) => category.items));
