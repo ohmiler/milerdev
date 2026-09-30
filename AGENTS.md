@@ -68,10 +68,13 @@ Run the narrowest meaningful check for each logical change. For application code
 ## Git and deployment
 
 - A dirty worktree belongs to the user. Preserve unrelated changes and inspect overlapping diffs.
-- For issue-based work on a non-`master` feature branch, the agent is authorized without additional confirmation to create or switch to the branch, review and verify the change, stage only task-owned files, create Conventional Commits, push the feature branch, open or update a pull request linked to the issue, monitor CI and review feedback, and fix and push failures caused by the change.
+- For issue-based work, or other work the user requests in chat, on a non-`master` branch, the agent is authorized without additional confirmation to create or switch to the branch, review and verify the change, stage only task-owned files, create Conventional Commits, push the feature branch, open or update a pull request (linked to the issue when one exists), monitor CI and review feedback, and fix and push failures caused by the change.
 - Do not ask for confirmation for those normal feature-branch delivery actions after implementation is complete.
+- When creating a branch, base it on `master` unless the user names another base. If the dirty worktree overlaps files the branch switch would change, stop and ask instead of stashing or discarding.
+- Deleting tracked files with `git rm` is allowed for requested cleanup when nothing in the repository references them (check code, `package.json`, CI, and docs) and they are not `.env*`, `drizzle/`, or migration snapshots. Report the list in the handoff.
+- Deleting untracked or ignored files and directories (for example `output/`, `.playwright-cli/`) cannot be undone through Git. List them and ask for confirmation first, unless the user named them explicitly.
 - Never push directly to `master`, merge a pull request into `master`, deploy, force-push, rewrite history, or close an issue without its linked change being merged unless explicitly authorized.
-- Never use destructive reset, checkout, recursive deletion, or broad filesystem operations without exact authorization.
+- Never use destructive reset, checkout, recursive deletion, or broad filesystem operations without exact authorization. Named `git rm` deletions and empty-directory removal under the cleanup rules above do not need separate authorization.
 - Stage only files belonging to the requested change and use Conventional Commits.
 - `master` is connected to Railway production. A push or merge to `master` can trigger a production rebuild and restart.
 - Production startup runs Drizzle migrations before starting Next.js. Treat every production deployment as migration-sensitive.
