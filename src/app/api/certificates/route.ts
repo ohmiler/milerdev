@@ -13,25 +13,7 @@ export async function GET() {
     }
 
     const collection = await getOwnerCertificateCollection(session.user.id);
-    const legacyActiveCertificates = collection.items.flatMap((item) => (
-      item.kind === 'active'
-        ? [{
-          id: item.code,
-          certificateCode: item.code,
-          recipientName: item.recipientName,
-          courseTitle: item.courseTitle,
-          completedAt: item.completedAt,
-          issuedAt: item.issuedAt,
-        }]
-        : []
-    ));
-
-    return NextResponse.json({
-      collection,
-      // Temporary compatibility for the current dashboard. Issue #52 moves it
-      // to the status-aware collection and removes this active-only shape.
-      certificates: legacyActiveCertificates,
-    });
+    return NextResponse.json({ collection }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), {
       action: 'certificate.collection.failed',

@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { toPng } from 'html-to-image';
+import { absoluteUrl } from '@/lib/seo';
 import styles from './CertificateArtifact.module.css';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -79,6 +80,8 @@ async function toDataUrl(url: string): Promise<string> {
 }
 
 export default function CertificateCard({ cert }: { cert: CertificateData }) {
+  const downloadBusy = useRef(false);
+  const verificationUrl = absoluteUrl(`/certificate/${cert.certificateCode}`);
   const cardRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
@@ -108,11 +111,13 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
     : completedDate;
 
   async function handleDownload() {
-    if (!cardRef.current || downloading) return;
+    if (!cardRef.current || downloadBusy.current) return;
+    downloadBusy.current = true;
     setDownloading(true);
     setFeedback(null);
 
     try {
+      await document.fonts?.ready;
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
@@ -124,10 +129,10 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
       link.href = dataUrl;
       link.click();
       setFeedback({ tone: 'success', message: 'เตรียมไฟล์ใบรับรองสำหรับดาวน์โหลดแล้ว' });
-    } catch (error) {
-      console.error('Download error:', error);
+    } catch {
       setFeedback({ tone: 'error', message: 'ยังสร้างไฟล์ดาวน์โหลดไม่ได้ กรุณาลองใหม่' });
     } finally {
+      downloadBusy.current = false;
       setDownloading(false);
     }
   }
@@ -135,7 +140,16 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
   async function handleShare() {
     setFeedback(null);
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: 'ตรวจสอบสถานะใบรับรอง MilerDev', url: verificationUrl });
+          setFeedback({ tone: 'success', message: 'แชร์ลิงก์ตรวจสอบใบรับรองแล้ว' });
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+        }
+      }
+      await navigator.clipboard.writeText(verificationUrl);
       setFeedback({ tone: 'success', message: 'คัดลอกลิงก์ตรวจสอบใบรับรองแล้ว' });
     } catch {
       setFeedback({ tone: 'error', message: 'คัดลอกลิงก์ไม่ได้ กรุณาคัดลอกจากแถบที่อยู่ของเบราว์เซอร์' });
@@ -195,13 +209,17 @@ export default function CertificateCard({ cert }: { cert: CertificateData }) {
             <strong>{cert.certificateCode}</strong>
           </div>
         </footer>
+        <div className={styles.verificationNotice}>
+          <p>ไฟล์นี้เป็นสำเนา ณ เวลาดาวน์โหลด สถานะใบรับรองอาจเปลี่ยนแปลง โปรดตรวจสอบสถานะปัจจุบันที่</p>
+          <a href={verificationUrl}>{verificationUrl}</a>
+        </div>
       </div>
 
       <div className="mt-6 flex flex-wrap justify-center gap-3" aria-label="เครื่องมือใบรับรอง">
         <Button type="button" onClick={handleDownload} disabled={downloading}>
           {downloading ? <><Spinner data-icon="inline-start" />กำลังสร้างไฟล์...</> : 'ดาวน์โหลด PNG'}
         </Button>
-        <Button variant="outline" type="button" onClick={handleShare}>คัดลอกลิงก์</Button>
+        <Button variant="outline" type="button" onClick={handleShare}>แชร์ลิงก์ตรวจสอบ</Button>
         {cert.courseSlug && <Button asChild variant="outline"><Link href={`/courses/${cert.courseSlug}`}>ดูรายละเอียดคอร์ส</Link></Button>}
       </div>
 

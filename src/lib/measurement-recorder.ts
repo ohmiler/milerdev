@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
 import { requireReadyBundleCourses } from '@/lib/bundle-commerce';
 import { requireCourseHasLessons } from '@/lib/course-availability';
-import { db } from '@/lib/db';
+import { getMeasurementDatabase } from '@/lib/measurement-database';
 import {
   analyticsEvents,
   bundleCourses,
@@ -152,7 +152,7 @@ export function createMeasurementRecorder(input: {
 const drizzleMeasurementStore: MeasurementStore = {
   async readProductEligibility(productType, productId) {
     if (productType === 'course') {
-      const [row] = await db
+      const [row] = await getMeasurementDatabase()
         .select({
           productId: courses.id,
           status: courses.status,
@@ -167,12 +167,12 @@ const drizzleMeasurementStore: MeasurementStore = {
     }
 
     const [bundleRows, courseRows] = await Promise.all([
-      db
+      getMeasurementDatabase()
         .select({ productId: bundles.id, status: bundles.status })
         .from(bundles)
         .where(eq(bundles.id, productId))
         .limit(1),
-      db
+      getMeasurementDatabase()
         .select({
           id: courses.id,
           status: courses.status,
@@ -190,7 +190,7 @@ const drizzleMeasurementStore: MeasurementStore = {
 
   async insertProductExposure(row) {
     try {
-      await db.insert(analyticsEvents).values({
+      await getMeasurementDatabase().insert(analyticsEvents).values({
         exposureId: row.exposureId,
         eventName: row.eventName,
         source: 'client',
@@ -210,7 +210,7 @@ const drizzleMeasurementStore: MeasurementStore = {
   },
 
   async readProductExposure(exposureId) {
-    const [row] = await db
+    const [row] = await getMeasurementDatabase()
       .select({
         exposureId: analyticsEvents.exposureId,
         eventName: analyticsEvents.eventName,

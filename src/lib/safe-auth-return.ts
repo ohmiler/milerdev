@@ -15,7 +15,7 @@ export type SafeAuthReturn = {
 
 export type AuthEntryPath = '/login' | '/register' | '/forgot-password';
 
-const AUTH_LOOP_PATHS = ['/login', '/register', '/forgot-password', '/reset-password'];
+const AUTH_LOOP_PATHS = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'];
 const INTERNAL_PATHS = ['/api', '/_next', '/_vercel'];
 const INTERNAL_PREFIXES = ['/__nextjs'];
 const PRODUCT_ROUTE_PATHS = ['/courses', '/bundles'];

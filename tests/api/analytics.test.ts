@@ -1,3 +1,4 @@
+vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
@@ -26,6 +27,7 @@ import {
   recordClientAnalyticsEvent,
 } from '@/lib/analytics';
 import { auth } from '@/lib/auth';
+import { withBrowserConsent } from '@/lib/privacy-consent';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 const validEvent = {
@@ -48,6 +50,12 @@ async function post(body: unknown) {
 }
 
 describe('POST /api/analytics/events', () => {
+  it('does not record or resolve targets for a refused or withdrawn consent', async () => {
+    vi.mocked(withBrowserConsent).mockImplementationOnce(async (_user, _collect, denied) => denied());
+    expect((await post(validEvent)).status).toBe(204);
+    expect(recordClientAnalyticsEvent).not.toHaveBeenCalled();
+    expect(isPublishedAnalyticsTarget).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(checkRateLimit).mockReturnValue({

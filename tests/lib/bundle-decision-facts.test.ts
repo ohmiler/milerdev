@@ -53,6 +53,63 @@ describe('ProductDecisionFacts for Bundle', () => {
     });
   });
 
+  it('projects truthful evidence for every included Course and the Bundle summary', () => {
+    const facts = bundleFacts('1500.00', [
+      course('typescript', 0, {
+        lessonCount: 6,
+        knownDurationSeconds: 5_460,
+        freePreviewCount: 2,
+        instructor: { name: 'Miler' },
+        verifiedReview: { average: '4.8', count: 24 },
+      }),
+      course('nextjs', 1, {
+        lessonCount: 4,
+        knownDurationSeconds: 1_800,
+        freePreviewCount: 1,
+      }),
+    ]);
+
+    expect({
+      courseEvidence: facts.courses[0]?.evidence,
+      bundleEvidence: facts.evidence,
+    }).toEqual({
+      courseEvidence: {
+        lessonCount: 6,
+        knownDurationSeconds: 5_460,
+        freePreviewCount: 2,
+        instructorName: 'Miler',
+        verifiedReview: { average: 4.8, count: 24 },
+      },
+      bundleEvidence: {
+        courseCount: 2,
+        totalLessons: 10,
+        knownDurationSeconds: 7_260,
+        freePreviewCount: 3,
+      },
+    });
+  });
+
+  it('keeps the regular total as context while savings use current separate prices', () => {
+    const facts = bundleFacts('1500.00', [
+      course('typescript', 0, {
+        regularPrice: '1000.00',
+        promotion: {
+          price: '800.00',
+          startsAt: new Date('2026-09-01T05:00:00.000Z'),
+          endsAt: new Date('2026-09-03T05:00:00.000Z'),
+        },
+      }),
+      course('nextjs', 1, { regularPrice: '1200.00' }),
+    ]);
+
+    expect(facts.price).toMatchObject({
+      separateCurrent: 2000,
+      separateRegular: 2200,
+      separateRegularFormatted: '฿2,200',
+      comparison: { kind: 'savings', amount: 500, percent: 25 },
+    });
+  });
+
   it.each([
     ['savings', '1500.00', 'savings', 500, 25],
     ['equal', '2000.00', 'equal', 0, null],
@@ -115,7 +172,7 @@ describe('ProductDecisionFacts for Bundle', () => {
     expect(facts.ownership.status).toBe('complete');
     expect(facts.actions.complete).toEqual({
       kind: 'continue-learning',
-      label: 'ลงทะเบียนครบแล้ว — เข้าเรียน',
+      label: 'ไปการเรียนของฉัน',
       href: '/dashboard',
     });
     expect(facts.evidence).not.toHaveProperty('verifiedReview');

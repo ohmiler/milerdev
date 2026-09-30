@@ -1,3 +1,4 @@
+vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/analytics-control', () => ({ isAnalyticsEventEnabled: vi.fn() }));

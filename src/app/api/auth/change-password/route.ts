@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
+import { hashNewPassword, verifyPassword } from '@/lib/password-storage';
 import { z } from 'zod';
+import { newPasswordSchema } from '@/lib/password-validation';
+import { PasswordSecurityError } from '@/lib/password-errors';
 import { auth } from '@/lib/auth';
 import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
 import {
@@ -13,12 +15,7 @@ import {
 
 const changePasswordSchema = z.object({
     currentPassword: z.string().min(1, 'กรุณากรอกรหัสผ่านปัจจุบัน'),
-    newPassword: z
-        .string()
-        .min(8, 'รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร')
-        .regex(/[A-Z]/, 'รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว')
-        .regex(/[a-z]/, 'รหัสผ่านต้องมีตัวพิมพ์เล็กอย่างน้อย 1 ตัว')
-        .regex(/[0-9]/, 'รหัสผ่านต้องมีตัวเลขอย่างน้อย 1 ตัว'),
+    newPassword: newPasswordSchema,
 });
 
 export async function POST(request: Request) {
@@ -82,7 +79,7 @@ export async function POST(request: Request) {
         }
 
         // Verify current password
-        const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+        const isValid = await verifyPassword(currentPassword, user.passwordHash);
         if (!isValid) {
             return NextResponse.json(
                 { error: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' },
@@ -91,7 +88,7 @@ export async function POST(request: Request) {
         }
 
         // Prevent using same password
-        const isSame = await bcrypt.compare(newPassword, user.passwordHash);
+        const isSame = await verifyPassword(newPassword, user.passwordHash);
         if (isSame) {
             return NextResponse.json(
                 { error: 'รหัสผ่านใหม่ต้องไม่เหมือนรหัสผ่านเดิม' },
@@ -100,7 +97,7 @@ export async function POST(request: Request) {
         }
 
         // Hash and update
-        const newHash = await bcrypt.hash(newPassword, 12);
+        const newHash = await hashNewPassword(newPassword);
         const updateResult = await db
             .update(users)
             .set({
@@ -124,7 +121,8 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
     } catch (error) {
-        console.error('Change password error:', error);
+        if (error instanceof PasswordSecurityError) return NextResponse.json({ error: error.message }, { status: error.status });
+        console.error('Password change failed');
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
             { status: 500 }

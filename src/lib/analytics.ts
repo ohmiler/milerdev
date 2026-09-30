@@ -13,10 +13,12 @@ import {
   type ServerAnalyticsEvent,
   type ServerAnalyticsEventName,
 } from '@/lib/analytics-contract';
-import { db } from '@/lib/db';
+import { getMeasurementDatabase } from '@/lib/measurement-database';
 import { analyticsEvents, bundles, courses } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { logEvent } from '@/lib/error-handler';
+import { getMemberConsentId, lockActiveConsent } from '@/lib/privacy-consent';
+import { measurementTransaction } from '@/lib/measurement-database';
 
 export async function isAnalyticsEnabled(): Promise<boolean> {
   return (await getAnalyticsControlState()).effectiveEnabled;
@@ -39,7 +41,7 @@ async function insertAnalyticsEvent(input: {
   try {
     if (!(await isAnalyticsEventEnabled(input.eventName))) return false;
 
-    await db.insert(analyticsEvents).values({
+    await getMeasurementDatabase().insert(analyticsEvents).values({
       eventName: input.eventName,
       source: input.source,
       userId: input.userId ?? null,
@@ -80,13 +82,22 @@ export async function recordClientAnalyticsEvent(
 export async function recordServerAnalyticsEvent(input: ServerAnalyticsEvent): Promise<boolean> {
   const parsed = serverAnalyticsEventSchema.safeParse(input);
   if (!parsed.success) return false;
+  const consentId = await getMemberConsentId(getMeasurementDatabase(), parsed.data.userId ?? null);
+  if (!consentId) return false;
   if (
     parsed.data.eventName === 'purchase_completed'
     || parsed.data.eventName === 'free_enrollment_completed'
     || parsed.data.eventName === 'lesson_completed'
     || parsed.data.eventName === 'course_completed'
   ) return false;
-  return insertAnalyticsEvent({ ...parsed.data, source: 'server' });
+  try {
+    return await getMeasurementDatabase().transaction(async (tx) => {
+      if (!(await lockActiveConsent(tx, consentId))) return false;
+      return measurementTransaction.run(tx, () => insertAnalyticsEvent({ ...parsed.data, source: 'server' }));
+    });
+  } catch {
+    return false;
+  }
 }
 
 export async function isPublishedAnalyticsTarget(input: {
@@ -94,7 +105,7 @@ export async function isPublishedAnalyticsTarget(input: {
   bundleId?: string;
 }): Promise<boolean> {
   if (input.courseId) {
-    const [course] = await db
+    const [course] = await getMeasurementDatabase()
       .select({ id: courses.id })
       .from(courses)
       .where(and(eq(courses.id, input.courseId), eq(courses.status, 'published')))
@@ -103,7 +114,7 @@ export async function isPublishedAnalyticsTarget(input: {
   }
 
   if (input.bundleId) {
-    const [bundle] = await db
+    const [bundle] = await getMeasurementDatabase()
       .select({ id: bundles.id })
       .from(bundles)
       .where(and(eq(bundles.id, input.bundleId), eq(bundles.status, 'published')))

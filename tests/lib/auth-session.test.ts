@@ -14,6 +14,27 @@ function token(overrides: Partial<JWT> = {}): JWT {
 }
 
 describe('JWT session policy', () => {
+    it.each([undefined, -1, 1.5, 2])('rejects credentials sign-in without current proof (%s)', async (sessionVersion) => {
+        await expect(applyJwtSessionPolicy({
+            token: token(),
+            user: { id: 'user-1', sessionVersion },
+            accountProvider: 'credentials',
+            loadUserState: async () => ({ role: 'student', sessionVersion: 3, deactivatedAt: null }),
+        })).resolves.toBeNull();
+    });
+
+    it('keeps an issued token stale if reset commits just after the state check', async () => {
+        const issued = await applyJwtSessionPolicy({
+            token: token(), user: { id: 'user-1', sessionVersion: 2 }, accountProvider: 'credentials',
+            loadUserState: async () => ({ role: 'student', sessionVersion: 2, deactivatedAt: null }),
+        });
+        expect(issued?.sessionVersion).toBe(2);
+        await expect(applyJwtSessionPolicy({
+            token: issued!,
+            loadUserState: async () => ({ role: 'student', sessionVersion: 3, deactivatedAt: null }),
+        })).resolves.toBeNull();
+    });
+
     it('loads role and session version from the database at sign-in', async () => {
         const loadUserState = vi.fn().mockResolvedValue({
             role: 'student',

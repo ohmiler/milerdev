@@ -44,6 +44,7 @@ describe('BundleCard', () => {
     );
 
     expect(html).toContain('ประหยัด ฿500 (25%)');
+    expect(html).toContain('ชุดคอร์ส · 2 คอร์ส');
     expect(html).toContain('ซื้อแยกวันนี้ ฿2,000');
     expect(html.indexOf('TypeScript')).toBeLessThan(html.indexOf('Next.js'));
     expect(html).not.toContain('รีวิว');

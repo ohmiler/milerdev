@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check Thai admin text
+        run: npm run check:admin-text
+
       - name: Run ESLint
         run: npm run lint
 
@@ -143,6 +146,9 @@ jobs:
 
       - name: Create deterministic E2E fixtures
         run: npm run db:fixtures:e2e
+
+      - name: Verify email registration transactions on isolated MySQL
+        run: npx vitest run --config vitest.mysql.config.ts
 
       - name: Install Chromium
         run: npx playwright install --with-deps chromium

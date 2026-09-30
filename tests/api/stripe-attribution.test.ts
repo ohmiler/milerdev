@@ -1,3 +1,4 @@
+vi.mock('@/lib/privacy-consent', () => ({ withBrowserConsent: vi.fn(async (_user: unknown, collect: () => Promise<unknown>) => collect()) }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { paymentInsert, resolveProductExposureAttribution } = vi.hoisted(() => ({
@@ -58,6 +59,8 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { db } from '@/lib/db';
+import { withBrowserConsent } from '@/lib/privacy-consent';
+import { measurementTransaction } from '@/lib/measurement-database';
 
 const exposureId = '11111111-1111-4111-8111-111111111111';
 
@@ -87,6 +90,39 @@ describe('Stripe payment-attempt attribution', () => {
       attributedExposureId: exposureId,
       status: 'pending',
     }));
+  });
+
+  it('creates checkout without attribution when the browser refused or withdrew consent', async () => {
+    vi.mocked(withBrowserConsent).mockImplementationOnce(async (_user, _collect, denied) => denied());
+    const { POST } = await import('@/app/api/stripe/checkout/route');
+    const response = await POST(new Request('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId: 'course-1', exposureId }),
+    }));
+    expect(response.status).toBe(200);
+    expect(resolveProductExposureAttribution).not.toHaveBeenCalled();
+    expect(paymentInsert).toHaveBeenCalledTimes(1);
+    expect(paymentInsert).toHaveBeenCalledWith(expect.objectContaining({ attributedExposureId: null, status: 'pending' }));
+  });
+
+  it('writes attribution on the receipt-lock transaction connection before releasing consent', async () => {
+    const transactionInsert = vi.fn().mockResolvedValue(undefined);
+    const transaction = { insert: vi.fn(() => ({ values: transactionInsert })) };
+    vi.mocked(withBrowserConsent).mockImplementationOnce(async (_user, collect) => {
+      const result = await measurementTransaction.run(transaction as never, collect);
+      expect(transactionInsert).toHaveBeenCalledTimes(1);
+      return result;
+    });
+    const { POST } = await import('@/app/api/stripe/checkout/route');
+    const response = await POST(new Request('http://localhost/api/stripe/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId: 'course-1', exposureId }),
+    }));
+    expect(response.status).toBe(200);
+    expect(paymentInsert).not.toHaveBeenCalled();
+    expect(transactionInsert).toHaveBeenCalledWith(expect.objectContaining({ attributedExposureId: exposureId }));
   });
 
   it('stores only the server-validated Bundle exposure on the immutable payment attempt', async () => {

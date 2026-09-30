@@ -7,7 +7,18 @@ import { createId } from '@paralleldrive/cuid2';
  * Check if a MySQL error is a duplicate key error (ER_DUP_ENTRY).
  */
 export function isDuplicateKeyError(error: unknown): boolean {
-    if (error instanceof Error) {
+    const seen = new Set<Error>();
+    while (error instanceof Error && !seen.has(error)) {
+        seen.add(error);
+        // DrizzleQueryError's message contains SQL/params, not the driver error.
+        // Inspect its cause so user-provided values cannot impersonate a duplicate.
+        if (error.cause !== undefined) {
+            error = error.cause;
+            continue;
+        }
+        if ('code' in error && typeof error.code === 'string') {
+            return error.code === 'ER_DUP_ENTRY';
+        }
         const msg = error.message || '';
         return msg.includes('Duplicate entry') || msg.includes('ER_DUP_ENTRY') || msg.includes('UNIQUE constraint');
     }

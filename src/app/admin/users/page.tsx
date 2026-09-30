@@ -1,5 +1,7 @@
 'use client';
 
+import { getPasswordPolicyError } from '@/lib/password-policy';
+
 import { Eye, EyeOff, FileDown, FileUp, KeyRound, Pencil, Search, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -201,7 +203,7 @@ export default function AdminUsersPage() {
   };
 
   const handleResetPassword = async () => {
-    if (!passwordResetUser || newPassword.length < 8) return;
+    if (!passwordResetUser || Boolean(getPasswordPolicyError(newPassword))) return;
     setResettingPassword(true);
     try {
       const response = await fetch(`/api/admin/users/${passwordResetUser.id}/reset-password`, {
@@ -475,13 +477,13 @@ export default function AdminUsersPage() {
       <Dialog open={Boolean(passwordResetUser)} onOpenChange={(open) => { if (!open && !resettingPassword) { setPasswordResetUser(null); setNewPassword(''); setShowPassword(false); } }}>
         <DialogContent>
           <DialogHeader><DialogTitle>ตั้งรหัสผ่านใหม่</DialogTitle><DialogDescription>{passwordResetUser ? `${passwordResetUser.name || 'ไม่ระบุชื่อ'} (${passwordResetUser.email})` : 'กำหนดรหัสผ่านใหม่ให้ผู้ใช้'}</DialogDescription></DialogHeader>
-          <Field data-invalid={Boolean(newPassword && newPassword.length < 8)}>
+          <Field data-invalid={Boolean(newPassword && getPasswordPolicyError(newPassword))}>
             <FieldLabel htmlFor="new-password">รหัสผ่านใหม่</FieldLabel>
-            <InputGroup><InputGroupInput id="new-password" type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="อย่างน้อย 8 ตัวอักษร" /><InputGroupAddon align="inline-end"><InputGroupButton size="icon-xs" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}>{showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}</InputGroupButton></InputGroupAddon></InputGroup>
-            <FieldDescription>อย่างน้อย 8 ตัวอักษร</FieldDescription>
-            {newPassword && newPassword.length < 8 ? <FieldError>รหัสผ่านสั้นเกินไป</FieldError> : null}
+            <InputGroup><InputGroupInput id="new-password" type={showPassword ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="ยาว 15–128 ตัวอักษร" /><InputGroupAddon align="inline-end"><InputGroupButton size="icon-xs" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}>{showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}</InputGroupButton></InputGroupAddon></InputGroup>
+            <FieldDescription>ยาว 15–128 ตัวอักษร เว้นวรรคได้ และต้องไม่เป็นรหัสผ่านที่พบในข้อมูลรั่วไหล</FieldDescription>
+            {newPassword && getPasswordPolicyError(newPassword) ? <FieldError>{getPasswordPolicyError(newPassword)}</FieldError> : null}
           </Field>
-          <DialogFooter><Button variant="outline" disabled={resettingPassword} onClick={() => setPasswordResetUser(null)}>ยกเลิก</Button><Button disabled={resettingPassword || newPassword.length < 8} onClick={() => void handleResetPassword()}>{resettingPassword ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : 'ตั้งรหัสผ่านใหม่'}</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" disabled={resettingPassword} onClick={() => setPasswordResetUser(null)}>ยกเลิก</Button><Button disabled={resettingPassword || Boolean(getPasswordPolicyError(newPassword))} onClick={() => void handleResetPassword()}>{resettingPassword ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : 'ตั้งรหัสผ่านใหม่'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
