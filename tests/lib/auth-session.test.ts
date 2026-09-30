@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Session, User } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 
-import { applyJwtSessionPolicy, exposeAuthorizedSession } from '@/lib/auth-session';
+import { applyJwtSessionPolicy, exposeAuthorizedSession } from '@/lib/auth/session';
 
 function token(overrides: Partial<JWT> = {}): JWT {
     return {

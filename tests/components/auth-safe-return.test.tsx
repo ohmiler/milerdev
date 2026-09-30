@@ -10,7 +10,7 @@ import LoginPage from '@/app/login/page';
 import RegisterPage from '@/app/register/page';
 import ForgotPasswordPage from '@/app/forgot-password/page';
 import ResetPasswordPage from '@/app/reset-password/page';
-import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/auth/safe-auth-return';
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),

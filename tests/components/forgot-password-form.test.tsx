@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
-import { DEFAULT_AUTH_RETURN_PATH } from '@/lib/safe-auth-return';
+import { DEFAULT_AUTH_RETURN_PATH } from '@/lib/auth/safe-auth-return';
 
 describe('ForgotPasswordForm', () => {
   afterEach(() => {

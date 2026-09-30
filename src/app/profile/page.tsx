@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { eq, count } from 'drizzle-orm';
-import { requireMember } from '@/lib/member-access';
+import { requireMember } from '@/lib/auth/member-access';
 import { db } from '@/lib/db';
 import { users, enrollments } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';

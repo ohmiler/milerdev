@@ -4,7 +4,7 @@ import { cache } from 'react';
 import { redirect } from 'next/navigation';
 
 import { auth } from '@/lib/auth';
-import { createAuthReturnHref } from '@/lib/safe-auth-return';
+import { createAuthReturnHref } from '@/lib/auth/safe-auth-return';
 
 export type MemberAccess = Readonly<{
   id: string;

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ArrowUpRight } from 'lucide-react';
 import { eq, sql } from 'drizzle-orm';
-import { requireMember } from '@/lib/member-access';
+import { requireMember } from '@/lib/auth/member-access';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';

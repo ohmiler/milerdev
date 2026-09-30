@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: vi.fn() }));
+vi.mock('@/lib/auth/helpers', () => ({ requireAdmin: vi.fn() }));
 vi.mock('@/lib/analytics/measurement-qualification', () => ({
   measurementQualificationService: { getReport: vi.fn() },
 }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
 
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { measurementQualificationService } from '@/lib/analytics/measurement-qualification';
 
 describe('GET /api/admin/reports/measurement-qualification', () => {

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ request: vi.fn(), complete: vi.fn(), limit: vi.fn() }));
-vi.mock('@/lib/email-registration', () => ({
+vi.mock('@/lib/auth/email-registration', () => ({
     requestEmailRegistration: mocks.request, completeEmailRegistration: mocks.complete,
     REGISTRATION_ACCEPTED: { message: 'ตรวจสอบคำขอแล้ว', retryAfterSeconds: 60 },
 }));
-vi.mock('@/lib/auth-rate-limit', () => ({
+vi.mock('@/lib/auth/rate-limit', () => ({
     consumeAuthRateLimit: mocks.limit,
     authRateLimitUnavailableResponse: () => new Response(null, { status: 503 }),
 }));

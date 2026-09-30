@@ -5,7 +5,7 @@ import {
     consumeRateLimitBucket,
     type ConsumeRateLimitBucketInput,
     type RateLimitBucketState,
-} from '@/lib/auth-rate-limit-store';
+} from '@/lib/auth/rate-limit-store';
 
 type AuthRateLimitInput = {
     namespace: string;

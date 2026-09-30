@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getPasswordPolicyError } from '@/lib/password-policy';
+import { getPasswordPolicyError } from '@/lib/auth/password-policy';
 import { AuthError, AuthField, PasswordInput, RecoveryState } from './AuthFormLayout';
 import PasswordPolicyFeedback from './PasswordPolicyFeedback';
 

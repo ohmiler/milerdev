@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
     OAUTH_ACCOUNT_DUPLICATE_GROUP_COUNT_SQL,
     countDuplicateOAuthAccountGroups,
-} from '@/lib/oauth-account-integrity';
+} from '@/lib/auth/oauth-account-integrity';
 
 describe('OAuth account duplicate preflight', () => {
     it('returns only the aggregate duplicate group count', async () => {

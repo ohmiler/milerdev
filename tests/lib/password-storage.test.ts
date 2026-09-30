@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import bcrypt from 'bcryptjs';
-import { hashNewPassword, verifyPassword } from '@/lib/password-storage';
-import { assertPasswordNotCompromised } from '@/lib/password-screening';
-import { PasswordSecurityError } from '@/lib/password-errors';
-vi.mock('@/lib/password-screening', () => ({ assertPasswordNotCompromised: vi.fn() }));
+import { hashNewPassword, verifyPassword } from '@/lib/auth/password-storage';
+import { assertPasswordNotCompromised } from '@/lib/auth/password-screening';
+import { PasswordSecurityError } from '@/lib/auth/password-errors';
+vi.mock('@/lib/auth/password-screening', () => ({ assertPasswordNotCompromised: vi.fn() }));
 beforeEach(() => { vi.mocked(assertPasswordNotCompromised).mockReset().mockResolvedValue(undefined); });
 
 describe('password storage boundary', () => {

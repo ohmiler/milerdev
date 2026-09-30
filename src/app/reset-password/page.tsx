@@ -1,6 +1,6 @@
 import AuthShell from '@/components/auth/AuthShell';
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm';
-import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/auth/safe-auth-return';
 
 export default async function ResetPasswordPage({
   searchParams,

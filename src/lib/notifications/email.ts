@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { logError, logEvent } from '@/lib/error-handler';
-import type { SafeAuthReturnPath } from '@/lib/safe-auth-return';
+import type { SafeAuthReturnPath } from '@/lib/auth/safe-auth-return';
 
 // =====================
 // EMAIL PROVIDER (Resend for production, nodemailer for local)

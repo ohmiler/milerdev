@@ -4,7 +4,7 @@ import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import RegisterForm from '@/components/auth/RegisterForm';
 import VerifyEmailForm from '@/components/auth/VerifyEmailForm';
-import { resolveSafeAuthReturn } from '@/lib/safe-auth-return';
+import { resolveSafeAuthReturn } from '@/lib/auth/safe-auth-return';
 const mocks = vi.hoisted(() => ({ signIn: vi.fn() }));
 vi.mock('next-auth/react', () => ({ signIn: mocks.signIn }));
 

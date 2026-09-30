@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
-import { authRateLimitUnavailableResponse, consumeAuthRateLimit } from '@/lib/auth-rate-limit';
-import { REGISTRATION_ACCEPTED, requestEmailRegistration } from '@/lib/email-registration';
+import { authRateLimitUnavailableResponse, consumeAuthRateLimit } from '@/lib/auth/rate-limit';
+import { REGISTRATION_ACCEPTED, requestEmailRegistration } from '@/lib/auth/email-registration';
 
 const schema = z.object({
     email: z.string().trim().email('รูปแบบอีเมลไม่ถูกต้อง').max(255),

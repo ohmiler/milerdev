@@ -1,8 +1,8 @@
 import argon2 from 'argon2';
 import bcrypt from 'bcryptjs';
-import { getPasswordPolicyError } from './password-policy';
-import { assertPasswordNotCompromised } from './password-screening';
-import { PasswordSecurityError } from './password-errors';
+import { getPasswordPolicyError } from '@/lib/auth/password-policy';
+import { assertPasswordNotCompromised } from '@/lib/auth/password-screening';
+import { PasswordSecurityError } from '@/lib/auth/password-errors';
 
 export async function hashNewPassword(password: string): Promise<string> {
   const error = getPasswordPolicyError(password);

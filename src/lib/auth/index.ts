@@ -1,16 +1,16 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { db } from "./db";
-import * as schema from "./db/schema";
-import { verifyPassword } from "@/lib/password-storage";
+import { db } from "@/lib/db";
+import * as schema from "@/lib/db/schema";
+import { verifyPassword } from "@/lib/auth/password-storage";
 import { and, eq } from "drizzle-orm";
-import { authorizeGoogleSignIn, createGoogleProvider, getGoogleLinkingRequestContext } from "./auth-google";
-import { applyJwtSessionPolicy, exposeAuthorizedSession } from "./auth-session";
-import { authorizeCredentials } from "./auth-credentials";
-import { consumeAuthRateLimit } from "./auth-rate-limit";
-import { resolveSafeAuthRedirect } from "./safe-auth-return";
-import { restrictAccountLinking } from "@/lib/auth-account-linking";
+import { authorizeGoogleSignIn, createGoogleProvider, getGoogleLinkingRequestContext } from "@/lib/auth/google";
+import { applyJwtSessionPolicy, exposeAuthorizedSession } from "@/lib/auth/session";
+import { authorizeCredentials } from "@/lib/auth/credentials";
+import { consumeAuthRateLimit } from "@/lib/auth/rate-limit";
+import { resolveSafeAuthRedirect } from "@/lib/auth/safe-auth-return";
+import { restrictAccountLinking } from "@/lib/auth/account-linking";
 
 const EXPECTED_AUTH_ERROR_TYPES = new Set(["CredentialsSignin", "MissingCSRF"]);
 

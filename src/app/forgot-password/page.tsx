@@ -1,6 +1,6 @@
 import AuthShell from '@/components/auth/AuthShell';
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
-import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/auth/safe-auth-return';
 
 export default async function ForgotPasswordPage({
   searchParams,

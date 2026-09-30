@@ -1,5 +1,5 @@
 import Google, { type GoogleProfile } from 'next-auth/providers/google';
-import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/auth/safe-auth-return';
 
 const GOOGLE_ISSUER = 'https://accounts.google.com';
 const GOOGLE_BARE_ISSUER = 'accounts.google.com';

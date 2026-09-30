@@ -1,11 +1,11 @@
 import 'server-only';
 import { createHash, randomBytes } from 'node:crypto';
-import { hashNewPassword } from '@/lib/password-storage';
+import { hashNewPassword } from '@/lib/auth/password-storage';
 import { and, eq, gt, lte } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { emailRegistrations, users } from '@/lib/db/schema';
 import { sendRegistrationVerificationEmail } from '@/lib/notifications/email';
-import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/safe-auth-return';
+import { createAuthReturnHref, resolveSafeAuthReturn } from '@/lib/auth/safe-auth-return';
 
 export const REGISTRATION_TTL_MS = 30 * 60 * 1000;
 export const REGISTRATION_ACCEPTED = { message: 'ตรวจสอบคำขอแล้ว', retryAfterSeconds: 60 };

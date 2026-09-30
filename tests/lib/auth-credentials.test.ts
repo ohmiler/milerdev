@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { authorizeCredentials } from '@/lib/auth-credentials';
-import { applyJwtSessionPolicy } from '@/lib/auth-session';
+import { authorizeCredentials } from '@/lib/auth/credentials';
+import { applyJwtSessionPolicy } from '@/lib/auth/session';
 import type { JWT } from 'next-auth/jwt';
 
 const request = new Request('https://example.test/api/auth/callback/credentials', {

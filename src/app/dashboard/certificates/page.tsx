@@ -1,4 +1,4 @@
-import { requireMember } from '@/lib/member-access';
+import { requireMember } from '@/lib/auth/member-access';
 import type { Metadata } from 'next';
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
 import CertificateCollection from './CertificateCollection';

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logError } from '@/lib/error-handler';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags } from '@/lib/db/schema';
 import { eq, and, ne } from 'drizzle-orm';

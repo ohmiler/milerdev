@@ -36,7 +36,7 @@ vi.mock('@/lib/db', () => ({
 import {
     cleanupExpiredRateLimitBuckets,
     consumeRateLimitBucket,
-} from '@/lib/auth-rate-limit-store';
+} from '@/lib/auth/rate-limit-store';
 
 describe('MySQL auth rate-limit store', () => {
     beforeEach(() => {

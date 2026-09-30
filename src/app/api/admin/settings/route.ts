@@ -9,7 +9,7 @@ import {
   setAnalyticsOperationalEnabled,
   type AnalyticsGovernanceDecisionInput,
 } from '@/lib/analytics/control';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { auditLogs, settings } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';

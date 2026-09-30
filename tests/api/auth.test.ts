@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/password-storage', () => ({
+vi.mock('@/lib/auth/password-storage', () => ({
     hashNewPassword: vi.fn().mockResolvedValue('$argon2id$test-hash'),
     verifyPassword: vi.fn(),
 }));
@@ -22,7 +22,7 @@ vi.mock('@paralleldrive/cuid2', () => ({
 }));
 
 // Mock shared auth rate-limit (allow all requests by default)
-vi.mock('@/lib/auth-rate-limit', () => ({
+vi.mock('@/lib/auth/rate-limit', () => ({
     consumeAuthRateLimit: vi.fn().mockResolvedValue({
         success: true,
         remaining: 10,
@@ -90,8 +90,8 @@ vi.mock('@/lib/db', () => ({
 
 import { auth } from '@/lib/auth';
 import { sendPasswordResetEmail } from '@/lib/notifications/email';
-import * as passwordStorage from '@/lib/password-storage';
-import { consumeAuthRateLimit } from '@/lib/auth-rate-limit';
+import * as passwordStorage from '@/lib/auth/password-storage';
+import { consumeAuthRateLimit } from '@/lib/auth/rate-limit';
 
 const mockedAuth = vi.mocked(auth);
 const mockedSendPasswordResetEmail = vi.mocked(sendPasswordResetEmail);

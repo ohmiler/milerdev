@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { PasswordSecurityError } from './password-errors';
+import { PasswordSecurityError } from '@/lib/auth/password-errors';
 
 const BLOCKED_PASSWORDS = new Set([
   'passwordpassword', 'passwordpasswordpassword', '123456789012345',

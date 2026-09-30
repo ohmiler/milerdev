@@ -1,4 +1,4 @@
-import type { AuthRateLimitResult } from '@/lib/auth-rate-limit';
+import type { AuthRateLimitResult } from '@/lib/auth/rate-limit';
 import { getClientIP } from '@/lib/security/client-ip';
 
 type CredentialsInput = Partial<Record<'email' | 'password', unknown>>;

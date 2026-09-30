@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: vi.fn() }));
+vi.mock('@/lib/auth/helpers', () => ({ requireAdmin: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: {} }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
 vi.mock('@/lib/security/rate-limit', () => ({ getClientIP: vi.fn().mockReturnValue('127.0.0.1') }));
@@ -24,7 +24,7 @@ import {
   recordAnalyticsGovernanceDecision,
   setAnalyticsOperationalEnabled,
 } from '@/lib/analytics/control';
-import { requireAdmin } from '@/lib/auth-helpers';
+import { requireAdmin } from '@/lib/auth/helpers';
 
 const effectiveState = {
   operationalEnabled: true,

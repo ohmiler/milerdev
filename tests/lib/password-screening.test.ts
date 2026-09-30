@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { assertPasswordNotCompromised } from '@/lib/password-screening';
+import { assertPasswordNotCompromised } from '@/lib/auth/password-screening';
 const password = 'a unique synthetic passphrase';
 const digest = createHash('sha1').update(password).digest('hex').toUpperCase();
 const fetchMock = vi.fn();
