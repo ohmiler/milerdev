@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import type { BundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 import { formatCourseDuration } from '@/lib/courses/duration';
-import { getExcerpt } from '@/lib/sanitize';
+import { getExcerpt } from '@/lib/security/sanitize';
 
 type BundleCourseRowProps = {
   course: BundleDecisionFacts['courses'][number];

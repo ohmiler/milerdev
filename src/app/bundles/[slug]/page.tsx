@@ -21,7 +21,7 @@ import {
   reviews,
   users,
 } from '@/lib/db/schema';
-import { getExcerpt } from '@/lib/sanitize';
+import { getExcerpt } from '@/lib/security/sanitize';
 import { requirePublishedBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import { and, asc, avg, count, eq, inArray, sql } from 'drizzle-orm';

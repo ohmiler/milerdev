@@ -4,7 +4,7 @@ import { users } from '@/lib/db/schema';
 import { eq, and, gt, isNull, sql } from 'drizzle-orm';
 import { hashNewPassword } from '@/lib/password-storage';
 import { z } from 'zod';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,

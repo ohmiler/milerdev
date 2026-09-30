@@ -3,7 +3,7 @@ import { MySqlDialect } from 'drizzle-orm/mysql-core';
 const mocks = vi.hoisted(() => ({ auth: vi.fn(), set: vi.fn(), where: vi.fn(), update: vi.fn(), limit: vi.fn(), select: vi.fn(), rate: vi.fn() }));
 vi.mock('@/lib/auth', () => ({ auth: mocks.auth }));
 vi.mock('@/lib/db', () => ({ db: { update: mocks.update, select: mocks.select } }));
-vi.mock('@/lib/rate-limit', () => ({ checkRateLimit: mocks.rate, rateLimits: { api: {} }, rateLimitResponse: () => new Response(null, { status: 429 }) }));
+vi.mock('@/lib/security/rate-limit', () => ({ checkRateLimit: mocks.rate, rateLimits: { api: {} }, rateLimitResponse: () => new Response(null, { status: 429 }) }));
 import { GET, PUT } from '@/app/api/profile/route';
 const request = (body: unknown) => new Request('http://localhost/api/profile', { method: 'PUT', body: JSON.stringify(body) });
 beforeEach(() => {

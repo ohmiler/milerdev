@@ -4,7 +4,7 @@ vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: {} }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
 vi.mock('@/lib/learning/progress', () => ({ updateLearningProgress: vi.fn() }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn(),
   rateLimits: { general: { maxRequests: 100, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock('@/lib/rate-limit', () => ({
 
 import { auth } from '@/lib/auth';
 import { updateLearningProgress } from '@/lib/learning/progress';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 
 describe('POST /api/progress authentication boundary', () => {
   beforeEach(() => {

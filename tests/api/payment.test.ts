@@ -28,7 +28,7 @@ vi.mock('@paralleldrive/cuid2', () => ({
     createId: vi.fn().mockReturnValue('mock-cuid'),
 }));
 
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
     checkRateLimit: vi.fn().mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 }),
     getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
     rateLimits: {
@@ -144,7 +144,7 @@ vi.mock('@/lib/db', () => ({
 
 import { auth } from '@/lib/auth';
 import { stripe } from '@/lib/commerce/stripe';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 import { calculateDiscount, validateCouponEligibility } from '@/lib/commerce/coupon';
 import { db } from '@/lib/db';
 

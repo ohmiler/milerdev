@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { loadOrderReview, OrderReviewError } from '@/lib/commerce/order-review';
-import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 const reviewSchema = z.object({
   courseId: z.string().trim().min(1).max(36).optional(),

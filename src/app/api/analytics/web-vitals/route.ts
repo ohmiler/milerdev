@@ -4,7 +4,7 @@ import { withBrowserConsent } from '@/lib/privacy/consent';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
 import { logEvent } from '@/lib/error-handler';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { webVitalReportSchema, webVitalsRecorder } from '@/lib/analytics/web-vitals';
 
 export async function POST(request: Request) {

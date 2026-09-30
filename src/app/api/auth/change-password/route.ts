@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { newPasswordSchema } from '@/lib/password-validation';
 import { PasswordSecurityError } from '@/lib/password-errors';
 import { auth } from '@/lib/auth';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,

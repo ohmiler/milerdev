@@ -10,7 +10,7 @@ import {
   releasePromptPayIntent,
 } from '@/lib/commerce/promptpay-fulfillment';
 import { PromptPayIntentError } from '@/lib/commerce/promptpay-intent';
-import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 const allowedTypes = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
 

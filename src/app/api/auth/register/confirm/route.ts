@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { authRateLimitUnavailableResponse, consumeAuthRateLimit } from '@/lib/auth-rate-limit';
 import { completeEmailRegistration } from '@/lib/email-registration';
 import { newPasswordSchema } from '@/lib/password-validation';

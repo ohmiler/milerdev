@@ -9,7 +9,7 @@ const { paymentInsert, resolveProductExposureAttribution } = vi.hoisted(() => ({
 vi.mock('@/lib/auth', () => ({
   auth: vi.fn().mockResolvedValue({ user: { id: 'user-1' } }),
 }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn().mockReturnValue({ success: true, remaining: 9, resetTime: Date.now() + 60_000 }),
   rateLimits: { sensitive: { maxRequests: 10, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(),

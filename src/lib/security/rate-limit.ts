@@ -1,7 +1,7 @@
 import {
     getClientIP,
     getClientIPFromHeaders,
-} from '@/lib/client-ip';
+} from '@/lib/security/client-ip';
 
 export { getClientIP, getClientIPFromHeaders };
 

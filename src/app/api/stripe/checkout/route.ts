@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { courses, payments, coupons, couponUsages, enrollments } from "@/lib/db/schema";
 import { eq, and, count } from "drizzle-orm";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/commerce/coupon";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
 import { analyticsExposureIdSchema } from '@/lib/analytics/contract';
 import { logEvent } from '@/lib/error-handler';

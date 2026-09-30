@@ -24,7 +24,7 @@ import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import { createLowlight } from 'lowlight';
-import { SizeBoundedStringLruCache } from '@/lib/size-bounded-lru-cache';
+import { SizeBoundedStringLruCache } from '@/lib/security/size-bounded-lru-cache';
 
 const lowlight = createLowlight({
     bash,

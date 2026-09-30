@@ -19,7 +19,7 @@ import {
 } from '@/lib/db/schema';
 import { loadPromptPayPresentation } from '@/lib/commerce/promptpay-presentation';
 import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/commerce/promptpay-intent';
-import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 const intentSchema = z.object({
   courseId: z.string().min(1).max(36).optional(),

@@ -6,7 +6,7 @@ import { blogPosts, blogPostTags, tags } from '@/lib/db/schema';
 import { eq, and, ne } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
-import { sanitizeRichContent } from '@/lib/sanitize';
+import { sanitizeRichContent } from '@/lib/security/sanitize';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

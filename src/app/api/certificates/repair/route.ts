@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { auth } from '@/lib/auth';
 import { repairOwnerCertificate } from '@/lib/certificates/credentials';
-import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 const repairSchema = z.object({
   courseSlug: z.string().trim().min(1).max(255),

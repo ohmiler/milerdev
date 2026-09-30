@@ -7,7 +7,7 @@ import { stripe } from "@/lib/commerce/stripe";
 import { db } from "@/lib/db";
 import { bundles, bundleCourses, courses, enrollments, lessons, payments } from "@/lib/db/schema";
 import { eq, asc, and, count, inArray } from "drizzle-orm";
-import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
+import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { analyticsExposureIdSchema } from '@/lib/analytics/contract';
 import { logEvent } from '@/lib/error-handler';

@@ -11,7 +11,7 @@ import { withBrowserConsent } from '@/lib/privacy/consent';
 import { logEvent } from '@/lib/error-handler';
 import { measurementRecorder } from '@/lib/analytics/measurement-recorder';
 import { learningMeasurementRecorder } from '@/lib/learning/measurement';
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/rate-limit';
+import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 export async function POST(request: Request) {
   const clientIP = getClientIP(request);

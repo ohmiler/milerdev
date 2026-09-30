@@ -10,7 +10,7 @@ vi.mock('@/lib/analytics/web-vitals', async (importOriginal) => {
   };
 });
 vi.mock('@/lib/error-handler', () => ({ logEvent: vi.fn() }));
-vi.mock('@/lib/rate-limit', () => ({
+vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn(),
   getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
   rateLimits: { general: { maxRequests: 100, windowMs: 60_000 } },
@@ -18,7 +18,7 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics/control';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit } from '@/lib/security/rate-limit';
 import { webVitalsRecorder } from '@/lib/analytics/web-vitals';
 
 const validReport = {

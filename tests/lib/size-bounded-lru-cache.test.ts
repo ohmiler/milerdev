@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     estimateStringCacheEntryBytes,
     SizeBoundedStringLruCache,
-} from '@/lib/size-bounded-lru-cache';
+} from '@/lib/security/size-bounded-lru-cache';
 
 describe('SizeBoundedStringLruCache', () => {
     it('evicts the least recently used entry to remain inside the byte budget', () => {

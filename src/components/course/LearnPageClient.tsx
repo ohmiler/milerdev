@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight, Check, CircleCheck, FileText, LoaderCircle, Lock
 import BunnyPlayer from '@/components/video/BunnyPlayer';
 import LearningCurriculum from './LearningCurriculum';
 import LearningNavbar from './LearningNavbar';
-import { sanitizeRichContent } from '@/lib/sanitize';
+import { sanitizeRichContent } from '@/lib/security/sanitize';
 import { showToast } from '@/components/ui/Toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
