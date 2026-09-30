@@ -26,7 +26,7 @@ interface BunnyPlayerProps {
 type VideoType = 'youtube' | 'vimeo' | 'bunny' | 'unknown';
 
 function detectVideoType(url: string): VideoType {
-  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  if (url.includes('youtube.com') || url.includes('youtube-nocookie.com') || url.includes('youtu.be')) return 'youtube';
   if (url.includes('vimeo.com')) return 'vimeo';
   if (url.includes('iframe.mediadelivery.net') || url.includes('video.bunnycdn.com')) return 'bunny';
   return 'unknown';
@@ -37,6 +37,7 @@ function getYouTubeId(url: string): string | null {
     /(?:youtube\.com\/watch\?v=)([^&\s]+)/,
     /(?:youtu\.be\/)([^?\s]+)/,
     /(?:youtube\.com\/embed\/)([^?\s]+)/,
+    /(?:youtube-nocookie\.com\/embed\/)([^?\s]+)/,
     /(?:youtube\.com\/v\/)([^?\s]+)/,
   ];
   for (const pattern of patterns) {
@@ -56,13 +57,13 @@ function resolveEmbedUrl(videoId: string, libraryId: string | undefined, autopla
   if (videoType === 'youtube') {
     const youtubeId = getYouTubeId(videoId);
     if (youtubeId) {
-      return 'https://www.youtube.com/embed/' + youtubeId + (autoplay ? '?autoplay=1&rel=0' : '?rel=0');
+      return 'https://www.youtube-nocookie.com/embed/' + youtubeId + (autoplay ? '?autoplay=1&rel=0' : '?rel=0');
     }
   }
   if (videoType === 'vimeo') {
     const vimeoId = getVimeoId(videoId);
     if (vimeoId) {
-      return 'https://player.vimeo.com/video/' + vimeoId + (autoplay ? '?autoplay=1' : '');
+      return 'https://player.vimeo.com/video/' + vimeoId + (autoplay ? '?dnt=1&autoplay=1' : '?dnt=1');
     }
   }
   if (videoType === 'bunny') {
@@ -115,13 +116,15 @@ export default function BunnyPlayer({
   const videoType = useMemo(() => detectVideoType(finalUrl), [finalUrl]);
 
   useEffect(() => {
-    if (videoType !== 'bunny' || loadedUrl !== finalUrl) return;
+    // The iframe may finish loading before hydration attaches onLoad.
+    if (videoType !== 'bunny') return;
     const frame = iframeRef.current;
     if (!frame) return;
     const connection = connectBunnyPlayer({
       frame,
       resumeAtSeconds,
       callbacks: {
+        onReady: () => setLoadedUrl(finalUrl),
         onTimeUpdate: (seconds, duration) => callbacksRef.current.onTimeUpdate?.(seconds, duration),
         onPlay: () => callbacksRef.current.onPlay?.(),
         onPause: () => callbacksRef.current.onPause?.(),

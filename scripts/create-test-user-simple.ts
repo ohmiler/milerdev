@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import * as schema from '../src/lib/db/schema';
-import { hash } from 'bcryptjs';
+import { hashNewPassword } from '../src/lib/password-storage';
 
 async function createTestUser() {
   try {
@@ -26,7 +26,7 @@ async function createTestUser() {
     const connection = mysql.createPool(config);
     const db = drizzle(connection, { schema, mode: 'default' });
     
-    const hashedPassword = await hash('user123', 10);
+    const hashedPassword = await hashNewPassword(process.env.INITIAL_USER_PASSWORD ?? '');
 
     await db.insert(schema.users).values({
       email: 'user@milerdev.com',
@@ -38,12 +38,12 @@ async function createTestUser() {
 
     console.log('✅ Test user created successfully!');
     console.log('📧 Email: user@milerdev.com');
-    console.log('🔑 Password: user123');
     console.log('👤 Role: student');
-  } catch (error) {
-    console.error('❌ Error creating test user:', error);
+  } catch {
+    process.exitCode = 1;
+    console.error('❌ Error creating test user:');
   } finally {
-    process.exit(0);
+    process.exit(process.exitCode ?? 0);
   }
 }
 

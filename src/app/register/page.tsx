@@ -17,7 +17,7 @@ export default async function RegisterPage({
       pageId={'register'}
       variant={'register'}
       panelTitle={'สมัครสมาชิก'}
-      panelDescription={'กรอกข้อมูลสำหรับบัญชีสมาชิก หรือสมัครด้วย Google'}
+      panelDescription={'ยืนยันอีเมลก่อนตั้งรหัสผ่าน หรือสมัครด้วย Google'}
     >
       <RegisterForm
         returnTo={returnTo}

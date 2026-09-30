@@ -3,6 +3,7 @@ import { Inter, Prompt } from "next/font/google";
 import "./globals.css";
 import WebVitalsReporter from "@/components/analytics/WebVitalsReporter";
 import SessionProvider from "@/components/providers/SessionProvider";
+import ConsentProvider from "@/components/privacy/ConsentProvider";
 import NotificationProvider from "@/components/notifications/NotificationProvider";
 import ThemeSurface from "@/components/theme/ThemeSurface";
 import { Toaster } from "@/components/ui/sonner";
@@ -86,7 +87,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="antialiased">
-        <WebVitalsReporter releaseIdentity={getWebVitalsReleaseIdentity()} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -94,12 +94,15 @@ export default function RootLayout({
           }}
         />
         <SessionProvider>
+          <ConsentProvider>
+          <WebVitalsReporter releaseIdentity={getWebVitalsReleaseIdentity()} />
           <NotificationProvider>
             <ThemeSurface theme="light" surface="public">
               {children}
             </ThemeSurface>
             <Toaster position="top-center" richColors closeButton />
           </NotificationProvider>
+          </ConsentProvider>
         </SessionProvider>
       </body>
     </html>

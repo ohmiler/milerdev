@@ -2,6 +2,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
 import { db } from '@/lib/db';
+import { lockActiveConsent } from '@/lib/privacy-consent';
 import { analyticsEvents, enrollments, measurementOutbox } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 
@@ -15,7 +16,7 @@ export interface EnrollmentMeasurementStore {
   readEnrollment(enrollmentId: string): Promise<FreeEnrollmentProjection | null>;
   projectPendingEnrollment(
     enrollment: FreeEnrollmentProjection,
-  ): Promise<'projected' | 'duplicate' | 'already_projected'>;
+  ): Promise<'projected' | 'duplicate' | 'already_projected' | 'ineligible'>;
   recordProjectionFailure(enrollmentId: string): Promise<void>;
 }
 
@@ -67,15 +68,17 @@ const drizzleEnrollmentMeasurementStore: EnrollmentMeasurementStore = {
   async projectPendingEnrollment(enrollment) {
     return db.transaction(async (tx) => {
       const [outbox] = await tx
-        .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt })
+        .select({ id: measurementOutbox.id, createdAt: measurementOutbox.createdAt, consentId: measurementOutbox.consentId })
         .from(measurementOutbox)
         .where(and(
           eq(measurementOutbox.eventName, 'free_enrollment_completed'),
           eq(measurementOutbox.enrollmentId, enrollment.enrollmentId),
           isNull(measurementOutbox.projectedAt),
         ))
-        .limit(1);
+        .limit(1)
+        .for('update');
       if (!outbox) return 'already_projected';
+      if (!(await lockActiveConsent(tx, outbox.consentId))) return 'ineligible';
 
       let duplicate = false;
       try {

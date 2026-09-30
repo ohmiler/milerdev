@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { withBrowserConsent } from '@/lib/privacy-consent';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
 import { logEvent } from '@/lib/error-handler';
@@ -30,9 +32,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid Web Vitals report' }, { status: 400 });
   }
 
+  const session = await auth();
+  return withBrowserConsent(session?.user?.id ?? null, async () => {
   const result = await webVitalsRecorder.record(parsed.data);
   if (result.status === 'failed') {
     logEvent('analytics.web_vitals_record_failed', 'warn');
   }
   return new NextResponse(null, { status: 204 });
+  }, () => new NextResponse(null, { status: 204 }));
 }

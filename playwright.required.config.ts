@@ -22,7 +22,9 @@ export default defineConfig({
   use: {
     ...devices['Desktop Chrome'],
     baseURL: APP_BASE_URL,
-    trace: 'on-first-retry',
+    // Registration redeems bearer links and enters generated passwords. Keep
+    // those values out of recorded traces; failure screenshots remain enabled.
+    trace: 'off',
     screenshot: 'only-on-failure',
   },
   webServer: {
@@ -33,6 +35,8 @@ export default defineConfig({
     env: {
       ...process.env,
       NEXT_TELEMETRY_DISABLED: '1',
+      STRIPE_SECRET_KEY: 'sk_test_required_e2e_placeholder',
+      RESEND_API_KEY: 're_required_email_verification_placeholder',
       NODE_OPTIONS: serverNodeOptions,
     },
   },

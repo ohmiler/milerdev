@@ -8,9 +8,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/auth-helpers', () => ({ requireAdmin: mocks.requireAdmin }));
-vi.mock('bcryptjs', () => ({
-    default: { hash: mocks.hash },
-}));
+vi.mock('@/lib/password-storage', () => ({ hashNewPassword: mocks.hash }));
 vi.mock('@/lib/auditLog', () => ({ logAudit: mocks.logAudit }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
 vi.mock('@/lib/db', () => ({
@@ -56,7 +54,7 @@ describe('Admin user password reset lifecycle contract', () => {
             new Request('http://localhost/api/admin/users/student-a/reset-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ newPassword: 'NewPassword1' }),
+                body: JSON.stringify({ newPassword: 'NewPassphrase123!' }),
             }),
             { params: Promise.resolve({ id: 'student-a' }) },
         );

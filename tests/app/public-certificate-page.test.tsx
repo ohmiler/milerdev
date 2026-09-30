@@ -18,7 +18,7 @@ vi.mock('@/components/certificate/CertificateCard', () => ({
   ),
 }));
 
-import CertificatePage from '@/app/certificate/[code]/page';
+import CertificatePage, { generateMetadata } from '@/app/certificate/[code]/page';
 
 describe('public certificate page', () => {
   it('renders from the minimal public verification projection', async () => {
@@ -55,4 +55,14 @@ describe('public certificate page', () => {
     expect(source).not.toContain("from '@/lib/db'");
     expect(source).not.toContain("from '@/lib/db/schema'");
   });
+});
+
+it.each(['active', 'revoked', 'not_found'])('metadata describes %s without indexing private names', async (kind) => {
+  getPublicCertificateVerificationMock.mockResolvedValue(kind === 'not_found' ? { kind } : {
+    kind, credential: { code: 'CERT-META', recipientName: 'Learner', courseTitle: 'TypeScript', revokedAt: kind === 'revoked' ? '2026-08-01' : null },
+  });
+  const metadata = await generateMetadata({ params: Promise.resolve({ code: 'CERT-META' }) });
+  expect(metadata.robots).toEqual({ index: false, follow: false });
+  if (kind === 'revoked') { expect(metadata.title).toBe('ใบรับรองถูกเพิกถอนแล้ว'); expect(metadata.description).toContain('ไม่สามารถใช้เป็นหลักฐาน'); }
+  if (kind === 'not_found') expect(metadata.title).toBe('ไม่พบใบรับรอง');
 });

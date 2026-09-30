@@ -12,6 +12,7 @@ export type AuthUserState = {
 type ApplyJwtSessionPolicyParams = {
     token: JWT;
     user?: User;
+    accountProvider?: string;
     loadUserState: (userId: string) => Promise<AuthUserState | null | undefined>;
 };
 
@@ -38,6 +39,7 @@ function getTokenSessionVersion(token: JWT): number {
 export async function applyJwtSessionPolicy({
     token,
     user,
+    accountProvider,
     loadUserState,
 }: ApplyJwtSessionPolicyParams): Promise<JWT | null> {
     const userId = user?.id ?? (typeof token.id === 'string' ? token.id : null);
@@ -51,6 +53,14 @@ export async function applyJwtSessionPolicy({
     }
 
     if (!isValidUserState(currentState)) return null;
+
+    // A password login may finish after a concurrent reset. Do not upgrade
+    // the credential proof to the newer version when issuing its first JWT.
+    if (user && accountProvider === 'credentials'
+        && (!Number.isSafeInteger(user.sessionVersion)
+            || user.sessionVersion !== currentState.sessionVersion)) {
+        return null;
+    }
 
     // Existing tokens created before sessionVersion was introduced behave as
     // version zero. Once credentials rotate to version one, they are rejected.
