@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeCourseReviewStats } from '@/lib/course-review-stats';
+import { normalizeCourseReviewStats } from '@/lib/courses/review-stats';
 
 describe('normalizeCourseReviewStats', () => {
   it('normalizes MySQL aggregate strings for verified review evidence', () => {

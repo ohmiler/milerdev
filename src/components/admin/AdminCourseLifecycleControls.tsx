@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import type { CourseLifecycleAction, CourseStatus } from '@/lib/course-lifecycle';
+import type { CourseLifecycleAction, CourseStatus } from '@/lib/courses/lifecycle';
 
 type LifecyclePresentation = {
   title: string;

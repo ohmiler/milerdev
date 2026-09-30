@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { auth } from '@/lib/auth';
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/bundle-commerce';
-import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/course-availability';
+import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/courses/availability';
 import { calculateDiscount, validateCouponEligibility } from '@/lib/coupon';
 import { db } from '@/lib/db';
 import {

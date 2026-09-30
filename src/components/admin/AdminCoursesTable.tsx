@@ -23,8 +23,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { showToast } from '@/components/ui/Toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { transitionAdminCourse } from '@/lib/admin-course-lifecycle-client';
-import type { CourseLifecycleAction, CourseStatus } from '@/lib/course-lifecycle';
+import { transitionAdminCourse } from '@/lib/courses/admin-lifecycle-client';
+import type { CourseLifecycleAction, CourseStatus } from '@/lib/courses/lifecycle';
 
 export interface Course {
   id: string;

@@ -9,7 +9,7 @@ import { courses, payments, coupons, couponUsages, enrollments } from "@/lib/db/
 import { eq, and, count } from "drizzle-orm";
 import { calculateDiscount, validateCouponEligibility } from "@/lib/coupon";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/rate-limit";
-import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/course-availability";
+import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
 import { analyticsExposureIdSchema } from '@/lib/analytics-contract';
 import { logEvent } from '@/lib/error-handler';
 import { measurementRecorder } from '@/lib/measurement-recorder';

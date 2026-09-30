@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { isAnalyticsEventEnabled } from '@/lib/analytics-control';
 import { requireReadyBundleCourses } from '@/lib/bundle-commerce';
-import { requireCourseHasLessons } from '@/lib/course-availability';
+import { requireCourseHasLessons } from '@/lib/courses/availability';
 import { getMeasurementDatabase } from '@/lib/measurement-database';
 import {
   analyticsEvents,
