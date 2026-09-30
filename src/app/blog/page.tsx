@@ -17,7 +17,7 @@ import {
   getBlogRecoveryAction,
   readBlogDiscoveryState,
   type BlogSearchParamsInput,
-} from '@/lib/blog-discovery';
+} from '@/lib/content/blog-discovery';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { and, count, desc, eq, like, sql } from 'drizzle-orm';

@@ -3,7 +3,7 @@ import {
   buildBlogHref,
   getBlogRecoveryAction,
   readBlogDiscoveryState,
-} from '@/lib/blog-discovery';
+} from '@/lib/content/blog-discovery';
 
 describe('Blog URL discovery', () => {
   it('reads the URL as the source of search, tag, and page state', () => {

@@ -23,7 +23,7 @@ import {
 } from '@/lib/db/schema';
 import { getExcerpt } from '@/lib/sanitize';
 import { requirePublishedBundleCourses } from '@/lib/bundle-commerce';
-import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/seo';
+import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import { and, asc, avg, count, eq, inArray, sql } from 'drizzle-orm';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Badge } from '@/components/ui/badge';
