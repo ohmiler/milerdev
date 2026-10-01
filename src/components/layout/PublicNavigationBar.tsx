@@ -77,7 +77,7 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
                             priority
                         />
                         <span
-                            className="font-heading text-xl font-bold tracking-tight transition-colors group-hover:text-primary motion-reduce:transition-none"
+                            className="font-heading text-xl font-bold tracking-tight transition-colors group-hover:text-link motion-reduce:transition-none"
                             translate="no"
                         >
                             MilerDev

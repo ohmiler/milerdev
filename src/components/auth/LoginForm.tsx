@@ -105,7 +105,7 @@ export default function LoginForm({
             />
           </AuthField>
 
-          <AuthField htmlFor="login-password" label="รหัสผ่าน" trailing={<Link className="text-xs font-semibold text-primary hover:underline" href={forgotPasswordHref}>ลืมรหัสผ่าน?</Link>}>
+          <AuthField htmlFor="login-password" label="รหัสผ่าน" trailing={<Link className="text-xs font-semibold text-link hover:underline" href={forgotPasswordHref}>ลืมรหัสผ่าน?</Link>}>
             <PasswordInput
               id={'login-password'}
               name={'password'}

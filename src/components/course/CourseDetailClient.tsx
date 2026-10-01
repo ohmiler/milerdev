@@ -140,7 +140,7 @@ export default function CourseDetailClient({
             </div>
             <div className="mt-2 flex items-baseline gap-3 text-3xl font-bold tracking-tight">
               {decisionFacts.price.isFree ? (
-                <strong className="text-primary">ฟรี</strong>
+                <strong className="text-link">ฟรี</strong>
               ) : (
                 <>
                   <strong>{decisionFacts.price.effectiveFormatted}</strong>
@@ -150,7 +150,7 @@ export default function CourseDetailClient({
                 </>
               )}
             </div>
-            {promoLabel && <p className="mt-2 text-sm font-medium text-primary">{promoLabel}</p>}
+            {promoLabel && <p className="mt-2 text-sm font-medium text-link">{promoLabel}</p>}
           </div>
         )}
 

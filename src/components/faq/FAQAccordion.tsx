@@ -14,7 +14,7 @@ export function FAQAnswer({ item }: { item: FAQItem }) {
     <div className={'flex flex-col gap-3'}>
       <p>{item.a}</p>
       {item.link ? (
-        <Link className={'w-fit font-medium text-primary'} href={item.link.href}>
+        <Link className={'w-fit font-medium text-link'} href={item.link.href}>
           {item.link.label} <span aria-hidden={true}>→</span>
         </Link>
       ) : null}

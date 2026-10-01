@@ -299,7 +299,7 @@ export default async function BlogPage({ searchParams }: Props) {
                           ))}
                         </div>
                         <p className={'text-sm text-muted-foreground'}>{formatDate(featuredPost.publishedAt)}</p>
-                        <h2 className={'mt-3 text-3xl leading-tight font-semibold tracking-[-.03em] [overflow-wrap:anywhere] group-hover:text-primary'}>
+                        <h2 className={'mt-3 text-3xl leading-tight font-semibold tracking-[-.03em] [overflow-wrap:anywhere] group-hover:text-link'}>
                           {featuredPost.title}
                         </h2>
                         {featuredPost.excerpt ? (
@@ -307,7 +307,7 @@ export default async function BlogPage({ searchParams }: Props) {
                         ) : null}
                         <div className={'mt-7 flex items-center justify-between gap-4 border-t pt-5 text-sm'}>
                           <span className={'text-muted-foreground'}>{featuredPost.authorName ? `โดย ${featuredPost.authorName}` : 'MilerDev'}</span>
-                          <strong className={'text-primary'}>อ่านบทความ →</strong>
+                          <strong className={'text-link'}>อ่านบทความ →</strong>
                         </div>
                       </div>
                     </Card>
@@ -330,7 +330,7 @@ export default async function BlogPage({ searchParams }: Props) {
                                   <Badge key={tag.id} variant={'secondary'}>{tag.name}</Badge>
                                 ))}
                               </div>
-                              <h2 className={'mt-4 text-xl leading-snug font-semibold [overflow-wrap:anywhere] group-hover:text-primary'}>{post.title}</h2>
+                              <h2 className={'mt-4 text-xl leading-snug font-semibold [overflow-wrap:anywhere] group-hover:text-link'}>{post.title}</h2>
                               {post.excerpt ? <p className={'mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground'}>{post.excerpt}</p> : null}
                               <p className={'mt-4 text-xs text-muted-foreground'}>
                                 {post.authorName ? `โดย ${post.authorName}` : 'MilerDev'} / {formatDate(post.publishedAt)}
