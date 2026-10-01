@@ -320,7 +320,7 @@ describe('POST /api/stripe/checkout', () => {
         expect(mockedStripe.checkout.sessions.create).not.toHaveBeenCalled();
     });
 
-    // Note: coupon discount logic is thoroughly tested in tests/lib/coupon.test.ts
+    // Note: coupon discount logic is thoroughly tested in tests/lib/commerce/coupon.test.ts
     // Complex multi-chain DB mocks for coupon flows are fragile in integration tests
 });
 
@@ -699,7 +699,7 @@ describe('POST /api/enroll', () => {
     });
 
     // Note: coupon + enroll integration (100% coupon, partial coupon, promo+coupon)
-    // is tested via unit tests in tests/lib/coupon.test.ts (calculateDiscount, isCouponFullDiscount)
+    // is tested via unit tests in tests/lib/commerce/coupon.test.ts (calculateDiscount, isCouponFullDiscount)
     // Complex multi-chain DB mocks are fragile — security logic is verified in unit tests
 
     it('should return 429 when rate limited', async () => {

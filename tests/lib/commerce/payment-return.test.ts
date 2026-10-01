@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadPaymentReturn } from '@/lib/commerce/payment-return';
-import { paymentRecord } from '../fixtures/payment-record';
+import { paymentRecord } from '../../fixtures/payment-record';
 
 const mocks = vi.hoisted(() => ({ product: vi.fn(), retrieve: vi.fn(), fulfill: vi.fn(), record: vi.fn() }));
 vi.mock('@/lib/db', () => ({ db: { query: { courses: { findFirst: mocks.product }, bundles: { findFirst: mocks.product } } } }));
