@@ -116,7 +116,7 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
         </Button>
       )}
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} type="warning" title="สมัครเรียนเพื่อเปิดบทนี้" buttonText="รับทราบ">
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} type="warning" title="สมัครเรียนเพื่อเปิดบทนี้" buttonText="ยังไม่ตอนนี้" action={<Button asChild><a href="#course-action" onClick={() => setShowModal(false)}>ดูราคาและวิธีเข้าเรียน</a></Button>}>
         บทเรียนนี้เปิดสำหรับผู้ที่สมัครคอร์สแล้ว คุณสามารถดูหัวข้อที่เปิดให้ทดลองได้ก่อนตัดสินใจ
       </Modal>
     </div>
