@@ -426,4 +426,4 @@ Visual routes อย่างน้อย:
 
 ใช้ข้อความนี้ได้ทันที:
 
-> อ่าน `docs/admin-ui-shadcn-audit.md` ให้ครบ แล้ว implement ต่อจาก Phase 2 โดยใช้ `$shadcn` รักษา behavior และ authorization เดิม เพิ่ม tests ตาม findings และหยุดสรุปผลหลังแต่ละ phase พร้อมรายงานไฟล์ที่เปลี่ยน checks ที่รัน และความเสี่ยงที่ยังเหลือ ห้าม commit หรือ deploy
+> อ่าน `docs/audits/admin-ui-shadcn-audit.md` ให้ครบ แล้ว implement ต่อจาก Phase 2 โดยใช้ `$shadcn` รักษา behavior และ authorization เดิม เพิ่ม tests ตาม findings และหยุดสรุปผลหลังแต่ละ phase พร้อมรายงานไฟล์ที่เปลี่ยน checks ที่รัน และความเสี่ยงที่ยังเหลือ ห้าม commit หรือ deploy

@@ -16,4 +16,4 @@ Each invocation is bounded. If old outbox rows remain, the runner postpones raw 
 
 Do not claim automatic retention enforcement while the command remains count-only or the service has not been created. The configuration has been checked locally; no Railway service or production data was accessed during preparation.
 
-References: [Railway configuration reference](https://docs.railway.com/config-as-code/reference), [Railway cron jobs](https://docs.railway.com/cron-jobs), [approved retention policy](../../docs/privacy-retention-video-review.md).
+References: [Railway configuration reference](https://docs.railway.com/config-as-code/reference), [Railway cron jobs](https://docs.railway.com/cron-jobs), [approved retention policy](../../docs/privacy/privacy-retention-video-review.md).
