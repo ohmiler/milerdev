@@ -14,8 +14,9 @@ import CourseSectionNav from '@/components/course/CourseSectionNav';
 import CourseReviewsWrapper from '@/components/course/CourseReviewsWrapper';
 import CoursePreviewVideo from '@/components/course/CoursePreviewVideo';
 import { db } from '@/lib/db';
-import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
-import { eq, asc, and } from 'drizzle-orm';
+import { courses, users, courseTags, tags } from '@/lib/db/schema';
+import { readCoursePageLessons } from '@/lib/courses/page-lessons';
+import { eq, and } from 'drizzle-orm';
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
 import { getExcerpt, getSanitizedRichContentCached } from '@/lib/security/sanitize';
 import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
@@ -106,11 +107,7 @@ async function getCourse(slug: string) {
           .where(eq(users.id, course.instructorId))
           .limit(1)
       : Promise.resolve([]),
-    db
-      .select()
-      .from(lessons)
-      .where(eq(lessons.courseId, course.id))
-      .orderBy(asc(lessons.orderIndex)),
+    readCoursePageLessons(course.id),
     db
       .select({ id: tags.id, name: tags.name, slug: tags.slug })
       .from(courseTags)
