@@ -14,6 +14,10 @@ export default defineConfig({
         environment: 'node',
         globals: true,
         setupFiles: ['./tests/setup.ts'],
+        // API route tests import heavy modules on first use. On a freshly
+        // installed checkout that exceeds the 5s default and fails with a
+        // timeout, then passes on rerun. Kept below the 20s used by the MySQL config.
+        testTimeout: 15_000,
         include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
         coverage: {
             provider: 'v8',
