@@ -211,7 +211,7 @@ export default function AdminCertificatesPage() {
                       href={`/certificate/${certificate.certificateCode}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 font-mono font-semibold text-primary hover:underline"
+                      className="inline-flex items-center gap-1 font-mono font-semibold text-link hover:underline"
                     >
                       {certificate.certificateCode}
                       <ExternalLink className="size-3.5" aria-hidden />

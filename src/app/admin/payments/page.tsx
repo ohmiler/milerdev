@@ -234,13 +234,13 @@ export default function AdminPaymentsPage() {
                 {payments.map((payment) => (
                   <TableRow key={payment.id}>
                     <TableCell>
-                      {payment.userId ? <Link href={`/admin/users/${payment.userId}`} className="font-semibold text-primary hover:underline">{payment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-semibold">{payment.userName || 'ไม่ระบุชื่อ'}</div>}
+                      {payment.userId ? <Link href={`/admin/users/${payment.userId}`} className="font-semibold text-link hover:underline">{payment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-semibold">{payment.userName || 'ไม่ระบุชื่อ'}</div>}
                       <div className="mt-1 text-xs text-muted-foreground">{payment.userEmail || '-'}</div>
                     </TableCell>
                     <TableCell>
                       <div className="max-w-72 truncate font-medium">{payment.bundleTitle || payment.courseTitle || payment.itemTitle || '-'}</div>
                       {payment.slipUrl ? payment.slipUrl.startsWith('http') ? (
-                        <a href={payment.slipUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">ดูหลักฐาน <ExternalLink className="size-3" aria-hidden /></a>
+                        <a href={payment.slipUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-link hover:underline">ดูหลักฐาน <ExternalLink className="size-3" aria-hidden /></a>
                       ) : <div className="mt-1 max-w-72 truncate font-mono text-xs text-muted-foreground" title={payment.slipUrl}>Ref: {payment.slipUrl}</div> : null}
                     </TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">{formatCurrency(payment.amount)}</TableCell>

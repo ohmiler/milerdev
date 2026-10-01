@@ -335,8 +335,8 @@ export default async function BlogPostPage({ params }: Props) {
                               />
                             </figure>
                             <CardContent className={'pt-5'}>
-                              <span className={'font-mono text-xs text-primary'}>{String(index + 1).padStart(2, '0')}</span>
-                              <h3 className={'mt-2 line-clamp-2 font-semibold [overflow-wrap:anywhere] group-hover:text-primary'}>{relatedPost.title}</h3>
+                              <span className={'font-mono text-xs text-link'}>{String(index + 1).padStart(2, '0')}</span>
+                              <h3 className={'mt-2 line-clamp-2 font-semibold [overflow-wrap:anywhere] group-hover:text-link'}>{relatedPost.title}</h3>
                               <p className={'mt-3 text-xs text-muted-foreground'}>{formatDate(relatedPost.publishedAt)}</p>
                             </CardContent>
                           </Card>

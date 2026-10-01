@@ -339,7 +339,7 @@ export default function AdminReportsPage() {
               <div className="flex flex-col gap-5">
                 {[
                   { label: 'เรียนจบ', value: data.completionStats.completed, tone: 'text-[var(--color-success-strong)]' },
-                  { label: 'กำลังเรียน', value: data.completionStats.inProgress, tone: 'text-primary' },
+                  { label: 'กำลังเรียน', value: data.completionStats.inProgress, tone: 'text-link' },
                   { label: 'ยังไม่เริ่ม', value: data.completionStats.notStarted, tone: 'text-muted-foreground' },
                 ].map((item) => (
                   <div key={item.label}>

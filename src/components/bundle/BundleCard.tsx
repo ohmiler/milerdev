@@ -30,7 +30,7 @@ export default function BundleCard({ title, description, decisionFacts }: Bundle
               </Badge>
             )}
           </div>
-          <CardTitle className="mt-3 text-2xl group-hover:text-primary">{title}</CardTitle>
+          <CardTitle className="mt-3 text-2xl group-hover:text-link">{title}</CardTitle>
           {description ? (
             <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{description}</p>
           ) : null}
@@ -54,7 +54,7 @@ export default function BundleCard({ title, description, decisionFacts }: Bundle
               ซื้อแยกวันนี้ {decisionFacts.price.separateCurrentFormatted}
             </span>
           </div>
-          <span className="text-sm font-semibold text-primary">
+          <span className="text-sm font-semibold text-link">
             {decisionFacts.actions.discovery.label} <span aria-hidden="true">→</span>
           </span>
         </CardFooter>

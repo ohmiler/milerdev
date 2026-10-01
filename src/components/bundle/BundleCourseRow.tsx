@@ -99,7 +99,7 @@ export default function BundleCourseRow({
                 <s className={'text-muted-foreground'}>{course.price.regularFormatted}</s>
               ) : null}
             </span>
-            <strong className={'text-primary'}>ดูรายละเอียด <span aria-hidden={true}>→</span></strong>
+            <strong className={'text-link'}>ดูรายละเอียด <span aria-hidden={true}>→</span></strong>
           </CardFooter>
         </div>
       </Link>

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -92,5 +92,39 @@ describe('MilerDev brand color contract', () => {
       expect(readSource(path).match(inlineWhiteOnExactAccent), path).toBeNull();
       expect(readSource(path).match(inlineWhiteOnContextualAccent), path).toBeNull();
     }
+  });
+
+  it('uses a readable link blue for text and keeps the exact brand blue for fills', () => {
+    const globals = readSource('src/app/globals.css');
+
+    expect(globals).toContain('--link: #006dab;');
+    expect(globals).toContain('--color-link: var(--link);');
+    expect(contrastRatio('#006dab', '#ffffff')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio('#006dab', '#f7f9fb')).toBeGreaterThanOrEqual(4.5);
+    expect(globals).toContain('--link: #33bcff;');
+    expect(contrastRatio('#33bcff', '#080b0f')).toBeGreaterThanOrEqual(4.5);
+    // The exact brand blue is too light to be text on white; that is why text uses --link.
+    expect(contrastRatio('#00abff', '#ffffff')).toBeLessThan(4.5);
+  });
+
+  it('keeps text-primary for icons and graphics only; text and links use text-link', () => {
+    const graphicLine = /<Star|<Check|<Lock|ImageIcon|size-16 place-items-center|bg-primary\/10 text-primary|coursePreview|star <= rating/;
+    const textPrimary = /(?<![-\w])text-primary(?![-\w/])/;
+    const offenders: string[] = [];
+
+    const walk = (directory: string) => {
+      for (const entry of readdirSync(resolve(process.cwd(), directory), { withFileTypes: true })) {
+        const path = `${directory}/${entry.name}`;
+        if (entry.isDirectory()) walk(path);
+        else if (entry.name.endsWith('.tsx')) {
+          readSource(path).split(/\r?\n/).forEach((line, index) => {
+            if (textPrimary.test(line) && !graphicLine.test(line)) offenders.push(`${path}:${index + 1}`);
+          });
+        }
+      }
+    };
+    walk('src');
+
+    expect(offenders).toEqual([]);
   });
 });

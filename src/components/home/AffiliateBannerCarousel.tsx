@@ -88,7 +88,7 @@ export default function AffiliateBannerCarousel() {
       <div className="container">
         <header className="mb-10 grid items-end gap-6 lg:grid-cols-[minmax(0,.8fr)_minmax(20rem,.6fr)] lg:gap-16">
           <div className="flex flex-col gap-3">
-            <p className="text-sm font-semibold text-primary">เครื่องมือและบริการที่เราใช้อยู่</p>
+            <p className="text-sm font-semibold text-link">เครื่องมือและบริการที่เราใช้อยู่</p>
             <h2 id="affiliate-carousel-title" className="max-w-3xl text-4xl font-bold tracking-tight text-balance sm:text-6xl">
               เครื่องมือและบริการที่เราเลือกใช้
             </h2>
@@ -123,7 +123,7 @@ export default function AffiliateBannerCarousel() {
                   <span className="absolute inset-0 flex flex-col items-start justify-center gap-2 p-7 sm:p-14">
                     <span className="text-sm font-medium text-muted-foreground">เครื่องมือที่ MilerDev เลือกใช้</span>
                     <strong className="max-w-2xl text-2xl sm:text-4xl">{banner.title}</strong>
-                    <span className="text-sm font-medium text-primary">เปิดรายละเอียดในแท็บใหม่ →</span>
+                    <span className="text-sm font-medium text-link">เปิดรายละเอียดในแท็บใหม่ →</span>
                   </span>
                   {!failedImages[banner.id] ? (
                     <Image

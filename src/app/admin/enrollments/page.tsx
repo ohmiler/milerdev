@@ -327,7 +327,7 @@ export default function AdminEnrollmentsPage() {
                   return (
                     <TableRow key={enrollment.id}>
                       <TableCell>
-                        {enrollment.userId ? <Link href={`/admin/users/${enrollment.userId}`} className="font-medium text-primary hover:underline">{enrollment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-medium">{enrollment.userName || 'ไม่ระบุชื่อ'}</div>}
+                        {enrollment.userId ? <Link href={`/admin/users/${enrollment.userId}`} className="font-medium text-link hover:underline">{enrollment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-medium">{enrollment.userName || 'ไม่ระบุชื่อ'}</div>}
                         <div className="mt-1 text-xs text-muted-foreground">{enrollment.userEmail || '-'}</div>
                       </TableCell>
                       <TableCell className="max-w-64 truncate">{enrollment.courseTitle || '-'}</TableCell>
