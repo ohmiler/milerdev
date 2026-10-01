@@ -23,7 +23,7 @@ import {
 } from '@/lib/db/schema';
 import { getExcerpt } from '@/lib/security/sanitize';
 import { requirePublishedBundleCourses } from '@/lib/commerce/bundle-commerce';
-import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
+import { absoluteUrl, DEFAULT_OG_IMAGE, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import { and, asc, avg, count, eq, inArray, sql } from 'drizzle-orm';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Badge } from '@/components/ui/badge';
@@ -173,15 +173,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       url: `/bundles/${slug}`,
       siteName: 'MilerDev',
-      ...(thumbnailUrl && {
-        images: [{ url: thumbnailUrl, width: 1200, height: 630, alt: bundle.title }],
-      }),
+      images: thumbnailUrl ? [{ url: thumbnailUrl, width: 1200, height: 630, alt: bundle.title }] : [DEFAULT_OG_IMAGE],
     },
     twitter: {
       card: 'summary_large_image',
       title: bundle.title,
       description,
-      ...(thumbnailUrl && { images: [thumbnailUrl] }),
+      images: [thumbnailUrl ?? DEFAULT_OG_IMAGE.url],
     },
   };
 }

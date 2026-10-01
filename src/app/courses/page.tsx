@@ -24,6 +24,7 @@ import {
   buildCourseCatalogHref,
   clampCourseCatalogPage,
   normalizeCourseCatalogQuery,
+  type CourseCatalogPreview,
   type CourseCatalogPrice,
   type CourseCatalogQueryInput,
   type CourseCatalogSort,
@@ -70,7 +71,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const tag = getSingleParam(resolved.tag) || 'all';
   const sort = getSingleParam(resolved.sort) || 'newest';
   const page = Math.max(1, parseInt(getSingleParam(resolved.page) || '1', 10) || 1);
-  const hasFacets = !!search || price !== 'all' || tag !== 'all' || sort !== 'newest' || page > 1;
+  const preview = getSingleParam(resolved.preview) || 'all';
+  const hasFacets = !!search || price !== 'all' || tag !== 'all' || preview !== 'all' || sort !== 'newest' || page > 1;
 
   return {
     title: search ? `ผลการค้นหา "${search}"` : 'คอร์สเขียนโปรแกรมออนไลน์ภาษาไทย',
@@ -180,10 +182,11 @@ async function getCoursesData(input: {
   search: string;
   priceFilter: CourseCatalogPrice;
   tagSlug: string;
+  previewFilter: CourseCatalogPreview;
   sort: CourseCatalogSort;
   now: Date;
 }) {
-  const { page, limit, search, priceFilter, tagSlug, sort, now } = input;
+  const { page, limit, search, priceFilter, tagSlug, previewFilter, sort, now } = input;
   const offset = (page - 1) * limit;
   const conditions = [eq(courses.status, 'published')];
   const effectivePrice = sql<string>`CASE
@@ -197,6 +200,15 @@ async function getCoursesData(input: {
   if (search) conditions.push(like(courses.title, `%${search}%`));
   if (priceFilter === 'free') conditions.push(sql`${effectivePrice} = 0`);
   else if (priceFilter === 'paid') conditions.push(sql`${effectivePrice} > 0`);
+
+  if (previewFilter === 'free') {
+    conditions.push(
+      sql`EXISTS (
+        SELECT 1 FROM lessons l
+        WHERE l.course_id = ${courses.id} AND l.is_free_preview = 1
+      )`
+    );
+  }
 
   if (tagSlug !== 'all') {
     conditions.push(
@@ -368,6 +380,7 @@ export default async function CoursesPage({ searchParams }: Props) {
       search: normalized.query.search,
       priceFilter: normalized.query.price,
       tagSlug: normalized.query.tag,
+      previewFilter: normalized.query.preview,
       sort: normalized.query.sort,
       now,
     }),
@@ -386,6 +399,7 @@ export default async function CoursesPage({ searchParams }: Props) {
     search,
     price: priceFilter,
     tag: tagFilter,
+    preview: previewFilter,
     sort,
     page: currentPage,
   } = normalized.query;
@@ -393,6 +407,7 @@ export default async function CoursesPage({ searchParams }: Props) {
     search
       || priceFilter !== 'all'
       || tagFilter !== 'all'
+      || previewFilter !== 'all'
       || sort !== 'newest'
       || currentPage > 1,
   );
@@ -420,6 +435,7 @@ export default async function CoursesPage({ searchParams }: Props) {
               search={search}
               priceFilter={priceFilter}
               tagFilter={tagFilter}
+              previewFilter={previewFilter}
               sort={sort}
               totalCourses={pagination.total}
               hasActiveFilters={hasActiveFilters}

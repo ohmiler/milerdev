@@ -6,6 +6,7 @@ import MainContent from '@/components/layout/MainContent';
 import Navbar from '@/components/layout/Navbar';
 import PublicPageHeader from '@/components/layout/PublicPageHeader';
 import { Badge } from '@/components/ui/badge';
+import { DEFAULT_OG_IMAGE } from '@/lib/content/seo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -18,11 +19,13 @@ export const metadata: Metadata = {
     description: 'coding learning studio ภาษาไทยที่ช่วยให้ผู้เรียนเข้าใจโค้ดผ่านการลงมือสร้าง',
     url: '/about',
     siteName: 'MilerDev',
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'เกี่ยวกับเรา - MilerDev',
     description: 'coding learning studio ภาษาไทยที่ช่วยให้ผู้เรียนเข้าใจโค้ดผ่านการลงมือสร้าง',
+    images: [DEFAULT_OG_IMAGE.url],
   },
 };
 

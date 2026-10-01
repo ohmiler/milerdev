@@ -1,13 +1,16 @@
 export const COURSE_CATALOG_PRICES = ['all', 'free', 'paid'] as const;
+export const COURSE_CATALOG_PREVIEWS = ['all', 'free'] as const;
 export const COURSE_CATALOG_SORTS = ['newest', 'oldest', 'price-low', 'price-high'] as const;
 
 export type CourseCatalogPrice = (typeof COURSE_CATALOG_PRICES)[number];
+export type CourseCatalogPreview = (typeof COURSE_CATALOG_PREVIEWS)[number];
 export type CourseCatalogSort = (typeof COURSE_CATALOG_SORTS)[number];
 
 export type CourseCatalogQuery = {
   search: string;
   price: CourseCatalogPrice;
   tag: string;
+  preview: CourseCatalogPreview;
   sort: CourseCatalogSort;
   page: number;
 };
@@ -19,6 +22,7 @@ const DEFAULT_QUERY: CourseCatalogQuery = {
   search: '',
   price: 'all',
   tag: 'all',
+  preview: 'all',
   sort: 'newest',
   page: 1,
 };
@@ -51,6 +55,7 @@ export function normalizeCourseCatalogQuery(
   const rawSearch = singleValue(input.search);
   const rawPrice = singleValue(input.price);
   const rawTag = singleValue(input.tag);
+  const rawPreview = singleValue(input.preview);
   const rawSort = singleValue(input.sort);
   const rawPage = singleValue(input.page);
 
@@ -58,12 +63,14 @@ export function normalizeCourseCatalogQuery(
     search: rawSearch.trim(),
     price: isOneOf(rawPrice, COURSE_CATALOG_PRICES) ? rawPrice : DEFAULT_QUERY.price,
     tag: rawTag === 'all' || validTags.has(rawTag) ? rawTag : DEFAULT_QUERY.tag,
+    preview: isOneOf(rawPreview, COURSE_CATALOG_PREVIEWS) ? rawPreview : DEFAULT_QUERY.preview,
     sort: isOneOf(rawSort, COURSE_CATALOG_SORTS) ? rawSort : DEFAULT_QUERY.sort,
     page: parsePage(rawPage),
   };
 
   if (!rawPrice) query.price = DEFAULT_QUERY.price;
   if (!rawTag) query.tag = DEFAULT_QUERY.tag;
+  if (!rawPreview) query.preview = DEFAULT_QUERY.preview;
   if (!rawSort) query.sort = DEFAULT_QUERY.sort;
   if (!rawPage) query.page = DEFAULT_QUERY.page;
 
@@ -89,6 +96,7 @@ export function buildCourseCatalogHref(
   if (nextQuery.search) params.set('search', nextQuery.search);
   if (nextQuery.price !== DEFAULT_QUERY.price) params.set('price', nextQuery.price);
   if (nextQuery.tag !== DEFAULT_QUERY.tag) params.set('tag', nextQuery.tag);
+  if (nextQuery.preview !== DEFAULT_QUERY.preview) params.set('preview', nextQuery.preview);
   if (nextQuery.sort !== DEFAULT_QUERY.sort) params.set('sort', nextQuery.sort);
   if (nextQuery.page > DEFAULT_QUERY.page) params.set('page', String(nextQuery.page));
 

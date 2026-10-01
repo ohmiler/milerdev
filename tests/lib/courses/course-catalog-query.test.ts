@@ -22,6 +22,7 @@ describe('Course catalog URL contract', () => {
       search: 'React',
       price: 'all',
       tag: 'all',
+      preview: 'all',
       sort: 'newest',
       page: 1,
     });
@@ -42,6 +43,7 @@ describe('Course catalog URL contract', () => {
       search: 'React',
       price: 'paid',
       tag: 'frontend',
+      preview: 'all',
       sort: 'price-low',
       page: 3,
     });
@@ -53,6 +55,7 @@ describe('Course catalog URL contract', () => {
       search: 'React',
       price: 'free',
       tag: 'frontend',
+      preview: 'all',
       sort: 'price-high',
       page: 4,
     }, { price: 'all', page: 1 });
@@ -79,5 +82,30 @@ describe('Course catalog URL contract', () => {
       12,
     ]);
     expect(getCourseCatalogPageItems(2, 4)).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe('Course catalog free-preview facet', () => {
+  it('accepts preview=free from the Home call to action as canonical', () => {
+    const result = normalizeCourseCatalogQuery({ preview: 'free' }, ['frontend']);
+
+    expect(result.query.preview).toBe('free');
+    expect(result.isCanonical).toBe(true);
+    expect(buildCourseCatalogHref(result.query)).toBe('/courses?preview=free');
+  });
+
+  it('drops unknown preview values and omits the default from URLs', () => {
+    const result = normalizeCourseCatalogQuery({ preview: 'paid' }, []);
+
+    expect(result.query.preview).toBe('all');
+    expect(result.isCanonical).toBe(false);
+    expect(buildCourseCatalogHref(result.query)).toBe('/courses');
+  });
+
+  it('keeps preview while other facets change and clears it on request', () => {
+    const query = normalizeCourseCatalogQuery({ preview: 'free', price: 'paid' }, []).query;
+
+    expect(buildCourseCatalogHref(query, { page: 2 })).toBe('/courses?price=paid&preview=free&page=2');
+    expect(buildCourseCatalogHref(query, { preview: 'all' })).toBe('/courses?price=paid');
   });
 });

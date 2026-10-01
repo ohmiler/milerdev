@@ -5,10 +5,10 @@ import { requireAdmin } from '@/lib/auth/helpers';
 import { normalizeCertificateColor } from '@/lib/certificates/color';
 import { CourseLifecycleError, courseLifecycleService } from '@/lib/courses/lifecycle';
 import { db } from '@/lib/db';
-import { courses, courseTags, tags } from '@/lib/db/schema';
+import { courses, courseTags, tags, users } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';
 import { adminCourseLifecycleSchema, updateCourseSchema } from '@/lib/validations/admin';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 interface RouteParams {
@@ -78,7 +78,18 @@ export async function GET(_request: Request, { params }: RouteParams) {
       .innerJoin(tags, eq(courseTags.tagId, tags.id))
       .where(eq(courseTags.courseId, id));
 
-    return NextResponse.json({ course, tags: courseTagRows });
+    // Candidates for the public instructor: active instructors and admins,
+    // plus whoever is currently assigned so the form can show them.
+    const instructorOptions = await db
+      .select({ id: users.id, name: users.name, email: users.email })
+      .from(users)
+      .where(or(
+        and(inArray(users.role, ['instructor', 'admin']), isNull(users.deactivatedAt)),
+        course.instructorId ? eq(users.id, course.instructorId) : undefined,
+      ))
+      .orderBy(users.name);
+
+    return NextResponse.json({ course, tags: courseTagRows, instructorOptions });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching course:' });
     return NextResponse.json(
@@ -103,7 +114,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         code: 'INVALID_REQUEST',
       }, { status: 400 });
     }
-    const { title, description, price, thumbnailUrl, slug, tagIds, certificateColor, certificateHeaderImage, previewVideoUrl, promoPrice, promoStartsAt, promoEndsAt } = parsed.data;
+    const { title, description, price, thumbnailUrl, slug, tagIds, certificateColor, certificateHeaderImage, previewVideoUrl, promoPrice, promoStartsAt, promoEndsAt, instructorId } = parsed.data;
 
     // Check if course exists
     const [existingCourse] = await db
@@ -114,6 +125,25 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     if (!existingCourse) {
       return NextResponse.json({ error: 'ไม่พบคอร์ส' }, { status: 404 });
+    }
+
+    const instructorChanged = instructorId !== undefined && instructorId !== existingCourse.instructorId;
+    if (instructorChanged && instructorId !== null) {
+      const [candidate] = await db
+        .select({ role: users.role, deactivatedAt: users.deactivatedAt })
+        .from(users)
+        .where(eq(users.id, instructorId))
+        .limit(1);
+      if (
+        !candidate
+        || candidate.deactivatedAt
+        || (candidate.role !== 'instructor' && candidate.role !== 'admin')
+      ) {
+        return NextResponse.json({
+          error: 'ผู้สอนที่เลือกไม่ถูกต้อง',
+          code: 'INVALID_INSTRUCTOR',
+        }, { status: 400 });
+      }
     }
 
     // Update course
@@ -133,6 +163,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         promoPrice: promoPrice !== undefined ? (promoPrice ? String(parseFloat(String(promoPrice))) : null) : existingCourse.promoPrice,
         promoStartsAt: promoStartsAt !== undefined ? (promoStartsAt ? new Date(promoStartsAt) : null) : existingCourse.promoStartsAt,
         promoEndsAt: promoEndsAt !== undefined ? (promoEndsAt ? new Date(promoEndsAt) : null) : existingCourse.promoEndsAt,
+        instructorId: instructorChanged ? instructorId : existingCourse.instructorId,
         updatedAt: new Date(),
       })
       .where(eq(courses.id, id));
@@ -154,6 +185,17 @@ export async function PUT(request: Request, { params }: RouteParams) {
     }
 
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'course', entityId: id, newValue: title || existingCourse.title });
+    if (instructorChanged) {
+      await logAudit({
+        userId: session.user.id,
+        action: 'update',
+        entityType: 'course_instructor',
+        entityId: id,
+        oldValue: existingCourse.instructorId,
+        newValue: instructorId,
+      });
+      revalidateCourseLifecyclePaths(slug || existingCourse.slug);
+    }
 
     return NextResponse.json({ message: 'อัพเดทคอร์สสำเร็จ' });
   } catch (error) {
