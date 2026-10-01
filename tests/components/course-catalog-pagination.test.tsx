@@ -12,6 +12,7 @@ describe('CourseCatalogPagination', () => {
           search: 'React',
           price: 'paid',
           tag: 'frontend',
+          preview: 'all',
           sort: 'price-low',
           page: 6,
         }}
