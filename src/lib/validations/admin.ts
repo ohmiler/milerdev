@@ -19,6 +19,7 @@ export const updateCourseSchema = createCourseSchema.omit({ status: true }).part
     promoEndsAt: z.string().optional().nullable(),
     certificateHeaderImage: z.string().max(2000).optional().nullable().or(z.literal('')),
     certificateBadge: z.string().max(50).optional().nullable(),
+    instructorId: z.string().min(1).max(36).optional().nullable(),
 }).strict();
 
 export const adminCourseLifecycleSchema = z.discriminatedUnion('action', [

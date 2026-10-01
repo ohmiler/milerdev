@@ -62,7 +62,9 @@ export default function EditCoursePage() {
     promoPrice: '',
     promoStartsAt: '',
     promoEndsAt: '',
+    instructorId: '',
   });
+  const [instructorOptions, setInstructorOptions] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -88,8 +90,10 @@ export default function EditCoursePage() {
             promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
             promoStartsAt: data.course.promoStartsAt ? new Date(data.course.promoStartsAt).toISOString().slice(0, 16) : '',
             promoEndsAt: data.course.promoEndsAt ? new Date(data.course.promoEndsAt).toISOString().slice(0, 16) : '',
+            instructorId: data.course.instructorId || '',
           });
         }
+        setInstructorOptions(data.instructorOptions || []);
         setSelectedTagIds((data.tags || []).map((tag: { id: string }) => tag.id));
       })
       .catch((caughtError) => setError(caughtError instanceof Error ? caughtError.message : 'โหลดข้อมูลคอร์สไม่สำเร็จ'))
@@ -107,7 +111,7 @@ export default function EditCoursePage() {
       const response = await fetch(`/api/admin/courses/${courseId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...courseDetails, tagIds: selectedTagIds }),
+        body: JSON.stringify({ ...courseDetails, instructorId: courseDetails.instructorId || null, tagIds: selectedTagIds }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'บันทึกคอร์สไม่สำเร็จ');
@@ -194,6 +198,16 @@ export default function EditCoursePage() {
                 <Field><FieldLabel htmlFor="course-slug">Slug</FieldLabel><InputGroup><InputGroupAddon>/courses/</InputGroupAddon><InputGroupInput id="course-slug" value={formData.slug} onChange={(event) => setFormData((previous) => ({ ...previous, slug: event.target.value }))} /></InputGroup><FieldDescription>เปลี่ยนอย่างระมัดระวังหากเคยแชร์ลิงก์แล้ว</FieldDescription></Field>
               </div>
               <Field><FieldLabel>คำอธิบาย</FieldLabel><RichTextEditor content={formData.description} onChange={(description) => setFormData((previous) => ({ ...previous, description }))} /></Field>
+              <Field>
+                <FieldLabel htmlFor="course-instructor">ผู้สอน</FieldLabel>
+                <NativeSelect id="course-instructor" className="w-full" value={formData.instructorId} onChange={(event) => setFormData((previous) => ({ ...previous, instructorId: event.target.value }))}>
+                  <NativeSelectOption value="">ไม่ระบุผู้สอน</NativeSelectOption>
+                  {instructorOptions.map((option) => (
+                    <NativeSelectOption key={option.id} value={option.id}>{option.name || option.email}</NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                <FieldDescription>ชื่อนี้จะแสดงบนหน้าคอร์สสาธารณะ เลือกได้เฉพาะบัญชีผู้สอนหรือผู้ดูแลที่ยังใช้งานอยู่</FieldDescription>
+              </Field>
               <Field><FieldLabel>แท็ก</FieldLabel><TagSelector selectedTagIds={selectedTagIds} onChange={setSelectedTagIds} /></Field>
             </FieldGroup>
           </AdminSection>
