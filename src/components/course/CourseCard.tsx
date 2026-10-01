@@ -75,7 +75,7 @@ export default function CourseCard({
               <strong className="text-sm text-muted-foreground">ยังไม่เปิดลงทะเบียน</strong>
             ) : (
               <div aria-label={displayPrice === 0 ? 'ราคา ฟรี' : showOriginalPrice ? `ราคาพิเศษ ${pricing.effectiveFormatted} จาก ${pricing.regularFormatted} ลด ${discountPercent}%` : `ราคา ${pricing.effectiveFormatted}`}>
-                {displayPrice === 0 ? <strong className="text-xl text-link">ฟรี</strong> : <div className="flex flex-wrap items-baseline gap-2"><strong className="text-xl">{pricing.effectiveFormatted}</strong>{showOriginalPrice ? <><s className="text-sm text-muted-foreground">{pricing.regularFormatted}</s><Badge variant="destructive">ลด {discountPercent}%</Badge></> : null}</div>}
+                {displayPrice === 0 ? <strong className="text-xl text-link">ฟรี</strong> : <div className="flex flex-wrap items-baseline gap-2"><strong className="text-xl">{pricing.effectiveFormatted}</strong>{showOriginalPrice ? <><s className="text-sm text-muted-foreground">{pricing.regularFormatted}</s><Badge variant="discount">ลด {discountPercent}%</Badge></> : null}</div>}
               </div>
             )}
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-link">{decisionFacts.actions.discovery.label}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>

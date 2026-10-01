@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { PaymentRecord } from '@/lib/commerce/payment-records';
-import { Badge } from '@/components/ui/badge';
+import PaymentStatusBadge from './PaymentStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import PaymentRecoveryAction from './PaymentRecoveryAction';
@@ -16,7 +16,7 @@ export default function PaymentRecordDetails({ record, onRefresh, showDetailsLin
       <CardDescription>{p.attempt?.createdAt ? new Date(p.attempt.createdAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' }) + ' (เวลาไทย)' : 'ยังยืนยันวันเวลารายการไม่ได้'}</CardDescription>
     </CardHeader>
     <CardContent className="flex min-w-0 flex-col gap-4">
-      <Badge variant={p.payment.state === 'failed' ? 'destructive' : 'outline'} className="h-auto max-w-full whitespace-normal">{p.payment.label}</Badge>
+      <PaymentStatusBadge state={p.payment.state} label={p.payment.label} />
       <p className="text-sm leading-6 text-muted-foreground">{p.payment.description}</p>
       <dl className="grid gap-4 sm:grid-cols-2 [&_dt]:text-sm [&_dt]:text-muted-foreground [&_dd]:mt-1 [&_dd]:break-words">
         <div><dt>ยอดรายการ (THB)</dt><dd><strong>{p.quote?.amountFormatted ?? 'ยังยืนยันยอดไม่ได้'}</strong></dd></div>

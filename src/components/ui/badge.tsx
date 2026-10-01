@@ -19,6 +19,8 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-link underline-offset-4 hover:underline",
+        discount: "bg-discount text-discount-foreground",
+        info: "bg-info-muted text-info",
         orange: "bg-hue-orange-bg text-hue-orange-fg [a]:hover:brightness-95",
         violet: "bg-hue-violet-bg text-hue-violet-fg [a]:hover:brightness-95",
         amber: "bg-hue-amber-bg text-hue-amber-fg [a]:hover:brightness-95",

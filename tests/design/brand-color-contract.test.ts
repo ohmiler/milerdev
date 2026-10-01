@@ -142,6 +142,18 @@ describe('MilerDev brand color contract', () => {
     }
   });
 
+  it('keeps discount and info badge pairs readable and off the error red', () => {
+    const globals = readSource('src/app/globals.css');
+
+    expect(globals).toContain('--discount: #c2410c;');
+    expect(globals).toContain('--discount: #fdba74;');
+    expect(contrastRatio('#ffffff', '#c2410c')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio('#431407', '#fdba74')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio('#176b93', '#eef8fd')).toBeGreaterThanOrEqual(4.5);
+    expect(readSource('src/components/course/CourseCard.tsx')).toContain('<Badge variant="discount">');
+    expect(readSource('src/components/bundle/BundleCard.tsx')).toContain("'discount'");
+  });
+
   it('uses the brand navy for dark editorial sections with readable text', () => {
     const globals = readSource('src/app/globals.css');
     const proof = readSource('src/components/home/StudioProofSection.tsx');
