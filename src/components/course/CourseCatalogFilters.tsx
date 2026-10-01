@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Banknote, Search, SlidersHorizontal, Tag, X } from 'lucide-react';
+import { Banknote, PlayCircle, Search, SlidersHorizontal, Tag, X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import {
   buildCourseCatalogHref,
+  type CourseCatalogPreview,
   type CourseCatalogPrice,
   type CourseCatalogQuery,
   type CourseCatalogSort,
@@ -36,6 +37,7 @@ interface CourseCatalogFiltersProps {
   search: string;
   priceFilter: CourseCatalogPrice;
   tagFilter: string;
+  previewFilter: CourseCatalogPreview;
   sort: CourseCatalogSort;
   totalCourses: number;
   hasActiveFilters: boolean;
@@ -45,6 +47,11 @@ const PRICE_LABELS: Record<string, string> = {
   all: 'ทุกราคา',
   free: 'ฟรี',
   paid: 'มีค่าใช้จ่าย',
+};
+
+const PREVIEW_LABELS: Record<string, string> = {
+  all: 'ทุกคอร์ส',
+  free: 'มีบทเรียนทดลองฟรี',
 };
 
 const SORT_LABELS: Record<string, string> = {
@@ -59,6 +66,7 @@ export default function CourseCatalogFilters({
   search,
   priceFilter,
   tagFilter,
+  previewFilter,
   sort,
   totalCourses,
   hasActiveFilters,
@@ -68,11 +76,13 @@ export default function CourseCatalogFilters({
     Boolean(search),
     priceFilter !== 'all',
     tagFilter !== 'all',
+    previewFilter !== 'all',
   ].filter(Boolean).length;
   const query: CourseCatalogQuery = {
     search,
     price: priceFilter,
     tag: tagFilter,
+    preview: previewFilter,
     sort,
     page: 1,
   };
@@ -86,7 +96,7 @@ export default function CourseCatalogFilters({
         className={cn(
           mobile
             ? 'grid gap-5'
-            : 'grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.5fr)_repeat(3,minmax(9rem,.65fr))_auto] xl:items-end',
+            : 'grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.5fr)_repeat(4,minmax(9rem,.65fr))_auto] xl:items-end',
         )}
       >
         <Field>
@@ -121,6 +131,14 @@ export default function CourseCatalogFilters({
             {tags.map((tag) => (
               <NativeSelectOption key={tag.id} value={tag.slug}>{tag.name}</NativeSelectOption>
             ))}
+          </NativeSelect>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor={`${idPrefix}-preview`}>ทดลองเรียน</FieldLabel>
+          <NativeSelect id={`${idPrefix}-preview`} name="preview" defaultValue={previewFilter}>
+            <NativeSelectOption value="all">ทุกคอร์ส</NativeSelectOption>
+            <NativeSelectOption value="free">มีบทเรียนทดลองฟรี</NativeSelectOption>
           </NativeSelect>
         </Field>
 
@@ -184,7 +202,7 @@ export default function CourseCatalogFilters({
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{SORT_LABELS[sort] ?? SORT_LABELS.newest}</p>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {selectedTag ?? 'ทุกหัวข้อ'} · {PRICE_LABELS[priceFilter] ?? PRICE_LABELS.all} · {totalCourses} คอร์ส
+              {selectedTag ?? 'ทุกหัวข้อ'} · {PRICE_LABELS[priceFilter] ?? PRICE_LABELS.all}{previewFilter === 'free' ? ` · ${PREVIEW_LABELS.free}` : ''} · {totalCourses} คอร์ส
             </p>
           </div>
 
@@ -232,6 +250,18 @@ export default function CourseCatalogFilters({
               >
                 <Tag data-icon={'inline-start'} aria-hidden={'true'} />
                 {selectedTag ?? tagFilter}
+                <X data-icon={'inline-end'} aria-hidden={'true'} />
+              </Link>
+            </Badge>
+          ) : null}
+          {previewFilter !== 'all' ? (
+            <Badge asChild variant={'secondary'}>
+              <Link
+                href={buildCourseCatalogHref(query, { preview: 'all', page: 1 })}
+                aria-label={`ลบตัวกรอง ${PREVIEW_LABELS.free}`}
+              >
+                <PlayCircle data-icon={'inline-start'} aria-hidden={'true'} />
+                {PREVIEW_LABELS.free}
                 <X data-icon={'inline-end'} aria-hidden={'true'} />
               </Link>
             </Badge>
