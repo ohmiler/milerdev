@@ -20,7 +20,7 @@ Payment records, invoices, accounts, certificates, security records and learning
 
 ## Cleanup runner and release operation
 
-[Runner](../src/lib/privacy-retention.ts), [CLI](../scripts/privacy-retention.ts) and [MySQL tests](../tests/integration/privacy-retention.mysql.ts) are implemented. They use an operator-supplied dedicated connection and never load environment files. The default command reports counts and cutoffs only:
+[Runner](../../src/lib/privacy/retention.ts), [CLI](../../scripts/privacy-retention.ts) and [MySQL tests](../../tests/integration/privacy-retention.mysql.ts) are implemented. They use an operator-supplied dedicated connection and never load environment files. The default command reports counts and cutoffs only:
 
 ```text
 npm run privacy:retention
@@ -40,13 +40,13 @@ Recommended release schedule is daily, with repeated bounded passes if a backlog
 
 ## Embedded video inventory
 
-A separate daily Railway count-only service configuration is prepared in [deployment/privacy-retention](../deployment/privacy-retention/README.md). It is not activated and cannot be substituted for the web-service configuration. Production apply mode still needs explicit operation approval.
+A separate daily Railway count-only service configuration is prepared in [deployment/privacy-retention](../../deployment/privacy-retention/README.md). It is not activated and cannot be substituted for the web-service configuration. Production apply mode still needs explicit operation approval.
 
-[BunnyPlayer](../src/components/video/BunnyPlayer.tsx) builds Bunny, YouTube and Vimeo iframe URLs and assigns `src` when rendered. `loading="lazy"` is a browser performance hint, not consent enforcement. The current first-party analytics switch does not control those iframe requests.
+[BunnyPlayer](../../src/components/video/BunnyPlayer.tsx) builds Bunny, YouTube and Vimeo iframe URLs and assigns `src` when rendered. `loading="lazy"` is a browser performance hint, not consent enforcement. The current first-party analytics switch does not control those iframe requests.
 
 | Provider supported in code | Current implementation | Follow-up |
 | --- | --- | --- |
-| Bunny Stream | Direct `iframe.mediadelivery.net` embed; Player.js messages support progress and playback recovery | Public test observed; see [findings](research/bunny-stream-privacy-2026-09-13.md). Actual library settings and endpoint-specific telemetry purpose/retention remain unverified. |
+| Bunny Stream | Direct `iframe.mediadelivery.net` embed; Player.js messages support progress and playback recovery | Public test observed; see [findings](../research/bunny-stream-privacy-2026-09-13.md). Actual library settings and endpoint-specific telemetry purpose/retention remain unverified. |
 | YouTube | `www.youtube-nocookie.com/embed/…` (Privacy Enhanced Mode), allowed by the page CSP | Inspect live requests and document the remaining data transfer. This is not a no-data-transfer guarantee. |
 | Vimeo | `player.vimeo.com/video/…` with `dnt=1` | Inspect live existing-cookie and security-cookie behavior. |
 | Other URL | Falls back to supplied URL | Inventory the allowed hosts before promising coverage of all third-party media. |

@@ -19,12 +19,12 @@ Branch: `feat/privacy-consent`, based on `origin/master` at implementation start
 
 ## Files
 
-- Contract and authority: [privacy-consent-contract](../src/lib/privacy-consent-contract.ts), [privacy-consent](../src/lib/privacy-consent.ts), [measurement-database](../src/lib/measurement-database.ts), [consent API](../src/app/api/privacy/consent/route.ts).
-- UI: [ConsentProvider](../src/components/privacy/ConsentProvider.tsx), [consent-client](../src/components/privacy/consent-client.ts), [settings button](../src/components/privacy/ConsentSettingsButton.tsx), root layout, footer, settings and [Privacy](../src/app/privacy/page.tsx).
+- Contract and authority: [privacy-consent-contract](../../src/lib/privacy/consent-contract.ts), [privacy-consent](../../src/lib/privacy/consent.ts), [measurement-database](../../src/lib/analytics/measurement-database.ts), [consent API](../../src/app/api/privacy/consent/route.ts).
+- UI: [ConsentProvider](../../src/components/privacy/ConsentProvider.tsx), [consent-client](../../src/components/privacy/consent-client.ts), [settings button](../../src/components/privacy/ConsentSettingsButton.tsx), root layout, footer, settings and [Privacy](../../src/app/privacy/page.tsx).
 - Collection: analytics event/Web Vitals APIs, client senders, product/workspace exposures, analytics writer, measurement recorder, learning measurement, Web Vitals store and analytics-control database reads.
 - Commerce and learning: Stripe course/bundle checkout attribution, paid/PromptPay/free fulfillment, learning progress and purchase/enrollment/learning projectors.
-- Database: [schema](../src/lib/db/schema.ts), [0022 migration](../drizzle/0022_lucky_ken_ellis.sql), generated journal and snapshot.
-- Tests: new consent authority, client and API suites, [MySQL concurrency test](../tests/integration/privacy-consent.mysql.ts), explicit consent fixtures in existing collection/fulfillment tests, and opt-out acquisition regressions.
+- Database: [schema](../../src/lib/db/schema.ts), [0022 migration](../../drizzle/0022_lucky_ken_ellis.sql), generated journal and snapshot.
+- Tests: new consent authority, client and API suites, [MySQL concurrency test](../../tests/integration/privacy-consent.mysql.ts), explicit consent fixtures in existing collection/fulfillment tests, and opt-out acquisition regressions.
 
 ## Verification
 
@@ -72,7 +72,7 @@ The approved retention policy, cleanup operation guide and source-backed video i
 
 ### Retention implementation
 
-The owner approved the proposed durations during follow-up. `src/lib/privacy-retention.ts` and `scripts/privacy-retention.ts` implement the `npm run privacy:retention` count-only default and explicit apply mode. Tests cover deletion on synthetic rows, preserving the operational payment fields, idempotency, a separate-connection lock conflict, date/batch bounds, and stopping raw cleanup while an outbox backlog remains. Purchase/enrollment projectors now lock their outbox reads to serialize with cleanup. The cleanup-versus-live-projector race was reviewed statically; the suite separately exercises the underlying lock and cleanup behavior.
+The owner approved the proposed durations during follow-up. `src/lib/privacy/retention.ts` and `scripts/privacy-retention.ts` implement the `npm run privacy:retention` count-only default and explicit apply mode. Tests cover deletion on synthetic rows, preserving the operational payment fields, idempotency, a separate-connection lock conflict, date/batch bounds, and stopping raw cleanup while an outbox backlog remains. Purchase/enrollment projectors now lock their outbox reads to serialize with cleanup. The cleanup-versus-live-projector race was reviewed statically; the suite separately exercises the underlying lock and cleanup behavior.
 
 ### Proxy and browser test harness
 

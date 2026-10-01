@@ -65,7 +65,7 @@ Production Smoke ที่มีอยู่ตรวจหลัง deployment 
 
 อ้างอิง: [AGENTS.md](../../AGENTS.md), [CI](../../.github/workflows/ci.yml),
 [Production Smoke](../../.github/workflows/production-smoke.yml),
-[rollout](../rollout-readiness-2026-09-05.md),
+[rollout](../rollout/rollout-readiness-2026-09-05.md),
 [GitHub PR #90](https://github.com/ohmiler/milerdev/pull/90)
 และ branch protection ที่อ่านจาก GitHub ในวันตรวจ
 
