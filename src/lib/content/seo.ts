@@ -14,6 +14,13 @@ export function getSiteUrl(rawUrl = process.env.NEXT_PUBLIC_APP_URL): string {
 
 export const SITE_URL = getSiteUrl();
 
+export const DEFAULT_OG_IMAGE = {
+  url: '/og-image.png',
+  width: 1200,
+  height: 630,
+  alt: 'MilerDev คอร์สเขียนโปรแกรมออนไลน์ภาษาไทย',
+};
+
 export function absoluteUrl(path: string, baseUrl = SITE_URL): string {
   if (/^https?:\/\//i.test(path)) return path;
 
