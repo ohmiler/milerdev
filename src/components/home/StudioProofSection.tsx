@@ -25,7 +25,7 @@ const STUDIO_IMAGES = [
 export default function StudioProofSection() {
   return (
     <section data-home-section="studio-proof"
-      className="bg-foreground py-16 text-background sm:py-20 lg:py-24"
+      className="bg-navy py-16 text-background sm:py-20 lg:py-24"
       aria-labelledby="studio-proof-title"
     >
       <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-end lg:gap-16">
@@ -65,7 +65,7 @@ export default function StudioProofSection() {
             >
               <div
                 className={[
-                  'relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900',
+                  'relative overflow-hidden rounded-2xl border border-white/10 bg-navy-raised',
                   index === 0 ? 'aspect-[16/10] h-full min-h-64 sm:aspect-auto' : 'aspect-[4/3]',
                 ].join(' ')}
               >
