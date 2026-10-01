@@ -21,7 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/db';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { getBlogTableOfContents, getProcessedBlogContent } from '@/lib/security/sanitize';
-import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
+import { absoluteUrl, DEFAULT_OG_IMAGE, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import { and, eq, ne, sql } from 'drizzle-orm';
 
 export const revalidate = 3600;
@@ -93,15 +93,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: 'MilerDev',
       ...(post.publishedAt && { publishedTime: new Date(post.publishedAt).toISOString() }),
       authors: ['MilerDev'],
-      ...(thumbnailUrl && {
-        images: [{ url: thumbnailUrl, width: 1200, height: 630, alt: post.title }],
-      }),
+      images: thumbnailUrl ? [{ url: thumbnailUrl, width: 1200, height: 630, alt: post.title }] : [DEFAULT_OG_IMAGE],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description,
-      ...(thumbnailUrl && { images: [thumbnailUrl] }),
+      images: [thumbnailUrl ?? DEFAULT_OG_IMAGE.url],
     },
   };
 }

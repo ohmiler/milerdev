@@ -18,7 +18,7 @@ import { courses, lessons, users, courseTags, tags } from '@/lib/db/schema';
 import { eq, asc, and } from 'drizzle-orm';
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
 import { getExcerpt, getSanitizedRichContentCached } from '@/lib/security/sanitize';
-import { absoluteUrl, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
+import { absoluteUrl, DEFAULT_OG_IMAGE, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
@@ -70,20 +70,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       url: `/courses/${slug}`,
       siteName: 'MilerDev',
-      ...(thumbnailUrl && {
-        images: [{
+      images: thumbnailUrl ? [{
           url: thumbnailUrl,
           width: 1200,
           height: 630,
           alt: course.title,
-        }],
-      }),
+        }] : [DEFAULT_OG_IMAGE],
     },
     twitter: {
       card: 'summary_large_image',
       title: course.title,
       description,
-      ...(thumbnailUrl && { images: [thumbnailUrl] }),
+      images: [thumbnailUrl ?? DEFAULT_OG_IMAGE.url],
     },
   };
 }

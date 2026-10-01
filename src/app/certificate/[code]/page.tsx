@@ -7,6 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CertificateCard from '@/components/certificate/CertificateCard';
 import { getPublicCertificateVerification } from '@/lib/certificates/credentials';
+import { DEFAULT_OG_IMAGE } from '@/lib/content/seo';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export const dynamic = 'force-dynamic';
@@ -41,11 +42,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       url: `/certificate/${code}`,
       siteName: 'MilerDev',
+      images: [DEFAULT_OG_IMAGE],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [DEFAULT_OG_IMAGE.url],
     },
   };
 }

@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { metadata as aboutMetadata } from '@/app/about/page';
 import { metadata as coursesMetadata } from '@/app/courses/layout';
+import { metadata as announcementsMetadata } from '@/app/announcements/layout';
+import { metadata as blogMetadata } from '@/app/blog/layout';
+import { metadata as contactMetadata } from '@/app/contact/layout';
 import { metadata as faqMetadata } from '@/app/faq/layout';
+import { metadata as privacyMetadata } from '@/app/privacy/layout';
+import { metadata as termsMetadata } from '@/app/terms/layout';
 import { DEFAULT_OG_IMAGE } from '@/lib/content/seo';
 
 describe('public page social images', () => {
@@ -10,6 +15,11 @@ describe('public page social images', () => {
     ['/courses', coursesMetadata],
     ['/faq', faqMetadata],
     ['/about', aboutMetadata],
+    ['/blog', blogMetadata],
+    ['/contact', contactMetadata],
+    ['/privacy', privacyMetadata],
+    ['/terms', termsMetadata],
+    ['/announcements', announcementsMetadata],
   ])('%s keeps an og:image and twitter:image when it overrides root metadata', (_path, metadata) => {
     expect(metadata.openGraph?.images).toEqual([DEFAULT_OG_IMAGE]);
     expect(metadata.twitter?.images).toEqual([DEFAULT_OG_IMAGE.url]);
