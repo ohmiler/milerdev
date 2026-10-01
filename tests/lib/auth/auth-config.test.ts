@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextAuthConfig } from 'next-auth';
 import type { Adapter } from 'next-auth/adapters';
-import { init } from '../../node_modules/@auth/core/lib/init.js';
-import { callback } from '../../node_modules/@auth/core/lib/actions/callback/index.js';
+import { init } from '../../../node_modules/@auth/core/lib/init.js';
+import { callback } from '../../../node_modules/@auth/core/lib/actions/callback/index.js';
 import { createGoogleProvider } from '@/lib/auth/google';
 
 const mocks = vi.hoisted(() => ({
@@ -32,7 +32,7 @@ vi.mock('@/lib/db', () => ({ db: { query: {
     users: { findFirst: mocks.findUser }, accounts: { findFirst: mocks.findAccount },
 } } }));
 vi.mock('@/lib/auth/rate-limit', () => ({ consumeAuthRateLimit: vi.fn() }));
-vi.mock('../../node_modules/@auth/core/lib/actions/callback/oauth/callback.js', () => ({ handleOAuth: mocks.handleOAuth }));
+vi.mock('../../../node_modules/@auth/core/lib/actions/callback/oauth/callback.js', () => ({ handleOAuth: mocks.handleOAuth }));
 
 import '@/lib/auth';
 

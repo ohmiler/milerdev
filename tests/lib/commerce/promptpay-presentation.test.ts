@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { loadPromptPayPresentation } from '@/lib/commerce/promptpay-presentation';
-import { paymentRecord } from '../fixtures/payment-record';
+import { paymentRecord } from '../../fixtures/payment-record';
 
 const mocks = vi.hoisted(() => ({ load: vi.fn() }));
 vi.mock('@/lib/commerce/payment-records', () => ({ loadPaymentRecord: mocks.load }));
