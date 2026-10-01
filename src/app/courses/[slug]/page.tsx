@@ -22,6 +22,7 @@ import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/l
 import { getExcerpt, getSanitizedRichContentCached } from '@/lib/security/sanitize';
 import { absoluteUrl, DEFAULT_OG_IMAGE, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
+import TagBadge from '@/components/content/TagBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
@@ -264,9 +265,9 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
                 {course.tags.length > 0 && (
                   <div className="mb-5 flex flex-wrap gap-2" aria-label="หัวข้อคอร์ส">
                     {course.tags.map((tag: { id: string; name: string; slug: string }) => (
-                      <Link key={tag.id} href={`/courses?tag=${tag.slug}`} className="inline-flex rounded-md border bg-card px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/40 hover:text-link focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
-                        {tag.name}
-                      </Link>
+                      <TagBadge key={tag.id} tag={tag} asChild className="h-auto px-2.5 py-1">
+                        <Link href={`/courses?tag=${tag.slug}`}>{tag.name}</Link>
+                      </TagBadge>
                     ))}
                   </div>
                 )}

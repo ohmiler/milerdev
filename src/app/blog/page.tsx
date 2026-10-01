@@ -7,6 +7,7 @@ import MainContent from '@/components/layout/MainContent';
 import Navbar from '@/components/layout/Navbar';
 import PublicPageHeader from '@/components/layout/PublicPageHeader';
 import { FeedbackState } from '@/components/status/FeedbackState';
+import TagBadge from '@/components/content/TagBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -295,7 +296,7 @@ export default async function BlogPage({ searchParams }: Props) {
                       <div className={'flex min-w-0 flex-col justify-center p-6 sm:p-9'}>
                         <div className={'mb-5 flex flex-wrap gap-2'}>
                           {featuredPost.tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag.id} variant={'secondary'}>{tag.name}</Badge>
+                            <TagBadge key={tag.id} tag={tag} />
                           ))}
                         </div>
                         <p className={'text-sm text-muted-foreground'}>{formatDate(featuredPost.publishedAt)}</p>
@@ -327,7 +328,7 @@ export default async function BlogPage({ searchParams }: Props) {
                             <div className={'min-w-0 p-5'}>
                               <div className={'flex flex-wrap gap-2'}>
                                 {post.tags.slice(0, 2).map((tag) => (
-                                  <Badge key={tag.id} variant={'secondary'}>{tag.name}</Badge>
+                                  <TagBadge key={tag.id} tag={tag} />
                                 ))}
                               </div>
                               <h2 className={'mt-4 text-xl leading-snug font-semibold [overflow-wrap:anywhere] group-hover:text-link'}>{post.title}</h2>

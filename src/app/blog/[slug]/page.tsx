@@ -14,7 +14,7 @@ import MainContent from '@/components/layout/MainContent';
 import Navbar from '@/components/layout/Navbar';
 import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import TagBadge from '@/components/content/TagBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -241,9 +241,9 @@ export default async function BlogPostPage({ params }: Props) {
                 {post.tags.length > 0 ? (
                   <nav className={'mb-5 flex flex-wrap gap-2'} aria-label={'หัวข้อของบทความ'}>
                     {post.tags.map((tag) => (
-                      <Badge key={tag.id} variant={'secondary'} asChild>
+                      <TagBadge key={tag.id} tag={tag} asChild>
                         <Link href={`/blog?tag=${tag.slug}`}>{tag.name}</Link>
-                      </Badge>
+                      </TagBadge>
                     ))}
                   </nav>
                 ) : null}

@@ -127,4 +127,18 @@ describe('MilerDev brand color contract', () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it('keeps every topic hue pair readable in the light and dark themes', () => {
+    const globals = readSource('src/app/globals.css');
+    const darkStart = globals.indexOf('[data-theme="dark"] {');
+    const pairPattern = /--hue-(\w+)-bg: (#[0-9a-f]{6}); --hue-\1-fg: (#[0-9a-f]{6});/g;
+    const light = [...globals.slice(0, darkStart).matchAll(pairPattern)];
+    const dark = [...globals.slice(darkStart).matchAll(pairPattern)];
+
+    expect(light.map(([, hue]) => hue).sort()).toEqual(['amber', 'green', 'orange', 'pink', 'teal', 'violet']);
+    expect(dark.map(([, hue]) => hue).sort()).toEqual(light.map(([, hue]) => hue).sort());
+    for (const [, hue, background, foreground] of [...light, ...dark]) {
+      expect(contrastRatio(foreground, background), hue).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 });
