@@ -168,6 +168,9 @@
   --primary: var(--color-accent);
   /* Text and link color: #00abff is only 2.5:1 on white, so text uses the deeper brand blue (5.6:1). */
   --link: #006dab;
+  /* Brand navy for dark editorial sections (instead of the near-black text color). */
+  --navy: #0f233a;
+  --navy-raised: #102f4a;
   /* Topic hues for tags and categories: soft fill + dark text, each pair >= 4.5:1. */
   --hue-orange-bg: #fff1e3; --hue-orange-fg: #9a4a00;
   --hue-violet-bg: #efeaff; --hue-violet-fg: #5b3fd0;
@@ -660,6 +663,8 @@ h1, h2, h3, h4, h5, h6 {
   --color-link: var(--link);
   --color-discount: var(--discount);
   --color-discount-foreground: var(--discount-foreground);
+  --color-navy: var(--navy);
+  --color-navy-raised: var(--navy-raised);
   --color-hue-orange-bg: var(--hue-orange-bg);
   --color-hue-orange-fg: var(--hue-orange-fg);
   --color-hue-violet-bg: var(--hue-violet-bg);
