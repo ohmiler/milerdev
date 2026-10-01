@@ -141,4 +141,18 @@ describe('MilerDev brand color contract', () => {
       expect(contrastRatio(foreground, background), hue).toBeGreaterThanOrEqual(4.5);
     }
   });
+
+  it('uses the brand navy for dark editorial sections with readable text', () => {
+    const globals = readSource('src/app/globals.css');
+    const proof = readSource('src/components/home/StudioProofSection.tsx');
+    const home = readSource('src/app/page.tsx');
+
+    expect(globals).toContain('--navy: #0f233a;');
+    expect(globals).toContain('--color-navy: var(--navy);');
+    expect(contrastRatio('#f7f9fb', '#0f233a')).toBeGreaterThanOrEqual(7);
+    expect(contrastRatio('#aebbc5', '#0f233a')).toBeGreaterThanOrEqual(4.5);
+    expect(proof).toContain('bg-navy py-16');
+    expect(proof).not.toContain('bg-foreground');
+    expect(home).toContain('rounded-2xl bg-navy px-6');
+  });
 });

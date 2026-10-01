@@ -448,7 +448,7 @@ export default async function HomePage() {
 
         <section data-home-section="final-cta" className="bg-background py-16 sm:py-20 lg:py-24">
           <div className="container">
-            <div className="grid gap-8 rounded-2xl bg-foreground px-6 py-10 text-background sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14" data-reveal>
+            <div className="grid gap-8 rounded-2xl bg-navy px-6 py-10 text-background sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14" data-reveal>
               <div>
                 <div className="flex items-center gap-2 text-sm font-semibold text-background/75">
                   <Rocket className="size-4" aria-hidden="true" />
