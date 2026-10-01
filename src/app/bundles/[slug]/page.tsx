@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import BundleCourseRow from '@/components/bundle/BundleCourseRow';
 import BundleEvidenceSummary from '@/components/bundle/BundleEvidenceSummary';
 import BundleEnrollButton from '@/components/bundle/BundleEnrollButton';
+import MobileActionBar from '@/components/layout/MobileActionBar';
 import BundlePriceSummary from '@/components/bundle/BundlePriceSummary';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
@@ -308,7 +309,7 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
               </ol>
             </div>
 
-            <aside className="lg:sticky lg:top-24 lg:self-start" aria-label={'สรุปและสมัครชุดคอร์ส'}>
+            <aside id="bundle-action" className="scroll-mt-24 lg:sticky lg:top-24 lg:self-start" aria-label={'สรุปและสมัครชุดคอร์ส'}>
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-2xl">เริ่มเส้นทางนี้</CardTitle>
@@ -339,6 +340,24 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
             </aside>
           </div>
         </section>
+        {decisionFacts.ownership.status === 'complete' ? (
+          <MobileActionBar
+            targetId="bundle-action"
+            summary="คุณมีสิทธิ์เรียนชุดนี้แล้ว"
+            actionLabel={decisionFacts.actions.complete.label}
+            href={decisionFacts.actions.complete.href}
+            hiddenFrom="lg"
+          />
+        ) : decisionFacts.actions.acquisition.kind !== 'unavailable' ? (
+          <MobileActionBar
+            targetId="bundle-action"
+            summary={decisionFacts.price.isFree ? 'ฟรี' : decisionFacts.price.bundleFormatted}
+            hint={decisionFacts.price.comparison.label}
+            actionLabel={decisionFacts.actions.acquisition.label}
+            href="#bundle-action"
+            hiddenFrom="lg"
+          />
+        ) : null}
         </MainContent>
       </AnalyticsViewEvent>
       <Footer />

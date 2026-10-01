@@ -370,6 +370,7 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
               </Suspense>
             </CourseDetailSection>
             {courseReady && <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} renderMode="final-action" />}
+            <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} renderMode="mobile-bar" />
           </article>
           </MainContent>
         </AnalyticsViewEvent>
