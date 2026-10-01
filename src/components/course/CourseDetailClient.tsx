@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Check, CircleCheck } from 'lucide-react';
 import EnrollButton from '@/components/course/EnrollButton';
+import MobileActionBar from '@/components/layout/MobileActionBar';
 import CourseLessonList from '@/components/course/CourseLessonList';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,7 @@ interface CourseDetailClientProps {
   lessons?: Lesson[];
   previewLessonHref?: string | null;
   hasVideoPreview?: boolean;
-  renderMode?: 'lessons' | 'button' | 'final-action';
+  renderMode?: 'lessons' | 'button' | 'final-action' | 'mobile-bar';
 }
 
 export default function CourseDetailClient({
@@ -182,6 +183,29 @@ export default function CourseDetailClient({
           </>
         )}
       </div>
+    );
+  }
+
+  if (renderMode === 'mobile-bar') {
+    if (status === 'checking' || (!courseReady && status !== 'enrolled')) return null;
+
+    return isEnrolled ? (
+      <MobileActionBar
+        targetId="course-action"
+        summary="คุณมีสิทธิ์เรียนคอร์สนี้แล้ว"
+        actionLabel={decisionFacts.actions.learner.label}
+        href={decisionFacts.actions.learner.href!}
+        hiddenFrom="md"
+      />
+    ) : (
+      <MobileActionBar
+        targetId="course-action"
+        summary={decisionFacts.price.isFree ? 'ฟรี' : decisionFacts.price.effectiveFormatted}
+        hint={promoLabel}
+        actionLabel={decisionFacts.actions.member.label}
+        href="#course-action"
+        hiddenFrom="md"
+      />
     );
   }
 
