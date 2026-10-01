@@ -165,6 +165,13 @@
   --primary: var(--color-accent);
   /* Text and link color: #00abff is only 2.5:1 on white, so text uses the deeper brand blue (5.6:1). */
   --link: #006dab;
+  /* Topic hues for tags and categories: soft fill + dark text, each pair >= 4.5:1. */
+  --hue-orange-bg: #fff1e3; --hue-orange-fg: #9a4a00;
+  --hue-violet-bg: #efeaff; --hue-violet-fg: #5b3fd0;
+  --hue-amber-bg: #fff7d6; --hue-amber-fg: #7a5b00;
+  --hue-teal-bg: #e0f7fb; --hue-teal-fg: #0b6477;
+  --hue-pink-bg: #ffeaf1; --hue-pink-fg: #b4234f;
+  --hue-green-bg: #e6f7ee; --hue-green-fg: #0b6b3a;
   --primary-foreground: var(--color-on-accent);
   --secondary: var(--color-accent-soft);
   --secondary-foreground: var(--color-accent-pressed);
@@ -218,6 +225,12 @@
   --color-on-accent: #061923;
   --color-on-accent-strong: #061923;
   --link: #33bcff;
+  --hue-orange-bg: #3d2a14; --hue-orange-fg: #ffc58a;
+  --hue-violet-bg: #2b2552; --hue-violet-fg: #cbbfff;
+  --hue-amber-bg: #3a3210; --hue-amber-fg: #ffe27a;
+  --hue-teal-bg: #0f3340; --hue-teal-fg: #8fe3f2;
+  --hue-pink-bg: #3d1d2a; --hue-pink-fg: #ffb3cd;
+  --hue-green-bg: #12351f; --hue-green-fg: #9be8b5;
   --color-background: #080b0f;
   --color-surface: #10151c;
   --color-surface-hover: #17202a;
@@ -640,6 +653,18 @@ h1, h2, h3, h4, h5, h6 {
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-link: var(--link);
+  --color-hue-orange-bg: var(--hue-orange-bg);
+  --color-hue-orange-fg: var(--hue-orange-fg);
+  --color-hue-violet-bg: var(--hue-violet-bg);
+  --color-hue-violet-fg: var(--hue-violet-fg);
+  --color-hue-amber-bg: var(--hue-amber-bg);
+  --color-hue-amber-fg: var(--hue-amber-fg);
+  --color-hue-teal-bg: var(--hue-teal-bg);
+  --color-hue-teal-fg: var(--hue-teal-fg);
+  --color-hue-pink-bg: var(--hue-pink-bg);
+  --color-hue-pink-fg: var(--hue-pink-fg);
+  --color-hue-green-bg: var(--hue-green-bg);
+  --color-hue-green-fg: var(--hue-green-fg);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
