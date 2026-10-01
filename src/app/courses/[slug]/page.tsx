@@ -1,4 +1,5 @@
 import PaymentCancellationNotice from '@/components/checkout/PaymentCancellationNotice';
+import CourseAccessDeniedNotice from '@/components/course/CourseAccessDeniedNotice';
 import MainContent from '@/components/layout/MainContent';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
@@ -39,7 +40,7 @@ function normalizeUrl(url: string | null): string | null {
 export const revalidate = 3600;
 
 interface Props {
-  searchParams?: Promise<{ payment?: string | string[] }>;
+  searchParams?: Promise<{ payment?: string | string[]; access?: string | string[] }>;
   params: Promise<{ slug: string }>;
 }
 
@@ -125,7 +126,9 @@ async function getCourse(slug: string) {
 
 export default async function CourseDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const cancelled = (await searchParams)?.payment === 'cancelled';
+  const resolvedSearchParams = await searchParams;
+  const cancelled = resolvedSearchParams?.payment === 'cancelled';
+  const accessDenied = resolvedSearchParams?.access === 'denied';
   const course = await getCourse(slug);
 
   if (!course) {
@@ -244,6 +247,7 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
         <AnalyticsViewEvent productType="course" productId={course.id}>
           <MainContent className="min-h-screen bg-background text-foreground">
           {cancelled ? <PaymentCancellationNotice /> : null}
+          {accessDenied ? <CourseAccessDeniedNotice /> : null}
 
           <header className="bg-[radial-gradient(circle_at_12%_8%,var(--color-accent-soft),transparent_36%),linear-gradient(180deg,var(--academy-canvas),var(--background))]">
             <div className="mx-auto grid max-w-[1204px] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_20rem] md:gap-9 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-20 lg:py-14">

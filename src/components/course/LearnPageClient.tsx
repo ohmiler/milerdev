@@ -331,6 +331,11 @@ export default function LearnPageClient({
                   <p className="mt-1 text-sm text-muted-foreground">{statusDescription}</p>
                 </div>
               </div>
+              {!isEnrolled && (
+                <Button asChild>
+                  <Link href={`/courses/${course.slug}#course-action`}>ดูราคาและวิธีเข้าเรียน</Link>
+                </Button>
+              )}
               {isEnrolled && !isCurrentCompleted && (
                 <Button
                   type="button"

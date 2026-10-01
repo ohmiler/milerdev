@@ -14,6 +14,7 @@ interface ModalProps {
   children: React.ReactNode;
   type?: ModalTone;
   buttonText?: string;
+  action?: React.ReactNode;
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
@@ -38,6 +39,7 @@ export default function Modal({
   children,
   type = 'info',
   buttonText,
+  action,
   returnFocusRef,
 }: ModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -55,7 +57,8 @@ export default function Modal({
       returnFocusRef={returnFocusRef}
       icon={icons[type]}
     >
-      <Button ref={closeButtonRef} type="button" onClick={onClose}>{resolvedButtonText}</Button>
+      {action}
+      <Button ref={closeButtonRef} type="button" variant={action ? 'outline' : 'default'} onClick={onClose}>{resolvedButtonText}</Button>
     </DialogShell>
   );
 }
