@@ -26,6 +26,9 @@
   --color-error: #f43f5e;
   --color-promo: #c5163a;
   --color-promo-soft: #fff0f3;
+  /* Discount badges: friendly orange instead of the error red. White on this is 5.2:1. */
+  --discount: #c2410c;
+  --discount-foreground: #ffffff;
   --color-success-strong: #067647;
   --color-success-soft: #e9f9f1;
   --color-warning-strong: #956000;
@@ -225,6 +228,8 @@
   --color-on-accent: #061923;
   --color-on-accent-strong: #061923;
   --link: #33bcff;
+  --discount: #fdba74;
+  --discount-foreground: #431407;
   --hue-orange-bg: #3d2a14; --hue-orange-fg: #ffc58a;
   --hue-violet-bg: #2b2552; --hue-violet-fg: #cbbfff;
   --hue-amber-bg: #3a3210; --hue-amber-fg: #ffe27a;
@@ -653,6 +658,8 @@ h1, h2, h3, h4, h5, h6 {
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-link: var(--link);
+  --color-discount: var(--discount);
+  --color-discount-foreground: var(--discount-foreground);
   --color-hue-orange-bg: var(--hue-orange-bg);
   --color-hue-orange-fg: var(--hue-orange-fg);
   --color-hue-violet-bg: var(--hue-violet-bg);

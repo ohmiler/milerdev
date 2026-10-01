@@ -25,7 +25,7 @@ export default function BundleCard({ title, description, decisionFacts }: Bundle
             {decisionFacts.readiness === 'preparing' ? (
               <Badge variant="secondary">กำลังเตรียมเนื้อหา</Badge>
             ) : (
-              <Badge variant={comparison.kind === 'savings' ? 'destructive' : 'outline'}>
+              <Badge variant={comparison.kind === 'savings' ? 'discount' : 'outline'}>
                 {comparison.label}
               </Badge>
             )}
