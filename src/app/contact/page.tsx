@@ -23,7 +23,7 @@ export default function ContactPage() {
             <Card className="h-fit bg-[var(--academy-navy)] text-white shadow-[var(--academy-shadow-card)]" aria-label="ข้อมูลการติดต่อ">
               <CardHeader><CardTitle className="text-2xl text-white">ช่องทางติดต่อ</CardTitle></CardHeader>
               <CardContent><dl className="divide-y divide-white/10 border-y border-white/10">{[
-                ['อีเมล', <a key="email" className="text-primary hover:underline" href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>],
+                ['อีเมล', <a key="email" className="text-link hover:underline" href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>],
                 ['เวลาทำการ', <>จันทร์ถึงศุกร์<br />09:00 ถึง 18:00 น.</>],
                 ['เรื่องที่ติดต่อได้', <>คอร์สและการเรียน<br />การชำระเงิน<br />งานวิทยากรและความร่วมมือ</>],
               ].map(([label, value]) => <div key={String(label)} className="grid gap-2 py-5 sm:grid-cols-[7rem_1fr]"><dt className="text-sm font-semibold text-white">{label}</dt><dd className="text-sm leading-6 text-white/65">{value}</dd></div>)}</dl><p className="mt-6 rounded-xl bg-white/5 p-4 text-xs leading-6 text-white/60">หลีกเลี่ยงการส่งรหัสผ่าน ข้อมูลบัตร หรือข้อมูลส่วนตัวที่ไม่จำเป็นผ่านแบบฟอร์มนี้</p></CardContent>

@@ -59,8 +59,8 @@ export default function CourseCard({
         <div className="flex min-w-0 flex-1 flex-col">
           <CardContent className="flex flex-1 flex-col px-5 pt-5 sm:px-6 sm:pt-6">
             {tags?.length ? <div className="mb-4 flex flex-wrap gap-2">{tags.slice(0, 3).map((tag) => <Badge key={tag.id} variant="secondary">{tag.name}</Badge>)}{tags.length > 3 ? <Badge variant="outline">+{tags.length - 3}</Badge> : null}</div> : null}
-            <h3 className="line-clamp-3 text-xl leading-snug font-semibold tracking-[-.02em] text-balance group-hover:text-primary">{title}</h3>
-            {outcomes?.length ? <ul className="mt-4 flex flex-col gap-2 text-sm leading-6 text-muted-foreground">{outcomes.map((outcome) => <li key={outcome} className="flex gap-2"><span className="text-primary">✓</span>{outcome}</li>)}</ul> : description ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">{getExcerpt(description, 120)}</p> : null}
+            <h3 className="line-clamp-3 text-xl leading-snug font-semibold tracking-[-.02em] text-balance group-hover:text-link">{title}</h3>
+            {outcomes?.length ? <ul className="mt-4 flex flex-col gap-2 text-sm leading-6 text-muted-foreground">{outcomes.map((outcome) => <li key={outcome} className="flex gap-2"><span className="text-link">✓</span>{outcome}</li>)}</ul> : description ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">{getExcerpt(description, 120)}</p> : null}
             <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5"><BookOpen className="size-3.5" />{lessonCount} บทเรียน</span>
               {durationText ? <span className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" />{durationText}</span> : null}
@@ -74,10 +74,10 @@ export default function CourseCard({
               <strong className="text-sm text-muted-foreground">ยังไม่เปิดลงทะเบียน</strong>
             ) : (
               <div aria-label={displayPrice === 0 ? 'ราคา ฟรี' : showOriginalPrice ? `ราคาพิเศษ ${pricing.effectiveFormatted} จาก ${pricing.regularFormatted} ลด ${discountPercent}%` : `ราคา ${pricing.effectiveFormatted}`}>
-                {displayPrice === 0 ? <strong className="text-xl text-primary">ฟรี</strong> : <div className="flex flex-wrap items-baseline gap-2"><strong className="text-xl">{pricing.effectiveFormatted}</strong>{showOriginalPrice ? <><s className="text-sm text-muted-foreground">{pricing.regularFormatted}</s><Badge variant="destructive">ลด {discountPercent}%</Badge></> : null}</div>}
+                {displayPrice === 0 ? <strong className="text-xl text-link">ฟรี</strong> : <div className="flex flex-wrap items-baseline gap-2"><strong className="text-xl">{pricing.effectiveFormatted}</strong>{showOriginalPrice ? <><s className="text-sm text-muted-foreground">{pricing.regularFormatted}</s><Badge variant="destructive">ลด {discountPercent}%</Badge></> : null}</div>}
               </div>
             )}
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">{decisionFacts.actions.discovery.label}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-link">{decisionFacts.actions.discovery.label}<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
           </CardFooter>
         </div>
       </Card>

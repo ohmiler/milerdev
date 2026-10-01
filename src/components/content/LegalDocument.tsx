@@ -32,7 +32,7 @@ function LegalTableOfContents({ title, sections, mobile = false }: LegalTableOfC
       href={`#${section.id}`}
       key={section.id}
     >
-      <span className={'font-mono text-xs text-primary'}>{String(index + 1).padStart(2, '0')}</span>
+      <span className={'font-mono text-xs text-link'}>{String(index + 1).padStart(2, '0')}</span>
       {section.title}
     </a>
   ));
@@ -76,10 +76,10 @@ export function LegalSection({ id, number, title, children }: LegalSectionProps)
       tabIndex={-1}
     >
       <div className={'grid gap-4 sm:grid-cols-[3rem_1fr]'}>
-        <div className={'font-mono text-xs text-primary'} aria-hidden={true}>{number}</div>
+        <div className={'font-mono text-xs text-link'} aria-hidden={true}>{number}</div>
         <div>
           <h2 id={`${id}-title`} className={'text-xl font-semibold sm:text-2xl'}>{title}</h2>
-          <div className={'mt-4 flex flex-col gap-4 text-sm leading-7 text-muted-foreground [&_a]:font-medium [&_a]:text-primary [&_a]:hover:underline [&_li]:pl-1 [&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-2 [&_ul]:pl-5'}>
+          <div className={'mt-4 flex flex-col gap-4 text-sm leading-7 text-muted-foreground [&_a]:font-medium [&_a]:text-link [&_a]:hover:underline [&_li]:pl-1 [&_ul]:flex [&_ul]:list-disc [&_ul]:flex-col [&_ul]:gap-2 [&_ul]:pl-5'}>
             {children}
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function LegalDocument({ title, lede, updatedLabel, sections, chi
             <CardContent className={'grid grid-cols-3 gap-3 pt-6 text-center text-sm'}>
               <dl><dt className={'text-xs text-muted-foreground'}>อัปเดต</dt><dd className={'mt-2 font-semibold'}>{updatedLabel}</dd></dl>
               <dl><dt className={'text-xs text-muted-foreground'}>หัวข้อ</dt><dd className={'mt-2 text-xl font-semibold'}>{sections.length}</dd></dl>
-              <dl><dt className={'text-xs text-muted-foreground'}>ติดต่อ</dt><dd className={'mt-2'}><a className={'font-semibold text-primary hover:underline'} href={'mailto:milerdev.official@gmail.com'}>อีเมลทีม</a></dd></dl>
+              <dl><dt className={'text-xs text-muted-foreground'}>ติดต่อ</dt><dd className={'mt-2'}><a className={'font-semibold text-link hover:underline'} href={'mailto:milerdev.official@gmail.com'}>อีเมลทีม</a></dd></dl>
             </CardContent>
           </Card>
         )}

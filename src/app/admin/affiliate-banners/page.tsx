@@ -220,7 +220,7 @@ export default function AdminAffiliateBannersPage() {
                       href={banner.linkUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 inline-flex max-w-full items-center gap-1.5 text-xs text-primary hover:underline"
+                      className="mt-2 inline-flex max-w-full items-center gap-1.5 text-xs text-link hover:underline"
                     >
                       <span className="truncate">{banner.linkUrl}</span>
                       <ExternalLink className="size-3 shrink-0" aria-hidden />

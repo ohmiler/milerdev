@@ -251,7 +251,7 @@ export default function AdminCouponsPage() {
                 return (
                   <TableRow key={coupon.id} className={expired || !coupon.isActive ? 'opacity-65' : undefined}>
                     <TableCell>
-                      <div className="font-mono font-semibold text-primary">{coupon.code}</div>
+                      <div className="font-mono font-semibold text-link">{coupon.code}</div>
                       {coupon.description ? <div className="mt-1 max-w-64 text-xs text-muted-foreground">{coupon.description}</div> : null}
                     </TableCell>
                     <TableCell>

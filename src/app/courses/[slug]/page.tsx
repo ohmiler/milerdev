@@ -264,7 +264,7 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
                 {course.tags.length > 0 && (
                   <div className="mb-5 flex flex-wrap gap-2" aria-label="หัวข้อคอร์ส">
                     {course.tags.map((tag: { id: string; name: string; slug: string }) => (
-                      <Link key={tag.id} href={`/courses?tag=${tag.slug}`} className="inline-flex rounded-md border bg-card px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+                      <Link key={tag.id} href={`/courses?tag=${tag.slug}`} className="inline-flex rounded-md border bg-card px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/40 hover:text-link focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
                         {tag.name}
                       </Link>
                     ))}

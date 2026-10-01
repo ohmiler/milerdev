@@ -70,7 +70,7 @@ export default function TableOfContents({ items, variant }: Props) {
               className={cn(
                 'block rounded-lg px-3 py-2 text-sm leading-5 text-muted-foreground transition-colors motion-reduce:transition-none hover:bg-muted hover:text-foreground',
                 item.level === 3 && 'pl-6 text-xs',
-                activeId === item.id && 'bg-primary/10 font-semibold text-primary',
+                activeId === item.id && 'bg-primary/10 font-semibold text-link',
               )}
               data-active={activeId === item.id || undefined}
               aria-current={activeId === item.id ? 'location' : undefined}

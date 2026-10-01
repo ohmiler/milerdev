@@ -55,7 +55,7 @@ export default async function DashboardPage() {
     >
       {primary.course ? (
             <section className="mt-10" aria-labelledby="dashboard-next-action-title">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-link">
                 สิ่งที่ควรทำต่อ
               </p>
               <h2 className="mt-2 text-2xl font-bold" id="dashboard-next-action-title">

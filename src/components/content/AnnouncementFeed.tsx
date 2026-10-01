@@ -90,7 +90,7 @@ export function AnnouncementFeedView({ status, announcements, onRetry }: Announc
             data-announcement-type={announcement.type}
             key={announcement.id}
           >
-            <CardHeader><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-primary">{String(index + 1).padStart(2, '0')}</span><Badge variant={announcement.type === 'error' ? 'destructive' : 'secondary'}>{config.code} · {config.label}</Badge><time className="text-xs text-muted-foreground" dateTime={announcement.createdAt}>{formatDate(announcement.createdAt)}</time>{announcement.creatorName ? <span className="text-xs text-muted-foreground">โดย {announcement.creatorName}</span> : null}</div><CardTitle className="mt-3 text-xl sm:text-2xl">{announcement.title}</CardTitle></CardHeader><CardContent><div className="whitespace-pre-line text-sm leading-7 text-muted-foreground">{announcement.content}</div></CardContent>
+            <CardHeader><div className="flex flex-wrap items-center gap-2"><span className="font-mono text-xs text-link">{String(index + 1).padStart(2, '0')}</span><Badge variant={announcement.type === 'error' ? 'destructive' : 'secondary'}>{config.code} · {config.label}</Badge><time className="text-xs text-muted-foreground" dateTime={announcement.createdAt}>{formatDate(announcement.createdAt)}</time>{announcement.creatorName ? <span className="text-xs text-muted-foreground">โดย {announcement.creatorName}</span> : null}</div><CardTitle className="mt-3 text-xl sm:text-2xl">{announcement.title}</CardTitle></CardHeader><CardContent><div className="whitespace-pre-line text-sm leading-7 text-muted-foreground">{announcement.content}</div></CardContent>
           </Card>
         );
       })}

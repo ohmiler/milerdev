@@ -163,6 +163,8 @@
   --popover: var(--color-surface);
   --popover-foreground: var(--color-text-primary);
   --primary: var(--color-accent);
+  /* Text and link color: #00abff is only 2.5:1 on white, so text uses the deeper brand blue (5.6:1). */
+  --link: #006dab;
   --primary-foreground: var(--color-on-accent);
   --secondary: var(--color-accent-soft);
   --secondary-foreground: var(--color-accent-pressed);
@@ -215,6 +217,7 @@
   --color-accent-soft: #003d5c;
   --color-on-accent: #061923;
   --color-on-accent-strong: #061923;
+  --link: #33bcff;
   --color-background: #080b0f;
   --color-surface: #10151c;
   --color-surface-hover: #17202a;
@@ -530,7 +533,7 @@ h1, h2, h3, h4, h5, h6 {
 .lesson-content ul { padding-left: 1.5em; margin: 0.5em 0; list-style-type: disc; }
 .lesson-content ol { padding-left: 1.5em; margin: 0.5em 0; list-style-type: decimal; }
 .lesson-content li { margin: 0.3em 0; display: list-item; }
-.lesson-content a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.lesson-content a { color: var(--link); text-decoration: underline; text-underline-offset: 3px; }
 .lesson-content a:hover { color: color-mix(in srgb, var(--primary) 78%, black); }
 .lesson-content code {
   background: var(--muted);
@@ -636,6 +639,7 @@ h1, h2, h3, h4, h5, h6 {
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-link: var(--link);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);

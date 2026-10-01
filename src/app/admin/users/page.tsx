@@ -430,7 +430,7 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-3">
                         <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">{(user.name?.charAt(0) || user.email.charAt(0)).toUpperCase()}</div>
                         <Link href={`/admin/users/${user.id}`} className="min-w-0 hover:underline">
-                          <div className="truncate font-semibold text-primary">{user.name || 'ไม่ระบุชื่อ'}</div>
+                          <div className="truncate font-semibold text-link">{user.name || 'ไม่ระบุชื่อ'}</div>
                           <div className="mt-1 truncate text-xs text-muted-foreground">{user.email}</div>
                         </Link>
                       </div>

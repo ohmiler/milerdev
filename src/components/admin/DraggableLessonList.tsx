@@ -204,7 +204,7 @@ function SortableItem({
             <CardTitle className="flex flex-wrap items-center gap-2">
               <Link
                 href={`/admin/lessons/${lesson.id}/edit`}
-                className="truncate hover:text-primary hover:underline"
+                className="truncate hover:text-link hover:underline"
               >
                 {lesson.title}
               </Link>
