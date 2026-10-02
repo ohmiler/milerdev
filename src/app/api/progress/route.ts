@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), {
-      action: 'Error updating progress',
+      action: 'progress.update_failed',
     });
     return NextResponse.json(
       { error: 'Failed to update progress' },
@@ -103,7 +103,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ progress });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), {
-      action: 'Error getting progress',
+      action: 'progress.fetch_failed',
     });
     return NextResponse.json(
       { error: 'Failed to get progress' },

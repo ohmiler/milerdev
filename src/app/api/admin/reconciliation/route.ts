@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { auditLogs, payments, users, courses, bundles } from '@/lib/db/schema';
+import { logError } from '@/lib/error-handler';
 
 const bulkReconciliationSchema = z.object({
     action: z.literal('mark_failed'),
@@ -131,7 +132,7 @@ export async function GET(request: Request) {
             filter: { status, days, q: query ?? null },
         });
     } catch (error) {
-        console.error('Error fetching reconciliation data:', error);
+        logError(error, { action: 'admin.reconciliation.fetch_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
@@ -189,7 +190,7 @@ export async function POST(request: Request) {
                 { status: 409 },
             );
         }
-        console.error('Error in reconciliation action:', error);
+        logError(error, { action: 'admin.reconciliation.action_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }

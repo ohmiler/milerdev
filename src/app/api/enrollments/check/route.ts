@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { logError } from '@/lib/error-handler';
 
 // GET /api/enrollments/check?courseId=xxx - Check if user is enrolled
 export async function GET(request: Request) {
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
       enrollment: enrollment || null,
     });
   } catch (error) {
-    console.error('Error checking enrollment:', error);
+    logError(error, { action: 'enrollments.check.fetch_failed' });
     return NextResponse.json(
       { error: 'Failed to check enrollment' },
       { status: 500 }

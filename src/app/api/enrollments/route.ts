@@ -7,6 +7,7 @@ import { sendEnrollmentEmail } from '@/lib/notifications/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
 import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/courses/availability';
+import { logError } from '@/lib/error-handler';
 
 // GET /api/enrollments - Get user's enrollments
 export async function GET() {
@@ -35,7 +36,7 @@ export async function GET() {
 
     return NextResponse.json({ enrollments: result });
   } catch (error) {
-    console.error('Error fetching enrollments:', error);
+    logError(error, { action: 'enrollments.fetch_failed' });
     return NextResponse.json(
       { error: 'Failed to fetch enrollments' },
       { status: 500 }
@@ -129,7 +130,7 @@ export async function POST(request: Request) {
         name: session.user.name || 'ผู้เรียน',
         courseName: course.title,
         courseSlug: course.slug,
-      }).catch((err) => console.error('[Email] Failed to send enrollment email:', err));
+      }).catch((err) => logError(err, { action: 'enrollments.email_failed' }));
     }
 
     return NextResponse.json(
@@ -144,7 +145,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating enrollment:', error);
+    logError(error, { action: 'enrollments.create_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

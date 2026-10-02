@@ -8,6 +8,7 @@ import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/ra
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
+import { logError } from '@/lib/error-handler';
 
 // POST /api/bundles/enroll - Enroll in all courses of a bundle
 export async function POST(request: Request) {
@@ -144,7 +145,7 @@ export async function POST(request: Request) {
                 name: session.user.name,
                 courseName: `${bundle.title} (${enrolled.length} คอร์ส)`,
                 courseSlug: bCourses[0].courseSlug,
-            }).catch((err) => console.error('Failed to send bundle enrollment email:', err));
+            }).catch((err) => logError(err, { action: 'bundles.enroll.email_failed' }));
         }
 
         return NextResponse.json({
@@ -155,7 +156,7 @@ export async function POST(request: Request) {
             totalSkipped: skipped.length,
         }, { status: 201 });
     } catch (error) {
-        console.error('Error enrolling in bundle:', error);
+        logError(error, { action: 'bundles.enroll.enroll_failed' });
         return NextResponse.json({ error: 'Failed to enroll in bundle' }, { status: 500 });
     }
 }
