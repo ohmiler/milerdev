@@ -109,13 +109,11 @@ describe('Admin reconciliation queue states', () => {
     expect(screen.queryByText(/ไม่พบรายการ/)).toBeNull();
   });
 
-  it('limits bulk selection to 50 rows and explains the limit', async () => {
+  it('never lets more than 50 rows be selected', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(okResponse(makePayments(60), { ...summary, verifying: 60 }));
 
     render(<ReconciliationPage />);
     await screen.findByText('คอร์ส 1');
-
-    expect(screen.getByText(/สูงสุด 50 รายการต่อครั้ง/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'เลือก 50 รายการแรก' }));
 
@@ -138,5 +136,86 @@ describe('Admin reconciliation queue states', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'รีเฟรช' }));
     await waitFor(() => expect(screen.getByText(/เลือกอยู่ 0\/50 รายการ/)).toBeTruthy());
+  });
+
+  describe('pagination and search', () => {
+    const paged = (page: number, total: number, rows: number) => new Response(JSON.stringify({
+      payments: makePayments(rows),
+      summary: { ...summary, verifying: total },
+      pagination: { page, pageSize: 50, total, totalPages: Math.ceil(total / 50) },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+    function requestedUrl(fetchMock: { mock: { calls: unknown[][] } }, index: number) {
+      return new URL(String(fetchMock.mock.calls[index][0]), 'http://localhost');
+    }
+
+    it('shows the visible range against the total and moves between pages', async () => {
+      const fetchMock = vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(paged(1, 120, 50))
+        .mockResolvedValueOnce(paged(2, 120, 50));
+
+      render(<ReconciliationPage />);
+      await screen.findByText('คอร์ส 1');
+
+      expect(screen.getByText(/แสดง 1–50 จาก 120 รายการ/)).toBeTruthy();
+      expect(screen.getByText('หน้า 1/3')).toBeTruthy();
+      expect((screen.getByRole('button', { name: /ก่อนหน้า/ }) as HTMLButtonElement).disabled).toBe(true);
+
+      fireEvent.click(screen.getByRole('button', { name: /ถัดไป/ }));
+
+      expect(await screen.findByText(/แสดง 51–100 จาก 120 รายการ/)).toBeTruthy();
+      expect(requestedUrl(fetchMock, 1).searchParams.get('page')).toBe('2');
+    });
+
+    it('sends the search term and returns to page 1', async () => {
+      const fetchMock = vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(paged(1, 120, 50))
+        .mockResolvedValueOnce(paged(2, 120, 50))
+        .mockResolvedValueOnce(paged(1, 1, 1));
+
+      render(<ReconciliationPage />);
+      await screen.findByText('คอร์ส 1');
+      fireEvent.click(screen.getByRole('button', { name: /ถัดไป/ }));
+      await screen.findByText(/แสดง 51–100/);
+
+      fireEvent.change(screen.getByLabelText('ค้นหาเลขธุรกรรมหรืออีเมล'), { target: { value: '  buyer1@example.com ' } });
+      fireEvent.click(screen.getByRole('button', { name: /ค้นหา/ }));
+
+      await screen.findByText(/ผลค้นหา/);
+      const url = requestedUrl(fetchMock, 2);
+      expect(url.searchParams.get('q')).toBe('buyer1@example.com');
+      expect(url.searchParams.get('page')).toBe('1');
+    });
+
+    it('requests every time range for backlog older than 90 days', async () => {
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(paged(1, 1, 1));
+
+      render(<ReconciliationPage />);
+      await screen.findByText('คอร์ส 1');
+      fireEvent.change(screen.getByLabelText('ช่วงเวลา'), { target: { value: 'all' } });
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(requestedUrl(fetchMock, 1).searchParams.get('days')).toBe('all');
+      expect(await screen.findByText(/ทุกช่วงเวลา/)).toBeTruthy();
+    });
+
+    it('moves back when the last items of a later page are resolved', async () => {
+      const fetchMock = vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(paged(1, 51, 50))
+        .mockResolvedValueOnce(paged(2, 51, 1))
+        .mockResolvedValueOnce(new Response(JSON.stringify({ payments: [], summary, pagination: { page: 3, pageSize: 50, total: 50, totalPages: 1 } }), { status: 200 }))
+        .mockResolvedValueOnce(paged(1, 50, 50));
+
+      render(<ReconciliationPage />);
+      await screen.findByText('คอร์ส 1');
+      fireEvent.click(screen.getByRole('button', { name: /ถัดไป/ }));
+      await screen.findByText(/แสดง 51–51 จาก 51/);
+
+      // The page now reports fewer rows than the page we asked for.
+      fireEvent.click(screen.getByRole('button', { name: 'รีเฟรช' }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+      expect(requestedUrl(fetchMock, 3).searchParams.get('page')).toBe('1');
+    });
   });
 });

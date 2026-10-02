@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle2, RefreshCw, ShieldAlert, XCircle } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight, RefreshCw, Search, ShieldAlert, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -56,7 +57,15 @@ interface Summary {
   pending: number;
 }
 
+interface Pagination {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 type StatusFilter = 'verifying' | 'failed' | 'pending';
+type DaysFilter = number | 'all';
 type ActionIntent =
   | { type: 'single'; payment: PaymentRecord; action: 'approve' | 'reject' }
   | { type: 'bulk' }
@@ -64,6 +73,7 @@ type ActionIntent =
 
 // Must match the max length of paymentIds in the bulk reconciliation API schema.
 const MAX_BULK_SELECTION = 50;
+const DAY_OPTIONS: DaysFilter[] = [7, 14, 30, 60, 90, 'all'];
 
 const statusLabels: Record<StatusFilter, string> = {
   verifying: 'รอตรวจสอบ',
@@ -77,7 +87,12 @@ export default function ReconciliationPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('verifying');
-  const [daysBack, setDaysBack] = useState(30);
+  const [daysBack, setDaysBack] = useState<DaysFilter>(30);
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  // The API page size equals the bulk cap, so selecting all means selecting the whole page.
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: MAX_BULK_SELECTION, total: 0, totalPages: 1 });
   const [actionLoading, setActionLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -88,16 +103,19 @@ export default function ReconciliationPage() {
   const loadedKeyRef = useRef<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    const requestKey = `${statusFilter}:${daysBack}`;
+    const requestKey = `${statusFilter}:${daysBack}:${page}:${searchTerm}`;
+    const params = new URLSearchParams({ status: statusFilter, days: String(daysBack), page: String(page) });
+    if (searchTerm) params.set('q', searchTerm);
     setLoading(true);
     setLoadError('');
     setSelected(new Set());
     try {
-      const response = await fetch(`/api/admin/reconciliation?status=${statusFilter}&days=${daysBack}`);
+      const response = await fetch(`/api/admin/reconciliation?${params.toString()}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายการกระทบยอดได้');
       setPayments(data.payments || []);
       setSummary(data.summary || { verifying: 0, failed: 0, pending: 0 });
+      setPagination(data.pagination || { page: 1, pageSize: MAX_BULK_SELECTION, total: (data.payments || []).length, totalPages: 1 });
       loadedKeyRef.current = requestKey;
     } catch (caughtError) {
       // Rows from a different filter must not stay on screen under the new filter's label.
@@ -106,11 +124,37 @@ export default function ReconciliationPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, daysBack]);
+  }, [statusFilter, daysBack, page, searchTerm]);
 
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  // Resolving the last items of a page can leave it empty while earlier pages remain.
+  useEffect(() => {
+    if (!loading && !loadError && payments.length === 0 && pagination.total > 0 && page > pagination.totalPages) {
+      setPage(pagination.totalPages);
+    }
+  }, [loading, loadError, payments.length, pagination.total, pagination.totalPages, page]);
+
+  const changeStatus = (next: StatusFilter) => {
+    setStatusFilter(next);
+    setPage(1);
+  };
+  const changeDays = (next: DaysFilter) => {
+    setDaysBack(next);
+    setPage(1);
+  };
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    setSearchTerm(searchInput.trim());
+    setPage(1);
+  };
+  const clearSearch = () => {
+    setSearchInput('');
+    setSearchTerm('');
+    setPage(1);
+  };
 
   const openAction = (intent: Exclude<ActionIntent, null>) => {
     setReason('');
@@ -205,14 +249,14 @@ export default function ReconciliationPage() {
 
       <AdminSection
         title="คิวตรวจสอบ"
-        description={`ย้อนหลัง ${daysBack.toLocaleString('th-TH')} วัน · เลือกอยู่ ${selected.size.toLocaleString('th-TH')}/${MAX_BULK_SELECTION} รายการ`}
+        description={`${daysBack === 'all' ? 'ทุกช่วงเวลา' : `ย้อนหลัง ${daysBack.toLocaleString('th-TH')} วัน`} · เลือกอยู่ ${selected.size.toLocaleString('th-TH')}/${MAX_BULK_SELECTION} รายการ`}
         actions={statusFilter === 'verifying' && selected.size > 0 && !showingStaleRows ? <Button variant="destructive" size="sm" onClick={() => openAction({ type: 'bulk' })}>ทำเครื่องหมายว่าล้มเหลว</Button> : undefined}
       >
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <ToggleGroup
             type="single"
             value={statusFilter}
-            onValueChange={(value) => { if (value) setStatusFilter(value as StatusFilter); }}
+            onValueChange={(value) => { if (value) changeStatus(value as StatusFilter); }}
             variant="outline"
             spacing={0}
             aria-label="กรองสถานะกระทบยอด"
@@ -222,13 +266,32 @@ export default function ReconciliationPage() {
               <ToggleGroupItem key={status} value={status}>{statusLabels[status]} {summary[status].toLocaleString('th-TH')}</ToggleGroupItem>
             ))}
           </ToggleGroup>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">ย้อนหลัง</span>
-            <NativeSelect value={String(daysBack)} onChange={(event) => setDaysBack(Number(event.target.value))} aria-label="ช่วงเวลาย้อนหลัง">
-              {[7, 14, 30, 60, 90].map((days) => <NativeSelectOption key={days} value={days}>{days} วัน</NativeSelectOption>)}
-            </NativeSelect>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <form className="flex items-center gap-2" role="search" onSubmit={submitSearch}>
+              <Input
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="ค้นหาเลขธุรกรรมหรืออีเมล"
+                aria-label="ค้นหาเลขธุรกรรมหรืออีเมล"
+                maxLength={100}
+                className="w-56"
+              />
+              <Button type="submit" variant="outline" size="sm"><Search data-icon="inline-start" aria-hidden />ค้นหา</Button>
+            </form>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">ช่วงเวลา</span>
+              <NativeSelect value={String(daysBack)} onChange={(event) => changeDays(event.target.value === 'all' ? 'all' : Number(event.target.value))} aria-label="ช่วงเวลา">
+                {DAY_OPTIONS.map((days) => <NativeSelectOption key={days} value={String(days)}>{days === 'all' ? 'ทั้งหมด' : `ย้อนหลัง ${days} วัน`}</NativeSelectOption>)}
+              </NativeSelect>
+            </div>
           </div>
         </div>
+        {searchTerm ? (
+          <p className="mb-4 text-sm text-muted-foreground">
+            ผลค้นหา &quot;{searchTerm}&quot; ·{' '}
+            <Button type="button" variant="link" size="sm" className="h-auto p-0" onClick={clearSearch}>ล้างการค้นหา</Button>
+          </p>
+        ) : null}
 
         {message ? (
           <Alert variant={message.type === 'error' ? 'destructive' : 'default'} className="mb-5">
@@ -244,16 +307,10 @@ export default function ReconciliationPage() {
             action={<Button variant="outline" onClick={() => void fetchData()}>ลองใหม่</Button>}
           />
         ) : null}
-        {!loading && !loadError && statusFilter === 'verifying' && payments.length > MAX_BULK_SELECTION ? (
-          <p className="text-sm text-muted-foreground">
-            แสดง {payments.length.toLocaleString('th-TH')} รายการ เลือกทำเครื่องหมายพร้อมกันได้สูงสุด {MAX_BULK_SELECTION} รายการต่อครั้ง
-          </p>
-        ) : null}
-
         {loading ? (
           <AdminLoadingState title="กำลังโหลดคิวกระทบยอด" />
         ) : payments.length === 0 && loadError ? null : payments.length === 0 ? (
-          <AdminEmptyState icon={<ShieldAlert aria-hidden />} title={`ไม่พบรายการ${statusLabels[statusFilter]}`} description="ไม่มีรายการในช่วงเวลาที่เลือก ลองเปลี่ยนสถานะหรือช่วงเวลา" tone="success" />
+          <AdminEmptyState icon={<ShieldAlert aria-hidden />} title={`ไม่พบรายการ${statusLabels[statusFilter]}`} description={searchTerm ? 'ไม่มีรายการที่ตรงกับคำค้นในช่วงเวลาที่เลือก ลองล้างการค้นหาหรือเปลี่ยนช่วงเวลา' : 'ไม่มีรายการในช่วงเวลาที่เลือก ลองเปลี่ยนสถานะหรือช่วงเวลา'} tone="success" />
         ) : (
           <Table>
             <TableHeader>
@@ -303,6 +360,22 @@ export default function ReconciliationPage() {
             </TableBody>
           </Table>
         )}
+        {!loading && payments.length > 0 ? (
+          <nav className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" aria-label="เลื่อนหน้าคิวกระทบยอด">
+            <p className="text-sm text-muted-foreground">
+              แสดง {((pagination.page - 1) * pagination.pageSize + 1).toLocaleString('th-TH')}–{((pagination.page - 1) * pagination.pageSize + payments.length).toLocaleString('th-TH')} จาก {pagination.total.toLocaleString('th-TH')} รายการ (เรียงรายการที่รอนานที่สุดก่อน)
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                <ChevronLeft data-icon="inline-start" aria-hidden />ก่อนหน้า
+              </Button>
+              <span className="text-sm tabular-nums text-muted-foreground">หน้า {pagination.page.toLocaleString('th-TH')}/{pagination.totalPages.toLocaleString('th-TH')}</span>
+              <Button variant="outline" size="sm" disabled={page >= pagination.totalPages} onClick={() => setPage(page + 1)}>
+                ถัดไป<ChevronRight data-icon="inline-end" aria-hidden />
+              </Button>
+            </div>
+          </nav>
+        ) : null}
       </AdminSection>
 
       <Dialog
