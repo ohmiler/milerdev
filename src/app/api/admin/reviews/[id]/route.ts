@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { reviews } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
+import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -39,6 +40,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     await db.update(reviews).set(updateData).where(eq(reviews.id, id));
 
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'review', entityId: id });
+    await revalidateCoursePagesById(existing.courseId);
 
     return NextResponse.json({ message: 'อัปเดตรีวิวสำเร็จ' });
   } catch (error) {
@@ -69,6 +71,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await db.delete(reviews).where(eq(reviews.id, id));
 
     await logAudit({ userId: session.user.id, action: 'delete', entityType: 'review', entityId: id });
+    await revalidateCoursePagesById(existing.courseId);
 
     return NextResponse.json({ message: 'ลบรีวิวสำเร็จ' });
   } catch (error) {

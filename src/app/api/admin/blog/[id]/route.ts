@@ -6,6 +6,7 @@ import { blogPosts, blogPostTags, tags } from '@/lib/db/schema';
 import { eq, and, ne } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { revalidateBlogPages } from '@/lib/content/revalidate';
 import { sanitizeRichContent } from '@/lib/security/sanitize';
 
 interface RouteParams {
@@ -108,6 +109,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     }
 
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'blog', entityId: id, newValue: title || existing.title });
+    revalidateBlogPages();
 
     return NextResponse.json({ message: 'อัพเดทบทความสำเร็จ' });
   } catch (error) {
@@ -142,6 +144,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }).where(eq(blogPosts.id, id));
 
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'blog', entityId: id, newValue: status });
+    revalidateBlogPages();
 
     return NextResponse.json({ message: 'อัพเดทสถานะสำเร็จ', status });
   } catch (error) {
@@ -173,6 +176,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await db.delete(blogPosts).where(eq(blogPosts.id, id));
 
     await logAudit({ userId: session.user.id, action: 'delete', entityType: 'blog', entityId: id, oldValue: existing.title });
+    revalidateBlogPages();
 
     return NextResponse.json({ message: 'ลบบทความสำเร็จ' });
   } catch (error) {

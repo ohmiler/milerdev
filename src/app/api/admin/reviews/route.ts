@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { reviews, users, courses } from '@/lib/db/schema';
 import { desc, eq, sql, and, like, or } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 
 // GET /api/admin/reviews - Get all reviews
 export async function GET(request: Request) {
@@ -121,6 +122,7 @@ export async function POST(request: Request) {
     }
 
     let imported = 0;
+    const importedCourseIds = new Set<string>();
     let skipped = 0;
     const errors: string[] = [];
 
@@ -145,11 +147,14 @@ export async function POST(request: Request) {
           updatedAt: new Date(),
         });
         imported++;
+        importedCourseIds.add(review.courseId);
       } catch (err) {
         errors.push(`Failed to import review: ${(err as Error).message}`);
         skipped++;
       }
     }
+
+    for (const courseId of importedCourseIds) await revalidateCoursePagesById(courseId);
 
     return NextResponse.json({
       message: `Imported ${imported} reviews, skipped ${skipped}`,

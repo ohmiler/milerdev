@@ -6,6 +6,7 @@ import { blogPosts, blogPostTags, users } from '@/lib/db/schema';
 import { eq, desc, count } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { revalidateBlogPages } from '@/lib/content/revalidate';
 import { sanitizeRichContent } from '@/lib/security/sanitize';
 
 // GET /api/admin/blog - List all blog posts
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
     }
 
     await logAudit({ userId: session.user.id, action: 'create', entityType: 'blog', entityId: postId, newValue: title });
+    revalidateBlogPages();
 
     return NextResponse.json(
       { message: 'สร้างบทความสำเร็จ', postId },
