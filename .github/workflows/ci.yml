@@ -41,6 +41,18 @@ jobs:
       - name: Run TypeScript type check
         run: npx tsc --noEmit
 
+      - name: Check schema.ts matches the migration history
+        run: |
+          npx drizzle-kit generate
+          if [ -n "$(git status --porcelain -- drizzle)" ]; then
+            echo "schema.ts changed without a migration. Run npm run db:generate and commit the result."
+            git status --porcelain -- drizzle
+            exit 1
+          fi
+        env:
+          # drizzle-kit only reads the schema here; it never connects to this URL.
+          DATABASE_URL: mysql://user:pass@localhost:3306/db
+
   build:
     name: Build
     runs-on: ubuntu-latest
