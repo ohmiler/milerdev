@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
-import { enrollments, lessonProgress } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { enrollments, lessonProgress, lessons } from '@/lib/db/schema';
+import { and, eq, inArray } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
@@ -101,13 +101,21 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'ไม่พบการลงทะเบียน' }, { status: 404 });
     }
 
-    // Delete related lesson progress
-    await db
-      .delete(lessonProgress)
-      .where(eq(lessonProgress.userId, existingEnrollment.userId));
-
-    // Delete enrollment
-    await db.delete(enrollments).where(eq(enrollments.id, id));
+    // Remove the enrollment and the member's progress in this course only, together or not at all.
+    // Progress is keyed by user and lesson, so it has to be scoped through the course's lessons;
+    // filtering by user alone would erase the member's progress in every other course.
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(lessonProgress)
+        .where(and(
+          eq(lessonProgress.userId, existingEnrollment.userId),
+          inArray(
+            lessonProgress.lessonId,
+            tx.select({ id: lessons.id }).from(lessons).where(eq(lessons.courseId, existingEnrollment.courseId)),
+          ),
+        ));
+      await tx.delete(enrollments).where(eq(enrollments.id, id));
+    });
 
     await logAudit({ userId: session.user.id, action: 'delete', entityType: 'enrollment', entityId: id, oldValue: `user: ${existingEnrollment.userId}, course: ${existingEnrollment.courseId}` });
 
