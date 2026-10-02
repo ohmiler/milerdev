@@ -41,7 +41,7 @@
 
 ## What changes in AGENTS.md
 
-- ยกเลิกหัวข้อ "Merging into master" (agent merge เองได้) ที่เป็นร่างค้างในเครื่อง เพราะระบบสิทธิ์ของ Claude Code บล็อกการ merge ที่ deploy production และ repo ผูกกับ production; เปลี่ยนเป็น "agent เตรียม เจ้าของ merge"
+- แทนที่หัวข้อ "Merging into master" (agent merge เองได้ทุกชนิดที่ไม่เปลี่ยนพฤติกรรม) ด้วยนโยบายสามระดับ: A เอกสาร/เทสต์อย่างเดียว agent merge เองได้เมื่อพร้อมตามเงื่อนไข; B โค้ดนอกจุดเสี่ยงสูง เจ้าของพิมพ์ "merge" รายตัว; C จุดเสี่ยงสูงและ CI gate เจ้าของ merge ระดับ A เปิดใช้ได้ต่อเมื่อ Railway รอ CI ก่อน deploy, มี alert, และโหมดสิทธิ์ของเครื่องอนุญาต (ระบบสิทธิ์ของ Claude Code ตัดสินแยกจาก AGENTS.md และอาจบล็อก)
 - แก้คำอธิบาย migration: รันเป็น pre-deploy command ไม่ใช่ตอน start
 - เพิ่ม: Production facts, Migrations (expand/contract), Testing (MySQL จริง, ป้าย KNOWN DEFECT, ตรวจว่า guard ทำงานจริงโดยถอดแล้วเทสต์ล้ม), Releasing, กติกา logging (`logError` + label), route-policy test
 - เพิ่ม: PR ซ้อนกันไม่มี CI, อัปเดต branch ด้วยการ merge ไม่ rebase, ใช้การเฝ้า CI ของแอปแทนการ poll
