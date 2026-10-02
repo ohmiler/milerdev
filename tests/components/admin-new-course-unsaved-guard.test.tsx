@@ -151,6 +151,8 @@ describe('new course form unsaved changes guard', () => {
 
     await waitFor(() => expect(router.push).toHaveBeenCalledWith('/admin/courses'));
     expect(screen.queryByText('ออกจากหน้านี้โดยไม่บันทึก')).toBeNull();
-    expect(leaveEvent().defaultPrevented).toBe(false);
+    // The guard is removed by an effect after the re-render that follows the save, which can land
+    // just after router.push is called, so wait for it instead of asserting at once.
+    await waitFor(() => expect(leaveEvent().defaultPrevented).toBe(false));
   });
 });
