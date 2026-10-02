@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { lessons } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
+import { logError } from '@/lib/error-handler';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -44,7 +45,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       newOrder: lessonIds.map((id: string, i: number) => ({ id, orderIndex: (i + 1) * 100 }))
     });
   } catch (error) {
-    console.error('Error reordering lessons:', error);
+    logError(error, { action: 'admin.courses.id.lessons.reorder.reorder_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

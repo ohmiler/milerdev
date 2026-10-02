@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { affiliateBanners } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { logError } from '@/lib/error-handler';
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -34,7 +35,7 @@ export async function PUT(request: Request, { params }: Props) {
 
         return NextResponse.json({ message: 'อัพเดท Banner สำเร็จ' });
     } catch (error) {
-        console.error('Error updating affiliate banner:', error);
+        logError(error, { action: 'admin.affiliate_banners.id.update_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
@@ -55,7 +56,7 @@ export async function DELETE(_request: Request, { params }: Props) {
 
         return NextResponse.json({ message: 'ลบ Banner สำเร็จ' });
     } catch (error) {
-        console.error('Error deleting affiliate banner:', error);
+        logError(error, { action: 'admin.affiliate_banners.id.delete_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }

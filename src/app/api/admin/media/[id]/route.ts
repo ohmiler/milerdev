@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ media: mediaFile });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching media:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.media.id.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -65,7 +65,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบไฟล์สำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting media:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.media.id.delete_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการลบไฟล์' },
       { status: 500 }

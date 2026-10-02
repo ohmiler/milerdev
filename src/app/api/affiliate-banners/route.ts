@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { affiliateBanners } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
+import { logError } from '@/lib/error-handler';
 
 // GET /api/affiliate-banners - Get active banners (public)
 export async function GET() {
@@ -19,7 +20,7 @@ export async function GET() {
 
         return NextResponse.json({ banners });
     } catch (error) {
-        console.error('Error fetching active banners:', error);
+        logError(error, { action: 'affiliate_banners.fetch_failed' });
         return NextResponse.json({ banners: [] });
     }
 }

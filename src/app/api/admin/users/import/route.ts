@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       results,
     });
   } catch {
-    logError(new Error('User import failed'), { action: 'Error importing users:' });
+    logError(new Error('User import failed'), { action: 'admin.users.import.handler_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล' },
       { status: 500 }

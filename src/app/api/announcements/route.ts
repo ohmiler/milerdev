@@ -42,7 +42,7 @@ export async function GET() {
 
     return NextResponse.json({ announcements: activeAnnouncements });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching announcements:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'announcements.fetch_failed' });
     return NextResponse.json({ error: 'โหลดประกาศไม่สำเร็จ' }, { status: 500 });
   }
 }

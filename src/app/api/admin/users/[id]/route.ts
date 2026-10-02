@@ -66,7 +66,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.users.id.fetch_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -101,7 +101,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
   } catch (error) {
     const lifecycleResponse = lifecycleErrorResponse(error);
     if (lifecycleResponse) return lifecycleResponse;
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating user:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.users.id.update_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }
@@ -140,7 +140,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   } catch (error) {
     const lifecycleResponse = lifecycleErrorResponse(error);
     if (lifecycleResponse) return lifecycleResponse;
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error changing user lifecycle:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.users.id.patch_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }
@@ -167,7 +167,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   } catch (error) {
     const lifecycleResponse = lifecycleErrorResponse(error);
     if (lifecycleResponse) return lifecycleResponse;
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deactivating user:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.users.id.deactivate_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }

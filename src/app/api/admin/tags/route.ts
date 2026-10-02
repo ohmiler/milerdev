@@ -28,7 +28,7 @@ export async function GET() {
 
     return NextResponse.json({ tags: tagList });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching tags:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.tags.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       tag: { id: tagId, name: name.trim(), slug },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating tag:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.tags.create_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการสร้างแท็ก' },
       { status: 500 }

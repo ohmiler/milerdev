@@ -5,6 +5,7 @@ import { courses, users, lessons, courseTags, tags } from "@/lib/db/schema";
 import { eq, desc, asc, and, count, like, gt, sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
+import { logError } from '@/lib/error-handler';
 
 // GET /api/courses - Get all published courses with filters and pagination
 export async function GET(request: Request) {
@@ -173,7 +174,7 @@ export async function GET(request: Request) {
             },
         });
     } catch (error) {
-        console.error("Error fetching courses:", error);
+        logError(error, { action: 'courses.fetch_failed' });
         return NextResponse.json(
             { error: "Failed to fetch courses" },
             { status: 500 }
@@ -227,7 +228,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json(newCourse, { status: 201 });
     } catch (error) {
-        console.error("Error creating course:", error);
+        logError(error, { action: 'courses.create_failed' });
         return NextResponse.json(
             { error: "Failed to create course" },
             { status: 500 }

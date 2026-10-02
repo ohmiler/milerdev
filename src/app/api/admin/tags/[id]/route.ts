@@ -56,7 +56,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทแท็กสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating tag:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.tags.id.update_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการอัพเดทแท็ก' },
       { status: 500 }
@@ -95,7 +95,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบแท็กสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting tag:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.tags.id.delete_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการลบแท็ก' },
       { status: 500 }

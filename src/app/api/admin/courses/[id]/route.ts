@@ -84,7 +84,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ course, tags: courseTagRows, instructorOptions });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching course:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.courses.id.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -192,7 +192,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทคอร์สสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating course:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.courses.id.update_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }
@@ -227,7 +227,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   } catch (error) {
     const lifecycleResponse = lifecycleErrorResponse(error);
     if (lifecycleResponse) return lifecycleResponse;
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error changing course lifecycle:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.courses.id.patch_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }
@@ -250,7 +250,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
   } catch (error) {
     const lifecycleResponse = lifecycleErrorResponse(error);
     if (lifecycleResponse) return lifecycleResponse;
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error archiving course:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.courses.id.archive_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }

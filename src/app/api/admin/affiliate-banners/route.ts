@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { affiliateBanners } from '@/lib/db/schema';
 import { desc, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logError } from '@/lib/error-handler';
 
 // GET /api/admin/affiliate-banners - Get all banners
 export async function GET() {
@@ -20,7 +21,7 @@ export async function GET() {
 
         return NextResponse.json({ banners });
     } catch (error) {
-        console.error('Error fetching affiliate banners:', error);
+        logError(error, { action: 'admin.affiliate_banners.fetch_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ id, message: 'สร้าง Banner สำเร็จ' });
     } catch (error) {
-        console.error('Error creating affiliate banner:', error);
+        logError(error, { action: 'admin.affiliate_banners.create_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }

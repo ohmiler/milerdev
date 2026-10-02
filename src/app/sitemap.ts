@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { courses, bundles, blogPosts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { absoluteUrl, SITE_URL } from '@/lib/content/seo';
+import { logError } from '@/lib/error-handler';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
   } catch (error) {
-    console.error('[sitemap] Failed to fetch published courses', error);
+    logError(error, { action: 'sitemap.courses_failed' });
   }
 
   try {
@@ -43,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
   } catch (error) {
-    console.error('[sitemap] Failed to fetch published bundles', error);
+    logError(error, { action: 'sitemap.bundles_failed' });
   }
 
   try {
@@ -55,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
   } catch (error) {
-    console.error('[sitemap] Failed to fetch published blog posts', error);
+    logError(error, { action: 'sitemap.blog_failed' });
   }
 
   return [...staticPages, ...coursePages, ...bundlePages, ...blogPostPages];
