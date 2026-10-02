@@ -99,7 +99,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching reviews:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'courses.slug.reviews.fetch_failed' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -189,7 +189,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ review: newReview }, { status: 201 });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating review:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'courses.slug.reviews.create_failed' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

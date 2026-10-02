@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/security/rate-limit';
 import { sendContactNotification } from '@/lib/notifications/email';
+import { logError } from '@/lib/error-handler';
 
 const contactSchema = z.object({
     name: z.string().min(2, 'กรุณากรอกชื่อ').max(100),
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error('Contact form error:', error);
+        logError(error, { action: 'contact.handler_failed' });
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
             { status: 500 }

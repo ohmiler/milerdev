@@ -102,7 +102,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching audit logs:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.audit_logs.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }

@@ -17,7 +17,7 @@ export async function GET() {
 
     return NextResponse.json({ tags: tagList });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching tags:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'tags.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }

@@ -5,6 +5,7 @@ import { uploadToBunny } from "@/lib/bunny/storage";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { checkRateLimit, rateLimitResponse } from '@/lib/security/rate-limit';
+import { logError } from '@/lib/error-handler';
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
             mediaId,
         });
     } catch (error) {
-        console.error("[Upload] Error:", error);
+        logError(error, { action: 'upload.fetch_failed' });
         return NextResponse.json(
             { error: "เกิดข้อผิดพลาด กรุณาลองใหม่" },
             { status: 500 }

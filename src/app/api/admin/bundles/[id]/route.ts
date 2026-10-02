@@ -8,6 +8,7 @@ import { revalidateBundleCatalog } from '@/lib/content/revalidate';
 import { getAuditContext } from '@/lib/auditLog';
 import { BundleMutationError, updateBundleWithIntegrity } from '@/lib/commerce/bundle-mutation';
 import { adminBundleMutationSchema } from '@/lib/validations/bundle';
+import { logError } from '@/lib/error-handler';
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -45,7 +46,7 @@ export async function GET(_request: Request, { params }: Props) {
 
         return NextResponse.json({ bundle: { ...bundle, courses: bCourses } });
     } catch (error) {
-        console.error('Error fetching bundle:', error);
+        logError(error, { action: 'admin.bundles.id.fetch_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
@@ -96,7 +97,7 @@ export async function PUT(request: Request, { params }: Props) {
                 blockingCourseIds: error.blockingCourseIds,
             }, { status: error.status });
         }
-        console.error('Error updating bundle:', error);
+        logError(error, { action: 'admin.bundles.id.update_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
@@ -119,7 +120,7 @@ export async function DELETE(_request: Request, { params }: Props) {
 
         return NextResponse.json({ message: 'ลบ Bundle สำเร็จ' });
     } catch (error) {
-        console.error('Error deleting bundle:', error);
+        logError(error, { action: 'admin.bundles.id.delete_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }

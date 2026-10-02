@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { requirePublishedBundleCourses } from '@/lib/commerce/bundle-commerce';
+import { logError } from '@/lib/error-handler';
 
 // GET /api/bundles - List published bundles
 export async function GET() {
@@ -58,7 +59,7 @@ export async function GET() {
 
         return NextResponse.json({ bundles: bundlesWithCourses.filter(Boolean) });
     } catch (error) {
-        console.error('Error fetching bundles:', error);
+        logError(error, { action: 'bundles.fetch_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }

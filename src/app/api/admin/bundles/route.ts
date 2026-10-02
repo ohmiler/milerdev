@@ -8,6 +8,7 @@ import { getAuditContext } from '@/lib/auditLog';
 import { revalidateBundleCatalog } from '@/lib/content/revalidate';
 import { BundleMutationError, createBundleWithIntegrity } from '@/lib/commerce/bundle-mutation';
 import { adminBundleMutationSchema } from '@/lib/validations/bundle';
+import { logError } from '@/lib/error-handler';
 
 // GET /api/admin/bundles - List all bundles with their courses
 export async function GET() {
@@ -59,7 +60,7 @@ export async function GET() {
 
         return NextResponse.json({ bundles: bundlesWithCourses });
     } catch (error) {
-        console.error('Error fetching bundles:', error);
+        logError(error, { action: 'admin.bundles.fetch_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
                 blockingCourseIds: error.blockingCourseIds,
             }, { status: error.status });
         }
-        console.error('Error creating bundle:', error);
+        logError(error, { action: 'admin.bundles.create_failed' });
         return NextResponse.json(
             { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
             { status: 500 }

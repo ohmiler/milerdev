@@ -127,7 +127,7 @@ export async function POST(request: Request) {
       description: coupon.description,
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error validating coupon:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'coupons.validate.validate_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

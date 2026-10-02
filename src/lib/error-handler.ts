@@ -78,7 +78,8 @@ export const errors = {
 };
 
 // Log error (can be extended to send to Sentry)
-export function logError(error: Error, context?: ErrorContext): void {
+export function logError(rawError: unknown, context?: ErrorContext): void {
+    const error = rawError instanceof Error ? rawError : new Error(String(rawError));
     const productionErrorInfo = {
         timestamp: new Date().toISOString(),
         level: 'error',

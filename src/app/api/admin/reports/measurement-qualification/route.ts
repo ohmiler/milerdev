@@ -15,7 +15,7 @@ export async function GET() {
     });
   } catch (error) {
     logError(error instanceof Error ? error : new Error('Measurement qualification failed'), {
-      action: 'measurement_qualification_report',
+      action: 'admin.reports.measurement_qualification.measurement_qualification_report_failed',
     });
     return NextResponse.json(
       { error: 'Unable to build measurement qualification report' },

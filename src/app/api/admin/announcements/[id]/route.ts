@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ announcement });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching announcement:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.announcements.id.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -79,7 +79,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทประกาศสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating announcement:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.announcements.id.update_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการอัพเดท' },
       { status: 500 }
@@ -122,7 +122,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบประกาศสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting announcement:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.announcements.id.delete_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการลบ' },
       { status: 500 }

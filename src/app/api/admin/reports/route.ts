@@ -203,7 +203,7 @@ export async function GET(request: Request) {
       paymentMethods,
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching reports:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.reports.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' },
       { status: 500 }

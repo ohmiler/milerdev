@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -25,6 +25,66 @@ describe('backend production logging contract', () => {
         expect(webhook).not.toMatch(/console\.(?:log|warn|error)\([^\n]*(?:event\.id|payment\.id|paymentId)/);
         expect(bunny).not.toContain('response.text()');
         expect(bunny).not.toContain('errorText');
+    });
+});
+
+function sourceFiles(dir: string): string[] {
+    return readdirSync(resolve(process.cwd(), dir), { recursive: true, withFileTypes: true })
+        .filter((entry) => entry.isFile() && /\.tsx?$/.test(entry.name))
+        .map((entry) => `${entry.parentPath}/${entry.name}`.replace(/\\/g, '/'));
+}
+
+/**
+ * Money, enrollment and reconciliation routes still to be converted (separate PR, kept apart
+ * because these are high-risk areas). Remove entries as they are converted; do not add new ones.
+ */
+const ROUTES_STILL_TO_CONVERT: string[] = [
+    '/admin/certificates/route.ts',
+    '/admin/certificates/[id]/route.ts',
+    '/admin/enrollments/import/route.ts',
+    '/admin/enrollments/route.ts',
+    '/admin/enrollments/[id]/route.ts',
+    '/admin/payments/route.ts',
+    '/admin/payments/[id]/route.ts',
+    '/admin/reconciliation/route.ts',
+    '/admin/reconciliation/[paymentId]/retry/route.ts',
+    '/admin/reconciliation/[paymentId]/route.ts',
+    '/admin/users/[id]/enrollments/route.ts',
+    '/bundles/enroll/route.ts',
+    '/enroll/route.ts',
+    '/enrollments/check/route.ts',
+    '/enrollments/route.ts',
+    '/progress/route.ts',
+    '/promptpay/intents/route.ts',
+    '/stripe/bundle-checkout/route.ts',
+    '/stripe/checkout/route.ts',
+];
+
+describe('server error logging contract', () => {
+    const files = [...sourceFiles('src/app/api'), resolve(process.cwd(), 'src/app/sitemap.ts').replace(/\\/g, '/')]
+        .filter((file) => !ROUTES_STILL_TO_CONVERT.some((skip) => file.endsWith(skip)));
+
+    it('never passes a raw error object to console.error in routes', () => {
+        const offenders = files.filter((file) =>
+            /console\.error\([^)]*\b(?:error|err)\s*\)/.test(readFileSync(file, 'utf8')),
+        );
+
+        expect(offenders).toEqual([]);
+    });
+
+    it('gives every logError a stable dot-style label of at most 100 characters', () => {
+        const bad: string[] = [];
+        for (const file of files) {
+            const text = readFileSync(file, 'utf8');
+            for (const match of text.matchAll(/logError\([^;]*?\{\s*action:\s*(['"])([^'"]*)\1/g)) {
+                const label = match[2];
+                if (!/^[a-z0-9_]+(\.[a-z0-9_]+)+$/.test(label) || label.length > 100) {
+                    bad.push(`${file}: ${label}`);
+                }
+            }
+        }
+
+        expect(bad).toEqual([]);
     });
 });
 

@@ -105,7 +105,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching reviews:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.reviews.fetch_failed' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -165,7 +165,7 @@ export async function POST(request: Request) {
       errors: errors.slice(0, 10),
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error importing reviews:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.reviews.handler_failed' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

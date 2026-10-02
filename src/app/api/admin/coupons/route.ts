@@ -38,7 +38,7 @@ export async function GET() {
 
     return NextResponse.json({ coupons: allCoupons });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching coupons:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.coupons.fetch_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'สร้างคูปองสำเร็จ', couponId: id }, { status: 201 });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating coupon:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.coupons.create_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

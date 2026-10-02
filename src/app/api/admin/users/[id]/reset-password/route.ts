@@ -69,7 +69,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     return NextResponse.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
   } catch (error) {
     if (error instanceof PasswordSecurityError) return NextResponse.json({ error: error.message }, { status: error.status });
-    logError(new Error('Password reset failed'), { action: 'Error resetting password:' });
+    logError(new Error('Password reset failed'), { action: 'admin.users.id.reset_password.handler_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }
