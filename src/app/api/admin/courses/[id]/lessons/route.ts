@@ -5,6 +5,7 @@ import { lessons } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 import { sanitizeRichContent } from '@/lib/security/sanitize';
 
 interface RouteParams {
@@ -80,6 +81,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
 
     await logAudit({ userId: session.user.id, action: 'create', entityType: 'lesson', entityId: lessonId, newValue: title });
+    await revalidateCoursePagesById(courseId);
 
     return NextResponse.json(
       { message: 'สร้างบทเรียนสำเร็จ', lessonId },
