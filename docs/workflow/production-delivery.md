@@ -1,6 +1,6 @@
 # Production delivery standard
 
-วันที่: 2026-10-02. สถานะ: ข้อเสนอ ยังไม่ได้ตกลง ใช้ประกอบ [AGENTS.proposed.md](../agents/AGENTS.proposed.md)
+วันที่: 2026-10-02. กติกาที่ตกลงแล้วอยู่ใน [AGENTS.md](../../AGENTS.md); ไฟล์นี้บันทึกช่องว่างที่ยังเหลือและ release runbook
 
 เทียบ workflow ของ MilerDev กับแนวปฏิบัติที่ใช้กันทั่วไปสำหรับเว็บ production ขนาดทีมเล็ก
 (แนวคิดจาก [DORA](https://dora.dev/capabilities/continuous-delivery/): trunk-based development, ชุด test อัตโนมัติ, deploy ที่ย้อนกลับได้, เฝ้าดูหลัง deploy)
@@ -39,13 +39,11 @@
 
 ถ้าผิดปกติ: revert PR ผ่าน PR ใหม่ (เร็วที่สุด) ถ้ามี migration แล้ว **ห้ามคาดว่าย้อนได้** ใช้ migration ถัดไปแก้ไปข้างหน้า ถ้าเกี่ยวกับเงินหรือสิทธิ์เรียน แจ้งผู้ได้รับผลกระทบและตรวจ `payments`/`enrollments` เทียบกัน
 
-## What changes in AGENTS.md
+## Merge authority
 
-- แทนที่หัวข้อ "Merging into master" (agent merge เองได้ทุกชนิดที่ไม่เปลี่ยนพฤติกรรม) ด้วยนโยบายสามระดับ: A เอกสาร/เทสต์อย่างเดียว agent merge เองได้เมื่อพร้อมตามเงื่อนไข; B โค้ดนอกจุดเสี่ยงสูง เจ้าของพิมพ์ "merge" รายตัว; C จุดเสี่ยงสูงและ CI gate เจ้าของ merge ระดับ A เปิดใช้ได้ต่อเมื่อ Railway รอ CI ก่อน deploy, มี alert, และโหมดสิทธิ์ของเครื่องอนุญาต (ระบบสิทธิ์ของ Claude Code ตัดสินแยกจาก AGENTS.md และอาจบล็อก)
-- แก้คำอธิบาย migration: รันเป็น pre-deploy command ไม่ใช่ตอน start
-- เพิ่ม: Production facts, Migrations (expand/contract), Testing (MySQL จริง, ป้าย KNOWN DEFECT, ตรวจว่า guard ทำงานจริงโดยถอดแล้วเทสต์ล้ม), Releasing, กติกา logging (`logError` + label), route-policy test
-- เพิ่ม: PR ซ้อนกันไม่มี CI, อัปเดต branch ด้วยการ merge ไม่ rebase, ใช้การเฝ้า CI ของแอปแทนการ poll
-- คงไว้: กฎความลับและข้อมูล, ขอบเขตการลบไฟล์, ข้อห้าม force-push/ข้าม branch protection, บล็อก `nextjs-agent-rules`
+AGENTS.md ใช้นโยบายสามระดับ: A เอกสาร/เทสต์อย่างเดียว agent merge เองได้; B โค้ดนอกจุดเสี่ยงสูง เจ้าของพิมพ์ "merge" รายตัว; C จุดเสี่ยงสูงและ CI gate เจ้าของ merge
+ระดับ A มีผลต่อเมื่อ Railway รอ CI ก่อน deploy, มี alert และโหมดสิทธิ์ของเครื่องอนุญาต ถ้ายังไม่ครบ agent ถือเป็นระดับ B
+ดังนั้นข้อ 1 และ 3 ด้านล่างคือสิ่งที่ปลดล็อกระดับ A
 
 ## ลำดับที่แนะนำให้เจ้าของลงมือ
 

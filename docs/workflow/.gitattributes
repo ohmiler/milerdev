@@ -1,3 +1,0 @@
-# Keep the exact specification/artifact bytes stable across Windows and Linux.
-ai-development.json text eol=lf
-ai-development.html text eol=lf
