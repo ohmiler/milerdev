@@ -129,7 +129,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error exporting users:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.users.export.export_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการส่งออกข้อมูล' },
       { status: 500 }

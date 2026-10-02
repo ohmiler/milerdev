@@ -39,7 +39,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ post, tags: postTags });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching blog post:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.blog.id.fetch_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -113,7 +113,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทบทความสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating blog post:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.blog.id.update_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }
@@ -148,7 +148,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทสถานะสำเร็จ', status });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error toggling blog status:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.blog.id.handler_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -180,7 +180,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบบทความสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting blog post:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.blog.id.delete_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' }, { status: 500 });
   }
 }

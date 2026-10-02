@@ -78,7 +78,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const lifecycleResponse = lifecycleErrorResponse(error);
     if (lifecycleResponse) return lifecycleResponse;
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error in bulk user operation:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.users.bulk.handler_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการดำเนินการ' }, { status: 500 });
   }
 }

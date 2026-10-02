@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ coupon });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching coupon:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.coupons.id.fetch_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -62,7 +62,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทคูปองสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating coupon:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.coupons.id.update_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -82,7 +82,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบคูปองสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting coupon:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.coupons.id.delete_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

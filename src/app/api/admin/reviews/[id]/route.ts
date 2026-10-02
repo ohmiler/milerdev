@@ -44,7 +44,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัปเดตรีวิวสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating review:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.reviews.id.update_failed' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -75,7 +75,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบรีวิวสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting review:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.reviews.id.delete_failed' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -75,7 +75,7 @@ export async function GET(request: Request) {
       unreadCount,
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching notifications:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'notifications.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -120,7 +120,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ message: 'อ่านการแจ้งเตือนแล้ว' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error marking notifications:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'notifications.notify_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -173,7 +173,7 @@ export async function DELETE(request: Request) {
       deletedCount,
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting notifications:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'notifications.delete_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }

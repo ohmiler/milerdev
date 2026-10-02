@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
 import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 import { sanitizeRichContent } from '@/lib/security/sanitize';
+import { logError } from '@/lib/error-handler';
 
 interface RouteParams {
   params: Promise<{ lessonId: string }>;
@@ -33,7 +34,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ lesson });
   } catch (error) {
-    console.error('Error fetching lesson:', error);
+    logError(error, { action: 'admin.lessons.lesson_id.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -86,7 +87,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทบทเรียนสำเร็จ' });
   } catch (error) {
-    console.error('Error updating lesson:', error);
+    logError(error, { action: 'admin.lessons.lesson_id.update_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }
@@ -123,7 +124,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบบทเรียนสำเร็จ' });
   } catch (error) {
-    console.error('Error deleting lesson:', error);
+    logError(error, { action: 'admin.lessons.lesson_id.delete_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

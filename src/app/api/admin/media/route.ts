@@ -71,7 +71,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching media:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.media.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error uploading media:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.media.create_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการอัพโหลด' },
       { status: 500 }

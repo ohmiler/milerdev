@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching notifications:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.notifications.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
       sentCount: targetUsers.length,
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error sending notifications:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.notifications.notify_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการส่งการแจ้งเตือน' },
       { status: 500 }

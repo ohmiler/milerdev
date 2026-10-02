@@ -7,6 +7,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
 import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 import { sanitizeRichContent } from '@/lib/security/sanitize';
+import { logError } from '@/lib/error-handler';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -30,7 +31,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ lessons: courseLessons });
   } catch (error) {
-    console.error('Error fetching lessons:', error);
+    logError(error, { action: 'admin.courses.id.lessons.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -88,7 +89,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating lesson:', error);
+    logError(error, { action: 'admin.courses.id.lessons.create_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

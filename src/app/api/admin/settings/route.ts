@@ -94,7 +94,7 @@ export async function GET() {
     return NextResponse.json({ settings: mergedSettings, grouped, analyticsControl });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), {
-      action: 'Error fetching settings:',
+      action: 'admin.settings.fetch_failed',
     });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
@@ -196,7 +196,7 @@ export async function PUT(request: Request) {
   } catch (error) {
     if (error instanceof AnalyticsControlError) return analyticsControlErrorResponse(error);
     logError(error instanceof Error ? error : new Error(String(error)), {
-      action: 'Error updating setting:',
+      action: 'admin.settings.update_failed',
     });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการบันทึก' }, { status: 500 });
   }

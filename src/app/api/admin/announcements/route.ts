@@ -81,7 +81,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching announcements:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.announcements.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         message: content?.slice(0, 100) || undefined,
         type: (type as 'info' | 'success' | 'warning' | 'error') || 'info',
         link: '/announcements',
-      }).catch(err => console.error('Failed to send announcement notifications:', err));
+      }).catch(err => logError(err, { action: 'admin.announcements.notify_failed' }));
     }
 
     return NextResponse.json({
@@ -139,7 +139,7 @@ export async function POST(request: Request) {
       announcement: { id: announcementId },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating announcement:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.announcements.create_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการสร้างประกาศ' },
       { status: 500 }
