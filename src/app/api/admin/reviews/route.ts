@@ -63,6 +63,8 @@ export async function GET(request: Request) {
           userName: users.name,
           userEmail: users.email,
           courseTitle: courses.title,
+          courseSlug: courses.slug,
+          courseStatus: courses.status,
         })
         .from(reviews)
         .leftJoin(users, eq(reviews.userId, users.id))

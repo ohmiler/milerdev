@@ -279,12 +279,14 @@ export default function AdminBundlesPage() {
                     </div>
 
                     <div className="flex shrink-0 flex-wrap gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={'/bundles/' + bundle.slug} target="_blank">
-                          <ExternalLink aria-hidden />
-                          ดูหน้าขาย
-                        </Link>
-                      </Button>
+                      {bundle.status === 'published' ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={'/bundles/' + bundle.slug} target="_blank">
+                            <ExternalLink aria-hidden />
+                            ดูหน้าขาย
+                          </Link>
+                        </Button>
+                      ) : null}
                       <Button variant="outline" size="sm" onClick={() => handleEdit(bundle)}>
                         แก้ไข
                       </Button>
