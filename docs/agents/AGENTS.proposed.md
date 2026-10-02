@@ -56,18 +56,18 @@ Run the narrowest meaningful check for each logical change; run affected tests, 
 - Never hardcode or log credentials, tokens, webhook secrets, database URLs, private URLs, customer data, payment payloads, or slip contents.
 - Keep server secrets out of client components and browser code.
 - Do not access or mutate production data unless the owner authorizes the exact operation.
-- Local database credentials stay owner-controlled. Never request, print, or store them. For real-database tests use the dedicated `e2e_test` user and `milerdev_e2e` database (below).
+- Local database credentials stay owner-controlled. Never request, print, or store them. For real-database tests use only the dedicated loopback `milerdev_e2e` database and the passwordless test user the owner created for it (named `e2e_test` on the owner's machine); if it is missing, ask the owner to create it instead of asking for credentials (see Testing).
 
 ## Implementation safety
 
 - Preserve TypeScript strictness and the edited file's style. Prefer `@/*` imports.
-- Server components by default; `'use client'` only for browser behavior. Components must not import server-only modules (enforced by ESLint).
+- Server components by default; `'use client'` only for browser behavior. Components must not import the server-only modules listed in `eslint.config.mjs` (`@/lib/db`, `@/lib/auth`, Stripe, Bunny stream, email), and `src/lib` must not import `@/app` or `@/components`; ESLint enforces both.
 - Use `auth()` from `@/lib/auth` for server session checks. Client role checks are UX only. Every `route.ts` must be classified in `tests/api/route-policy.test.ts`; admin routes use `requireAdmin()`.
 - Validate sensitive request bodies with Zod.
 - Preserve authorization, validation, idempotency, replay protection, and recovery behavior. Never grant enrollment before verified payment or explicit admin intent.
 - Use Drizzle query builders and schema exports. MySQL has no `.returning()`.
 - Treat decimal amounts as strings at database boundaries; keep commerce in THB unless a flow explicitly supports otherwise.
-- Log server errors only through `logError(error, { action: '<area>.<name>_failed' })` (lowercase dot labels). Never pass a raw error object to `console.error`; the contract test enforces this.
+- Log server errors only through `logError(error, { action: '<area>.<name>_failed' })` (lowercase dot labels). Never pass a raw error object to `console.error` in routes; `tests/lib/backend-log-ci-contract.test.ts` enforces this for `src/app/api` and `sitemap.ts`.
 - Preserve Thai copy as UTF-8 and check for mojibake.
 - Mock Stripe, SlipOK, Bunny, Google, SMTP, and Resend in tests.
 
@@ -103,7 +103,7 @@ The agent is authorized, without further confirmation, on a non-`master` branch 
 
 - `Build` is the final gate and must keep `needs` on lint, tests, and required E2E (`tests/lib/backend-log-ci-contract.test.ts` enforces this). Do not remove, rename, or skip jobs without the owner updating branch protection first. Speed the E2E up; do not cut it.
 - Branch protection requires the branch to be up to date, so after any merge to `master` every other open PR needs a fresh update and a new CI run.
-- Do not poll CI by hand. Use the app's PR/CI monitoring, then report the state.
+- Do not poll CI in a loop. Use the app's PR/CI monitoring where available; otherwise check the state once when the owner says CI finished, then report it.
 - "Ready to merge" means: required checks pass on the latest commit, the PR is mergeable and up to date, and the body states verification gaps and production risk.
 
 ## Releasing
