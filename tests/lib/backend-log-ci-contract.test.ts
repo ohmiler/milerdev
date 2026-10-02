@@ -38,27 +38,7 @@ function sourceFiles(dir: string): string[] {
  * Money, enrollment and reconciliation routes still to be converted (separate PR, kept apart
  * because these are high-risk areas). Remove entries as they are converted; do not add new ones.
  */
-const ROUTES_STILL_TO_CONVERT: string[] = [
-    '/admin/certificates/route.ts',
-    '/admin/certificates/[id]/route.ts',
-    '/admin/enrollments/import/route.ts',
-    '/admin/enrollments/route.ts',
-    '/admin/enrollments/[id]/route.ts',
-    '/admin/payments/route.ts',
-    '/admin/payments/[id]/route.ts',
-    '/admin/reconciliation/route.ts',
-    '/admin/reconciliation/[paymentId]/retry/route.ts',
-    '/admin/reconciliation/[paymentId]/route.ts',
-    '/admin/users/[id]/enrollments/route.ts',
-    '/bundles/enroll/route.ts',
-    '/enroll/route.ts',
-    '/enrollments/check/route.ts',
-    '/enrollments/route.ts',
-    '/progress/route.ts',
-    '/promptpay/intents/route.ts',
-    '/stripe/bundle-checkout/route.ts',
-    '/stripe/checkout/route.ts',
-];
+const ROUTES_STILL_TO_CONVERT: string[] = [];
 
 describe('server error logging contract', () => {
     const files = [...sourceFiles('src/app/api'), resolve(process.cwd(), 'src/app/sitemap.ts').replace(/\\/g, '/')]

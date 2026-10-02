@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { MAX_RECONCILIATION_RETRIES } from '@/lib/commerce/reconciliation';
 import { db } from '@/lib/db';
 import { auditLogs, bundleCourses, enrollments, payments, users } from '@/lib/db/schema';
+import { logError } from '@/lib/error-handler';
 
 const HISTORY_LIMIT = 10;
 
@@ -100,7 +101,7 @@ export async function GET(
             },
         });
     } catch (error) {
-        console.error('Error reading reconciliation case:', error);
+        logError(error, { action: 'admin.reconciliation.payment_id.fetch_failed' });
         return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
     }
 }

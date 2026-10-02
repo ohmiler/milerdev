@@ -23,7 +23,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ certificate: cert });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching certificate:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.certificates.id.fetch_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -61,7 +61,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating certificate:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.certificates.id.update_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
@@ -78,7 +78,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await logAudit({ userId: session.user.id, action: 'delete', entityType: 'certificate', entityId: id });
     return NextResponse.json({ message: 'ลบใบรับรองสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting certificate:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.certificates.id.delete_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

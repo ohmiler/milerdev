@@ -12,6 +12,7 @@ import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/
 import { analyticsExposureIdSchema } from '@/lib/analytics/contract';
 import { logEvent } from '@/lib/error-handler';
 import { measurementRecorder } from '@/lib/analytics/measurement-recorder';
+import { logError } from '@/lib/error-handler';
 
 const stripeBundleCheckoutRequestSchema = z.object({
     bundleId: z.string().trim().min(1).max(36),
@@ -192,7 +193,7 @@ export async function POST(request: Request) {
             sessionId: checkoutSession.id,
         });
     } catch (error) {
-        console.error("Error creating bundle checkout:", error);
+        logError(error, { action: 'stripe.bundle_checkout.create_failed' });
         return NextResponse.json(
             { error: "Failed to create checkout session" },
             { status: 500 }

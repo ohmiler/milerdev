@@ -112,7 +112,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching payments:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.payments.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
