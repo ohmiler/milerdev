@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { lessons } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -17,7 +18,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await params; // validate params
+    const { id: courseId } = await params;
     const { lessonIds } = await request.json();
 
     if (!lessonIds || !Array.isArray(lessonIds)) {
@@ -36,6 +37,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     );
 
     await Promise.all(updates);
+    await revalidateCoursePagesById(courseId);
 
     return NextResponse.json({ 
       message: 'จัดลำดับบทเรียนสำเร็จ',

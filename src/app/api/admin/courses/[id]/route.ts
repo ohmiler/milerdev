@@ -1,9 +1,9 @@
-import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { getAuditContext, logAudit } from '@/lib/auditLog';
 import { requireAdmin } from '@/lib/auth/helpers';
 import { normalizeCertificateColor } from '@/lib/certificates/color';
 import { CourseLifecycleError, courseLifecycleService } from '@/lib/courses/lifecycle';
+import { revalidateCoursePages } from '@/lib/courses/revalidate';
 import { db } from '@/lib/db';
 import { courses, courseTags, tags, users } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';
@@ -13,13 +13,6 @@ import { createId } from '@paralleldrive/cuid2';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
-}
-
-function revalidateCourseLifecyclePaths(slug: string): void {
-  revalidatePath('/');
-  revalidatePath('/courses');
-  revalidatePath(`/courses/${slug}`);
-  revalidatePath('/sitemap.xml');
 }
 
 function lifecycleErrorResponse(error: unknown): NextResponse | null {
@@ -194,8 +187,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
         oldValue: existingCourse.instructorId,
         newValue: instructorId,
       });
-      revalidateCourseLifecyclePaths(slug || existingCourse.slug);
     }
+    revalidateCoursePages(existingCourse.slug, slug);
 
     return NextResponse.json({ message: 'อัพเดทคอร์สสำเร็จ' });
   } catch (error) {
@@ -229,7 +222,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       expectedStatus: parsed.data.expectedStatus,
       auditContext: await getAuditContext(),
     });
-    revalidateCourseLifecyclePaths(mutation.course.slug);
+    revalidateCoursePages(mutation.course.slug);
     return NextResponse.json({ message: 'เปลี่ยนสถานะคอร์สสำเร็จ', ...mutation });
   } catch (error) {
     const lifecycleResponse = lifecycleErrorResponse(error);
@@ -252,7 +245,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
       action: 'archive',
       auditContext: await getAuditContext(),
     });
-    revalidateCourseLifecyclePaths(mutation.course.slug);
+    revalidateCoursePages(mutation.course.slug);
     return NextResponse.json({ message: 'เก็บคอร์สเข้าคลังสำเร็จ', ...mutation });
   } catch (error) {
     const lifecycleResponse = lifecycleErrorResponse(error);

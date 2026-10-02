@@ -6,6 +6,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { desc, eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
 import { normalizeCertificateColor } from '@/lib/certificates/color';
+import { revalidateCoursePages } from '@/lib/courses/revalidate';
 import { createCourseSchema, validateBody } from '@/lib/validations/admin';
 
 // GET /api/admin/courses - List all courses
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
     }
 
     await logAudit({ userId: session.user.id, action: 'create', entityType: 'course', entityId: courseId, newValue: title });
+    revalidateCoursePages(finalSlug);
 
     return NextResponse.json(
       { message: 'สร้างคอร์สสำเร็จ', courseId },
