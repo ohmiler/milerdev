@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle2, RefreshCw, ShieldAlert, XCircle } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AdminEmptyState,
@@ -62,6 +62,9 @@ type ActionIntent =
   | { type: 'bulk' }
   | null;
 
+// Must match the max length of paymentIds in the bulk reconciliation API schema.
+const MAX_BULK_SELECTION = 50;
+
 const statusLabels: Record<StatusFilter, string> = {
   verifying: 'รอตรวจสอบ',
   failed: 'ล้มเหลว',
@@ -81,18 +84,24 @@ export default function ReconciliationPage() {
   const [actionIntent, setActionIntent] = useState<ActionIntent>(null);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState('');
+  // Filter whose rows are currently in `payments`; lets a failed reload keep rows only for the same filter.
+  const loadedKeyRef = useRef<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    const requestKey = `${statusFilter}:${daysBack}`;
     setLoading(true);
     setLoadError('');
+    setSelected(new Set());
     try {
       const response = await fetch(`/api/admin/reconciliation?status=${statusFilter}&days=${daysBack}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายการกระทบยอดได้');
       setPayments(data.payments || []);
       setSummary(data.summary || { verifying: 0, failed: 0, pending: 0 });
-      setSelected(new Set());
+      loadedKeyRef.current = requestKey;
     } catch (caughtError) {
+      // Rows from a different filter must not stay on screen under the new filter's label.
+      if (loadedKeyRef.current !== requestKey) setPayments([]);
       setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายการกระทบยอดได้');
     } finally {
       setLoading(false);
@@ -147,14 +156,19 @@ export default function ReconciliationPage() {
     setSelected((previous) => {
       const next = new Set(previous);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else if (next.size < MAX_BULK_SELECTION) next.add(id);
       return next;
     });
   };
 
+  const selectablePayments = payments.slice(0, MAX_BULK_SELECTION);
+  const allSelectableSelected = selectablePayments.length > 0 && selectablePayments.every((payment) => selected.has(payment.id));
   const toggleSelectAll = () => {
-    setSelected((previous) => previous.size === payments.length ? new Set() : new Set(payments.map((payment) => payment.id)));
+    setSelected(allSelectableSelected ? new Set() : new Set(selectablePayments.map((payment) => payment.id)));
   };
+  const selectionAtLimit = selected.size >= MAX_BULK_SELECTION;
+  // After a failed refresh the rows on screen may be out of date, so mutations stay off until a reload succeeds.
+  const showingStaleRows = Boolean(loadError) && payments.length > 0;
 
   const formatDate = (date: string | null) => date
     ? new Date(date).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
@@ -191,8 +205,8 @@ export default function ReconciliationPage() {
 
       <AdminSection
         title="คิวตรวจสอบ"
-        description={`ย้อนหลัง ${daysBack.toLocaleString('th-TH')} วัน · เลือกอยู่ ${selected.size.toLocaleString('th-TH')} รายการ`}
-        actions={statusFilter === 'verifying' && selected.size > 0 ? <Button variant="destructive" size="sm" onClick={() => openAction({ type: 'bulk' })}>ทำเครื่องหมายว่าล้มเหลว</Button> : undefined}
+        description={`ย้อนหลัง ${daysBack.toLocaleString('th-TH')} วัน · เลือกอยู่ ${selected.size.toLocaleString('th-TH')}/${MAX_BULK_SELECTION} รายการ`}
+        actions={statusFilter === 'verifying' && selected.size > 0 && !showingStaleRows ? <Button variant="destructive" size="sm" onClick={() => openAction({ type: 'bulk' })}>ทำเครื่องหมายว่าล้มเหลว</Button> : undefined}
       >
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <ToggleGroup
@@ -223,11 +237,22 @@ export default function ReconciliationPage() {
             <AlertDescription>{message.text}</AlertDescription>
           </Alert>
         ) : null}
-        {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchData()}>ลองใหม่</Button>} /> : null}
+        {!loading && loadError ? (
+          <AdminErrorState
+            title={showingStaleRows ? 'รีเฟรชไม่สำเร็จ ข้อมูลด้านล่างอาจไม่เป็นปัจจุบัน' : undefined}
+            description={showingStaleRows ? `${loadError} · อนุมัติและปฏิเสธถูกปิดไว้จนกว่าจะโหลดสำเร็จ` : loadError}
+            action={<Button variant="outline" onClick={() => void fetchData()}>ลองใหม่</Button>}
+          />
+        ) : null}
+        {!loading && !loadError && statusFilter === 'verifying' && payments.length > MAX_BULK_SELECTION ? (
+          <p className="text-sm text-muted-foreground">
+            แสดง {payments.length.toLocaleString('th-TH')} รายการ เลือกทำเครื่องหมายพร้อมกันได้สูงสุด {MAX_BULK_SELECTION} รายการต่อครั้ง
+          </p>
+        ) : null}
 
         {loading ? (
           <AdminLoadingState title="กำลังโหลดคิวกระทบยอด" />
-        ) : payments.length === 0 ? (
+        ) : payments.length === 0 && loadError ? null : payments.length === 0 ? (
           <AdminEmptyState icon={<ShieldAlert aria-hidden />} title={`ไม่พบรายการ${statusLabels[statusFilter]}`} description="ไม่มีรายการในช่วงเวลาที่เลือก ลองเปลี่ยนสถานะหรือช่วงเวลา" tone="success" />
         ) : (
           <Table>
@@ -235,7 +260,7 @@ export default function ReconciliationPage() {
               <TableRow>
                 {statusFilter === 'verifying' ? (
                   <TableHead className="w-10">
-                    <Checkbox checked={selected.size === payments.length && payments.length > 0} onCheckedChange={toggleSelectAll} aria-label="เลือกทุกรายการ" />
+                    <Checkbox checked={allSelectableSelected} onCheckedChange={toggleSelectAll} disabled={showingStaleRows} aria-label={payments.length > MAX_BULK_SELECTION ? `เลือก ${MAX_BULK_SELECTION} รายการแรก` : 'เลือกทุกรายการ'} />
                   </TableHead>
                 ) : null}
                 <TableHead>วันที่</TableHead>
@@ -250,7 +275,7 @@ export default function ReconciliationPage() {
             <TableBody>
               {payments.map((payment) => (
                 <TableRow key={payment.id}>
-                  {statusFilter === 'verifying' ? <TableCell><Checkbox checked={selected.has(payment.id)} onCheckedChange={() => toggleSelect(payment.id)} aria-label={`เลือกธุรกรรม ${payment.id}`} /></TableCell> : null}
+                  {statusFilter === 'verifying' ? <TableCell><Checkbox checked={selected.has(payment.id)} onCheckedChange={() => toggleSelect(payment.id)} disabled={showingStaleRows || (selectionAtLimit && !selected.has(payment.id))} aria-label={`เลือกธุรกรรม ${payment.id}`} /></TableCell> : null}
                   <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(payment.createdAt)}</TableCell>
                   <TableCell>
                     <div className="font-medium">{payment.userName || '-'}</div>
@@ -267,8 +292,8 @@ export default function ReconciliationPage() {
                     <div className="flex justify-end gap-2">
                       {payment.status === 'verifying' || payment.status === 'failed' ? (
                         <>
-                          <Button size="sm" variant="outline" onClick={() => openAction({ type: 'single', payment, action: 'approve' })}>อนุมัติ</Button>
-                          <Button size="sm" variant="destructive" onClick={() => openAction({ type: 'single', payment, action: 'reject' })}>ปฏิเสธ</Button>
+                          <Button size="sm" variant="outline" disabled={showingStaleRows} onClick={() => openAction({ type: 'single', payment, action: 'approve' })}>อนุมัติ</Button>
+                          <Button size="sm" variant="destructive" disabled={showingStaleRows} onClick={() => openAction({ type: 'single', payment, action: 'reject' })}>ปฏิเสธ</Button>
                         </>
                       ) : null}
                     </div>

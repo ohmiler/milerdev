@@ -119,7 +119,7 @@ export async function POST(request: Request) {
         );
         if (!parsedBody.success) {
             return NextResponse.json(
-                { error: 'กรุณาระบุรายการและเหตุผลอย่างน้อย 5 ตัวอักษร' },
+                { error: 'กรุณาเลือก 1-50 รายการและระบุเหตุผลอย่างน้อย 5 ตัวอักษร' },
                 { status: 400 },
             );
         }
