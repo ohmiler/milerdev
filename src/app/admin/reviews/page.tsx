@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Eye, EyeOff, Import, MessageSquareText, Search, ShieldCheck, Star, Trash2 } from 'lucide-react';
+import { ExternalLink, Eye, EyeOff, Import, MessageSquareText, Search, ShieldCheck, Star, Trash2 } from 'lucide-react';
 
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
@@ -42,6 +43,8 @@ interface Review {
   userName: string | null;
   userEmail: string | null;
   courseTitle: string | null;
+  courseSlug: string | null;
+  courseStatus: string | null;
 }
 
 interface Course {
@@ -399,6 +402,11 @@ export default function AdminReviewsPage() {
                     </TableCell>
                     <TableCell className="max-w-52">
                       <span className="line-clamp-2">{review.courseTitle || 'ไม่พบชื่อคอร์ส'}</span>
+                      {review.courseSlug && review.courseStatus === 'published' ? (
+                        <Link href={`/courses/${review.courseSlug}`} target="_blank" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-link hover:underline">
+                          ดูหน้าคอร์ส<ExternalLink className="size-3" aria-hidden />
+                        </Link>
+                      ) : null}
                     </TableCell>
                     <TableCell>
                       <RatingStars rating={review.rating} />

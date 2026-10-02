@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ListVideo, Plus } from 'lucide-react';
+import { ArrowLeft, ExternalLink, ListVideo, Plus } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -68,6 +68,7 @@ export default function ManageLessonsPage() {
   const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
+  const [publicCourse, setPublicCourse] = useState<{ slug: string; status: string } | null>(null);
 
   const fetchLessons = async (id: string) => {
     setLoadError('');
@@ -83,6 +84,18 @@ export default function ManageLessonsPage() {
 
   useEffect(() => {
     void fetchLessons(courseId).finally(() => setLoading(false));
+  }, [courseId]);
+
+  // Only needed for the "view on site" link; a failure just hides the link.
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/admin/courses/${courseId}`, { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data?.course?.slug) setPublicCourse({ slug: data.course.slug, status: data.course.status });
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
   }, [courseId]);
 
   const resetForm = () => {
@@ -149,6 +162,9 @@ export default function ManageLessonsPage() {
         actions={
           <>
             <Button asChild variant="outline"><Link href="/admin/courses"><ArrowLeft data-icon="inline-start" aria-hidden />คอร์สทั้งหมด</Link></Button>
+            {publicCourse?.status === 'published' ? (
+              <Button asChild variant="outline"><Link href={`/courses/${publicCourse.slug}`} target="_blank">ดูหน้าเว็บ<ExternalLink data-icon="inline-end" aria-hidden /></Link></Button>
+            ) : null}
             <Button onClick={() => { setFormData(emptyForm); setFormError(''); setShowForm(true); }}><Plus data-icon="inline-start" aria-hidden />เพิ่มบทเรียน</Button>
           </>
         }

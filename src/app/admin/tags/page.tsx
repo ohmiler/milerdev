@@ -1,7 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Pencil, Plus, Tag as TagIcon, Trash2 } from 'lucide-react';
+import { ExternalLink, Pencil, Plus, Tag as TagIcon, Trash2 } from 'lucide-react';
 
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
@@ -238,6 +239,12 @@ export default function AdminTagsPage() {
                       </AdminStatusBadge>
                     </div>
                     <div className="flex shrink-0 gap-1">
+                      <Button variant="ghost" size="icon-sm" asChild>
+                        <Link href={`/courses?tag=${encodeURIComponent(tag.slug)}`} target="_blank" title="ดูคอร์สที่ใช้แท็กนี้บนเว็บ">
+                          <ExternalLink aria-hidden />
+                          <span className="sr-only">ดูคอร์สแท็ก {tag.name} บนเว็บ</span>
+                        </Link>
+                      </Button>
                       <Button variant="ghost" size="icon-sm" title="แก้ไขแท็ก" onClick={() => startEdit(tag)}>
                         <Pencil aria-hidden />
                         <span className="sr-only">แก้ไข {tag.name}</span>
