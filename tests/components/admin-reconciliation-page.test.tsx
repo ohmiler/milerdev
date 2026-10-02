@@ -218,4 +218,112 @@ describe('Admin reconciliation queue states', () => {
       expect(requestedUrl(fetchMock, 3).searchParams.get('page')).toBe('1');
     });
   });
+
+  describe('case details in the decision dialog', () => {
+    const detail = (overrides: Record<string, unknown> = {}, decision = { canDecide: true, maxRetries: 5 }) => ({
+      payment: {
+        id: 'payment-001',
+        status: 'verifying',
+        method: 'promptpay',
+        amount: '990.00',
+        currency: 'THB',
+        itemTitle: 'คอร์ส 1',
+        itemType: 'course',
+        createdAt: '2026-09-01T00:00:00.000Z',
+        retryCount: 1,
+        lastRetryAt: null,
+        transactionReference: null,
+        ...overrides,
+      },
+      payer: { name: 'ผู้ซื้อ 1', email: 'buyer1@example.com' },
+      entitlement: { kind: 'course', total: 1, enrolled: 0 },
+      history: [{
+        id: 'log-1',
+        action: 'update',
+        oldValue: 'status: verifying',
+        newValue: 'status: failed; reconciliation rejected; reason: ยอดไม่ตรง',
+        createdAt: '2026-09-02T00:00:00.000Z',
+        actorName: 'แอดมิน',
+      }],
+      decision,
+    });
+
+    function respond(caseResponse: () => Response) {
+      return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+        const url = String(input);
+        if (url.startsWith('/api/admin/reconciliation/payment-001')) return caseResponse();
+        return okResponse(makePayments(1), { ...summary, verifying: 1 });
+      });
+    }
+
+    async function openApprove() {
+      render(<ReconciliationPage />);
+      await screen.findByText('คอร์ส 1');
+      fireEvent.click(screen.getByRole('button', { name: 'อนุมัติ' }));
+      fireEvent.change(await screen.findByLabelText('เหตุผลและหลักฐาน'), { target: { value: 'ตรวจรายการเดินบัญชีแล้ว' } });
+    }
+
+    const confirmButton = () => screen.getByRole('button', { name: 'ยืนยันการอนุมัติ' }) as HTMLButtonElement;
+
+    it('shows payer, amount, missing bank reference, entitlement and history before approving', async () => {
+      const fetchMock = respond(() => new Response(JSON.stringify(detail()), { status: 200 }));
+
+      await openApprove();
+
+      expect(await screen.findByText(/ระบบไม่เก็บรูปสลิป/)).toBeTruthy();
+      expect(screen.getByText('buyer1@example.com', { selector: 'span.block' })).toBeTruthy();
+      expect(screen.getByText(/ยังไม่ได้ลงทะเบียนเรียนคอร์สนี้/)).toBeTruthy();
+      expect(screen.getByText(/ปฏิเสธไปแล้ว/)).toBeTruthy();
+      expect(screen.getByText(/reason: ยอดไม่ตรง/)).toBeTruthy();
+      expect(fetchMock.mock.calls.some(([url]) => String(url) === '/api/admin/reconciliation/payment-001')).toBe(true);
+      await waitFor(() => expect(confirmButton().disabled).toBe(false));
+    });
+
+    it('shows the bank reference when the payment has one', async () => {
+      respond(() => new Response(JSON.stringify(detail({ transactionReference: 'REF-777' })), { status: 200 }));
+
+      await openApprove();
+
+      expect(await screen.findByText('REF-777')).toBeTruthy();
+      expect(screen.queryByText(/ระบบไม่เก็บรูปสลิป/)).toBeNull();
+    });
+
+    it('keeps the decision closed while details load and when they fail, until a retry works', async () => {
+      let attempts = 0;
+      respond(() => {
+        attempts += 1;
+        return attempts === 1
+          ? new Response(JSON.stringify({ error: 'ไม่สามารถโหลดรายละเอียดรายการได้' }), { status: 500 })
+          : new Response(JSON.stringify(detail()), { status: 200 });
+      });
+
+      await openApprove();
+
+      expect(await screen.findByText('โหลดรายละเอียดรายการไม่สำเร็จ')).toBeTruthy();
+      expect(confirmButton().disabled).toBe(true);
+
+      fireEvent.click(screen.getByRole('button', { name: 'ลองใหม่' }));
+
+      expect(await screen.findByText(/ระบบไม่เก็บรูปสลิป/)).toBeTruthy();
+      await waitFor(() => expect(confirmButton().disabled).toBe(false));
+    });
+
+    it('blocks the decision when another reviewer already changed the status', async () => {
+      respond(() => new Response(JSON.stringify(detail({ status: 'completed' })), { status: 200 }));
+
+      await openApprove();
+
+      expect(await screen.findByText('สถานะรายการถูกเปลี่ยนแล้ว')).toBeTruthy();
+      expect(confirmButton().disabled).toBe(true);
+    });
+
+    it('blocks the decision when the retry limit is used up', async () => {
+      respond(() => new Response(JSON.stringify(detail({ retryCount: 5 }, { canDecide: false, maxRetries: 5 })), { status: 200 }));
+
+      await openApprove();
+
+      expect(await screen.findByText('รายการนี้ดำเนินการต่อไม่ได้')).toBeTruthy();
+      expect(confirmButton().disabled).toBe(true);
+    });
+  });
 });
