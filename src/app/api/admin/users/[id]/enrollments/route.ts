@@ -83,7 +83,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       availableCourses,
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching user enrollments:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.users.id.enrollments.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -138,7 +138,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลงทะเบียนสำเร็จ', enrollmentId });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error manual enrolling:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.users.id.enrollments.enroll_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }

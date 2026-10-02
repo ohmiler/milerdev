@@ -32,7 +32,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ payment });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching payment:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.payments.id.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -214,7 +214,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
           type: 'success',
           link: '/dashboard',
         });
-      })().catch(err => console.error('Failed to send payment notification:', err));
+      })().catch(err => logError(err, { action: 'admin.payments.id.notify_failed' }));
     }
 
     return NextResponse.json({ 
@@ -230,7 +230,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         { status: 409 },
       );
     }
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating payment:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.payments.id.update_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

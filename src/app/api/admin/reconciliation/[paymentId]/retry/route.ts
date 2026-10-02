@@ -8,6 +8,7 @@ import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/notification
 import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
 import { MAX_RECONCILIATION_RETRIES } from '@/lib/commerce/reconciliation';
 import { notify } from '@/lib/notifications/notify';
+import { logError } from '@/lib/error-handler';
 
 const reconciliationActionSchema = z.object({
   action: z.enum(['approve', 'reject']),
@@ -114,7 +115,7 @@ export async function POST(
     }
 
     sendApprovalMessages(payment).catch((error) => {
-      console.error('Failed to send reconciliation confirmation:', error);
+      logError(error, { action: 'admin.reconciliation.payment_id.retry.email_failed' });
     });
 
     return NextResponse.json({
@@ -130,7 +131,7 @@ export async function POST(
         { status: 409 },
       );
     }
-    console.error('Error reconciling payment:', error);
+    logError(error, { action: 'admin.reconciliation.payment_id.retry.reconcile_failed' });
     return NextResponse.json({ error: 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

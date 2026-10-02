@@ -154,7 +154,7 @@ export async function POST(request: Request) {
                     name: session.user.name,
                     courseName: course.title,
                     courseSlug: course.slug,
-                }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'Failed to send enrollment email' }));
+                }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'enroll.coupon_email_failed' }));
             }
 
             return NextResponse.json(enrollment, { status: 201 });
@@ -190,7 +190,7 @@ export async function POST(request: Request) {
                 name: session.user.name,
                 courseName: course.title,
                 courseSlug: course.slug,
-            }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'Failed to send enrollment email' }));
+            }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'enroll.email_failed' }));
         }
 
         return NextResponse.json(enrollment, { status: 201 });
@@ -198,7 +198,7 @@ export async function POST(request: Request) {
         if (error instanceof Error && error.message === 'COUPON_LIMIT_EXCEEDED') {
             return NextResponse.json({ error: 'คูปองนี้ถูกใช้ครบจำนวนแล้ว' }, { status: 400 });
         }
-        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error enrolling' });
+        logError(error instanceof Error ? error : new Error(String(error)), { action: 'enroll.create_failed' });
         return NextResponse.json(
             { error: "Failed to enroll" },
             { status: 500 }
@@ -236,7 +236,7 @@ export async function GET(request: Request) {
             enrollment: enrollment || null,
         });
     } catch (error) {
-        logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error checking enrollment' });
+        logError(error instanceof Error ? error : new Error(String(error)), { action: 'enroll.check_failed' });
         return NextResponse.json(
             { error: "Failed to check enrollment" },
             { status: 500 }

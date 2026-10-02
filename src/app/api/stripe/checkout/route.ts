@@ -13,6 +13,7 @@ import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availab
 import { analyticsExposureIdSchema } from '@/lib/analytics/contract';
 import { logEvent } from '@/lib/error-handler';
 import { measurementRecorder } from '@/lib/analytics/measurement-recorder';
+import { logError } from '@/lib/error-handler';
 
 const stripeCheckoutRequestSchema = z.object({
     courseId: z.string().trim().min(1).max(36),
@@ -198,7 +199,7 @@ export async function POST(request: Request) {
             sessionId: checkoutSession.id,
         });
     } catch (error) {
-        console.error("Error creating checkout:", error);
+        logError(error, { action: 'stripe.checkout.create_failed' });
         return NextResponse.json(
             { error: "Failed to create checkout session" },
             { status: 500 }

@@ -30,7 +30,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ enrollment });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching enrollment:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.enrollments.id.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -73,7 +73,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'อัพเดทการลงทะเบียนสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error updating enrollment:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.enrollments.id.update_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }
@@ -121,7 +121,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ message: 'ลบการลงทะเบียนสำเร็จ' });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error deleting enrollment:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.enrollments.id.delete_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

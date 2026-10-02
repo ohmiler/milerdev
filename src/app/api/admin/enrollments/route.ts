@@ -103,7 +103,7 @@ export async function GET(request: Request) {
       courses: coursesList,
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error fetching enrollments:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.enrollments.fetch_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด' },
       { status: 500 }
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error creating enrollment:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.enrollments.create_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาด กรุณาลองใหม่' },
       { status: 500 }

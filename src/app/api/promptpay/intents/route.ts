@@ -20,6 +20,7 @@ import {
 import { loadPromptPayPresentation } from '@/lib/commerce/promptpay-presentation';
 import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/commerce/promptpay-intent';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
+import { logError } from '@/lib/error-handler';
 
 const intentSchema = z.object({
   courseId: z.string().min(1).max(36).optional(),
@@ -209,7 +210,7 @@ export async function POST(request: Request) {
       ? Number(error.status)
       : 500;
     const message = error instanceof Error && status !== 500 ? error.message : 'Failed to create payment intent';
-    if (status === 500) console.error('Error creating PromptPay intent:', error);
+    if (status === 500) logError(error, { action: 'promptpay.intents.create_failed' });
     return NextResponse.json({ error: message }, { status });
   }
 }

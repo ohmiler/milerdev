@@ -194,7 +194,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'Error importing enrollments:' });
+    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.enrollments.import.import_failed' });
     return NextResponse.json(
       { error: 'เกิดข้อผิดพลาดในการนำเข้า' },
       { status: 500 }
