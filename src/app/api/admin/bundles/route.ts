@@ -5,6 +5,7 @@ import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import { desc, eq, asc } from 'drizzle-orm';
 import { getAuditContext } from '@/lib/auditLog';
+import { revalidateBundleCatalog } from '@/lib/content/revalidate';
 import { BundleMutationError, createBundleWithIntegrity } from '@/lib/commerce/bundle-mutation';
 import { adminBundleMutationSchema } from '@/lib/validations/bundle';
 
@@ -101,6 +102,8 @@ export async function POST(request: Request) {
             },
             auditContext: await getAuditContext(),
         });
+
+        revalidateBundleCatalog();
 
         return NextResponse.json(
             { message: 'สร้าง Bundle สำเร็จ', bundleId },

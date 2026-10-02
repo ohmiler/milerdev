@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/db';
+import { BLOG_CACHE_TAG } from '@/lib/content/revalidate';
 import { blogPosts, blogPostTags, tags, users } from '@/lib/db/schema';
 import { getBlogTableOfContents, getProcessedBlogContent } from '@/lib/security/sanitize';
 import { absoluteUrl, DEFAULT_OG_IMAGE, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
@@ -64,7 +65,7 @@ const getPublishedPostMetadata = unstable_cache(
     return post ?? null;
   },
   ['blog-post-metadata'],
-  { revalidate },
+  { revalidate, tags: [BLOG_CACHE_TAG] },
 );
 
 interface Props {
@@ -172,7 +173,7 @@ const getPost = unstable_cache(
     };
   },
   ['blog-post'],
-  { revalidate },
+  { revalidate, tags: [BLOG_CACHE_TAG] },
 );
 
 export default async function BlogPostPage({ params }: Props) {

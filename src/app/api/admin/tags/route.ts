@@ -6,6 +6,7 @@ import { tags } from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { revalidateTagPages } from '@/lib/content/revalidate';
 
 // GET /api/admin/tags - Get all tags
 export async function GET() {
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
     });
 
     await logAudit({ userId: session.user.id, action: 'create', entityType: 'tag', entityId: tagId, newValue: name.trim() });
+    revalidateTagPages();
 
     return NextResponse.json({
       message: 'สร้างแท็กสำเร็จ',

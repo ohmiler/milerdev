@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { bundles, bundleCourses, courses } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
+import { revalidateBundleCatalog } from '@/lib/content/revalidate';
 import { getAuditContext } from '@/lib/auditLog';
 import { BundleMutationError, updateBundleWithIntegrity } from '@/lib/commerce/bundle-mutation';
 import { adminBundleMutationSchema } from '@/lib/validations/bundle';
@@ -85,6 +86,8 @@ export async function PUT(request: Request, { params }: Props) {
             auditContext: await getAuditContext(),
         });
 
+        revalidateBundleCatalog();
+
         return NextResponse.json({ message: 'อัปเดต Bundle สำเร็จ' });
     } catch (error) {
         if (error instanceof BundleMutationError) {
@@ -111,6 +114,8 @@ export async function DELETE(_request: Request, { params }: Props) {
         await db.delete(bundles).where(eq(bundles.id, id));
 
         await logAudit({ userId: session.user.id, action: 'delete', entityType: 'bundle', entityId: id, oldValue: existing?.title || id });
+
+        revalidateBundleCatalog();
 
         return NextResponse.json({ message: 'ลบ Bundle สำเร็จ' });
     } catch (error) {
