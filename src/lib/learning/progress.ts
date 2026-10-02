@@ -198,6 +198,10 @@ export async function updateLearningProgress(
       tx.select({ totalLessons: count() })
         .from(lessons)
         .where(eq(lessons.courseId, lesson.courseId)),
+      // A locking read sees the latest committed rows. A plain read would use the snapshot
+      // taken by the first query of this transaction, which predates the enrollment lock
+      // above, so two lessons finishing at once would each miss the other and leave the
+      // course below 100% with no certificate.
       tx.select({ completedLessons: count() })
         .from(lessonProgress)
         .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
@@ -205,7 +209,8 @@ export async function updateLearningProgress(
           eq(lessonProgress.userId, input.userId),
           eq(lessons.courseId, lesson.courseId),
           eq(lessonProgress.completed, true),
-        )),
+        ))
+        .for('share'),
     ]);
     const progressPercent = totalLessons > 0
       ? Math.round((completedLessons / totalLessons) * 100)

@@ -196,22 +196,17 @@ describe('lesson progress on real MySQL', () => {
         expect(await certsFor(a.userId)).toHaveLength(0);
     });
 
-    it('keeps certificate and progress consistent when the last two lessons finish at once (KNOWN DEFECT: lost update)', async () => {
+    it('completes the course and issues one certificate when the last two lessons finish at once', async () => {
         const a = await seedLearner({ lessons: 2 });
 
         await Promise.all(a.lessonIds.map((lessonId) => complete(a.userId, lessonId)));
 
-        // Both lessons are saved as completed...
         const rows = await db.select().from(lessonProgress).where(eq(lessonProgress.userId, a.userId));
         expect(rows.filter((r) => r.completed)).toHaveLength(2);
-        // ...but each transaction counts completed lessons from its own snapshot, so on MySQL
-        // the enrollment can be left at 50% with no certificate even though every lesson is
-        // done (observed on every local run). The invariant that must hold either way:
-        // a certificate exists exactly when the enrollment reached 100%, and never twice.
-        // When this defect is fixed, tighten this to expect 100% and exactly one certificate.
         const enrollment = await enrollmentOf(a.userId, a.courseId);
-        expect([50, 100]).toContain(enrollment.progressPercent);
-        expect(await certsFor(a.userId)).toHaveLength(enrollment.progressPercent === 100 ? 1 : 0);
+        expect(enrollment.progressPercent).toBe(100);
+        expect(enrollment.completedAt).toBeInstanceOf(Date);
+        expect(await certsFor(a.userId)).toHaveLength(1);
     });
 
     it('refuses progress on a paid lesson without an enrollment and writes nothing', async () => {
