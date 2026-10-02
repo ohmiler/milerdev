@@ -4,7 +4,7 @@
 
 สถานะ: ข้อค้นพบและข้อเสนอสำหรับรอบถัดไป ยังไม่ใช่ spec ที่ตกลงครบแล้ว และยังไม่ได้สร้าง GitHub Issues
 
-**อัปเดต 2026-10-02:** รอบ 1 (A, B, C) ส่งมอบแล้วผ่าน [#126](https://github.com/ohmiler/milerdev/pull/126), [#127](https://github.com/ohmiler/milerdev/pull/127), [#128](https://github.com/ohmiler/milerdev/pull/128) รายละเอียดและสิ่งที่ปรับจากข้อเสนอเดิมอยู่ใน [spec รอบ 1](specs/admin-reconciliation-queue-round-1.md) D และ E ยังไม่เริ่ม เนื้อหาด้านล่างเป็นภาพ ณ 2026-09-13 ยกเว้นข้อแก้ไขที่ระบุ
+**อัปเดต 2026-10-02:** รอบ 1 (A, B, C) ส่งมอบแล้วผ่าน [#126](https://github.com/ohmiler/milerdev/pull/126), [#127](https://github.com/ohmiler/milerdev/pull/127), [#128](https://github.com/ohmiler/milerdev/pull/128) รายละเอียดและสิ่งที่ปรับจากข้อเสนอเดิมอยู่ใน [spec รอบ 1](specs/admin-reconciliation-queue-round-1.md) E ส่งมอบแล้วใน [#131](https://github.com/ohmiler/milerdev/pull/131) (เตือนก่อนออกจากฟอร์มสร้างคอร์ส ไม่ดักปุ่ม Back ของ browser และไม่เก็บร่าง) D ยังไม่เริ่ม มี [spec ร่าง](specs/admin-member-history.md) รอการตัดสินใจ ระหว่างตรวจ D พบว่าการถอนสมาชิกออกจากคอร์สลบความคืบหน้าทุกคอร์ส แก้แล้วใน [#132](https://github.com/ohmiler/milerdev/pull/132) นอกจากนี้ [#130](https://github.com/ohmiler/milerdev/pull/130) เพิ่มลิงก์ไปหน้าจริงในหน้าแอดมิน และ [#124](https://github.com/ohmiler/milerdev/pull/124) กับ [#125](https://github.com/ohmiler/milerdev/pull/125) ทำให้หน้าสาธารณะอัปเดตทันทีหลังแอดมินแก้ เนื้อหาด้านล่างเป็นภาพ ณ 2026-09-13 ยกเว้นข้อแก้ไขที่ระบุ
 
 ## ที่มาและขอบเขตหลักฐาน
 
@@ -105,6 +105,8 @@
 
 หลักฐาน: [รายละเอียดผู้ใช้](../src/app/admin/users/[id]/page.tsx)
 
+**สถานะ 2026-10-02:** ร่าง spec แล้วที่ [specs/admin-member-history.md](specs/admin-member-history.md) ยังไม่เริ่ม implementation รอตัดสินใจว่าจะทำขั้นแรกแบบอ่านอย่างเดียวหรือไม่ และการถอนสิทธิ์เรียนควรเป็นแบบลบแถวหรือระงับ
+
 ## E — ป้องกันข้อมูลฟอร์มสร้างคอร์สสูญหาย
 
 **สิ่งที่พบ:** ฟอร์มสร้างคอร์สเก็บข้อมูลใน React state และบันทึกผ่าน submit ในขอบเขต admin ที่ค้นยังไม่พบการเตือนออกจากหน้าหรือการกู้คืนร่าง ต้องทดลอง navigation/reload เพื่อยืนยันก่อนแก้
@@ -122,6 +124,8 @@
 **ต้องตกลง:** เตือนอย่างเดียวหรือกู้คืนร่าง; ที่เก็บร่าง อายุร่าง และการแยกบัญชี; ขอบเขตขยายไปฟอร์มแก้ไข/บทเรียน
 
 หลักฐาน: [สร้างคอร์ส](../src/app/admin/courses/new/page.tsx)
+
+**สถานะ 2026-10-02:** ส่งมอบใน [#131](https://github.com/ohmiler/milerdev/pull/131) เตือนก่อนออก (reload ปิดแท็บ และลิงก์ในแอป) ยังไม่ดักปุ่ม Back/Forward ไม่เก็บร่าง และยังไม่ครอบคลุมฟอร์มแก้คอร์ส บทเรียน หรือบล็อก
 
 ## วิธีหยิบต่อรอบหน้า
 
