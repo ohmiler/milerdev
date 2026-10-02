@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { useUnsavedChangesGuard } from '@/components/admin/useUnsavedChangesGuard';
+import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
   AdminMetricCard,
   AdminPageHeader,
@@ -26,6 +28,7 @@ import {
 } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { DEFAULT_CERTIFICATE_COLOR } from '@/lib/certificates/color';
+import { hasUnsavedCourseInput } from '@/lib/courses/form-draft';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -47,6 +50,9 @@ export default function NewCoursePage() {
   });
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const dirty = !saved && hasUnsavedCourseInput(formData, selectedTagIds);
+  const { pendingHref, stay, leave } = useUnsavedChangesGuard(dirty, (href) => router.push(href));
 
   const generateSlug = (title: string) => title
     .toLowerCase()
@@ -68,6 +74,7 @@ export default function NewCoursePage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'สร้างคอร์สไม่สำเร็จ');
+      setSaved(true);
       router.push('/admin/courses');
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'สร้างคอร์สไม่สำเร็จ กรุณาลองใหม่');
@@ -187,6 +194,15 @@ export default function NewCoursePage() {
           </Card>
         </aside>
       </form>
+      <AdminConfirmActionDialog
+        open={pendingHref !== null}
+        title="ออกจากหน้านี้โดยไม่บันทึก"
+        description="ข้อมูลคอร์สที่กรอกไว้ยังไม่ได้บันทึกและจะหายไปถ้าออกจากหน้านี้"
+        confirmLabel="ออกโดยไม่บันทึก"
+        cancelLabel="อยู่ต่อ"
+        onConfirm={leave}
+        onOpenChange={(open) => { if (!open) stay(); }}
+      />
     </div>
   );
 }
