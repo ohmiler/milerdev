@@ -6,9 +6,8 @@ import { db } from '@/lib/db';
 import { auditLogs, bundles, courses, payments, users } from '@/lib/db/schema';
 import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/notifications/email';
 import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
+import { MAX_RECONCILIATION_RETRIES } from '@/lib/commerce/reconciliation';
 import { notify } from '@/lib/notifications/notify';
-
-const MAX_RETRIES = 5;
 
 const reconciliationActionSchema = z.object({
   action: z.enum(['approve', 'reject']),
@@ -67,9 +66,9 @@ export async function POST(
         { status: 400 },
       );
     }
-    if ((payment.retryCount ?? 0) >= MAX_RETRIES) {
+    if ((payment.retryCount ?? 0) >= MAX_RECONCILIATION_RETRIES) {
       return NextResponse.json(
-        { error: `Maximum retries (${MAX_RETRIES}) reached` },
+        { error: `Maximum retries (${MAX_RECONCILIATION_RETRIES}) reached` },
         { status: 400 },
       );
     }

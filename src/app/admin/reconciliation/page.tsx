@@ -13,6 +13,11 @@ import {
   AdminSection,
   AdminStatusBadge,
 } from '@/components/admin/ui/AdminOperations';
+import ReconciliationCaseDetails, {
+  describeCaseBlock,
+  type ReconciliationCase,
+  type ReconciliationCaseState,
+} from '@/components/admin/ReconciliationCaseDetails';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -99,6 +104,8 @@ export default function ReconciliationPage() {
   const [actionIntent, setActionIntent] = useState<ActionIntent>(null);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState('');
+  const [caseState, setCaseState] = useState<ReconciliationCaseState>({ status: 'loading' });
+  const [caseReload, setCaseReload] = useState(0);
   // Filter whose rows are currently in `payments`; lets a failed reload keep rows only for the same filter.
   const loadedKeyRef = useRef<string | null>(null);
 
@@ -136,6 +143,33 @@ export default function ReconciliationPage() {
       setPage(pagination.totalPages);
     }
   }, [loading, loadError, payments.length, pagination.total, pagination.totalPages, page]);
+
+  // Load the facts a reviewer needs whenever a single-payment decision dialog opens.
+  const caseTargetId = actionIntent?.type === 'single' ? actionIntent.payment.id : null;
+  useEffect(() => {
+    if (!caseTargetId) return;
+    const controller = new AbortController();
+    setCaseState({ status: 'loading' });
+    (async () => {
+      try {
+        const response = await fetch(`/api/admin/reconciliation/${caseTargetId}`, { signal: controller.signal });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายละเอียดรายการได้');
+        setCaseState({ status: 'ready', data: data as ReconciliationCase });
+      } catch (caughtError) {
+        if (controller.signal.aborted) return;
+        setCaseState({
+          status: 'error',
+          message: caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายละเอียดรายการได้',
+        });
+      }
+    })();
+    return () => controller.abort();
+  }, [caseTargetId, caseReload]);
+
+  const caseBlockReason = actionIntent?.type === 'single'
+    ? describeCaseBlock(caseState, actionIntent.payment.status)
+    : null;
 
   const changeStatus = (next: StatusFilter) => {
     setStatusFilter(next);
@@ -388,16 +422,17 @@ export default function ReconciliationPage() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{intentTitle}</DialogTitle>
             <DialogDescription>ระบุเหตุผลและหลักฐานประกอบอย่างน้อย 5 ตัวอักษร ระบบจะเก็บไว้สำหรับตรวจสอบย้อนหลัง</DialogDescription>
           </DialogHeader>
           {actionIntent?.type === 'single' ? (
-            <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
-              <div className="font-medium">{actionIntent.payment.itemTitle || actionIntent.payment.courseTitle || actionIntent.payment.bundleTitle || 'ไม่ระบุรายการ'}</div>
-              <div className="mt-1 font-mono text-xs text-muted-foreground">{actionIntent.payment.id}</div>
-            </div>
+            <ReconciliationCaseDetails
+              state={caseState}
+              rowStatus={actionIntent.payment.status}
+              onRetry={() => setCaseReload((previous) => previous + 1)}
+            />
           ) : null}
           {actionError ? <Alert variant="destructive"><AlertTitle>ดำเนินการไม่สำเร็จ</AlertTitle><AlertDescription>{actionError}</AlertDescription></Alert> : null}
           <Field data-invalid={Boolean(reason && reason.trim().length < 5)}>
@@ -408,7 +443,7 @@ export default function ReconciliationPage() {
           </Field>
           <DialogFooter>
             <Button variant="outline" disabled={actionLoading} onClick={() => setActionIntent(null)}>ยกเลิก</Button>
-            <Button variant={isDestructive ? 'destructive' : 'default'} disabled={actionLoading || reason.trim().length < 5} onClick={() => void handleAction()}>
+            <Button variant={isDestructive ? 'destructive' : 'default'} disabled={actionLoading || reason.trim().length < 5 || Boolean(caseBlockReason)} onClick={() => void handleAction()}>
               {actionLoading ? <AdminPendingLabel>กำลังดำเนินการ</AdminPendingLabel> : isDestructive ? 'ยืนยันการปฏิเสธ' : 'ยืนยันการอนุมัติ'}
             </Button>
           </DialogFooter>
