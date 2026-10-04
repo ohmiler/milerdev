@@ -2,13 +2,6 @@ import { createId } from '@paralleldrive/cuid2';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
-import {
-  AnalyticsControlError,
-  getAnalyticsControlState,
-  recordAnalyticsGovernanceDecision,
-  setAnalyticsOperationalEnabled,
-  type AnalyticsGovernanceDecisionInput,
-} from '@/lib/analytics/control';
 import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { auditLogs, settings } from '@/lib/db/schema';
@@ -24,45 +17,19 @@ const defaultSettings = [
   { key: 'currency', value: 'THB', type: 'string', description: 'สกุลเงิน' },
   { key: 'max_upload_size', value: '5', type: 'number', description: 'ขนาดไฟล์สูงสุด (MB)' },
   { key: 'maintenance_mode', value: 'false', type: 'boolean', description: 'โหมดปิดปรับปรุง' },
-  { key: 'analytics_enabled', value: 'false', type: 'boolean', description: 'เปิดใช้ Analytics' },
   { key: 'smtp_host', value: '', type: 'string', description: 'SMTP Host' },
   { key: 'smtp_port', value: '587', type: 'number', description: 'SMTP Port' },
   { key: 'smtp_user', value: '', type: 'string', description: 'SMTP Username' },
   { key: 'smtp_from', value: '', type: 'string', description: 'Email ผู้ส่ง' },
 ];
 
-function analyticsControlErrorResponse(error: AnalyticsControlError) {
-  if (error.code === 'GOVERNANCE_REQUIRED') {
-    return NextResponse.json(
-      { error: 'ต้องบันทึกและอนุมัตินโยบายข้อมูล Analytics ก่อนเปิดใช้งาน' },
-      { status: 409 },
-    );
-  }
-  if (error.code === 'INVALID_GOVERNANCE_DECISION') {
-    return NextResponse.json({ error: 'ข้อมูลการอนุมัติ Analytics ไม่ถูกต้อง' }, { status: 400 });
-  }
-  return NextResponse.json(
-    { error: 'ไม่สามารถยืนยันสถานะ Analytics หลังบันทึกได้' },
-    { status: 503 },
-  );
-}
-
-function parseOperationalValue(value: unknown): boolean | null {
-  if (value === true || value === 'true') return true;
-  if (value === false || value === 'false') return false;
-  return null;
-}
-
-// GET /api/admin/settings - Get all settings and observable analytics state.
+// GET /api/admin/settings - Get all settings.
 export async function GET() {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
 
-    const [settingsList, analyticsControl] = await Promise.all([
-      db.select().from(settings),
-      getAnalyticsControlState({ fresh: true }),
-    ]);
+    const settingsList = await db.select().from(settings);
     const settingsMap = new Map(settingsList.map((setting) => [setting.key, setting]));
     const mergedSettings = defaultSettings.map((definition) => {
       const existing = settingsMap.get(definition.key);
@@ -91,7 +58,7 @@ export async function GET() {
       ].includes(setting.key)),
     };
 
-    return NextResponse.json({ settings: mergedSettings, grouped, analyticsControl });
+    return NextResponse.json({ settings: mergedSettings, grouped });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), {
       action: 'admin.settings.fetch_failed',
@@ -126,29 +93,6 @@ export async function PUT(request: Request) {
       ipAddress: getClientIP(request),
       userAgent: request.headers.get('user-agent'),
     };
-
-    if (key === 'analytics_enabled') {
-      const enabled = parseOperationalValue(value);
-      if (enabled === null) {
-        return NextResponse.json({ error: 'ค่า Analytics ต้องเป็น true หรือ false' }, { status: 400 });
-      }
-
-      const analyticsControl = await setAnalyticsOperationalEnabled({
-        enabled,
-        actorId: session.user.id,
-        auditContext,
-      });
-      return NextResponse.json({ message: 'บันทึกการตั้งค่าสำเร็จ', analyticsControl });
-    }
-
-    if (key === 'analytics_governance_decision') {
-      const analyticsControl = await recordAnalyticsGovernanceDecision({
-        decision: value as AnalyticsGovernanceDecisionInput,
-        actorId: session.user.id,
-        auditContext,
-      });
-      return NextResponse.json({ message: 'บันทึกการอนุมัติ Analytics สำเร็จ', analyticsControl });
-    }
 
     const allowedKeys = defaultSettings.map((setting) => setting.key);
     if (!allowedKeys.includes(key)) {
@@ -194,7 +138,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ message: 'บันทึกการตั้งค่าสำเร็จ' });
   } catch (error) {
-    if (error instanceof AnalyticsControlError) return analyticsControlErrorResponse(error);
     logError(error instanceof Error ? error : new Error(String(error)), {
       action: 'admin.settings.update_failed',
     });

@@ -14,8 +14,7 @@ vi.mock('@/lib/db', () => {
   };
   return { db: chain };
 });
-import { db } from '@/lib/db';
-import { readBrowserConsent, saveBrowserConsent, lockActiveConsent } from '@/lib/privacy/consent';
+import { readBrowserConsent, saveBrowserConsent } from '@/lib/privacy/consent';
 import { CONSENT_VERSION, UNKNOWN_CONSENT, isConsentCurrent } from '@/lib/privacy/consent-contract';
 
 const valid = () => ({ id: 'receipt', userId: 'user-1', version: CONSENT_VERSION, analytics: true, revokedAt: null, expiresAt: new Date(Date.now() + 60_000) });
@@ -51,12 +50,9 @@ describe('consent authority', () => {
     expect(fixture.updates.every((row) => row.revokedAt instanceof Date)).toBe(true);
   });
 
-  it('does not project legacy, withdrawn or expired grants on retry', async () => {
-    const tx = db as unknown as Parameters<typeof lockActiveConsent>[0];
-    expect(await lockActiveConsent(tx, null)).toBe(false);
-    expect(await lockActiveConsent(tx, 'receipt')).toBe(true);
-    fixture.rows = [{ ...valid(), revokedAt: new Date() }];
-    expect(await lockActiveConsent(tx, 'receipt')).toBe(false);
+  it('treats expired or refused grants as not current', () => {
+    expect(isConsentCurrent(valid())).toBe(true);
+    expect(isConsentCurrent({ ...valid(), revokedAt: new Date() })).toBe(false);
     expect(isConsentCurrent({ ...valid(), expiresAt: new Date(0) })).toBe(false);
     expect(isConsentCurrent({ ...valid(), analytics: false })).toBe(false);
   });

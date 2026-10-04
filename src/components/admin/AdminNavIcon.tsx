@@ -1,6 +1,5 @@
 import {
   Award,
-  BarChart3,
   BookOpen,
   Boxes,
   ClipboardCheck,
@@ -17,7 +16,6 @@ import {
 } from 'lucide-react';
 
 const icons: Record<string, LucideIcon> = {
-  analytics: BarChart3,
   bundles: Boxes,
   certificates: Award,
   courses: BookOpen,

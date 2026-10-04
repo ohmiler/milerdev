@@ -17,7 +17,7 @@ export default function PaymentRecoveryAction({ record, onRefresh }: { record: P
   const { recovery, target } = record.presentation;
   if (record.canSubmitSlip && recovery.kind === 'resume') return <>
     <Button ref={trigger} type="button" className="h-auto min-h-11 whitespace-normal" onClick={() => setOpen(true)}>{recovery.label}</Button>
-    {open ? <CheckoutDialog open onClose={() => setOpen(false)} target={target} resumePaymentId={record.id} exposureId={null} returnFocusRef={trigger} onEnrolled={refresh} /> : null}
+    {open ? <CheckoutDialog open onClose={() => setOpen(false)} target={target} resumePaymentId={record.id} returnFocusRef={trigger} onEnrolled={refresh} /> : null}
   </>;
   if (recovery.kind === 'refresh') return <Button type="button" className="h-auto min-h-11 whitespace-normal" onClick={refresh}>{recovery.label}</Button>;
   return <Button asChild variant="outline" className="h-auto min-h-11 whitespace-normal"><Link href={recovery.href}>{recovery.label}</Link></Button>;

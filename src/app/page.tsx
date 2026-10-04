@@ -18,7 +18,6 @@ import {
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { HOME_FAQ_ITEMS } from '@/app/faq/faq-data';
-import TrackedAnalyticsLink from '@/components/analytics/TrackedAnalyticsLink';
 import CourseCard from '@/components/course/CourseCard';
 import HomeFAQ from '@/components/home/HomeFAQ';
 import HomeAnimations from '@/components/home/HomeAnimations';
@@ -207,13 +206,10 @@ export default async function HomePage() {
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="hero" variant="hero">
-                  <TrackedAnalyticsLink
-                    href="/courses"
-                    analyticsEvent={{ eventName: 'home_primary_cta_clicked', placement: 'hero' }}
-                  >
+                  <Link href="/courses">
                     ดูคอร์สทั้งหมด
                     <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                  </TrackedAnalyticsLink>
+                  </Link>
                 </Button>
                 <Button asChild size="hero" variant="heroOutline">
                   <Link href="/courses?preview=free">

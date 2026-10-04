@@ -26,7 +26,6 @@ import { getExcerpt } from '@/lib/security/sanitize';
 import { requirePublishedBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { absoluteUrl, DEFAULT_OG_IMAGE, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
 import { and, asc, avg, count, eq, inArray, sql } from 'drizzle-orm';
-import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -248,7 +247,6 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }} />
       <Navbar />
-      <AnalyticsViewEvent productType="bundle" productId={bundle.id}>
         <MainContent className="min-h-screen bg-background text-foreground">
           {cancelled ? <PaymentCancellationNotice /> : null}
         <header className="border-b bg-muted/30">
@@ -359,7 +357,6 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
           />
         ) : null}
         </MainContent>
-      </AnalyticsViewEvent>
       <Footer />
     </>
   );
