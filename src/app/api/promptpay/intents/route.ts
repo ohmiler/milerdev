@@ -5,13 +5,10 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/courses/availability';
-import { calculateDiscount, validateCouponEligibility } from '@/lib/commerce/coupon';
 import { db } from '@/lib/db';
 import {
   bundleCourses,
   bundles,
-  coupons,
-  couponUsages,
   courses,
   enrollments,
   lessons,
@@ -25,14 +22,10 @@ import { logError } from '@/lib/error-handler';
 const intentSchema = z.object({
   courseId: z.string().min(1).max(36).optional(),
   bundleId: z.string().min(1).max(36).optional(),
-  couponId: z.string().min(1).max(36).optional(),
   expectedAmount: z.string().regex(/^\d{1,8}\.\d{2}$/).optional(),
 }).strict().superRefine((value, context) => {
   if (Boolean(value.courseId) === Boolean(value.bundleId)) {
     context.addIssue({ code: 'custom', message: 'Exactly one payment target is required' });
-  }
-  if (value.bundleId && value.couponId) {
-    context.addIssue({ code: 'custom', path: ['couponId'], message: 'Bundle coupons are unsupported' });
   }
 });
 
@@ -89,32 +82,6 @@ export async function POST(request: Request) {
           && (!course.promoStartsAt || course.promoStartsAt <= now)
           && (!course.promoEndsAt || course.promoEndsAt >= now);
         let amount = promoActive ? Number(course.promoPrice) : originalPrice;
-        let couponId: string | null = null;
-
-        if (parsed.data.couponId) {
-          const [coupon] = await tx.select().from(coupons)
-            .where(eq(coupons.id, parsed.data.couponId))
-            .for('update');
-          if (!coupon) unavailable('COUPON_NOT_AVAILABLE', 400);
-          const [usage] = await tx.select({ count: count() }).from(couponUsages)
-            .where(and(
-              eq(couponUsages.couponId, coupon.id),
-              eq(couponUsages.userId, session.user.id),
-            ));
-          const eligibility = validateCouponEligibility(coupon, {
-            targetCourseId: course.id,
-            userUsageCount: usage?.count ?? 0,
-            coursePrice: amount,
-          });
-          if (!eligibility.valid) unavailable('COUPON_NOT_AVAILABLE', 400);
-          amount = Math.max(0, amount - calculateDiscount(
-            amount,
-            coupon.discountType,
-            coupon.discountValue,
-            coupon.maxDiscount,
-          ));
-          couponId = coupon.id;
-        }
 
         amount = Math.round(amount * 100) / 100;
         if (!Number.isFinite(amount) || amount <= 0) unavailable('PAYMENT_AMOUNT_INVALID', 400);
@@ -125,7 +92,6 @@ export async function POST(request: Request) {
           id: paymentId,
           userId: session.user.id,
           courseId: course.id,
-          couponId,
           amount: amount.toFixed(2),
           currency: 'THB',
           method: 'promptpay',

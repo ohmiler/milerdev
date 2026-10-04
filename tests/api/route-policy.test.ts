@@ -32,7 +32,6 @@ const MANIFEST: Record<string, RouteClass> = {
     'certificates/route.ts': 'auth',
     'checkout/review/route.ts': 'auth',
     'contact/route.ts': 'public',
-    'coupons/validate/route.ts': 'auth',
     'courses/[slug]/reviews/route.ts': 'mixed',
     'courses/route.ts': 'mixed',
     'enroll/route.ts': 'auth',
@@ -57,7 +56,7 @@ const MANIFEST: Record<string, RouteClass> = {
 const ADMIN_ROUTES = [
     'affiliate-banners/[id]', 'affiliate-banners', 'audit-logs',
     'bundles/[id]', 'bundles', 'certificates/[id]', 'certificates',
-    'coupons/[id]', 'coupons', 'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]',
+    'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]',
     'courses', 'enrollments/[id]', 'enrollments/import', 'enrollments', 'lessons/[lessonId]',
     'media/[id]', 'media', 'payments/[id]', 'payments/cleanup', 'payments',
     'reconciliation/[paymentId]/retry', 'reconciliation/[paymentId]', 'reconciliation',

@@ -77,14 +77,6 @@ The authoritative relationship granting a User access to a Course. Enrollment ma
 
 A commerce record whose schema status is one of `pending`, `verifying`, `completed`, `failed`, or `refunded`. UI wording must accurately reflect these states. In particular, `pending` and `verifying` must not be presented as successful enrollment.
 
-### Coupon
-
-A discount rule whose type is `percentage` or `fixed`. Coupon validation and final amount are server-authoritative. The client may display a quote but must not determine the charged amount or access outcome.
-
-### Coupon usage
-
-A persisted record of coupon consumption. The redesign must preserve limits and replay/duplicate protections implemented by the server.
-
 ### Promotion
 
 A course price override bounded by optional start and end timestamps. “Promotion active” is a computed display state, not a separate persisted course lifecycle state.
@@ -123,7 +115,7 @@ Home, shared navigation/footer, course catalog, course detail, bundle detail, ab
 
 ### Conversion surface
 
-Authentication, coupon, enrollment, payment-method selection, PromptPay/slip, Stripe redirect, and success/recovery UI. It is high risk because it touches money and access.
+Authentication, enrollment, payment-method selection, PromptPay/slip, Stripe redirect, and success/recovery UI. It is high risk because it touches money and access.
 
 ### Course decision journey
 
@@ -256,7 +248,7 @@ The existing `analytics_enabled` application setting. Collection remains off unl
 - Paid access follows verified payment or explicit authorized admin intent.
 - Free enrollment remains an explicit server action.
 - Money is presented in THB unless the flow explicitly supports another currency.
-- Payment, enrollment, webhook, coupon, upload, and rate-limit protections survive visual migration unchanged.
+- Payment, enrollment, webhook, upload, and rate-limit protections survive visual migration unchanged.
 - Thai text remains valid UTF-8.
 
 ## Product-language decisions

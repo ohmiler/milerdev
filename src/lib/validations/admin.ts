@@ -93,25 +93,6 @@ export const updatePaymentSchema = z.object({
     status: z.enum(['pending', 'completed', 'failed', 'refunded']),
 });
 
-// Coupon validation
-export const createCouponSchema = z.object({
-    code: z.string().min(1, 'กรุณาระบุรหัสคูปอง').max(50),
-    description: z.string().max(500).optional().nullable(),
-    discountType: z.enum(['percentage', 'fixed']),
-    discountValue: z.union([z.string(), z.number()]),
-    minPurchase: z.union([z.string(), z.number()]).optional().nullable(),
-    maxDiscount: z.union([z.string(), z.number()]).optional().nullable(),
-    usageLimit: z.number().int().positive().optional().nullable(),
-    perUserLimit: z.number().int().positive().optional(),
-    courseId: z.string().optional().nullable(),
-    startsAt: z.string().optional().nullable(),
-    expiresAt: z.string().optional().nullable(),
-});
-
-export const updateCouponSchema = createCouponSchema.partial().extend({
-    isActive: z.boolean().optional(),
-});
-
 // Bundle validation
 export const createBundleSchema = z.object({
     title: z.string().min(1, 'กรุณาระบุชื่อ Bundle').max(255),

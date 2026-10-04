@@ -1,13 +1,11 @@
 import Stripe from 'stripe';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { getMemberConsentId } from '@/lib/privacy/consent';
 import {
   bundleCourses,
   bundles,
   auditLogs,
-  coupons,
-  couponUsages,
   courses,
   enrollments,
   payments,
@@ -89,7 +87,7 @@ function getPaymentIntentId(session: Stripe.Checkout.Session): string | null {
 function readSessionIdentity(
   session: Stripe.Checkout.Session,
   expected?: ExpectedStripePayment,
-): { paymentId: string; userId: string; target: PaymentTarget; couponId?: string } {
+): { paymentId: string; userId: string; target: PaymentTarget } {
   const metadata = session.metadata ?? {};
   const paymentId = metadata.paymentId;
   const userId = metadata.userId;
@@ -113,7 +111,6 @@ function readSessionIdentity(
     paymentId,
     userId,
     target: { type, itemId } as PaymentTarget,
-    ...(metadata.couponId ? { couponId: metadata.couponId } : {}),
   };
 }
 
@@ -255,36 +252,6 @@ export async function fulfillStripeCheckoutSession({
             courseCount: includedCourses.length,
             firstCourseSlug: includedCourses[0]?.courseSlug ?? '',
           };
-        }
-      }
-
-      if (identity.couponId) {
-        const [coupon] = await tx
-          .select({ id: coupons.id })
-          .from(coupons)
-          .where(eq(coupons.id, identity.couponId))
-          .limit(1);
-
-        if (coupon) {
-          let usageCreated = false;
-          try {
-            await tx.insert(couponUsages).values({
-              couponId: identity.couponId,
-              userId: identity.userId,
-              ...(identity.target.type === 'course' && { courseId: identity.target.itemId }),
-              discountAmount: '0',
-            });
-            usageCreated = true;
-          } catch (error) {
-            if (!isDuplicateKeyError(error)) throw error;
-          }
-
-          if (usageCreated) {
-            await tx
-              .update(coupons)
-              .set({ usageCount: sql`${coupons.usageCount} + 1` })
-              .where(eq(coupons.id, identity.couponId));
-          }
         }
       }
 

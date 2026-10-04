@@ -7,9 +7,7 @@ import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/ra
 const reviewSchema = z.object({
   courseId: z.string().trim().min(1).max(36).optional(),
   bundleId: z.string().trim().min(1).max(36).optional(),
-  couponCode: z.string().trim().min(1).max(100).optional(),
-}).strict().refine((value) => Boolean(value.courseId) !== Boolean(value.bundleId))
-  .refine((value) => !value.bundleId || !value.couponCode);
+}).strict().refine((value) => Boolean(value.courseId) !== Boolean(value.bundleId));
 
 export async function POST(request: Request) {
   const session = await auth();

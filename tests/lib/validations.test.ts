@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
     createCourseSchema,
     updateCourseSchema,
-    createCouponSchema,
     updateUserSchema,
     updatePaymentSchema,
     createBundleSchema,
@@ -76,44 +75,6 @@ describe('Admin Validation Schemas', () => {
 
         it('should reject lifecycle status changes', () => {
             const result = updateCourseSchema.safeParse({ status: 'archived' });
-            expect(result.success).toBe(false);
-        });
-    });
-
-    describe('createCouponSchema', () => {
-        it('should accept valid coupon', () => {
-            const result = createCouponSchema.safeParse({
-                code: 'SAVE50',
-                discountType: 'percentage',
-                discountValue: '50',
-            });
-            expect(result.success).toBe(true);
-        });
-
-        it('should reject empty code', () => {
-            const result = createCouponSchema.safeParse({
-                code: '',
-                discountType: 'percentage',
-                discountValue: '50',
-            });
-            expect(result.success).toBe(false);
-        });
-
-        it('should reject invalid discountType', () => {
-            const result = createCouponSchema.safeParse({
-                code: 'TEST',
-                discountType: 'half_price',
-                discountValue: '50',
-            });
-            expect(result.success).toBe(false);
-        });
-
-        it('should reject code longer than 50 chars', () => {
-            const result = createCouponSchema.safeParse({
-                code: 'X'.repeat(51),
-                discountType: 'fixed',
-                discountValue: 100,
-            });
             expect(result.success).toBe(false);
         });
     });
@@ -238,7 +199,7 @@ describe('Admin Validation Schemas', () => {
         });
 
         it('should return error on completely wrong input', () => {
-            const result = validateBody(createCouponSchema, { random: 'data' });
+            const result = validateBody(createCourseSchema, { random: 'data' });
             expect(result.success).toBe(false);
         });
     });

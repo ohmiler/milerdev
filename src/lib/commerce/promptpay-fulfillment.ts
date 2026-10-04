@@ -1,12 +1,10 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/lib/db';
 import { getMemberConsentId } from '@/lib/privacy/consent';
 import {
   bundleCourses,
   bundles,
-  coupons,
-  couponUsages,
   courses,
   enrollments,
   measurementOutbox,
@@ -153,29 +151,6 @@ export async function fulfillPromptPayIntent({
           firstCourseSlug: includedCourses[0]?.courseSlug ?? '',
           courseCount: includedCourses.length,
         };
-      }
-    }
-
-    if (payment.couponId && payment.courseId) {
-      const [coupon] = await tx.select({ id: coupons.id }).from(coupons)
-        .where(eq(coupons.id, payment.couponId)).limit(1);
-      if (coupon) {
-        let inserted = false;
-        try {
-          await tx.insert(couponUsages).values({
-            couponId: coupon.id,
-            userId,
-            courseId: payment.courseId,
-            discountAmount: '0',
-          });
-          inserted = true;
-        } catch (error) {
-          if (!isDuplicateKeyError(error)) throw error;
-        }
-        if (inserted) {
-          await tx.update(coupons).set({ usageCount: sql`${coupons.usageCount} + 1` })
-            .where(eq(coupons.id, coupon.id));
-        }
       }
     }
 

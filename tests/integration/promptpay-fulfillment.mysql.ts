@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomBytes } from 'node:crypto';
 import { eq, inArray, sql } from 'drizzle-orm';
 import {
-    bundleCourses, bundles, couponUsages, coupons, courses, enrollments, payments, users,
+    bundleCourses, bundles, courses, enrollments, payments, users,
 } from '@/lib/db/schema';
 
 /**
@@ -17,7 +17,7 @@ const suffix = randomBytes(6).toString('hex');
 let counter = 0;
 const created = {
     users: [] as string[], courses: [] as string[], payments: [] as string[],
-    bundles: [] as string[], coupons: [] as string[],
+    bundles: [] as string[],
 };
 const id = (kind: string) => `pp-${suffix}-${kind}-${counter++}`;
 
@@ -63,10 +63,6 @@ beforeAll(async () => {
 afterAll(async () => {
     if (!db) return;
     // Only rows created here are removed; shared tables are never truncated.
-    if (created.coupons.length) {
-        await db.delete(couponUsages).where(inArray(couponUsages.couponId, created.coupons));
-        await db.delete(coupons).where(inArray(coupons.id, created.coupons));
-    }
     if (created.users.length) await db.delete(enrollments).where(inArray(enrollments.userId, created.users));
     if (created.payments.length) await db.delete(payments).where(inArray(payments.id, created.payments));
     if (created.bundles.length) {
@@ -197,18 +193,4 @@ describe('PromptPay fulfillment on real MySQL', () => {
         expect(await statusOf(a.paymentId)).toBe('verifying');
     });
 
-    it('records coupon usage with discountAmount 0 (KNOWN DEFECT: real discount not stored)', async () => {
-        const couponId = id('k');
-        await db.insert(coupons).values({ id: couponId, code: `CODE-${couponId}`, discountType: 'fixed', discountValue: '10.00' });
-        created.coupons.push(couponId);
-        const a = await seedIntent({ status: 'verifying', couponId });
-
-        await svc.fulfillPromptPayIntent({ paymentId: a.paymentId, userId: a.userId, promptpayTransRef: `ref-${suffix}-coupon` });
-
-        const usages = await db.select().from(couponUsages).where(eq(couponUsages.couponId, couponId));
-        expect(usages).toHaveLength(1);
-        expect(usages[0].discountAmount).toBe('0.00');
-        const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId));
-        expect(coupon.usageCount).toBe(1);
-    });
 });

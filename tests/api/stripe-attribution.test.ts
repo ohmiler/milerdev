@@ -14,10 +14,6 @@ vi.mock('@/lib/security/rate-limit', () => ({
   rateLimits: { sensitive: { maxRequests: 10, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/commerce/coupon', () => ({
-  calculateDiscount: vi.fn(),
-  validateCouponEligibility: vi.fn(),
-}));
 vi.mock('@/lib/analytics/measurement-recorder', () => ({
   measurementRecorder: { resolveProductExposureAttribution },
 }));

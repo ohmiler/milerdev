@@ -167,13 +167,6 @@ test.describe('Payment API Security', () => {
     expect(res.status()).toBe(401);
   });
 
-  test('coupon validate API requires auth', async ({ page }) => {
-    const res = await page.request.post('/api/coupons/validate', {
-      data: { code: 'FAKE', courseId: 'fake', originalPrice: 100 },
-    });
-    expect(res.status()).toBe(401);
-  });
-
   test('webhook rejects without stripe-signature', async ({ page }) => {
     const res = await page.request.post('/api/stripe/webhook', {
       data: '{}',
@@ -203,13 +196,6 @@ test.describe('Payment Amount Validation', () => {
       data: {},
     });
     // Should be 400 or 401 — NOT 500
-    expect(res.status()).toBeLessThan(500);
-  });
-
-  test('coupon validate rejects empty code', async ({ page }) => {
-    const res = await page.request.post('/api/coupons/validate', {
-      data: { code: '', courseId: 'fake', originalPrice: 100 },
-    });
     expect(res.status()).toBeLessThan(500);
   });
 });

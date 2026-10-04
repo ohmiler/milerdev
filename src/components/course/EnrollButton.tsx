@@ -21,7 +21,7 @@ interface EnrollButtonProps {
 export const COURSE_PAYMENT_CONTRACT = {
   ...CHECKOUT_CONTRACT,
   enrollEndpoint: '/api/enroll', stripeEndpoint: '/api/stripe/checkout',
-  couponEndpoint: '/api/coupons/validate', slipEndpoint: '/api/slip/verify',
+  slipEndpoint: '/api/slip/verify',
   slipFields: { file: 'slip', paymentId: 'paymentId' },
 } as const;
 

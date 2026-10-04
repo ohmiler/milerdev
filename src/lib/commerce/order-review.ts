@@ -3,14 +3,12 @@ import 'server-only';
 import { and, count, eq, inArray } from 'drizzle-orm';
 import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
-import { calculateDiscount, validateCouponEligibility } from '@/lib/commerce/coupon';
 import { db } from '@/lib/db';
-import { bundleCourses, bundles, coupons, couponUsages, courses, enrollments, lessons } from '@/lib/db/schema';
+import { bundleCourses, bundles, courses, enrollments, lessons } from '@/lib/db/schema';
 
 export type OrderReview = {
   target: { type: 'course' | 'bundle'; id: string; title: string; href: string };
-  price: { original: string; discount: string; amountDue: string; currency: 'THB' };
-  coupon: { id: string; code: string; description: string | null } | null;
+  price: { amountDue: string; currency: 'THB' };
   access: { ownedCount: number; totalCount: number; description: string };
   comparison: { separate: string; label: string } | null;
   action: 'pay' | 'enroll-free' | 'owned' | 'unavailable';
@@ -22,7 +20,7 @@ export class OrderReviewError extends Error {
 
 export async function loadOrderReview(
   userId: string,
-  input: { courseId?: string; bundleId?: string; couponCode?: string },
+  input: { courseId?: string; bundleId?: string },
 ): Promise<OrderReview> {
   const now = new Date();
   if (input.courseId) {
@@ -41,25 +39,10 @@ export async function loadOrderReview(
         price: course.promoPrice, startsAt: course.promoStartsAt, endsAt: course.promoEndsAt,
       },
     }, { now });
-    let coupon: OrderReview['coupon'] = null;
-    let amount = facts.price.effective;
-    if (input.couponCode) {
-      const record = await db.query.coupons.findFirst({ where: eq(coupons.code, input.couponCode.toUpperCase()) });
-      if (!record) throw new OrderReviewError('ไม่พบคูปองนี้');
-      const [usage] = await db.select({ count: count() }).from(couponUsages)
-        .where(and(eq(couponUsages.couponId, record.id), eq(couponUsages.userId, userId)));
-      const eligibility = validateCouponEligibility(record, {
-        targetCourseId: course.id, userUsageCount: usage?.count ?? 0, coursePrice: amount,
-      });
-      if (!eligibility.valid) throw new OrderReviewError(eligibility.error || 'คูปองนี้ใช้ไม่ได้');
-      amount = Math.max(0, amount - calculateDiscount(amount, record.discountType, record.discountValue, record.maxDiscount));
-      amount = Math.round(amount * 100) / 100;
-      coupon = { id: record.id, code: record.code, description: record.description };
-    }
+    const amount = facts.price.effective;
     return {
       target: { type: 'course', id: course.id, title: course.title, href: facts.actions.discovery.href },
-      price: { original: facts.price.effective.toFixed(2), discount: (facts.price.effective - amount).toFixed(2), amountDue: amount.toFixed(2), currency: 'THB' },
-      coupon,
+      price: { amountDue: amount.toFixed(2), currency: 'THB' },
       access: { ownedCount: owned ? 1 : 0, totalCount: 1, description: owned ? 'คุณมีสิทธิ์เรียนคอร์สนี้แล้ว' : 'ได้รับสิทธิ์เรียนคอร์สนี้เมื่อระบบยืนยันการชำระเงิน หรือยืนยันการลงทะเบียนเรียนฟรีแล้ว' },
       comparison: null,
       action: owned ? 'owned' : facts.readiness !== 'ready' ? 'unavailable' : amount === 0 ? 'enroll-free' : 'pay',
@@ -89,8 +72,7 @@ export async function loadOrderReview(
   })) }, { now });
   return {
     target: { type: 'bundle', id: bundle.id, title: bundle.title, href: facts.actions.discovery.href },
-    price: { original: facts.price.bundle.toFixed(2), discount: '0.00', amountDue: facts.price.bundle.toFixed(2), currency: 'THB' },
-    coupon: null,
+    price: { amountDue: facts.price.bundle.toFixed(2), currency: 'THB' },
     access: { ownedCount: facts.ownership.ownedCount, totalCount: ids.length, description: facts.ownership.disclosure || (facts.ownership.status === 'complete' ? 'คุณมีสิทธิ์เรียนทุกคอร์สใน Bundle นี้แล้ว' : 'ได้รับสิทธิ์เรียนทุกคอร์สใน Bundle เมื่อระบบยืนยันการชำระเงิน หรือยืนยันการลงทะเบียนเรียนฟรีแล้ว') },
     comparison: { separate: facts.price.separateCurrent.toFixed(2), label: facts.price.comparison.label },
     action: facts.ownership.status === 'complete' ? 'owned' : facts.readiness !== 'ready' ? 'unavailable' : facts.price.isFree ? 'enroll-free' : 'pay',

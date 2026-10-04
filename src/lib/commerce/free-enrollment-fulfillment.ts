@@ -1,28 +1,22 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 import { db } from '@/lib/db';
 import { getMemberConsentId } from '@/lib/privacy/consent';
-import { couponUsages, coupons, enrollments, measurementOutbox } from '@/lib/db/schema';
+import { enrollments, measurementOutbox } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { enrollmentMeasurementProjector } from '@/lib/analytics/enrollment-measurement-projector';
 
 type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export class FreeEnrollmentFulfillmentError extends Error {
-  constructor(readonly code: 'INVALID_FREE_ENROLLMENT' | 'COUPON_LIMIT_EXCEEDED') {
+  constructor(readonly code: 'INVALID_FREE_ENROLLMENT') {
     super(code);
     this.name = 'FreeEnrollmentFulfillmentError';
   }
 }
 
 type EnrollmentOutcome = { id: string; courseId: string; created: boolean };
-
-function getAffectedRows(result: unknown): number {
-  const candidate = Array.isArray(result) ? result[0] : result;
-  if (!candidate || typeof candidate !== 'object' || !('affectedRows' in candidate)) return 0;
-  return Number((candidate as { affectedRows: unknown }).affectedRows) || 0;
-}
 
 async function insertEnrollment(
   tx: DatabaseTransaction,
@@ -54,11 +48,9 @@ async function insertEnrollment(
 export async function fulfillFreeEnrollment({
   userId,
   courseIds,
-  coupon,
 }: {
   userId: string;
   courseIds: string[];
-  coupon?: { id: string; discountAmount: string };
 }): Promise<{
   status: 'fulfilled' | 'already_fulfilled';
   created: EnrollmentOutcome[];
@@ -70,7 +62,6 @@ export async function fulfillFreeEnrollment({
     || userId.length > 36
     || uniqueCourseIds.length === 0
     || uniqueCourseIds.some((id) => id.length > 36)
-    || (coupon && uniqueCourseIds.length !== 1)
   ) {
     throw new FreeEnrollmentFulfillmentError('INVALID_FREE_ENROLLMENT');
   }
@@ -79,25 +70,6 @@ export async function fulfillFreeEnrollment({
     const entries: EnrollmentOutcome[] = [];
     for (const courseId of uniqueCourseIds) {
       entries.push(await insertEnrollment(tx, userId, courseId));
-    }
-
-    const created = entries.filter((entry) => entry.created);
-    if (coupon && created.length > 0) {
-      const updateResult = await tx.update(coupons)
-        .set({ usageCount: sql`${coupons.usageCount} + 1` })
-        .where(and(
-          eq(coupons.id, coupon.id),
-          sql`(${coupons.usageLimit} IS NULL OR ${coupons.usageCount} < ${coupons.usageLimit})`,
-        ));
-      if (getAffectedRows(updateResult) !== 1) {
-        throw new FreeEnrollmentFulfillmentError('COUPON_LIMIT_EXCEEDED');
-      }
-      await tx.insert(couponUsages).values({
-        couponId: coupon.id,
-        userId,
-        courseId: uniqueCourseIds[0],
-        discountAmount: coupon.discountAmount,
-      });
     }
     return entries;
   });

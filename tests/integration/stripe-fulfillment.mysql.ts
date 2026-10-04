@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { eq, inArray, sql } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import {
-    couponUsages, coupons, courses, enrollments, payments, stripeEvents, users,
+    courses, enrollments, payments, stripeEvents, users,
 } from '@/lib/db/schema';
 
 /**
@@ -19,16 +19,16 @@ let fulfill: typeof import('@/lib/commerce/payment-fulfillment').fulfillStripeCh
 const suffix = randomBytes(6).toString('hex');
 const created = {
     users: [] as string[], courses: [] as string[], payments: [] as string[],
-    coupons: [] as string[], events: [] as string[],
+    events: [] as string[],
 };
 
-async function seedAttempt(opts: { amount?: string; couponId?: string } = {}) {
+async function seedAttempt(opts: { amount?: string } = {}) {
     const [userId, courseId, paymentId] = [0, 1, 2].map((i) => `t-${suffix}-${i}-${created.payments.length}`);
     await db.insert(users).values({ id: userId, email: `${userId}@example.test`, name: 'Buyer' });
     await db.insert(courses).values({ id: courseId, title: 'Course', slug: `course-${userId}`, price: '100.00', status: 'published' });
     await db.insert(payments).values({
         id: paymentId, userId, courseId, amount: opts.amount ?? '100.00', currency: 'THB',
-        method: 'stripe', status: 'pending', ...(opts.couponId ? { couponId: opts.couponId } : {}),
+        method: 'stripe', status: 'pending',
     });
     created.users.push(userId); created.courses.push(courseId); created.payments.push(paymentId);
     return { userId, courseId, paymentId };
@@ -60,10 +60,6 @@ afterAll(async () => {
     if (!db) return;
     // Only rows created here are removed; shared tables are never truncated.
     if (created.events.length) await db.delete(stripeEvents).where(inArray(stripeEvents.id, created.events));
-    if (created.coupons.length) {
-        await db.delete(couponUsages).where(inArray(couponUsages.couponId, created.coupons));
-        await db.delete(coupons).where(inArray(coupons.id, created.coupons));
-    }
     if (created.users.length) await db.delete(enrollments).where(inArray(enrollments.userId, created.users));
     if (created.payments.length) {
         await db.delete(stripeEvents).where(inArray(stripeEvents.paymentId, created.payments));
@@ -161,39 +157,12 @@ describe('Stripe fulfillment on real MySQL', () => {
         expect(await db.select().from(stripeEvents).where(eq(stripeEvents.id, event.id))).toHaveLength(0);
     });
 
-    describe('coupon redemption (KNOWN DEFECTS pinned, not endorsed)', () => {
-        async function seedCoupon(over: Partial<typeof coupons.$inferInsert> = {}) {
-            const id = `c-${suffix}-${created.coupons.length}`;
-            await db.insert(coupons).values({
-                id, code: `CODE-${suffix}-${created.coupons.length}`, discountType: 'fixed', discountValue: '10.00', ...over,
-            });
-            created.coupons.push(id);
-            return id;
-        }
+    it('fulfills a session that still carries couponId metadata from before coupons were retired', async () => {
+        const a = await seedAttempt();
 
-        it('records the usage with discountAmount 0 instead of the real discount', async () => {
-            const couponId = await seedCoupon();
-            const a = await seedAttempt({ couponId });
+        const result = await fulfill({ session: sessionFor(a, {}, 'retired-coupon') });
 
-            const result = await fulfill({ session: sessionFor(a, {}, couponId) });
-
-            expect(result.status).toBe('fulfilled');
-            const usages = await db.select().from(couponUsages).where(eq(couponUsages.couponId, couponId));
-            expect(usages).toHaveLength(1);
-            expect(usages[0].discountAmount).toBe('0.00'); // KNOWN DEFECT: real discount is not stored
-            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId));
-            expect(coupon.usageCount).toBe(1);
-        });
-
-        it('does not re-check usageLimit at fulfillment time', async () => {
-            const couponId = await seedCoupon({ usageLimit: 1, usageCount: 1 });
-            const a = await seedAttempt({ couponId });
-
-            const result = await fulfill({ session: sessionFor(a, {}, couponId) });
-
-            expect(result.status).toBe('fulfilled'); // KNOWN DEFECT: limit is only checked when the attempt starts
-            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId));
-            expect(coupon.usageCount).toBe(2);
-        });
+        expect(result.status).toBe('fulfilled');
+        expect(await enrollmentRows(a.userId)).toHaveLength(1);
     });
 });

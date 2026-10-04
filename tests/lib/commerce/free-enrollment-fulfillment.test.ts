@@ -30,7 +30,7 @@ function transactionAdapter() {
   return {
     insert: vi.fn(() => ({
       values: vi.fn(async (row: Record<string, unknown>) => {
-        const isEnrollment = Boolean(row.id && row.userId && row.courseId && !row.eventName && !row.couponId);
+        const isEnrollment = Boolean(row.id && row.userId && row.courseId && !row.eventName);
         if (isEnrollment && duplicateCourses.has(String(row.courseId))) {
           throw new Error('duplicate');
         }
@@ -113,20 +113,13 @@ describe('free enrollment fulfillment', () => {
     expect(projectEnrollment).toHaveBeenCalledWith('existing-enrollment');
   });
 
-  it('keeps a 100%-coupon usage, enrollment, and outbox in the same transaction', async () => {
+  it('keeps the enrollment and its outbox in the same transaction', async () => {
     const result = await fulfillFreeEnrollment({
       userId: 'student-1',
       courseIds: ['course-1'],
-      coupon: { id: 'coupon-1', discountAmount: '990' },
     });
 
     expect(result.status).toBe('fulfilled');
-    expect(insertedRows).toContainEqual(expect.objectContaining({
-      couponId: 'coupon-1',
-      userId: 'student-1',
-      courseId: 'course-1',
-      discountAmount: '990',
-    }));
     expect(insertedRows).toContainEqual(expect.objectContaining({
       eventName: 'free_enrollment_completed',
       enrollmentId: enrollmentIds.get('course-1'),

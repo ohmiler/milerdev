@@ -7,7 +7,7 @@ import { CreditCard, Smartphone, X } from 'lucide-react';
 import DialogShell from '@/components/ui/DialogShell';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import OrderReviewSummary, { formatOrderAmount } from './OrderReviewSummary';
@@ -38,8 +38,6 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
   const [review, setReview] = useState<OrderReview | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponError, setCouponError] = useState<string | null>(null);
   const [intent, setIntent] = useState<Intent | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [uncertain, setUncertain] = useState(false);
@@ -51,7 +49,6 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
   const busyRef = useRef(false);
   const reviewRequest = useRef(0);
   const fileRef = useRef<HTMLInputElement>(null);
-  const couponId = useId();
   const slipId = useId();
   const body = target.type === 'course' ? { courseId: target.id } : { bundleId: target.id };
   const endpoints = target.type === 'course'
@@ -62,7 +59,7 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
     if (!open || intent || resumePaymentId) return;
     const controller = new AbortController();
     const version = ++reviewRequest.current;
-    // Every fresh opening revalidates product/ownership facts. Coupons are reapplied explicitly.
+    // Every fresh opening revalidates product/ownership facts.
     fetch(CHECKOUT_CONTRACT.reviewEndpoint, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(target.type === 'course' ? { courseId: target.id } : { bundleId: target.id }),
@@ -118,37 +115,32 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
   const close = () => {
     if (busyRef.current) return;
     if (!intent && !uncertain) setError(null);
-    setCouponError(null);
     reviewRequest.current += 1;
     setReview(null);
-    setCouponCode('');
     setSlipFile(null);
     setSlipPreview(null);
     setResumeChecked(false);
     onClose();
   };
 
-  const refreshReview = async (code?: string) => {
+  const refreshReview = async () => {
     if (busyRef.current) return;
     busyRef.current = true;
     setLoading(true);
     if (!intent && !uncertain) setError(null);
-    setCouponError(null);
     reviewRequest.current += 1;
     setReview(null);
     try {
       const response = await fetch(CHECKOUT_CONTRACT.reviewEndpoint, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, ...(code ? { couponCode: code } : {}) }),
+        body: JSON.stringify(body),
       });
       const data = await response.json();
       if (!response.ok || !data.review) {
-        if (code) setCouponError(data.error || 'คูปองนี้ใช้ไม่ได้');
-        else setError(data.error || 'ยังตรวจสอบรายการไม่ได้');
+        setError(data.error || 'ยังตรวจสอบรายการไม่ได้');
         return;
       }
       setReview(data.review);
-      if (!code) setCouponCode('');
     } catch {
       setError('ไม่สามารถเชื่อมต่อได้ กรุณาตรวจสอบรายการอีกครั้ง');
     } finally {
@@ -166,7 +158,7 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
       const response = await fetch(method === 'stripe' ? endpoints.stripe : method === 'promptpay' ? CHECKOUT_CONTRACT.intentEndpoint : endpoints.enroll, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...body, ...(review.coupon ? { couponId: review.coupon.id } : {}),
+          ...body,
           ...(method !== 'free' ? { expectedAmount: review.price.amountDue } : {}),
           ...(method === 'stripe' && exposureId ? { exposureId } : {}),
         }),
@@ -322,26 +314,15 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
             </>
           ) : (
             <>
-              {review ? <OrderReviewSummary review={review} /> : !error && !couponError ? <p role="status">กำลังตรวจสอบรายการ...</p> : null}
-              {target.type === 'course' && !uncertain ? (
-                <FieldGroup>
-                  <Field data-invalid={Boolean(couponError) || undefined}>
-                    <FieldLabel htmlFor={couponId}>มีโค้ดส่วนลด?</FieldLabel>
-                    <Input id={couponId} value={couponCode} disabled={pending} maxLength={100} aria-invalid={Boolean(couponError) || undefined} aria-describedby={couponError ? `${couponId}-error` : undefined} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); void refreshReview(couponCode.trim()); } }} />
-                    {couponError ? <FieldError id={`${couponId}-error`}>{couponError}</FieldError> : null}
-                    <Button type="button" variant="outline" disabled={pending || !couponCode.trim()} onClick={() => refreshReview(couponCode.trim())}>ใช้โค้ด</Button>
-                    {review?.coupon ? <><p role="status">ใช้คูปอง {review.coupon.code} แล้ว</p><Button type="button" variant="outline" disabled={pending} onClick={() => refreshReview()}>ลบคูปอง</Button></> : null}
-                  </Field>
-                </FieldGroup>
-              ) : null}
-              {!review && (error || couponError) && !uncertain ? <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => refreshReview()}>ตรวจสอบรายการใหม่โดยไม่ใช้คูปอง</Button> : null}
+              {review ? <OrderReviewSummary review={review} /> : !error ? <p role="status">กำลังตรวจสอบรายการ...</p> : null}
+              {!review && error && !uncertain ? <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => refreshReview()}>ตรวจสอบรายการอีกครั้ง</Button> : null}
               {review?.action === 'unavailable' ? <Alert><AlertTitle>ยังไม่เปิดรับสมัคร</AlertTitle><AlertDescription>สินค้านี้ยังไม่พร้อมรับการลงทะเบียน กรุณากลับมาตรวจสอบภายหลัง</AlertDescription></Alert> : null}
               {review?.action === 'owned' ? <Button asChild><Link href="/dashboard">ไปการเรียนของฉัน</Link></Button> : null}
               {review?.action === 'pay' && !uncertain ? <div className="flex flex-col gap-3" role="group" aria-label="ช่องทางชำระเงิน">
                 <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('stripe')}><CreditCard data-icon="inline-start" aria-hidden="true" />ชำระด้วยบัตรผ่าน Stripe</Button>
                 <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('promptpay')}><Smartphone data-icon="inline-start" aria-hidden="true" />โอนเงิน / PromptPay</Button>
               </div> : null}
-              {review?.action === 'enroll-free' && !uncertain ? <Button type="button" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('free')}>{review.coupon ? 'ลงทะเบียนเรียนฟรี (คูปอง 100%)' : 'ยืนยันลงทะเบียนเรียนฟรี'}</Button> : null}
+              {review?.action === 'enroll-free' && !uncertain ? <Button type="button" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('free')}>ยืนยันลงทะเบียนเรียนฟรี</Button> : null}
               {loading ? <p role="status"><Spinner aria-hidden="true" />กำลังดำเนินการ...</p> : null}
             </>
           )}
