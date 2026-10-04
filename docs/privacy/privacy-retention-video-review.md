@@ -46,7 +46,7 @@ A separate daily Railway count-only service configuration is prepared in [deploy
 
 | Provider supported in code | Current implementation | Follow-up |
 | --- | --- | --- |
-| Bunny Stream | Direct `iframe.mediadelivery.net` embed; Player.js messages support progress and playback recovery | Public test observed; see [findings](../research/bunny-stream-privacy-2026-09-13.md). Actual library settings and endpoint-specific telemetry purpose/retention remain unverified. |
+| Bunny Stream | Direct `iframe.mediadelivery.net` embed; Player.js messages support progress and playback recovery | Public test observed; see [findings](../archive/research/bunny-stream-privacy-2026-09-13.md). Actual library settings and endpoint-specific telemetry purpose/retention remain unverified. |
 | YouTube | `www.youtube-nocookie.com/embed/…` (Privacy Enhanced Mode), allowed by the page CSP | Inspect live requests and document the remaining data transfer. This is not a no-data-transfer guarantee. |
 | Vimeo | `player.vimeo.com/video/…` with `dnt=1` | Inspect live existing-cookie and security-cookie behavior. |
 | Other URL | Falls back to supplied URL | Inventory the allowed hosts before promising coverage of all third-party media. |

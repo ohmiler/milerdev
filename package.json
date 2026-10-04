@@ -23,10 +23,6 @@
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:migrate:local": "tsx src/lib/db/migrate.ts",
     "privacy:retention": "tsx scripts/privacy-retention.ts",
-    "db:rehearse:user-lifecycle": "tsx scripts/rehearse-user-lifecycle-migration.ts",
-    "db:rehearse:course-lifecycle": "tsx scripts/rehearse-course-lifecycle-migration.ts",
-    "db:fixtures:user-lifecycle-smoke": "tsx scripts/create-user-lifecycle-smoke-fixtures.ts",
-    "db:fixtures:course-lifecycle-smoke": "tsx scripts/create-course-lifecycle-smoke-fixtures.ts",
     "db:fixtures:e2e": "tsx scripts/create-e2e-fixtures.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx scripts/seed.ts",
@@ -63,7 +59,6 @@
     "mysql2": "^3.24.5",
     "next": "16.3.8",
     "next-auth": "5.0.0-beta.32",
-    "next-rate-limit": "^0.0.3",
     "nodemailer": "8.0.11",
     "radix-ui": "^1.6.7",
     "react": "19.2.3",
@@ -96,7 +91,6 @@
     "jsdom": "^29.1.1",
     "shadcn": "^4.18.0",
     "tailwindcss": "^4",
-    "ts-node": "^10.9.2",
     "typescript": "^5",
     "vitest": "^2.1.8"
   }

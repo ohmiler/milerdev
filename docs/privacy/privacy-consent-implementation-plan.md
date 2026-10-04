@@ -47,7 +47,7 @@
 
 1. ตรวจ browser แบบ isolated ด้วย provider mocks: public page, login, authenticated page, checkout, video; จดชื่อ storage/request, purpose, recipient, lifetime และเวลาที่เริ่มทำงาน
 2. ระบุจุดที่ mock พิสูจน์ไม่ได้ เช่น third-party cookies และ provider configuration ให้เป็นช่องว่างแยกต่างหาก การยืนยันของจริงต้องอยู่ในขอบเขตที่เจ้าของอนุญาต
-3. สรุป owner identity/contact, lawful basis ต่อกลุ่ม, retention, rights workflow และ vendor roles; ใช้ [แหล่งอ้างอิง](../research/website-foundations-sources-2026-09-13.md) ประกอบ ไม่แต่งข้อเท็จจริงธุรกิจ
+3. สรุป owner identity/contact, lawful basis ต่อกลุ่ม, retention, rights workflow และ vendor roles; ใช้ [แหล่งอ้างอิง](../archive/research/website-foundations-sources-2026-09-13.md) ประกอบ ไม่แต่งข้อเท็จจริงธุรกิจ
 
 เกณฑ์จบ: มี inventory ที่แยก source evidence/browser evidence/provider unknown และตาราง policy ที่พร้อมให้ใช้เขียน notice
 
