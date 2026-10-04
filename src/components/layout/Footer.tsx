@@ -12,6 +12,7 @@ function YouTubeIcon() {
 const quickLinks = [
   { href: '/courses', label: 'คอร์สทั้งหมด' },
   { href: '/about', label: 'เกี่ยวกับเรา' },
+  { href: '/stack', label: 'เบื้องหลัง MilerDev' },
   { href: '/contact', label: 'ติดต่อ' },
 ];
 
