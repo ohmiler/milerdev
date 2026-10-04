@@ -8,8 +8,6 @@ import CheckoutDialog, { CHECKOUT_CONTRACT } from '@/components/checkout/Checkou
 import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
-import { useProductExposureId } from '@/components/analytics/AnalyticsViewEvent';
 
 interface EnrollButtonProps {
   courseId: string;
@@ -31,7 +29,6 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   const session = sessionResult?.data;
   const status = sessionResult?.status ?? 'unauthenticated';
   const sessionUserId = session?.user.id;
-  const exposureId = useProductExposureId();
   const [enrolled, setEnrolled] = useState(false);
   const [checking, setChecking] = useState(true);
   const [open, setOpen] = useState(false);
@@ -65,7 +62,6 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
       return;
     }
     if (price > 0) {
-      trackClientAnalyticsEvent({ eventName: 'checkout_opened', courseId, placement: 'course_detail' });
       setOpen(true);
       return;
     }
@@ -88,7 +84,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
         {checking || loading ? <Spinner data-icon="inline-start" aria-hidden="true" /> : enrolled ? <PlayCircle data-icon="inline-start" aria-hidden="true" /> : null}
         {checking ? 'กำลังตรวจสอบ...' : loading ? 'กำลังดำเนินการ...' : enrolled ? 'เข้าเรียน' : price === 0 ? 'ลงทะเบียนเรียนฟรี' : `ซื้อคอร์สนี้ ฿${price.toLocaleString()}`}
       </Button>
-      <CheckoutDialog key={`${sessionUserId}:${courseId}`} open={open} onClose={() => setOpen(false)} target={{ type: 'course', id: courseId }} exposureId={exposureId} returnFocusRef={triggerRef} onEnrolled={() => updateEnrolled(true)} />
+      <CheckoutDialog key={`${sessionUserId}:${courseId}`} open={open} onClose={() => setOpen(false)} target={{ type: 'course', id: courseId }} returnFocusRef={triggerRef} onEnrolled={() => updateEnrolled(true)} />
       <Modal isOpen={Boolean(error)} onClose={() => setError(null)} returnFocusRef={triggerRef} type="error" title="เกิดข้อผิดพลาด">{error}</Modal>
     </>
   );

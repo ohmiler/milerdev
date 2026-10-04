@@ -26,13 +26,12 @@ type Props = {
   open: boolean;
   onClose: () => void;
   target: { type: 'course' | 'bundle'; id: string };
-  exposureId: string | null | undefined;
   returnFocusRef: RefObject<HTMLButtonElement | null>;
   onEnrolled: () => void;
   resumePaymentId?: string;
 };
 
-export default function CheckoutDialog({ open, onClose, target, exposureId, returnFocusRef, onEnrolled, resumePaymentId }: Props) {
+export default function CheckoutDialog({ open, onClose, target, returnFocusRef, onEnrolled, resumePaymentId }: Props) {
   const [resumeVersion, setResumeVersion] = useState(0);
   const [resumeChecked, setResumeChecked] = useState(false);
   const [review, setReview] = useState<OrderReview | null>(null);
@@ -160,7 +159,6 @@ export default function CheckoutDialog({ open, onClose, target, exposureId, retu
         body: JSON.stringify({
           ...body,
           ...(method !== 'free' ? { expectedAmount: review.price.amountDue } : {}),
-          ...(method === 'stripe' && exposureId ? { exposureId } : {}),
         }),
       });
       const data = await response.json();

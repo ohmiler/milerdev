@@ -21,7 +21,6 @@ import { eq, and } from 'drizzle-orm';
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
 import { getExcerpt, getSanitizedRichContentCached } from '@/lib/security/sanitize';
 import { absoluteUrl, DEFAULT_OG_IMAGE, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
-import AnalyticsViewEvent from '@/components/analytics/AnalyticsViewEvent';
 import TagBadge from '@/components/content/TagBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
@@ -245,7 +244,6 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
       <Navbar />
 
       <CourseDetailProvider>
-        <AnalyticsViewEvent productType="course" productId={course.id}>
           <MainContent className="min-h-screen bg-background text-foreground">
           {cancelled ? <PaymentCancellationNotice /> : null}
           {accessDenied ? <CourseAccessDeniedNotice /> : null}
@@ -374,7 +372,6 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
             <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} renderMode="mobile-bar" />
           </article>
           </MainContent>
-        </AnalyticsViewEvent>
       </CourseDetailProvider>
 
       <Footer />

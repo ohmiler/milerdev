@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { Inter, Prompt } from "next/font/google";
 import "./globals.css";
-import WebVitalsReporter from "@/components/analytics/WebVitalsReporter";
 import SessionProvider from "@/components/providers/SessionProvider";
 import ConsentProvider from "@/components/privacy/ConsentProvider";
 import ThemeSurface from "@/components/theme/ThemeSurface";
 import { Toaster } from "@/components/ui/sonner";
 
 import { buildSiteJsonLd, serializeJsonLd, SITE_URL } from "@/lib/content/seo";
-import { getWebVitalsReleaseIdentity } from "@/lib/analytics/web-vitals-release";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -94,7 +92,6 @@ export default function RootLayout({
         />
         <SessionProvider>
           <ConsentProvider>
-          <WebVitalsReporter releaseIdentity={getWebVitalsReleaseIdentity()} />
           <ThemeSurface theme="light" surface="public">
             {children}
           </ThemeSurface>

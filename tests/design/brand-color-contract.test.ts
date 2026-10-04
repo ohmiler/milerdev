@@ -71,7 +71,7 @@ describe('MilerDev brand color contract', () => {
     const home = readSource('src/app/page.tsx');
     const button = readSource('src/components/ui/button.tsx');
 
-    expect(home).toContain("eventName: 'home_primary_cta_clicked'");
+    expect(home).toContain('<Link href="/courses">');
     expect(home).toContain('ดูคอร์สทั้งหมด');
     expect(button).toContain('bg-primary');
     expect(globals).toContain('--primary: var(--color-accent);');

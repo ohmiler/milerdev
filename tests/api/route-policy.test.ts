@@ -17,8 +17,6 @@ type RouteClass = 'public' | 'auth' | 'admin' | 'signature' | 'delegated' | 'mix
 
 const MANIFEST: Record<string, RouteClass> = {
     'affiliate-banners/route.ts': 'public',
-    'analytics/events/route.ts': 'mixed',
-    'analytics/web-vitals/route.ts': 'mixed',
     'auth/[...nextauth]/route.ts': 'delegated',
     'auth/change-password/route.ts': 'auth',
     'auth/register/confirm/route.ts': 'public',
@@ -60,7 +58,7 @@ const ADMIN_ROUTES = [
     'courses', 'enrollments/[id]', 'enrollments/import', 'enrollments', 'lessons/[lessonId]',
     'media/[id]', 'media', 'payments/[id]', 'payments/cleanup', 'payments',
     'reconciliation/[paymentId]/retry', 'reconciliation/[paymentId]', 'reconciliation',
-    'reports/export', 'reports/measurement-qualification', 'reports', 'reviews/[id]', 'reviews',
+    'reports/export', 'reports', 'reviews/[id]', 'reviews',
     'settings', 'tags/[id]', 'tags', 'users/[id]/enrollments', 'users/[id]/reset-password',
     'users/[id]', 'users/bulk', 'users/export', 'users/import', 'users',
 ];

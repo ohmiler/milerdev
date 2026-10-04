@@ -29,7 +29,7 @@ function review(type: 'course' | 'bundle', overrides: Partial<OrderReview> = {})
   };
 }
 function mount(type: 'course' | 'bundle') {
-  return render(<CheckoutDialog open onClose={close} target={{ type, id: 'product-1' }} exposureId={null} returnFocusRef={createRef<HTMLButtonElement>()} onEnrolled={enrolled} />);
+  return render(<CheckoutDialog open onClose={close} target={{ type, id: 'product-1' }} returnFocusRef={createRef<HTMLButtonElement>()} onEnrolled={enrolled} />);
 }
 
 beforeEach(() => {
@@ -70,7 +70,7 @@ describe.each(['course', 'bundle'] as const)('%s order review and payment', (typ
     const user = userEvent.setup(); const mounted = mount(type);
     await user.click(await screen.findByRole('button', { name: /PromptPay/ }));
     await user.click(await screen.findByRole('button', { name: 'ปิดและเก็บรายการไว้' }));
-    const props = { onClose: close, target: { type, id: 'product-1' }, exposureId: null, returnFocusRef: createRef<HTMLButtonElement>(), onEnrolled: enrolled };
+    const props = { onClose: close, target: { type, id: 'product-1' }, returnFocusRef: createRef<HTMLButtonElement>(), onEnrolled: enrolled };
     mounted.rerender(<CheckoutDialog {...props} open={false} />);
     mounted.rerender(<CheckoutDialog {...props} open />);
     expect(screen.getByText('attempt-1')).toBeTruthy();
@@ -189,7 +189,7 @@ it('recovers an uncertain free enrollment by reading current ownership rather th
 });
 
 describe.each(['course', 'bundle'] as const)('%s history resumption', (type) => {
-  function mountResume() { return render(<CheckoutDialog open onClose={close} target={{ type, id: type === 'course' ? 'course-1' : 'bundle-1' }} resumePaymentId="attempt-1" exposureId={null} returnFocusRef={createRef<HTMLButtonElement>()} onEnrolled={enrolled} />); }
+  function mountResume() { return render(<CheckoutDialog open onClose={close} target={{ type, id: type === 'course' ? 'course-1' : 'bundle-1' }} resumePaymentId="attempt-1" returnFocusRef={createRef<HTMLButtonElement>()} onEnrolled={enrolled} />); }
   function status(canSubmitSlip: boolean, state: 'pending' | 'verifying' | 'completed' = 'pending') {
     return { ...paymentRecord({ method: 'promptpay', status: state, ...(type === 'bundle' ? { bundleId: 'bundle-1', courseId: null } : {}) }), canSubmitSlip };
   }

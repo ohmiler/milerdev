@@ -11,7 +11,6 @@ export const adminPrimaryLinks: AdminNavLink[] = [
   { href: '/admin/users', label: 'ผู้เรียน', icon: 'users' },
   { href: '/admin/enrollments', label: 'การลงทะเบียน', icon: 'enrollments' },
   { href: '/admin/payments', label: 'การชำระเงิน', icon: 'payments' },
-  { href: '/admin/analytics', label: 'ข้อมูลวิเคราะห์', icon: 'analytics' },
 ];
 
 export const adminSecondaryLinkGroups: Array<{ title: string; items: AdminNavLink[] }> = [

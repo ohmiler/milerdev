@@ -11,8 +11,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Spinner } from '@/components/ui/spinner';
-import { trackClientAnalyticsEvent } from '@/components/analytics/analytics-client';
-import { useProductExposureId } from '@/components/analytics/AnalyticsViewEvent';
 import type { BundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 interface BundleEnrollButtonProps {
@@ -30,7 +28,6 @@ export const BUNDLE_PAYMENT_CONTRACT = {
 export default function BundleEnrollButton({ bundleId, bundleSlug, decisionFacts }: BundleEnrollButtonProps) {
   const router = useRouter();
   const session = useSession()?.data;
-  const exposureId = useProductExposureId();
   const [loading, setLoading] = useState(false);
   const [enrolled, setEnrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -42,7 +39,6 @@ export default function BundleEnrollButton({ bundleId, bundleSlug, decisionFacts
       return;
     }
     if (!decisionFacts.price.isFree) {
-      trackClientAnalyticsEvent({ eventName: 'checkout_opened', bundleId, placement: 'bundle_detail' });
       setOpen(true);
       return;
     }
@@ -69,7 +65,7 @@ export default function BundleEnrollButton({ bundleId, bundleSlug, decisionFacts
     <>
       {disclosure}
       <Button ref={triggerRef} type="button" onClick={handleEnroll} disabled={loading} className="w-full" aria-busy={loading}>{loading ? <><Spinner data-icon="inline-start" aria-hidden="true" />กำลังดำเนินการ...</> : decisionFacts.actions.acquisition.label}</Button>
-      <CheckoutDialog key={`${session?.user.id}:${bundleId}`} open={open} onClose={() => setOpen(false)} target={{ type: 'bundle', id: bundleId }} exposureId={exposureId} returnFocusRef={triggerRef} onEnrolled={() => { setEnrolled(true); router.refresh(); }} />
+      <CheckoutDialog key={`${session?.user.id}:${bundleId}`} open={open} onClose={() => setOpen(false)} target={{ type: 'bundle', id: bundleId }} returnFocusRef={triggerRef} onEnrolled={() => { setEnrolled(true); router.refresh(); }} />
       <Modal isOpen={Boolean(error)} onClose={() => setError(null)} returnFocusRef={triggerRef} type="error" title="เกิดข้อผิดพลาด">{error}</Modal>
     </>
   );

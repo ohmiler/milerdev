@@ -32,7 +32,6 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import LearningWorkspaceAnalytics from '@/components/analytics/LearningWorkspaceAnalytics';
 import type { LearningCurriculumLesson } from '@/lib/learning/workspace';
 
 interface CurrentLesson extends LearningCurriculumLesson {
@@ -271,7 +270,6 @@ export default function LearnPageClient({
 
   return (
     <>
-      <LearningWorkspaceAnalytics lessonId={currentLesson.id} enabled={isEnrolled} />
     <div className="min-h-screen bg-[var(--academy-canvas)] text-foreground" data-theme="light" data-surface="learning">
       <LearningNavbar
         courseSlug={course.slug}
