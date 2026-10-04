@@ -5,10 +5,11 @@ import MainContent from '@/components/layout/MainContent';
 import Navbar from '@/components/layout/Navbar';
 import StackExplorer from '@/components/stack/StackExplorer';
 import { Button } from '@/components/ui/button';
-import { DEFAULT_OG_IMAGE } from '@/lib/content/seo';
 import { findStackNode, STACK_JOURNEYS, STACK_LAYERS, STACK_NODES } from '@/lib/content/stack';
 
 const description = 'MilerDev สร้างด้วยอะไร และแต่ละส่วนคุยกันยังไง ตั้งแต่ Next.js ฐานข้อมูล ระบบชำระเงิน วิดีโอ จนถึงการส่งโค้ดขึ้นเว็บจริง';
+// A capture of the 3D model itself, so a shared link shows what the page is.
+const ogImage = { url: '/og-stack.png', width: 1200, height: 630, alt: 'โมเดล 3 มิติของชั้นต่างๆ ที่ใช้สร้าง MilerDev' };
 
 export const metadata: Metadata = {
   title: 'เบื้องหลัง MilerDev',
@@ -19,13 +20,13 @@ export const metadata: Metadata = {
     description,
     url: '/stack',
     siteName: 'MilerDev',
-    images: [DEFAULT_OG_IMAGE],
+    images: [ogImage],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'เบื้องหลัง MilerDev',
     description,
-    images: [DEFAULT_OG_IMAGE.url],
+    images: [ogImage.url],
   },
 };
 

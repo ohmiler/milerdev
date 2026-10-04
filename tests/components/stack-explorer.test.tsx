@@ -27,6 +27,7 @@ function stubReducedMotion(reduce: boolean) {
 describe('StackExplorer', () => {
   beforeEach(() => {
     scene.props = null;
+    window.history.replaceState(null, '', '/stack');
     vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
     stubReducedMotion(false);
   });
@@ -83,6 +84,50 @@ describe('StackExplorer', () => {
     act(() => vi.advanceTimersByTime(10_000));
     expect(scene.props?.activeEdge).toEqual({ from: 'github', to: 'ci' });
     expect(scene.props?.reducedMotion).toBe(true);
+  });
+
+  it('tours the layers top to bottom, then hands over to the PromptPay journey', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    render(<StackExplorer />);
+
+    act(() => screen.getByRole('button', { name: '▶ ทัวร์ทีละชั้น' }).click());
+    expect(scene.props?.focusIds).toEqual(['browser', 'bank-app']);
+    expect(screen.getByText('1/5 · ชั้นผู้ใช้')).toBeTruthy();
+
+    act(() => vi.advanceTimersByTime(4500));
+    expect(scene.props?.focusIds).toEqual(['nextjs', 'ui', 'api', 'auth']);
+
+    for (let stop = 0; stop < 4; stop += 1) act(() => vi.advanceTimersByTime(4500));
+    expect(scene.props?.focusIds).toBeNull();
+    expect(scene.props?.activeEdge).toEqual({ from: 'browser', to: 'ui' });
+    expect(screen.getByRole('heading', { name: 'ซื้อคอร์สด้วยพร้อมเพย์' })).toBeTruthy();
+  });
+
+  it('opens a shared link and leaves the address bar alone until the viewer acts', async () => {
+    window.history.replaceState(null, '', '/stack?flow=card');
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    const user = userEvent.setup();
+    render(<StackExplorer />);
+
+    expect(scene.props?.activeEdge).toEqual({ from: 'browser', to: 'ui' });
+    expect(screen.getByRole('heading', { name: 'ซื้อคอร์สด้วยบัตร' })).toBeTruthy();
+    expect(replaceState).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'ส่งโค้ดขึ้นเว็บจริง' }));
+    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/stack?flow=deploy');
+    await user.click(screen.getByRole('button', { name: 'ปิดเส้นทางนี้' }));
+    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/stack');
+  });
+
+  it('copies a link to the part on screen', async () => {
+    // user-event installs its own clipboard, which the test reads back.
+    const user = userEvent.setup();
+    render(<StackExplorer />);
+
+    await user.click(screen.getByRole('button', { name: /^Drizzle ORM/ }));
+    await user.click(screen.getByRole('button', { name: 'คัดลอกลิงก์มุมนี้' }));
+    await expect(navigator.clipboard.readText()).resolves.toBe(`${window.location.origin}/stack?part=drizzle`);
+    expect(screen.getByText('คัดลอกแล้ว')).toBeTruthy();
   });
 
   it('falls back to a flat diagram when WebGL is unavailable', async () => {

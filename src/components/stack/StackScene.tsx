@@ -14,6 +14,8 @@ type Props = {
   selectedId: string | null;
   journeyEdges: SceneEdge[] | null;
   activeEdge: SceneEdge | null;
+  // Nodes the guided tour is pointing at; everything else is dimmed.
+  focusIds: string[] | null;
   reducedMotion: boolean;
   // Ways to keep clear of the overlays (title, panel), in CSS pixels; the fit that gives the largest model wins.
   getInsets: () => SceneInsets[];
@@ -22,12 +24,24 @@ type Props = {
   onUnavailable: () => void;
 };
 
+type Highlight = Pick<Props, 'selectedId' | 'journeyEdges' | 'activeEdge' | 'focusIds'> & { hoveredId: string | null };
+
+type EdgeEntry = { mesh: THREE.Mesh<THREE.TubeGeometry, THREE.MeshBasicMaterial>; curve: THREE.QuadraticBezierCurve3; label: string };
+
+type AmbientDot = { mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>; edge: EdgeEntry | null; reverse: boolean; startsAt: number };
+
 type SceneState = {
   nodes: Map<string, { mesh: THREE.Mesh<RoundedBoxGeometry, THREE.MeshStandardMaterial>; label: HTMLButtonElement }>;
-  edges: Map<string, { mesh: THREE.Mesh<THREE.TubeGeometry, THREE.MeshBasicMaterial>; curve: THREE.QuadraticBezierCurve3 }>;
+  edges: Map<string, EdgeEntry>;
   particle: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
+  flowTag: CSS2DObject;
+  ambient: AmbientDot[];
+  highlight: Highlight;
   fit: () => void;
   flow: { curve: THREE.QuadraticBezierCurve3; reverse: boolean; startedAt: number } | null;
+  // Frames are drawn only when something changed or is moving.
+  needsRender: boolean;
+  lastActivity: number;
 };
 
 // Layers are stacked along y like shelves, each layer's nodes in one row along x, seen from the front.
@@ -44,9 +58,14 @@ const SWAY = 0.07;
 const EDGE_IDLE = new THREE.Color('#5d7f9e');
 const EDGE_ACTIVE = new THREE.Color('#ffffff');
 const FLOW_SECONDS = 1.1;
+// Small dots keep travelling along the links while someone is looking, then stop to save battery.
+const AMBIENT_DOTS = 4;
+const AMBIENT_SECONDS = 1.8;
+const AMBIENT_IDLE_MS = 30_000;
 
 const layerColor = (id: StackLayerId) => STACK_LAYERS.find((layer) => layer.id === id)!.color;
 const edgeKey = (from: string, to: string) => `${from}>${to}`;
+const touches = (id: string) => STACK_EDGES.filter((edge) => edge.from === id || edge.to === id).map((edge) => edgeKey(edge.from, edge.to));
 const SHELF_LEFT = -NODE_SPAN / 2 - 1.3 - LABEL_ZONE;
 const SHELF_RIGHT = NODE_SPAN / 2 + 1.3;
 
@@ -70,54 +89,61 @@ function edgeCurve(from: THREE.Vector3, to: THREE.Vector3, index: number) {
   return new THREE.QuadraticBezierCurve3(from.clone(), mid, to.clone());
 }
 
-// Applies the current selection or journey step to the scene objects.
-function applyHighlight(state: SceneState, selectedId: string | null, journeyEdges: SceneEdge[] | null, activeEdge: SceneEdge | null) {
+// Applies the selection, hover, tour stop or journey step to the scene objects.
+function applyHighlight(state: SceneState, highlight: Highlight) {
+  state.highlight = highlight;
+  const { selectedId, hoveredId, focusIds, journeyEdges, activeEdge } = highlight;
+  const involved = journeyEdges ? new Set(journeyEdges.flatMap((edge) => [edge.from, edge.to])) : focusIds ? new Set(focusIds) : null;
+  const focus = activeEdge ? new Set([activeEdge.from, activeEdge.to]) : focusIds ? new Set(focusIds) : null;
+
   const lit = new Set<string>();
-  const involved = new Set<string>();
-  if (journeyEdges) {
-    for (const edge of journeyEdges) {
-      involved.add(edge.from);
-      involved.add(edge.to);
-    }
-  }
   if (activeEdge) {
     lit.add(edgeKey(activeEdge.from, activeEdge.to));
     lit.add(edgeKey(activeEdge.to, activeEdge.from));
+  } else if (focusIds) {
+    for (const edge of STACK_EDGES) if (focus?.has(edge.from) && focus.has(edge.to)) lit.add(edgeKey(edge.from, edge.to));
   } else if (selectedId) {
-    for (const edge of STACK_EDGES) {
-      if (edge.from === selectedId || edge.to === selectedId) lit.add(edgeKey(edge.from, edge.to));
-    }
+    for (const key of touches(selectedId)) lit.add(key);
   }
+  if (hoveredId && !activeEdge) for (const key of touches(hoveredId)) lit.add(key);
 
+  const quiet = Boolean(involved || selectedId || hoveredId);
   for (const [key, { mesh }] of state.edges) {
     const on = lit.has(key);
     mesh.material.color.copy(on ? EDGE_ACTIVE : EDGE_IDLE);
-    mesh.material.opacity = on ? 0.95 : journeyEdges || selectedId ? 0.15 : 0.45;
+    mesh.material.opacity = on ? 0.95 : quiet ? 0.15 : 0.45;
   }
 
-  const focus = activeEdge ? new Set([activeEdge.from, activeEdge.to]) : null;
   for (const [id, { mesh, label }] of state.nodes) {
     const selected = id === selectedId || Boolean(focus?.has(id));
-    const dim = Boolean(journeyEdges) && !involved.has(id) && id !== selectedId;
-    mesh.material.emissiveIntensity = selected ? 0.75 : 0.12;
+    const hovered = id === hoveredId;
+    const dim = Boolean(involved) && !involved?.has(id) && id !== selectedId;
+    mesh.material.emissiveIntensity = selected ? 0.75 : hovered ? 0.45 : 0.12;
     mesh.material.opacity = dim ? 0.3 : 1;
-    mesh.scale.setScalar(selected ? 1.12 : 1);
+    mesh.scale.setScalar(selected ? 1.12 : hovered ? 1.06 : 1);
     label.dataset.state = selected ? 'selected' : dim ? 'dim' : 'idle';
     label.setAttribute('aria-pressed', String(id === selectedId));
   }
 
-  const edge = activeEdge && (state.edges.get(edgeKey(activeEdge.from, activeEdge.to)) ?? state.edges.get(edgeKey(activeEdge.to, activeEdge.from)));
+  const forward = activeEdge ? state.edges.get(edgeKey(activeEdge.from, activeEdge.to)) : undefined;
+  const edge = forward ?? (activeEdge ? state.edges.get(edgeKey(activeEdge.to, activeEdge.from)) : undefined);
   if (activeEdge && edge) {
-    const reverse = !state.edges.has(edgeKey(activeEdge.from, activeEdge.to));
-    state.flow = { curve: edge.curve, reverse, startedAt: performance.now() };
+    if (state.flow?.curve !== edge.curve || state.flow.reverse !== !forward) {
+      state.flow = { curve: edge.curve, reverse: !forward, startedAt: performance.now() };
+    }
     state.particle.visible = true;
+    state.flowTag.element.textContent = edge.label;
+    state.flowTag.position.copy(edge.curve.getPoint(0.5));
+    state.flowTag.visible = true;
   } else {
     state.flow = null;
     state.particle.visible = false;
+    state.flowTag.visible = false;
   }
+  state.needsRender = true;
 }
 
-export default function StackScene({ selectedId, journeyEdges, activeEdge, reducedMotion, getInsets, layoutKey, onSelect, onUnavailable }: Props) {
+export default function StackScene({ selectedId, journeyEdges, activeEdge, focusIds, reducedMotion, getInsets, layoutKey, onSelect, onUnavailable }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<SceneState | null>(null);
   const onSelectRef = useRef(onSelect);
@@ -133,6 +159,7 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
     onUnavailableRef.current = onUnavailable;
     getInsetsRef.current = getInsets;
     reducedMotionRef.current = reducedMotion;
+    if (stateRef.current) stateRef.current.needsRender = true;
   }, [onSelect, onUnavailable, getInsets, reducedMotion]);
 
   useEffect(() => {
@@ -167,9 +194,15 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
 
     const disposables: Array<{ dispose: () => void }> = [];
     const meshes: THREE.Mesh[] = [];
-    // Points the default view must keep on screen: shelf corners, layer names and label tops.
+    // Points the default view must keep on screen: shelf corners and label tops.
     const fitPoints: THREE.Vector3[] = [];
     const flippable: CSS2DObject[] = [];
+    let hoveredId: string | null = null;
+    const setHovered = (id: string | null) => {
+      if (id === hoveredId || !stateRef.current) return;
+      hoveredId = id;
+      applyHighlight(stateRef.current, { ...stateRef.current.highlight, hoveredId: id });
+    };
 
     for (const layer of STACK_LAYERS) {
       const y = LAYER_Y[layer.id] - 0.36;
@@ -223,6 +256,8 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
       label.className = 'pointer-events-auto rounded-[0.5em] border border-white/15 bg-[#0b1b2d]/90 px-[0.6em] py-[0.25em] text-[length:var(--stack-label-size,12px)] leading-tight font-semibold whitespace-nowrap text-white shadow-lg transition-[opacity,background-color] outline-none hover:bg-[#13304d] focus-visible:ring-2 focus-visible:ring-white data-[state=dim]:opacity-35 data-[state=selected]:bg-white data-[state=selected]:text-[#0f233a]';
       label.textContent = node.name;
       label.addEventListener('click', () => onSelectRef.current(node.id));
+      label.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse') setHovered(node.id); });
+      label.addEventListener('pointerleave', (event) => { if (event.pointerType === 'mouse') setHovered(null); });
       const labelObject = new CSS2DObject(label);
       // Bottom of the label rests on top of its block.
       labelObject.center.set(0.5, 1);
@@ -242,7 +277,7 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
       const mesh = new THREE.Mesh(geometry, material);
       stack.add(mesh);
       disposables.push(geometry, material);
-      edges.set(edgeKey(edge.from, edge.to), { mesh, curve });
+      edges.set(edgeKey(edge.from, edge.to), { mesh, curve, label: edge.label });
     });
 
     const particleGeometry = new THREE.SphereGeometry(0.2, 16, 16);
@@ -251,6 +286,23 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
     particle.visible = false;
     stack.add(particle);
     disposables.push(particleGeometry, particleMaterial);
+
+    // What the current journey step does, written on its link.
+    const flowTagElement = document.createElement('div');
+    flowTagElement.className = 'rounded-full bg-[#33bcff] px-[0.7em] py-[0.2em] text-[length:var(--stack-label-size,12px)] font-semibold whitespace-nowrap text-[#0f233a] shadow-lg';
+    const flowTag = new CSS2DObject(flowTagElement);
+    flowTag.visible = false;
+    stack.add(flowTag);
+
+    const ambientGeometry = new THREE.SphereGeometry(0.09, 10, 10);
+    const ambientMaterial = new THREE.MeshBasicMaterial({ color: '#bfe9ff', transparent: true, opacity: 0.85 });
+    disposables.push(ambientGeometry, ambientMaterial);
+    const ambient: AmbientDot[] = Array.from({ length: AMBIENT_DOTS }, (_, index) => {
+      const mesh = new THREE.Mesh(ambientGeometry, ambientMaterial);
+      mesh.visible = false;
+      stack.add(mesh);
+      return { mesh, edge: null, reverse: false, startsAt: performance.now() + index * 450 };
+    });
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.copy(target);
@@ -337,9 +389,15 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
         labelObject.center.set(0.5, crowded ? 0 : 1);
         labelObject.position.y = crowded ? -0.35 : 0.4;
       }
+      if (stateRef.current) stateRef.current.needsRender = true;
     };
 
-    stateRef.current = { nodes, edges, particle, fit, flow: null };
+    stateRef.current = {
+      nodes, edges, particle, flowTag, ambient, fit, flow: null,
+      highlight: { selectedId: null, hoveredId: null, focusIds: null, journeyEdges: null, activeEdge: null },
+      needsRender: true,
+      lastActivity: performance.now(),
+    };
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -350,6 +408,7 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
       raycaster.setFromCamera(pointer, camera);
       return raycaster.intersectObjects(meshes, false)[0]?.object.userData.nodeId as string | undefined;
     };
+    const wake = () => { if (stateRef.current) stateRef.current.lastActivity = performance.now(); };
     const onPointerDown = (event: PointerEvent) => { downAt = { x: event.clientX, y: event.clientY }; };
     const onPointerUp = (event: PointerEvent) => {
       // A drag turns the model; only a click selects.
@@ -358,11 +417,18 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
       if (id) onSelectRef.current(id);
     };
     const onPointerMove = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse') renderer.domElement.style.cursor = pick(event) ? 'pointer' : 'grab';
+      if (event.pointerType !== 'mouse') return;
+      const id = pick(event) ?? null;
+      renderer.domElement.style.cursor = id ? 'pointer' : 'grab';
+      setHovered(id);
     };
+    const onPointerLeave = () => setHovered(null);
     renderer.domElement.addEventListener('pointerdown', onPointerDown);
     renderer.domElement.addEventListener('pointerup', onPointerUp);
     renderer.domElement.addEventListener('pointermove', onPointerMove);
+    renderer.domElement.addEventListener('pointerleave', onPointerLeave);
+    container.addEventListener('pointermove', wake);
+    container.addEventListener('pointerdown', wake);
 
     const resizeObserver = new ResizeObserver(fit);
     resizeObserver.observe(container);
@@ -370,21 +436,71 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
 
     // Draw only while the model is on screen and the tab is visible.
     let onScreen = true;
-    const visibility = new IntersectionObserver(([entry]) => { onScreen = entry.isIntersecting; });
+    const visibility = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      if (onScreen) wake();
+    });
     visibility.observe(container);
 
+    const edgeList = [...edges.values()];
+    const ambientEdges = (state: SceneState) => {
+      const { selectedId: selected } = state.highlight;
+      if (!selected) return edgeList;
+      const keys = touches(selected);
+      return keys.map((key) => edges.get(key)!);
+    };
+
     let frame = 0;
+    let tickCount = 0;
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick);
-      if (!onScreen || document.hidden) return;
       const state = stateRef.current;
-      if (state?.flow) {
-        const progress = reducedMotionRef.current ? 1 : Math.min(1, (now - state.flow.startedAt) / (FLOW_SECONDS * 1000));
+      if (!state || !onScreen || document.hidden) return;
+      tickCount += 1;
+      let dirty = state.needsRender;
+      state.needsRender = false;
+      const reduced = reducedMotionRef.current;
+
+      if (state.flow) {
+        const elapsed = (now - state.flow.startedAt) / (FLOW_SECONDS * 1000);
+        const progress = reduced ? 1 : Math.min(1, elapsed);
         state.particle.position.copy(state.flow.curve.getPoint(state.flow.reverse ? 1 - progress : progress));
+        if (elapsed < 1.1) dirty = true;
       }
-      const swaying = !settledRef.current && !reducedMotionRef.current;
-      stack.rotation.y = swaying ? Math.sin(now / 2600) * SWAY : stack.rotation.y * 0.92;
-      controls.update();
+
+      if (!settledRef.current && !reduced) {
+        stack.rotation.y = Math.sin(now / 2600) * SWAY;
+        dirty = true;
+      } else if (Math.abs(stack.rotation.y) > 0.0005) {
+        stack.rotation.y *= 0.92;
+        dirty = true;
+      }
+
+      const { journeyEdges: journey, focusIds: focus } = state.highlight;
+      const ambientOn = !reduced && !journey && !focus && now - state.lastActivity < AMBIENT_IDLE_MS;
+      let ambientMoving = false;
+      for (const dot of state.ambient) {
+        if (!ambientOn) {
+          if (dot.mesh.visible) { dot.mesh.visible = false; dirty = true; }
+          continue;
+        }
+        if (!dot.edge || now - dot.startsAt > AMBIENT_SECONDS * 1000) {
+          const pool = ambientEdges(state);
+          dot.edge = pool[Math.floor(Math.random() * pool.length)] ?? null;
+          dot.reverse = Math.random() < 0.5;
+          dot.startsAt = now + Math.random() * 1200;
+        }
+        const progress = (now - dot.startsAt) / (AMBIENT_SECONDS * 1000);
+        const visible = Boolean(dot.edge) && progress >= 0 && progress <= 1;
+        if (visible && dot.edge) dot.mesh.position.copy(dot.edge.curve.getPoint(dot.reverse ? 1 - progress : progress));
+        if (visible || dot.mesh.visible) ambientMoving = true;
+        dot.mesh.visible = visible;
+      }
+      // The background flow is drawn at half rate; everything else at full rate.
+      if (ambientMoving && tickCount % 2 === 0) dirty = true;
+
+      if (controls.update()) dirty = true;
+      if (!dirty) return;
       renderer.render(scene, camera);
       labelRenderer.render(scene, camera);
     };
@@ -397,6 +513,9 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
+      renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
+      container.removeEventListener('pointermove', wake);
+      container.removeEventListener('pointerdown', wake);
       controls.dispose();
       for (const item of disposables) item.dispose();
       renderer.dispose();
@@ -406,9 +525,12 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, reduc
   }, []);
 
   useEffect(() => {
-    if (selectedId !== initialSelectionRef.current || journeyEdges) settledRef.current = true;
-    if (stateRef.current) applyHighlight(stateRef.current, selectedId, journeyEdges, activeEdge);
-  }, [selectedId, journeyEdges, activeEdge]);
+    if (selectedId !== initialSelectionRef.current || journeyEdges || focusIds) settledRef.current = true;
+    const state = stateRef.current;
+    if (!state) return;
+    state.lastActivity = performance.now();
+    applyHighlight(state, { selectedId, journeyEdges, activeEdge, focusIds, hoveredId: state.highlight.hoveredId });
+  }, [selectedId, journeyEdges, activeEdge, focusIds]);
 
   useEffect(() => {
     stateRef.current?.fit();

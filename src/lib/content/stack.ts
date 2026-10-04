@@ -221,3 +221,38 @@ export function stackNeighbors(id: string) {
 export function isStackEdge(a: string, b: string) {
   return STACK_EDGES.some((edge) => (edge.from === a && edge.to === b) || (edge.from === b && edge.to === a));
 }
+
+export type StackTourStop = { layer: StackLayerId; text: string };
+
+// The guided tour visits the layers top to bottom, then hands over to the PromptPay journey.
+export const STACK_TOUR: StackTourStop[] = [
+  { layer: 'people', text: 'เริ่มจากผู้เรียน เปิดเว็บด้วยเบราว์เซอร์ และใช้แอปธนาคารตอนจ่ายด้วยพร้อมเพย์' },
+  { layer: 'app', text: 'โค้ดของ MilerDev เอง Next.js สร้างหน้าเว็บ React ทำส่วนที่กดได้ API รับคำขอ และ Auth.js ดูแลการล็อกอิน' },
+  { layer: 'data', text: 'ข้อมูลทั้งหมดอยู่ใน MySQL โดยโค้ดคุยกับฐานข้อมูลผ่าน Drizzle ที่ TypeScript ตรวจให้' },
+  { layer: 'services', text: 'งานเฉพาะทางให้ผู้เชี่ยวชาญทำ เงินผ่าน Stripe และ SlipOK วิดีโอผ่าน Bunny อีเมลผ่าน Resend และล็อกอินผ่าน Google' },
+  { layer: 'delivery', text: 'โค้ดทุกบรรทัดผ่าน GitHub และเทสต์อัตโนมัติก่อน แล้ว Railway จึง deploy ขึ้นเว็บจริง' },
+];
+
+export const STACK_TOUR_FINALE = 'promptpay';
+
+// Shareable views: ?part=<node>, ?flow=<journey> or ?tour. Only known ids are accepted.
+export type StackView = { part: string | null; flow: string | null; tour: boolean };
+
+export function parseStackView(search: string): StackView | null {
+  const params = new URLSearchParams(search);
+  const flow = params.get('flow');
+  const part = params.get('part');
+  const view = {
+    part: part && findStackNode(part) ? part : null,
+    flow: flow && STACK_JOURNEYS.some((journey) => journey.id === flow) ? flow : null,
+    tour: params.has('tour'),
+  };
+  return view.part || view.flow || view.tour ? view : null;
+}
+
+export function stackViewQuery(view: StackView) {
+  if (view.tour) return '?tour';
+  if (view.flow) return `?flow=${view.flow}`;
+  if (view.part) return `?part=${view.part}`;
+  return '';
+}
