@@ -1,12 +1,6 @@
 import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, uniqueIndex, index, check } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
-import {
-    WEB_VITAL_DEVICE_CLASSES,
-    WEB_VITAL_NAMES,
-    WEB_VITAL_RATINGS,
-    WEB_VITAL_ROUTE_FAMILIES,
-} from '@/lib/analytics/web-vitals-contract';
 
 // =====================
 // USERS TABLE
@@ -29,25 +23,11 @@ export const users = mysqlTable('users', {
     index('idx_users_deactivated_at').on(table.deactivatedAt),
 ]);
 
-export const privacyConsents = mysqlTable('privacy_consents', {
-    id: varchar('id', { length: 64 }).primaryKey(),
-    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }),
-    version: int('version').notNull(),
-    analytics: boolean('analytics').notNull(),
-    createdAt: datetime('created_at', { fsp: 3 }).notNull(),
-    expiresAt: datetime('expires_at', { fsp: 3 }).notNull(),
-    revokedAt: datetime('revoked_at', { fsp: 3 }),
-}, (table) => [
-    index('idx_privacy_consents_user').on(table.userId),
-    index('idx_privacy_consents_expiry').on(table.expiresAt),
-]);
-
 export const usersRelations = relations(users, ({ many }) => ({
     enrollments: many(enrollments),
     payments: many(payments),
     lessonProgress: many(lessonProgress),
     accounts: many(accounts),
-    analyticsEvents: many(analyticsEvents),
 }));
 
 // =====================
@@ -119,7 +99,6 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
     }),
     lessons: many(lessons),
     enrollments: many(enrollments),
-    analyticsEvents: many(analyticsEvents),
 }));
 
 // =====================
@@ -241,7 +220,6 @@ export const paymentsRelations = relations(payments, ({ one, many }) => ({
         fields: [payments.bundleId],
         references: [bundles.id],
     }),
-    analyticsEvents: many(analyticsEvents),
     stripeEvents: many(stripeEvents),
 }));
 
@@ -274,53 +252,6 @@ export const stripeEventsRelations = relations(stripeEvents, ({ one }) => ({
     payment: one(payments, {
         fields: [stripeEvents.paymentId],
         references: [payments.id],
-    }),
-}));
-
-// =====================
-// ANNOUNCEMENTS TABLE
-// =====================
-export const announcements = mysqlTable('announcements', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    title: varchar('title', { length: 255 }).notNull(),
-    content: text('content').notNull(),
-    type: varchar('type', { length: 20, enum: ['info', 'warning', 'success', 'error'] }).default('info').notNull(),
-    targetRole: varchar('target_role', { length: 20, enum: ['all', 'student', 'instructor', 'admin'] }).default('all').notNull(),
-    isActive: boolean('is_active').default(true),
-    startsAt: datetime('starts_at'),
-    endsAt: datetime('ends_at'),
-    createdBy: varchar('created_by', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
-    createdAt: datetime('created_at').$defaultFn(() => new Date()),
-    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
-});
-
-export const announcementsRelations = relations(announcements, ({ one }) => ({
-    creator: one(users, {
-        fields: [announcements.createdBy],
-        references: [users.id],
-    }),
-}));
-
-// =====================
-// NOTIFICATIONS TABLE
-// =====================
-export const notifications = mysqlTable('notifications', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
-    title: varchar('title', { length: 255 }).notNull(),
-    message: text('message'),
-    type: varchar('type', { length: 20, enum: ['info', 'warning', 'success', 'error'] }).default('info').notNull(),
-    link: varchar('link', { length: 500 }),
-    isRead: boolean('is_read').default(false),
-    createdAt: datetime('created_at').$defaultFn(() => new Date()),
-}, (table) => [
-    index('idx_notifications_user_id').on(table.userId),
-]);
-
-export const notificationsRelations = relations(notifications, ({ one }) => ({
-    user: one(users, {
-        fields: [notifications.userId],
-        references: [users.id],
     }),
 }));
 
@@ -452,104 +383,6 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
 // =====================
 // BLOG POSTS TABLE
 // =====================
-export const blogPosts = mysqlTable('blog_posts', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    title: varchar('title', { length: 255 }).notNull(),
-    slug: varchar('slug', { length: 255 }).notNull().unique(),
-    excerpt: text('excerpt'),
-    content: text('content'),
-    thumbnailUrl: text('thumbnail_url'),
-    status: varchar('status', { length: 20, enum: ['draft', 'published'] }).default('draft').notNull(),
-    authorId: varchar('author_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
-    publishedAt: datetime('published_at'),
-    viewCount: int('view_count').default(0).notNull(),
-    createdAt: datetime('created_at').$defaultFn(() => new Date()),
-    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
-}, (table) => [
-    index('idx_blog_posts_status').on(table.status),
-    index('idx_blog_posts_published_at').on(table.publishedAt),
-]);
-
-export const blogPostTags = mysqlTable('blog_post_tags', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    postId: varchar('post_id', { length: 36 }).references(() => blogPosts.id, { onDelete: 'cascade' }).notNull(),
-    tagId: varchar('tag_id', { length: 36 }).references(() => tags.id, { onDelete: 'cascade' }).notNull(),
-});
-
-export const blogPostsRelations = relations(blogPosts, ({ one, many }) => ({
-    author: one(users, {
-        fields: [blogPosts.authorId],
-        references: [users.id],
-    }),
-    blogPostTags: many(blogPostTags),
-}));
-
-export const blogPostTagsRelations = relations(blogPostTags, ({ one }) => ({
-    post: one(blogPosts, {
-        fields: [blogPostTags.postId],
-        references: [blogPosts.id],
-    }),
-    tag: one(tags, {
-        fields: [blogPostTags.tagId],
-        references: [tags.id],
-    }),
-}));
-
-// =====================
-// COUPONS TABLE
-// =====================
-export const coupons = mysqlTable('coupons', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    code: varchar('code', { length: 50 }).notNull().unique(),
-    description: text('description'),
-    discountType: varchar('discount_type', { length: 20, enum: ['percentage', 'fixed'] }).notNull(),
-    discountValue: decimal('discount_value', { precision: 10, scale: 2 }).notNull(),
-    minPurchase: decimal('min_purchase', { precision: 10, scale: 2 }).default('0'),
-    maxDiscount: decimal('max_discount', { precision: 10, scale: 2 }),
-    usageLimit: int('usage_limit'),
-    usageCount: int('usage_count').default(0),
-    perUserLimit: int('per_user_limit').default(1),
-    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
-    isActive: boolean('is_active').default(true),
-    startsAt: datetime('starts_at'),
-    expiresAt: datetime('expires_at'),
-    createdAt: datetime('created_at').$defaultFn(() => new Date()),
-});
-
-export const couponUsages = mysqlTable('coupon_usages', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    couponId: varchar('coupon_id', { length: 36 }).references(() => coupons.id, { onDelete: 'cascade' }).notNull(),
-    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
-    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
-    discountAmount: decimal('discount_amount', { precision: 10, scale: 2 }).notNull(),
-    usedAt: datetime('used_at').$defaultFn(() => new Date()),
-}, (table) => [
-    uniqueIndex('uq_coupon_user_course').on(table.couponId, table.userId, table.courseId),
-]);
-
-export const couponsRelations = relations(coupons, ({ one, many }) => ({
-    course: one(courses, {
-        fields: [coupons.courseId],
-        references: [courses.id],
-    }),
-    usages: many(couponUsages),
-}));
-
-export const couponUsagesRelations = relations(couponUsages, ({ one }) => ({
-    coupon: one(coupons, {
-        fields: [couponUsages.couponId],
-        references: [coupons.id],
-    }),
-    user: one(users, {
-        fields: [couponUsages.userId],
-        references: [users.id],
-    }),
-    course: one(courses, {
-        fields: [couponUsages.courseId],
-        references: [courses.id],
-    }),
-}));
-
 // =====================
 // BUNDLES TABLE
 // =====================
@@ -576,7 +409,6 @@ export const bundleCourses = mysqlTable('bundle_courses', {
 
 export const bundlesRelations = relations(bundles, ({ many }) => ({
     bundleCourses: many(bundleCourses),
-    analyticsEvents: many(analyticsEvents),
 }));
 
 export const bundleCoursesRelations = relations(bundleCourses, ({ one }) => ({
@@ -624,170 +456,12 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
 // =====================
 // ANALYTICS EVENTS TABLE
 // =====================
-export const analyticsEvents = mysqlTable('analytics_events', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    eventName: varchar('event_name', { length: 100 }).notNull(),
-    exposureId: varchar('exposure_id', { length: 36 }),
-    attributedExposureId: varchar('attributed_exposure_id', { length: 36 }),
-    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'set null' }),
-    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'set null' }),
-    bundleId: varchar('bundle_id', { length: 36 }).references(() => bundles.id, { onDelete: 'set null' }),
-    paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id, { onDelete: 'set null' }),
-    enrollmentId: varchar('enrollment_id', { length: 36 }).references(() => enrollments.id, { onDelete: 'set null' }),
-    learningFactId: varchar('learning_fact_id', { length: 36 }),
-    learningEnrollmentId: varchar('learning_enrollment_id', { length: 36 }).references(() => enrollments.id, { onDelete: 'set null' }),
-    lessonId: varchar('lesson_id', { length: 36 }).references(() => lessons.id, { onDelete: 'set null' }),
-    source: varchar('source', { length: 20, enum: ['client', 'server'] }).default('server').notNull(),
-    metadata: text('metadata'),
-    ipAddress: varchar('ip_address', { length: 45 }),
-    userAgent: text('user_agent'),
-    createdAt: datetime('created_at').$defaultFn(() => new Date()),
-}, (table) => [
-    uniqueIndex('uq_analytics_exposure_id').on(table.exposureId),
-    index('idx_analytics_attributed_exposure_id').on(table.attributedExposureId),
-    index('idx_analytics_event_name').on(table.eventName),
-    index('idx_analytics_created_at').on(table.createdAt),
-    index('idx_analytics_course_id').on(table.courseId),
-    index('idx_analytics_bundle_id').on(table.bundleId),
-    index('idx_analytics_payment_id').on(table.paymentId),
-    index('idx_analytics_enrollment_id').on(table.enrollmentId),
-    index('idx_analytics_learning_enrollment_id').on(table.learningEnrollmentId),
-    index('idx_analytics_lesson_id').on(table.lessonId),
-    uniqueIndex('uq_analytics_event_payment').on(table.eventName, table.paymentId),
-    uniqueIndex('uq_analytics_event_enrollment').on(table.eventName, table.enrollmentId),
-    uniqueIndex('uq_analytics_learning_fact').on(table.eventName, table.learningFactId),
-]);
-
-export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
-    user: one(users, {
-        fields: [analyticsEvents.userId],
-        references: [users.id],
-    }),
-    course: one(courses, {
-        fields: [analyticsEvents.courseId],
-        references: [courses.id],
-    }),
-    bundle: one(bundles, {
-        fields: [analyticsEvents.bundleId],
-        references: [bundles.id],
-    }),
-    payment: one(payments, {
-        fields: [analyticsEvents.paymentId],
-        references: [payments.id],
-    }),
-    enrollment: one(enrollments, {
-        fields: [analyticsEvents.enrollmentId],
-        references: [enrollments.id],
-    }),
-    learningEnrollment: one(enrollments, {
-        fields: [analyticsEvents.learningEnrollmentId],
-        references: [enrollments.id],
-    }),
-    lesson: one(lessons, {
-        fields: [analyticsEvents.lessonId],
-        references: [lessons.id],
-    }),
-}));
-
 // =====================
 // WEB VITALS TABLE
 // =====================
-export const webVitals = mysqlTable('web_vitals', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    pageLoadId: varchar('page_load_id', { length: 100 }).notNull(),
-    metricName: varchar('metric_name', { length: 10, enum: WEB_VITAL_NAMES }).notNull(),
-    routeFamily: varchar('route_family', {
-        length: 40,
-        enum: WEB_VITAL_ROUTE_FAMILIES,
-    }).notNull(),
-    deviceClass: varchar('device_class', { length: 10, enum: WEB_VITAL_DEVICE_CLASSES }).notNull(),
-    releaseIdentity: varchar('release_identity', { length: 100 }).notNull(),
-    value: decimal('value', { precision: 16, scale: 4 }).notNull(),
-    rating: varchar('rating', { length: 20, enum: WEB_VITAL_RATINGS }).notNull(),
-    createdAt: datetime('created_at').$defaultFn(() => new Date()).notNull(),
-    updatedAt: datetime('updated_at').$defaultFn(() => new Date()).notNull(),
-}, (table) => [
-    uniqueIndex('uq_web_vitals_page_metric').on(table.pageLoadId, table.metricName),
-    index('idx_web_vitals_updated_at').on(table.updatedAt),
-    index('idx_web_vitals_release_route_metric_device').on(
-        table.releaseIdentity,
-        table.routeFamily,
-        table.metricName,
-        table.deviceClass,
-    ),
-]);
-
 // =====================
 // MEASUREMENT OUTBOX TABLE
 // =====================
-export const measurementOutbox = mysqlTable('measurement_outbox', {
-    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
-    consentId: varchar('consent_id', { length: 64 }),
-    eventName: varchar('event_name', { length: 100, enum: ['purchase_completed', 'free_enrollment_completed', 'lesson_completed', 'course_completed'] }).notNull(),
-    paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id),
-    enrollmentId: varchar('enrollment_id', { length: 36 }).references(() => enrollments.id),
-    learningFactId: varchar('learning_fact_id', { length: 36 }),
-    learningEnrollmentId: varchar('learning_enrollment_id', { length: 36 }).references(() => enrollments.id, { onDelete: 'cascade' }),
-    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }),
-    lessonId: varchar('lesson_id', { length: 36 }).references(() => lessons.id, { onDelete: 'cascade' }),
-    attemptCount: int('attempt_count').default(0).notNull(),
-    lastAttemptAt: datetime('last_attempt_at'),
-    lastErrorCode: varchar('last_error_code', { length: 64 }),
-    projectedAt: datetime('projected_at'),
-    createdAt: datetime('created_at').$defaultFn(() => new Date()).notNull(),
-}, (table) => [
-    uniqueIndex('uq_measurement_outbox_event_payment').on(table.eventName, table.paymentId),
-    uniqueIndex('uq_measurement_outbox_event_enrollment').on(table.eventName, table.enrollmentId),
-    uniqueIndex('uq_measurement_outbox_learning_fact').on(table.eventName, table.learningFactId),
-    index('idx_measurement_outbox_projected_at').on(table.projectedAt),
-    index('idx_measurement_outbox_payment_id').on(table.paymentId),
-    index('idx_measurement_outbox_enrollment_id').on(table.enrollmentId),
-    index('idx_measurement_outbox_learning_enrollment_id').on(table.learningEnrollmentId),
-    index('idx_measurement_outbox_course_id').on(table.courseId),
-    index('idx_measurement_outbox_lesson_id').on(table.lessonId),
-    check('chk_measurement_outbox_identity', sql`
-        (${table.eventName} = 'purchase_completed'
-            AND ${table.paymentId} IS NOT NULL AND ${table.enrollmentId} IS NULL
-            AND ${table.learningFactId} IS NULL AND ${table.learningEnrollmentId} IS NULL
-            AND ${table.courseId} IS NULL AND ${table.lessonId} IS NULL)
-        OR (${table.eventName} = 'free_enrollment_completed'
-            AND ${table.paymentId} IS NULL AND ${table.enrollmentId} IS NOT NULL
-            AND ${table.learningFactId} IS NULL AND ${table.learningEnrollmentId} IS NULL
-            AND ${table.courseId} IS NULL AND ${table.lessonId} IS NULL)
-        OR (${table.eventName} = 'lesson_completed'
-            AND ${table.paymentId} IS NULL AND ${table.enrollmentId} IS NULL
-            AND ${table.learningFactId} IS NOT NULL AND ${table.learningEnrollmentId} IS NOT NULL
-            AND ${table.courseId} IS NOT NULL AND ${table.lessonId} IS NOT NULL)
-        OR (${table.eventName} = 'course_completed'
-            AND ${table.paymentId} IS NULL AND ${table.enrollmentId} IS NULL
-            AND ${table.learningFactId} IS NOT NULL AND ${table.learningEnrollmentId} IS NOT NULL
-            AND ${table.courseId} IS NOT NULL AND ${table.lessonId} IS NULL)
-    `),
-]);
-
-export const measurementOutboxRelations = relations(measurementOutbox, ({ one }) => ({
-    payment: one(payments, {
-        fields: [measurementOutbox.paymentId],
-        references: [payments.id],
-    }),
-    enrollment: one(enrollments, {
-        fields: [measurementOutbox.enrollmentId],
-        references: [enrollments.id],
-    }),
-    learningEnrollment: one(enrollments, {
-        fields: [measurementOutbox.learningEnrollmentId],
-        references: [enrollments.id],
-    }),
-    course: one(courses, {
-        fields: [measurementOutbox.courseId],
-        references: [courses.id],
-    }),
-    lesson: one(lessons, {
-        fields: [measurementOutbox.lessonId],
-        references: [lessons.id],
-    }),
-}));
-
 // =====================
 // TYPE EXPORTS
 // =====================
@@ -813,30 +487,14 @@ export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
-export type Announcement = typeof announcements.$inferSelect;
-export type NewAnnouncement = typeof announcements.$inferInsert;
-export type Notification = typeof notifications.$inferSelect;
-export type NewNotification = typeof notifications.$inferInsert;
 export type Review = typeof reviews.$inferSelect;
 export type NewReview = typeof reviews.$inferInsert;
-export type BlogPost = typeof blogPosts.$inferSelect;
-export type NewBlogPost = typeof blogPosts.$inferInsert;
 export type Certificate = typeof certificates.$inferSelect;
 export type NewCertificate = typeof certificates.$inferInsert;
-export type Coupon = typeof coupons.$inferSelect;
-export type NewCoupon = typeof coupons.$inferInsert;
-export type CouponUsage = typeof couponUsages.$inferSelect;
-export type NewCouponUsage = typeof couponUsages.$inferInsert;
 export type Bundle = typeof bundles.$inferSelect;
 export type NewBundle = typeof bundles.$inferInsert;
 export type BundleCourse = typeof bundleCourses.$inferSelect;
 export type NewBundleCourse = typeof bundleCourses.$inferInsert;
-export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
-export type NewAnalyticsEvent = typeof analyticsEvents.$inferInsert;
-export type WebVital = typeof webVitals.$inferSelect;
-export type NewWebVital = typeof webVitals.$inferInsert;
-export type MeasurementOutboxEntry = typeof measurementOutbox.$inferSelect;
-export type NewMeasurementOutboxEntry = typeof measurementOutbox.$inferInsert;
 export type RateLimitBucket = typeof rateLimitBuckets.$inferSelect;
 
 // =====================
