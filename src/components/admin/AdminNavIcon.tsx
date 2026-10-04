@@ -6,7 +6,6 @@ import {
   ClipboardCheck,
   CreditCard,
   FileBarChart,
-  FileText,
   Image,
   LayoutDashboard,
   RefreshCw,
@@ -20,7 +19,6 @@ import {
 
 const icons: Record<string, LucideIcon> = {
   analytics: BarChart3,
-  blog: FileText,
   bundles: Boxes,
   certificates: Award,
   coupons: TicketPercent,

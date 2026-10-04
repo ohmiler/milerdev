@@ -130,19 +130,6 @@ export const createTagSchema = z.object({
     name: z.string().min(1, 'กรุณาระบุชื่อแท็ก').max(100).trim(),
 });
 
-// Blog validation
-export const createBlogSchema = z.object({
-    title: z.string().min(1, 'กรุณาระบุชื่อบทความ').max(255),
-    slug: z.string().max(255).optional().nullable(),
-    excerpt: z.string().max(500).optional().nullable(),
-    content: z.string().max(200000).optional().nullable(),
-    thumbnailUrl: z.string().max(2000).optional().nullable().or(z.literal('')),
-    status: z.enum(['draft', 'published']).optional(),
-    tagIds: z.array(z.string()).optional(),
-});
-
-export const updateBlogSchema = createBlogSchema.partial();
-
 /**
  * Helper to validate request body with a Zod schema.
  * Returns { data, error } — if error, return it as NextResponse.

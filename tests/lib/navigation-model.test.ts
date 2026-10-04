@@ -11,7 +11,6 @@ describe('canonical navigation model', () => {
   it('owns the public, guest, and account destinations and labels', () => {
     expect(PUBLIC_NAVIGATION.map(({ href, label }) => ({ href, label }))).toEqual([
       { href: '/courses', label: 'คอร์สทั้งหมด' },
-      { href: '/blog', label: 'บทความ' },
       { href: '/about', label: 'เกี่ยวกับเรา' },
       { href: '/contact', label: 'ติดต่อ' },
     ]);
@@ -32,7 +31,6 @@ describe('canonical navigation model', () => {
     const dashboard = ACCOUNT_NAVIGATION.find((item) => item.key === 'dashboard')!;
     const payments = ACCOUNT_NAVIGATION.find((item) => item.key === 'payments')!;
     const courses = PUBLIC_NAVIGATION.find((item) => item.key === 'courses')!;
-    const blog = PUBLIC_NAVIGATION.find((item) => item.key === 'blog')!;
 
     expect(getNavigationState('/dashboard/payments', dashboard)).toEqual({
       active: false,
@@ -46,7 +44,7 @@ describe('canonical navigation model', () => {
       active: true,
       ariaCurrent: 'location',
     });
-    expect(getNavigationState('/blogger', blog)).toEqual({
+    expect(getNavigationState('/courses-archive', courses)).toEqual({
       active: false,
       ariaCurrent: undefined,
     });

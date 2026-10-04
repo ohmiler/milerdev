@@ -55,12 +55,6 @@ const lowlight = createLowlight({
 const MAX_PROCESSED_HTML_CACHE_BYTES = 2 * 1024 * 1024;
 const processedHtmlCache = new SizeBoundedStringLruCache(MAX_PROCESSED_HTML_CACHE_BYTES);
 
-export interface BlogTableOfContentsItem {
-  id: string;
-  text: string;
-  level: 2 | 3;
-}
-
 type HastNode = {
   type: string;
   tagName?: string;
@@ -131,38 +125,6 @@ export function getExcerpt(html: string, maxLength: number = 200): string {
 }
 
 /**
- * Enhance blog content by converting common plain-text patterns to semantic HTML.
- * - Lines like "1. Title" or "2. Title (subtitle)" → <h2>
- * - Lines ending with ":" that are short → <h3>
- * - Lines starting with bold text followed by ":" → keeps as styled paragraph
- */
-export function enhanceBlogContent(html: string): string {
-    // Process content line by line (split on closing </p> tags)
-    let enhanced = html;
-
-    // Convert numbered section headings: <p>1. Title...</p> → <h2>
-    enhanced = enhanced.replace(
-        /<p>\s*(\d+)\.\s+(.+?)\s*<\/p>/gi,
-        '<h2><span style="color:#2563eb">$1.</span> $2</h2>'
-    );
-
-    // Convert lines that are short and end with : or ? into <h3>
-    enhanced = enhanced.replace(
-        /<p>([^<]{5,80}[?:])(\s*)<\/p>/gi,
-        (match, content) => {
-            const plain = content.replace(/<[^>]*>/g, '').trim();
-            // Only convert if it looks like a heading (short, ends with : or ?)
-            if (plain.length < 80 && (plain.endsWith(':') || plain.endsWith('?'))) {
-                return `<h3>${content.trim()}</h3>`;
-            }
-            return match;
-        }
-    );
-
-    return enhanced;
-}
-
-/**
  * Sanitize HTML allowing safe tags for rich content display.
  */
 export function sanitizeRichContent(html: string): string {
@@ -187,59 +149,6 @@ export function sanitizeRichContent(html: string): string {
     });
 }
 
-function createHeadingId(text: string, index: number): string {
-    const slug = text
-        .normalize('NFKC')
-        .toLocaleLowerCase('th-TH')
-        .replace(/[^\p{L}\p{M}\p{N}]+/gu, '-')
-        .replace(/^-+|-+$/g, '');
-
-    return `section-${slug || index + 1}`;
-}
-
-/**
- * Add deterministic anchors after sanitization so article HTML and the TOC
- * share one server-authored source of truth before hydration.
- */
-export function addStableBlogHeadingIds(html: string): string {
-    const seenIds = new Map<string, number>();
-    let headingIndex = 0;
-
-    return html.replace(
-        /<(h[23])([^>]*)>([\s\S]*?)<\/\1>/gi,
-        (_match, tag: 'h2' | 'h3', attributes: string, content: string) => {
-            const text = stripHtml(content);
-            const baseId = createHeadingId(text, headingIndex);
-            const occurrence = (seenIds.get(baseId) ?? 0) + 1;
-            const id = occurrence === 1 ? baseId : `${baseId}-${occurrence}`;
-
-            seenIds.set(baseId, occurrence);
-            headingIndex += 1;
-
-            return `<${tag}${attributes} id='${id}' tabindex='-1'>${content}</${tag}>`;
-        },
-    );
-}
-
-export function getBlogTableOfContents(html: string): BlogTableOfContentsItem[] {
-    const items: BlogTableOfContentsItem[] = [];
-    const headingPattern = /<h([23])[^>]*\sid='([^']+)'[^>]*>([\s\S]*?)<\/h\1>/gi;
-    let match: RegExpExecArray | null;
-
-    while ((match = headingPattern.exec(html)) !== null) {
-        const text = stripHtml(match[3]);
-        if (!text) continue;
-
-        items.push({
-            id: match[2],
-            text,
-            level: Number(match[1]) as 2 | 3,
-        });
-    }
-
-    return items;
-}
-
 function getCachedProcessedHtml(cacheKey: string, compute: () => string): string {
     const existing = processedHtmlCache.get(cacheKey);
     if (existing !== undefined) return existing;
@@ -247,14 +156,6 @@ function getCachedProcessedHtml(cacheKey: string, compute: () => string): string
     const value = compute();
     processedHtmlCache.set(cacheKey, value);
     return value;
-}
-
-export function getProcessedBlogContent(html: string): string {
-    return getCachedProcessedHtml(`blog:${html}`, () =>
-        addStableBlogHeadingIds(
-            sanitizeRichContent(highlightCodeBlocks(enhanceBlogContent(html)))
-        )
-    );
 }
 
 export function getProcessedDocContent(html: string): string {

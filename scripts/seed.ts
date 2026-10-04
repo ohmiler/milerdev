@@ -166,19 +166,6 @@ async function main() {
     console.log('✅ Default settings created');
 
     // =====================
-    // 10. BLOG POST
-    // =====================
-    await connection.execute(
-        `INSERT IGNORE INTO blog_posts (id, title, slug, excerpt, content, status, author_id, published_at, view_count, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [createId(), 'ยินดีต้อนรับสู่ MilerDev', 'welcome-to-milerdev',
-         'บทความแรกของเรา เกี่ยวกับการเรียนรู้ Web Development',
-         '<p>ยินดีต้อนรับสู่ MilerDev! เราพร้อมช่วยคุณเรียนรู้การเขียนโปรแกรม</p>',
-         'published', adminId, now, 0, now, now]
-    );
-    console.log('✅ 1 blog post created');
-
-    // =====================
     // DONE
     // =====================
     console.log('\n🎉 Seed complete! You can now login with:');

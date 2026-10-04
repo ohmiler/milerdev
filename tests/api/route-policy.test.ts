@@ -25,7 +25,6 @@ const MANIFEST: Record<string, RouteClass> = {
     'auth/register/route.ts': 'public',
     'auth/reset-password/confirm/route.ts': 'public',
     'auth/reset-password/route.ts': 'public',
-    'blog/route.ts': 'public',
     'bundles/enroll/route.ts': 'auth',
     'bundles/route.ts': 'public',
     'bundles/slip/verify/route.ts': 'mixed',
@@ -59,7 +58,7 @@ const MANIFEST: Record<string, RouteClass> = {
 
 const ADMIN_ROUTES = [
     'affiliate-banners/[id]', 'affiliate-banners', 'audit-logs',
-    'blog/[id]', 'blog', 'bundles/[id]', 'bundles', 'certificates/[id]', 'certificates',
+    'bundles/[id]', 'bundles', 'certificates/[id]', 'certificates',
     'coupons/[id]', 'coupons', 'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]',
     'courses', 'enrollments/[id]', 'enrollments/import', 'enrollments', 'lessons/[lessonId]',
     'media/[id]', 'media', 'notifications', 'payments/[id]', 'payments/cleanup', 'payments',
@@ -137,7 +136,7 @@ describe('route policy inventory', () => {
     const keys = Object.keys(routeModules).sort();
 
     it('finds the route files', () => {
-        expect(keys.length).toBeGreaterThan(80);
+        expect(keys.length).toBeGreaterThan(50);
     });
 
     it('classifies every route file', () => {

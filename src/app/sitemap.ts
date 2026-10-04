@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
-import { courses, bundles, blogPosts } from '@/lib/db/schema';
+import { courses, bundles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { absoluteUrl, SITE_URL } from '@/lib/content/seo';
 import { logError } from '@/lib/error-handler';
@@ -11,7 +11,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: 'daily', priority: 1 },
     { url: absoluteUrl('/courses'), changeFrequency: 'daily', priority: 0.9 },
-    { url: absoluteUrl('/blog'), changeFrequency: 'weekly', priority: 0.8 },
     { url: absoluteUrl('/about'), changeFrequency: 'monthly', priority: 0.6 },
     { url: absoluteUrl('/contact'), changeFrequency: 'monthly', priority: 0.5 },
     { url: absoluteUrl('/faq'), changeFrequency: 'monthly', priority: 0.5 },
@@ -21,7 +20,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let coursePages: MetadataRoute.Sitemap = [];
   let bundlePages: MetadataRoute.Sitemap = [];
-  let blogPostPages: MetadataRoute.Sitemap = [];
 
   try {
     const publishedCourses = await db.select({ slug: courses.slug, createdAt: courses.createdAt, updatedAt: courses.updatedAt }).from(courses).where(eq(courses.status, 'published'));
@@ -47,17 +45,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     logError(error, { action: 'sitemap.bundles_failed' });
   }
 
-  try {
-    const publishedPosts = await db.select({ slug: blogPosts.slug, createdAt: blogPosts.createdAt, updatedAt: blogPosts.updatedAt }).from(blogPosts).where(eq(blogPosts.status, 'published'));
-    blogPostPages = publishedPosts.map((post) => ({
-      url: absoluteUrl(`/blog/${post.slug}`),
-      lastModified: post.updatedAt || post.createdAt || undefined,
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }));
-  } catch (error) {
-    logError(error, { action: 'sitemap.blog_failed' });
-  }
-
-  return [...staticPages, ...coursePages, ...bundlePages, ...blogPostPages];
+  return [...staticPages, ...coursePages, ...bundlePages];
 }

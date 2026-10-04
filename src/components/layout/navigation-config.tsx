@@ -6,7 +6,6 @@ import {
     House,
     Info,
     Mail,
-    PenLine,
     Settings,
     User,
 } from 'lucide-react';
@@ -25,7 +24,6 @@ export type NavigationIcon = LucideIcon;
 
 const publicIcons: Record<(typeof PUBLIC_NAVIGATION)[number]['key'], LucideIcon> = {
     courses: BookOpen,
-    blog: PenLine,
     about: Info,
     contact: Mail,
 };

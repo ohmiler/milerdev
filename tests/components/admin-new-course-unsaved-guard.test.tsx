@@ -110,14 +110,14 @@ describe('new course form unsaved changes guard', () => {
     render(
       <>
         <NewCoursePage />
-        <Link href="/admin/blog" target="_blank">บล็อกแท็บใหม่</Link>
+        <Link href="/admin/tags" target="_blank">แท็กแท็บใหม่</Link>
         <a href="https://example.com/docs">ภายนอก</a>
       </>,
     );
     await screen.findByTestId('editor');
     typeTitle('TypeScript');
 
-    expect(clickLink('บล็อกแท็บใหม่')).toBe(true);
+    expect(clickLink('แท็กแท็บใหม่')).toBe(true);
     expect(clickLink('ภายนอก')).toBe(true);
     expect(clickLink('ยกเลิก', { ctrlKey: true })).toBe(true);
     expect(screen.queryByText('ออกจากหน้านี้โดยไม่บันทึก')).toBeNull();
