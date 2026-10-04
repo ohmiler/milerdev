@@ -17,7 +17,7 @@
 | CI ก่อน merge | มีแล้ว | lint, `tsc`, admin-text, unit, required E2E บน MySQL จริง, build; ด่าน schema drift | - |
 | Required checks + branch ต้อง up to date | มีแล้ว (บางส่วนยังไม่ยืนยัน) | ตั้ง Build/Lint/Test เป็น required; `Required E2E` ผ่าน `Build` | เจ้าของยืนยันค่า |
 | คิว merge (merge queue) | ยังไม่มี | ทุก merge ทำให้ PR อื่นต้องอัปเดตและรัน CI ซ้ำ | เจ้าของเปิดใน GitHub |
-| ตาข่าย test ของจุดเสี่ยง | บางส่วน | MySQL จริง: Stripe, PromptPay, ใบรับรอง, ลบ enrollment; route-policy test; ยังขาด admin route 18 ตัว, webhook/ใบรับรองใน E2E ที่บังคับ | agent + เจ้าของ |
+| ตาข่าย test ของจุดเสี่ยง | บางส่วน | MySQL จริง: Stripe, PromptPay, ใบรับรอง, ลบ enrollment, admin ให้สิทธิ์เรียน/ออกใบรับรอง; route-policy test; admin route ที่ยังไม่มีเทสต์ของตัวเอง 13 จาก 45 (2026-10-04), webhook/ใบรับรองใน E2E ที่บังคับ | agent + เจ้าของ |
 | Migration ปลอดภัย | บางส่วน | รันเป็น pre-deploy (`npm run db:migrate`), health check `/api/health`; กติกา expand/contract อยู่ใน AGENTS.md; ลบ `db:push` ออกจาก scripts แล้ว (2026-10-04) | - |
 | รอ CI ผ่านก่อน deploy | ยังไม่ยืนยัน | Railway deploy จาก `master` ทันทีหลัง merge; ตัวเลือก "Wait for CI" ยังไม่เห็นในภาพที่ส่งมา | เจ้าของตรวจ/เปิดใน Railway |
 | ติดตั้งแบบ lockfile เป๊ะบน production | ยังไม่มี | Railway ใช้ `npm install` ไม่ใช่ `npm ci` | เจ้าของตั้ง install command |
