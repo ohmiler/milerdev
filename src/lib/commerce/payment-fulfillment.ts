@@ -1,7 +1,6 @@
 import Stripe from 'stripe';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { getMemberConsentId } from '@/lib/privacy/consent';
 import {
   bundleCourses,
   bundles,
@@ -9,12 +8,10 @@ import {
   courses,
   enrollments,
   payments,
-  measurementOutbox,
   stripeEvents,
   type Payment,
 } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
-import { purchaseMeasurementProjector } from '@/lib/analytics/purchase-measurement-projector';
 
 type PaymentTarget =
   | { type: 'course'; itemId: string }
@@ -255,15 +252,6 @@ export async function fulfillStripeCheckoutSession({
         }
       }
 
-      if (!wasCompleted) {
-        const consentId = await getMemberConsentId(tx, payment.userId);
-        if (consentId) await tx.insert(measurementOutbox).values({
-          consentId,
-          eventName: 'purchase_completed',
-          paymentId: payment.id,
-        });
-      }
-
       return {
         status: wasCompleted ? 'already_fulfilled' : 'fulfilled',
         payment: { ...payment, status: 'completed', stripePaymentId: paymentIntentId },
@@ -271,11 +259,9 @@ export async function fulfillStripeCheckoutSession({
       };
     });
 
-    await purchaseMeasurementProjector.projectPurchase(result.payment.id);
     return result;
   } catch (error) {
     if (event && isDuplicateKeyError(error)) {
-      await purchaseMeasurementProjector.projectPurchase(identity.paymentId);
       return { status: 'replayed' };
     }
     if (error instanceof FulfillmentRejection) {
@@ -360,13 +346,6 @@ export async function fulfillManualPayment({
         newValue: `status: completed; manual approval; reason: ${reason.trim()}`,
       });
 
-      const consentId = await getMemberConsentId(tx, payment.userId);
-      if (consentId) await tx.insert(measurementOutbox).values({
-        consentId,
-        eventName: 'purchase_completed',
-        paymentId: payment.id,
-      });
-
       return {
         status: 'fulfilled',
         payment: { ...payment, status: 'completed' },
@@ -374,7 +353,6 @@ export async function fulfillManualPayment({
       };
     });
 
-    await purchaseMeasurementProjector.projectPurchase(result.payment.id);
     return result;
   } catch (error) {
     if (error instanceof FulfillmentRejection) {

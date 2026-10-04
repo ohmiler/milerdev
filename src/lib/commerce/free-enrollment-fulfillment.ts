@@ -2,10 +2,8 @@ import { and, eq } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 import { db } from '@/lib/db';
-import { getMemberConsentId } from '@/lib/privacy/consent';
-import { enrollments, measurementOutbox } from '@/lib/db/schema';
+import { enrollments } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
-import { enrollmentMeasurementProjector } from '@/lib/analytics/enrollment-measurement-projector';
 
 type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -35,13 +33,6 @@ async function insertEnrollment(
     return { id: existing.id, courseId, created: false };
   }
 
-  const consentId = await getMemberConsentId(tx, userId);
-  if (consentId) await tx.insert(measurementOutbox).values({
-    consentId,
-    eventName: 'free_enrollment_completed',
-    paymentId: null,
-    enrollmentId: id,
-  });
   return { id, courseId, created: true };
 }
 
@@ -74,9 +65,6 @@ export async function fulfillFreeEnrollment({
     return entries;
   });
 
-  for (const enrollment of outcomes) {
-    await enrollmentMeasurementProjector.projectEnrollment(enrollment.id);
-  }
   const created = outcomes.filter((entry) => entry.created);
   return {
     status: created.length > 0 ? 'fulfilled' : 'already_fulfilled',

@@ -1,5 +1,3 @@
-import { withBrowserConsent } from '@/lib/privacy/consent';
-import { getMeasurementDatabase } from '@/lib/analytics/measurement-database';
 import { NextResponse } from "next/server";
 import { z } from 'zod';
 import { auth } from "@/lib/auth";
@@ -9,14 +7,12 @@ import { bundles, bundleCourses, courses, enrollments, lessons, payments } from 
 import { eq, asc, and, count, inArray } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
-import { analyticsExposureIdSchema } from '@/lib/analytics/contract';
-import { logEvent } from '@/lib/error-handler';
-import { measurementRecorder } from '@/lib/analytics/measurement-recorder';
 import { logError } from '@/lib/error-handler';
 
 const stripeBundleCheckoutRequestSchema = z.object({
     bundleId: z.string().trim().min(1).max(36),
-    exposureId: analyticsExposureIdSchema.optional(),
+    // Ignored: purchase attribution was removed, and pages loaded before that deploy still send it.
+    exposureId: z.string().max(64).optional(),
     expectedAmount: z.string().regex(/^\d{1,8}\.\d{2}$/).optional(),
 }).strict();
 
@@ -38,7 +34,7 @@ export async function POST(request: Request) {
         if (!parsed.success) {
             return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
         }
-        const { bundleId, exposureId } = parsed.data;
+        const { bundleId } = parsed.data;
 
         // Get bundle details
         const [bundle] = await db
@@ -129,29 +125,11 @@ export async function POST(request: Request) {
             bundleId: bundle.id,
             amount: priceNumber.toFixed(2),
             currency: "THB",
-            attributedExposureId: null,
             method: "stripe",
             itemTitle: `📦 ${bundle.title}`,
             status: "pending",
         };
-        let insertedWithConsent = false;
-        if (exposureId) {
-            try {
-                insertedWithConsent = await withBrowserConsent(session.user.id, async () => {
-                    const attributedExposureId = await measurementRecorder.resolveProductExposureAttribution({
-                        exposureId,
-                        productType: 'bundle',
-                        productId: bundle.id,
-                    });
-                    // Hold the receipt lock until the attributed payment write commits.
-                    await getMeasurementDatabase().insert(payments).values({ ...paymentValues, attributedExposureId });
-                    return true;
-                }, () => false);
-            } catch {
-                logEvent('analytics.payment_attribution_failed', 'warn');
-            }
-        }
-        if (!insertedWithConsent) await db.insert(payments).values(paymentValues);
+        await db.insert(payments).values(paymentValues);
 
         // Normalize thumbnail URL
         const thumbnailUrl = bundle.thumbnailUrl

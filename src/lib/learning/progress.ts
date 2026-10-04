@@ -5,19 +5,13 @@ import { and, count, eq } from 'drizzle-orm';
 
 import { ensureCompletedCertificate } from '@/lib/certificates/issuance';
 import { db } from '@/lib/db';
-import { getMemberConsentId } from '@/lib/privacy/consent';
 import {
   enrollments,
   lessonProgress,
   lessons,
-  measurementOutbox,
 } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { logError, logEvent } from '@/lib/error-handler';
-import {
-  learningMeasurementProjector,
-  type LearningMilestoneIdentity,
-} from '@/lib/learning/measurement';
 
 export type LearningProgressUpdate = {
   userId: string;
@@ -30,7 +24,6 @@ export type LearningProgressUpdateResult =
   | { status: 'not_found' | 'forbidden' }
   | {
     status: 'saved';
-    milestones: LearningMilestoneIdentity[];
     courseCompleted: boolean;
     courseId: string;
     enrollmentId: string | null;
@@ -60,53 +53,6 @@ export async function retryLearningProgressTransaction<T>(
   } catch (error) {
     if (!isDuplicateKeyError(error)) throw error;
     return operation();
-  }
-}
-
-export function deriveLearningMilestoneIdentities(input: {
-  progressId: string;
-  enrollmentId: string;
-  lessonCompletedBefore: boolean;
-  lessonCompletedAfter: boolean;
-  courseCompletedBefore: boolean;
-  courseCompletedAfter: boolean;
-}): LearningMilestoneIdentity[] {
-  const milestones: LearningMilestoneIdentity[] = [];
-  if (!input.lessonCompletedBefore && input.lessonCompletedAfter) {
-    milestones.push({ eventName: 'lesson_completed', factId: input.progressId });
-  }
-  if (!input.courseCompletedBefore && input.courseCompletedAfter) {
-    milestones.push({ eventName: 'course_completed', factId: input.enrollmentId });
-  }
-  return milestones;
-}
-
-type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-
-async function enqueueLearningMilestone(
-  tx: DatabaseTransaction,
-  input: LearningMilestoneIdentity & {
-    userId: string;
-    enrollmentId: string;
-    courseId: string;
-    lessonId: string | null;
-  },
-) {
-  try {
-    const consentId = await getMemberConsentId(tx, input.userId);
-    if (!consentId) return;
-    await tx.insert(measurementOutbox).values({
-      consentId,
-      eventName: input.eventName,
-      paymentId: null,
-      enrollmentId: null,
-      learningFactId: input.factId,
-      learningEnrollmentId: input.enrollmentId,
-      courseId: input.courseId,
-      lessonId: input.lessonId,
-    });
-  } catch (error) {
-    if (!isDuplicateKeyError(error)) throw error;
   }
 }
 
@@ -187,7 +133,6 @@ export async function updateLearningProgress(
     if (!enrollment || wasCompleted === nextCompleted) {
       return {
         status: 'saved',
-        milestones: [],
         courseCompleted: false,
         courseId: lesson.courseId,
         enrollmentId: enrollment?.id ?? null,
@@ -216,34 +161,14 @@ export async function updateLearningProgress(
       ? Math.round((completedLessons / totalLessons) * 100)
       : 0;
     const courseCompleted = progressPercent === 100;
-    const courseCompletedBefore = Boolean(enrollment.completedAt);
 
     await tx.update(enrollments).set({
       progressPercent,
       completedAt: courseCompleted ? enrollment.completedAt ?? new Date() : null,
     }).where(eq(enrollments.id, enrollment.id));
 
-    const milestones = deriveLearningMilestoneIdentities({
-      progressId,
-      enrollmentId: enrollment.id,
-      lessonCompletedBefore: wasCompleted,
-      lessonCompletedAfter: nextCompleted,
-      courseCompletedBefore,
-      courseCompletedAfter: courseCompleted,
-    });
-    for (const milestone of milestones) {
-      await enqueueLearningMilestone(tx, {
-        userId: input.userId,
-        ...milestone,
-        enrollmentId: enrollment.id,
-        courseId: lesson.courseId,
-        lessonId: milestone.eventName === 'lesson_completed' ? lesson.id : null,
-      });
-    }
-
       return {
         status: 'saved',
-        milestones,
         courseCompleted,
         courseId: lesson.courseId,
         enrollmentId: enrollment.id,
@@ -264,8 +189,5 @@ export async function updateLearningProgress(
     }
   }
 
-  if (result.enrollmentId) {
-    await learningMeasurementProjector.projectPendingMilestones(result.enrollmentId);
-  }
   return result;
 }
