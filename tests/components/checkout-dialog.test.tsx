@@ -8,7 +8,7 @@ import CheckoutDialog from '@/components/checkout/CheckoutDialog';
 import { paymentRecord } from '../fixtures/payment-record';
 import type { OrderReview } from '@/lib/commerce/order-review';
 
-vi.mock('next/image', () => ({ default: () => null }));
+vi.mock('next/image', () => ({ default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} /> }));
 vi.mock('@/components/ui/DialogShell', () => ({ default: ({ isOpen, title, body, children, onClose }: { isOpen: boolean; title: string; body: ReactNode; children: ReactNode; onClose: () => void }) => isOpen ? <section role="dialog" aria-label={title}><button onClick={onClose}>Close</button>{body}{children}</section> : null }));
 
 const response = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
@@ -61,6 +61,25 @@ describe.each(['course', 'bundle'] as const)('%s order review and payment', (typ
     expect(await screen.findByText('attempt-1')).toBeTruthy();
     expect(screen.getByText(/เวลาไทย/)).toBeTruthy();
     expect(screen.getByText(/ข้อมูลส่วนบุคคล/)).toBeTruthy();
+  });
+
+  it('shows the amount-embedded PromptPay QR instead of the bank account when the server returns one', async () => {
+    const qr = 'data:image/png;base64,UVI=';
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ review: review(type) })).mockResolvedValueOnce(response({ ...intent, promptpayQr: qr }, 201)));
+    const user = userEvent.setup(); mount(type);
+    await user.click(await screen.findByRole('button', { name: /PromptPay/ }));
+    expect((await screen.findByRole('img', { name: 'QR พร้อมเพย์ ยอด ฿990.25' })).getAttribute('src')).toBe(qr);
+    expect(screen.getByRole('link', { name: /บันทึกรูป QR/ }).getAttribute('href')).toBe(qr);
+    expect(screen.queryByText('เลขบัญชี')).toBeNull();
+    expect(screen.getByLabelText('แนบสลิปการโอนเงิน')).toBeTruthy();
+  });
+
+  it('falls back to the bank account when no PromptPay QR is configured', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ review: review(type) })).mockResolvedValueOnce(response({ ...intent, promptpayQr: null }, 201)));
+    const user = userEvent.setup(); mount(type);
+    await user.click(await screen.findByRole('button', { name: /PromptPay/ }));
+    expect(await screen.findByText('เลขบัญชี')).toBeTruthy();
+    expect(screen.queryByRole('img', { name: /QR พร้อมเพย์/ })).toBeNull();
   });
 
   it('retains the exact attempt on close/reopen and retries a rejected slip without another payment', async () => {

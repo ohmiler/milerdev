@@ -21,7 +21,7 @@ export const CHECKOUT_CONTRACT = {
   maxSlipBytes: 5 * 1024 * 1024,
 };
 
-type Intent = { paymentId: string; amount: number; itemTitle: string; expiresAt: string };
+type Intent = { paymentId: string; amount: number; itemTitle: string; expiresAt: string; promptpayQr?: string | null };
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -289,11 +289,15 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
               {verifying ? <p role="status">กำลังตรวจสอบสลิป กรุณารอผล อย่าชำระหรือส่งสลิปซ้ำ</p> : null}
               {!expired && !uncertain ? (
                 <>
-                  {!resumePaymentId ? <dl className="grid gap-2 text-sm [&_dd]:break-words">
+                  {resumePaymentId ? null : intent.promptpayQr ? <figure className="flex flex-col items-center gap-2">
+                    <Image src={intent.promptpayQr} alt={`QR พร้อมเพย์ ยอด ${formatOrderAmount(intent.amount)}`} width={240} height={240} unoptimized className="size-60 rounded-md bg-white" />
+                    <figcaption className="text-center text-sm text-muted-foreground">สแกนด้วยแอปธนาคาร ยอดเงินใส่ไว้ให้แล้ว ถ้าจ่ายด้วยมือถือเครื่องนี้ ให้บันทึกรูปแล้วเปิดจากแอปธนาคาร</figcaption>
+                    <Button asChild variant="outline" size="sm"><a href={intent.promptpayQr} download={`milerdev-promptpay-${intent.paymentId.slice(0, 8)}.png`}>บันทึกรูป QR</a></Button>
+                  </figure> : <dl className="grid gap-2 text-sm [&_dd]:break-words">
                     <div><dt>ธนาคาร</dt><dd>{process.env.NEXT_PUBLIC_BANK_NAME || 'กสิกรไทย (KBank)'}</dd></div>
                     <div><dt>เลขบัญชี</dt><dd>{process.env.NEXT_PUBLIC_BANK_ACCOUNT || 'xxx-x-xxxxx-x'}</dd></div>
                     <div><dt>ชื่อบัญชี</dt><dd>{process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'MilerDev'}</dd></div>
-                  </dl> : null}
+                  </dl>}
                   <p className="text-sm text-muted-foreground">แนบเฉพาะสลิปของรายการนี้ สลิปมีข้อมูลส่วนบุคคลและจะส่งให้ผู้ให้บริการตรวจสอบการโอนเงิน กรุณาอย่าส่งเอกสารอื่นหรือข้อมูลที่ไม่เกี่ยวข้อง</p>
                   <Field data-invalid={Boolean(slipError) || undefined}>
                     <FieldLabel htmlFor={slipId}>แนบสลิปการโอนเงิน</FieldLabel>

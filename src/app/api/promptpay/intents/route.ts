@@ -16,6 +16,7 @@ import {
 } from '@/lib/db/schema';
 import { loadPromptPayPresentation } from '@/lib/commerce/promptpay-presentation';
 import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/commerce/promptpay-intent';
+import { createPromptPayQr } from '@/lib/commerce/promptpay-qr';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { logError } from '@/lib/error-handler';
 
@@ -165,11 +166,18 @@ export async function POST(request: Request) {
       return { amount, itemTitle: bundle.title };
     });
 
+    // The intent is already stored; without a QR the dialog shows the bank account instead.
+    const promptpayQr = await createPromptPayQr(result.amount).catch((error: unknown) => {
+      logError(error, { action: 'promptpay.intents.qr_failed' });
+      return null;
+    });
+
     return NextResponse.json({
       paymentId,
       amount: result.amount,
       itemTitle: result.itemTitle,
       expiresAt: new Date(intentCreatedAt.getTime() + PROMPTPAY_INTENT_TTL_MS).toISOString(),
+      promptpayQr,
     }, { status: 201 });
   } catch (error) {
     const status = typeof error === 'object' && error && 'status' in error

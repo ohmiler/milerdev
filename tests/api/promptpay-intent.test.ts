@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/auth', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
 vi.mock('@/lib/security/rate-limit', () => ({
   checkRateLimit: vi.fn(() => ({ success: true, resetTime: Date.now() + 60_000 })),
   rateLimits: { sensitive: { maxRequests: 10, windowMs: 60_000 } },
@@ -38,6 +39,8 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { auth } from '@/lib/auth';
+import { buildPromptPayPayload } from '@/lib/commerce/promptpay-qr';
+import { logError } from '@/lib/error-handler';
 import { assertPromptPayIntentClaim, PROMPTPAY_INTENT_TTL_MS, type PromptPayIntentRecord } from '@/lib/commerce/promptpay-intent';
 
 const studentSession = { user: { id: 'student-1' } };
@@ -57,6 +60,7 @@ describe('PromptPay intent creation boundary', () => {
     inserted.length = 0;
     vi.mocked(auth).mockResolvedValue(studentSession as never);
   });
+  afterEach(() => vi.unstubAllEnvs());
 
   it('creates an immutable owner-bound course attempt before transfer', async () => {
     selectQueue.push(
@@ -81,6 +85,32 @@ describe('PromptPay intent creation boundary', () => {
     const body = await response.json();
     expect(body.paymentId).toBeTruthy();
     expect(body.expiresAt).toBeTruthy();
+  });
+
+  it.each([
+    ['configured', '0812345678', true],
+    ['not configured', '', false],
+    ['misconfigured', '12345', false],
+  ] as const)('returns a QR for the stored amount only when PromptPay is %s', async (_state, promptPayId, hasQr) => {
+    vi.stubEnv('PROMPTPAY_ID', promptPayId);
+    selectQueue.push(
+      [{ id: 'course-1', title: 'Course', price: '990.00', promoPrice: null, status: 'published' }], [{ lessonCount: 1 }], [],
+    );
+    const { POST } = await import('@/app/api/promptpay/intents/route');
+    const response = await POST(request({ courseId: 'course-1' }));
+
+    expect(response.status).toBe(201);
+    expect(inserted).toHaveLength(1);
+    const body = await response.json();
+    if (hasQr) {
+      const QRCode = await import('qrcode');
+      const payload = buildPromptPayPayload(promptPayId, 990);
+      expect(payload).toContain('5406990.00');
+      expect(body.promptpayQr).toBe(await QRCode.toDataURL(payload!, { errorCorrectionLevel: 'M', margin: 2, width: 480 }));
+    } else {
+      expect(body.promptpayQr).toBeNull();
+    }
+    expect(vi.mocked(logError)).toHaveBeenCalledTimes(promptPayId === '12345' ? 1 : 0);
   });
 
   it.each(['course', 'bundle'] as const)('keeps a new %s attempt claimable after MySQL DATETIME(0) storage rounding', async (type) => {
