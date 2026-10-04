@@ -3,6 +3,9 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const navigation = vi.hoisted(() => ({ searchParams: new URLSearchParams() }));
+vi.mock('next/navigation', () => ({ useSearchParams: () => navigation.searchParams }));
+
 import ReconciliationPage from '@/app/admin/reconciliation/page';
 
 const summary = { verifying: 0, failed: 0, pending: 0 };
@@ -187,16 +190,33 @@ describe('Admin reconciliation queue states', () => {
       expect(url.searchParams.get('page')).toBe('1');
     });
 
-    it('requests every time range for backlog older than 90 days', async () => {
+    it('requests every time range by default so open cases never age out, and narrows on request', async () => {
       const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(paged(1, 1, 1));
 
       render(<ReconciliationPage />);
       await screen.findByText('คอร์ส 1');
-      fireEvent.change(screen.getByLabelText('ช่วงเวลา'), { target: { value: 'all' } });
+      expect(requestedUrl(fetchMock, 0).searchParams.get('days')).toBe('all');
+      expect(screen.getByText(/ทุกช่วงเวลา/)).toBeTruthy();
+      fireEvent.change(screen.getByLabelText('ช่วงเวลา'), { target: { value: '30' } });
 
       await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-      expect(requestedUrl(fetchMock, 1).searchParams.get('days')).toBe('all');
-      expect(await screen.findByText(/ทุกช่วงเวลา/)).toBeTruthy();
+      expect(requestedUrl(fetchMock, 1).searchParams.get('days')).toBe('30');
+    });
+
+    it('opens the status named in the link, and ignores an unknown one', async () => {
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(paged(1, 1, 1));
+
+      navigation.searchParams = new URLSearchParams('status=failed');
+      render(<ReconciliationPage />);
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      expect(requestedUrl(fetchMock, 0).searchParams.get('status')).toBe('failed');
+      cleanup();
+
+      navigation.searchParams = new URLSearchParams('status=refunded');
+      render(<ReconciliationPage />);
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(requestedUrl(fetchMock, 1).searchParams.get('status')).toBe('verifying');
+      navigation.searchParams = new URLSearchParams();
     });
 
     it('moves back when the last items of a later page are resolved', async () => {

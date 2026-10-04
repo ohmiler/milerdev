@@ -17,8 +17,8 @@ const RECONCILIATION_PAGE_SIZE = 50;
 
 const reconciliationQuerySchema = z.object({
     status: z.enum(['verifying', 'failed', 'pending']).default('verifying'),
-    // "all" lets reviewers reach work items older than the 90 day window.
-    days: z.union([z.literal('all'), z.coerce.number().int().min(1).max(90)]).default(30),
+    // Open cases never age out of the queue by default; a day window is an explicit narrowing.
+    days: z.union([z.literal('all'), z.coerce.number().int().min(1).max(90)]).default('all'),
     page: z.coerce.number().int().min(1).max(100_000).default(1),
     q: z.string().trim().max(100).optional(),
 });

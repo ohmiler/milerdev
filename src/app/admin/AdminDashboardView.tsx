@@ -30,6 +30,10 @@ export type AdminDashboardData = {
     verifying: number;
     failed: number;
     refunded: number;
+    /** PromptPay slips waiting for an admin decision in the reconciliation queue. */
+    slipsToReview: number;
+    /** PromptPay payments marked failed, reviewable in the reconciliation queue. */
+    slipsFailed: number;
   };
   courseAttention: {
     draft: number;
@@ -86,22 +90,22 @@ function paymentStatus(status: string): { label: string; tone: AdminTone } {
 }
 
 export default function AdminDashboardView({ data }: { data: AdminDashboardData }) {
-  const paymentsNeedReview = data.paymentHealth.pending + data.paymentHealth.verifying;
+  const paymentsNeedReview = data.paymentHealth.slipsToReview;
   const attentionItems = [
     {
       key: 'payments-review',
       label: 'ตรวจรายการชำระเงิน',
-      detail: 'รายการที่รอดำเนินการหรือกำลังตรวจสอบ',
+      detail: 'สลิป PromptPay ที่รออนุมัติหรือปฏิเสธ',
       count: paymentsNeedReview,
-      href: '/admin/payments',
+      href: '/admin/reconciliation?status=verifying',
       tone: 'warning' as const,
     },
     {
       key: 'payments-failed',
       label: 'ทบทวนรายการไม่สำเร็จ',
       detail: 'ตรวจสาเหตุและเส้นทางกู้คืนก่อนดำเนินการต่อ',
-      count: data.paymentHealth.failed,
-      href: '/admin/reconciliation',
+      count: data.paymentHealth.slipsFailed,
+      href: '/admin/reconciliation?status=failed',
       tone: 'danger' as const,
     },
     {
@@ -192,7 +196,7 @@ export default function AdminDashboardView({ data }: { data: AdminDashboardData 
         <AdminMetricCard
           label="การชำระเงินที่ต้องตรวจ"
           value={formatNumber(paymentsNeedReview)}
-          detail="รอดำเนินการและกำลังตรวจสอบ"
+          detail="สลิป PromptPay ที่รอตรวจ"
           icon={<CreditCard />}
           tone={paymentsNeedReview > 0 ? 'warning' : 'success'}
         />
