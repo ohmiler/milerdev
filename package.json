@@ -28,8 +28,6 @@
     "db:fixtures:user-lifecycle-smoke": "tsx scripts/create-user-lifecycle-smoke-fixtures.ts",
     "db:fixtures:course-lifecycle-smoke": "tsx scripts/create-course-lifecycle-smoke-fixtures.ts",
     "db:fixtures:e2e": "tsx scripts/create-e2e-fixtures.ts",
-    "db:push": "drizzle-kit push",
-    "db:push:local": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx scripts/seed.ts",
     "docker:up": "docker compose up -d",
