@@ -4,7 +4,6 @@ import type { Session } from 'next-auth';
 import Link from 'next/link';
 import { LogIn, LogOut, ShieldCheck, UserRoundPlus } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +15,6 @@ import {
 } from '@/lib/navigation-model';
 import {
     ACCOUNT_MENU_LINKS,
-    MEMBER_UTILITY_LINKS,
     NAV_LINKS,
     UserAvatar,
 } from './navigation-config';
@@ -26,7 +24,6 @@ interface MobileNavigationPanelProps {
     sessionStatus: 'loading' | 'authenticated' | 'unauthenticated';
     isAdmin: boolean;
     pathname: string;
-    unreadCount: number;
     onClose: () => void;
     onLogout: () => void;
 }
@@ -36,7 +33,6 @@ export default function MobileNavigationPanel({
     sessionStatus,
     isAdmin,
     pathname,
-    unreadCount,
     onClose,
     onLogout,
 }: MobileNavigationPanelProps) {
@@ -96,32 +92,19 @@ export default function MobileNavigationPanel({
                         })}
                     </nav>
                     <Separator />
-                    <nav className="flex flex-col gap-1 py-2" aria-label="เมนูสมาชิก">
-                        {MEMBER_UTILITY_LINKS.map((destination) => {
-                            const state = getNavigationState(pathname, destination);
-                            const Icon = destination.icon;
-                            return (
-                                <Button key={destination.href} asChild variant={state.active ? 'secondary' : 'ghost'} className="w-full justify-start">
-                                    <Link href={destination.href} onClick={onClose} aria-current={state.ariaCurrent}>
-                                        <Icon data-icon="inline-start" aria-hidden="true" />
-                                        <span className="flex-1 text-left">{destination.label}</span>
-                                        {destination.key === 'announcements' && unreadCount > 0 ? (
-                                            <Badge variant="destructive">{unreadCount > 9 ? '9+' : unreadCount}</Badge>
-                                        ) : null}
+                    {isAdmin ? (
+                        <>
+                            <nav className="flex flex-col gap-1 py-2" aria-label="เมนูผู้ดูแล">
+                                <Button asChild variant={adminState.active ? 'secondary' : 'ghost'} className="w-full justify-start">
+                                    <Link href={ADMIN_NAVIGATION.href} onClick={onClose} aria-current={adminState.ariaCurrent}>
+                                        <ShieldCheck data-icon="inline-start" aria-hidden="true" />
+                                        {ADMIN_NAVIGATION.label}
                                     </Link>
                                 </Button>
-                            );
-                        })}
-                        {isAdmin ? (
-                            <Button asChild variant={adminState.active ? 'secondary' : 'ghost'} className="w-full justify-start">
-                                <Link href={ADMIN_NAVIGATION.href} onClick={onClose} aria-current={adminState.ariaCurrent}>
-                                    <ShieldCheck data-icon="inline-start" aria-hidden="true" />
-                                    {ADMIN_NAVIGATION.label}
-                                </Link>
-                            </Button>
-                        ) : null}
-                    </nav>
-                    <Separator />
+                            </nav>
+                            <Separator />
+                        </>
+                    ) : null}
                     <Button type="button" variant="destructive" className="mt-3 w-full" onClick={onLogout}>
                         <LogOut data-icon="inline-start" aria-hidden="true" />
                         ออกจากระบบ

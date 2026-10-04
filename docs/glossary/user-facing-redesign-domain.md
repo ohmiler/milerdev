@@ -23,7 +23,6 @@ flowchart LR
     User --> LessonProgress[Lesson progress]
     Lesson --> LessonProgress
     Enrollment -->|completion criteria met| Certificate[Certificate]
-    Announcement[Announcement] --> User
     Notification[Notification] --> User
 ```
 
@@ -118,10 +117,6 @@ Evidence associated with a learner and completed course. Revoked certificates mu
 The focused route and UI used to watch a lesson and move through curriculum. It includes the player, lesson rail, progress feedback, recovery states, mobile navigation, and exit path back to the broader learner experience.
 
 ## Communication and content objects
-
-### Announcement
-
-Broad published communication shown on public or learner surfaces according to existing behavior.
 
 ### Notification
 

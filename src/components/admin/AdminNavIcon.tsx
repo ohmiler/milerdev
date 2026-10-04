@@ -1,7 +1,6 @@
 import {
   Award,
   BarChart3,
-  Bell,
   BookOpen,
   Boxes,
   ClipboardCheck,
@@ -21,7 +20,6 @@ import {
 
 const icons: Record<string, LucideIcon> = {
   analytics: BarChart3,
-  announcements: Bell,
   blog: FileText,
   bundles: Boxes,
   certificates: Award,

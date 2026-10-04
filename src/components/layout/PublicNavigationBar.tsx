@@ -168,7 +168,6 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
                                 sessionStatus={status}
                                 isAdmin={isAdmin}
                                 pathname={pathname}
-                                unreadCount={unreadCount}
                                 onClose={closeMobileMenu}
                                 onLogout={() => requestLogout(mobileMenuTriggerRef.current)}
                             />

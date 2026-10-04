@@ -43,7 +43,7 @@ A learner, instructor, or administrator whose account, access, enrollment, payme
 
 ### Admin record
 
-A domain object shown for inspection or management, such as a user, course, lesson, enrollment, payment, reconciliation item, coupon, certificate, post, media object, announcement, review, or setting. Its displayed state must come from an authoritative source.
+A domain object shown for inspection or management, such as a user, course, lesson, enrollment, payment, reconciliation item, coupon, certificate, post, media object, review, or setting. Its displayed state must come from an authoritative source.
 
 ### Work queue
 
@@ -109,7 +109,7 @@ A read-oriented surface such as the dashboard or analytics summary. It shows onl
 
 ### Content operations surface
 
-Course, lesson, media, blog, bundle, tag, announcement, affiliate-banner, and review workflows. It emphasizes draft/published/archive truth, ordering, preview, validation, and safe publication.
+Course, lesson, media, blog, bundle, tag, affiliate-banner, and review workflows. It emphasizes draft/published/archive truth, ordering, preview, validation, and safe publication.
 
 ### People operations surface
 

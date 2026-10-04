@@ -3,13 +3,12 @@ import { describe, expect, it } from 'vitest';
 import {
   ACCOUNT_NAVIGATION,
   GUEST_NAVIGATION,
-  MEMBER_UTILITY_NAVIGATION,
   PUBLIC_NAVIGATION,
   getNavigationState,
 } from '@/lib/navigation-model';
 
 describe('canonical navigation model', () => {
-  it('owns the public, guest, account, and member destinations and labels', () => {
+  it('owns the public, guest, and account destinations and labels', () => {
     expect(PUBLIC_NAVIGATION.map(({ href, label }) => ({ href, label }))).toEqual([
       { href: '/courses', label: 'คอร์สทั้งหมด' },
       { href: '/blog', label: 'บทความ' },
@@ -26,9 +25,6 @@ describe('canonical navigation model', () => {
       { href: '/dashboard/certificates', label: 'ใบรับรอง' },
       { href: '/profile', label: 'โปรไฟล์' },
       { href: '/settings', label: 'ตั้งค่าบัญชี' },
-    ]);
-    expect(MEMBER_UTILITY_NAVIGATION).toEqual([
-      expect.objectContaining({ href: '/announcements', label: 'ประกาศ' }),
     ]);
   });
 

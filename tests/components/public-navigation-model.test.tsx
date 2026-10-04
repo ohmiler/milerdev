@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -96,12 +96,8 @@ describe('public navigation model adapters', () => {
     expect((await screen.findByRole('link', { name: 'การชำระเงิน' })).getAttribute('aria-current')).toBe('page');
     expect(screen.getByRole('link', { name: 'การเรียนของฉัน' }).hasAttribute('aria-current')).toBe(false);
     expect(screen.getByRole('link', { name: 'ใบรับรอง' }).hasAttribute('aria-current')).toBe(false);
-    const accountNavigation = screen.getByRole('navigation', { name: 'เมนูบัญชีสมาชิก' });
-    expect(within(accountNavigation).queryByRole('link', { name: 'ประกาศ' })).toBeNull();
-    const memberNavigation = screen.getByRole('navigation', { name: 'เมนูสมาชิก' });
-    expect(within(memberNavigation).getByRole('link', { name: 'ประกาศ' })).toBe(
-      screen.getByRole('link', { name: 'ประกาศ' }),
-    );
+    expect(screen.queryByRole('link', { name: 'ประกาศ' })).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'เมนูผู้ดูแล' })).toBeNull();
   });
 
   it('shows a desktop section cue for nested public routes', () => {
