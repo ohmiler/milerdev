@@ -27,7 +27,7 @@
 | Staging / preview | ยังไม่มี | ทดสอบกับของจริงได้แค่หลัง deploy | พิจารณา Railway PR environment |
 | Log และ alert | บางส่วน | log redacted และมี label แยก route; ยังไม่ยืนยันว่ามี alert (error rate, health check) | เจ้าของตั้ง alert ใน Railway/uptime monitor |
 | Backup และการกู้คืน | บางส่วน | เคยซ้อมกู้คืนในเครื่อง; ยังไม่ยืนยันตารางสำรองและการทดสอบกู้คืนเป็นระยะ | เจ้าของยืนยัน |
-| Dependency และช่องโหว่ | บางส่วน | `npm audit fix` ทำเป็นครั้งคราว; ไม่มี Dependabot | เพิ่ม `.github/dependabot.yml`; เปิด secret scanning/CodeQL |
+| Dependency และช่องโหว่ | บางส่วน | `.github/dependabot.yml` เปิด PR อัปเดต npm และ GitHub Actions ทุกวันจันทร์ (2026-10-04); ยังไม่ยืนยัน secret scanning/Dependabot alerts | เจ้าของเปิด secret scanning และ Dependabot alerts ใน Settings |
 | ผู้ตรวจ (review) งานเสี่ยงสูง | ยังไม่มี | ไม่บังคับ approval; ทำคนเดียว | พิจารณา CODEOWNERS สำหรับ auth/payments/migrations แม้ยังไม่บังคับ |
 | Secrets | มีแล้ว | Infisical + กฎห้ามอ่าน `.env` | - |
 
@@ -50,5 +50,5 @@ AGENTS.md ใช้นโยบายสามระดับ: A เอกสา
 1. ตรวจ Railway: "Wait for CI" และตั้ง install command เป็น `npm ci`
 2. เปิด Merge queue ใน GitHub (หรือยอมรับต้นทุนการอัปเดต branch)
 3. เพิ่ม alert พื้นฐาน (health check ล้ม, อัตรา error) และยืนยันตาราง backup
-4. เพิ่ม Dependabot และ secret scanning
+4. เปิด secret scanning และ Dependabot alerts ใน GitHub Settings
 5. ตัดสินใจ: จะมี staging หรือไม่
