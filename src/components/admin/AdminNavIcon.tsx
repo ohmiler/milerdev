@@ -12,7 +12,6 @@ import {
   Settings,
   Star,
   Tags,
-  TicketPercent,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -21,7 +20,6 @@ const icons: Record<string, LucideIcon> = {
   analytics: BarChart3,
   bundles: Boxes,
   certificates: Award,
-  coupons: TicketPercent,
   courses: BookOpen,
   dashboard: LayoutDashboard,
   enrollments: ClipboardCheck,

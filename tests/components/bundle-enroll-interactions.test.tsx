@@ -36,8 +36,8 @@ it('grants the Bundle learning action after explicit server-confirmed free enrol
 it('reviews the server-derived Bundle comparison before choosing a payment method', async () => {
   const fetchMock = vi.fn().mockResolvedValue(response({ review: {
     target: { type: 'bundle', id: 'bundle-1', title: 'Bundle จาก server', href: '/bundles/full-stack' },
-    price: { original: '2490.00', discount: '0.00', amountDue: '2490.00', currency: 'THB' },
-    coupon: null, comparison: { separate: '3500.00', label: 'ประหยัด ฿1,010 (29%)' },
+    price: { amountDue: '2490.00', currency: 'THB' },
+    comparison: { separate: '3500.00', label: 'ประหยัด ฿1,010 (29%)' },
     access: { ownedCount: 0, totalCount: 1, description: 'ยืนยันแล้วจึงมีสิทธิ์เรียน' }, action: 'pay',
   } }));
   vi.stubGlobal('fetch', fetchMock);

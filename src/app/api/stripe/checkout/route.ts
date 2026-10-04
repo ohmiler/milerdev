@@ -5,9 +5,8 @@ import { z } from 'zod';
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/commerce/stripe";
 import { db } from "@/lib/db";
-import { courses, payments, coupons, couponUsages, enrollments } from "@/lib/db/schema";
-import { eq, and, count } from "drizzle-orm";
-import { calculateDiscount, validateCouponEligibility } from "@/lib/commerce/coupon";
+import { courses, payments, enrollments } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
 import { analyticsExposureIdSchema } from '@/lib/analytics/contract';
@@ -17,7 +16,6 @@ import { logError } from '@/lib/error-handler';
 
 const stripeCheckoutRequestSchema = z.object({
     courseId: z.string().trim().min(1).max(36),
-    couponId: z.string().trim().min(1).max(36).optional(),
     exposureId: analyticsExposureIdSchema.optional(),
     expectedAmount: z.string().regex(/^\d{1,8}\.\d{2}$/).optional(),
 }).strict();
@@ -40,7 +38,7 @@ export async function POST(request: Request) {
         if (!parsed.success) {
             return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
         }
-        const { courseId, couponId, exposureId } = parsed.data;
+        const { courseId, exposureId } = parsed.data;
 
         // Get course details
         const course = await db.query.courses.findFirst({
@@ -82,37 +80,6 @@ export async function POST(request: Request) {
         const isPromoActive = hasPromo && promoStartOk && promoEndOk;
         let priceNumber = isPromoActive ? parseFloat(course.promoPrice!.toString()) : originalPrice;
 
-        // Apply coupon discount if provided
-        let appliedCouponId: string | null = null;
-        if (couponId) {
-            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
-            if (coupon) {
-                const [userUsage] = await db.select({ count: count() }).from(couponUsages)
-                    .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
-
-                const eligibility = validateCouponEligibility(coupon, {
-                    targetCourseId: courseId,
-                    userUsageCount: userUsage?.count || 0,
-                    coursePrice: priceNumber,
-                });
-
-                if (eligibility.valid) {
-                    const discount = calculateDiscount(
-                        priceNumber,
-                        coupon.discountType as 'percentage' | 'fixed',
-                        coupon.discountValue,
-                        coupon.maxDiscount,
-                    );
-                    priceNumber = Math.max(0, priceNumber - discount);
-                    appliedCouponId = coupon.id;
-                }
-            }
-        }
-
-        if (couponId && appliedCouponId !== couponId) {
-            return NextResponse.json({ error: 'คูปองนี้ใช้ไม่ได้แล้ว กรุณาตรวจสอบรายการใหม่' }, { status: 400 });
-        }
-
         priceNumber = Math.round(priceNumber * 100) / 100;
         if (priceNumber <= 0) {
             return NextResponse.json(
@@ -134,7 +101,6 @@ export async function POST(request: Request) {
             id: paymentId,
             userId: session.user.id,
             courseId: course.id,
-            couponId: appliedCouponId,
             amount: priceNumber.toFixed(2),
             currency: "THB",
             attributedExposureId: null,
@@ -186,7 +152,6 @@ export async function POST(request: Request) {
                 userId: session.user.id,
                 courseId: course.id,
                 type: "course",
-                ...(appliedCouponId && { couponId: appliedCouponId }),
             },
             success_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/courses/${course.slug}?payment=cancelled`,

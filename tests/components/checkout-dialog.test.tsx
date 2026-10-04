@@ -21,8 +21,8 @@ const close = vi.fn();
 function review(type: 'course' | 'bundle', overrides: Partial<OrderReview> = {}): OrderReview {
   return {
     target: { type, id: 'product-1', title: 'รายการภาษาไทย', href: '/courses/thai' },
-    price: { original: '990.25', discount: '0.00', amountDue: '990.25', currency: 'THB' },
-    coupon: null, action: 'pay',
+    price: { amountDue: '990.25', currency: 'THB' },
+    action: 'pay',
     access: { ownedCount: 0, totalCount: 1, description: 'ได้รับสิทธิ์เมื่อระบบยืนยันแล้ว' },
     comparison: type === 'bundle' ? { separate: '1500.00', label: 'ประหยัด ฿509.75' } : null,
     ...overrides,
@@ -51,7 +51,7 @@ describe.each(['course', 'bundle'] as const)('%s order review and payment', (typ
     const user = userEvent.setup(); mount(type);
     expect(screen.queryByRole('button', { name: /PromptPay/ })).toBeNull();
     await act(async () => pendingReview.resolve(response({ review: review(type) })));
-    expect(await screen.findAllByText('฿990.25')).toHaveLength(2);
+    expect(await screen.findAllByText('฿990.25')).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: /PromptPay/ }));
     expect((screen.getByRole('button', { name: /Stripe/ }) as HTMLButtonElement).disabled).toBe(true);
     await user.click(screen.getByRole('button', { name: 'Close' }));
@@ -134,7 +134,7 @@ describe.each(['course', 'bundle'] as const)('%s order review and payment', (typ
     expect(await screen.findByText('ราคาเปลี่ยนแปลง')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /PromptPay/ })).toBeNull();
     expect(fetchMock).toHaveBeenLastCalledWith(stripeEndpoint, expect.objectContaining({ body: JSON.stringify({ ...body, expectedAmount: '990.25' }) }));
-    expect(screen.getByRole('button', { name: 'ตรวจสอบรายการใหม่โดยไม่ใช้คูปอง' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'ตรวจสอบรายการอีกครั้ง' })).toBeTruthy();
   });
 
   it('shows expired attempts without a second transfer prompt', async () => {
@@ -147,35 +147,18 @@ describe.each(['course', 'bundle'] as const)('%s order review and payment', (typ
   });
 });
 
-it('uses the explicit free-enrollment endpoint only after a server-confirmed 100% coupon', async () => {
-  const couponReview = deferred();
+it('uses the explicit free-enrollment endpoint only for a server-confirmed free course', async () => {
   const enrollment = deferred();
-  const fetchMock = vi.fn().mockResolvedValueOnce(response({ review: review('course') })).mockReturnValueOnce(couponReview.promise).mockReturnValueOnce(enrollment.promise);
+  const fetchMock = vi.fn().mockResolvedValueOnce(response({ review: review('course', { price: { amountDue: '0.00', currency: 'THB' }, action: 'enroll-free' }) })).mockReturnValueOnce(enrollment.promise);
   vi.stubGlobal('fetch', fetchMock);
   const user = userEvent.setup(); mount('course');
-  await screen.findByRole('button', { name: /Stripe/ });
-  await user.type(screen.getByRole('textbox', { name: 'มีโค้ดส่วนลด?' }), 'FREE100');
-  await user.click(screen.getByRole('button', { name: 'ใช้โค้ด' }));
-  expect((screen.getByRole('button', { name: 'ใช้โค้ด' }) as HTMLButtonElement).disabled).toBe(true);
-  await act(async () => couponReview.resolve(response({ review: review('course', { coupon: { id: 'coupon-1', code: 'FREE100', description: null }, price: { original: '990.25', discount: '990.25', amountDue: '0.00', currency: 'THB' }, action: 'enroll-free' }) })));
+  await user.click(await screen.findByRole('button', { name: 'ยืนยันลงทะเบียนเรียนฟรี' }));
   expect(screen.queryByRole('button', { name: /Stripe/ })).toBeNull();
-  await user.click(screen.getByRole('button', { name: 'ลงทะเบียนเรียนฟรี (คูปอง 100%)' }));
-  expect(fetchMock).toHaveBeenLastCalledWith('/api/enroll', expect.objectContaining({ body: JSON.stringify({ courseId: 'product-1', couponId: 'coupon-1' }) }));
+  expect(screen.queryByRole('textbox')).toBeNull();
+  expect(fetchMock).toHaveBeenLastCalledWith('/api/enroll', expect.objectContaining({ body: JSON.stringify({ courseId: 'product-1' }) }));
   expect(enrolled).not.toHaveBeenCalled();
   await act(async () => enrollment.resolve(response({ success: true })));
   expect(enrolled).toHaveBeenCalledTimes(1);
-});
-
-it.each(['คูปองนี้หมดอายุแล้ว', 'คูปองนี้ไม่สามารถใช้กับคอร์สนี้ได้'])('keeps invalid coupons accessible: %s', async (error) => {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ review: review('course') })).mockResolvedValueOnce(response({ error }, 400)));
-  const user = userEvent.setup(); mount('course');
-  await screen.findByRole('button', { name: /Stripe/ });
-  const input = screen.getByRole('textbox', { name: 'มีโค้ดส่วนลด?' });
-  await user.type(input, 'INVALID');
-  await user.click(screen.getByRole('button', { name: 'ใช้โค้ด' }));
-  expect(await screen.findByText(error)).toBeTruthy();
-  expect(input.getAttribute('aria-invalid')).toBe('true');
-  expect(screen.queryByRole('button', { name: /Stripe/ })).toBeNull();
 });
 
 it('does not claim learning access from a successful slip response while access is still pending', async () => {
@@ -192,7 +175,7 @@ it('does not claim learning access from a successful slip response while access 
 });
 
 it('recovers an uncertain free enrollment by reading current ownership rather than prompting for payment', async () => {
-  const fetchMock = vi.fn().mockResolvedValueOnce(response({ review: review('course', { action: 'enroll-free', price: { original: '0.00', discount: '0.00', amountDue: '0.00', currency: 'THB' } }) }))
+  const fetchMock = vi.fn().mockResolvedValueOnce(response({ review: review('course', { action: 'enroll-free', price: { amountDue: '0.00', currency: 'THB' } }) }))
     .mockRejectedValueOnce(new Error('offline'))
     .mockResolvedValueOnce(response({ review: review('course', { action: 'owned' }) }));
   vi.stubGlobal('fetch', fetchMock);
@@ -200,7 +183,7 @@ it('recovers an uncertain free enrollment by reading current ownership rather th
   await user.click(await screen.findByRole('button', { name: 'ยืนยันลงทะเบียนเรียนฟรี' }));
   expect(await screen.findByText(/ยังยืนยันผลการลงทะเบียนไม่ได้/)).toBeTruthy();
   expect(enrolled).not.toHaveBeenCalled();
-  await user.click(screen.getByRole('button', { name: 'ตรวจสอบรายการใหม่โดยไม่ใช้คูปอง' }));
+  await user.click(screen.getByRole('button', { name: 'ตรวจสอบรายการอีกครั้ง' }));
   expect(await screen.findByRole('link', { name: 'ไปการเรียนของฉัน' })).toBeTruthy();
   expect(screen.queryByRole('link', { name: 'ดูประวัติการชำระเงิน' })).toBeNull();
 });

@@ -44,14 +44,14 @@ it('shows a server rejection without granting course access', async () => {
 it('opens the shared authoritative order review for a paid Course', async () => {
   const fetchMock = vi.fn().mockResolvedValueOnce(response({ enrolled: false })).mockResolvedValueOnce(response({ review: {
     target: { type: 'course', id: 'course-1', title: 'คอร์สจาก server', href: '/courses/typescript' },
-    price: { original: '990.25', discount: '0.00', amountDue: '990.25', currency: 'THB' },
-    coupon: null, comparison: null, access: { ownedCount: 0, totalCount: 1, description: 'ยืนยันแล้วจึงมีสิทธิ์เรียน' }, action: 'pay',
+    price: { amountDue: '990.25', currency: 'THB' },
+    comparison: null, access: { ownedCount: 0, totalCount: 1, description: 'ยืนยันแล้วจึงมีสิทธิ์เรียน' }, action: 'pay',
   } }));
   vi.stubGlobal('fetch', fetchMock);
   const user = userEvent.setup();
   render(<EnrollButton courseId="course-1" courseSlug="typescript" price={2490} />);
   await user.click(await screen.findByRole('button', { name: /ซื้อคอร์สนี้/ }));
   expect(await screen.findByText('คอร์สจาก server')).toBeTruthy();
-  expect(screen.getAllByText('฿990.25')).toHaveLength(2);
+  expect(screen.getAllByText('฿990.25')).toHaveLength(1);
   expect(fetchMock).toHaveBeenLastCalledWith('/api/checkout/review', expect.objectContaining({ body: JSON.stringify({ courseId: 'course-1' }) }));
 });

@@ -60,19 +60,6 @@ test.describe('Concurrent Enrollment Protection', () => {
       expect(res.status()).toBeLessThan(500);
     }
   });
-
-  test('concurrent coupon validate requests all return < 500', async ({ page }) => {
-    const promises = Array.from({ length: 10 }, () =>
-      page.request.post('/api/coupons/validate', {
-        data: { code: 'TESTCONCURRENT', courseId: 'fake-id' },
-      })
-    );
-
-    const responses = await Promise.all(promises);
-    for (const res of responses) {
-      expect(res.status()).toBeLessThan(500);
-    }
-  });
 });
 
 // ============================================================
@@ -134,7 +121,6 @@ test.describe('Concurrent Page Loads', () => {
       page.request.post('/api/enroll', { data: { courseId: 'x' } }),
       page.request.post('/api/stripe/checkout', { data: { courseId: 'x' } }),
       page.request.post('/api/bundles/enroll', { data: { bundleId: 'x' } }),
-      page.request.post('/api/coupons/validate', { data: { code: 'X', courseId: 'x' } }),
       page.request.get('/api/courses'),
       page.request.post('/api/enroll', { data: { courseId: 'y' } }),
       page.request.post('/api/stripe/checkout', { data: { courseId: 'y' } }),

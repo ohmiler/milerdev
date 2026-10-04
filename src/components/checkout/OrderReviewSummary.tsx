@@ -15,8 +15,6 @@ export default function OrderReviewSummary({ review }: { review: OrderReview }) 
       <CardContent className="flex min-w-0 flex-col gap-3">
         <dl className="grid gap-3 text-sm [&>div]:flex [&>div]:flex-wrap [&>div]:justify-between [&>div]:gap-2 [&_dd]:min-w-0 [&_dd]:break-words">
           {review.comparison ? <div><dt>ซื้อแยกวันนี้</dt><dd>{formatOrderAmount(review.comparison.separate)}</dd></div> : null}
-          <div><dt>ราคาก่อนใช้คูปอง</dt><dd>{formatOrderAmount(review.price.original)}</dd></div>
-          <div><dt>ส่วนลดคูปอง</dt><dd>{formatOrderAmount(review.price.discount)}</dd></div>
           <div><dt>ยอดชำระ (THB)</dt><dd><strong>{formatOrderAmount(review.price.amountDue)}</strong></dd></div>
         </dl>
         {review.comparison ? <p className="text-sm">{review.comparison.label}</p> : null}

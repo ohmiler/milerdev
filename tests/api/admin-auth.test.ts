@@ -45,11 +45,6 @@ vi.mock('@/lib/notifications/email', () => ({
     sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock coupon
-vi.mock('@/lib/commerce/coupon', () => ({
-    calculateDiscount: vi.fn().mockReturnValue(0),
-}));
-
 const mockedAuth = vi.mocked(auth);
 
 /**

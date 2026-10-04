@@ -41,12 +41,6 @@ vi.mock('@/lib/security/rate-limit', () => ({
     ),
 }));
 
-vi.mock('@/lib/commerce/coupon', () => ({
-    calculateDiscount: vi.fn().mockReturnValue(0),
-    validateCouponEligibility: vi.fn().mockReturnValue({ valid: true }),
-    isCouponFullDiscount: vi.fn().mockReturnValue(false),
-}));
-
 vi.mock('@/lib/certificates/issuance', () => ({
     issueCertificate: vi.fn().mockResolvedValue({ certificate: { certificateCode: 'CERT-001' }, isNew: true }),
 }));
@@ -145,15 +139,12 @@ vi.mock('@/lib/db', () => ({
 import { auth } from '@/lib/auth';
 import { stripe } from '@/lib/commerce/stripe';
 import { checkRateLimit } from '@/lib/security/rate-limit';
-import { calculateDiscount, validateCouponEligibility } from '@/lib/commerce/coupon';
 import { db } from '@/lib/db';
 
 const mockedAuth = vi.mocked(auth);
 const mockedRateLimit = vi.mocked(checkRateLimit);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockedStripe = stripe as any;
-const mockedCalcDiscount = vi.mocked(calculateDiscount);
-const mockedValidateCoupon = vi.mocked(validateCouponEligibility);
 
 // Helper: authenticated session
 const studentSession = {
@@ -200,8 +191,6 @@ function resetMocks() {
     mockDb.updateSetData = null;
     mockDb.transactionCalled = false;
     mockedRateLimit.mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 });
-    mockedCalcDiscount.mockReturnValue(0);
-    mockedValidateCoupon.mockReturnValue({ valid: true });
 }
 
 // ============================================================
@@ -311,17 +300,13 @@ describe('POST /api/stripe/checkout', () => {
         expect(mockedStripe.checkout.sessions.create).not.toHaveBeenCalled();
     });
 
-    it('does not silently discard a missing coupon and charge the full price', async () => {
+    it('rejects a coupon id now that coupons are retired, instead of charging the full price', async () => {
         vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
-        mockDb.selectResults = [];
-        const res = await callCheckout({ courseId: 'course-1', couponId: 'missing-coupon' });
+        const res = await callCheckout({ courseId: 'course-1', couponId: 'any-coupon' });
         expect(res.status).toBe(400);
         expect(db.insert).not.toHaveBeenCalled();
         expect(mockedStripe.checkout.sessions.create).not.toHaveBeenCalled();
     });
-
-    // Note: coupon discount logic is thoroughly tested in tests/lib/commerce/coupon.test.ts
-    // Complex multi-chain DB mocks for coupon flows are fragile in integration tests
 });
 
 // ============================================================
@@ -626,7 +611,7 @@ describe('POST /api/stripe/webhook', () => {
 });
 
 // ============================================================
-// ENROLL (free + coupon 100%)
+// ENROLL (free courses and verified payments)
 // ============================================================
 describe('POST /api/enroll', () => {
     beforeEach(() => {
@@ -697,10 +682,6 @@ describe('POST /api/enroll', () => {
         const res = await callEnroll({ courseId: 'course-1', paymentId: 'fake-pay' });
         expect(res.status).toBe(402);
     });
-
-    // Note: coupon + enroll integration (100% coupon, partial coupon, promo+coupon)
-    // is tested via unit tests in tests/lib/commerce/coupon.test.ts (calculateDiscount, isCouponFullDiscount)
-    // Complex multi-chain DB mocks are fragile — security logic is verified in unit tests
 
     it('should return 429 when rate limited', async () => {
         mockedRateLimit.mockReturnValue({ success: false, remaining: 0, resetTime: Date.now() + 60000 });

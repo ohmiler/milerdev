@@ -24,7 +24,6 @@ describe('course enrollment purchase contract', () => {
     expect(COURSE_PAYMENT_CONTRACT).toEqual({
       enrollEndpoint: '/api/enroll',
       stripeEndpoint: '/api/stripe/checkout',
-      couponEndpoint: '/api/coupons/validate',
       intentEndpoint: '/api/promptpay/intents',
       reviewEndpoint: '/api/checkout/review',
       slipEndpoint: '/api/slip/verify',

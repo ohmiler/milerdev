@@ -145,7 +145,7 @@ describe('Admin operations UI', () => {
     const adminComponentSources = collectTsxFiles(join(process.cwd(), 'src/components/admin'))
       .map((path) => readFileSync(path, 'utf8'));
 
-    expect(adminPages).toHaveLength(23);
+    expect(adminPages).toHaveLength(22);
     for (const migratedSource of migratedSources) {
       expect(migratedSource).not.toContain('<style');
       expect(migratedSource).not.toMatch(/#[0-9a-f]{3,8}/i);

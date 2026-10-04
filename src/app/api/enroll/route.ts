@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { enrollments, courses, payments, coupons, couponUsages } from "@/lib/db/schema";
-import { eq, and, count } from "drizzle-orm";
+import { enrollments, courses, payments } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/notifications/email";
 import { z } from "zod";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
-import { calculateDiscount, validateCouponEligibility } from "@/lib/commerce/coupon";
 import { safeInsertEnrollment } from "@/lib/db/safe-insert";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
@@ -16,7 +15,6 @@ import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillmen
 const enrollSchema = z.object({
     courseId: z.string().min(1, "Course ID is required"),
     paymentId: z.string().optional(),
-    couponId: z.string().optional(),
 });
 
 // POST /api/enroll - Enroll in a course
@@ -42,7 +40,7 @@ export async function POST(request: Request) {
             );
         }
         
-        const { courseId, paymentId, couponId } = validation.data;
+        const { courseId, paymentId } = validation.data;
 
         // Check if course exists
         const course = await db.query.courses.findFirst({
@@ -104,60 +102,6 @@ export async function POST(request: Request) {
                     { status: 402 }
                 );
             }
-        } else if (coursePrice > 0 && couponId) {
-            // Coupon-based free enrollment — validate coupon makes it free
-            const [coupon] = await db.select().from(coupons).where(eq(coupons.id, couponId)).limit(1);
-            if (!coupon) {
-                return NextResponse.json({ error: 'คูปองไม่ถูกต้อง' }, { status: 400 });
-            }
-
-            const [userUsage] = await db.select({ count: count() }).from(couponUsages)
-                .where(and(eq(couponUsages.couponId, coupon.id), eq(couponUsages.userId, session.user.id)));
-
-            const eligibility = validateCouponEligibility(coupon, {
-                targetCourseId: courseId,
-                userUsageCount: userUsage?.count || 0,
-                coursePrice,
-            });
-            if (!eligibility.valid) {
-                return NextResponse.json({ error: eligibility.error }, { status: 400 });
-            }
-
-            const discount = calculateDiscount(
-                coursePrice,
-                coupon.discountType as 'percentage' | 'fixed',
-                coupon.discountValue,
-                coupon.maxDiscount,
-            );
-            if (discount < coursePrice) {
-                return NextResponse.json({ error: 'คูปองนี้ไม่ได้ลด 100% กรุณาชำระเงินส่วนที่เหลือ' }, { status: 402 });
-            }
-            const fulfillment = await fulfillFreeEnrollment({
-                userId: session.user.id,
-                courseIds: [courseId],
-                coupon: {
-                    id: coupon.id,
-                    discountAmount: String(Math.min(discount, coursePrice)),
-                },
-            });
-            const createdEnrollment = fulfillment.created[0];
-            if (!createdEnrollment) {
-                return NextResponse.json({ error: 'Already enrolled in this course' }, { status: 400 });
-            }
-
-            const enrollment = { id: createdEnrollment.id, userId: session.user.id, courseId };
-
-            // Send enrollment email (non-blocking)
-            if (session.user.email && session.user.name) {
-                sendEnrollmentEmail({
-                    email: session.user.email,
-                    name: session.user.name,
-                    courseName: course.title,
-                    courseSlug: course.slug,
-                }).catch((err) => logError(err instanceof Error ? err : new Error(String(err)), { action: 'enroll.coupon_email_failed' }));
-            }
-
-            return NextResponse.json(enrollment, { status: 201 });
         } else if (coursePrice > 0) {
             return NextResponse.json(
                 { error: "Payment required for this course" },
@@ -195,9 +139,6 @@ export async function POST(request: Request) {
 
         return NextResponse.json(enrollment, { status: 201 });
     } catch (error) {
-        if (error instanceof Error && error.message === 'COUPON_LIMIT_EXCEEDED') {
-            return NextResponse.json({ error: 'คูปองนี้ถูกใช้ครบจำนวนแล้ว' }, { status: 400 });
-        }
         logError(error instanceof Error ? error : new Error(String(error)), { action: 'enroll.create_failed' });
         return NextResponse.json(
             { error: "Failed to enroll" },

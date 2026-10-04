@@ -27,7 +27,6 @@ export const adminSecondaryLinkGroups: Array<{ title: string; items: AdminNavLin
     title: 'การขาย',
     items: [
       { href: '/admin/bundles', label: 'ชุดคอร์ส', icon: 'bundles' },
-      { href: '/admin/coupons', label: 'คูปอง', icon: 'coupons' },
       { href: '/admin/reconciliation', label: 'กระทบยอด', icon: 'reconciliation' },
       { href: '/admin/reviews', label: 'รีวิว', icon: 'reviews' },
       { href: '/admin/reports', label: 'รายงาน', icon: 'reports' },

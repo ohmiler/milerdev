@@ -6,10 +6,6 @@ vi.mock('@/lib/security/rate-limit', () => ({
   rateLimits: { sensitive: { maxRequests: 10, windowMs: 60_000 } },
   rateLimitResponse: vi.fn(),
 }));
-vi.mock('@/lib/commerce/coupon', () => ({
-  calculateDiscount: vi.fn(),
-  validateCouponEligibility: vi.fn(),
-}));
 
 const selectQueue: unknown[][] = [];
 const inserted: Record<string, unknown>[] = [];
@@ -78,7 +74,6 @@ describe('PromptPay intent creation boundary', () => {
     expect(inserted).toContainEqual(expect.objectContaining({
       userId: 'student-1',
       courseId: 'course-1',
-      couponId: null,
       amount: '990.00',
       method: 'promptpay',
       status: 'pending',

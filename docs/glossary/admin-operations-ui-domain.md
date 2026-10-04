@@ -43,7 +43,7 @@ A learner, instructor, or administrator whose account, access, enrollment, payme
 
 ### Admin record
 
-A domain object shown for inspection or management, such as a user, course, lesson, enrollment, payment, reconciliation item, coupon, certificate, media object, review, or setting. Its displayed state must come from an authoritative source.
+A domain object shown for inspection or management, such as a user, course, lesson, enrollment, payment, reconciliation item, certificate, media object, review, or setting. Its displayed state must come from an authoritative source.
 
 ### Work queue
 
@@ -117,7 +117,7 @@ User, enrollment, and certificate workflows. It emphasizes identity, role, acces
 
 ### Commerce operations surface
 
-Payment, reconciliation, coupon, and financial reporting workflows. It emphasizes THB precision, provider truth, status history, evidence, idempotency, refund/retry rules, and explicit outcomes.
+Payment, reconciliation, and financial reporting workflows. It emphasizes THB precision, provider truth, status history, evidence, idempotency, refund/retry rules, and explicit outcomes.
 
 ### System operations surface
 
@@ -206,7 +206,7 @@ The observable permissions, validation, state transitions, recovery, idempotency
 - `auth()` and server authorization remain authoritative for admin access.
 - Visual state, client role checks, confirmations, and optimistic updates do not establish domain truth.
 - Enrollment requires verified payment or explicit authorized admin intent.
-- Stripe, SlipOK, webhook, reconciliation, coupon, and retry protections remain intact.
+- Stripe, SlipOK, webhook, reconciliation, and retry protections remain intact.
 - Payment amounts remain THB and decimal values remain strings at database boundaries where required.
 - Publication, archive, user lifecycle, certificate, upload, and settings validation remain intact.
 - Every displayed metric or notification is sourced, derived transparently, or represented as unavailable.
