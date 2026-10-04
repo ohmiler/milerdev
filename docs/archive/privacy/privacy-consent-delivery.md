@@ -19,12 +19,12 @@ Branch: `feat/privacy-consent`, based on `origin/master` at implementation start
 
 ## Files
 
-- Contract and authority: [privacy-consent-contract](../../src/lib/privacy/consent-contract.ts), [privacy-consent](../../src/lib/privacy/consent.ts), [measurement-database](../../src/lib/analytics/measurement-database.ts), [consent API](../../src/app/api/privacy/consent/route.ts).
-- UI: [ConsentProvider](../../src/components/privacy/ConsentProvider.tsx), [consent-client](../../src/components/privacy/consent-client.ts), [settings button](../../src/components/privacy/ConsentSettingsButton.tsx), root layout, footer, settings and [Privacy](../../src/app/privacy/page.tsx).
+- Contract and authority: `src/lib/privacy/consent-contract.ts` (removed), `src/lib/privacy/consent.ts` (removed), `src/lib/analytics/measurement-database.ts` (removed), `src/app/api/privacy/consent/route.ts` (removed).
+- UI: `src/components/privacy/ConsentProvider.tsx` (removed), `src/components/privacy/consent-client.ts` (removed), `src/components/privacy/ConsentSettingsButton.tsx` (removed), root layout, footer, settings and [Privacy](../../../src/app/privacy/page.tsx).
 - Collection: analytics event/Web Vitals APIs, client senders, product/workspace exposures, analytics writer, measurement recorder, learning measurement, Web Vitals store and analytics-control database reads.
 - Commerce and learning: Stripe course/bundle checkout attribution, paid/PromptPay/free fulfillment, learning progress and purchase/enrollment/learning projectors.
-- Database: [schema](../../src/lib/db/schema.ts), [0022 migration](../../drizzle/0022_lucky_ken_ellis.sql), generated journal and snapshot.
-- Tests: new consent authority, client and API suites, [MySQL concurrency test](../../tests/integration/privacy-consent.mysql.ts), explicit consent fixtures in existing collection/fulfillment tests, and opt-out acquisition regressions.
+- Database: [schema](../../../src/lib/db/schema.ts), [0022 migration](../../../drizzle/0022_lucky_ken_ellis.sql), generated journal and snapshot.
+- Tests: new consent authority, client and API suites, `tests/integration/privacy-consent.mysql.ts` (removed), explicit consent fixtures in existing collection/fulfillment tests, and opt-out acquisition regressions.
 
 ## Verification
 
@@ -68,7 +68,7 @@ The review independently identified the pending-save identity/cross-tab race. Re
 
 The original required browser suite passed 11/12 journeys and reproduced a consent overlay covering the lesson-completion button. Moving the card into page flow corrected that obstruction for the recorded matrix. The owner subsequently requested the floating bottom placement again; the current card follows that request and makes the surrounding empty area click-through. The local screenshot `output/playwright/consent-flow-mobile.png` and the 48-case matrix describe the previous in-flow placement, not verification that controls underneath the restored overlay are unobstructed.
 
-The approved retention policy, cleanup operation guide and source-backed video inventory are in [Privacy retention and video review](privacy-retention-video-review.md). They are not an enabled production cleanup job or a live vendor-network audit.
+The approved retention policy, cleanup operation guide and source-backed video inventory are in [Privacy retention and video review](../../privacy/privacy-retention-video-review.md). They are not an enabled production cleanup job or a live vendor-network audit.
 
 ### Retention implementation
 

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter, Prompt } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
-import ConsentProvider from "@/components/privacy/ConsentProvider";
 import ThemeSurface from "@/components/theme/ThemeSurface";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -91,12 +90,10 @@ export default function RootLayout({
           }}
         />
         <SessionProvider>
-          <ConsentProvider>
           <ThemeSurface theme="light" surface="public">
             {children}
           </ThemeSurface>
           <Toaster position="top-center" richColors closeButton />
-          </ConsentProvider>
         </SessionProvider>
       </body>
     </html>

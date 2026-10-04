@@ -12,7 +12,9 @@ const legalDocumentSource = readFileSync('src/components/content/LegalDocument.t
 describe('public content contracts', () => {
   it('preserves all policy sections and high-risk published statements', () => {
     expect(privacySource.match(/<LegalSection/g)).toHaveLength(9);
-    expect(privacySource).toContain('อัปเดตล่าสุด: 13 กันยายน 2569');
+    expect(privacySource).toContain('อัปเดตล่าสุด: 4 ตุลาคม 2569');
+    expect(privacySource).toContain('ไม่ใช้คุกกี้หรือโค้ดติดตามเพื่อเก็บสถิติการใช้งาน');
+    expect(privacySource).not.toContain('ConsentSettingsButton');
     expect(privacySource).toContain('เราไม่เก็บข้อมูลบัตรเครดิต');
     expect(privacySource).toContain('Argon2id สำหรับรหัสผ่านที่ตั้งใหม่');
     expect(privacySource).toContain('milerdev.official@gmail.com');

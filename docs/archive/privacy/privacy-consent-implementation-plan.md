@@ -18,16 +18,16 @@
 
 | กลุ่ม | หลักฐาน | ข้อมูล/พฤติกรรม | ข้อเสนอ |
 | --- | --- | --- | --- |
-| Session / authentication | [auth](../../src/lib/auth/index.ts) | JWT session maxAge 7 วัน; ไม่พบ custom cookie config ในจุดที่ตรวจ | จำเป็นต่อการเข้าสู่ระบบ; ยืนยันชื่อ cookie/attributes ของ auth library จาก browser fixture ก่อนเขียน cookie notice |
-| จดจำการปิดประกาศ | [AnnouncementAlert](../../src/components/layout/AnnouncementAlert.tsx) | sessionStorage ชื่อ dismissed_announcements | อธิบายการจดจำการกระทำผู้ใช้แยกจาก tracking; ไม่มีเหตุให้เรียก storage นี้ว่า cookie |
-| Product/client events | [client sender](../../src/components/analytics/analytics-client.ts), [API](../../src/app/api/analytics/events/route.ts) | beacon/fetch ไป first-party API; บาง event เชื่อมสมาชิกฝั่ง server | เสนอ opt-in สำหรับสถิติส่วนเสริม ทั้งก่อนส่งและก่อนบันทึก |
-| Performance | [Web Vitals](../../src/components/analytics/web-vitals-client.ts), [recorder](../../src/lib/analytics/web-vitals.ts) | page-load identity, route family, device, release, metric; root mount | เสนออยู่หมวดสถิติเดียวกันในรุ่นแรก; ไม่ replay ค่าที่วัดไว้ก่อนยินยอม |
-| Server analytics | [analytics](../../src/lib/analytics/events.ts), [learning](../../src/lib/learning/measurement.ts) | lifecycle/learning/commerce events; บางรายการใช้ตัวตนสมาชิกหรือ domain identity | แยกการบันทึกเพื่อบริการออกจากสำเนาเพื่อวิเคราะห์; ใช้ eligibility ที่ตรวจสอบบน server |
-| Delayed purchase/enrollment projection | [purchase projector](../../src/lib/analytics/purchase-measurement-projector.ts), [enrollment projector](../../src/lib/analytics/enrollment-measurement-projector.ts) | webhook/outbox/retry อาจทำงานเมื่อไม่มี browser request | ห้ามอนุมาน consent จาก cookie ที่ไม่มีใน webhook; ต้องมี durable eligibility และวิธีรับมือ withdrawal/retry |
-| Video embed | [BunnyPlayer](../../src/components/video/BunnyPlayer.tsx) | iframe ของผู้ให้บริการวิดีโอ รองรับ URL หลายประเภท | ตรวจบริการที่ใช้งานจริง คำขอ cookies และการติดตามของแต่ละ embed ก่อนจัดหมวด; ห้ามบล็อกบทเรียนทั้งหมดเพียงเพราะปฏิเสธ analytics |
-| บริการภายนอกอื่น | [privacy ปัจจุบัน](../../src/app/privacy/page.tsx), [dependencies](../../package.json) | payment, slip verification, OAuth, email, password screening และ infrastructure | แจ้งผู้รับ/บทบาทตามจริง; dependency ที่มีไม่ได้ยืนยันว่าผู้ให้บริการนั้นเปิดใช้งาน production |
-| Global governance | [analytics-control](../../src/lib/analytics/control.ts) | operational switch + approved event classes; มี purpose/basis/notice/retention/access/deletion/withdrawal fields | คง gate เดิมและเพิ่ม visitor/member eligibility เป็นเงื่อนไขร่วม; ไม่ใช้ owner approval แทน consent ผู้เยี่ยมชม |
-| Retention | [retention helper](../../src/lib/analytics/retention.ts) | raw analytics/Web Vitals cutoff + batch deletion; ไม่พบ caller ของ runAnalyticsRawEventRetention ใน scripts/src ที่ค้น | ต้องมี scheduler/runbook และผลตรวจจาก isolated data; aggregateRetentionDays ที่เก็บใน policy ไม่ได้ยืนยันว่ามี enforcement |
+| Session / authentication | [auth](../../../src/lib/auth/index.ts) | JWT session maxAge 7 วัน; ไม่พบ custom cookie config ในจุดที่ตรวจ | จำเป็นต่อการเข้าสู่ระบบ; ยืนยันชื่อ cookie/attributes ของ auth library จาก browser fixture ก่อนเขียน cookie notice |
+| จดจำการปิดประกาศ | `src/components/layout/AnnouncementAlert.tsx` (removed) | sessionStorage ชื่อ dismissed_announcements | อธิบายการจดจำการกระทำผู้ใช้แยกจาก tracking; ไม่มีเหตุให้เรียก storage นี้ว่า cookie |
+| Product/client events | `src/components/analytics/analytics-client.ts` (removed), `src/app/api/analytics/events/route.ts` (removed) | beacon/fetch ไป first-party API; บาง event เชื่อมสมาชิกฝั่ง server | เสนอ opt-in สำหรับสถิติส่วนเสริม ทั้งก่อนส่งและก่อนบันทึก |
+| Performance | `src/components/analytics/web-vitals-client.ts` (removed), `src/lib/analytics/web-vitals.ts` (removed) | page-load identity, route family, device, release, metric; root mount | เสนออยู่หมวดสถิติเดียวกันในรุ่นแรก; ไม่ replay ค่าที่วัดไว้ก่อนยินยอม |
+| Server analytics | `src/lib/analytics/events.ts` (removed), `src/lib/learning/measurement.ts` (removed) | lifecycle/learning/commerce events; บางรายการใช้ตัวตนสมาชิกหรือ domain identity | แยกการบันทึกเพื่อบริการออกจากสำเนาเพื่อวิเคราะห์; ใช้ eligibility ที่ตรวจสอบบน server |
+| Delayed purchase/enrollment projection | `src/lib/analytics/purchase-measurement-projector.ts` (removed), `src/lib/analytics/enrollment-measurement-projector.ts` (removed) | webhook/outbox/retry อาจทำงานเมื่อไม่มี browser request | ห้ามอนุมาน consent จาก cookie ที่ไม่มีใน webhook; ต้องมี durable eligibility และวิธีรับมือ withdrawal/retry |
+| Video embed | [BunnyPlayer](../../../src/components/video/BunnyPlayer.tsx) | iframe ของผู้ให้บริการวิดีโอ รองรับ URL หลายประเภท | ตรวจบริการที่ใช้งานจริง คำขอ cookies และการติดตามของแต่ละ embed ก่อนจัดหมวด; ห้ามบล็อกบทเรียนทั้งหมดเพียงเพราะปฏิเสธ analytics |
+| บริการภายนอกอื่น | [privacy ปัจจุบัน](../../../src/app/privacy/page.tsx), [dependencies](../../../package.json) | payment, slip verification, OAuth, email, password screening และ infrastructure | แจ้งผู้รับ/บทบาทตามจริง; dependency ที่มีไม่ได้ยืนยันว่าผู้ให้บริการนั้นเปิดใช้งาน production |
+| Global governance | `src/lib/analytics/control.ts` (removed) | operational switch + approved event classes; มี purpose/basis/notice/retention/access/deletion/withdrawal fields | คง gate เดิมและเพิ่ม visitor/member eligibility เป็นเงื่อนไขร่วม; ไม่ใช้ owner approval แทน consent ผู้เยี่ยมชม |
+| Retention | `src/lib/analytics/retention.ts` (removed) | raw analytics/Web Vitals cutoff + batch deletion; ไม่พบ caller ของ runAnalyticsRawEventRetention ใน scripts/src ที่ค้น | ต้องมี scheduler/runbook และผลตรวจจาก isolated data; aggregateRetentionDays ที่เก็บใน policy ไม่ได้ยืนยันว่ามี enforcement |
 
 ## ข้อเสนอพฤติกรรมรุ่นแรก
 
@@ -47,7 +47,7 @@
 
 1. ตรวจ browser แบบ isolated ด้วย provider mocks: public page, login, authenticated page, checkout, video; จดชื่อ storage/request, purpose, recipient, lifetime และเวลาที่เริ่มทำงาน
 2. ระบุจุดที่ mock พิสูจน์ไม่ได้ เช่น third-party cookies และ provider configuration ให้เป็นช่องว่างแยกต่างหาก การยืนยันของจริงต้องอยู่ในขอบเขตที่เจ้าของอนุญาต
-3. สรุป owner identity/contact, lawful basis ต่อกลุ่ม, retention, rights workflow และ vendor roles; ใช้ [แหล่งอ้างอิง](../archive/research/website-foundations-sources-2026-09-13.md) ประกอบ ไม่แต่งข้อเท็จจริงธุรกิจ
+3. สรุป owner identity/contact, lawful basis ต่อกลุ่ม, retention, rights workflow และ vendor roles; ใช้ [แหล่งอ้างอิง](../research/website-foundations-sources-2026-09-13.md) ประกอบ ไม่แต่งข้อเท็จจริงธุรกิจ
 
 เกณฑ์จบ: มี inventory ที่แยก source evidence/browser evidence/provider unknown และตาราง policy ที่พร้อมให้ใช้เขียน notice
 
@@ -58,7 +58,7 @@
 3. Gate client sender และ Web Vitals ก่อนส่ง พร้อม gate API ก่อนบันทึก; คง global governance/event-class controls เดิม
 4. Gate server recorders/projectors รวม replay/retry/backfill; event ที่เกิดก่อนยินยอมต้องไม่กลายเป็น eligible เพราะยินยอมภายหลัง กรณีถอนระหว่าง queue รอต้องไม่ถูก project ต่อ
 5. ตรวจ exposure attribution ขณะเริ่ม checkout และ delayed completion; ไม่แปลง opt-out เป็น attribution ที่เชื่อถือได้ และรายงาน denominator เฉพาะกลุ่มที่มีสิทธิ์วัด
-6. หาก outbox ปัจจุบันถือข้อมูลส่วนเสริมก่อนยินยอม ต้องตัดสินว่าจะ skip/minimize enqueue ที่จุดใด โดยรักษาความเป็นอะตอมของ payment/enrollment และ deduplication ตาม ADR [0009](../adr/0009-project-stripe-purchase-facts-through-a-transactional-outbox.md) และ [0010](../adr/0010-key-authoritative-acquisition-facts-by-domain-identity.md)
+6. หาก outbox ปัจจุบันถือข้อมูลส่วนเสริมก่อนยินยอม ต้องตัดสินว่าจะ skip/minimize enqueue ที่จุดใด โดยรักษาความเป็นอะตอมของ payment/enrollment และ deduplication ตาม ADR [0009](../../adr/0009-project-stripe-purchase-facts-through-a-transactional-outbox.md) และ [0010](../../adr/0010-key-authoritative-acquisition-facts-by-domain-identity.md)
 
 เกณฑ์จบ: tests ครอบคลุมไม่เลือก/ปฏิเสธ/ยอมรับ/หมดอายุ/ถอน และ delayed events โดยไม่มีผลข้างเคียงต่อสิทธิ์เรียน ห้ามส่งมอบเพียง frontend banner แล้วเรียกว่า consent ครบ
 

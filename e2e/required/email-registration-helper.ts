@@ -43,9 +43,9 @@ function startMailbox() {
 export async function completeRegistration(page: Page, identity: { name: string; email: string; password: string }) {
   await startMailbox();
   await expect(page).toHaveURL(/\/register(?:\?|$)/);
+  // Analytics was retired, so no consent prompt sits over the registration form.
   const consent = page.getByRole('complementary', { name: 'ตัวเลือกความเป็นส่วนตัว' });
-  await consent.getByRole('button', { name: 'ไม่อนุญาต', exact: true }).click();
-  await expect(consent).not.toBeVisible();
+  await expect(consent).toHaveCount(0);
   await page.locator('#register-email').fill(identity.email);
   const [registrationResponse] = await Promise.all([
     page.waitForResponse((response) => new URL(response.url()).pathname === '/api/auth/register' && response.request().method() === 'POST'),
@@ -69,7 +69,5 @@ export async function completeRegistration(page: Page, identity: { name: string;
   await page.locator('input[name=password]').fill(identity.password);
   await page.locator('button[type=submit]').click();
   await page.waitForURL((url) => url.pathname !== '/login');
-  // The anonymous choice is not promoted to the newly authenticated account.
-  await consent.getByRole('button', { name: 'ไม่อนุญาต', exact: true }).click();
-  await expect(consent).not.toBeVisible();
+  await expect(consent).toHaveCount(0);
 }
