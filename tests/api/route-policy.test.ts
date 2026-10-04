@@ -38,7 +38,6 @@ const MANIFEST: Record<string, RouteClass> = {
     'health/route.ts': 'public',
     'image-proxy/route.ts': 'mixed',
     'payments/route.ts': 'auth',
-    'privacy/consent/route.ts': 'mixed',
     'profile/route.ts': 'auth',
     'progress/route.ts': 'auth',
     'promptpay/intents/route.ts': 'auth',
