@@ -252,6 +252,14 @@ describe('POST /api/stripe/checkout', () => {
         expect(data.sessionId).toBeTruthy();
     });
 
+    it('accepts and ignores an exposure id sent by pages loaded before attribution was removed', async () => {
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue(publishedCourse as never);
+        mockDb.selectResults = [];
+        const res = await callCheckout({ courseId: 'course-1', exposureId: '11111111-1111-4111-8111-111111111111' });
+        expect(res.status).toBe(200);
+        expect(db.insert).toHaveBeenCalledTimes(1);
+    });
+
     it('should use promo price when promo is active', async () => {
         vi.mocked(db.query.courses.findFirst).mockResolvedValue(promoCourse as never);
         mockDb.selectResults = [];

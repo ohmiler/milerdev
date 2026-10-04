@@ -1,16 +1,13 @@
-vi.mock('@/lib/privacy/consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   dbTransaction,
   insertedRows,
-  projectEnrollment,
   duplicateCourses,
   enrollmentIds,
 } = vi.hoisted(() => ({
   dbTransaction: vi.fn(),
   insertedRows: [] as Array<Record<string, unknown>>,
-  projectEnrollment: vi.fn(),
   duplicateCourses: new Set<string>(),
   enrollmentIds: new Map<string, string>(),
 }));
@@ -19,25 +16,18 @@ vi.mock('@/lib/db', () => ({ db: { transaction: dbTransaction } }));
 vi.mock('@/lib/db/safe-insert', () => ({
   isDuplicateKeyError: vi.fn((error: unknown) => error instanceof Error && error.message === 'duplicate'),
 }));
-vi.mock('@/lib/analytics/enrollment-measurement-projector', () => ({
-  enrollmentMeasurementProjector: { projectEnrollment },
-}));
 
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
-import { getMemberConsentId } from '@/lib/privacy/consent';
 
 function transactionAdapter() {
   return {
     insert: vi.fn(() => ({
       values: vi.fn(async (row: Record<string, unknown>) => {
-        const isEnrollment = Boolean(row.id && row.userId && row.courseId && !row.eventName);
-        if (isEnrollment && duplicateCourses.has(String(row.courseId))) {
+        if (duplicateCourses.has(String(row.courseId))) {
           throw new Error('duplicate');
         }
         insertedRows.push(row);
-        if (isEnrollment) {
-          enrollmentIds.set(String(row.courseId), String(row.id));
-        }
+        enrollmentIds.set(String(row.courseId), String(row.id));
       }),
     })),
     select: vi.fn(() => ({
@@ -47,58 +37,40 @@ function transactionAdapter() {
         })),
       })),
     })),
-    update: vi.fn(() => ({
-      set: vi.fn(() => ({ where: vi.fn().mockResolvedValue([{ affectedRows: 1 }]) })),
-    })),
   };
 }
 
 describe('free enrollment fulfillment', () => {
-  it('grants free access without creating an optional fact when consent is absent', async () => {
-    vi.mocked(getMemberConsentId).mockResolvedValueOnce(null);
-    const result = await fulfillFreeEnrollment({ userId: 'student-1', courseIds: ['course-1'] });
-    expect(result.status).toBe('fulfilled');
-    expect(result.created).toHaveLength(1);
-    expect(insertedRows.some((row) => row.eventName)).toBe(false);
-  });
   beforeEach(() => {
     vi.clearAllMocks();
     insertedRows.length = 0;
     duplicateCourses.clear();
     enrollmentIds.clear();
-    projectEnrollment.mockResolvedValue({ status: 'projected' });
     dbTransaction.mockImplementation(async (work) => work(transactionAdapter()));
   });
 
-  it('creates one enrollment fact for a first-created free course enrollment', async () => {
+  it('creates one enrollment for a free course and writes nothing else', async () => {
     const result = await fulfillFreeEnrollment({
       userId: 'student-1',
       courseIds: ['course-1'],
     });
 
     expect(result.status).toBe('fulfilled');
-    const enrollmentId = enrollmentIds.get('course-1');
-    expect(enrollmentId).toBeTruthy();
-    expect(insertedRows).toContainEqual(expect.objectContaining({
-      eventName: 'free_enrollment_completed',
-      enrollmentId,
-      paymentId: null,
-    }));
-    expect(projectEnrollment).toHaveBeenCalledWith(enrollmentId);
+    expect(result.created).toEqual([{ id: enrollmentIds.get('course-1'), courseId: 'course-1', created: true }]);
+    expect(insertedRows).toEqual([expect.objectContaining({ userId: 'student-1', courseId: 'course-1' })]);
   });
 
-  it('creates one fact per newly-created course enrollment in a free Bundle', async () => {
+  it('creates one enrollment per course in a free Bundle', async () => {
     const result = await fulfillFreeEnrollment({
       userId: 'student-1',
-      courseIds: ['course-1', 'course-2'],
+      courseIds: ['course-1', 'course-2', 'course-1'],
     });
 
-    expect(result.created).toHaveLength(2);
-    expect(insertedRows.filter((row) => row.eventName === 'free_enrollment_completed')).toHaveLength(2);
-    expect(projectEnrollment).toHaveBeenCalledTimes(2);
+    expect(result.created.map((entry) => entry.courseId)).toEqual(['course-1', 'course-2']);
+    expect(insertedRows).toHaveLength(2);
   });
 
-  it('does not enqueue a second fact when the enrollment already exists', async () => {
+  it('reports an existing enrollment instead of creating a second one', async () => {
     duplicateCourses.add('course-1');
 
     const result = await fulfillFreeEnrollment({
@@ -107,38 +79,13 @@ describe('free enrollment fulfillment', () => {
     });
 
     expect(result.status).toBe('already_fulfilled');
-    expect(insertedRows).not.toContainEqual(expect.objectContaining({
-      eventName: 'free_enrollment_completed',
-    }));
-    expect(projectEnrollment).toHaveBeenCalledWith('existing-enrollment');
+    expect(result.existing).toEqual([{ id: 'existing-enrollment', courseId: 'course-1', created: false }]);
+    expect(insertedRows).toHaveLength(0);
   });
 
-  it('keeps the enrollment and its outbox in the same transaction', async () => {
-    const result = await fulfillFreeEnrollment({
-      userId: 'student-1',
-      courseIds: ['course-1'],
-    });
-
-    expect(result.status).toBe('fulfilled');
-    expect(insertedRows).toContainEqual(expect.objectContaining({
-      eventName: 'free_enrollment_completed',
-      enrollmentId: enrollmentIds.get('course-1'),
-    }));
-  });
-
-  it('does not reverse a committed free enrollment when projection is unavailable', async () => {
-    projectEnrollment.mockResolvedValue({ status: 'failed' });
-
-    const result = await fulfillFreeEnrollment({
-      userId: 'student-1',
-      courseIds: ['course-1'],
-    });
-
-    expect(result.status).toBe('fulfilled');
-    expect(result.created).toHaveLength(1);
-    expect(insertedRows).toContainEqual(expect.objectContaining({
-      eventName: 'free_enrollment_completed',
-      enrollmentId: result.created[0].id,
-    }));
+  it('rejects an empty or malformed request before opening a transaction', async () => {
+    await expect(fulfillFreeEnrollment({ userId: 'student-1', courseIds: [] })).rejects.toThrow('INVALID_FREE_ENROLLMENT');
+    await expect(fulfillFreeEnrollment({ userId: ' ', courseIds: ['course-1'] })).rejects.toThrow('INVALID_FREE_ENROLLMENT');
+    expect(dbTransaction).not.toHaveBeenCalled();
   });
 });

@@ -1,18 +1,15 @@
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/lib/db';
-import { getMemberConsentId } from '@/lib/privacy/consent';
 import {
   bundleCourses,
   bundles,
   courses,
   enrollments,
-  measurementOutbox,
   payments,
   type Payment,
 } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
-import { purchaseMeasurementProjector } from '@/lib/analytics/purchase-measurement-projector';
 import {
   assertPromptPayIntentClaim,
   PromptPayIntentError,
@@ -154,13 +151,6 @@ export async function fulfillPromptPayIntent({
       }
     }
 
-    const consentId = await getMemberConsentId(tx, payment.userId);
-    if (consentId) await tx.insert(measurementOutbox).values({
-      consentId,
-      eventName: 'purchase_completed',
-      paymentId: payment.id,
-    });
-
     return {
       status: 'fulfilled' as const,
       payment: { ...payment, status: 'completed' as const, promptpayTransRef, slipUrl: promptpayTransRef },
@@ -169,6 +159,5 @@ export async function fulfillPromptPayIntent({
     };
   });
 
-  await purchaseMeasurementProjector.projectPurchase(result.payment.id);
   return result;
 }

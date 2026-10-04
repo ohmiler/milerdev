@@ -32,7 +32,6 @@ describe('POST /api/progress contract', () => {
     vi.mocked(auth).mockResolvedValue({ user: { id: 'user-1' } } as never);
     vi.mocked(updateLearningProgress).mockResolvedValue({
       status: 'saved',
-      milestones: [],
       courseCompleted: false,
       courseId: 'course-1',
       enrollmentId: 'enrollment-1',

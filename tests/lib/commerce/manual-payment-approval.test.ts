@@ -1,20 +1,15 @@
-vi.mock('@/lib/privacy/consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { dbTransaction, insertedRows, paymentState, projectPurchase } = vi.hoisted(() => ({
+const { dbTransaction, insertedRows, paymentState } = vi.hoisted(() => ({
   dbTransaction: vi.fn(),
   insertedRows: [] as Array<Record<string, unknown>>,
   paymentState: { status: 'verifying' as 'verifying' | 'completed' },
-  projectPurchase: vi.fn(),
 }));
 
 vi.mock('@/lib/db/safe-insert', () => ({
   isDuplicateKeyError: vi.fn().mockReturnValue(false),
 }));
 vi.mock('@/lib/db', () => ({ db: { transaction: dbTransaction } }));
-vi.mock('@/lib/analytics/purchase-measurement-projector', () => ({
-  purchaseMeasurementProjector: { projectPurchase },
-}));
 
 import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
 
@@ -56,16 +51,15 @@ function transactionAdapter() {
   };
 }
 
-describe('audited manual purchase outbox', () => {
+describe('audited manual payment approval', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     insertedRows.length = 0;
     paymentState.status = 'verifying';
-    projectPurchase.mockResolvedValue({ status: 'projected' });
     dbTransaction.mockImplementation(async (work) => work(transactionAdapter()));
   });
 
-  it('audits and enqueues only the first authorized completion before projecting it', async () => {
+  it('audits the first authorized completion and writes no measurement fact', async () => {
     const result = await fulfillManualPayment({
       paymentId: 'payment-1',
       allowedMethod: 'promptpay',
@@ -79,14 +73,10 @@ describe('audited manual purchase outbox', () => {
       entityType: 'payment',
       entityId: 'payment-1',
     }));
-    expect(insertedRows).toContainEqual(expect.objectContaining({
-      eventName: 'purchase_completed',
-      paymentId: 'payment-1',
-    }));
-    expect(projectPurchase).toHaveBeenCalledWith('payment-1');
+    expect(insertedRows).not.toContainEqual(expect.objectContaining({ eventName: expect.anything() }));
   });
 
-  it('uses an already-completed retry only to reconcile the original fact', async () => {
+  it('treats a retry of an already-completed payment as a no-op', async () => {
     paymentState.status = 'completed';
 
     const result = await fulfillManualPayment({
@@ -98,27 +88,9 @@ describe('audited manual purchase outbox', () => {
 
     expect(result.status).toBe('already_fulfilled');
     expect(insertedRows).toHaveLength(0);
-    expect(projectPurchase).toHaveBeenCalledWith('payment-1');
   });
 
-  it('does not reverse audited completion when projection is unavailable after commit', async () => {
-    projectPurchase.mockResolvedValue({ status: 'failed' });
-
-    const result = await fulfillManualPayment({
-      paymentId: 'payment-1',
-      allowedMethod: 'promptpay',
-      actorId: 'admin-1',
-      reason: 'ตรวจสอบหลักฐานกับธนาคารแล้ว',
-    });
-
-    expect(result.status).toBe('fulfilled');
-    expect(insertedRows).toContainEqual(expect.objectContaining({
-      eventName: 'purchase_completed',
-      paymentId: 'payment-1',
-    }));
-  });
-
-  it('rejects missing audit context before touching payment authority or measurement', async () => {
+  it('rejects missing audit context before touching payment authority', async () => {
     const result = await fulfillManualPayment({
       paymentId: 'payment-1',
       actorId: '',
@@ -129,6 +101,5 @@ describe('audited manual purchase outbox', () => {
       status: 'rejected', code: 'INVALID_AUDIT_CONTEXT', retryable: false,
     });
     expect(dbTransaction).not.toHaveBeenCalled();
-    expect(projectPurchase).not.toHaveBeenCalled();
   });
 });

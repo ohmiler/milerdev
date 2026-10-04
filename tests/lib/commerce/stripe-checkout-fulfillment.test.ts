@@ -1,11 +1,9 @@
-vi.mock('@/lib/privacy/consent', () => ({ getMemberConsentId: vi.fn().mockResolvedValue('test-consent') }));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { dbTransaction, insertedRows, paymentState, projectPurchase, isDuplicateKeyError } = vi.hoisted(() => ({
+const { dbTransaction, insertedRows, paymentState, isDuplicateKeyError } = vi.hoisted(() => ({
   dbTransaction: vi.fn(),
   insertedRows: [] as Array<Record<string, unknown>>,
   paymentState: { status: 'pending' as 'pending' | 'completed' },
-  projectPurchase: vi.fn(),
   isDuplicateKeyError: vi.fn(),
 }));
 
@@ -13,12 +11,8 @@ vi.mock('@/lib/db/safe-insert', () => ({
   isDuplicateKeyError,
 }));
 vi.mock('@/lib/db', () => ({ db: { transaction: dbTransaction } }));
-vi.mock('@/lib/analytics/purchase-measurement-projector', () => ({
-  purchaseMeasurementProjector: { projectPurchase },
-}));
 
 import { fulfillStripeCheckoutSession } from '@/lib/commerce/payment-fulfillment';
-import { getMemberConsentId } from '@/lib/privacy/consent';
 
 const payment = () => ({
   id: 'pay-1',
@@ -26,7 +20,7 @@ const payment = () => ({
   courseId: 'course-1',
   bundleId: null,
   couponId: null,
-  attributedExposureId: '11111111-1111-4111-8111-111111111111',
+  attributedExposureId: null,
   amount: '990.00',
   currency: 'THB',
   method: 'stripe',
@@ -76,61 +70,33 @@ function transactionAdapter() {
   };
 }
 
-describe('Stripe purchase transactional outbox', () => {
-  it('grants access without consent and never queues that old purchase after a later opt-in', async () => {
-    vi.mocked(getMemberConsentId).mockResolvedValueOnce(null);
-    expect((await fulfillStripeCheckoutSession({ session: session as never })).status).toBe('fulfilled');
-    expect(insertedRows).toContainEqual(expect.objectContaining({ userId: 'user-1', courseId: 'course-1' }));
-    expect(insertedRows.some((row) => row.eventName)).toBe(false);
-    paymentState.status = 'completed';
-    await fulfillStripeCheckoutSession({ session: session as never });
-    expect(insertedRows.some((row) => row.eventName)).toBe(false);
-  });
+describe('Stripe checkout fulfillment', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     insertedRows.length = 0;
     paymentState.status = 'pending';
-    projectPurchase.mockResolvedValue({ status: 'projected' });
     isDuplicateKeyError.mockReturnValue(false);
     dbTransaction.mockImplementation(async (work) => work(transactionAdapter()));
   });
 
-  it('enqueues one purchase fact with the first committed pending-to-completed transition', async () => {
+  it('grants access on the first pending-to-completed transition and writes no measurement fact', async () => {
     const result = await fulfillStripeCheckoutSession({ session: session as never });
 
     expect(result.status).toBe('fulfilled');
-    expect(insertedRows).toContainEqual(expect.objectContaining({
-      eventName: 'purchase_completed',
-      paymentId: 'pay-1',
-    }));
-    expect(projectPurchase).toHaveBeenCalledWith('pay-1');
+    expect(insertedRows).toContainEqual(expect.objectContaining({ userId: 'user-1', courseId: 'course-1' }));
+    expect(insertedRows.some((row) => row.eventName)).toBe(false);
   });
 
-  it('keeps fulfillment successful when projection fails after the domain commit', async () => {
-    projectPurchase.mockResolvedValue({ status: 'failed' });
-
-    const result = await fulfillStripeCheckoutSession({ session: session as never });
-
-    expect(result.status).toBe('fulfilled');
-    expect(insertedRows).toContainEqual(expect.objectContaining({
-      eventName: 'purchase_completed', paymentId: 'pay-1',
-    }));
-  });
-
-  it('does not enqueue a second purchase fact for an already-fulfilled success-page render', async () => {
+  it('reports an already-fulfilled success-page render without granting again', async () => {
     paymentState.status = 'completed';
 
     const result = await fulfillStripeCheckoutSession({ session: session as never });
 
     expect(result.status).toBe('already_fulfilled');
-    expect(insertedRows).not.toContainEqual(expect.objectContaining({
-      eventName: 'purchase_completed',
-      paymentId: 'pay-1',
-    }));
-    expect(projectPurchase).toHaveBeenCalledWith('pay-1');
+    expect(insertedRows.some((row) => row.eventName)).toBe(false);
   });
 
-  it('uses a duplicate webhook only to reconcile the original payment fact', async () => {
+  it('treats a duplicate webhook event as a replay', async () => {
     isDuplicateKeyError.mockReturnValue(true);
     dbTransaction.mockRejectedValue(new Error('duplicate Stripe event'));
 
@@ -141,7 +107,5 @@ describe('Stripe purchase transactional outbox', () => {
 
     expect(result).toEqual({ status: 'replayed' });
     expect(insertedRows).toHaveLength(0);
-    expect(projectPurchase).toHaveBeenCalledTimes(1);
-    expect(projectPurchase).toHaveBeenCalledWith('pay-1');
   });
 });
