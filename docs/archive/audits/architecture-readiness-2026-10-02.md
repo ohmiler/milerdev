@@ -56,7 +56,7 @@
 6. **log ให้ปลอดภัย (ขนานกับ 3–5):** แทน `console.error(..., error)` ด้วย `logError`, เปลี่ยน label เป็นแบบ dot-style, ขยาย contract test; เส้นทางเงิน/enrollment แยก PR เล็กต่างหาก
 7. **ประตูก่อน refactor PR แรก:** baseline บันทึกแล้ว, ตัดสินใจครบ, ADR 0012 merge, route policy + lint + drift check อยู่ใน CI, มี characterization test ของพื้นที่ที่จะแตะ แล้วลำดับ refactor แรกที่แนะนำ: (a) type `DbTransaction`/`affectedRows` กลาง (b) module ค่าคงที่ role/status/payment (c) `requireAdmin` เดียวพร้อม `requireAdminPage` (auth: PR เล็กแยก เจ้าของสั่ง merge) (d) นำร่องสัญญา FE/BE กับ admin coupons หนึ่งทรัพยากร (e) `grantEnrollment`/`hasCourseAccess` (หลังตัดสินเรื่องถอนสิทธิ์)
 
-กฎ PR ตาม [AGENTS.md](../../AGENTS.md): งานย้าย/เปลี่ยนชื่อเชิงกลไกรวมได้; auth, payments, enrollment, certificates, migrations, CI gates แยก PR เล็ก; ทุก PR ระบุสิ่งที่เปลี่ยน/ตรวจ/ไม่ได้ตรวจ และความเสี่ยง production ทุกการ merge เข้า `master` จะ rebuild และรัน migration บน Railway
+กฎ PR ตาม [AGENTS.md](../../../AGENTS.md): งานย้าย/เปลี่ยนชื่อเชิงกลไกรวมได้; auth, payments, enrollment, certificates, migrations, CI gates แยก PR เล็ก; ทุก PR ระบุสิ่งที่เปลี่ยน/ตรวจ/ไม่ได้ตรวจ และความเสี่ยง production ทุกการ merge เข้า `master` จะ rebuild และรัน migration บน Railway
 
 ## เลื่อนไว้ก่อน (และเหตุผล)
 
@@ -70,7 +70,7 @@
 
 ## สิ่งที่เจ้าของต้องตัดสินใจ
 
-1. ถอนสิทธิ์เรียนจะลบแถว (master ปัจจุบัน) หรือระงับพร้อมเก็บประวัติ ([CONTEXT.md](../../CONTEXT.md) ระบุแบบหลัง) กระทบ schema, access predicate และ refund
+1. ถอนสิทธิ์เรียนจะลบแถว (master ปัจจุบัน) หรือระงับพร้อมเก็บประวัติ ([CONTEXT.md](../../../CONTEXT.md) ระบุแบบหลัง) กระทบ schema, access predicate และ refund
 2. `feat/privacy-consent`: port ทีละ commit, ทำใหม่ หรือทิ้ง และอนุญาต push backup ref หรือไม่
 3. จำนวน replica, เวอร์ชัน Node และ start command บน Railway; migration รันตอน start หรือก่อน deploy
 4. role instructor ใช้จริงหรือไม่ ถ้าไม่ ลบ `POST /api/courses`
