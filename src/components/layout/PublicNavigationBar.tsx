@@ -8,7 +8,6 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Menu, UserRoundPlus } from 'lucide-react';
 
-import { useNotifications } from '@/components/notifications/NotificationProvider';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
@@ -36,20 +35,12 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
     const status = sessionResult?.status ?? 'unauthenticated';
     const pathname = usePathname();
     const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
-    const {
-        unreadCount,
-        notifications,
-        markAsRead,
-        deleteRead,
-        setNotificationsPanelOpen,
-    } = useNotifications();
 
     const isAdmin = session?.user?.role === 'admin';
 
     const closeMobileMenu = () => setIsMenuOpen(false);
     const requestLogout = (returnFocus: HTMLElement | null) => {
         closeMobileMenu();
-        setNotificationsPanelOpen(false);
         onRequestLogout(returnFocus);
     };
 
@@ -105,12 +96,7 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
                                 session={session}
                                 isAdmin={isAdmin}
                                 pathname={pathname}
-                                unreadCount={unreadCount}
-                                notifications={notifications}
-                                onMarkAsRead={markAsRead}
-                                onDeleteRead={deleteRead}
                                 onLogout={requestLogout}
-                                onNotificationsOpenChange={setNotificationsPanelOpen}
                             />
                         ) : (
                             <>

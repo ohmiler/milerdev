@@ -17,15 +17,6 @@ const navigationMocks = vi.hoisted(() => ({
 
 vi.mock('next/navigation', () => ({ usePathname: () => navigationMocks.pathname }));
 vi.mock('next-auth/react', () => ({ useSession: () => navigationMocks.sessionResult }));
-vi.mock('@/components/notifications/NotificationProvider', () => ({
-  useNotifications: () => ({
-    unreadCount: 0,
-    notifications: [],
-    markAsRead: vi.fn().mockResolvedValue(undefined),
-    deleteRead: vi.fn().mockResolvedValue(undefined),
-    setNotificationsPanelOpen: vi.fn(),
-  }),
-}));
 
 import PublicNavigationBar from '@/components/layout/PublicNavigationBar';
 
