@@ -54,7 +54,7 @@ interface Course {
 
 interface Stats {
   total: number;
-  avgRating: number;
+  avgRating: number | null;
   hidden: number;
   verified: number;
 }
