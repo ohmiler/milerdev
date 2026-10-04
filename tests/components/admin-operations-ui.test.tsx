@@ -92,6 +92,8 @@ describe('Admin operations UI', () => {
         verifying: 3,
         failed: 1,
         refunded: 0,
+        slipsToReview: 3,
+        slipsFailed: 1,
       },
       courseAttention: {
         draft: 2,
@@ -108,6 +110,8 @@ describe('Admin operations UI', () => {
     expect(markup).toContain('12,345');
     expect(markup).toContain('การชำระเงินที่ต้องตรวจ');
     expect(markup).toContain('ตรวจรายการชำระเงิน');
+    expect(markup).toContain('href="/admin/reconciliation?status=verifying"');
+    expect(markup).toContain('href="/admin/reconciliation?status=failed"');
     expect(markup).toContain('เติมบทเรียนให้คอร์ส');
     expect(markup).not.toContain('+12.5%');
     expect(markup).not.toContain('กราฟ');

@@ -90,7 +90,8 @@ describe('GET /api/admin/reconciliation', () => {
     expect(mocks.orderBy).toHaveBeenCalledTimes(1);
     expect(body.pagination).toEqual({ page: 1, pageSize: 50, total: 120, totalPages: 3 });
     expect(body.summary).toEqual({ verifying: 120, failed: 3, pending: 7 });
-    expect(body.filter).toEqual({ status: 'verifying', days: 30, q: null });
+    // Open cases must not age out of the default queue.
+    expect(body.filter).toEqual({ status: 'verifying', days: 'all', q: null });
   });
 
   it('offsets by whole pages so pages neither overlap nor skip rows', async () => {

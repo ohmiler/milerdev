@@ -71,6 +71,9 @@ async function getPaymentHealth() {
       verifying: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'verifying' THEN 1 ELSE 0 END), 0)`,
       failed: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'failed' THEN 1 ELSE 0 END), 0)`,
       refunded: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'refunded' THEN 1 ELSE 0 END), 0)`,
+      // The reconciliation queue only holds PromptPay slips, so its work counts use the same scope.
+      slipsToReview: sql<number>`COALESCE(SUM(CASE WHEN ${payments.method} = 'promptpay' AND ${payments.status} = 'verifying' THEN 1 ELSE 0 END), 0)`,
+      slipsFailed: sql<number>`COALESCE(SUM(CASE WHEN ${payments.method} = 'promptpay' AND ${payments.status} = 'failed' THEN 1 ELSE 0 END), 0)`,
     })
     .from(payments);
 
@@ -80,6 +83,8 @@ async function getPaymentHealth() {
     verifying: Number(row?.verifying || 0),
     failed: Number(row?.failed || 0),
     refunded: Number(row?.refunded || 0),
+    slipsToReview: Number(row?.slipsToReview || 0),
+    slipsFailed: Number(row?.slipsFailed || 0),
   };
 }
 
