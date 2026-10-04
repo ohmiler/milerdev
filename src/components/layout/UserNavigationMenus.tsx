@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { ADMIN_NAVIGATION, getNavigationState } from '@/lib/navigation-model';
-import { ACCOUNT_MENU_LINKS, MEMBER_UTILITY_LINKS, UserAvatar } from './navigation-config';
+import { ACCOUNT_MENU_LINKS, UserAvatar } from './navigation-config';
 
 const notificationTypeIcons: Record<string, LucideIcon> = {
     info: Info,
@@ -281,32 +281,22 @@ export default function UserNavigationMenus({
                             );
                         })}
                     </DropdownMenuGroup>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                        {MEMBER_UTILITY_LINKS.map((destination) => {
-                            const state = getNavigationState(pathname, destination);
-                            const Icon = destination.icon;
-                            return (
-                                <DropdownMenuItem key={destination.href} variant="navigation" asChild>
-                                    <Link href={destination.href} aria-current={state.ariaCurrent}>
-                                        <Icon aria-hidden="true" />
-                                        {destination.label}
+                    {isAdmin && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem variant="navigation" asChild>
+                                    <Link
+                                        href={ADMIN_NAVIGATION.href}
+                                        aria-current={adminState.ariaCurrent}
+                                    >
+                                        <ShieldCheck aria-hidden="true" />
+                                        {ADMIN_NAVIGATION.label}
                                     </Link>
                                 </DropdownMenuItem>
-                            );
-                        })}
-                        {isAdmin && (
-                            <DropdownMenuItem variant="navigation" asChild>
-                                <Link
-                                    href={ADMIN_NAVIGATION.href}
-                                    aria-current={adminState.ariaCurrent}
-                                >
-                                    <ShieldCheck aria-hidden="true" />
-                                    {ADMIN_NAVIGATION.label}
-                                </Link>
-                            </DropdownMenuItem>
-                        )}
-                    </DropdownMenuGroup>
+                            </DropdownMenuGroup>
+                        </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                         <DropdownMenuItem

@@ -88,7 +88,6 @@ const adminRoutes: Array<{
     { path: '@/app/api/admin/tags/route', methods: ['GET'] },
     { path: '@/app/api/admin/tags/[id]/route', methods: ['PUT', 'DELETE'] },
     { path: '@/app/api/admin/reviews/[id]/route', methods: ['PUT', 'DELETE'] },
-    { path: '@/app/api/admin/announcements/route', methods: ['GET'] },
 ];
 
 describe('Admin API Access Control', () => {
@@ -146,11 +145,6 @@ describe('Admin API Access Control', () => {
 
         it('GET admin/tags should not return 401', async () => {
             const response = await callRoute('@/app/api/admin/tags/route', 'GET');
-            expect(response.status).not.toBe(401);
-        });
-
-        it('GET admin/announcements should not return 401', async () => {
-            const response = await callRoute('@/app/api/admin/announcements/route', 'GET');
             expect(response.status).not.toBe(401);
         });
     });

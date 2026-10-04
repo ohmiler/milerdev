@@ -19,7 +19,6 @@ const MANIFEST: Record<string, RouteClass> = {
     'affiliate-banners/route.ts': 'public',
     'analytics/events/route.ts': 'mixed',
     'analytics/web-vitals/route.ts': 'mixed',
-    'announcements/route.ts': 'mixed',
     'auth/[...nextauth]/route.ts': 'delegated',
     'auth/change-password/route.ts': 'auth',
     'auth/register/confirm/route.ts': 'public',
@@ -59,7 +58,7 @@ const MANIFEST: Record<string, RouteClass> = {
 };
 
 const ADMIN_ROUTES = [
-    'affiliate-banners/[id]', 'affiliate-banners', 'announcements/[id]', 'announcements', 'audit-logs',
+    'affiliate-banners/[id]', 'affiliate-banners', 'audit-logs',
     'blog/[id]', 'blog', 'bundles/[id]', 'bundles', 'certificates/[id]', 'certificates',
     'coupons/[id]', 'coupons', 'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]',
     'courses', 'enrollments/[id]', 'enrollments/import', 'enrollments', 'lessons/[lessonId]',

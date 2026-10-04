@@ -42,10 +42,6 @@ export const ACCOUNT_NAVIGATION = [
 
 export type AccountNavigationKey = (typeof ACCOUNT_NAVIGATION)[number]['key'];
 
-export const MEMBER_UTILITY_NAVIGATION = [
-  { key: 'announcements', href: '/announcements', label: 'ประกาศ', match: 'exact' },
-] as const satisfies readonly NavigationDestination[];
-
 export const ADMIN_NAVIGATION = {
   key: 'admin',
   href: '/admin',

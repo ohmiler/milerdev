@@ -51,7 +51,7 @@ export function normalizeWebVitalRouteFamily(
   }
   if (['dashboard', 'profile', 'settings'].includes(first)) return 'account';
   if (first === 'certificate') return 'certificate';
-  if (['blog', 'announcements'].includes(first)) return 'content';
+  if (first === 'blog') return 'content';
   if (['about', 'contact', 'faq', 'privacy', 'terms'].includes(first)) return 'legal_support';
   return 'other';
 }

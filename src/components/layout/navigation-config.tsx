@@ -6,7 +6,6 @@ import {
     House,
     Info,
     Mail,
-    Megaphone,
     PenLine,
     Settings,
     User,
@@ -19,7 +18,6 @@ import {
 } from '@/components/ui/avatar';
 import {
     ACCOUNT_NAVIGATION,
-    MEMBER_UTILITY_NAVIGATION,
     PUBLIC_NAVIGATION,
 } from '@/lib/navigation-model';
 
@@ -40,10 +38,6 @@ const accountIcons: Record<(typeof ACCOUNT_NAVIGATION)[number]['key'], LucideIco
     settings: Settings,
 };
 
-const utilityIcons: Record<(typeof MEMBER_UTILITY_NAVIGATION)[number]['key'], LucideIcon> = {
-    announcements: Megaphone,
-};
-
 export const NAV_LINKS = PUBLIC_NAVIGATION.map((destination) => ({
     ...destination,
     icon: publicIcons[destination.key],
@@ -52,11 +46,6 @@ export const NAV_LINKS = PUBLIC_NAVIGATION.map((destination) => ({
 export const ACCOUNT_MENU_LINKS = ACCOUNT_NAVIGATION.map((destination) => ({
     ...destination,
     icon: accountIcons[destination.key],
-}));
-
-export const MEMBER_UTILITY_LINKS = MEMBER_UTILITY_NAVIGATION.map((destination) => ({
-    ...destination,
-    icon: utilityIcons[destination.key],
 }));
 
 

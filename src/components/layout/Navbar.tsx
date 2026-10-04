@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react';
 import { signOut } from 'next-auth/react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import AnnouncementAlert from './AnnouncementAlert';
 import PublicNavigationBar from './PublicNavigationBar';
 
 export default function Navbar() {
@@ -12,7 +11,6 @@ export default function Navbar() {
 
     return (
         <>
-            <AnnouncementAlert />
             <PublicNavigationBar
                 onRequestLogout={(returnFocus) => {
                     logoutReturnFocusRef.current = returnFocus;

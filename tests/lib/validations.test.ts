@@ -5,7 +5,6 @@ import {
     createCouponSchema,
     updateUserSchema,
     updatePaymentSchema,
-    createAnnouncementSchema,
     createBundleSchema,
     createTagSchema,
     createBlogSchema,
@@ -149,33 +148,6 @@ describe('Admin Validation Schemas', () => {
 
         it('should reject missing status', () => {
             expect(updatePaymentSchema.safeParse({}).success).toBe(false);
-        });
-    });
-
-    describe('createAnnouncementSchema', () => {
-        it('should accept valid announcement', () => {
-            const result = createAnnouncementSchema.safeParse({
-                title: 'System Update',
-                content: 'We will be performing maintenance.',
-            });
-            expect(result.success).toBe(true);
-        });
-
-        it('should reject empty content', () => {
-            const result = createAnnouncementSchema.safeParse({
-                title: 'Test',
-                content: '',
-            });
-            expect(result.success).toBe(false);
-        });
-
-        it('should reject invalid type', () => {
-            const result = createAnnouncementSchema.safeParse({
-                title: 'Test',
-                content: 'Body',
-                type: 'danger',
-            });
-            expect(result.success).toBe(false);
         });
     });
 
