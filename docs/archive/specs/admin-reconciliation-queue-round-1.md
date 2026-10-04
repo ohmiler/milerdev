@@ -4,7 +4,7 @@
 
 สถานะ: **ส่งมอบแล้ว (A, B, C)** ผ่าน [#126](https://github.com/ohmiler/milerdev/pull/126), [#127](https://github.com/ohmiler/milerdev/pull/127), [#128](https://github.com/ohmiler/milerdev/pull/128) ไม่ได้เผยแพร่เป็น GitHub Issue เพราะลงมือทำตามที่ตกลงในแชตโดยตรง เอกสารนี้เก็บเหตุผลและขอบเขตไว้เป็นบันทึก ดูหัวข้อ "ส่งมอบแล้วและสิ่งที่เหลือ" ท้ายเอกสาร
 
-ที่มา: รอบ 1 (A–C) ของ [backlog งานหลังบ้าน](../admin-operations-backlog-2026-09-13.md) ตรวจเทียบกับ source ปัจจุบันบน `master` ณ `6947a55` เมื่อ 2026-10-02 ใช้คำศัพท์สมาชิก ผู้ซื้อ และผู้เรียนตาม CONTEXT.md ของ repo และไม่ขัดกับ [ADR 0007](../adr/0007-brand-aligned-admin-operations-ui.md) ซึ่งไม่อนุญาตให้เปลี่ยนอำนาจการอนุมัติชำระเงิน สิทธิ์เรียน หรือ schema
+ที่มา: รอบ 1 (A–C) ของ [backlog งานหลังบ้าน](../../admin-operations-backlog-2026-09-13.md) ตรวจเทียบกับ source ปัจจุบันบน `master` ณ `6947a55` เมื่อ 2026-10-02 ใช้คำศัพท์สมาชิก ผู้ซื้อ และผู้เรียนตาม CONTEXT.md ของ repo และไม่ขัดกับ [ADR 0007](../../adr/0007-brand-aligned-admin-operations-ui.md) ซึ่งไม่อนุญาตให้เปลี่ยนอำนาจการอนุมัติชำระเงิน สิทธิ์เรียน หรือ schema
 
 ## ผลตรวจ source เทียบกับ backlog
 
