@@ -16,10 +16,8 @@ import {
 
 const mocks = vi.hoisted(() => ({
     sendCertificateEmail: vi.fn().mockResolvedValue(true),
-    notify: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('@/lib/notifications/email', () => ({ sendCertificateEmail: mocks.sendCertificateEmail }));
-vi.mock('@/lib/notifications/notify', () => ({ notify: mocks.notify }));
 
 let db: typeof import('@/lib/db').db;
 let issuance: typeof import('@/lib/certificates/issuance');
@@ -157,16 +155,14 @@ describe('certificate issuance on real MySQL', () => {
         expect(await certsFor(a.userId)).toHaveLength(1);
     });
 
-    it('sends the email and notification only for a newly issued certificate', async () => {
+    it('sends the email only for a newly issued certificate', async () => {
         const a = await seedLearner({ completed: true });
         mocks.sendCertificateEmail.mockClear();
-        mocks.notify.mockClear();
 
         await issuance.ensureCompletedCertificate(a.userId, a.courseId);
         await issuance.ensureCompletedCertificate(a.userId, a.courseId);
 
         expect(mocks.sendCertificateEmail).toHaveBeenCalledTimes(1);
-        expect(mocks.notify).toHaveBeenCalledTimes(1);
     });
 });
 

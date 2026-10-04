@@ -20,7 +20,6 @@ vi.mock('@/lib/auditLog', async (importOriginal) => ({
 }));
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
-vi.mock('@/lib/notifications/notify', () => ({ notify: vi.fn() }));
 vi.mock('@/lib/db', () => ({
     db: {
         select: vi.fn().mockReturnThis(),

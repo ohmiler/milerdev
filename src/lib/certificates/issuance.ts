@@ -8,7 +8,6 @@ import { certificates, courses, enrollments, users } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
 import { sendCertificateEmail } from '@/lib/notifications/email';
 import { logError } from '@/lib/error-handler';
-import { notify } from '@/lib/notifications/notify';
 
 type CertificateRecord = typeof certificates.$inferSelect;
 type IssuanceAuthority = 'explicit_admin_intent' | 'verified_completion';
@@ -165,17 +164,6 @@ async function issueCertificateWithAuthority(
         { action: 'certificate.email.failed' },
       ));
     }
-
-    void notify({
-      userId,
-      title: '🎓 ยินดีด้วย! คุณได้รับใบรับรอง',
-      message: `สำเร็จหลักสูตร "${delivery.courseTitle}"`,
-      type: 'success',
-      link: `/certificate/${certificate.certificateCode}`,
-    }).catch((error) => logError(
-      error instanceof Error ? error : new Error(String(error)),
-      { action: 'certificate.notification.failed' },
-    ));
   }
 
   return outcome;

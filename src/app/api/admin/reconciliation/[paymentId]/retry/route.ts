@@ -3,11 +3,10 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { auditLogs, bundles, courses, payments, users } from '@/lib/db/schema';
+import { auditLogs, courses, payments, users } from '@/lib/db/schema';
 import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/notifications/email';
 import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
 import { MAX_RECONCILIATION_RETRIES } from '@/lib/commerce/reconciliation';
-import { notify } from '@/lib/notifications/notify';
 import { logError } from '@/lib/error-handler';
 
 const reconciliationActionSchema = z.object({
@@ -137,61 +136,35 @@ export async function POST(
 }
 
 async function sendApprovalMessages(payment: typeof payments.$inferSelect) {
-  if (!payment.userId) return;
+  // Only course purchases send approval emails; bundle approvals have no message.
+  if (!payment.userId || !payment.courseId) return;
 
   const [user] = await db
     .select({ email: users.email, name: users.name })
     .from(users)
     .where(eq(users.id, payment.userId))
     .limit(1);
+  const [course] = await db
+    .select({ title: courses.title, slug: courses.slug })
+    .from(courses)
+    .where(eq(courses.id, payment.courseId))
+    .limit(1);
 
-  if (payment.courseId) {
-    const [course] = await db
-      .select({ title: courses.title, slug: courses.slug })
-      .from(courses)
-      .where(eq(courses.id, payment.courseId))
-      .limit(1);
-    const courseName = course?.title ?? 'คอร์ส';
+  if (!course || !user?.email || !user.name) return;
 
-    await Promise.all([
-      notify({
-        userId: payment.userId,
-        title: '✅ ชำระเงินสำเร็จ',
-        message: `การชำระเงินสำหรับ "${courseName}" ได้รับการยืนยันแล้ว`,
-        type: 'success',
-        link: '/dashboard',
-      }),
-      ...(course && user?.email && user.name ? [
-        sendPaymentConfirmation({
-          email: user.email,
-          name: user.name,
-          courseName: course.title,
-          amount: Number(payment.amount),
-          paymentId: payment.id,
-        }),
-        sendEnrollmentEmail({
-          email: user.email,
-          name: user.name,
-          courseName: course.title,
-          courseSlug: course.slug,
-        }),
-      ] : []),
-    ]);
-    return;
-  }
-
-  if (payment.bundleId) {
-    const [bundle] = await db
-      .select({ title: bundles.title })
-      .from(bundles)
-      .where(eq(bundles.id, payment.bundleId))
-      .limit(1);
-    await notify({
-      userId: payment.userId,
-      title: '✅ ชำระเงินสำเร็จ',
-      message: `การชำระเงินสำหรับ "${bundle?.title ?? 'Bundle'}" ได้รับการยืนยันแล้ว`,
-      type: 'success',
-      link: '/dashboard',
-    });
-  }
+  await Promise.all([
+    sendPaymentConfirmation({
+      email: user.email,
+      name: user.name,
+      courseName: course.title,
+      amount: Number(payment.amount),
+      paymentId: payment.id,
+    }),
+    sendEnrollmentEmail({
+      email: user.email,
+      name: user.name,
+      courseName: course.title,
+      courseSlug: course.slug,
+    }),
+  ]);
 }

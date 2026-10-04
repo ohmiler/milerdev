@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   transactionDelete: vi.fn(),
   transaction: vi.fn(),
   logAudit: vi.fn(),
+  sendEnrollmentEmail: vi.fn(),
+  sendPaymentConfirmation: vi.fn(),
 }));
 
 function selectChain() {
@@ -46,10 +48,9 @@ function transactionSelectChain() {
 vi.mock('@/lib/auth', () => ({ auth: mocks.auth }));
 vi.mock('@/lib/auth/helpers', () => ({ requireAdmin: mocks.requireAdmin }));
 vi.mock('@/lib/auditLog', () => ({ logAudit: mocks.logAudit }));
-vi.mock('@/lib/notifications/notify', () => ({ notify: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/notifications/email', () => ({
-  sendEnrollmentEmail: vi.fn().mockResolvedValue(undefined),
-  sendPaymentConfirmation: vi.fn().mockResolvedValue(undefined),
+  sendEnrollmentEmail: mocks.sendEnrollmentEmail,
+  sendPaymentConfirmation: mocks.sendPaymentConfirmation,
 }));
 vi.mock('@paralleldrive/cuid2', () => ({ createId: vi.fn(() => 'test-id') }));
 
@@ -105,6 +106,8 @@ describe('admin payment mutation boundaries', () => {
     state.transactionAffectedRows = 1;
     mocks.auth.mockResolvedValue(adminSession);
     mocks.requireAdmin.mockResolvedValue({ session: adminSession });
+    mocks.sendEnrollmentEmail.mockResolvedValue(undefined);
+    mocks.sendPaymentConfirmation.mockResolvedValue(undefined);
   });
 
   it('does not default an empty reconciliation request to approval', async () => {
@@ -137,6 +140,39 @@ describe('admin payment mutation boundaries', () => {
     expect(body.status).toBe('completed');
     expect(body.enrolled).toBe(1);
     expect(mocks.transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('emails the learner after approving a course payment', async () => {
+    // Every select in this mock returns the same row, so it carries the payment, learner, and course fields.
+    state.selectResults = [{
+      ...promptPayPayment,
+      email: 'learner@example.com',
+      name: 'Learner',
+      title: 'TypeScript Foundations',
+      slug: 'typescript-foundations',
+    }];
+    const route = await import('@/app/api/admin/reconciliation/[paymentId]/retry/route');
+    const request = new Request('http://localhost/api/admin/reconciliation/pay-1/retry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve', reason: 'verified against bank evidence' }),
+    });
+
+    const response = await route.POST(request, { params: Promise.resolve({ paymentId: 'pay-1' }) });
+
+    expect(response.status).toBe(200);
+    await vi.waitFor(() => {
+      expect(mocks.sendPaymentConfirmation).toHaveBeenCalledWith(expect.objectContaining({
+        email: 'learner@example.com',
+        courseName: 'TypeScript Foundations',
+        amount: 990,
+        paymentId: 'pay-1',
+      }));
+      expect(mocks.sendEnrollmentEmail).toHaveBeenCalledWith(expect.objectContaining({
+        email: 'learner@example.com',
+        courseSlug: 'typescript-foundations',
+      }));
+    });
   });
 
   it('records an explicit PromptPay rejection in the mutation transaction', async () => {

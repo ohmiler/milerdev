@@ -23,7 +23,6 @@ flowchart LR
     User --> LessonProgress[Lesson progress]
     Lesson --> LessonProgress
     Enrollment -->|completion criteria met| Certificate[Certificate]
-    Notification[Notification] --> User
 ```
 
 The arrow from Payment to Enrollment is a protected business transition. A client-side success screen is not proof of payment and must never grant access by itself.
@@ -116,12 +115,6 @@ Evidence associated with a learner and completed course. Revoked certificates mu
 
 The focused route and UI used to watch a lesson and move through curriculum. It includes the player, lesson rail, progress feedback, recovery states, mobile navigation, and exit path back to the broader learner experience.
 
-## Communication and content objects
-
-### Notification
-
-A user-specific item with read/unread behavior. Notification count, item state, and deletion must stay synchronized with server responses.
-
 ## Experience surfaces
 
 ### Public acquisition surface
@@ -150,7 +143,7 @@ The primary Course Detail pattern combining real course media or preview with pr
 
 ### Learner surface
 
-Dashboard, course workspace, progress, certificates, payment history, notifications, profile, and settings. Its job is to make the next useful learning action obvious.
+Dashboard, course workspace, progress, certificates, payment history, profile, and settings. Its job is to make the next useful learning action obvious.
 
 ### Admin surface
 
@@ -158,7 +151,7 @@ Routes under `/admin`. Explicitly out of scope for the current redesign phase.
 
 ### Completed non-admin redesign surface
 
-Every user-facing route outside `/admin`: public acquisition, conversion, dashboard, learning workspace, notifications, certificate and payment records, profile, settings, and shared application status pages. Work ships in slices, but a route is complete only when its representative states share the MilerDev visual language and preserve its domain behavior.
+Every user-facing route outside `/admin`: public acquisition, conversion, dashboard, learning workspace, certificate and payment records, profile, settings, and shared application status pages. Work ships in slices, but a route is complete only when its representative states share the MilerDev visual language and preserve its domain behavior.
 
 ### Academy-light surface
 

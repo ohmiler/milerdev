@@ -15,7 +15,6 @@ const mocks = vi.hoisted(() => ({
     logAudit: vi.fn().mockResolvedValue(undefined),
     logError: vi.fn(),
     sendCertificateEmail: vi.fn().mockResolvedValue(undefined),
-    notify: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('@/lib/auth', () => ({ auth: mocks.auth }));
 vi.mock('@/lib/auditLog', () => ({
@@ -24,7 +23,6 @@ vi.mock('@/lib/auditLog', () => ({
 }));
 vi.mock('@/lib/error-handler', () => ({ logError: mocks.logError }));
 vi.mock('@/lib/notifications/email', () => ({ sendCertificateEmail: mocks.sendCertificateEmail }));
-vi.mock('@/lib/notifications/notify', () => ({ notify: mocks.notify }));
 
 let db: typeof import('@/lib/db').db;
 let enrollmentsRoute: typeof import('@/app/api/admin/enrollments/route');
