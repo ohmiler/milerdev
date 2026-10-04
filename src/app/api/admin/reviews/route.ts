@@ -83,8 +83,9 @@ export async function GET(request: Request) {
         .select({
           total: sql<number>`count(*)`,
           avgRating: sql<number>`ROUND(AVG(rating), 1)`,
-          hidden: sql<number>`sum(case when is_hidden = true then 1 else 0 end)`,
-          verified: sql<number>`sum(case when is_verified = true then 1 else 0 end)`,
+          // SUM over zero rows is NULL; the page formats these as numbers.
+          hidden: sql<number>`coalesce(sum(case when is_hidden = true then 1 else 0 end), 0)`,
+          verified: sql<number>`coalesce(sum(case when is_verified = true then 1 else 0 end), 0)`,
         })
         .from(reviews),
       db
@@ -96,7 +97,12 @@ export async function GET(request: Request) {
     return NextResponse.json({
       reviews: reviewList,
       courses: coursesList,
-      stats: statsResult[0],
+      stats: {
+        total: Number(statsResult[0]?.total ?? 0),
+        avgRating: statsResult[0]?.avgRating == null ? null : Number(statsResult[0].avgRating),
+        hidden: Number(statsResult[0]?.hidden ?? 0),
+        verified: Number(statsResult[0]?.verified ?? 0),
+      },
       pagination: {
         page,
         limit,
