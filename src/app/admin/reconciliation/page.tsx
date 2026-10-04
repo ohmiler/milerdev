@@ -2,6 +2,7 @@
 
 import { CheckCircle2, ChevronLeft, ChevronRight, RefreshCw, Search, ShieldAlert, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import {
   AdminEmptyState,
@@ -86,13 +87,19 @@ const statusLabels: Record<StatusFilter, string> = {
   pending: 'รอดำเนินการ',
 };
 
+function isStatusFilter(value: string | null): value is StatusFilter {
+  return value !== null && Object.hasOwn(statusLabels, value);
+}
+
 export default function ReconciliationPage() {
+  // Dashboard links open a specific status, e.g. /admin/reconciliation?status=failed.
+  const requestedStatus = useSearchParams().get('status');
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [summary, setSummary] = useState<Summary>({ verifying: 0, failed: 0, pending: 0 });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('verifying');
-  const [daysBack, setDaysBack] = useState<DaysFilter>(30);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(isStatusFilter(requestedStatus) ? requestedStatus : 'verifying');
+  const [daysBack, setDaysBack] = useState<DaysFilter>('all');
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
