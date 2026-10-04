@@ -6,8 +6,8 @@ Before exploring the codebase, engineering skills should read:
 - `CONTEXT-MAP.md`, when present, and the contexts relevant to the task.
 - ADRs under `docs/adr/` that affect the area being changed.
 
-Missing domain files should not block work. `/domain-modeling`,
-`/grill-with-docs`, and `/improve-codebase-architecture` create or update them
+Missing domain files should not block work. `/domain-modeling` and
+`/grill-with-docs` create or update them
 when terminology or decisions are actually resolved.
 
 ## Layout

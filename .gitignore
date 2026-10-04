@@ -58,3 +58,6 @@ scripts/wordpress-export.sql
 # generated Playwright artifacts
 /output/
 /.playwright-cli/
+
+# skills installer lock (provenance is tracked in .agents/skills-provenance.json)
+/skills-lock.json

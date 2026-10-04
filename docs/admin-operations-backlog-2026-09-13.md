@@ -131,7 +131,7 @@
 
 1. อ่านเอกสารนี้และตรวจ source ปัจจุบัน เลือกรอบ 1 หรือรายการที่ต้องการ
 2. ใช้ `/grill-with-docs` ปิดคำถามสำคัญของรายการที่เลือก โดยไม่ต้องออกแบบทุกงานใน backlog พร้อมกัน
-3. ใช้ `/to-spec` เมื่อพร้อมสรุปขอบเขต และ `/to-tickets` แยกเป็นงานที่ตรวจรับได้ใน GitHub Issues ของ `ohmiler/milerdev` พร้อม dependencies ตาม [ข้อกำหนด tracker](agents/issue-tracker.md)
+3. ใช้ `/to-spec` เมื่อพร้อมสรุปขอบเขต แล้วแยกเป็นงานที่ตรวจรับได้ใน GitHub Issues ของ `ohmiler/milerdev` พร้อม dependencies ตาม [ข้อกำหนด tracker](agents/issue-tracker.md)
 4. ก่อนสร้าง issues ตรวจงานที่มีอยู่เพื่อลดการซ้ำ แล้วเชื่อม issue กลับมายังเอกสารนี้ ให้ GitHub เป็นแหล่งสถานะงานหลังเผยแพร่ tickets
 5. เริ่ม implementation ราย issue ตาม workflow ของ repo พร้อม tests ที่จำลอง providers; การอนุมัติ production และ migrations ใช้กติกา AGENTS.md
 
