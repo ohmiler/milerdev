@@ -30,7 +30,6 @@ const contrastRatio = (foreground: string, background: string) => {
 const accentSurfaceFiles = [
   'src/app/globals.css',
   'src/app/about/page.tsx',
-  'src/app/blog/page.tsx',
   'src/app/courses/page.tsx',
   'src/app/faq/page.tsx',
   'src/app/page.tsx',
@@ -41,7 +40,6 @@ const accentSurfaceFiles = [
   'src/app/settings/page.tsx',
   'src/components/account/LearnerAccountShell.tsx',
   'src/components/auth/AuthFormLayout.tsx',
-  'src/components/blog/ShareButtons.tsx',
   'src/components/bundle/BundleEnrollButton.tsx',
   'src/components/content/PublicContentHeader.tsx',
   'src/components/course/CourseReviews.tsx',

@@ -43,8 +43,6 @@ vi.mock('@/lib/db', () => {
   return { db: { select, insert: write, update: write, delete: write } };
 });
 
-import { POST as createBlogPost } from '@/app/api/admin/blog/route';
-import { DELETE as deleteBlogPost, PATCH as toggleBlogPost, PUT as updateBlogPost } from '@/app/api/admin/blog/[id]/route';
 import { PUT as updateBundle } from '@/app/api/admin/bundles/[id]/route';
 import { POST as importReviews } from '@/app/api/admin/reviews/route';
 import { DELETE as deleteReview, PUT as updateReview } from '@/app/api/admin/reviews/[id]/route';
@@ -69,53 +67,11 @@ describe('admin content edits purge cached public pages', () => {
     mocks.requireAdmin.mockResolvedValue({ session });
   });
 
-  describe('blog', () => {
-    const post = { id: 'p1', title: 'Post', slug: 'post', status: 'draft', publishedAt: null, excerpt: null, content: null, thumbnailUrl: null };
-    const params = { params: Promise.resolve({ id: 'p1' }) };
-
-    function expectBlogPurged() {
-      expect(mocks.revalidateTag).toHaveBeenCalledWith('blog-posts', { expire: 0 });
-      expect(revalidated()).toEqual(expect.arrayContaining(['/blog', '/blog/[slug]']));
-    }
-
-    it('purges after creating a post', async () => {
-      mocks.selectResults.push([]);
-      expect((await createBlogPost(json('POST', { title: 'Hello', status: 'published' }))).status).toBe(201);
-      expectBlogPurged();
-    });
-
-    it('purges after editing a post', async () => {
-      mocks.selectResults.push([post]);
-      expect((await updateBlogPost(json('PUT', { title: 'New title' }), params)).status).toBe(200);
-      expectBlogPurged();
-    });
-
-    it('purges after publishing or unpublishing a post', async () => {
-      mocks.selectResults.push([post]);
-      expect((await toggleBlogPost(json('PATCH', { status: 'published' }), params)).status).toBe(200);
-      expectBlogPurged();
-    });
-
-    it('purges after deleting a post', async () => {
-      mocks.selectResults.push([post]);
-      expect((await deleteBlogPost(json('DELETE', {}), params)).status).toBe(200);
-      expectBlogPurged();
-    });
-
-    it('does not purge when the post is not found', async () => {
-      mocks.selectResults.push([]);
-      expect((await toggleBlogPost(json('PATCH', { status: 'published' }), params)).status).toBe(404);
-      expect(mocks.revalidateTag).not.toHaveBeenCalled();
-      expect(mocks.revalidatePath).not.toHaveBeenCalled();
-    });
-  });
-
   describe('tags', () => {
     const params = { params: Promise.resolve({ id: 't1' }) };
 
     function expectTagPagesPurged() {
-      expect(revalidated()).toEqual(expect.arrayContaining(['/courses', '/courses/[slug]', '/blog', '/blog/[slug]']));
-      expect(mocks.revalidateTag).toHaveBeenCalledWith('blog-posts', { expire: 0 });
+      expect(revalidated()).toEqual(expect.arrayContaining(['/courses', '/courses/[slug]']));
     }
 
     it('purges after creating, renaming and deleting a tag', async () => {

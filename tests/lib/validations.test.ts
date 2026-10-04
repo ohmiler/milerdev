@@ -7,7 +7,6 @@ import {
     updatePaymentSchema,
     createBundleSchema,
     createTagSchema,
-    createBlogSchema,
     createLessonSchema,
     validateBody,
 } from '@/lib/validations/admin';
@@ -198,25 +197,6 @@ describe('Admin Validation Schemas', () => {
             if (result.success) {
                 expect(result.data.name).toBe('React');
             }
-        });
-    });
-
-    describe('createBlogSchema', () => {
-        it('should accept valid blog post', () => {
-            const result = createBlogSchema.safeParse({
-                title: 'My First Post',
-                content: '<p>Hello World</p>',
-                status: 'draft',
-            });
-            expect(result.success).toBe(true);
-        });
-
-        it('should reject invalid status', () => {
-            const result = createBlogSchema.safeParse({
-                title: 'Test',
-                status: 'archived',
-            });
-            expect(result.success).toBe(false);
         });
     });
 

@@ -43,9 +43,11 @@ test.describe('Public Pages', () => {
     await expect(page.locator('main')).toBeVisible();
   });
 
-  test('blog page loads', async ({ page }) => {
-    await page.goto('/blog');
-    await expect(page.getByRole('navigation', { name: 'เมนูหลัก' })).toBeVisible();
+  test('retired blog URLs redirect to the home page', async ({ page }) => {
+    for (const path of ['/blog', '/blog/welcome-to-milerdev']) {
+      await page.goto(path);
+      await expect(page).toHaveURL(/\/$/);
+    }
   });
 
   test('faq page loads', async ({ page }) => {

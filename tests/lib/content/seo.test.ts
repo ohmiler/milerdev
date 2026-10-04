@@ -21,7 +21,7 @@ describe('SEO helpers', () => {
     expect(absoluteUrl('/courses/react', 'https://milerdev.com/')).toBe(
       'https://milerdev.com/courses/react',
     );
-    expect(absoluteUrl('blog', 'http://localhost:3000')).toBe('http://localhost:3000/blog');
+    expect(absoluteUrl('courses', 'http://localhost:3000')).toBe('http://localhost:3000/courses');
   });
 
   it('escapes HTML-significant characters in JSON-LD', () => {

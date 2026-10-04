@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { metadata as aboutMetadata } from '@/app/about/page';
 import { metadata as coursesMetadata } from '@/app/courses/layout';
-import { metadata as blogMetadata } from '@/app/blog/layout';
 import { metadata as contactMetadata } from '@/app/contact/layout';
 import { metadata as faqMetadata } from '@/app/faq/layout';
 import { metadata as privacyMetadata } from '@/app/privacy/layout';
@@ -14,7 +13,6 @@ describe('public page social images', () => {
     ['/courses', coursesMetadata],
     ['/faq', faqMetadata],
     ['/about', aboutMetadata],
-    ['/blog', blogMetadata],
     ['/contact', contactMetadata],
     ['/privacy', privacyMetadata],
     ['/terms', termsMetadata],

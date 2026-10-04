@@ -18,7 +18,6 @@ export const adminSecondaryLinkGroups: Array<{ title: string; items: AdminNavLin
   {
     title: 'เนื้อหา',
     items: [
-      { href: '/admin/blog', label: 'บทความ', icon: 'blog' },
       { href: '/admin/media', label: 'สื่อ', icon: 'media' },
       { href: '/admin/tags', label: 'แท็ก', icon: 'tags' },
       { href: '/admin/certificates', label: 'ใบรับรอง', icon: 'certificates' },

@@ -12,7 +12,6 @@ function YouTubeIcon() {
 
 const quickLinks = [
   { href: '/courses', label: 'คอร์สทั้งหมด' },
-  { href: '/blog', label: 'บทความ' },
   { href: '/about', label: 'เกี่ยวกับเรา' },
   { href: '/contact', label: 'ติดต่อ' },
 ];

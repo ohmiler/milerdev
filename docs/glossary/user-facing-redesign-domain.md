@@ -62,7 +62,7 @@ A priced collection of courses with lifecycle states `draft`, `published`, and `
 
 ### Tag
 
-Catalog classification attached to courses and blog posts. In the catalog, tags are filters and decision aids; they are not access rules.
+Catalog classification attached to courses. In the catalog, tags are filters and decision aids; they are not access rules.
 
 ### Review
 
@@ -122,15 +122,11 @@ The focused route and UI used to watch a lesson and move through curriculum. It 
 
 A user-specific item with read/unread behavior. Notification count, item state, and deletion must stay synchronized with server responses.
 
-### Blog post
-
-Editorial content with `draft` or `published` status. Public routes must expose only published posts.
-
 ## Experience surfaces
 
 ### Public acquisition surface
 
-Home, shared navigation/footer, course catalog, course detail, bundle detail, blog, about, FAQ, contact, and legal pages. Its job is to build trust and help a Visitor choose a useful next action.
+Home, shared navigation/footer, course catalog, course detail, bundle detail, about, FAQ, contact, and legal pages. Its job is to build trust and help a Visitor choose a useful next action.
 
 ### Conversion surface
 

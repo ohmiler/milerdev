@@ -6,6 +6,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
+  // The blog was retired; send old article links and bookmarks to the home page.
+  async redirects() {
+    return [
+      { source: '/blog', destination: '/', permanent: true },
+      { source: '/blog/:path*', destination: '/', permanent: true },
+    ];
+  },
   images: {
     remotePatterns: [
       {
