@@ -22,7 +22,6 @@
     "db:preflight:oauth-accounts": "tsx scripts/check-oauth-account-duplicates.ts",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:migrate:local": "tsx src/lib/db/migrate.ts",
-    "privacy:retention": "tsx scripts/privacy-retention.ts",
     "db:fixtures:e2e": "tsx scripts/create-e2e-fixtures.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx scripts/seed.ts",

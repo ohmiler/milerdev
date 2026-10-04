@@ -1,16 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { randomBytes } from 'node:crypto';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import {
-    courses, enrollments, lessonProgress, lessons, measurementOutbox, users,
+    courses, enrollments, lessonProgress, lessons, users,
 } from '@/lib/db/schema';
 
 /**
  * Characterization of deleting an enrollment (and what depends on it) on real MySQL.
  *
- * measurement_outbox.enrollment_id references enrollments with the default ON DELETE NO ACTION,
- * while learning_enrollment_id cascades. These tests pin both, and the admin route's reaction.
- * KNOWN DEFECT marks behavior that blocks an admin action and is documented, not endorsed.
+ * Deleting an enrollment or its course used to be blocked by measurement_outbox rows (#147).
+ * That table is retired and dropped by migration 0023, so these tests pin that both deletes
+ * now go through and that the admin route removes only that course's progress.
  */
 
 const mocks = vi.hoisted(() => ({
@@ -54,15 +54,6 @@ async function seedEnrollment() {
     created.users.push(userId); created.courses.push(courseId, otherCourseId);
     return { userId, courseId, lessonId, otherLessonId, enrollmentId };
 }
-const freeEnrollmentOutbox = (enrollmentId: string) =>
-    db.insert(measurementOutbox).values({ eventName: 'free_enrollment_completed', enrollmentId });
-const learningOutbox = (a: { enrollmentId: string; courseId: string; lessonId: string }) =>
-    db.insert(measurementOutbox).values({
-        eventName: 'lesson_completed', learningFactId: id('f'), learningEnrollmentId: a.enrollmentId,
-        courseId: a.courseId, lessonId: a.lessonId,
-    });
-const outboxFor = (enrollmentId: string) =>
-    db.select().from(measurementOutbox).where(sql`${measurementOutbox.enrollmentId} = ${enrollmentId} OR ${measurementOutbox.learningEnrollmentId} = ${enrollmentId}`);
 const enrollmentExists = async (enrollmentId: string) =>
     (await db.select().from(enrollments).where(eq(enrollments.id, enrollmentId))).length === 1;
 const callDelete = (enrollmentId: string) => route.DELETE(
@@ -85,8 +76,6 @@ afterAll(async () => {
     if (!db) return;
     // Only rows created here are removed; shared tables are never truncated.
     if (created.users.length) {
-        await db.delete(measurementOutbox).where(inArray(measurementOutbox.enrollmentId,
-            db.select({ id: enrollments.id }).from(enrollments).where(inArray(enrollments.userId, created.users))));
         await db.delete(lessonProgress).where(inArray(lessonProgress.userId, created.users));
         await db.delete(enrollments).where(inArray(enrollments.userId, created.users));
     }
@@ -99,7 +88,7 @@ afterAll(async () => {
 });
 
 describe('deleting an enrollment on real MySQL', () => {
-    it('deletes an enrollment that has no outbox rows', async () => {
+    it('deletes an enrollment', async () => {
         const a = await seedEnrollment();
 
         await db.delete(enrollments).where(eq(enrollments.id, a.enrollmentId));
@@ -107,32 +96,12 @@ describe('deleting an enrollment on real MySQL', () => {
         expect(await enrollmentExists(a.enrollmentId)).toBe(false);
     });
 
-    it('cascades learning outbox rows (learning_enrollment_id is ON DELETE CASCADE)', async () => {
+    it('removes the enrollment when its course is deleted (ON DELETE CASCADE)', async () => {
         const a = await seedEnrollment();
-        await learningOutbox(a);
-        expect(await outboxFor(a.enrollmentId)).toHaveLength(1);
 
-        await db.delete(enrollments).where(eq(enrollments.id, a.enrollmentId));
+        await db.delete(courses).where(eq(courses.id, a.courseId));
 
-        expect(await outboxFor(a.enrollmentId)).toHaveLength(0);
-    });
-
-    it('is blocked by a free-enrollment outbox row (KNOWN DEFECT: enrollment_id is ON DELETE NO ACTION)', async () => {
-        const a = await seedEnrollment();
-        await freeEnrollmentOutbox(a.enrollmentId);
-
-        await expect(db.delete(enrollments).where(eq(enrollments.id, a.enrollmentId))).rejects.toThrow();
-
-        expect(await enrollmentExists(a.enrollmentId)).toBe(true);
-    });
-
-    it('is also blocked when the course itself is deleted (cascade reaches a NO ACTION reference)', async () => {
-        const a = await seedEnrollment();
-        await freeEnrollmentOutbox(a.enrollmentId);
-
-        await expect(db.delete(courses).where(eq(courses.id, a.courseId))).rejects.toThrow();
-
-        expect(await enrollmentExists(a.enrollmentId)).toBe(true);
+        expect(await enrollmentExists(a.enrollmentId)).toBe(false);
     });
 });
 
@@ -149,18 +118,4 @@ describe('admin DELETE /api/admin/enrollments/[id] on real MySQL', () => {
         expect(left.map((r) => r.lessonId)).toEqual([a.otherLessonId]);
     });
 
-    it('answers 500 and leaves enrollment and progress untouched when a free-enrollment outbox row exists (KNOWN DEFECT)', async () => {
-        mocks.auth.mockResolvedValue({ user: { id: 'admin-1', role: 'admin' } });
-        const a = await seedEnrollment();
-        await freeEnrollmentOutbox(a.enrollmentId);
-
-        const res = await callDelete(a.enrollmentId);
-
-        expect(res.status).toBe(500);
-        expect(await enrollmentExists(a.enrollmentId)).toBe(true);
-        const progress = await db.select().from(lessonProgress)
-            .where(and(eq(lessonProgress.userId, a.userId), eq(lessonProgress.lessonId, a.lessonId)));
-        expect(progress).toHaveLength(1); // the delete is one transaction, so progress is not half-removed
-        expect(mocks.logAudit).not.toHaveBeenCalledWith(expect.objectContaining({ entityId: a.enrollmentId }));
-    });
 });

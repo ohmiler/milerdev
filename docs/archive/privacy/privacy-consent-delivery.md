@@ -68,7 +68,7 @@ The review independently identified the pending-save identity/cross-tab race. Re
 
 The original required browser suite passed 11/12 journeys and reproduced a consent overlay covering the lesson-completion button. Moving the card into page flow corrected that obstruction for the recorded matrix. The owner subsequently requested the floating bottom placement again; the current card follows that request and makes the surrounding empty area click-through. The local screenshot `output/playwright/consent-flow-mobile.png` and the 48-case matrix describe the previous in-flow placement, not verification that controls underneath the restored overlay are unobstructed.
 
-The approved retention policy, cleanup operation guide and source-backed video inventory are in [Privacy retention and video review](../../privacy/privacy-retention-video-review.md). They are not an enabled production cleanup job or a live vendor-network audit.
+The approved retention policy, cleanup operation guide and source-backed video inventory are in [Privacy retention and video review](privacy-retention-video-review.md). They are not an enabled production cleanup job or a live vendor-network audit.
 
 ### Retention implementation
 
