@@ -197,7 +197,7 @@ export default function EditCoursePage() {
                 <Field><FieldLabel htmlFor="course-title">ชื่อคอร์ส *</FieldLabel><Input id="course-title" value={formData.title} onChange={(event) => setFormData((previous) => ({ ...previous, title: event.target.value }))} required /><FieldDescription>ชื่อที่สื่อผลลัพธ์ของคอร์สอย่างชัดเจน</FieldDescription></Field>
                 <Field><FieldLabel htmlFor="course-slug">Slug</FieldLabel><InputGroup><InputGroupAddon>/courses/</InputGroupAddon><InputGroupInput id="course-slug" value={formData.slug} onChange={(event) => setFormData((previous) => ({ ...previous, slug: event.target.value }))} /></InputGroup><FieldDescription>เปลี่ยนอย่างระมัดระวังหากเคยแชร์ลิงก์แล้ว</FieldDescription></Field>
               </div>
-              <Field><FieldLabel>คำอธิบาย</FieldLabel><RichTextEditor content={formData.description} onChange={(description) => setFormData((previous) => ({ ...previous, description }))} /></Field>
+              <Field><FieldLabel id="course-description-label">คำอธิบาย</FieldLabel><RichTextEditor labelledBy="course-description-label" content={formData.description} onChange={(description) => setFormData((previous) => ({ ...previous, description }))} /></Field>
               <Field>
                 <FieldLabel htmlFor="course-instructor">ผู้สอน</FieldLabel>
                 <NativeSelect id="course-instructor" className="w-full" value={formData.instructorId} onChange={(event) => setFormData((previous) => ({ ...previous, instructorId: event.target.value }))}>
@@ -247,7 +247,7 @@ export default function EditCoursePage() {
           <Card>
             <CardHeader><CardTitle>พร้อมบันทึก</CardTitle><CardDescription>ตรวจความพร้อมและจัดการสถานะคอร์สจากจุดนี้</CardDescription></CardHeader>
             <CardContent className="grid gap-5">
-              <div><div className="mb-2 flex justify-between text-sm"><span className="text-muted-foreground">ความพร้อม</span><strong>{readinessPercent}%</strong></div><Progress value={readinessPercent} /></div>
+              <div><div className="mb-2 flex justify-between text-sm"><span className="text-muted-foreground">ความพร้อม</span><strong>{readinessPercent}%</strong></div><Progress value={readinessPercent} aria-label={`ความพร้อมของคอร์ส ${readinessPercent}%`} /></div>
               <div className="grid gap-2 text-sm">{checklist.map((item) => <div key={item.label} className="flex items-center justify-between"><span>{item.label}</span><AdminStatusBadge tone={item.ready ? 'success' : 'neutral'}>{item.ready ? 'พร้อม' : 'ยังไม่พร้อม'}</AdminStatusBadge></div>)}</div>
               <div className="grid gap-3 rounded-xl border bg-muted/30 p-4 text-sm"><div className="flex justify-between"><span className="text-muted-foreground">สถานะ</span><strong>{statusLabel}</strong></div><div className="flex justify-between"><span className="text-muted-foreground">ราคา</span><strong>{priceLabel}</strong></div><div className="flex justify-between gap-3"><span className="text-muted-foreground">URL</span><span className="max-w-40 truncate font-mono text-xs">/courses/{normalizedSlug}</span></div></div>
               <Button type="submit" disabled={saving} size="lg">{saving ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : <><Save data-icon="inline-start" aria-hidden />บันทึกการเปลี่ยนแปลง</>}</Button>

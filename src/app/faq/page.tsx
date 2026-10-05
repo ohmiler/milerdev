@@ -27,7 +27,7 @@ export default function FAQPage() {
               <h1 className="text-4xl leading-[1.15] font-semibold tracking-[-.04em] sm:text-5xl lg:text-6xl">คำตอบที่ช่วยให้ไปต่อได้</h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">รวมข้อมูลเรื่องการเริ่มเรียน คอร์ส การชำระเงิน และบัญชี เพื่อให้คุณตัดสินใจหรือแก้ปัญหาได้จากจุดเดียว</p>
             </div>
-            <Card><CardContent className="grid grid-cols-3 gap-3 pt-6 text-center"><div><dt className="text-xs text-muted-foreground">คำถาม</dt><dd className="mt-2 text-2xl font-semibold">{questionCount}</dd></div><div><dt className="text-xs text-muted-foreground">หมวด</dt><dd className="mt-2 text-2xl font-semibold">{FAQ_CATEGORIES.length}</dd></div><div><dt className="text-xs text-muted-foreground">ทางเลือกถัดไป</dt><dd className="mt-2"><Button size="sm" variant="outline" asChild><Link href="/contact">ติดต่อทีม</Link></Button></dd></div></CardContent></Card>
+            <Card><CardContent className="pt-6"><dl className="grid grid-cols-3 gap-3 text-center"><div><dt className="text-xs text-muted-foreground">คำถาม</dt><dd className="mt-2 text-2xl font-semibold">{questionCount}</dd></div><div><dt className="text-xs text-muted-foreground">หมวด</dt><dd className="mt-2 text-2xl font-semibold">{FAQ_CATEGORIES.length}</dd></div><div><dt className="text-xs text-muted-foreground">ทางเลือกถัดไป</dt><dd className="mt-2"><Button size="sm" variant="outline" asChild><Link href="/contact">ติดต่อทีม</Link></Button></dd></div></dl></CardContent></Card>
           </div>
         </header>
 

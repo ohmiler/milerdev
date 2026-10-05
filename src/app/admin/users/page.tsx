@@ -427,8 +427,9 @@ export default function AdminUsersPage() {
                 {users.map((user) => (
                   <TableRow key={user.id} className={user.lifecycleStatus === 'inactive' ? 'opacity-65' : selectedUsers.includes(user.id) ? 'bg-muted/50' : undefined}>
                     <TableCell className="max-md:absolute max-md:top-4 max-md:right-4"><Checkbox checked={selectedUsers.includes(user.id)} onCheckedChange={() => toggleSelectUser(user.id)} aria-label={`เลือก ${user.name || user.email}`} /></TableCell>
-                    <TableCell className="max-md:col-span-2 max-md:pr-8">
-                      <div className="flex items-center gap-3">
+                    <TableCell className="max-md:col-span-2">
+                      {/* Keep the name clear of the card's corner checkbox; the stacked card zeroes cell padding. */}
+                      <div className="flex items-center gap-3 max-md:pr-10">
                         <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">{(user.name?.charAt(0) || user.email.charAt(0)).toUpperCase()}</div>
                         <Link href={`/admin/users/${user.id}`} className="min-w-0 hover:underline">
                           <div className="truncate font-semibold text-link">{user.name || 'ไม่ระบุชื่อ'}</div>

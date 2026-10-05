@@ -146,7 +146,7 @@ export default function EditLessonPage() {
           <AdminSection title="เนื้อหาหลักของบทเรียน" description="ชื่อและรายละเอียดควรช่วยให้ผู้เรียนเข้าใจว่าจะได้ทำอะไรในบทนี้">
             <FieldGroup>
               <Field><FieldLabel htmlFor="lesson-title">ชื่อบทเรียน *</FieldLabel><Input id="lesson-title" value={formData.title} onChange={(event) => setFormData((previous) => ({ ...previous, title: event.target.value }))} required placeholder="เช่น State, Props และการจัดการ Component" /><FieldDescription>ใช้ชื่อที่สแกนง่ายเมื่ออยู่ในสารบัญ</FieldDescription></Field>
-              <Field><FieldLabel>เนื้อหาบทเรียน</FieldLabel><RichTextEditor content={formData.content} onChange={(content) => setFormData((previous) => ({ ...previous, content }))} /><FieldDescription>ใส่ summary, code snippet, resource หรือโจทย์ฝึกหัด</FieldDescription></Field>
+              <Field><FieldLabel id="lesson-content-label">เนื้อหาบทเรียน</FieldLabel><RichTextEditor labelledBy="lesson-content-label" content={formData.content} onChange={(content) => setFormData((previous) => ({ ...previous, content }))} /><FieldDescription>ใส่ summary, code snippet, resource หรือโจทย์ฝึกหัด</FieldDescription></Field>
             </FieldGroup>
           </AdminSection>
 

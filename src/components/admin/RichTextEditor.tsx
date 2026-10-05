@@ -17,6 +17,8 @@ const lowlight = createLowlight(common);
 interface RichTextEditorProps {
   content: string;
   onChange: (html: string) => void;
+  /** id of the visible label; the editable area is a textbox and needs a name. */
+  labelledBy: string;
 }
 
 const MenuButton = ({
@@ -43,7 +45,7 @@ const MenuButton = ({
   </Button>
 );
 
-export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
+export default function RichTextEditor({ content, onChange, labelledBy }: RichTextEditorProps) {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
 
@@ -74,6 +76,8 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     editorProps: {
       attributes: {
         class: 'min-h-[200px] p-4 text-[0.95rem] leading-7 text-foreground outline-none',
+        'aria-labelledby': labelledBy,
+        'aria-multiline': 'true',
       },
       handleKeyDown(view, event) {
         const { state } = view;

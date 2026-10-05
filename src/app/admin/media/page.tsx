@@ -186,7 +186,8 @@ export default function AdminMediaPage() {
               type="file"
               accept="image/*"
               multiple
-              className="sr-only"
+              className="hidden"
+              tabIndex={-1}
               onChange={handleUpload}
             />
             <Button onClick={() => fileInputRef.current?.click()} disabled={uploading}>

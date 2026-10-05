@@ -139,8 +139,8 @@ export default function NewCoursePage() {
                 </Field>
               </div>
               <Field>
-                <FieldLabel>คำอธิบาย</FieldLabel>
-                <RichTextEditor content={formData.description} onChange={(description) => setFormData((previous) => ({ ...previous, description }))} />
+                <FieldLabel id="course-description-label">คำอธิบาย</FieldLabel>
+                <RichTextEditor labelledBy="course-description-label" content={formData.description} onChange={(description) => setFormData((previous) => ({ ...previous, description }))} />
               </Field>
               <Field>
                 <FieldLabel>แท็ก</FieldLabel>
