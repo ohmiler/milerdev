@@ -1,4 +1,5 @@
-import { CircleAlert, Inbox } from 'lucide-react';
+import { ArrowUpRight, CircleAlert, Inbox } from 'lucide-react';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -52,18 +53,25 @@ export function AdminMetricCard({
   detail,
   icon,
   tone = 'neutral',
+  href,
 }: {
   label: ReactNode;
   value: ReactNode;
   detail?: ReactNode;
   icon?: ReactNode;
   tone?: AdminTone;
+  // Where the number comes from: the card becomes a link to that list.
+  href?: string;
 }) {
-  return (
-    <Card size="sm" className="gap-3 rounded-xl shadow-none">
-      <CardHeader className="flex-row items-start justify-between gap-3 pb-0">
-        <div>
-          <CardDescription className="text-xs font-medium">{label}</CardDescription>
+  const card = (
+    <Card size="sm" className={cn('h-full gap-3 rounded-xl shadow-none', href && 'transition-colors group-hover:border-primary/40 group-hover:bg-muted/40')}>
+      {/* CardHeader is a grid by default; flex keeps the icon beside the number instead of below it. */}
+      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-0">
+        <div className="min-w-0">
+          <CardDescription className="flex items-center gap-1 text-xs font-medium">
+            {label}
+            {href ? <ArrowUpRight className="size-3.5 opacity-60" aria-hidden="true" /> : null}
+          </CardDescription>
           <CardTitle className="mt-2 text-2xl font-semibold tabular-nums">{value}</CardTitle>
         </div>
         {icon ? (
@@ -74,6 +82,12 @@ export function AdminMetricCard({
       </CardHeader>
       {detail ? <CardContent className="text-xs leading-5 text-muted-foreground">{detail}</CardContent> : null}
     </Card>
+  );
+  if (!href) return card;
+  return (
+    <Link href={href} className="group block rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+      {card}
+    </Link>
   );
 }
 
