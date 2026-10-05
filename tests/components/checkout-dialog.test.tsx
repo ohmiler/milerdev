@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createRef, type ReactNode } from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CheckoutDialog from '@/components/checkout/CheckoutDialog';
@@ -63,6 +63,18 @@ describe.each(['course', 'bundle'] as const)('%s order review and payment', (typ
     expect(screen.getByText(/ข้อมูลส่วนบุคคล/)).toBeTruthy();
   });
 
+  it('offers PromptPay first and says what happens next for each method', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ review: review(type) })));
+    mount(type);
+    const methods = within(await screen.findByRole('group', { name: 'ช่องทางชำระเงิน' })).getAllByRole('button');
+    expect(methods.map((button) => button.textContent)).toEqual([
+      'พร้อมเพย์ (PromptPay)โอนผ่านแอปธนาคาร แล้วแนบสลิปให้ระบบตรวจ',
+      'บัตรเครดิต / เดบิตกรอกบัตรบนหน้าชำระเงินของ Stripe แล้วระบบพากลับมาที่นี่',
+    ]);
+    expect(screen.getByRole('dialog', { name: 'เลือกช่องทางชำระเงิน' })).toBeTruthy();
+    expect(screen.queryByText(/ฟรี/)).toBeNull();
+  });
+
   it('shows the amount-embedded PromptPay QR instead of the bank account when the server returns one', async () => {
     const qr = 'data:image/png;base64,UVI=';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ review: review(type) })).mockResolvedValueOnce(response({ ...intent, promptpayQr: qr }, 201)));
@@ -71,7 +83,8 @@ describe.each(['course', 'bundle'] as const)('%s order review and payment', (typ
     expect((await screen.findByRole('img', { name: 'QR พร้อมเพย์ ยอด ฿990.25' })).getAttribute('src')).toBe(qr);
     expect(screen.getByRole('link', { name: /บันทึกรูป QR/ }).getAttribute('href')).toBe(qr);
     expect(screen.queryByText('เลขบัญชี')).toBeNull();
-    expect(screen.getByLabelText('แนบสลิปการโอนเงิน')).toBeTruthy();
+    expect(screen.getByLabelText('แนบสลิปการโอนเงิน').getAttribute('aria-describedby')).toBeTruthy();
+    expect(screen.getByText(/ไม่ใช่รูป QR ด้านบน/)).toBeTruthy();
   });
 
   it('falls back to the bank account when no PromptPay QR is configured', async () => {
@@ -80,6 +93,7 @@ describe.each(['course', 'bundle'] as const)('%s order review and payment', (typ
     await user.click(await screen.findByRole('button', { name: /PromptPay/ }));
     expect(await screen.findByText('เลขบัญชี')).toBeTruthy();
     expect(screen.queryByRole('img', { name: /QR พร้อมเพย์/ })).toBeNull();
+    expect(screen.queryByText(/ไม่ใช่รูป QR/)).toBeNull();
   });
 
   it('retains the exact attempt on close/reopen and retries a rejected slip without another payment', async () => {
@@ -172,6 +186,7 @@ it('uses the explicit free-enrollment endpoint only for a server-confirmed free 
   vi.stubGlobal('fetch', fetchMock);
   const user = userEvent.setup(); mount('course');
   await user.click(await screen.findByRole('button', { name: 'ยืนยันลงทะเบียนเรียนฟรี' }));
+  expect(screen.getByRole('dialog', { name: 'ลงทะเบียนเรียนฟรี' })).toBeTruthy();
   expect(screen.queryByRole('button', { name: /Stripe/ })).toBeNull();
   expect(screen.queryByRole('textbox')).toBeNull();
   expect(fetchMock).toHaveBeenLastCalledWith('/api/enroll', expect.objectContaining({ body: JSON.stringify({ courseId: 'product-1' }) }));
