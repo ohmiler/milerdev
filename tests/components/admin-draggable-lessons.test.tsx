@@ -49,7 +49,7 @@ describe('DraggableLessonList', () => {
     ]);
   });
 
-  it('uses semantic tabs for filtering and disables drag handles while filtering', async () => {
+  it('filters with pressed buttons and disables drag handles while filtering', async () => {
     const user = userEvent.setup();
     render(
       <DraggableLessonList
@@ -60,8 +60,12 @@ describe('DraggableLessonList', () => {
       />,
     );
 
-    const needsWorkTab = screen.getByRole('tab', { name: /ต้องตรวจ/ });
-    await user.click(needsWorkTab);
+    // One list is filtered, so these are toggle buttons, not tabs with panels.
+    expect(screen.queryByRole('tab')).toBeNull();
+    const needsWork = screen.getByRole('button', { name: /ต้องตรวจ/ });
+    expect(needsWork.getAttribute('aria-pressed')).toBe('false');
+    await user.click(needsWork);
+    expect(needsWork.getAttribute('aria-pressed')).toBe('true');
 
     expect(screen.queryByText('บทพร้อมใช้งาน')).toBeNull();
     expect(screen.getByText('บทที่ยังไม่มีวิดีโอ')).toBeTruthy();

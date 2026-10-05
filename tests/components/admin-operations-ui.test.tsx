@@ -225,7 +225,8 @@ describe('Admin operations UI', () => {
     const lessonsSource = source('src/components/admin/DraggableLessonList.tsx');
     expect(lessonsSource).toContain('KeyboardSensor');
     expect(lessonsSource).toContain('id={`lesson-sort-${courseId}`}');
-    expect(lessonsSource).toContain('<TabsList');
+    // Filters narrow one list, so they are pressed buttons like the course status filters, not tabs without panels.
+    expect(lessonsSource).toContain('aria-pressed={filter === tab.value}');
     expect(lessonsSource).toContain('<InputGroup');
     expect(lessonsSource).not.toContain('<style');
     expect(lessonsSource).not.toContain('admin-lesson-');

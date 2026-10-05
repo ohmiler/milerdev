@@ -5,11 +5,15 @@ import { Progress as ProgressPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+// A progress bar must say what it measures, so a name is required.
+type ProgressProps = React.ComponentProps<typeof ProgressPrimitive.Root> &
+  ({ "aria-label": string } | { "aria-labelledby": string })
+
 function Progress({
   className,
   value,
   ...props
-}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+}: ProgressProps) {
   return (
     <ProgressPrimitive.Root
       data-slot="progress"

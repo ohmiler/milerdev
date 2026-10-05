@@ -94,7 +94,7 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={handleFileSelect}
-        className="sr-only"
+        className="hidden"
         tabIndex={-1}
       />
 

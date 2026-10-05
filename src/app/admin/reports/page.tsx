@@ -347,7 +347,7 @@ export default function AdminReportsPage() {
                       <span className="text-muted-foreground">{item.label}</span>
                       <span className={cn('font-semibold tabular-nums', item.tone)}>{formatNumber(item.value)}</span>
                     </div>
-                    <Progress value={(item.value / completionTotal) * 100} />
+                    <Progress value={(item.value / completionTotal) * 100} aria-label={`${item.label} ${formatNumber(item.value)}`} />
                   </div>
                 ))}
               </div>
@@ -479,7 +479,7 @@ export default function AdminReportsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Progress value={course.avgProgress} className="min-w-24" />
+                          <Progress value={course.avgProgress} className="min-w-24" aria-label={`ความคืบหน้าเฉลี่ย ${course.courseTitle || 'ไม่ระบุ'} ${Math.round(course.avgProgress)}%`} />
                           <span className="w-11 text-right text-xs tabular-nums text-muted-foreground">
                             {Math.round(course.avgProgress)}%
                           </span>
