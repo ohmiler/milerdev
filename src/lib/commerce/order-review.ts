@@ -43,7 +43,7 @@ export async function loadOrderReview(
     return {
       target: { type: 'course', id: course.id, title: course.title, href: facts.actions.discovery.href },
       price: { amountDue: amount.toFixed(2), currency: 'THB' },
-      access: { ownedCount: owned ? 1 : 0, totalCount: 1, description: owned ? 'คุณมีสิทธิ์เรียนคอร์สนี้แล้ว' : 'ได้รับสิทธิ์เรียนคอร์สนี้เมื่อระบบยืนยันการชำระเงิน หรือยืนยันการลงทะเบียนเรียนฟรีแล้ว' },
+      access: { ownedCount: owned ? 1 : 0, totalCount: 1, description: owned ? 'คุณมีสิทธิ์เรียนคอร์สนี้แล้ว' : amount === 0 ? 'เรียนได้ทันทีหลังกดยืนยันลงทะเบียน' : 'เรียนได้ทันทีหลังระบบยืนยันการชำระเงิน' },
       comparison: null,
       action: owned ? 'owned' : facts.readiness !== 'ready' ? 'unavailable' : amount === 0 ? 'enroll-free' : 'pay',
     };
@@ -73,7 +73,7 @@ export async function loadOrderReview(
   return {
     target: { type: 'bundle', id: bundle.id, title: bundle.title, href: facts.actions.discovery.href },
     price: { amountDue: facts.price.bundle.toFixed(2), currency: 'THB' },
-    access: { ownedCount: facts.ownership.ownedCount, totalCount: ids.length, description: facts.ownership.disclosure || (facts.ownership.status === 'complete' ? 'คุณมีสิทธิ์เรียนทุกคอร์สใน Bundle นี้แล้ว' : 'ได้รับสิทธิ์เรียนทุกคอร์สใน Bundle เมื่อระบบยืนยันการชำระเงิน หรือยืนยันการลงทะเบียนเรียนฟรีแล้ว') },
+    access: { ownedCount: facts.ownership.ownedCount, totalCount: ids.length, description: facts.ownership.disclosure || (facts.ownership.status === 'complete' ? 'คุณมีสิทธิ์เรียนทุกคอร์สใน Bundle นี้แล้ว' : facts.price.isFree ? 'เรียนได้ทุกคอร์สใน Bundle ทันทีหลังกดยืนยันลงทะเบียน' : 'เรียนได้ทุกคอร์สใน Bundle ทันทีหลังระบบยืนยันการชำระเงิน') },
     comparison: { separate: facts.price.separateCurrent.toFixed(2), label: facts.price.comparison.label },
     action: facts.ownership.status === 'complete' ? 'owned' : facts.readiness !== 'ready' ? 'unavailable' : facts.price.isFree ? 'enroll-free' : 'pay',
   };

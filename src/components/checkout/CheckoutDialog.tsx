@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState, type RefObject } from 'react';
-import { CreditCard, Smartphone, X } from 'lucide-react';
+import { ChevronRight, CreditCard, QrCode, X } from 'lucide-react';
 import DialogShell from '@/components/ui/DialogShell';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,12 @@ export const CHECKOUT_CONTRACT = {
   allowedSlipTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'] as readonly string[],
   maxSlipBytes: 5 * 1024 * 1024,
 };
+
+// PromptPay first: most learners pay from a Thai bank app. Each card says what happens next.
+const PAYMENT_METHODS = [
+  { id: 'promptpay', icon: QrCode, title: 'พร้อมเพย์ (PromptPay)', next: 'โอนผ่านแอปธนาคาร แล้วแนบสลิปให้ระบบตรวจ' },
+  { id: 'stripe', icon: CreditCard, title: 'บัตรเครดิต / เดบิต', next: 'กรอกบัตรบนหน้าชำระเงินของ Stripe แล้วระบบพากลับมาที่นี่' },
+] as const;
 
 type Intent = { paymentId: string; amount: number; itemTitle: string; expiresAt: string; promptpayQr?: string | null };
 type Props = {
@@ -271,8 +277,8 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
   return (
     <DialogShell
       isOpen={open} onClose={close} returnFocusRef={returnFocusRef} size="wide"
-      title={resumePaymentId ? 'แนบสลิปในรายการเดิม' : intent ? 'โอนเงินและแนบสลิป' : 'เลือกช่องทางชำระเงิน'}
-      description={intent ? 'ใช้รายการและยอดนี้ในการตรวจสอบสลิป หากโอนแล้วอย่าชำระซ้ำ' : 'ทบทวนสินค้า ยอดชำระ และสิทธิ์เรียนก่อนเลือกวิธีชำระเงิน'}
+      title={resumePaymentId ? 'แนบสลิปในรายการเดิม' : intent ? 'โอนเงินและแนบสลิป' : review?.action === 'enroll-free' ? 'ลงทะเบียนเรียนฟรี' : review?.action === 'owned' ? 'คุณมีสิทธิ์เรียนแล้ว' : 'เลือกช่องทางชำระเงิน'}
+      description={intent ? 'ใช้รายการและยอดนี้ในการตรวจสอบสลิป หากโอนแล้วอย่าชำระซ้ำ' : review?.action === 'enroll-free' ? 'ตรวจรายการ แล้วกดยืนยันเพื่อเริ่มเรียน' : review?.action === 'owned' ? 'เรียนต่อได้จากหน้าการเรียนของฉัน' : 'ตรวจรายการและยอดชำระ แล้วเลือกวิธีที่สะดวก'}
       body={(
         <div className="flex min-w-0 flex-col gap-4" aria-busy={pending}>
           {error ? <Alert variant="destructive"><AlertTitle>ยังดำเนินการไม่สำเร็จ</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
@@ -301,8 +307,8 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
                   <p className="text-sm text-muted-foreground">แนบเฉพาะสลิปของรายการนี้ สลิปมีข้อมูลส่วนบุคคลและจะส่งให้ผู้ให้บริการตรวจสอบการโอนเงิน กรุณาอย่าส่งเอกสารอื่นหรือข้อมูลที่ไม่เกี่ยวข้อง</p>
                   <Field data-invalid={Boolean(slipError) || undefined}>
                     <FieldLabel htmlFor={slipId}>แนบสลิปการโอนเงิน</FieldLabel>
-                    <Input ref={fileRef} id={slipId} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" disabled={pending} aria-invalid={Boolean(slipError) || undefined} aria-describedby={slipError ? `${slipId}-error` : undefined} onChange={(event) => selectSlip(event.target.files?.[0])} />
-                    <p className="text-sm text-muted-foreground">JPG, PNG, WEBP (ไม่เกิน 5MB)</p>
+                    <Input ref={fileRef} id={slipId} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" disabled={pending} aria-invalid={Boolean(slipError) || undefined} aria-describedby={slipError ? `${slipId}-hint ${slipId}-error` : `${slipId}-hint`} onChange={(event) => selectSlip(event.target.files?.[0])} />
+                    <p id={`${slipId}-hint`} className="text-sm text-muted-foreground">{intent.promptpayQr && !resumePaymentId ? 'ใช้สลิปที่แอปธนาคารออกให้หลังโอน ไม่ใช่รูป QR ด้านบน' : 'ใช้สลิปที่แอปธนาคารออกให้หลังโอน'} · JPG, PNG, WEBP ไม่เกิน 5MB</p>
                     {slipError ? <FieldError id={`${slipId}-error`}>{slipError}</FieldError> : null}
                   </Field>
                   {slipFile && slipPreview ? <div className="relative">
@@ -321,8 +327,22 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
               {review?.action === 'unavailable' ? <Alert><AlertTitle>ยังไม่เปิดรับสมัคร</AlertTitle><AlertDescription>สินค้านี้ยังไม่พร้อมรับการลงทะเบียน กรุณากลับมาตรวจสอบภายหลัง</AlertDescription></Alert> : null}
               {review?.action === 'owned' ? <Button asChild><Link href="/dashboard">ไปการเรียนของฉัน</Link></Button> : null}
               {review?.action === 'pay' && !uncertain ? <div className="flex flex-col gap-3" role="group" aria-label="ช่องทางชำระเงิน">
-                <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('stripe')}><CreditCard data-icon="inline-start" aria-hidden="true" />ชำระด้วยบัตรผ่าน Stripe</Button>
-                <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('promptpay')}><Smartphone data-icon="inline-start" aria-hidden="true" />โอนเงิน / PromptPay</Button>
+                {PAYMENT_METHODS.map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    disabled={pending}
+                    onClick={() => startPayment(method.id)}
+                    className="flex w-full min-w-0 items-center gap-3 rounded-xl border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted"><method.icon className="size-5" aria-hidden="true" /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold">{method.title}</span>
+                      <span className="block text-sm text-muted-foreground">{method.next}</span>
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  </button>
+                ))}
               </div> : null}
               {review?.action === 'enroll-free' && !uncertain ? <Button type="button" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('free')}>ยืนยันลงทะเบียนเรียนฟรี</Button> : null}
               {loading ? <p role="status"><Spinner aria-hidden="true" />กำลังดำเนินการ...</p> : null}
