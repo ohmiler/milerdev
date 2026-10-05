@@ -30,8 +30,8 @@ function TableHead({ className, children }: TableElementProps) {
   return <th data-slot="table-head" className={cn('h-10 px-3 text-left align-middle text-xs font-semibold text-muted-foreground', className)}>{children}</th>;
 }
 
-function TableCell({ className, children }: TableElementProps) {
-  return <td data-slot="table-cell" className={cn('px-3 py-3 align-middle', className)}>{children}</td>;
+function TableCell({ className, children, ...props }: React.ComponentProps<'td'>) {
+  return <td data-slot="table-cell" className={cn('px-3 py-3 align-middle', className)} {...props}>{children}</td>;
 }
 
 export { Table, TableBody, TableCell, TableHead, TableHeader, TableRow };
