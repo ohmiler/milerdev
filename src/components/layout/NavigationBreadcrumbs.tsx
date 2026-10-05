@@ -30,7 +30,8 @@ export default function NavigationBreadcrumbs({
           const isCurrent = index === items.length - 1;
           return (
             <Fragment key={`${item.href ?? 'current'}:${item.label}`}>
-              <BreadcrumbItem className={cn(isCurrent && 'min-w-0')}>
+              {/* Earlier steps never shrink, so short Thai words are not split; only the current page truncates. */}
+              <BreadcrumbItem className={cn(isCurrent ? 'min-w-0' : 'shrink-0 whitespace-nowrap')}>
                 {item.href && !isCurrent ? (
                   <BreadcrumbLink asChild>
                     <Link href={item.href}>{item.label}</Link>

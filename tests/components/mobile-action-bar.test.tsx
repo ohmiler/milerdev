@@ -34,7 +34,7 @@ afterEach(() => {
 const barProps = {
   targetId: 'course-action',
   summary: '฿1,490',
-  actionLabel: 'สมัครคอร์สนี้',
+  actionLabel: 'ซื้อคอร์สนี้ ฿1,490',
   href: '#course-action',
   hiddenFrom: 'md' as const,
 };
@@ -43,15 +43,15 @@ describe('MobileActionBar', () => {
   it('shows a shortcut only while the real purchase controls are off screen', () => {
     render(<MobileActionBar {...barProps} />, { container: document.body.appendChild(document.createElement('div')) });
 
-    expect(screen.queryByRole('link', { name: 'สมัครคอร์สนี้' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'ซื้อคอร์สนี้ ฿1,490' })).toBeNull();
 
     act(() => notify(false));
-    const link = screen.getByRole('link', { name: 'สมัครคอร์สนี้' });
+    const link = screen.getByRole('link', { name: 'ซื้อคอร์สนี้ ฿1,490' });
     expect(link.getAttribute('href')).toBe('#course-action');
     expect(screen.getByText('฿1,490')).toBeTruthy();
 
     act(() => notify(true));
-    expect(screen.queryByRole('link', { name: 'สมัครคอร์สนี้' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'ซื้อคอร์สนี้ ฿1,490' })).toBeNull();
   });
 
   it('is hidden from the configured breakpoint upward and does not start checkout itself', () => {
@@ -94,7 +94,7 @@ describe('course mobile bar mode', () => {
     act(() => notify(false));
 
     expect(screen.getByText('฿1,490')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'สมัครคอร์สนี้' }).getAttribute('href')).toBe('#course-action');
+    expect(screen.getByRole('link', { name: 'ซื้อคอร์สนี้ ฿1,490' }).getAttribute('href')).toBe('#course-action');
   });
 
   it('renders nothing while enrollment is unresolved or the course is not ready', () => {

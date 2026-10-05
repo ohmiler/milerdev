@@ -157,9 +157,11 @@ export function deriveCourseDecisionFacts(
   const readiness = lessonCount > 0 ? 'ready' : 'preparing';
   const courseHref = `/courses/${source.slug}`;
   const unavailable = unavailableAction();
+  // One wording everywhere a visitor can pay, with the price, matching the price card;
+  // "สมัคร" stays reserved for creating an account.
   const acquisitionAction: CourseAcquisitionActionDescriptor = effectivePrice === 0
     ? { kind: 'enroll-free', label: 'ลงทะเบียนเรียนฟรี', href: null }
-    : { kind: 'start-checkout', label: 'สมัครคอร์สนี้', href: null };
+    : { kind: 'start-checkout', label: `ซื้อคอร์สนี้ ${thbFormatter.format(effectivePrice)}`, href: null };
 
   return {
     readiness,
