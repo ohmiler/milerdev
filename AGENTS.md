@@ -45,6 +45,11 @@ Run the narrowest meaningful check for each logical change; run affected tests, 
 - Complete implementation, verification, and fixes caused by the change before handoff. Report unrelated failures and genuine blockers without expanding the task or claiming unverified success.
 - A denial by the permission system is final for that outcome. Do not retry the same outcome through another route; report it and let the owner decide.
 
+## Communication
+
+- Write every reply to the owner in Thai: answers, status reports, summaries, plans, and questions. Code, commands, file paths, check names, and technical terms without a common Thai form may stay in English.
+- Commit messages, pull request titles and bodies, code comments, and docs stay in English, as the repository already does.
+
 ## Secrets and data
 
 - Never read, print, summarize, edit, or expose `.env*` files or secret values. Use `.env.example` for placeholder names only.
