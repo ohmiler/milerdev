@@ -197,6 +197,8 @@ describe('Admin operations UI', () => {
     expect(headerSource).not.toContain('Search');
     expect(headerSource).not.toContain('Notifications');
     expect(headerSource).not.toContain('สร้างใหม่');
+    // Every admin page renders its own h1 through AdminPageHeader; the top bar must not add a second one.
+    expect(headerSource).not.toContain('<h1');
   });
 
   it('keeps migrated admin interactions on shadcn composition contracts', () => {

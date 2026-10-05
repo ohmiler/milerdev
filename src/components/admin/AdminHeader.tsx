@@ -37,7 +37,8 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
       <header className="sticky top-0 z-30 hidden min-h-20 items-center justify-between gap-4 border-b border-border bg-background/95 px-7 backdrop-blur lg:flex">
         <div>
           <p className="text-xs font-medium text-muted-foreground">ศูนย์จัดการ MilerDev</p>
-          <h1 className="mt-1 font-heading text-lg font-semibold text-foreground">{activeTitle}</h1>
+          {/* Each page renders its own h1; the bar only names the section. */}
+          <p className="mt-1 font-heading text-lg font-semibold text-foreground">{activeTitle}</p>
         </div>
         <Link href="/admin/settings" aria-label="เปิดการตั้งค่าผู้ดูแลระบบ" className="flex items-center gap-3 rounded-lg p-1.5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
           <div className="hidden text-right xl:block">
