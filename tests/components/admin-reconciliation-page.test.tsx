@@ -219,6 +219,25 @@ describe('Admin reconciliation queue states', () => {
       navigation.searchParams = new URLSearchParams();
     });
 
+    it('opens one case from a payments-page link, with the search shown and editable', async () => {
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(paged(1, 1, 1));
+
+      navigation.searchParams = new URLSearchParams('status=failed&q=%20payment-001%20');
+      render(<ReconciliationPage />);
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      expect(requestedUrl(fetchMock, 0).searchParams.get('status')).toBe('failed');
+      expect(requestedUrl(fetchMock, 0).searchParams.get('q')).toBe('payment-001');
+      expect((screen.getByLabelText('ค้นหาเลขธุรกรรมหรืออีเมล') as HTMLInputElement).value).toBe('payment-001');
+      cleanup();
+
+      // The API rejects longer terms, so an oversized link is cut to its limit.
+      navigation.searchParams = new URLSearchParams(`q=${'a'.repeat(150)}`);
+      render(<ReconciliationPage />);
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(requestedUrl(fetchMock, 1).searchParams.get('q')).toHaveLength(100);
+      navigation.searchParams = new URLSearchParams();
+    });
+
     it('moves back when the last items of a later page are resolved', async () => {
       const fetchMock = vi.spyOn(globalThis, 'fetch')
         .mockResolvedValueOnce(paged(1, 51, 50))

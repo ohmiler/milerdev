@@ -92,8 +92,11 @@ function isStatusFilter(value: string | null): value is StatusFilter {
 }
 
 export default function ReconciliationPage() {
-  // Dashboard links open a specific status, e.g. /admin/reconciliation?status=failed.
-  const requestedStatus = useSearchParams().get('status');
+  // Dashboard links open a specific status, e.g. /admin/reconciliation?status=failed;
+  // the payments page also passes ?q=<payment id> to open one case.
+  const searchParams = useSearchParams();
+  const requestedStatus = searchParams.get('status');
+  const requestedQuery = (searchParams.get('q') ?? '').trim().slice(0, 100);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [summary, setSummary] = useState<Summary>({ verifying: 0, failed: 0, pending: 0 });
   const [loading, setLoading] = useState(true);
@@ -101,8 +104,8 @@ export default function ReconciliationPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(isStatusFilter(requestedStatus) ? requestedStatus : 'verifying');
   const [daysBack, setDaysBack] = useState<DaysFilter>('all');
   const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState(requestedQuery);
+  const [searchTerm, setSearchTerm] = useState(requestedQuery);
   // The API page size equals the bulk cap, so selecting all means selecting the whole page.
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: MAX_BULK_SELECTION, total: 0, totalPages: 1 });
   const [actionLoading, setActionLoading] = useState(false);
