@@ -52,17 +52,19 @@ export default function LearningNavbar({
               <PanelLeftClose data-icon="inline-start" aria-hidden="true" />
             )}
           </Button>
+          {/* A visible word beside the icon: the lesson list is the main way around on phones. */}
           <Button
             type="button"
-            size="icon-sm"
+            size="sm"
             variant="outline"
-            className="min-h-11 min-w-11 lg:hidden"
+            className="min-h-11 shrink-0 lg:hidden"
             onClick={(event) => onOpenSidebar(event.currentTarget)}
             aria-label="เปิดรายการบทเรียน"
             title="เปิดรายการบทเรียน"
             data-learning-control="curriculum"
           >
             <ListVideo data-icon="inline-start" aria-hidden="true" />
+            บทเรียน
           </Button>
 
           <div className="hidden items-center gap-2 sm:flex" aria-label="MilerDev">
@@ -77,9 +79,9 @@ export default function LearningNavbar({
             <strong className="block truncate text-sm font-semibold">{lessonTitle}</strong>
           </div>
 
-          <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex" aria-label={isEnrolled ? `ความคืบหน้า ${progressPercent}%` : 'บทเรียนทดลอง'}>
+          <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground" aria-label={isEnrolled ? `ความคืบหน้า ${progressPercent}%` : 'บทเรียนทดลอง'}>
             <span>{isEnrolled ? `${progressPercent}%` : 'ทดลองเรียน'}</span>
-            <span className="tabular-nums">{currentIndex + 1} / {totalCount}</span>
+            <span className="hidden tabular-nums sm:inline">{currentIndex + 1} / {totalCount}</span>
           </div>
 
           <Button asChild size="icon-sm" variant="ghost" className="min-h-11 min-w-11 lg:w-auto lg:px-3">
