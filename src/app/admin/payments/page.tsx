@@ -9,6 +9,7 @@ import {
   AdminErrorState,
   AdminLoadingState,
   AdminMetricCard,
+  adminStackedTableClass,
   AdminPageHeader,
   AdminPendingLabel,
   AdminSection,
@@ -203,7 +204,7 @@ export default function AdminPaymentsPage() {
       />
 
       {stats ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           <AdminMetricCard label="ธุรกรรมทั้งหมด" value={stats.total.toLocaleString('th-TH')} detail="รายการที่อยู่ในระบบ" />
           <AdminMetricCard label="สำเร็จแล้ว" value={stats.completed.toLocaleString('th-TH')} tone="success" detail="ปิดยอดและมอบสิทธิ์แล้ว" />
           <AdminMetricCard label="รอดำเนินการ" value={stats.pending.toLocaleString('th-TH')} tone="warning" detail="ควรติดตามเพื่อปิดงาน" />
@@ -234,7 +235,7 @@ export default function AdminPaymentsPage() {
           <AdminEmptyState icon={<WalletCards aria-hidden />} title="ไม่พบรายการชำระเงิน" description="ลองเปลี่ยนคำค้นหา สถานะ หรือช่องทางชำระเงิน" />
         ) : (
           <>
-            <Table>
+            <Table className={adminStackedTableClass}>
               <TableHeader>
                 <TableRow>
                   <TableHead>ผู้ชำระเงิน</TableHead>
@@ -251,19 +252,19 @@ export default function AdminPaymentsPage() {
                   const reconciliationHref = getReconciliationHref(payment);
                   return (
                     <TableRow key={payment.id}>
-                      <TableCell className="whitespace-normal">
+                      <TableCell className="whitespace-normal max-md:col-span-2">
                         {payment.userId ? <Link href={`/admin/users/${payment.userId}`} className="font-semibold text-link hover:underline">{payment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-semibold">{payment.userName || 'ไม่ระบุชื่อ'}</div>}
                         <div className="mt-1 text-xs text-muted-foreground [overflow-wrap:anywhere]">{payment.userEmail || '-'}</div>
                       </TableCell>
-                      <TableCell>
-                        <div className="line-clamp-2 max-w-72 font-medium whitespace-normal [overflow-wrap:anywhere]">{payment.bundleTitle || payment.courseTitle || payment.itemTitle || '-'}</div>
+                      <TableCell className="max-md:col-span-2" data-label="รายการ">
+                        <div className="line-clamp-2 max-w-72 font-medium whitespace-normal [overflow-wrap:anywhere] max-md:max-w-none">{payment.bundleTitle || payment.courseTitle || payment.itemTitle || '-'}</div>
                         {payment.slipUrl ? payment.slipUrl.startsWith('http') ? (
                           <a href={payment.slipUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-link hover:underline">ดูหลักฐาน <ExternalLink className="size-3" aria-hidden /></a>
                         ) : <div className="mt-1 line-clamp-1 max-w-72 font-mono text-xs text-muted-foreground whitespace-normal [overflow-wrap:anywhere]" title={payment.slipUrl}>Ref: {payment.slipUrl}</div> : null}
                       </TableCell>
-                      <TableCell className="text-right font-semibold tabular-nums">{formatCurrency(payment.amount)}</TableCell>
-                      <TableCell><AdminStatusBadge>{methodText[payment.method]}</AdminStatusBadge></TableCell>
-                      <TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums" data-label="จำนวน">{formatCurrency(payment.amount)}</TableCell>
+                      <TableCell data-label="ช่องทาง"><AdminStatusBadge>{methodText[payment.method]}</AdminStatusBadge></TableCell>
+                      <TableCell className="max-md:col-span-2" data-label="สถานะ">
                         {/* Stacked so the column stays narrow; the select appears only when a transition exists. */}
                         <div className="flex flex-col items-start gap-1.5">
                           <AdminStatusBadge tone={statusTone(payment.status)}>{statusText[payment.status]}</AdminStatusBadge>
@@ -285,7 +286,7 @@ export default function AdminPaymentsPage() {
                           ) : null}
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-xs leading-5 text-muted-foreground">{formatDate(payment.createdAt)}</TableCell>
+                      <TableCell className="whitespace-nowrap text-xs leading-5 text-muted-foreground" data-label="เวลา">{formatDate(payment.createdAt)}</TableCell>
                     </TableRow>
                   );
                 })}

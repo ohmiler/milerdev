@@ -10,6 +10,7 @@ import {
   AdminErrorState,
   AdminLoadingState,
   AdminMetricCard,
+  adminStackedTableClass,
   AdminPageHeader,
   AdminPendingLabel,
   AdminSection,
@@ -275,7 +276,7 @@ export default function AdminEnrollmentsPage() {
       ) : null}
 
       {stats ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           <AdminMetricCard label="ทั้งหมด" value={stats.total.toLocaleString('th-TH')} detail="สิทธิ์เข้าเรียนทุกสถานะ" />
           <AdminMetricCard label="เรียนจบแล้ว" value={stats.completed.toLocaleString('th-TH')} tone="success" detail="ผ่านเงื่อนไขจบคอร์ส" />
           <AdminMetricCard label="กำลังเรียน" value={stats.inProgress.toLocaleString('th-TH')} tone="info" detail="มีความคืบหน้ามากกว่า 0%" />
@@ -310,7 +311,7 @@ export default function AdminEnrollmentsPage() {
           <AdminEmptyState icon={<GraduationCap aria-hidden />} title="ไม่พบการลงทะเบียน" description="ลองเปลี่ยนคำค้นหาหรือตัวกรอง หรือเพิ่มสิทธิ์เข้าเรียนใหม่" />
         ) : (
           <>
-            <Table>
+            <Table className={adminStackedTableClass}>
               <TableHeader>
                 <TableRow>
                   <TableHead>ผู้ใช้</TableHead>
@@ -326,25 +327,25 @@ export default function AdminEnrollmentsPage() {
                   const progress = enrollment.progressPercent || 0;
                   return (
                     <TableRow key={enrollment.id}>
-                      <TableCell>
+                      <TableCell className="max-md:col-span-2">
                         {enrollment.userId ? <Link href={`/admin/users/${enrollment.userId}`} className="font-medium text-link hover:underline">{enrollment.userName || 'ไม่ระบุชื่อ'}</Link> : <div className="font-medium">{enrollment.userName || 'ไม่ระบุชื่อ'}</div>}
                         <div className="mt-1 text-xs text-muted-foreground">{enrollment.userEmail || '-'}</div>
                       </TableCell>
-                      <TableCell className="max-w-64 truncate">{enrollment.courseTitle || '-'}</TableCell>
-                      <TableCell>
+                      <TableCell className="max-w-64 truncate max-md:col-span-2" data-label="คอร์ส">{enrollment.courseTitle || '-'}</TableCell>
+                      <TableCell data-label="ความคืบหน้า">
                         <div className="flex min-w-32 items-center gap-3">
                           <Progress value={progress} className="w-24" aria-label={`ความคืบหน้า ${progress}%`} />
                           <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{progress}%</span>
                         </div>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(enrollment.enrolledAt)}</TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap text-muted-foreground" data-label="วันที่ลงทะเบียน">{formatDate(enrollment.enrolledAt)}</TableCell>
+                      <TableCell data-label="สถานะ">
                         <AdminStatusBadge tone={enrollment.completedAt ? 'success' : progress > 0 ? 'info' : 'neutral'}>
                           {enrollment.completedAt ? 'เรียนจบ' : progress > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}
                         </AdminStatusBadge>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end">
+                      <TableCell data-label="จัดการ">
+                        <div className="flex justify-end max-md:justify-start">
                           <Button variant="ghost" size="icon-sm" disabled={updating === enrollment.id} onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอน ${enrollment.userName || enrollment.userEmail || 'ผู้ใช้'} ออกจากคอร์ส`}>
                             <Trash2 aria-hidden />
                           </Button>
