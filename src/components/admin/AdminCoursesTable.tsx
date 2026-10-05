@@ -1,14 +1,15 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, ImageOff, Search, Sparkles, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, ExternalLink, ImageOff, ListOrdered, MoreHorizontal, Pencil, Search, Sparkles, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
-  AdminCourseLifecycleActions,
   AdminCourseLifecycleBadge,
   CourseLifecycleDialog,
+  getAllowedCourseLifecycleActions,
+  getCourseLifecyclePresentation,
 } from '@/components/admin/AdminCourseLifecycleControls';
 import {
   AdminEmptyState,
@@ -19,8 +20,16 @@ import {
 } from '@/components/admin/ui/AdminOperations';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
+import { Spinner } from '@/components/ui/spinner';
 import { showToast } from '@/components/ui/Toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { transitionAdminCourse } from '@/lib/courses/admin-lifecycle-client';
@@ -143,7 +152,7 @@ function CourseIdentity({ course }: { course: Course }) {
       <CourseCover course={course} />
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <strong className="max-w-64 truncate text-sm font-semibold text-foreground">{course.title}</strong>
+          <Link href={`/admin/courses/${course.id}/edit`} className="max-w-64 truncate rounded text-sm font-semibold text-foreground hover:text-link hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">{course.title}</Link>
           <AdminStatusBadge tone={health.tone}>{health.label}</AdminStatusBadge>
         </div>
         <p className="mt-1 max-w-64 truncate text-xs text-muted-foreground">{course.slug}</p>
@@ -162,20 +171,48 @@ function CourseActions({
   onRequest: (action: CourseLifecycleAction) => void;
 }) {
   const primaryAction = getCoursePrimaryAction(course);
+  // One primary step per row; everything else, including status changes, sits in the "⋯" menu.
+  const links = [
+    { href: `/admin/courses/${course.id}/edit`, label: 'แก้ไขรายละเอียดคอร์ส', Icon: Pencil },
+    { href: `/admin/courses/${course.id}/lessons`, label: 'จัดบทเรียน', Icon: ListOrdered },
+    { href: `/admin/courses/${course.id}/enrollments`, label: 'ผู้เรียนในคอร์สนี้', Icon: Users },
+  ].filter((link) => link.href !== primaryAction.href);
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex items-center justify-end gap-2">
       <Button asChild size="sm">
         <Link href={primaryAction.href}>{primaryAction.label}</Link>
       </Button>
-      <Button asChild size="sm" variant="outline">
-        <Link href={`/admin/courses/${course.id}/edit`}>แก้ไข</Link>
-      </Button>
-      {course.status === 'published' ? (
-        <Button asChild size="sm" variant="ghost">
-          <Link href={`/courses/${course.slug}`} target="_blank" rel="noreferrer">ดูหน้าเว็บ</Link>
-        </Button>
-      ) : null}
-      <AdminCourseLifecycleActions status={course.status} pending={pending} onRequest={onRequest} />
+      {/* Not modal: the status confirmation dialog opens from this menu and must get the page back afterwards. */}
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" size="icon-sm" variant="outline" disabled={pending} aria-label={`จัดการเพิ่มเติม: ${course.title}`}>
+            {pending ? <Spinner aria-hidden="true" /> : <MoreHorizontal aria-hidden="true" />}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          {links.map(({ href, label, Icon }) => (
+            <DropdownMenuItem key={href} asChild>
+              <Link href={href}><Icon aria-hidden="true" />{label}</Link>
+            </DropdownMenuItem>
+          ))}
+          {course.status === 'published' ? (
+            <DropdownMenuItem asChild>
+              <a href={`/courses/${course.slug}`} target="_blank" rel="noreferrer"><ExternalLink aria-hidden="true" />ดูหน้าเว็บ</a>
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          {getAllowedCourseLifecycleActions(course.status).map((action) => (
+            <DropdownMenuItem
+              key={action}
+              variant={action === 'archive' ? 'destructive' : 'default'}
+              data-action={action}
+              onSelect={() => onRequest(action)}
+            >
+              {getCourseLifecyclePresentation(action).actionLabel}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -346,7 +383,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
         ) : (
           <>
             <div className="hidden overflow-x-auto rounded-xl border border-border md:block">
-              <Table className="min-w-[70rem]">
+              <Table className="min-w-[60rem]">
                 <TableHeader>
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
                     <TableHead className="w-[30%]">คอร์ส</TableHead>

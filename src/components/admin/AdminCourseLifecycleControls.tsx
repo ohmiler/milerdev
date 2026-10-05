@@ -72,6 +72,10 @@ const allowedActions: Record<CourseStatus, CourseLifecycleAction[]> = {
   archived: ['restore'],
 };
 
+export function getAllowedCourseLifecycleActions(status: CourseStatus) {
+  return allowedActions[status];
+}
+
 export function getCourseLifecyclePresentation(action: CourseLifecycleAction) {
   return actionPresentation[action];
 }

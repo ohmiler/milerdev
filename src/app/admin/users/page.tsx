@@ -16,6 +16,7 @@ import {
   AdminErrorState,
   AdminLoadingState,
   AdminMetricCard,
+  adminStackedTableClass,
   AdminPageHeader,
   AdminPendingLabel,
   AdminSection,
@@ -332,7 +333,7 @@ export default function AdminUsersPage() {
       />
 
       {stats ? (
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="สรุปสถานะบัญชีผู้ใช้">
+        <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4" aria-label="สรุปสถานะบัญชีผู้ใช้">
           <AdminMetricCard label="บัญชีทั้งหมด" value={stats.total.toLocaleString('th-TH')} detail="ผู้ใช้ที่อยู่ในระบบ" tone="info" />
           <AdminMetricCard label="ใช้งาน" value={stats.active.toLocaleString('th-TH')} detail="เข้าสู่ระบบได้" tone="success" />
           <AdminMetricCard label="ปิดใช้งาน" value={stats.inactive.toLocaleString('th-TH')} detail="ข้อมูลคงอยู่ แต่เข้าสู่ระบบไม่ได้" tone="warning" />
@@ -410,7 +411,7 @@ export default function AdminUsersPage() {
         ) : !loadError ? (
           <>
             {loading ? <div className="mb-3 text-xs text-muted-foreground">กำลังอัปเดตรายชื่อ…</div> : null}
-            <Table>
+            <Table className={adminStackedTableClass}>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10"><Checkbox checked={selectedUsers.length === users.length && users.length > 0} onCheckedChange={toggleSelectAll} aria-label="เลือกผู้ใช้ทั้งหมดในหน้านี้" /></TableHead>
@@ -425,8 +426,8 @@ export default function AdminUsersPage() {
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id} className={user.lifecycleStatus === 'inactive' ? 'opacity-65' : selectedUsers.includes(user.id) ? 'bg-muted/50' : undefined}>
-                    <TableCell><Checkbox checked={selectedUsers.includes(user.id)} onCheckedChange={() => toggleSelectUser(user.id)} aria-label={`เลือก ${user.name || user.email}`} /></TableCell>
-                    <TableCell>
+                    <TableCell className="max-md:absolute max-md:top-4 max-md:right-4"><Checkbox checked={selectedUsers.includes(user.id)} onCheckedChange={() => toggleSelectUser(user.id)} aria-label={`เลือก ${user.name || user.email}`} /></TableCell>
+                    <TableCell className="max-md:col-span-2 max-md:pr-8">
                       <div className="flex items-center gap-3">
                         <div className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">{(user.name?.charAt(0) || user.email.charAt(0)).toUpperCase()}</div>
                         <Link href={`/admin/users/${user.id}`} className="min-w-0 hover:underline">
@@ -435,12 +436,12 @@ export default function AdminUsersPage() {
                         </Link>
                       </div>
                     </TableCell>
-                    <TableCell><AdminStatusBadge tone={roleTone(user.role)}>{roleText(user.role)}</AdminStatusBadge></TableCell>
-                    <TableCell><AdminUserLifecycleBadge status={user.lifecycleStatus} detail={user.deactivatedAt ? `ตั้งแต่ ${formatDate(user.deactivatedAt)}` : undefined} /></TableCell>
-                    <TableCell className="text-center tabular-nums text-muted-foreground">{user.enrollmentCount.toLocaleString('th-TH')}</TableCell>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap justify-end gap-2">
+                    <TableCell data-label="บทบาท"><AdminStatusBadge tone={roleTone(user.role)}>{roleText(user.role)}</AdminStatusBadge></TableCell>
+                    <TableCell data-label="สถานะ"><AdminUserLifecycleBadge status={user.lifecycleStatus} detail={user.deactivatedAt ? `ตั้งแต่ ${formatDate(user.deactivatedAt)}` : undefined} /></TableCell>
+                    <TableCell className="text-center tabular-nums text-muted-foreground" data-label="คอร์ส">{user.enrollmentCount.toLocaleString('th-TH')}</TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground" data-label="วันที่สมัคร">{formatDate(user.createdAt)}</TableCell>
+                    <TableCell className="max-md:col-span-2">
+                      <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
                         <Button variant="outline" size="sm" onClick={() => handleEdit(user)}><Pencil data-icon="inline-start" aria-hidden />แก้ไข</Button>
                         <Button variant="outline" size="sm" onClick={() => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}><KeyRound data-icon="inline-start" aria-hidden />รหัสผ่าน</Button>
                         <AdminUserLifecycleAction status={user.lifecycleStatus} pending={updating === user.id} onRequest={() => handleLifecycleRequest(user)} />
