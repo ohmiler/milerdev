@@ -157,7 +157,7 @@ export function AdminEmptyState({
       <EmptyHeader>
         <EmptyMedia variant="icon">{icon ?? <Inbox aria-hidden />}</EmptyMedia>
         <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription className="text-current/80">{description}</EmptyDescription>
+        <EmptyDescription className="text-current">{description}</EmptyDescription>
       </EmptyHeader>
       {action ? <EmptyContent>{action}</EmptyContent> : null}
     </Empty>

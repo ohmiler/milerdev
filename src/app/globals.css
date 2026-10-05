@@ -10,7 +10,8 @@
   /* MilerDev light-default palette */
   --color-accent: #00abff;
   --color-accent-hover: #008ed6;
-  --color-accent-pressed: #0075b3;
+  /* Pressed accent, and accent text on soft fills: 4.95:1 on --color-accent-soft, 5.56:1 under white text. */
+  --color-accent-pressed: #006dab;
   --color-accent-soft: #e0f5ff;
   --color-on-accent: #061923;
   --color-on-accent-strong: #ffffff;
@@ -168,6 +169,8 @@
   --primary: var(--color-accent);
   /* Text and link color: #00abff is only 2.5:1 on white, so text uses the deeper brand blue (5.6:1). */
   --link: #006dab;
+  /* Links and accent text on navy panels: #006dab is only 2.85:1 there; this is 7.4:1. */
+  --link-inverse: #33bcff;
   /* Brand navy for dark editorial sections (instead of the near-black text color). */
   --navy: #0f233a;
   --navy-raised: #102f4a;
@@ -183,7 +186,8 @@
   --secondary-foreground: var(--color-accent-pressed);
   --muted: var(--color-surface-hover);
   --muted-foreground: var(--color-text-secondary);
-  --destructive: var(--color-error);
+  /* Destructive buttons carry white text and badges use a 10% tint, so this needs the strong red (6.57:1 / 5.58:1). */
+  --destructive: var(--color-error-strong);
   --info: var(--color-info-strong);
   --info-muted: var(--color-info-soft);
   --success-muted: var(--color-success-soft);
@@ -661,6 +665,7 @@ h1, h2, h3, h4, h5, h6 {
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-link: var(--link);
+  --color-link-inverse: var(--link-inverse);
   --color-discount: var(--discount);
   --color-discount-foreground: var(--discount-foreground);
   --color-navy: var(--navy);
