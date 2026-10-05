@@ -62,7 +62,7 @@ describe('MilerDev brand color contract', () => {
     expect(globals).toContain('--color-on-accent-strong: #ffffff;');
     expect(globals).toContain('--accent-strong-foreground: var(--color-on-accent-strong);');
     expect(contrastRatio('#061923', '#00abff')).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio('#ffffff', '#0075b3')).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio('#ffffff', '#006dab')).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio('#061923', '#33bcff')).toBeGreaterThanOrEqual(4.5);
   });
 
@@ -103,6 +103,29 @@ describe('MilerDev brand color contract', () => {
     expect(contrastRatio('#33bcff', '#080b0f')).toBeGreaterThanOrEqual(4.5);
     // The exact brand blue is too light to be text on white; that is why text uses --link.
     expect(contrastRatio('#00abff', '#ffffff')).toBeLessThan(4.5);
+  });
+
+  it('keeps accent text on soft fills, destructive actions and links on navy readable', () => {
+    const globals = readSource('src/app/globals.css');
+    // First definition of a token, i.e. the light theme in :root.
+    const token = (name: string) => globals.match(new RegExp(`--${name}: (#[0-9a-f]{6});`))![1];
+    const tintOnWhite = (hex: string, alpha: number) => `#${hex.replace('#', '').match(/.{2}/g)!
+      .map((channel) => Math.round(Number.parseInt(channel, 16) * alpha + 255 * (1 - alpha)).toString(16).padStart(2, '0'))
+      .join('')}`;
+
+    // Secondary badges and buttons and the current sidebar item: pressed blue text on the soft blue fill.
+    expect(globals).toContain('--secondary-foreground: var(--color-accent-pressed);');
+    expect(contrastRatio(token('color-accent-pressed'), token('color-accent-soft'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio('#ffffff', token('color-accent-pressed'))).toBeGreaterThanOrEqual(4.5);
+
+    // Destructive buttons put white text on the red; destructive badges put the red on a 10% tint of itself.
+    expect(globals).toContain('--destructive: var(--color-error-strong);');
+    const red = token('color-error-strong');
+    expect(contrastRatio('#ffffff', red)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(red, tintOnWhite(red, 0.1))).toBeGreaterThanOrEqual(4.5);
+
+    // Links and numbers on the navy contact and sign-in panels.
+    expect(contrastRatio(token('link-inverse'), token('academy-navy'))).toBeGreaterThanOrEqual(4.5);
   });
 
   it('keeps text-primary for icons and graphics only; text and links use text-link', () => {
