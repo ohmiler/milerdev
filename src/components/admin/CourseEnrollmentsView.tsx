@@ -220,7 +220,7 @@ export function CourseEnrollmentsView({ data }: { data: CourseEnrollmentsData })
                           <AvatarFallback>{getInitial(user.userName, user.userEmail)}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-foreground">{displayName}</p>
+                          <Link href={`/admin/users/${user.userId}`} className="block truncate font-medium text-link hover:underline">{displayName}</Link>
                           <p className="truncate text-xs text-muted-foreground">{user.userEmail}</p>
                         </div>
                       </div>

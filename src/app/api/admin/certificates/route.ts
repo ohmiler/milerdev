@@ -15,12 +15,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || 'all';
+    // One learner's certificates, for the learner detail page.
+    const userId = searchParams.get('userId');
 
     const conditions = [];
     if (search) {
       conditions.push(
         sql`(${certificates.recipientName} LIKE ${'%' + search + '%'} OR ${certificates.certificateCode} LIKE ${'%' + search + '%'} OR ${certificates.courseTitle} LIKE ${'%' + search + '%'})`
       );
+    }
+    if (userId) {
+      conditions.push(sql`${certificates.userId} = ${userId}`);
     }
     if (status === 'active') {
       conditions.push(sql`${certificates.revokedAt} IS NULL`);
