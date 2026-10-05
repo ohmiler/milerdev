@@ -45,7 +45,7 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
 
         {adminSecondaryLinkGroups.map((group) => (
           <section key={group.title}>
-            <h2 className="mb-1.5 px-3 text-[0.68rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase">{group.title}</h2>
+            <h2 className="mb-1.5 px-3 text-xs font-semibold text-muted-foreground">{group.title}</h2>
             <div className="flex flex-col gap-1">
               {group.items.map((link) => (
                 <Link key={link.href} href={link.href} className={linkClass(isAdminNavActive(pathname, link))}>

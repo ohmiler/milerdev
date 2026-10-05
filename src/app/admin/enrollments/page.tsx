@@ -233,7 +233,7 @@ export default function AdminEnrollmentsPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Learning operations"
+        eyebrow="สิทธิ์เข้าเรียน"
         title="การลงทะเบียน"
         description="ตรวจสิทธิ์เข้าเรียน ความคืบหน้า และจัดการการเพิ่มหรือถอนผู้เรียนจากคอร์ส"
         actions={

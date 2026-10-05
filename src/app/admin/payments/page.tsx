@@ -197,7 +197,7 @@ export default function AdminPaymentsPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Payment operations"
+        eyebrow="การเงิน"
         title="รายการชำระเงิน"
         description="ค้นหา ตรวจหลักฐาน และเปลี่ยนสถานะธุรกรรมพร้อมบันทึกเหตุผลสำหรับตรวจสอบย้อนหลัง"
         meta="การยืนยันรายการอาจส่งผลต่อสิทธิ์เข้าเรียน โปรดตรวจข้อมูลก่อนดำเนินการ"

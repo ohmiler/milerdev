@@ -186,7 +186,7 @@ export default async function AdminDashboardPage() {
     return (
       <div className="grid gap-6">
         <AdminPageHeader
-          eyebrow="Operations overview"
+          eyebrow="ภาพรวมการดำเนินงาน"
           title="โหลดภาพรวมไม่สำเร็จ"
           description="ระบบยังไม่สามารถอ่านข้อมูลปฏิบัติการได้ในขณะนี้ และไม่ได้แสดงตัวเลขทดแทน"
         />

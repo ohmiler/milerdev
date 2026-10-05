@@ -206,8 +206,8 @@ export default function AdminBundlesPage() {
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        eyebrow="Commerce"
-        title="จัดการ Bundle"
+        eyebrow="การขาย"
+        title="จัดการชุดคอร์ส"
         description="รวมหลายคอร์สเป็นชุดราคาเดียว พร้อมตรวจส่วนลดและสถานะก่อนเปิดขาย"
         actions={
           <Button onClick={handleNew}>
@@ -218,7 +218,7 @@ export default function AdminBundlesPage() {
       />
 
       <AdminSection
-        title="Bundle ทั้งหมด"
+        title="ชุดคอร์สทั้งหมด"
         description="ตรวจคอร์สที่รวมอยู่ ราคาเต็ม ราคาขาย และสถานะเผยแพร่จากรายการเดียว"
         actions={<AdminStatusBadge tone="info">{bundlesList.length.toLocaleString('th-TH')} Bundle</AdminStatusBadge>}
       >
@@ -246,7 +246,7 @@ export default function AdminBundlesPage() {
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-base font-semibold text-foreground">{bundle.title}</h2>
+                        <h3 className="text-base font-semibold text-foreground">{bundle.title}</h3>
                         <AdminStatusBadge tone={presentation.tone}>{presentation.label}</AdminStatusBadge>
                         <AdminStatusBadge>{bundle.courseCount.toLocaleString('th-TH')} คอร์ส</AdminStatusBadge>
                       </div>

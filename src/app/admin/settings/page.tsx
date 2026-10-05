@@ -109,7 +109,7 @@ export default function AdminSettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        eyebrow="System Configuration"
+        eyebrow="ระบบ"
         title="ตั้งค่าระบบ"
         description="ปรับค่าการทำงานของแพลตฟอร์มทีละรายการ พร้อมบันทึก audit log ทุกครั้ง"
         meta="ค่าบางรายการอาจมีผลต่อผู้ใช้ทันทีหลังบันทึก"

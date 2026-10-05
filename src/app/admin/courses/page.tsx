@@ -40,7 +40,7 @@ export default async function AdminCoursesPage() {
   return (
     <div className="grid gap-6" data-admin-courses>
       <AdminPageHeader
-        eyebrow="Course operations"
+        eyebrow="คอร์สทั้งหมด"
         title="จัดการคอร์ส"
         description="ตรวจความพร้อม ค้นหารายการ และเลือกขั้นตอนถัดไปของแต่ละคอร์สโดยไม่เปลี่ยนกติกาการเผยแพร่เดิม"
         actions={(
