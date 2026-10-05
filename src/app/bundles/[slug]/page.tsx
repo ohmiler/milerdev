@@ -265,7 +265,7 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
                 <Badge variant={'outline'}>
                   ชุดคอร์ส · {decisionFacts.evidence.courseCount} คอร์ส
                 </Badge>
-                <h1 className={'mt-5 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl'}>
+                <h1 className={'mt-5 max-w-4xl text-[1.75rem] leading-tight font-bold tracking-tight sm:text-5xl'}>
                   {bundle.title}
                 </h1>
                 {bundle.description ? (

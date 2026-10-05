@@ -84,6 +84,9 @@ describe('ProductDecisionFacts for Course', () => {
 
     expect(facts.actions.visitor).toMatchObject({ kind: 'start-checkout', href: null });
     expect(facts.actions.member).toMatchObject({ kind: 'start-checkout', href: null });
+    // The buy action names the price, matching the price card; "สมัคร" is reserved for accounts.
+    expect(facts.actions.visitor.label).toBe(`ซื้อคอร์สนี้ ${facts.price.effectiveFormatted}`);
+    expect(facts.actions.visitor.label).not.toContain('สมัคร');
     expect(facts.actions.buyer).toEqual({
       kind: 'review-payment',
       label: 'ตรวจสอบการชำระเงิน',

@@ -270,7 +270,7 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
                   </div>
                 )}
 
-                <h1 className="max-w-3xl text-4xl leading-[1.15] font-bold tracking-[-.04em] text-balance lg:text-5xl xl:text-[3.5rem]">{course.title}</h1>
+                <h1 className="max-w-3xl text-[1.75rem] leading-[1.2] font-bold tracking-[-.03em] text-balance sm:text-4xl sm:leading-[1.15] lg:text-5xl xl:text-[3.5rem]">{course.title}</h1>
                 {course.description && (
                   <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground text-pretty">{getExcerpt(course.description, 200)}</p>
                 )}
