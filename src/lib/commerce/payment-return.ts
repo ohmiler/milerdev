@@ -1,12 +1,26 @@
 import 'server-only';
 
-import { eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { db } from '@/lib/db';
-import { bundles, courses } from '@/lib/db/schema';
+import { bundleCourses, bundles, courses } from '@/lib/db/schema';
 import { stripe } from '@/lib/commerce/stripe';
 import { fulfillStripeCheckoutSession } from '@/lib/commerce/payment-fulfillment';
 import { loadPaymentRecord } from '@/lib/commerce/payment-records';
-import { derivePaymentPresentation } from '@/lib/commerce/payment-presentation';
+import { derivePaymentPresentation, type PaymentTarget } from '@/lib/commerce/payment-presentation';
+
+export type LearningStart = { href: string; label: string };
+
+// Where a buyer starts once access is ready. The learn route opens the first unfinished lesson,
+// which is the first lesson for a new purchase. A Bundle starts with its first published course.
+export async function loadLearningStart(target: Pick<PaymentTarget, 'type' | 'id' | 'href'>): Promise<LearningStart | null> {
+  if (target.type === 'course') return target.href.startsWith('/courses/') ? { href: `${target.href}/learn`, label: 'เริ่มเรียนบทแรก' } : null;
+  const [first] = await db.select({ slug: courses.slug }).from(bundleCourses)
+    .innerJoin(courses, eq(bundleCourses.courseId, courses.id))
+    .where(and(eq(bundleCourses.bundleId, target.id), eq(courses.status, 'published')))
+    .orderBy(asc(bundleCourses.orderIndex))
+    .limit(1);
+  return first ? { href: `/courses/${first.slug}/learn`, label: 'เริ่มเรียนคอร์สแรก' } : null;
+}
 
 export function isStripeReturnId(value: unknown): value is string {
   return typeof value === 'string' && /^cs_[a-zA-Z0-9_-]{1,240}$/.test(value);
