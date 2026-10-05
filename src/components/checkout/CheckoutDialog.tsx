@@ -333,10 +333,11 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
                     type="button"
                     disabled={pending}
                     onClick={() => startPayment(method.id)}
-                    className="flex w-full min-w-0 items-center gap-3 rounded-xl border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50"
+                    className="flex w-full min-w-0 items-center gap-2.5 rounded-xl border bg-card p-3 text-left transition-colors hover:border-primary hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50 sm:gap-3 sm:p-4"
                   >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted"><method.icon className="size-5" aria-hidden="true" /></span>
-                    <span className="min-w-0 flex-1">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted sm:size-10"><method.icon className="size-5" aria-hidden="true" /></span>
+                    {/* Words may break anywhere so a long name never sets a minimum width wider than a 320px screen. */}
+                    <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
                       <span className="block font-semibold">{method.title}</span>
                       <span className="block text-sm text-muted-foreground">{method.next}</span>
                     </span>
