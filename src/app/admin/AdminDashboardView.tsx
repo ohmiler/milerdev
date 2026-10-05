@@ -178,6 +178,7 @@ export default function AdminDashboardView({ data }: { data: AdminDashboardData 
           detail="นับเฉพาะรายการชำระเงินที่สำเร็จ"
           icon={<Banknote />}
           tone="success"
+          href="/admin/reports"
         />
         <AdminMetricCard
           label="ลงทะเบียนใหม่ 7 วัน"
@@ -185,6 +186,7 @@ export default function AdminDashboardView({ data }: { data: AdminDashboardData 
           detail={`จากทั้งหมด ${formatNumber(data.stats.enrollments)} การลงทะเบียน`}
           icon={<GraduationCap />}
           tone="info"
+          href="/admin/enrollments"
         />
         <AdminMetricCard
           label="คอร์สที่เผยแพร่"
@@ -192,6 +194,7 @@ export default function AdminDashboardView({ data }: { data: AdminDashboardData 
           detail={`จากทั้งหมด ${formatNumber(data.stats.courses)} คอร์ส`}
           icon={<BookOpen />}
           tone="neutral"
+          href="/admin/courses"
         />
         <AdminMetricCard
           label="การชำระเงินที่ต้องตรวจ"
@@ -199,6 +202,7 @@ export default function AdminDashboardView({ data }: { data: AdminDashboardData 
           detail="สลิป PromptPay ที่รอตรวจ"
           icon={<CreditCard />}
           tone={paymentsNeedReview > 0 ? 'warning' : 'success'}
+          href="/admin/reconciliation?status=verifying"
         />
       </section>
 
