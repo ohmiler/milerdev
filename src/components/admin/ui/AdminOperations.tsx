@@ -11,6 +11,10 @@ import { cn } from '@/lib/utils';
 
 export type AdminTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
+// Below md a table reads as stacked cards: the header row is hidden, every row becomes a two-column card,
+// and each cell names its column from its data-label. The same cells and controls serve both layouts.
+export const adminStackedTableClass = 'max-md:block max-md:[&_thead]:hidden max-md:[&_tbody]:grid max-md:[&_tbody]:gap-3 max-md:[&_tr]:relative max-md:[&_tr]:grid max-md:[&_tr]:grid-cols-2 max-md:[&_tr]:items-start max-md:[&_tr]:gap-x-4 max-md:[&_tr]:gap-y-3 max-md:[&_tr]:rounded-xl max-md:[&_tr]:border max-md:[&_tr]:p-4 max-md:[&_td]:block max-md:[&_td]:min-w-0 max-md:[&_td]:max-w-none max-md:[&_td]:p-0 max-md:[&_td]:text-left max-md:[&_td]:whitespace-normal max-md:[&_td]:[overflow-wrap:anywhere] max-md:[&_td]:before:block max-md:[&_td]:before:text-xs max-md:[&_td]:before:font-medium max-md:[&_td]:before:text-muted-foreground max-md:[&_td]:before:content-[attr(data-label)]';
+
 const toneClasses: Record<AdminTone, string> = {
   neutral: 'border-border bg-muted/60 text-foreground',
   info: 'border-primary/20 bg-secondary text-secondary-foreground',
