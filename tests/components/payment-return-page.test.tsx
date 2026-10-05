@@ -1,9 +1,10 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import PaymentReturnPage from '@/components/proof/PaymentReturnPage';
 import { createAuthReturnHref, resolveSafeAuthRedirect } from '@/lib/auth/safe-auth-return';
-const mocks = vi.hoisted(() => ({ member: vi.fn(), load: vi.fn(), redirect: vi.fn() }));
+import { paymentRecord } from '../fixtures/payment-record';
+const mocks = vi.hoisted(() => ({ member: vi.fn(), load: vi.fn(), redirect: vi.fn(), start: vi.fn() }));
 vi.mock('@/lib/auth/member-access', () => ({ requireMember: mocks.member }));
-vi.mock('@/lib/commerce/payment-return', () => ({ isStripeReturnId: (id: unknown) => typeof id === 'string' && /^cs_[a-zA-Z0-9_-]{1,240}$/.test(id), loadPaymentReturn: mocks.load }));
+vi.mock('@/lib/commerce/payment-return', () => ({ isStripeReturnId: (id: unknown) => typeof id === 'string' && /^cs_[a-zA-Z0-9_-]{1,240}$/.test(id), loadPaymentReturn: mocks.load, loadLearningStart: mocks.start }));
 vi.mock('next/navigation', () => ({ redirect: mocks.redirect, notFound: () => { throw new Error('not found'); } }));
 beforeEach(() => { vi.resetAllMocks(); mocks.redirect.mockImplementation(() => { throw new Error('redirect'); }); });
 it.each(['course', 'bundle'] as const)('preserves the exact %s return through canonicalization and auth', async (type) => {
@@ -17,6 +18,19 @@ it.each(['course', 'bundle'] as const)('preserves the exact %s return through ca
   await expect(PaymentReturnPage({ type, params: Promise.resolve({ slug: 'thai', sessionId: 'cs_test_original' }) })).rejects.toThrow('login');
   expect(mocks.member).toHaveBeenCalledWith(path);
   expect(mocks.load).not.toHaveBeenCalled();
+});
+it.each([
+  ['paid with access ready', 'completed', 1, true],
+  ['paid while access is pending', 'completed', 0, false],
+  ['still verifying', 'verifying', 0, false],
+] as const)('offers the learning start only when %s', async (_case, status, enrolled, offered) => {
+  const start = { href: '/courses/thai/learn', label: 'เริ่มเรียนบทแรก' };
+  mocks.member.mockResolvedValue({ id: 'member-1' });
+  mocks.load.mockResolvedValue(paymentRecord({ status }, enrolled));
+  mocks.start.mockResolvedValue(start);
+  const element = await PaymentReturnPage({ type: 'course', params: Promise.resolve({ slug: 'thai' }) });
+  expect(element.props.start).toEqual(offered ? start : null);
+  expect(mocks.start).toHaveBeenCalledTimes(offered ? 1 : 0);
 });
 it('does not turn arbitrary query values into a redirect', async () => {
   mocks.member.mockRejectedValue(new Error('login'));

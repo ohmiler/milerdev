@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadPaymentReturn } from '@/lib/commerce/payment-return';
+import { loadLearningStart, loadPaymentReturn } from '@/lib/commerce/payment-return';
 import { paymentRecord } from '../../fixtures/payment-record';
 
-const mocks = vi.hoisted(() => ({ product: vi.fn(), retrieve: vi.fn(), fulfill: vi.fn(), record: vi.fn() }));
-vi.mock('@/lib/db', () => ({ db: { query: { courses: { findFirst: mocks.product }, bundles: { findFirst: mocks.product } } } }));
+const mocks = vi.hoisted(() => ({ product: vi.fn(), retrieve: vi.fn(), fulfill: vi.fn(), record: vi.fn(), select: vi.fn() }));
+vi.mock('@/lib/db', () => ({ db: { query: { courses: { findFirst: mocks.product }, bundles: { findFirst: mocks.product } }, select: mocks.select } }));
 vi.mock('@/lib/commerce/stripe', () => ({ stripe: { checkout: { sessions: { retrieve: mocks.retrieve } } } }));
 vi.mock('@/lib/commerce/payment-fulfillment', () => ({ fulfillStripeCheckoutSession: mocks.fulfill }));
 vi.mock('@/lib/commerce/payment-records', () => ({ loadPaymentRecord: mocks.record }));
@@ -14,6 +14,26 @@ beforeEach(() => {
   mocks.retrieve.mockResolvedValue(session);
   mocks.record.mockResolvedValue(paymentRecord({ status: 'completed' }, 1));
   mocks.fulfill.mockResolvedValue({ status: 'already_fulfilled' });
+});
+
+describe('learning start after a confirmed purchase', () => {
+  it('opens the learn route of the purchased course', async () => {
+    await expect(loadLearningStart({ type: 'course', id: 'course-1', href: '/courses/thai' })).resolves.toEqual({ href: '/courses/thai/learn', label: 'เริ่มเรียนบทแรก' });
+    // A record whose course is gone falls back to the payments page; it must not become a learn link.
+    await expect(loadLearningStart({ type: 'course', id: 'course-1', href: '/dashboard/payments' })).resolves.toBeNull();
+    expect(mocks.select).not.toHaveBeenCalled();
+  });
+
+  it('starts a Bundle with its first published course, or offers nothing', async () => {
+    const limit = vi.fn().mockResolvedValue([{ slug: 'first-course' }]);
+    const query: Record<string, unknown> = { limit };
+    for (const method of ['from', 'innerJoin', 'where', 'orderBy']) query[method] = () => query;
+    mocks.select.mockReturnValue(query);
+    await expect(loadLearningStart({ type: 'bundle', id: 'bundle-1', href: '/bundles/set' })).resolves.toEqual({ href: '/courses/first-course/learn', label: 'เริ่มเรียนคอร์สแรก' });
+    expect(limit).toHaveBeenCalledWith(1);
+    limit.mockResolvedValue([]);
+    await expect(loadLearningStart({ type: 'bundle', id: 'bundle-1', href: '/bundles/set' })).resolves.toBeNull();
+  });
 });
 
 describe.each(['course', 'bundle'] as const)('%s exact Stripe return', (type) => {

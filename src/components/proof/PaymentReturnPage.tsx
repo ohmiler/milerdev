@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { requireMember } from '@/lib/auth/member-access';
-import { isStripeReturnId, loadPaymentReturn } from '@/lib/commerce/payment-return';
+import { isStripeReturnId, loadLearningStart, loadPaymentReturn } from '@/lib/commerce/payment-return';
 import TransactionReceipt from './TransactionReceipt';
 
 export type PaymentReturnPageProps = {
@@ -16,5 +16,7 @@ export default async function PaymentReturnPage({ type, params, searchParams }: 
   const member = await requireMember(sessionId && isStripeReturnId(sessionId) ? `${path}/${sessionId}` : path);
   const record = await loadPaymentReturn(member.id, type, slug, sessionId);
   if (!record) notFound();
-  return <TransactionReceipt record={record} />;
+  // Only once payment and access are both confirmed does the page lead into the course.
+  const start = record.presentation.payment.state === 'completed-ready' ? await loadLearningStart(record.presentation.target) : null;
+  return <TransactionReceipt record={record} start={start} />;
 }

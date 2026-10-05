@@ -44,6 +44,11 @@ for (const type of ['course', 'bundle'] as const) {
     await page.reload();
     await expect(page.getByRole('heading', { level: 1, name: 'ชำระแล้ว พร้อมเริ่มเรียน' })).toBeVisible();
     expect(await recoveryEnrollmentCount(userId)).toBe(type === 'course' ? 1 : 2);
+    // Once access is ready the return page leads straight into the first lesson.
+    const start = page.getByRole('link', { name: type === 'course' ? 'เริ่มเรียนบทแรก' : 'เริ่มเรียนคอร์สแรก' });
+    await expect(start).toHaveAttribute('href', type === 'course' ? `/courses/${product.slug}/learn` : /^\/courses\/[^/]+\/learn$/);
+    await start.click();
+    await expect(page).toHaveURL(/\/courses\/[^/]+\/learn\/[^/]+$/);
     await page.goto('/dashboard/payments');
     await expect(page.getByRole('main').getByText(fixture.id, { exact: true })).toBeVisible();
     await expect(page.getByRole('main').getByText(fixture.latest, { exact: true })).toBeVisible();
