@@ -19,7 +19,6 @@ export default function OrderReviewSummary({ review }: { review: OrderReview }) 
         </dl>
         {review.comparison ? <p className="text-sm">{review.comparison.label}</p> : null}
         <p className="text-sm">{review.access.description}</p>
-        <p className="text-sm text-muted-foreground">ระบบจะตรวจสอบราคาและสิทธิ์อีกครั้งก่อนเริ่มรายการ</p>
       </CardContent>
     </Card>
   );
