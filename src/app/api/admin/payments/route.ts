@@ -15,6 +15,8 @@ export async function GET(request: Request) {
     const status = searchParams.get('status');
     const method = searchParams.get('method');
     const search = searchParams.get('search');
+    // One learner's payments, for the learner detail page.
+    const userId = searchParams.get('userId');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20));
     const offset = (page - 1) * limit;
@@ -26,6 +28,9 @@ export async function GET(request: Request) {
     }
     if (method && method !== 'all') {
       conditions.push(eq(payments.method, method as 'stripe' | 'promptpay' | 'bank_transfer'));
+    }
+    if (userId) {
+      conditions.push(eq(payments.userId, userId));
     }
 
     // Search filter applied after join
