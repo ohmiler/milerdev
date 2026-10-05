@@ -18,13 +18,14 @@ test('learning keeps failed completion recoverable and mobile locked navigation 
   await page.goto(path);
   await expect(page.getByRole('main')).toContainText('เนื้อหาการเรียนภาษาไทย');
   await page.route('**/api/progress', async (route) => { await route.fulfill({ status: 503, json: { error: 'temporarily unavailable' } }); });
-  await page.getByRole('button', { name: 'ทำเครื่องหมายว่าเรียนจบ' }).click();
+  await page.getByRole('button', { name: 'เรียนจบ แล้วไปบทถัดไป' }).click();
+  // A failed save keeps the learner on this lesson with a retry; nothing moves on.
   await expect(page.getByRole('heading', { name: 'ยังบันทึกบทนี้ไม่ได้' })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`${fixture.lessonIds[0]}$`));
   await page.unroute('**/api/progress');
   await page.getByRole('button', { name: 'ลองบันทึกอีกครั้ง' }).click();
-  await expect(page.getByRole('heading', { name: 'เรียนจบบทนี้แล้ว' })).toBeVisible();
-  await expect(page).toHaveURL(new RegExp(`${fixture.lessonIds[0]}$`));
-  await page.reload();
+  await expect(page).toHaveURL(new RegExp(`${fixture.lessonIds[1]}$`));
+  await page.goto(path);
   await expect(page.getByRole('heading', { name: 'เรียนจบบทนี้แล้ว' })).toBeVisible();
   await page.route('https://iframe.mediadelivery.net/**', async (route) => {
     await route.fulfill({ contentType: 'text/html', body: `<!doctype html><button id="fail">Simulate player failure</button><script>
@@ -49,12 +50,12 @@ test('learning keeps failed completion recoverable and mobile locked navigation 
   await expect(page.getByRole('main').getByText('ยังเล่นวิดีโอนี้ไม่ได้')).toBeVisible();
   await page.getByRole('button', { name: 'ลองโหลดวิดีโออีกครั้ง' }).click();
   await expect(page.getByRole('main').frameLocator('iframe').getByRole('button', { name: 'Simulate player failure' })).toBeVisible();
-  await page.getByRole('button', { name: 'ทำเครื่องหมายว่าเรียนจบ' }).click();
-  await expect(page.getByRole('heading', { name: 'เรียนจบบทนี้แล้ว' })).toBeVisible();
-  await page.goto(`/courses/${fixture.slug}/learn/${fixture.lessonIds[2]}`);
+  await page.getByRole('button', { name: 'เรียนจบ แล้วไปบทถัดไป' }).click();
+  await expect(page).toHaveURL(new RegExp(`${fixture.lessonIds[2]}$`));
   await expect(page.getByRole('main').getByText('บทเรียนนี้ยังไม่มีเนื้อหา')).toBeVisible();
-  await page.getByRole('button', { name: 'ทำเครื่องหมายว่าเรียนจบ' }).click();
+  await page.getByRole('button', { name: 'เรียนจบบทสุดท้าย' }).click();
   await expect(page.getByRole('heading', { name: 'เรียนครบแล้ว · กำลังทบทวน' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'ดูใบรับรอง' })).toHaveAttribute('href', '/dashboard/certificates');
   const guest = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   const guestPage = await guest.newPage();
   await installRequiredE2EProviderMocks(guestPage, baseURL);
