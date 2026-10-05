@@ -53,7 +53,6 @@ import {
 } from '@/components/ui/input-group';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 
@@ -453,16 +452,20 @@ export default function DraggableLessonList({
           </InputGroup>
         </Field>
 
-        <Tabs value={filter} onValueChange={(value) => setFilter(value as LessonFilter)}>
-          <TabsList aria-label="กรองบทเรียน" className="h-auto flex-wrap justify-start">
-            {tabs.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
-                <span className="text-xs tabular-nums">{tab.count}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="กรองบทเรียน">
+          {tabs.map((tab) => (
+            <Button
+              key={tab.value}
+              type="button"
+              size="sm"
+              variant={filter === tab.value ? 'default' : 'outline'}
+              aria-pressed={filter === tab.value}
+              onClick={() => setFilter(tab.value)}
+            >
+              {tab.label} <span className="tabular-nums opacity-75">{tab.count}</span>
+            </Button>
+          ))}
+        </div>
 
         {isFiltering ? (
           <Button

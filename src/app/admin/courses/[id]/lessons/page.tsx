@@ -179,7 +179,7 @@ export default function ManageLessonsPage() {
 
       <AdminSection title="ความพร้อมของบทเรียน" description="คำนวณจากบทเรียนที่มีทั้งวิดีโอและเนื้อหาประกอบ">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="flex-1"><div className="mb-2 flex justify-between text-sm"><span className="text-muted-foreground">ความพร้อมรวม</span><strong>{readinessPercent}%</strong></div><Progress value={readinessPercent} /></div>
+          <div className="flex-1"><div className="mb-2 flex justify-between text-sm"><span className="text-muted-foreground">ความพร้อมรวม</span><strong>{readinessPercent}%</strong></div><Progress value={readinessPercent} aria-label={`ความพร้อมรวม ${readinessPercent}%`} /></div>
           <AdminStatusBadge tone={readinessPercent === 100 ? 'success' : readinessPercent >= 50 ? 'warning' : 'neutral'}>{readinessPercent === 100 ? 'พร้อม' : 'ต้องตรวจเพิ่ม'}</AdminStatusBadge>
         </div>
       </AdminSection>
@@ -207,7 +207,7 @@ export default function ManageLessonsPage() {
           <form id="new-lesson-form" onSubmit={handleSubmit}>
             <FieldGroup>
               <Field><FieldLabel htmlFor="lesson-title">ชื่อบทเรียน *</FieldLabel><Input id="lesson-title" value={formData.title} onChange={(event) => setFormData((previous) => ({ ...previous, title: event.target.value }))} required placeholder="เช่น สร้างหน้าแรกด้วย Next.js" /></Field>
-              <Field><FieldLabel>เนื้อหาบทเรียน</FieldLabel><RichTextEditor content={formData.content} onChange={(content) => setFormData((previous) => ({ ...previous, content }))} /></Field>
+              <Field><FieldLabel id="new-lesson-content-label">เนื้อหาบทเรียน</FieldLabel><RichTextEditor labelledBy="new-lesson-content-label" content={formData.content} onChange={(content) => setFormData((previous) => ({ ...previous, content }))} /></Field>
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field><FieldLabel htmlFor="lesson-video">URL วิดีโอ</FieldLabel><Input id="lesson-video" value={formData.videoUrl} onChange={(event) => setFormData((previous) => ({ ...previous, videoUrl: event.target.value }))} placeholder="Bunny Video GUID หรือ Embed URL" /></Field>
                 <Field><FieldLabel htmlFor="lesson-duration">ระยะเวลา</FieldLabel><Input id="lesson-duration" value={formData.videoDuration} onChange={(event) => { if (/^[0-9:]*$/.test(event.target.value)) setFormData((previous) => ({ ...previous, videoDuration: event.target.value })); }} placeholder="10:30" /><FieldDescription>รูปแบบ นาที:วินาที</FieldDescription></Field>
