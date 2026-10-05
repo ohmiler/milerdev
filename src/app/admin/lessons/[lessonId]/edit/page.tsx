@@ -126,7 +126,7 @@ export default function EditLessonPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Lesson editor"
+        eyebrow="แก้ไขบทเรียน"
         title={formData.title || 'แก้ไขบทเรียน'}
         description="ปรับชื่อ เนื้อหา วิดีโอ ระยะเวลา และสิทธิ์ Preview ก่อนกลับไปจัดลำดับในสารบัญ"
         actions={<Button asChild variant="outline"><Link href={`/admin/courses/${lesson.courseId}/lessons`}><ArrowLeft data-icon="inline-start" aria-hidden />กลับไปจัดการบทเรียน</Link></Button>}

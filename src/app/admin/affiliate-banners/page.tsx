@@ -159,8 +159,8 @@ export default function AdminAffiliateBannersPage() {
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        eyebrow="Affiliate Content"
-        title="Affiliate Banners"
+        eyebrow="พันธมิตร"
+        title="จัดการแบนเนอร์"
         description="จัดลำดับภาพโปรโมต ตรวจสอบปลายทาง และควบคุมว่าแบนเนอร์ใดแสดงต่อผู้ใช้"
         actions={
           <Button onClick={openNewForm}>
@@ -171,7 +171,7 @@ export default function AdminAffiliateBannersPage() {
       />
 
       <AdminSection
-        title="รายการ Banner"
+        title="รายการแบนเนอร์"
         description="ลำดับตัวเลขน้อยจะแสดงก่อน สามารถซ่อนชั่วคราวโดยไม่ต้องลบข้อมูล"
         actions={<AdminStatusBadge tone="info">{banners.length.toLocaleString('th-TH')} รายการ</AdminStatusBadge>}
       >
@@ -210,7 +210,7 @@ export default function AdminAffiliateBannersPage() {
                   </div>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-medium text-foreground">{banner.title}</h2>
+                      <h3 className="font-medium text-foreground">{banner.title}</h3>
                       <AdminStatusBadge tone={banner.isActive ? 'success' : 'neutral'}>
                         {banner.isActive ? 'กำลังแสดง' : 'ซ่อนอยู่'}
                       </AdminStatusBadge>

@@ -277,7 +277,7 @@ export default function AdminReviewsPage() {
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        eyebrow="Moderation"
+        eyebrow="เสียงจากผู้เรียน"
         title="จัดการรีวิว"
         description="ตรวจสอบเสียงตอบรับจากผู้เรียน ซ่อนเนื้อหาที่ไม่เหมาะสม และนำเข้าประวัติจากระบบเดิม"
         actions={

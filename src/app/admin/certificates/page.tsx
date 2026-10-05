@@ -149,7 +149,7 @@ export default function AdminCertificatesPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Credential operations"
+        eyebrow="การออกใบรับรอง"
         title="ใบรับรอง"
         description="ตรวจสอบใบรับรองที่ออกแล้ว คืนสถานะ หรือเพิกถอนพร้อมบันทึกเหตุผลอย่างชัดเจน"
         meta={`ผลลัพธ์ ${certificates.length.toLocaleString('th-TH')} ใบ`}

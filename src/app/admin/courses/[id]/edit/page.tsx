@@ -167,7 +167,7 @@ export default function EditCoursePage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Course editor"
+        eyebrow="แก้ไขคอร์ส"
         title={formData.title || 'แก้ไขคอร์ส'}
         description="ปรับข้อมูลหน้าขาย ราคา โปรโมชั่น และภาพลักษณ์ ส่วนสถานะคอร์สจัดการผ่าน lifecycle actions แยกต่างหาก"
         actions={

@@ -8,7 +8,7 @@ vi.mock('@/components/ui/Toast', () => ({ showToast: vi.fn() }));
 
 import AdminUserDetailPage from '@/app/admin/users/[id]/page';
 
-const section = (title: string) => screen.getByText(title, { selector: '[data-slot="card-title"]' }).closest('[data-slot="card"]') as HTMLElement;
+const section = (title: string) => screen.getByRole('heading', { level: 2, name: title }).closest('[data-slot="card"]') as HTMLElement;
 const enrollmentRow = (course: string) => within(section('คอร์สที่ลงทะเบียน')).getByText(course).closest('tr') as HTMLElement;
 
 const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;

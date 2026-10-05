@@ -16,6 +16,7 @@ import {
   getAdminNavTitle,
   isAdminNavActive,
 } from '@/components/admin/adminNav';
+import { AdminSection } from '@/components/admin/ui/AdminOperations';
 
 const courseFixture: Course = {
   id: 'course-1',
@@ -199,6 +200,20 @@ describe('Admin operations UI', () => {
     expect(headerSource).not.toContain('สร้างใหม่');
     // Every admin page renders its own h1 through AdminPageHeader; the top bar must not add a second one.
     expect(headerSource).not.toContain('<h1');
+  });
+
+  it('gives each admin section a real heading and keeps page eyebrows in Thai', () => {
+    // Section titles sit under the page h1 so screen readers can jump between sections.
+    const markup = renderToStaticMarkup(<AdminSection title="ประวัติการชำระเงิน"><p>รายการ</p></AdminSection>);
+    expect(markup).toContain('<h2>ประวัติการชำระเงิน</h2>');
+
+    const sources = [
+      ...collectTsxFiles(join(process.cwd(), 'src/app/admin')),
+      ...collectTsxFiles(join(process.cwd(), 'src/components/admin')),
+    ].map((path) => readFileSync(path, 'utf8'));
+    const eyebrows = sources.flatMap((source) => [...source.matchAll(/eyebrow="([^"]+)"/g)].map((match) => match[1]));
+    expect(eyebrows.length).toBeGreaterThan(15);
+    expect(eyebrows.filter((eyebrow) => /[A-Za-z]/.test(eyebrow))).toEqual([]);
   });
 
   it('keeps migrated admin interactions on shadcn composition contracts', () => {

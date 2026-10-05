@@ -274,7 +274,7 @@ export default function ReconciliationPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Payment controls"
+        eyebrow="ตรวจสอบการชำระเงิน"
         title="กระทบยอดการชำระเงิน"
         description="จัดการรายการค้าง ตรวจสอบรายการผิดปกติ และบันทึกเหตุผลก่อนอนุมัติหรือปฏิเสธทุกครั้ง"
         actions={

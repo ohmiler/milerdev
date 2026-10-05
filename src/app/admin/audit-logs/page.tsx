@@ -130,7 +130,7 @@ export default function AdminAuditLogsPage() {
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        eyebrow="Traceability"
+        eyebrow="ตรวจสอบย้อนหลัง"
         title="บันทึกการใช้งาน"
         description="ติดตามว่าใครเปลี่ยนข้อมูลอะไร เมื่อใด และตรวจค่าก่อนกับหลังสำหรับการวิเคราะห์เหตุการณ์"
         meta={pagination ? pagination.total.toLocaleString('th-TH') + ' เหตุการณ์ตามตัวกรองปัจจุบัน' : undefined}

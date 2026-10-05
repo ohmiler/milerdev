@@ -313,7 +313,7 @@ export default function AdminUsersPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6" aria-busy={loading}>
       <AdminPageHeader
-        eyebrow="User directory"
+        eyebrow="ผู้เรียนและผู้ดูแล"
         title="บัญชีผู้ใช้"
         description="ค้นหา ปรับบทบาท และปิดหรือเปิดใช้งานบัญชี โดยไม่ลบประวัติการเรียน การชำระเงิน หรือใบรับรอง"
         actions={

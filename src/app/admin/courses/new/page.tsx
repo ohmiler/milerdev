@@ -94,7 +94,7 @@ export default function NewCoursePage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Course setup"
+        eyebrow="ตั้งค่าคอร์ส"
         title="สร้างคอร์สใหม่"
         description="กำหนดข้อมูลหลัก ราคา สถานะ และภาพลักษณ์ก่อนเพิ่มบทเรียนในขั้นถัดไป"
         actions={<Button asChild variant="outline"><Link href="/admin/courses"><ArrowLeft data-icon="inline-start" aria-hidden />กลับไปรายการคอร์ส</Link></Button>}
