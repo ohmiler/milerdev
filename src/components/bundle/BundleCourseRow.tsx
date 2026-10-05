@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import CourseArtwork from '@/components/course/CourseArtwork';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -53,7 +54,9 @@ export default function BundleCourseRow({
               decoding={'async'}
               className={'size-full object-cover'}
             />
-          ) : null}
+          ) : (
+            <CourseArtwork compact title={course.title} slug={course.slug} />
+          )}
           <Badge className={'absolute top-4 left-4'}>
             {String(position).padStart(2, '0')}
           </Badge>

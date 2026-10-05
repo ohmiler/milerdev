@@ -85,13 +85,19 @@ describe('adaptive learning workspace contracts', () => {
 
   it('keeps completion one-way and removes automatic or global lesson navigation', () => {
     const workspace = readSource('src/components/course/LearnPageClient.tsx');
+    const endedHandler = workspace.slice(workspace.indexOf('const handleEnded'), workspace.indexOf('const openLockedDialog'));
 
     expect(workspace).toContain('completed: true');
     expect(workspace).not.toContain('completed: false');
     expect(workspace).not.toContain('autoAdvanceCountdown');
     expect(workspace).not.toContain("e.key === 'ArrowLeft'");
     expect(workspace).not.toContain("e.key === 'ArrowRight'");
-    expect(workspace).not.toContain('useRouter');
+    // ADR 0006 (amended 2026-10-05): the only navigation follows a learner-chosen, successfully saved completion.
+    expect(workspace.match(/router\.push\(/g)).toHaveLength(1);
+    expect(workspace).toContain('if (await completeCurrentLesson() && nextLessonHref) router.push(nextLessonHref);');
+    expect(endedHandler).toContain('completeCurrentLesson');
+    expect(endedHandler).not.toMatch(/router|completeAndContinue/);
+    expect(workspace).not.toMatch(/set(?:Timeout|Interval)\([^)]*router/);
   });
 
   it('retains sanitized rich-content styling without legacy learning selectors', () => {

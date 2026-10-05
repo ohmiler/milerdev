@@ -3,7 +3,8 @@
 import MainContent from '@/components/layout/MainContent';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Check, CircleCheck, FileText, LoaderCircle, Lock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, ArrowRight, Award, Check, CircleCheck, FileText, LoaderCircle, Lock } from 'lucide-react';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
 import LearningCurriculum from './LearningCurriculum';
 import LearningNavbar from './LearningNavbar';
@@ -84,6 +85,7 @@ export default function LearnPageClient({
   completedLessonIds: initialCompletedIds,
   currentProgress,
 }: LearnPageClientProps) {
+  const router = useRouter();
   const [mobileCurriculumOpen, setMobileCurriculumOpen] = useState(false);
   const [curriculumCollapsed, setCurriculumCollapsed] = useState(false);
   const [lessonSearch, setLessonSearch] = useState('');
@@ -127,7 +129,7 @@ export default function LearnPageClient({
       : isCurrentCompleted
         ? 'คุณกลับมาทบทวนบทนี้ได้เสมอ'
         : isEnrolled
-          ? 'เมื่อเรียนเนื้อหาครบแล้ว กดบันทึกว่าเรียนจบได้'
+          ? nextLesson ? 'เรียนเนื้อหาครบแล้ว กดปุ่มนี้เพื่อบันทึกและไปบทถัดไป' : 'เรียนเนื้อหาครบแล้ว กดปุ่มนี้เพื่อบันทึกว่าเรียนจบคอร์ส'
           : 'ความคืบหน้าจะถูกบันทึกหลังจากสมัครและเข้าสู่ระบบ';
 
   const syncWatchTime = useCallback(async () => {
@@ -184,7 +186,7 @@ export default function LearnPageClient({
   }, [currentLesson.id, currentProgress.completed, currentProgress.watchTimeSeconds]);
 
   const completeCurrentLesson = useCallback(async () => {
-    if (!isEnrolled || !canTrackProgress || completionRequestedRef.current) return;
+    if (!isEnrolled || !canTrackProgress || completionRequestedRef.current) return false;
 
     completionRequestedRef.current = true;
     setCompletionSaveState('pending');
@@ -208,12 +210,20 @@ export default function LearnPageClient({
         nextCompletedCount === totalCount ? 'เรียนครบทุกบทแล้ว พร้อมกลับมาทบทวนได้ทุกเมื่อ' : 'บันทึกว่าเรียนจบบทนี้แล้ว',
         'success',
       );
+      return true;
     } catch {
       completionRequestedRef.current = false;
       setCompletionSaveState('failed');
       showToast('บันทึกความคืบหน้าไม่สำเร็จ กรุณาลองอีกครั้ง', 'error');
+      return false;
     }
   }, [canTrackProgress, completedCount, currentLesson.id, isEnrolled, totalCount]);
+
+  const nextLessonHref = nextLesson ? `/courses/${course.slug}/learn/${nextLesson.id}` : null;
+  // Moves on only after the completion is saved; a failed save keeps the learner here to retry.
+  const completeAndContinue = useCallback(async () => {
+    if (await completeCurrentLesson() && nextLessonHref) router.push(nextLessonHref);
+  }, [completeCurrentLesson, nextLessonHref, router]);
 
   const handleTimeUpdate = useCallback((currentTime: number) => {
     watchTimeRef.current = currentTime;
@@ -319,39 +329,6 @@ export default function LearnPageClient({
               </>
             )}
 
-            <section className="mt-6 flex flex-col gap-4 rounded-2xl border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5" aria-label="สถานะบทเรียน">
-              <div className="flex items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
-                  {isCurrentCompleted ? <CircleCheck className="size-5" /> : <FileText className="size-5" />}
-                </span>
-                <div role="status" aria-live="polite">
-                  <h2 className="font-heading text-base font-semibold">{statusHeading}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{statusDescription}</p>
-                </div>
-              </div>
-              {!isEnrolled && (
-                <Button asChild>
-                  <Link href={`/courses/${course.slug}#course-action`}>ดูราคาและวิธีเข้าเรียน</Link>
-                </Button>
-              )}
-              {isEnrolled && !isCurrentCompleted && (
-                <Button
-                  type="button"
-                  onClick={() => void completeCurrentLesson()}
-                  disabled={completionSaveState === 'pending'}
-                >
-                  {completionSaveState === 'pending'
-                    ? <LoaderCircle className="animate-spin motion-reduce:animate-none" data-icon="inline-start" aria-hidden="true" />
-                    : <Check data-icon="inline-start" aria-hidden="true" />}
-                  {completionSaveState === 'pending'
-                    ? 'กำลังบันทึก...'
-                    : completionSaveState === 'failed'
-                      ? 'ลองบันทึกอีกครั้ง'
-                      : 'ทำเครื่องหมายว่าเรียนจบ'}
-                </Button>
-              )}
-            </section>
-
             {watchSyncFailed && canTrackProgress && (
               <Alert className="mt-4">
                 <AlertTitle>ยังบันทึกตำแหน่งล่าสุดไม่ได้</AlertTitle>
@@ -384,6 +361,47 @@ export default function LearnPageClient({
                 </EmptyHeader>
               </Empty>
             )}
+
+            {/* Completion sits after the content, where the learner finishes reading or watching. */}
+            <section className="mt-8 flex flex-col gap-4 rounded-2xl border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5" aria-label="สถานะบทเรียน">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
+                  {isCurrentCompleted ? <CircleCheck className="size-5" /> : <FileText className="size-5" />}
+                </span>
+                <div role="status" aria-live="polite">
+                  <h2 className="font-heading text-base font-semibold">{statusHeading}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{statusDescription}</p>
+                </div>
+              </div>
+              {!isEnrolled && (
+                <Button asChild>
+                  <Link href={`/courses/${course.slug}#course-action`}>ดูราคาและวิธีเข้าเรียน</Link>
+                </Button>
+              )}
+              {isEnrolled && !isCurrentCompleted && (
+                <Button
+                  type="button"
+                  className="h-auto min-h-11 whitespace-normal"
+                  onClick={() => void (nextLessonHref ? completeAndContinue() : completeCurrentLesson())}
+                  disabled={completionSaveState === 'pending'}
+                >
+                  {completionSaveState === 'pending'
+                    ? <LoaderCircle className="animate-spin motion-reduce:animate-none" data-icon="inline-start" aria-hidden="true" />
+                    : <Check data-icon="inline-start" aria-hidden="true" />}
+                  {completionSaveState === 'pending'
+                    ? 'กำลังบันทึก...'
+                    : completionSaveState === 'failed'
+                      ? 'ลองบันทึกอีกครั้ง'
+                      : nextLessonHref ? 'เรียนจบ แล้วไปบทถัดไป' : 'เรียนจบบทสุดท้าย'}
+                  {completionSaveState !== 'pending' && nextLessonHref ? <ArrowRight data-icon="inline-end" aria-hidden="true" /> : null}
+                </Button>
+              )}
+              {isReviewMode && (
+                <Button asChild variant="outline" className="h-auto min-h-11 whitespace-normal">
+                  <Link href="/dashboard/certificates"><Award data-icon="inline-start" aria-hidden="true" />ดูใบรับรอง</Link>
+                </Button>
+              )}
+            </section>
 
             <nav className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 border-t pt-6" aria-label="เปลี่ยนบทเรียน">
               {prevLesson && (isEnrolled || prevLesson.isFreePreview) ? (

@@ -36,6 +36,19 @@ function includedCourse(overrides: {
 }
 
 describe('BundleCourseRow', () => {
+  it('gives a course without a cover the generated artwork instead of an empty box', () => {
+    const { course } = includedCourse();
+    const withoutCover = renderToStaticMarkup(<BundleCourseRow course={course} description={null} thumbnailUrl={null} position={1} />);
+    const withCover = renderToStaticMarkup(<BundleCourseRow course={course} description={null} thumbnailUrl={'cdn.example.test/typescript.jpg'} position={1} />);
+
+    // The generated artwork prints the course title on the cover; a real cover is an image instead.
+    const artworkTitle = `>${course.title}</strong>`;
+    expect(withoutCover).not.toContain('<img');
+    expect(withoutCover).toContain(artworkTitle);
+    expect(withCover).toContain('<img');
+    expect(withCover).not.toContain(artworkTitle);
+  });
+
   it('renders the included Course state and evidence from decision facts', () => {
     const { course } = includedCourse();
     const html = renderToStaticMarkup(

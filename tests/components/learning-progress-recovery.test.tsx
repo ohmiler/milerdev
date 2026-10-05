@@ -3,6 +3,8 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const router = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => router }));
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
@@ -39,7 +41,9 @@ vi.mock('@/components/video/BunnyPlayer', () => ({
 
 import LearnPageClient from '@/components/course/LearnPageClient';
 
-function renderWorkspace(currentProgress = { completed: false, watchTimeSeconds: 37 }) {
+const lessonTwo = { id: 'lesson-2', title: 'บทที่สอง', videoDuration: 90, isFreePreview: false };
+
+function renderWorkspace(currentProgress = { completed: false, watchTimeSeconds: 37 }, withNext = false) {
   return render(
     <LearnPageClient
       course={{ id: 'course-1', slug: 'typescript', title: 'TypeScript' }}
@@ -53,9 +57,10 @@ function renderWorkspace(currentProgress = { completed: false, watchTimeSeconds:
       }}
       allLessons={[
         { id: 'lesson-1', title: 'บทที่หนึ่ง', videoDuration: 120, isFreePreview: false },
+        ...(withNext ? [lessonTwo] : []),
       ]}
       prevLesson={null}
-      nextLesson={null}
+      nextLesson={withNext ? lessonTwo : null}
       currentIndex={0}
       isEnrolled
       canTrackProgress
@@ -73,6 +78,42 @@ describe('learning progress save recovery', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    router.push.mockReset();
+  });
+
+  it('moves to the next lesson only after the completion is saved', async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    renderWorkspace(undefined, true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'เรียนจบ แล้วไปบทถัดไป' }));
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'ยังบันทึกบทนี้ไม่ได้' })).toBeTruthy());
+    expect(router.push).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'ลองบันทึกอีกครั้ง' }));
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith('/courses/typescript/learn/lesson-2'));
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('saves a lesson whose video ends without leaving the page', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    renderWorkspace(undefined, true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'emit ended' }));
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'เรียนจบบทนี้แล้ว' })).toBeTruthy());
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it('finishes the last lesson in place and then offers the certificate', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    renderWorkspace();
+
+    expect(screen.queryByRole('link', { name: 'ดูใบรับรอง' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'เรียนจบบทสุดท้าย' }));
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'เรียนครบแล้ว · กำลังทบทวน' })).toBeTruthy());
+    expect(screen.getByRole('link', { name: 'ดูใบรับรอง' }).getAttribute('href')).toBe('/dashboard/certificates');
+    expect(router.push).not.toHaveBeenCalled();
   });
 
   it('shows pending truth and sends one positive completion request for duplicate ended events', async () => {
