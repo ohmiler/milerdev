@@ -115,7 +115,7 @@ export function CourseEnrollmentsView({ data }: { data: CourseEnrollmentsData })
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Course enrollments"
+        eyebrow="ติดตามการเรียน"
         title="ผู้เรียนในคอร์ส"
         description={
           <>

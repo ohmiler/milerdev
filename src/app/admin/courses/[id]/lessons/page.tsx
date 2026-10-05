@@ -156,7 +156,7 @@ export default function ManageLessonsPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="Lesson operations"
+        eyebrow="บทเรียนในคอร์ส"
         title="จัดการบทเรียน"
         description="จัดลำดับ เติมวิดีโอ ตรวจเนื้อหา และกำหนดบทเรียนตัวอย่างจาก workspace เดียว"
         actions={

@@ -175,7 +175,7 @@ export default function AdminMediaPage() {
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        eyebrow="Media Library"
+        eyebrow="คลังสื่อ"
         title="จัดการไฟล์สื่อ"
         description="อัปโหลด ค้นหา และตรวจรายละเอียดไฟล์ที่ใช้กับคอร์สจากจุดเดียว"
         meta="รองรับการอัปโหลดรูปภาพหลายไฟล์พร้อมกัน"

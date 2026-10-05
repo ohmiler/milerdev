@@ -144,7 +144,7 @@ export default function AdminTagsPage() {
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        eyebrow="Taxonomy"
+        eyebrow="หมวดหมู่เนื้อหา"
         title="จัดการแท็ก"
         description="สร้างชื่อเรียกที่สม่ำเสมอสำหรับจัดหมวดหมู่และช่วยให้ผู้ดูแลค้นหาคอร์สได้เร็วขึ้น"
         meta={tagsList.length > 0 ? 'มีแท็กในระบบ ' + tagsList.length.toLocaleString('th-TH') + ' รายการ' : undefined}

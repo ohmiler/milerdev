@@ -161,7 +161,7 @@ export default function AdminDashboardView({ data }: { data: AdminDashboardData 
   return (
     <div className="grid gap-6" data-admin-dashboard>
       <AdminPageHeader
-        eyebrow="Operations overview"
+        eyebrow="ภาพรวมการดำเนินงาน"
         title="งานที่ต้องดูแลวันนี้"
         description="เห็นรายการที่ต้องตรวจและสถานะสำคัญจากข้อมูลจริง ก่อนเข้าสู่รายละเอียดของแต่ละส่วน"
         meta={(

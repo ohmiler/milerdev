@@ -256,7 +256,7 @@ export default function AdminReportsPage() {
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        eyebrow="Analytics"
+        eyebrow="สถิติ"
         title="รายงานและวิเคราะห์"
         description="ติดตามรายได้ การลงทะเบียน ความคืบหน้า และการเติบโตของผู้ใช้"
         actions={

@@ -40,7 +40,7 @@ export function AdminPageHeader({
     <header className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0 max-w-3xl">
         {eyebrow ? (
-          <p className="mb-2 text-xs font-semibold tracking-[0.12em] text-link uppercase">{eyebrow}</p>
+          <p className="mb-2 text-xs font-semibold text-link">{eyebrow}</p>
         ) : null}
         <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>
         {description ? <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">{description}</p> : null}
@@ -112,7 +112,8 @@ export function AdminSection({
     <Card className={cn('gap-4 rounded-xl shadow-none', className)}>
       <CardHeader className="border-b border-border pb-4">
         <div className="min-w-0">
-          <CardTitle>{title}</CardTitle>
+          {/* A real heading under the page h1, so screen readers can jump between sections. */}
+          <CardTitle><h2>{title}</h2></CardTitle>
           {description ? <CardDescription className="mt-1.5 leading-5">{description}</CardDescription> : null}
         </div>
         {actions ? <CardAction className="flex flex-wrap items-center justify-end gap-2">{actions}</CardAction> : null}

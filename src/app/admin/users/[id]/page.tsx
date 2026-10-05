@@ -255,7 +255,7 @@ export default function AdminUserDetailPage() {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
       <AdminPageHeader
-        eyebrow="User detail"
+        eyebrow="ข้อมูลผู้เรียน"
         title={user.name || 'ไม่ระบุชื่อ'}
         description={`${user.email} · ${roleText(user.role)} · สมัครเมื่อ ${formatDate(user.createdAt)}`}
         actions={
