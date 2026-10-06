@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { normalizeLessonSearch } from '@/lib/learning/lesson-search';
+import { groupBySection, hasSections } from '@/lib/courses/course-structure';
 import { BookOpen, Check, Lock, SearchX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,8 @@ interface Lesson {
   title: string;
   videoDuration: number | null;
   isFreePreview: boolean | null;
+  sectionId?: string | null;
+  sectionTitle?: string | null;
 }
 
 interface LessonListProps {
@@ -89,54 +92,70 @@ export default function LessonList({
     );
   }
 
+  const renderLesson = ({ lesson, index: originalIndex }: { lesson: Lesson; index: number }) => {
+    const isLocked = !isEnrolled && !lesson.isFreePreview;
+    const isCurrent = lesson.id === currentLessonId;
+    const isCompleted = completedLessonIds?.has(lesson.id) ?? false;
+    const duration = formatDuration(lesson.videoDuration);
+    const number = String(originalIndex + 1).padStart(2, '0');
+
+    const itemClassName = 'grid h-auto min-h-16 w-full grid-cols-[2rem_minmax(0,1fr)_auto] justify-normal gap-3 px-3 py-2.5 text-left whitespace-normal';
+
+    const content = (
+      <>
+        <Badge variant={isCurrent ? 'default' : 'secondary'} className="font-mono">
+          {isCompleted ? <Check aria-hidden="true" /> : number}
+        </Badge>
+        <span className="min-w-0">
+          <strong className="block truncate text-sm font-medium text-current">{lesson.title}</strong>
+          <small className="mt-1 block text-xs text-muted-foreground">
+            {duration ?? (lesson.isFreePreview && !isEnrolled ? 'ทดลองเรียนฟรี' : `บทที่ ${originalIndex + 1}`)}
+          </small>
+        </span>
+        <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+          {isLocked ? <><Lock className="size-3" aria-hidden="true" />ล็อก</> : isCurrent ? 'กำลังเรียน' : isCompleted ? 'จบแล้ว' : 'เปิด'}
+        </span>
+      </>
+    );
+
+    return (
+      <li key={lesson.id}>
+        {isLocked ? (
+          <Button type="button" variant="ghost" className={itemClassName} onClick={() => onLockedClick?.(lesson.id)} aria-label={`บทที่ ${originalIndex + 1} ${lesson.title}, ต้องสมัครเรียนก่อน`}>
+            {content}
+          </Button>
+        ) : (
+          <Button asChild variant={isCurrent ? 'secondary' : 'ghost'} className={itemClassName}>
+            <Link ref={isCurrent ? currentItemRef : null} href={`/courses/${courseSlug}/learn/${lesson.id}`} aria-current={isCurrent ? 'page' : undefined}>
+              {content}
+            </Link>
+          </Button>
+        )}
+      </li>
+    );
+  };
+  const indexedPage = paginatedLessons.map((lesson) => ({
+    lesson,
+    index: lessons.findIndex((item) => item.id === lesson.id),
+  }));
+
   return (
     <div>
       <p role="status" aria-live="polite" className="mb-3 text-sm text-muted-foreground">{isSearching ? "ผลการค้นหา" : "ทั้งหมด"} {filteredLessons.length} บท · แสดง {page * LESSONS_PER_PAGE + 1}–{Math.min((page + 1) * LESSONS_PER_PAGE, filteredLessons.length)}</p>
-      <ol className="grid gap-2">
-        {paginatedLessons.map((lesson) => {
-          const originalIndex = lessons.findIndex((item) => item.id === lesson.id);
-          const isLocked = !isEnrolled && !lesson.isFreePreview;
-          const isCurrent = lesson.id === currentLessonId;
-          const isCompleted = completedLessonIds?.has(lesson.id) ?? false;
-          const duration = formatDuration(lesson.videoDuration);
-          const number = String(originalIndex + 1).padStart(2, '0');
-
-          const itemClassName = 'grid h-auto min-h-16 w-full grid-cols-[2rem_minmax(0,1fr)_auto] justify-normal gap-3 px-3 py-2.5 text-left whitespace-normal';
-
-          const content = (
-            <>
-              <Badge variant={isCurrent ? 'default' : 'secondary'} className="font-mono">
-                {isCompleted ? <Check aria-hidden="true" /> : number}
-              </Badge>
-              <span className="min-w-0">
-                <strong className="block truncate text-sm font-medium text-current">{lesson.title}</strong>
-                <small className="mt-1 block text-xs text-muted-foreground">
-                  {duration ?? (lesson.isFreePreview && !isEnrolled ? 'ทดลองเรียนฟรี' : `บทที่ ${originalIndex + 1}`)}
-                </small>
-              </span>
-              <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                {isLocked ? <><Lock className="size-3" aria-hidden="true" />ล็อก</> : isCurrent ? 'กำลังเรียน' : isCompleted ? 'จบแล้ว' : 'เปิด'}
-              </span>
-            </>
-          );
-
-          return (
-            <li key={lesson.id}>
-              {isLocked ? (
-                <Button type="button" variant="ghost" className={itemClassName} onClick={() => onLockedClick?.(lesson.id)} aria-label={`บทที่ ${originalIndex + 1} ${lesson.title}, ต้องสมัครเรียนก่อน`}>
-                  {content}
-                </Button>
-              ) : (
-                <Button asChild variant={isCurrent ? 'secondary' : 'ghost'} className={itemClassName}>
-                  <Link ref={isCurrent ? currentItemRef : null} href={`/courses/${courseSlug}/learn/${lesson.id}`} aria-current={isCurrent ? 'page' : undefined}>
-                    {content}
-                  </Link>
-                </Button>
+      {hasSections(lessons) && !isSearching ? (
+        <div className="flex flex-col gap-4">
+          {groupBySection(indexedPage).map((group) => (
+            <div key={group.key}>
+              {group.title && (
+                <h3 className="mb-2 px-3 text-xs font-semibold text-muted-foreground wrap-anywhere">{group.title}</h3>
               )}
-            </li>
-          );
-        })}
-      </ol>
+              <ol className="grid gap-2">{group.items.map(renderLesson)}</ol>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ol className="grid gap-2">{indexedPage.map(renderLesson)}</ol>
+      )}
 
       {totalPages > 1 && (
         <nav className="mt-4 flex items-center justify-between gap-3 border-t pt-4" aria-label="หน้ารายการบทเรียน">

@@ -1,6 +1,8 @@
 'use client';
 
 import {
+  ArrowDown,
+  ArrowUp,
   FileText,
   Film,
   GripVertical,
@@ -52,8 +54,15 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
 import { showToast } from '@/components/ui/Toast';
+import {
+  moveLessonToSection,
+  moveSection,
+  readCourseStructure,
+  type CourseStructure,
+} from '@/lib/courses/course-structure';
 import { cn } from '@/lib/utils';
 
 export interface Lesson {
@@ -64,13 +73,24 @@ export interface Lesson {
   videoDuration: number | null;
   orderIndex: number | null;
   isFreePreview: boolean | null;
+  sectionId?: string | null;
 }
+
+export interface LessonSection {
+  id: string;
+  title: string;
+}
+
+export type CourseOutline = { lessons: Lesson[]; sections: LessonSection[] };
 
 interface DraggableLessonListProps {
   lessons: Lesson[];
+  sections?: LessonSection[];
   courseId: string;
   onDelete: (lessonId: string) => void;
-  onReorder: (lessonIds: string[]) => void;
+  onStructureChange: (outline: CourseOutline) => void;
+  onRenameSection?: (section: LessonSection) => void;
+  onDeleteSection?: (section: LessonSection) => void;
   onLessonUpdate?: (lessonId: string, data: Partial<Lesson>) => void;
 }
 
@@ -79,12 +99,15 @@ export type LessonFilter = 'all' | 'needs-work' | 'no-video' | 'ready';
 interface SortableItemProps {
   lesson: Lesson;
   index: number;
+  sections: LessonSection[];
+  onMoveToSection: (lessonId: string, sectionId: string | null) => void;
   onDelete: (lessonId: string) => void;
   editingVideoId: string | null;
   onEditVideo: (lessonId: string | null) => void;
   onSaveVideo: (lessonId: string, videoUrl: string, videoDuration: number) => void;
   savingVideoId: string | null;
   disabledDrag?: boolean;
+  disabledMove?: boolean;
 }
 
 export function formatLessonDuration(totalSeconds: number | null) {
@@ -142,15 +165,42 @@ export function reorderLessonIds(lessons: Lesson[], activeId: string, overId: st
   return arrayMove(lessons, oldIndex, newIndex).map((lesson) => lesson.id);
 }
 
+export function readOutlineStructure({ lessons, sections }: CourseOutline): CourseStructure {
+  return readCourseStructure({
+    sections,
+    lessons: lessons.map((lesson) => ({ id: lesson.id, sectionId: lesson.sectionId ?? null })),
+  });
+}
+
+/** Reorders the outline to match a structure, the same way the server will. */
+export function applyCourseStructure(outline: CourseOutline, structure: CourseStructure): CourseOutline {
+  const lessonsById = new Map(outline.lessons.map((lesson) => [lesson.id, lesson]));
+  const sectionsById = new Map(outline.sections.map((section) => [section.id, section]));
+  const blocks = [
+    { sectionId: null, lessonIds: structure.unsectionedLessonIds },
+    ...structure.sections.map((section) => ({ sectionId: section.id, lessonIds: section.lessonIds })),
+  ];
+  return {
+    sections: structure.sections.flatMap((section) => sectionsById.get(section.id) ?? []),
+    lessons: blocks.flatMap((block) => block.lessonIds.flatMap((id) => {
+      const lesson = lessonsById.get(id);
+      return lesson ? [{ ...lesson, sectionId: block.sectionId }] : [];
+    })),
+  };
+}
+
 function SortableItem({
   lesson,
   index,
+  sections,
+  onMoveToSection,
   onDelete,
   editingVideoId,
   onEditVideo,
   onSaveVideo,
   savingVideoId,
   disabledDrag,
+  disabledMove,
 }: SortableItemProps) {
   const [videoUrl, setVideoUrl] = useState(lesson.videoUrl || '');
   const [videoDuration, setVideoDuration] = useState(formatLessonDuration(lesson.videoDuration));
@@ -183,7 +233,8 @@ function SortableItem({
         isEditing && 'ring-primary/30',
       )}
     >
-      <CardHeader>
+      {/* On narrow screens the actions wrap below the title instead of squeezing it. */}
+      <CardHeader className="max-sm:grid-cols-1!">
         <div className="flex min-w-0 items-start gap-3">
           <Button
             type="button"
@@ -223,9 +274,24 @@ function SortableItem({
                 <AdminStatusBadge tone="warning">Preview ฟรี</AdminStatusBadge>
               ) : null}
             </CardDescription>
+            {sections.length > 0 ? (
+              <NativeSelect
+                size="sm"
+                className="mt-3 max-w-full"
+                aria-label={`หมวดของบทเรียน ${lesson.title}`}
+                value={lesson.sectionId ?? ''}
+                disabled={disabledMove}
+                onChange={(event) => onMoveToSection(lesson.id, event.target.value || null)}
+              >
+                <NativeSelectOption value="">ไม่อยู่ในหมวด</NativeSelectOption>
+                {sections.map((section) => (
+                  <NativeSelectOption key={section.id} value={section.id}>{section.title}</NativeSelectOption>
+                ))}
+              </NativeSelect>
+            ) : null}
           </div>
         </div>
-        <CardAction className="flex flex-wrap justify-end gap-2">
+        <CardAction className="flex flex-wrap justify-end gap-2 max-sm:col-start-1 max-sm:row-span-1 max-sm:row-start-auto max-sm:justify-self-start max-sm:justify-start">
           <Button
             type="button"
             variant="outline"
@@ -323,9 +389,12 @@ function SortableItem({
 
 export default function DraggableLessonList({
   lessons,
+  sections = [],
   courseId,
   onDelete,
-  onReorder,
+  onStructureChange,
+  onRenameSection,
+  onDeleteSection,
   onLessonUpdate,
 }: DraggableLessonListProps) {
   const [saving, setSaving] = useState(false);
@@ -377,30 +446,69 @@ export default function DraggableLessonList({
     }
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const previousLessonIds = lessons.map((lesson) => lesson.id);
-    const newLessonIds = reorderLessonIds(lessons, String(active.id), String(over.id));
-    if (newLessonIds.every((lessonId, index) => lessonId === previousLessonIds[index])) return;
-    onReorder(newLessonIds);
+  const outline = { lessons, sections };
+  const structure = readOutlineStructure(outline);
+  const blocks = [
+    { section: null, lessonIds: structure.unsectionedLessonIds },
+    ...structure.sections.map((block) => ({
+      section: sections.find((section) => section.id === block.id) ?? null,
+      lessonIds: block.lessonIds,
+    })),
+  ].filter((block, index) => index > 0 || block.lessonIds.length > 0 || sections.length === 0);
+  const lessonsById = new Map(lessons.map((lesson) => [lesson.id, lesson]));
+
+  // Optimistic: show the new order at once and restore the previous one if the save fails.
+  const saveStructure = async (next: CourseStructure) => {
+    const previous = outline;
+    onStructureChange(applyCourseStructure(previous, next));
     setSaving(true);
     try {
       const response = await fetch(`/api/admin/courses/${courseId}/lessons/reorder`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lessonIds: newLessonIds }),
+        body: JSON.stringify(next),
       });
       if (!response.ok) {
-        onReorder(previousLessonIds);
-        showToast('ไม่สามารถจัดลำดับได้ กรุณาลองใหม่', 'error');
+        onStructureChange(previous);
+        const data = await response.json().catch(() => ({}));
+        showToast(data.error || 'ไม่สามารถจัดลำดับได้ กรุณาลองใหม่', 'error');
       }
     } catch {
-      onReorder(previousLessonIds);
+      onStructureChange(previous);
       showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || saving) return;
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    // Lessons move between sections through the section picker, not by dragging.
+    const reorderWithin = (ids: string[]) => {
+      if (!ids.includes(activeId) || !ids.includes(overId)) return null;
+      return arrayMove(ids, ids.indexOf(activeId), ids.indexOf(overId));
+    };
+    const unsectioned = reorderWithin(structure.unsectionedLessonIds);
+    if (unsectioned) {
+      void saveStructure({ ...structure, unsectionedLessonIds: unsectioned });
+      return;
+    }
+    const sectionIndex = structure.sections.findIndex((block) => reorderWithin(block.lessonIds));
+    if (sectionIndex < 0) return;
+    void saveStructure({
+      ...structure,
+      sections: structure.sections.map((block, index) => (
+        index === sectionIndex ? { ...block, lessonIds: reorderWithin(block.lessonIds)! } : block
+      )),
+    });
+  };
+
+  const handleMoveToSection = (lessonId: string, sectionId: string | null) => {
+    if ((lessonsById.get(lessonId)?.sectionId ?? null) === sectionId) return;
+    void saveStructure(moveLessonToSection(structure, lessonId, sectionId));
   };
 
   const tabs = [
@@ -410,7 +518,7 @@ export default function DraggableLessonList({
     { value: 'ready', label: 'พร้อม', count: readyCount },
   ] as const;
 
-  if (lessons.length === 0) {
+  if (lessons.length === 0 && sections.length === 0) {
     return (
       <AdminEmptyState
         title="ยังไม่มีบทเรียน"
@@ -425,6 +533,9 @@ export default function DraggableLessonList({
       key={`${lesson.id}:${lesson.videoUrl ?? ''}:${lesson.videoDuration ?? ''}`}
       lesson={lesson}
       index={index}
+      sections={sections}
+      onMoveToSection={handleMoveToSection}
+      disabledMove={saving}
       onDelete={onDelete}
       editingVideoId={editingVideoId}
       onEditVideo={setEditingVideoId}
@@ -537,14 +648,85 @@ export default function DraggableLessonList({
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext
-            items={lessons.map((lesson) => lesson.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="flex flex-col gap-3">
-              {lessons.map((lesson, index) => renderLesson(lesson, index))}
-            </div>
-          </SortableContext>
+          <div className="flex flex-col gap-6">
+            {blocks.map((block, blockIndex) => {
+              const sectionPosition = block.section
+                ? structure.sections.findIndex((item) => item.id === block.section?.id)
+                : -1;
+              const blockLessons = block.lessonIds.flatMap((id) => lessonsById.get(id) ?? []);
+              return (
+                <div key={block.section?.id ?? 'unsectioned'} className="flex flex-col gap-3">
+                  {block.section ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+                      <h3 className="min-w-0 font-heading text-base font-semibold">
+                        <span className="wrap-anywhere">{block.section.title}</span>{' '}
+                        <span className="text-sm font-normal text-muted-foreground tabular-nums">
+                          {blockLessons.length.toLocaleString('th-TH')} บท
+                        </span>
+                      </h3>
+                      <div className="flex flex-wrap gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`ย้ายหมวด ${block.section.title} ขึ้น`}
+                          disabled={saving || sectionPosition <= 0}
+                          onClick={() => void saveStructure(moveSection(structure, block.section!.id, -1))}
+                        >
+                          <ArrowUp aria-hidden />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`ย้ายหมวด ${block.section.title} ลง`}
+                          disabled={saving || sectionPosition >= structure.sections.length - 1}
+                          onClick={() => void saveStructure(moveSection(structure, block.section!.id, 1))}
+                        >
+                          <ArrowDown aria-hidden />
+                        </Button>
+                        {onRenameSection ? (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => onRenameSection(block.section!)}>
+                            <Pencil data-icon="inline-start" aria-hidden />
+                            แก้ชื่อ
+                          </Button>
+                        ) : null}
+                        {onDeleteSection ? (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => onDeleteSection(block.section!)}>
+                            <Trash2 data-icon="inline-start" aria-hidden />
+                            ลบหมวด
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : sections.length > 0 ? (
+                    <h3 className="border-b border-border pb-2 font-heading text-base font-semibold text-muted-foreground">
+                      ยังไม่อยู่ในหมวด
+                    </h3>
+                  ) : null}
+                  {blockLessons.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                      ยังไม่มีบทเรียนในหมวดนี้ เลือกหมวดจากเมนูของบทเรียนเพื่อย้ายเข้ามา
+                    </p>
+                  ) : (
+                    <SortableContext
+                      id={`lesson-block-${blockIndex}`}
+                      items={block.lessonIds}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="flex flex-col gap-3">
+                        {blockLessons.map((lesson) => renderLesson(
+                          lesson,
+                          lessons.findIndex((item) => item.id === lesson.id),
+                          saving,
+                        ))}
+                      </div>
+                    </SortableContext>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </DndContext>
       )}
     </div>

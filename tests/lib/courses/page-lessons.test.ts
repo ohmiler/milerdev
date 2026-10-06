@@ -15,6 +15,8 @@ describe('public course page lesson projection', () => {
     expect(Object.keys(coursePageLessonColumns).sort()).toEqual([
       'id',
       'isFreePreview',
+      'sectionId',
+      'sectionTitle',
       'title',
       'videoDuration',
     ]);
@@ -23,10 +25,11 @@ describe('public course page lesson projection', () => {
   });
 
   it('passes the restricted column map to the query and returns its rows', async () => {
-    const rows = [{ id: 'l1', title: 'Intro', videoDuration: 60, isFreePreview: true }];
+    const rows = [{ id: 'l1', title: 'Intro', videoDuration: 60, isFreePreview: true, sectionId: null, sectionTitle: null }];
     const orderBy = vi.fn().mockResolvedValue(rows);
     const where = vi.fn().mockReturnValue({ orderBy });
-    const from = vi.fn().mockReturnValue({ where });
+    const leftJoin = vi.fn().mockReturnValue({ where });
+    const from = vi.fn().mockReturnValue({ leftJoin });
     selectMock.mockReturnValue({ from });
 
     await expect(readCoursePageLessons('course-1')).resolves.toEqual(rows);
