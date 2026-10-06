@@ -9,12 +9,14 @@ const guardUrl = pathToFileURL(
 ).href;
 
 function runWithRequiredE2EGuard(source: string) {
+  const env: NodeJS.ProcessEnv = { ...process.env, NODE_OPTIONS: `--import=${guardUrl}` };
+  // Inside a Claude Code session the Stripe SDK prints a plugin hint to stderr;
+  // the child must not inherit that, or the empty-stderr check fails locally.
+  delete env.CLAUDECODE;
+  delete env.CLAUDE_CODE_CHILD_SESSION;
   return spawnSync(process.execPath, ['--input-type=module', '-e', source], {
     encoding: 'utf8',
-    env: {
-      ...process.env,
-      NODE_OPTIONS: `--import=${guardUrl}`,
-    },
+    env,
   });
 }
 
