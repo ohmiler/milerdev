@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { courses, lessons } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import LearnPageClient from '@/components/course/LearnPageClient';
+import { readLearnerQuiz } from '@/lib/learning/lesson-quiz-store';
 import { getLearningWorkspaceProjection } from '@/lib/learning/workspace';
 
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,8 @@ export default async function LessonPage({ params }: Props) {
     redirect(`/courses/${projection.courseSlug}?access=denied`);
   }
 
+  // The projection has already authorized this lesson, so its quiz may be shown (without answers).
+  const quiz = await readLearnerQuiz(projection.canTrackProgress ? session?.user?.id ?? null : null, lessonId);
   const { playbackUrl: videoUrl, ...currentLesson } = projection.currentLesson;
   return (
     <LearnPageClient
@@ -61,6 +64,7 @@ export default async function LessonPage({ params }: Props) {
       canTrackProgress={projection.canTrackProgress}
       completedLessonIds={projection.completedLessonIds}
       currentProgress={projection.currentProgress}
+      quiz={quiz}
     />
   );
 }
