@@ -75,7 +75,6 @@ const eslintConfig = defineConfig([
     // Utility scripts
     "scripts/**",
     // Local agent tooling and generated review state
-    ".agents/skills/impeccable/**",
     ".impeccable/**",
     ".superpowers/**",
   ]),
