@@ -13,7 +13,7 @@
 5. Stage เฉพาะไฟล์ของงาน ใช้ Conventional Commit, push branch, เปิด PR เข้า `master` และเชื่อม Issue ถ้ามี
    PR body ระบุสิ่งที่เปลี่ยน สิ่งที่ตรวจแล้ว สิ่งที่**ยังไม่ได้**ตรวจ และความเสี่ยงต่อ production
 6. รอ CI และแก้ failures ที่เกิดจากงานนี้ อัปเดต branch ด้วยการ merge `master` เข้ามา (ไม่ rebase ไม่ force-push)
-7. Merge ตามระดับความเสี่ยงใน AGENTS.md (หัวข้อ Merging and releasing):
+7. Merge ตามระดับความเสี่ยงใน AGENTS.md (หัวข้อ Merging):
    - **A** เอกสารหรือเทสต์อย่างเดียว: agent merge เองได้ เมื่อเงื่อนไขเบื้องต้นของระดับ A ครบ
    - **B** โค้ด production นอกจุดเสี่ยงสูง: เจ้าของพิมพ์ "merge" สำหรับ PR นั้น
    - **C** จุดเสี่ยงสูงและ CI gate: เจ้าของ merge เอง หรือสั่ง "merge" หลังอ่าน diff
