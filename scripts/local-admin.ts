@@ -25,7 +25,7 @@ import { generateLocalPassword, parseLocalAdminArgs } from './local-admin/plan';
 import { writeLocalAdmin } from './local-admin/write';
 import {
   assertLocalDatabase,
-  databaseMismatchWarning,
+  chooseLocalDatabaseUrl,
   describeDatabase,
   readDevServerDatabaseUrl,
 } from './local-database-target';
@@ -60,33 +60,37 @@ function promptMasked(question: string): Promise<string> {
   });
 }
 
-function askYes(question: string): Promise<boolean> {
+function askLine(question: string): Promise<string> {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
-      resolve(answer.trim().toLowerCase() === 'y');
+      resolve(answer);
     });
   });
 }
 
+async function askYes(question: string): Promise<boolean> {
+  return (await askLine(question)).trim().toLowerCase() === 'y';
+}
+
 async function main() {
   const options = parseLocalAdminArgs(process.argv.slice(2));
-  assertLocalDatabase(process.env.DATABASE_URL, process.env.NODE_ENV, 'Local admin setup');
-  console.log(`ฐานข้อมูล: ${describeDatabase(process.env.DATABASE_URL!)}`);
-  const mismatch = databaseMismatchWarning(process.env.DATABASE_URL, readDevServerDatabaseUrl());
-  if (mismatch) {
-    console.log(mismatch);
-    const proceed = process.stdin.isTTY && await askYes('ใช้ฐานข้อมูลนี้ต่อไหม? พิมพ์ y เพื่อยืนยัน หรือ Enter เพื่อยกเลิก: ');
-    if (!proceed) {
-      throw new Error('ยกเลิกแล้ว ไม่มีการเปลี่ยนแปลงใด ๆ ถ้าต้องการใช้ฐานข้อมูลของเว็บ ให้ล้างตัวแปร DATABASE_URL ใน terminal ก่อน');
-    }
-  }
+  const databaseUrl = await chooseLocalDatabaseUrl({
+    envUrl: process.env.DATABASE_URL,
+    devServerUrl: readDevServerDatabaseUrl(),
+    interactive: Boolean(process.stdin.isTTY),
+    ask: askLine,
+    nonInteractive: 'abort',
+    log: (line) => console.log(line),
+  });
+  assertLocalDatabase(databaseUrl, process.env.NODE_ENV, 'Local admin setup');
+  console.log(`ฐานข้อมูล: ${describeDatabase(databaseUrl!)}`);
 
   const password = options.generate ? generateLocalPassword() : await readTypedPassword();
   const passwordHash = await hashNewPassword(password);
 
-  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+  const connection = await mysql.createConnection(databaseUrl!);
   const db = drizzle(connection, { schema, mode: 'default' });
   try {
     const write = await writeLocalAdmin(db, options, passwordHash);

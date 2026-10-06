@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { applyMaskedInput, hasNonAsciiCharacters, initialMaskedInput } from '../../scripts/local-admin/masked-input';
 import { generateLocalPassword, parseLocalAdminArgs, planLocalAdminWrite } from '../../scripts/local-admin/plan';
 import { getPasswordPolicyError } from '@/lib/auth/password-policy';
-import { assertLocalDatabase, databaseMismatchWarning, describeDatabase } from '../../scripts/local-database-target';
+import { assertLocalDatabase, chooseLocalDatabaseUrl, databaseMismatchWarning, describeDatabase } from '../../scripts/local-database-target';
 
 const now = new Date('2026-10-06T10:00:00Z');
 
@@ -86,6 +86,26 @@ describe('local admin setup', () => {
     expect(databaseMismatchWarning(undefined, devServer)).toBeNull();
     expect(databaseMismatchWarning('mysql://root@127.0.0.1/milerdev', null)).toBeNull();
     expect(databaseMismatchWarning('mysql://e2e_test@127.0.0.1/x', devServer)).not.toContain('pw');
+  });
+
+  it('switches to the dev server database on Enter, and keeps the terminal one only on request', async () => {
+    const envUrl = 'mysql://e2e_test@127.0.0.1:3306/milerdev_e2e';
+    const devServerUrl = 'mysql://root:pw@127.0.0.1:3306/milerdev';
+    const base = { envUrl, devServerUrl, interactive: true, nonInteractive: 'abort' as const, log: () => undefined };
+
+    await expect(chooseLocalDatabaseUrl({ ...base, ask: async () => '' })).resolves.toBe(devServerUrl);
+    await expect(chooseLocalDatabaseUrl({ ...base, ask: async () => ' Terminal ' })).resolves.toBe(envUrl);
+    await expect(chooseLocalDatabaseUrl({ ...base, interactive: false, ask: async () => '' })).rejects.toThrow();
+    await expect(chooseLocalDatabaseUrl({ ...base, interactive: false, nonInteractive: 'keep-terminal', ask: async () => '' })).resolves.toBe(envUrl);
+  });
+
+  it('asks nothing when the terminal and the dev server agree, or only one is set', async () => {
+    const ask = async () => { throw new Error('should not ask'); };
+    const base = { interactive: true, nonInteractive: 'abort' as const, log: () => undefined, ask };
+    const url = 'mysql://root@127.0.0.1:3306/milerdev';
+    await expect(chooseLocalDatabaseUrl({ ...base, envUrl: url, devServerUrl: url })).resolves.toBe(url);
+    await expect(chooseLocalDatabaseUrl({ ...base, envUrl: undefined, devServerUrl: url })).resolves.toBe(url);
+    await expect(chooseLocalDatabaseUrl({ ...base, envUrl: url, devServerUrl: null })).resolves.toBe(url);
   });
 
   it('runs only against a MySQL server on this machine', () => {

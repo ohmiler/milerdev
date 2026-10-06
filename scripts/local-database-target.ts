@@ -19,9 +19,35 @@ export function readDevServerDatabaseUrl(envFile = '.env.local'): string | null 
 }
 
 /**
- * Scripts honor a DATABASE_URL already set in the terminal, but the dev server prefers
- * .env.local. When they differ, a script would write where the site never looks.
+ * Chooses the database for a local tool. Scripts used to honor a DATABASE_URL already set in
+ * the terminal while the dev server prefers .env.local, so a tool could write where the site
+ * never looks. On a mismatch an interactive run defaults to the dev server's database (Enter),
+ * or keeps the terminal's when the person types "terminal"; a non-interactive run follows
+ * `nonInteractive`.
  */
+export async function chooseLocalDatabaseUrl(input: {
+  envUrl: string | undefined;
+  devServerUrl: string | null;
+  interactive: boolean;
+  ask: (question: string) => Promise<string>;
+  nonInteractive: 'abort' | 'keep-terminal';
+  log: (line: string) => void;
+}): Promise<string | undefined> {
+  const warning = databaseMismatchWarning(input.envUrl, input.devServerUrl);
+  if (!warning) return input.envUrl ?? input.devServerUrl ?? undefined;
+  input.log(warning);
+  if (!input.interactive) {
+    if (input.nonInteractive === 'keep-terminal') return input.envUrl;
+    throw new Error('ยกเลิกแล้ว ไม่มีการเปลี่ยนแปลงใด ๆ ฐานข้อมูลใน terminal ไม่ตรงกับของเว็บ');
+  }
+  const answer = await input.ask(
+    `กด Enter เพื่อใช้ฐานข้อมูลของเว็บ (${describeDatabase(input.devServerUrl!)}) `
+    + `หรือพิมพ์ terminal เพื่อใช้ ${describeDatabase(input.envUrl!)}: `,
+  );
+  return answer.trim().toLowerCase() === 'terminal' ? input.envUrl : input.devServerUrl!;
+}
+
+/** Warns when the terminal's DATABASE_URL and .env.local's (used by `npm run dev`) differ. */
 export function databaseMismatchWarning(active: string | undefined, devServer: string | null): string | null {
   if (!active || !devServer) return null;
   try {
