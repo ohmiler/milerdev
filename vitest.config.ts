@@ -2,12 +2,11 @@ import { defineConfig } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
-    // Vite 5 expects a directory here; `false` falls back to the repository.
-    // Keep test environment discovery away from local application secrets.
+    // Load env files from an empty directory so tests never read local application secrets.
     envDir: path.resolve(__dirname, 'tests/fixtures/empty-env'),
-    // Tests only need JSX compiled with the automatic runtime; esbuild does that
-    // without a React plugin (Next.js compiles the app itself).
-    esbuild: { jsx: 'automatic' },
+    // Tests only need JSX compiled with the automatic runtime; Vite's Oxc transform
+    // does that without a React plugin (Next.js compiles the app itself).
+    oxc: { jsx: { runtime: 'automatic' } },
     test: {
         // Let callback tests mock OAuth transport inside the installed Auth.js
         // modules instead of performing provider discovery over the network.

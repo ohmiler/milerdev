@@ -15,7 +15,8 @@ vi.mock('nodemailer', () => ({
 }));
 
 vi.mock('resend', () => ({
-    Resend: vi.fn().mockImplementation(() => ({ emails: { send: mocks.resendSend } })),
+    // Constructed with `new`, so the mock needs a function, not an arrow (Vitest 4+).
+    Resend: vi.fn().mockImplementation(function () { return { emails: { send: mocks.resendSend } }; }),
 }));
 
 vi.mock('@/lib/error-handler', () => ({
