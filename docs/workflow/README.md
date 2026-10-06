@@ -13,7 +13,7 @@
 5. Stage เฉพาะไฟล์ของงาน ใช้ Conventional Commit, push branch, เปิด PR เข้า `master` และเชื่อม Issue ถ้ามี
    PR body ระบุสิ่งที่เปลี่ยน สิ่งที่ตรวจแล้ว สิ่งที่**ยังไม่ได้**ตรวจ และความเสี่ยงต่อ production
 6. รอ CI และแก้ failures ที่เกิดจากงานนี้ อัปเดต branch ด้วยการ merge `master` เข้ามา (ไม่ rebase ไม่ force-push)
-7. Merge ตามระดับความเสี่ยงใน AGENTS.md (หัวข้อ Git and delivery):
+7. Merge ตามระดับความเสี่ยงใน AGENTS.md (หัวข้อ Merging):
    - **A** เอกสารหรือเทสต์อย่างเดียว: agent merge เองได้ เมื่อเงื่อนไขเบื้องต้นของระดับ A ครบ
    - **B** โค้ด production นอกจุดเสี่ยงสูง: เจ้าของพิมพ์ "merge" สำหรับ PR นั้น
    - **C** จุดเสี่ยงสูงและ CI gate: เจ้าของ merge เอง หรือสั่ง "merge" หลังอ่าน diff
@@ -30,7 +30,7 @@
 | Auth/payment/enrollment/certificate/data | ตรวจ authorization, validation, replay/idempotency และ recovery บน MySQL จริง (`milerdev_e2e`) และ mock providers; รายงานส่วนที่ยังไม่ทดสอบ |
 
 ก่อนส่งมอบรัน `git diff --check` และ `git status --short` เสมอ
-การเลือกชุดตรวจในเครื่องไม่เปลี่ยน CI: ทุก PR ที่เข้า `master` รัน pipeline เต็ม รวม PR เอกสาร
+การเลือกชุดตรวจในเครื่องไม่เปลี่ยน CI: ทุก PR ที่เข้า `master` รันทุก job ส่วน PR ที่แก้เฉพาะ `docs/` หรือไฟล์ `.md` ที่ root นั้น `Required E2E` ข้ามขั้น MySQL และ browser แต่ยังรายงานผ่าน (ดู [docs-only-scope.mjs](../../scripts/ci/docs-only-scope.mjs))
 
 ## CI gates
 
@@ -40,7 +40,7 @@
 | --- | --- |
 | Lint & Type Check | admin-text scan, ESLint, `tsc`, และ `schema.ts` ตรงกับ `drizzle/` |
 | Test | Vitest unit/component suite |
-| Required E2E | MySQL แยก, migrations, fixtures, integration tests บน MySQL จริง และ required browser journeys |
+| Required E2E | MySQL แยก, migrations, fixtures, integration tests บน MySQL จริง และ required browser journeys; PR ที่แก้เฉพาะเอกสารข้ามขั้นเหล่านี้ |
 | Build | production build; เป็นด่านรวมที่ `needs` ทั้งสาม job ข้างต้น |
 
 branch protection (อ่านล่าสุด 2026-09-13) บังคับ `Lint & Type Check`, `Test`, `Build` และไม่บังคับ approval

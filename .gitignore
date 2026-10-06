@@ -59,5 +59,5 @@ scripts/wordpress-export.sql
 /output/
 /.playwright-cli/
 
-# skills installer lock (provenance is tracked in .agents/skills-provenance.json)
+# local agent-skills installer lock
 /skills-lock.json
