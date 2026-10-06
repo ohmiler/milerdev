@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { showToast } from '@/components/ui/Toast';
+import { formatLessonPosition } from '@/lib/courses/lesson-position';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 
@@ -47,6 +48,11 @@ export default function EditLessonPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [formData, setFormData] = useState({ title: '', content: '', videoUrl: '', videoDuration: '0:00', isFreePreview: false });
+  const [placement, setPlacement] = useState<{ position: number | null; lessonCount: number | null; sectionTitle: string | null }>({
+    position: null,
+    lessonCount: null,
+    sectionTitle: null,
+  });
 
   const fetchLesson = async (id: string) => {
     setLoading(true);
@@ -57,6 +63,11 @@ export default function EditLessonPage() {
       if (!response.ok) throw new Error(data.error || 'ไม่พบบทเรียน');
       const loadedLesson = data.lesson as Lesson;
       setLesson(loadedLesson);
+      setPlacement({
+        position: typeof data.position === 'number' ? data.position : null,
+        lessonCount: typeof data.lessonCount === 'number' ? data.lessonCount : null,
+        sectionTitle: typeof data.sectionTitle === 'string' ? data.sectionTitle : null,
+      });
       const totalSeconds = loadedLesson.videoDuration || 0;
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
@@ -82,7 +93,7 @@ export default function EditLessonPage() {
   const hasVideo = Boolean(formData.videoUrl.trim());
   const hasContent = Boolean(formData.content.trim().replace(/<[^>]*>/g, ''));
   const durationLabel = formData.videoDuration.trim() || '0:00';
-  const orderLabel = lesson?.orderIndex != null ? String(lesson.orderIndex + 1).padStart(2, '0') : '--';
+  const orderLabel = formatLessonPosition(placement.position, placement.lessonCount);
   const checklist = useMemo(() => [
     { label: 'ชื่อบทเรียน', ready: hasTitle, hint: hasTitle ? 'พร้อมแสดงในสารบัญ' : 'ควรใส่ชื่อให้ชัดเจน' },
     { label: 'เนื้อหา', ready: hasContent, hint: hasContent ? 'มีรายละเอียดประกอบ' : 'เพิ่มคำอธิบายหรือ resource' },
@@ -134,7 +145,7 @@ export default function EditLessonPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricCard label="ลำดับ" value={orderLabel} detail="ตำแหน่งในสารบัญ" />
+        <AdminMetricCard label="ลำดับ" value={orderLabel} detail={placement.sectionTitle ? `หมวด ${placement.sectionTitle}` : 'ตำแหน่งในสารบัญ'} />
         <AdminMetricCard label="วิดีโอ" value={hasVideo ? 'พร้อม' : 'ยังไม่มี'} tone={hasVideo ? 'success' : 'warning'} detail={hasVideo ? 'เชื่อม video source แล้ว' : 'ควรเพิ่ม URL วิดีโอ'} />
         <AdminMetricCard label="ระยะเวลา" value={durationLabel} tone="info" detail="แสดงให้ผู้เรียนวางแผนเวลา" />
         <AdminMetricCard label="Preview" value={formData.isFreePreview ? 'เปิด' : 'เฉพาะผู้เรียน'} tone={formData.isFreePreview ? 'warning' : 'neutral'} detail={formData.isFreePreview ? 'ดูได้ก่อนซื้อคอร์ส' : 'จำกัดเฉพาะผู้มีสิทธิ์'} />
