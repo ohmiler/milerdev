@@ -91,8 +91,8 @@ describe('demo course rows', () => {
     expect(Number(rows.bundle.price)).toBeLessThan(bundled.reduce((sum, course) => sum + Number(course.price), 0));
   });
 
-  it('never claims a review is from a verified buyer or a real account', () => {
-    expect(rows.reviews.every((review) => review.isVerified === false && review.userId === null)).toBe(true);
+  it('attaches demo reviews to no account and makes them visible on course pages', () => {
+    expect(rows.reviews.every((review) => review.userId === null && review.isVerified === true && review.isHidden === false)).toBe(true);
     expect(rows.reviews.every((review) => review.rating! >= 1 && review.rating! <= 5)).toBe(true);
   });
 

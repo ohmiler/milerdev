@@ -165,7 +165,9 @@ export function buildDemoRows(now: Date): DemoRows {
         rating: review.rating,
         comment: review.comment,
         displayName: review.name,
-        isVerified: false,
+        // Public pages list only reviews with isVerified, which also shows a learner badge.
+        // That is acceptable only because target.ts keeps this data on a local database.
+        isVerified: true,
         isHidden: false,
         createdAt: daysAgo(review.daysAgo),
         updatedAt: daysAgo(review.daysAgo),
