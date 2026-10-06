@@ -1,14 +1,13 @@
 # Domain Docs
 
-Before exploring the codebase, engineering skills should read:
+Before exploring the codebase, agents should read:
 
 - `CONTEXT.md` at the repository root, when present.
 - `CONTEXT-MAP.md`, when present, and the contexts relevant to the task.
 - ADRs under `docs/adr/` that affect the area being changed.
 
-Missing domain files should not block work. `/domain-modeling` and
-`/grill-with-docs` create or update them
-when terminology or decisions are actually resolved.
+Missing domain files should not block work. Create or update them when
+terminology or decisions are actually resolved.
 
 ## Layout
 

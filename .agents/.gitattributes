@@ -1,2 +1,0 @@
-# Vendored upstream Markdown uses trailing spaces as hard line breaks; keep the bytes as published.
-skills/vercel-react-best-practices/** -whitespace
