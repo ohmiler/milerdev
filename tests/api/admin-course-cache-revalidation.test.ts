@@ -17,6 +17,10 @@ vi.mock('@/lib/auditLog', async (importOriginal) => ({
   logAudit: mocks.logAudit,
 }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
+vi.mock('@/lib/courses/course-structure-store', () => ({
+  saveCourseStructure: vi.fn().mockResolvedValue({ ok: true }),
+  createLessonInSection: vi.fn(),
+}));
 vi.mock('@/lib/security/sanitize', () => ({ sanitizeRichContent: (value: string) => value }));
 vi.mock('@/lib/db', () => {
   // Each select() resolves to the next queued result, with or without a trailing limit().
@@ -124,7 +128,7 @@ describe('admin course edits purge cached public pages', () => {
     mocks.selectResults.push([{ slug: 'old-slug' }]);
 
     const response = await reorderLessons(
-      json('POST', { lessonIds: ['l1', 'l2'] }),
+      json('POST', { unsectionedLessonIds: ['l1', 'l2'], sections: [] }),
       { params: Promise.resolve({ id: 'course-a' }) },
     );
 
