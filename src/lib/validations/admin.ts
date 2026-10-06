@@ -32,15 +32,29 @@ export const createCourseSchema = z.object({
     certificateColor: z.string().max(20).optional(),
 });
 
+// Promotion times must carry their offset (the editor sends Thai time as an ISO instant), so
+// the server never guesses a time zone. A form from before this rule gets a reload prompt.
+const isoInstantSchema = z.iso.datetime({ offset: true });
+const promoTimeSchema = z.string()
+    .refine((value) => value === '' || isoInstantSchema.safeParse(value).success, {
+        message: 'เวลาโปรโมชั่นไม่ถูกต้อง กรุณาโหลดหน้าใหม่แล้วลองอีกครั้ง',
+    })
+    .optional()
+    .nullable();
+
 export const updateCourseSchema = createCourseSchema.omit({ status: true }).partial().extend({
     previewVideoUrl: z.string().max(2000, 'ลิงก์วิดีโอแนะนำยาวเกิน 2,000 ตัวอักษร').optional().nullable().or(z.literal('')),
     promoPrice: z.union([z.string(), z.number()]).optional().nullable(),
-    promoStartsAt: z.string().optional().nullable(),
-    promoEndsAt: z.string().optional().nullable(),
+    promoStartsAt: promoTimeSchema,
+    promoEndsAt: promoTimeSchema,
     certificateHeaderImage: z.string().max(2000, 'ลิงก์รูป Header ใบรับรองยาวเกิน 2,000 ตัวอักษร').optional().nullable().or(z.literal('')),
     certificateBadge: z.string().max(50).optional().nullable(),
     instructorId: z.string().min(1).max(36).optional().nullable(),
-}).strict();
+}).strict().refine(
+    ({ promoStartsAt, promoEndsAt }) => !promoStartsAt || !promoEndsAt
+        || new Date(promoEndsAt).getTime() > new Date(promoStartsAt).getTime(),
+    { message: 'เวลาสิ้นสุดโปรโมชั่นต้องอยู่หลังเวลาเริ่มต้น', path: ['promoEndsAt'] },
+);
 
 export const adminCourseLifecycleSchema = z.discriminatedUnion('action', [
     z.object({

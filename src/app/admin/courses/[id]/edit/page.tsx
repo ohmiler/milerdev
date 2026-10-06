@@ -34,6 +34,7 @@ import {
   normalizeCertificateColor,
 } from '@/lib/certificates/color';
 import type { CourseLifecycleAction, CourseStatus } from '@/lib/courses/lifecycle';
+import { fromThaiDateTimeInput, toThaiDateTimeInput } from '@/lib/courses/promo-time';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -88,8 +89,8 @@ export default function EditCoursePage() {
             certificateHeaderImage: data.course.certificateHeaderImage || '',
             previewVideoUrl: data.course.previewVideoUrl || '',
             promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
-            promoStartsAt: data.course.promoStartsAt ? new Date(data.course.promoStartsAt).toISOString().slice(0, 16) : '',
-            promoEndsAt: data.course.promoEndsAt ? new Date(data.course.promoEndsAt).toISOString().slice(0, 16) : '',
+            promoStartsAt: toThaiDateTimeInput(data.course.promoStartsAt),
+            promoEndsAt: toThaiDateTimeInput(data.course.promoEndsAt),
             instructorId: data.course.instructorId || '',
           });
         }
@@ -108,10 +109,22 @@ export default function EditCoursePage() {
     try {
       const { status: lifecycleStatus, ...courseDetails } = formData;
       void lifecycleStatus;
+      // The inputs hold Thai time; send instants so the server never guesses a time zone.
+      const promoStartsAt = fromThaiDateTimeInput(courseDetails.promoStartsAt);
+      const promoEndsAt = fromThaiDateTimeInput(courseDetails.promoEndsAt);
+      if (promoStartsAt === null || promoEndsAt === null) {
+        throw new Error('กรุณากรอกเวลาโปรโมชั่นให้ครบทั้งวันที่และเวลา');
+      }
       const response = await fetch(`/api/admin/courses/${courseId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...courseDetails, instructorId: courseDetails.instructorId || null, tagIds: selectedTagIds }),
+        body: JSON.stringify({
+          ...courseDetails,
+          promoStartsAt,
+          promoEndsAt,
+          instructorId: courseDetails.instructorId || null,
+          tagIds: selectedTagIds,
+        }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'บันทึกคอร์สไม่สำเร็จ');
@@ -222,8 +235,8 @@ export default function EditCoursePage() {
                 <div className="mb-4"><h3 className="font-semibold">ราคาโปรโมชั่น</h3><p className="mt-1 text-sm text-muted-foreground">เว้นว่างหากยังไม่ต้องการเปิดโปรโมชั่น</p></div>
                 <div className="grid gap-5 md:grid-cols-3">
                   <Field><FieldLabel htmlFor="promo-price">ราคาโปรโมชั่น</FieldLabel><Input id="promo-price" type="number" min="0" value={formData.promoPrice} onChange={(event) => setFormData((previous) => ({ ...previous, promoPrice: event.target.value }))} placeholder="เช่น 990" />{hasPromo && Number(formData.price || 0) > 0 ? <FieldDescription>ลด {promoDiscount}% จากราคาหลัก</FieldDescription> : null}</Field>
-                  <Field><FieldLabel htmlFor="promo-start">เริ่มต้น</FieldLabel><Input id="promo-start" type="datetime-local" value={formData.promoStartsAt} onChange={(event) => setFormData((previous) => ({ ...previous, promoStartsAt: event.target.value }))} /></Field>
-                  <Field><FieldLabel htmlFor="promo-end">สิ้นสุด</FieldLabel><Input id="promo-end" type="datetime-local" value={formData.promoEndsAt} onChange={(event) => setFormData((previous) => ({ ...previous, promoEndsAt: event.target.value }))} /></Field>
+                  <Field><FieldLabel htmlFor="promo-start">เริ่มต้น (เวลาไทย)</FieldLabel><Input id="promo-start" type="datetime-local" value={formData.promoStartsAt} onChange={(event) => setFormData((previous) => ({ ...previous, promoStartsAt: event.target.value }))} /></Field>
+                  <Field><FieldLabel htmlFor="promo-end">สิ้นสุด (เวลาไทย)</FieldLabel><Input id="promo-end" type="datetime-local" value={formData.promoEndsAt} onChange={(event) => setFormData((previous) => ({ ...previous, promoEndsAt: event.target.value }))} /></Field>
                 </div>
               </div>
             </FieldGroup>
