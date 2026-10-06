@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import LessonQuizEditor from '@/components/admin/LessonQuizEditor';
 import {
   AdminErrorState,
   AdminLoadingState,
@@ -128,7 +129,7 @@ export default function EditLessonPage() {
       <AdminPageHeader
         eyebrow="แก้ไขบทเรียน"
         title={formData.title || 'แก้ไขบทเรียน'}
-        description="ปรับชื่อ เนื้อหา วิดีโอ ระยะเวลา และสิทธิ์ Preview ก่อนกลับไปจัดลำดับในสารบัญ"
+        description="ปรับชื่อ เนื้อหา วิดีโอ ระยะเวลา สิทธิ์ Preview และแบบทดสอบท้ายบท ก่อนกลับไปจัดลำดับในสารบัญ"
         actions={<Button asChild variant="outline"><Link href={`/admin/courses/${lesson.courseId}/lessons`}><ArrowLeft data-icon="inline-start" aria-hidden />กลับไปจัดการบทเรียน</Link></Button>}
       />
 
@@ -173,6 +174,9 @@ export default function EditLessonPage() {
           </Card>
         </aside>
       </form>
+
+      {/* Saved on its own: the lesson form above returns to the course after saving. */}
+      <LessonQuizEditor lessonId={lessonId} />
     </div>
   );
 }
