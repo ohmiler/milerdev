@@ -131,17 +131,41 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          # The merge commit and its first parent, to list what a pull request changes.
+          fetch-depth: 2
+
+      # A pull request that only touches docs/ or Markdown at the root cannot change what
+      # this job tests, so it runs and passes without the database and browser steps.
+      # Pushes to master, any other file, or a failed comparison run everything.
+      - name: Decide whether the journeys need to run
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            changed="$(git diff --name-only --no-renames HEAD^1 HEAD)" || changed=""
+            printf 'Changed files:\n%s\n' "$changed"
+            printf '%s\n' "$changed" | node scripts/ci/docs-only-scope.mjs >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+          grep '^run=' "$GITHUB_OUTPUT"
 
       - name: Setup Node.js
+        if: steps.scope.outputs.run == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.scope.outputs.run == 'true'
         run: npm ci
 
       - name: Configure isolated E2E environment
+        if: steps.scope.outputs.run == 'true'
         shell: bash
         env:
           E2E_DB_PROTOCOL: mysql
@@ -163,18 +187,23 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Migrate isolated E2E database
+        if: steps.scope.outputs.run == 'true'
         run: npm run db:migrate
 
       - name: Create deterministic E2E fixtures
+        if: steps.scope.outputs.run == 'true'
         run: npm run db:fixtures:e2e
 
       - name: Verify email registration transactions on isolated MySQL
+        if: steps.scope.outputs.run == 'true'
         run: npx vitest run --config vitest.mysql.config.ts
 
       - name: Install Chromium
+        if: steps.scope.outputs.run == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Run required browser journey
+        if: steps.scope.outputs.run == 'true'
         run: npm run test:e2e:required
 
       - name: Upload Playwright report on failure
