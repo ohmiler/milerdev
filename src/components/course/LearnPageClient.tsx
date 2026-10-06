@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Award, Check, CircleCheck, FileText, LoaderCircle, Lock } from 'lucide-react';
 import BunnyPlayer from '@/components/video/BunnyPlayer';
 import LearningCurriculum from './LearningCurriculum';
+import LessonQuiz from './LessonQuiz';
 import LearningNavbar from './LearningNavbar';
 import { sanitizeRichContent } from '@/lib/security/sanitize';
 import { showToast } from '@/components/ui/Toast';
@@ -33,6 +34,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import type { LearnerQuiz } from '@/lib/learning/lesson-quiz';
 import type { LearningCurriculumLesson } from '@/lib/learning/workspace';
 
 interface CurrentLesson extends Omit<LearningCurriculumLesson, 'sectionId' | 'sectionTitle'> {
@@ -57,6 +59,7 @@ interface LearnPageClientProps {
   canTrackProgress: boolean;
   completedLessonIds: string[];
   currentProgress: { completed: boolean; watchTimeSeconds: number };
+  quiz?: LearnerQuiz | null;
 }
 
 const formatDuration = (seconds: number | null) => {
@@ -84,6 +87,7 @@ export default function LearnPageClient({
   canTrackProgress,
   completedLessonIds: initialCompletedIds,
   currentProgress,
+  quiz = null,
 }: LearnPageClientProps) {
   const router = useRouter();
   const [mobileCurriculumOpen, setMobileCurriculumOpen] = useState(false);
@@ -364,6 +368,17 @@ export default function LearnPageClient({
                   <EmptyDescription>คุณยังสามารถเลือกบทก่อนหน้าหรือบทถัดไปได้</EmptyDescription>
                 </EmptyHeader>
               </Empty>
+            )}
+
+            {quiz && quiz.questions.length > 0 && (
+              <LessonQuiz
+                key={currentLesson.id}
+                lessonId={currentLesson.id}
+                questions={quiz.questions}
+                lastAttempt={quiz.lastAttempt}
+                canSubmit={canTrackProgress}
+                loginHref={`/login?callbackUrl=${encodeURIComponent(`/courses/${course.slug}/learn/${currentLesson.id}`)}`}
+              />
             )}
 
             {/* Completion sits after the content, where the learner finishes reading or watching. */}
