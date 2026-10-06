@@ -22,6 +22,10 @@ updates:
       # still calls, so lint crashes. Remove this once eslint-config-next supports ESLint 10.
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
+      # typescript-eslint (used by eslint-config-next) refuses TypeScript 7 and supports up to 6.0,
+      # so lint crashes on 7. TypeScript 6 may still come through. Remove once typescript-eslint supports 7.
+      - dependency-name: "typescript"
+        versions: [">=7"]
 
   - package-ecosystem: github-actions
     directory: /
