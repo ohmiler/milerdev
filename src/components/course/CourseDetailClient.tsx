@@ -58,6 +58,8 @@ interface Lesson {
   title: string;
   videoDuration: number | null;
   isFreePreview: boolean | null;
+  sectionId?: string | null;
+  sectionTitle?: string | null;
 }
 
 interface CourseDetailClientProps {

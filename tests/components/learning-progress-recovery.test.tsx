@@ -41,7 +41,7 @@ vi.mock('@/components/video/BunnyPlayer', () => ({
 
 import LearnPageClient from '@/components/course/LearnPageClient';
 
-const lessonTwo = { id: 'lesson-2', title: 'บทที่สอง', videoDuration: 90, isFreePreview: false };
+const lessonTwo = { id: 'lesson-2', title: 'บทที่สอง', videoDuration: 90, isFreePreview: false, sectionId: null, sectionTitle: null };
 
 function renderWorkspace(currentProgress = { completed: false, watchTimeSeconds: 37 }, withNext = false) {
   return render(
@@ -56,7 +56,7 @@ function renderWorkspace(currentProgress = { completed: false, watchTimeSeconds:
         isFreePreview: false,
       }}
       allLessons={[
-        { id: 'lesson-1', title: 'บทที่หนึ่ง', videoDuration: 120, isFreePreview: false },
+        { id: 'lesson-1', title: 'บทที่หนึ่ง', videoDuration: 120, isFreePreview: false, sectionId: null, sectionTitle: null },
         ...(withNext ? [lessonTwo] : []),
       ]}
       prevLesson={null}

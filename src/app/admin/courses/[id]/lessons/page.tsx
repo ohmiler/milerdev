@@ -1,12 +1,12 @@
 'use client';
 
-import { ArrowLeft, ExternalLink, ListVideo, Plus } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FolderPlus, ListVideo, Plus } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import DraggableLessonList from '@/components/admin/DraggableLessonList';
+import DraggableLessonList, { type Lesson, type LessonSection } from '@/components/admin/DraggableLessonList';
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
   AdminEmptyState,
@@ -30,21 +30,12 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { showToast } from '@/components/ui/Toast';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
-
-interface Lesson {
-  id: string;
-  title: string;
-  content: string | null;
-  videoUrl: string | null;
-  videoDuration: number | null;
-  orderIndex: number | null;
-  isFreePreview: boolean | null;
-}
 
 function toDurationSeconds(value: string) {
   if (value.includes(':')) {
@@ -54,11 +45,15 @@ function toDurationSeconds(value: string) {
   return Math.round(parseFloat(value) * 60) || 0;
 }
 
-const emptyForm = { title: '', content: '', videoUrl: '', videoDuration: '0:00', isFreePreview: false };
+const emptyForm = { title: '', content: '', videoUrl: '', videoDuration: '0:00', isFreePreview: false, sectionId: '' };
+
+// A section dialog either creates a section or renames an existing one.
+type SectionDialogState = { mode: 'create' } | { mode: 'rename'; section: LessonSection };
 
 export default function ManageLessonsPage() {
   const { id: courseId } = useParams<{ id: string }>();
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [sections, setSections] = useState<LessonSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -69,6 +64,13 @@ export default function ManageLessonsPage() {
   const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
   const [publicCourse, setPublicCourse] = useState<{ slug: string; status: string } | null>(null);
+  const [sectionDialog, setSectionDialog] = useState<SectionDialogState | null>(null);
+  const [sectionTitle, setSectionTitle] = useState('');
+  const [sectionError, setSectionError] = useState('');
+  const [sectionSaving, setSectionSaving] = useState(false);
+  const [sectionDeleteTarget, setSectionDeleteTarget] = useState<LessonSection | null>(null);
+  const [sectionDeleteError, setSectionDeleteError] = useState('');
+  const [sectionDeleting, setSectionDeleting] = useState(false);
 
   const fetchLessons = async (id: string) => {
     setLoadError('');
@@ -77,6 +79,7 @@ export default function ManageLessonsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'โหลดบทเรียนไม่สำเร็จ');
       setLessons(data.lessons || []);
+      setSections(data.sections || []);
     } catch (caughtError) {
       setLoadError(caughtError instanceof Error ? caughtError.message : 'โหลดบทเรียนไม่สำเร็จ');
     }
@@ -104,16 +107,29 @@ export default function ManageLessonsPage() {
     setShowForm(false);
   };
 
+  const openLessonForm = () => {
+    // New lessons default to the last section, which matches appending to the course.
+    setFormData({ ...emptyForm, sectionId: sections.at(-1)?.id ?? '' });
+    setFormError('');
+    setShowForm(true);
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!courseId) return;
     setSaving(true);
     setFormError('');
     try {
+      const { sectionId, ...lesson } = formData;
       const response = await fetch(`/api/admin/courses/${courseId}/lessons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, videoDuration: toDurationSeconds(formData.videoDuration) }),
+        body: JSON.stringify({
+          ...lesson,
+          videoDuration: toDurationSeconds(formData.videoDuration),
+          // Only courses with sections need a placement; others keep appending to the end.
+          ...(sections.length > 0 ? { sectionId: sectionId || null } : {}),
+        }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'เพิ่มบทเรียนไม่สำเร็จ');
@@ -145,11 +161,69 @@ export default function ManageLessonsPage() {
     }
   };
 
+  const openSectionDialog = (state: SectionDialogState) => {
+    setSectionTitle(state.mode === 'rename' ? state.section.title : '');
+    setSectionError('');
+    setSectionDialog(state);
+  };
+
+  const submitSection = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!sectionDialog || !courseId) return;
+    setSectionSaving(true);
+    setSectionError('');
+    try {
+      const isRename = sectionDialog.mode === 'rename';
+      const response = await fetch(
+        isRename
+          ? `/api/admin/courses/${courseId}/sections/${sectionDialog.section.id}`
+          : `/api/admin/courses/${courseId}/sections`,
+        {
+          method: isRename ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: sectionTitle }),
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'บันทึกหมวดไม่สำเร็จ');
+      await fetchLessons(courseId);
+      setSectionDialog(null);
+      showToast(isRename ? 'แก้ชื่อหมวดแล้ว' : 'เพิ่มหมวดแล้ว', 'success');
+    } catch (caughtError) {
+      setSectionError(caughtError instanceof Error ? caughtError.message : 'บันทึกหมวดไม่สำเร็จ กรุณาลองใหม่');
+    } finally {
+      setSectionSaving(false);
+    }
+  };
+
+  const confirmDeleteSection = async () => {
+    if (!sectionDeleteTarget || !courseId) return;
+    setSectionDeleting(true);
+    setSectionDeleteError('');
+    try {
+      const response = await fetch(
+        `/api/admin/courses/${courseId}/sections/${sectionDeleteTarget.id}`,
+        { method: 'DELETE' },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'ลบหมวดไม่สำเร็จ');
+      setSectionDeleteTarget(null);
+      await fetchLessons(courseId);
+      showToast('ลบหมวดแล้ว บทเรียนยังอยู่ครบ', 'success');
+    } catch (caughtError) {
+      setSectionDeleteError(caughtError instanceof Error ? caughtError.message : 'ลบหมวดไม่สำเร็จ กรุณาลองใหม่');
+    } finally {
+      setSectionDeleting(false);
+    }
+  };
+
   const totalLessons = lessons.length;
   const lessonsWithVideo = lessons.filter((lesson) => Boolean(lesson.videoUrl)).length;
   const lessonsWithContent = lessons.filter((lesson) => Boolean(lesson.content?.trim())).length;
   const freePreviewCount = lessons.filter((lesson) => Boolean(lesson.isFreePreview)).length;
   const readinessPercent = totalLessons > 0 ? Math.round(((lessonsWithVideo + lessonsWithContent) / (totalLessons * 2)) * 100) : 0;
+  const sectionDeleteIndex = sectionDeleteTarget ? sections.findIndex((section) => section.id === sectionDeleteTarget.id) : -1;
+  const sectionDeleteDestination = sectionDeleteIndex > 0 ? `หมวด “${sections[sectionDeleteIndex - 1].title}”` : 'กลุ่มที่ยังไม่อยู่ในหมวด';
 
   if (loading) return <AdminLoadingState title="กำลังโหลดบทเรียน" />;
 
@@ -158,20 +232,21 @@ export default function ManageLessonsPage() {
       <AdminPageHeader
         eyebrow="บทเรียนในคอร์ส"
         title="จัดการบทเรียน"
-        description="จัดลำดับ เติมวิดีโอ ตรวจเนื้อหา และกำหนดบทเรียนตัวอย่างจาก workspace เดียว"
+        description="จัดหมวดและลำดับ เติมวิดีโอ ตรวจเนื้อหา และกำหนดบทเรียนตัวอย่างจาก workspace เดียว"
         actions={
           <>
             <Button asChild variant="outline"><Link href="/admin/courses"><ArrowLeft data-icon="inline-start" aria-hidden />คอร์สทั้งหมด</Link></Button>
             {publicCourse?.status === 'published' ? (
               <Button asChild variant="outline"><Link href={`/courses/${publicCourse.slug}`} target="_blank">ดูหน้าเว็บ<ExternalLink data-icon="inline-end" aria-hidden /></Link></Button>
             ) : null}
-            <Button onClick={() => { setFormData(emptyForm); setFormError(''); setShowForm(true); }}><Plus data-icon="inline-start" aria-hidden />เพิ่มบทเรียน</Button>
+            <Button variant="outline" onClick={() => openSectionDialog({ mode: 'create' })}><FolderPlus data-icon="inline-start" aria-hidden />เพิ่มหมวด</Button>
+            <Button onClick={openLessonForm}><Plus data-icon="inline-start" aria-hidden />เพิ่มบทเรียน</Button>
           </>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <AdminMetricCard label="บทเรียนทั้งหมด" value={totalLessons.toLocaleString('th-TH')} detail="โครงสร้างในคอร์สนี้" />
+        <AdminMetricCard label="บทเรียนทั้งหมด" value={totalLessons.toLocaleString('th-TH')} detail={sections.length > 0 ? `${sections.length.toLocaleString('th-TH')} หมวด` : 'โครงสร้างในคอร์สนี้'} />
         <AdminMetricCard label="มีวิดีโอแล้ว" value={lessonsWithVideo.toLocaleString('th-TH')} tone="info" detail="พร้อมสำหรับ player" />
         <AdminMetricCard label="มีเนื้อหาแล้ว" value={lessonsWithContent.toLocaleString('th-TH')} tone="success" detail="มีรายละเอียดประกอบ" />
         <AdminMetricCard label="Preview ฟรี" value={freePreviewCount.toLocaleString('th-TH')} tone="warning" detail="เปิดให้ทดลองเรียน" />
@@ -186,15 +261,18 @@ export default function ManageLessonsPage() {
 
       {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchLessons(courseId)}>ลองใหม่</Button>} /> : null}
 
-      <AdminSection title="โครงสร้างบทเรียน" description="ลากเพื่อจัดลำดับ ใช้ตัวกรองหาบทที่ยังไม่พร้อม และแก้วิดีโอแบบ inline">
-        {lessons.length === 0 ? (
-          <AdminEmptyState icon={<ListVideo aria-hidden />} title="ยังไม่มีบทเรียน" description="เพิ่มบทเรียนแรกเพื่อเริ่มสร้างโครงสร้างคอร์ส" action={<Button onClick={() => setShowForm(true)}>เพิ่มบทเรียน</Button>} />
+      <AdminSection title="โครงสร้างบทเรียน" description="ลากเพื่อจัดลำดับภายในหมวด เลือกหมวดจากเมนูของแต่ละบทเพื่อย้ายข้ามหมวด และแก้วิดีโอแบบ inline">
+        {lessons.length === 0 && sections.length === 0 ? (
+          <AdminEmptyState icon={<ListVideo aria-hidden />} title="ยังไม่มีบทเรียน" description="เพิ่มบทเรียนแรกเพื่อเริ่มสร้างโครงสร้างคอร์ส" action={<Button onClick={openLessonForm}>เพิ่มบทเรียน</Button>} />
         ) : (
           <DraggableLessonList
             lessons={lessons}
+            sections={sections}
             courseId={courseId || ''}
             onDelete={(id) => { setDeleteError(''); setDeleteTarget(lessons.find((lesson) => lesson.id === id) || null); }}
-            onReorder={(newIds) => setLessons(newIds.map((id) => lessons.find((lesson) => lesson.id === id)!).filter(Boolean))}
+            onStructureChange={(outline) => { setLessons(outline.lessons); setSections(outline.sections); }}
+            onRenameSection={(section) => openSectionDialog({ mode: 'rename', section })}
+            onDeleteSection={(section) => { setSectionDeleteError(''); setSectionDeleteTarget(section); }}
             onLessonUpdate={(lessonId, data) => setLessons((current) => current.map((lesson) => lesson.id === lessonId ? { ...lesson, ...data } : lesson))}
           />
         )}
@@ -207,6 +285,16 @@ export default function ManageLessonsPage() {
           <form id="new-lesson-form" onSubmit={handleSubmit}>
             <FieldGroup>
               <Field><FieldLabel htmlFor="lesson-title">ชื่อบทเรียน *</FieldLabel><Input id="lesson-title" value={formData.title} onChange={(event) => setFormData((previous) => ({ ...previous, title: event.target.value }))} required placeholder="เช่น สร้างหน้าแรกด้วย Next.js" /></Field>
+              {sections.length > 0 ? (
+                <Field>
+                  <FieldLabel htmlFor="lesson-section">หมวด</FieldLabel>
+                  <NativeSelect id="lesson-section" value={formData.sectionId} onChange={(event) => setFormData((previous) => ({ ...previous, sectionId: event.target.value }))}>
+                    <NativeSelectOption value="">ไม่อยู่ในหมวด</NativeSelectOption>
+                    {sections.map((section) => <NativeSelectOption key={section.id} value={section.id}>{section.title}</NativeSelectOption>)}
+                  </NativeSelect>
+                  <FieldDescription>บทเรียนใหม่จะต่อท้ายหมวดที่เลือก</FieldDescription>
+                </Field>
+              ) : null}
               <Field><FieldLabel id="new-lesson-content-label">เนื้อหาบทเรียน</FieldLabel><RichTextEditor labelledBy="new-lesson-content-label" content={formData.content} onChange={(content) => setFormData((previous) => ({ ...previous, content }))} /></Field>
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field><FieldLabel htmlFor="lesson-video">URL วิดีโอ</FieldLabel><Input id="lesson-video" value={formData.videoUrl} onChange={(event) => setFormData((previous) => ({ ...previous, videoUrl: event.target.value }))} placeholder="Bunny Video GUID หรือ Embed URL" /></Field>
@@ -216,6 +304,26 @@ export default function ManageLessonsPage() {
             </FieldGroup>
           </form>
           <DialogFooter><Button variant="outline" disabled={saving} onClick={resetForm}>ยกเลิก</Button><Button type="submit" form="new-lesson-form" disabled={saving || !formData.title.trim()}>{saving ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : 'เพิ่มบทเรียน'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(sectionDialog)} onOpenChange={(open) => { if (!open && !sectionSaving) setSectionDialog(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{sectionDialog?.mode === 'rename' ? 'แก้ชื่อหมวด' : 'เพิ่มหมวดใหม่'}</DialogTitle>
+            <DialogDescription>หมวดช่วยแบ่งบทเรียนเป็นช่วง ๆ ผู้เรียนจะเห็นชื่อหมวดเมื่อหมวดมีบทเรียนแล้ว</DialogDescription>
+          </DialogHeader>
+          {sectionError ? <Alert variant="destructive"><AlertTitle>บันทึกหมวดไม่สำเร็จ</AlertTitle><AlertDescription>{sectionError}</AlertDescription></Alert> : null}
+          <form id="section-form" onSubmit={submitSection}>
+            <Field>
+              <FieldLabel htmlFor="section-title">ชื่อหมวด *</FieldLabel>
+              <Input id="section-title" value={sectionTitle} onChange={(event) => setSectionTitle(event.target.value)} required maxLength={255} placeholder="เช่น พื้นฐาน JavaScript" />
+            </Field>
+          </form>
+          <DialogFooter>
+            <Button variant="outline" disabled={sectionSaving} onClick={() => setSectionDialog(null)}>ยกเลิก</Button>
+            <Button type="submit" form="section-form" disabled={sectionSaving || !sectionTitle.trim()}>{sectionSaving ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : 'บันทึกหมวด'}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -230,6 +338,19 @@ export default function ManageLessonsPage() {
         error={deleteError || undefined}
         onConfirm={() => void confirmDeleteLesson()}
         onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(''); } }}
+      />
+
+      <AdminConfirmActionDialog
+        open={Boolean(sectionDeleteTarget)}
+        title="ลบหมวด"
+        description={`บทเรียนในหมวดนี้จะไม่ถูกลบ แต่จะย้ายไปต่อท้าย${sectionDeleteDestination} โดยลำดับการเรียนไม่เปลี่ยน`}
+        target={sectionDeleteTarget?.title}
+        confirmLabel="ลบหมวด"
+        pending={sectionDeleting}
+        pendingLabel="กำลังลบ"
+        error={sectionDeleteError || undefined}
+        onConfirm={() => void confirmDeleteSection()}
+        onOpenChange={(open) => { if (!open) { setSectionDeleteTarget(null); setSectionDeleteError(''); } }}
       />
     </div>
   );

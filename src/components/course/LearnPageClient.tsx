@@ -37,7 +37,7 @@ import { cn } from '@/lib/utils';
 import type { LearnerQuiz } from '@/lib/learning/lesson-quiz';
 import type { LearningCurriculumLesson } from '@/lib/learning/workspace';
 
-interface CurrentLesson extends LearningCurriculumLesson {
+interface CurrentLesson extends Omit<LearningCurriculumLesson, 'sectionId' | 'sectionTitle'> {
   videoUrl: string | null;
   content: string | null;
 }
@@ -115,6 +115,7 @@ export default function LearnPageClient({
   const isReviewMode = isEnrolled && totalCount > 0 && completedCount === totalCount;
   const hasContent = Boolean(currentLesson.content?.trim());
   const duration = formatDuration(currentLesson.videoDuration);
+  const currentSectionTitle = allLessons[currentIndex]?.sectionTitle ?? null;
   const statusHeading = completionSaveState === 'pending'
     ? 'กำลังบันทึกบทเรียน…'
     : completionSaveState === 'failed'
@@ -308,7 +309,10 @@ export default function LearnPageClient({
                 {duration && <span className="text-sm text-muted-foreground">{duration}</span>}
               </div>
               <h1 className="mt-3 max-w-4xl font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">{currentLesson.title}</h1>
-              <p className="mt-2 text-sm text-muted-foreground">{course.title}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {course.title}
+                {currentSectionTitle ? ` · ${currentSectionTitle}` : null}
+              </p>
             </header>
 
             {currentLesson.videoUrl && (

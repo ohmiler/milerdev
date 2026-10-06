@@ -54,8 +54,8 @@ const MANIFEST: Record<string, RouteClass> = {
 const ADMIN_ROUTES = [
     'affiliate-banners/[id]', 'affiliate-banners', 'audit-logs',
     'bundles/[id]', 'bundles', 'certificates/[id]', 'certificates',
-    'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]',
-    'courses', 'enrollments/[id]', 'enrollments/import', 'enrollments', 'lessons/[lessonId]/quiz', 'lessons/[lessonId]',
+    'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]/sections/[sectionId]',
+    'courses/[id]/sections', 'courses/[id]', 'courses', 'enrollments/[id]', 'enrollments/import', 'enrollments', 'lessons/[lessonId]/quiz', 'lessons/[lessonId]',
     'media/[id]', 'media', 'payments/[id]', 'payments/cleanup', 'payments',
     'reconciliation/[paymentId]/retry', 'reconciliation/[paymentId]', 'reconciliation',
     'reports/export', 'reports', 'reviews/[id]', 'reviews',
@@ -75,7 +75,6 @@ const STUDENT_GETS_401 = new Set([
     'admin/bundles/[id]/route.ts',
     'admin/bundles/route.ts',
 
-    'admin/courses/[id]/lessons/reorder/route.ts',
     'admin/courses/[id]/lessons/route.ts',
     'admin/lessons/[lessonId]/route.ts',
     'admin/reconciliation/[paymentId]/retry/route.ts',
@@ -120,7 +119,7 @@ async function call(key: string, method: (typeof METHODS)[number]) {
         ...(method === 'GET' || method === 'DELETE' ? {} : { body: '{}' }),
     });
     const params = Promise.resolve({
-        id: 'x', lessonId: 'x', paymentId: 'x', slug: 'x',
+        id: 'x', lessonId: 'x', paymentId: 'x', sectionId: 'x', slug: 'x',
     });
     return handler(request, { params });
 }

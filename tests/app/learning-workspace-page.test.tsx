@@ -34,10 +34,10 @@ describe('lesson learning workspace page', () => {
         isFreePreview: false,
       },
       curriculum: [
-        { id: 'lesson-1', title: 'Lesson one', videoDuration: 60, isFreePreview: true },
-        { id: 'lesson-2', title: 'Lesson two', videoDuration: 90, isFreePreview: false },
+        { id: 'lesson-1', title: 'Lesson one', videoDuration: 60, isFreePreview: true, sectionId: null, sectionTitle: null },
+        { id: 'lesson-2', title: 'Lesson two', videoDuration: 90, isFreePreview: false, sectionId: null, sectionTitle: null },
       ],
-      previousLesson: { id: 'lesson-1', title: 'Lesson one', videoDuration: 60, isFreePreview: true },
+      previousLesson: { id: 'lesson-1', title: 'Lesson one', videoDuration: 60, isFreePreview: true, sectionId: null, sectionTitle: null },
       nextLesson: null,
       currentIndex: 1,
       isEnrolled: true,

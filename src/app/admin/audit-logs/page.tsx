@@ -61,6 +61,7 @@ function getEntityTypeText(type: string) {
     user: 'ผู้ใช้',
     course: 'คอร์ส',
     lesson: 'บทเรียน',
+    course_section: 'หมวดบทเรียน',
     payment: 'การชำระเงิน',
     enrollment: 'การลงทะเบียน',
     coupon: 'คูปอง',
