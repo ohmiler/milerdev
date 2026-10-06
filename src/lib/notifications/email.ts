@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { Resend } from 'resend';
 import { logError, logEvent } from '@/lib/error-handler';
 import type { SafeAuthReturnPath } from '@/lib/auth/safe-auth-return';
@@ -7,7 +7,7 @@ import type { SafeAuthReturnPath } from '@/lib/auth/safe-auth-return';
 // EMAIL PROVIDER (Resend for production, nodemailer for local)
 // =====================
 let _resend: Resend | null = null;
-let _transporter: nodemailer.Transporter | null = null;
+let _transporter: Transporter | null = null;
 
 function getResend(): Resend | null {
     if (!process.env.RESEND_API_KEY) return null;
@@ -17,7 +17,7 @@ function getResend(): Resend | null {
     return _resend;
 }
 
-function getTransporter(): nodemailer.Transporter | null {
+function getTransporter(): Transporter | null {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return null;
     if (!_transporter) {
         _transporter = nodemailer.createTransport({
