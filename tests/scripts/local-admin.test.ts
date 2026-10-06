@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { applyMaskedInput, hasNonAsciiCharacters, initialMaskedInput } from '../../scripts/local-admin/masked-input';
 import { parseLocalAdminArgs, planLocalAdminWrite } from '../../scripts/local-admin/plan';
 import { assertLocalDatabase } from '../../scripts/local-database-target';
 
@@ -40,6 +41,27 @@ describe('local admin setup', () => {
         resetToken: null, resetExpires: null, deactivatedAt: null, emailVerifiedAt: now,
       }),
     });
+  });
+
+  it('masks typed and pasted characters with "*" and finishes on Enter', () => {
+    const typed = applyMaskedInput(initialMaskedInput, 'abc');
+    expect(typed).toEqual({ state: { value: 'abc', done: false, cancelled: false }, echo: '***' });
+    const pasted = applyMaskedInput(typed.state, 'def\r');
+    expect(pasted).toEqual({ state: { value: 'abcdef', done: true, cancelled: false }, echo: '***' });
+  });
+
+  it('handles backspace, ignores arrow keys, and cancels on Ctrl+C', () => {
+    const edited = applyMaskedInput(initialMaskedInput, 'ab\u007fc\u001b[Dd\u001bOA\r');
+    expect(edited.state).toEqual({ value: 'acd', done: true, cancelled: false });
+    expect(edited.echo).toBe('**\b \b**');
+    expect(applyMaskedInput(initialMaskedInput, '\u007f').echo).toBe('');
+    expect(applyMaskedInput({ value: 'secret', done: false, cancelled: false }, '\u0003').state)
+      .toEqual({ value: '', done: true, cancelled: true });
+  });
+
+  it('flags passwords typed with a non-English keyboard layout', () => {
+    expect(hasNonAsciiCharacters('correct horse battery staple')).toBe(false);
+    expect(hasNonAsciiCharacters('ฟหกดเ่าสวงฟหกดเ')).toBe(true);
   });
 
   it('runs only against a MySQL server on this machine', () => {
