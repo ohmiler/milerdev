@@ -77,6 +77,34 @@ describe('Admin Validation Schemas', () => {
             const result = updateCourseSchema.safeParse({ status: 'archived' });
             expect(result.success).toBe(false);
         });
+
+        // A course whose stored cover predates https CDN URLs must still save: the edit form
+        // sends the stored value back on every save, even when only the price changed.
+        it.each([
+            ['https://cdn.example.com/course.jpg', 'https://cdn.example.com/course.jpg'],
+            ['cdn.example.com/course.jpg', 'https://cdn.example.com/course.jpg'],
+            ['//cdn.example.com/course.jpg', 'https://cdn.example.com/course.jpg'],
+            ['/uploads/course.jpg', '/uploads/course.jpg'],
+            ['  https://cdn.example.com/course.jpg  ', 'https://cdn.example.com/course.jpg'],
+            ['', ''],
+        ])('saves the legacy cover %j as %j', (thumbnailUrl, expected) => {
+            const result = updateCourseSchema.safeParse({ price: '2500.00', thumbnailUrl });
+            expect(result.success && result.data.thumbnailUrl).toBe(expected);
+        });
+
+        it.each(['javascript:alert(1)', 'data:image/png;base64,abc', 'not a url'])(
+            'rejects the unusable cover %j with a Thai message that says how to fix it',
+            (thumbnailUrl) => {
+                const result = updateCourseSchema.safeParse({ thumbnailUrl });
+                expect(result.success).toBe(false);
+                expect(result.error?.issues[0].message).toContain('กรุณาอัปโหลดรูปใหม่หรือกดลบรูป');
+            },
+        );
+
+        it('explains an over-long title in Thai', () => {
+            const result = updateCourseSchema.safeParse({ title: 'x'.repeat(256) });
+            expect(result.error?.issues[0].message).toBe('ชื่อคอร์สยาวเกิน 255 ตัวอักษร');
+        });
     });
 
     describe('updateUserSchema', () => {
