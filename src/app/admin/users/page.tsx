@@ -2,14 +2,12 @@
 
 import { getPasswordPolicyError } from '@/lib/auth/password-policy';
 
-import { Eye, EyeOff, FileDown, FileUp, KeyRound, Pencil, Search, Users } from 'lucide-react';
+import { Eye, EyeOff, FileDown, FileUp, Search, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
-import {
-  AdminUserLifecycleAction,
-  AdminUserLifecycleBadge,
-} from '@/components/admin/AdminUserLifecycleControls';
+import { AdminUserLifecycleBadge } from '@/components/admin/AdminUserLifecycleControls';
+import { AdminUserRowActions } from '@/components/admin/AdminUserRowActions';
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
   AdminEmptyState,
@@ -442,11 +440,13 @@ export default function AdminUsersPage() {
                     <TableCell className="text-center tabular-nums text-muted-foreground" data-label="คอร์ส">{user.enrollmentCount.toLocaleString('th-TH')}</TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground" data-label="วันที่สมัคร">{formatDate(user.createdAt)}</TableCell>
                     <TableCell className="max-md:col-span-2">
-                      <div className="flex flex-wrap justify-end gap-2 max-md:justify-start">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(user)}><Pencil data-icon="inline-start" aria-hidden />แก้ไข</Button>
-                        <Button variant="outline" size="sm" onClick={() => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}><KeyRound data-icon="inline-start" aria-hidden />รหัสผ่าน</Button>
-                        <AdminUserLifecycleAction status={user.lifecycleStatus} pending={updating === user.id} onRequest={() => handleLifecycleRequest(user)} />
-                      </div>
+                      <AdminUserRowActions
+                        user={user}
+                        pending={updating === user.id}
+                        onEdit={() => handleEdit(user)}
+                        onResetPassword={() => { setPasswordResetUser(user); setNewPassword(''); setShowPassword(false); }}
+                        onLifecycle={() => handleLifecycleRequest(user)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
