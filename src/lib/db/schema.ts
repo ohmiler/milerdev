@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, uniqueIndex, index, check } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, json, uniqueIndex, index, check } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -98,7 +98,31 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
         references: [users.id],
     }),
     lessons: many(lessons),
+    sections: many(courseSections),
     enrollments: many(enrollments),
+}));
+
+// =====================
+// COURSE SECTIONS TABLE
+// =====================
+// Sections only group lessons. lessons.order_index stays the one learning order
+// across the course, so section order must agree with it.
+export const courseSections = mysqlTable('course_sections', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    orderIndex: int('order_index').notNull(),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+}, (table) => [
+    index('idx_course_sections_course_id').on(table.courseId),
+]);
+
+export const courseSectionsRelations = relations(courseSections, ({ one, many }) => ({
+    course: one(courses, {
+        fields: [courseSections.courseId],
+        references: [courses.id],
+    }),
+    lessons: many(lessons),
 }));
 
 // =====================
@@ -107,6 +131,8 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
 export const lessons = mysqlTable('lessons', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
     courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    // Deleting a section must never delete its lessons (and with them, learner progress).
+    sectionId: varchar('section_id', { length: 36 }).references(() => courseSections.id, { onDelete: 'set null' }),
     title: varchar('title', { length: 255 }).notNull(),
     content: text('content'),
     videoUrl: text('video_url'),
@@ -116,6 +142,7 @@ export const lessons = mysqlTable('lessons', {
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
 }, (table) => [
     index('idx_lessons_course_id').on(table.courseId),
+    index('idx_lessons_section_id').on(table.sectionId),
 ]);
 
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
@@ -123,7 +150,64 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
         fields: [lessons.courseId],
         references: [courses.id],
     }),
+    section: one(courseSections, {
+        fields: [lessons.sectionId],
+        references: [courseSections.id],
+    }),
     progress: many(lessonProgress),
+    quizQuestions: many(lessonQuizQuestions),
+}));
+
+// =====================
+// LESSON QUIZ TABLES
+// =====================
+// A practice quiz after a lesson. It never gates lesson completion or certificates.
+export type LessonQuizOption = { id: string; text: string; isCorrect: boolean };
+
+export const lessonQuizQuestions = mysqlTable('lesson_quiz_questions', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    lessonId: varchar('lesson_id', { length: 36 }).references(() => lessons.id, { onDelete: 'cascade' }).notNull(),
+    prompt: text('prompt').notNull(),
+    // isCorrect is answer data: strip it before sending options to a learner.
+    options: json('options').$type<LessonQuizOption[]>().notNull(),
+    explanation: text('explanation'),
+    orderIndex: int('order_index').notNull(),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+    updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
+}, (table) => [
+    index('idx_lesson_quiz_questions_lesson_id').on(table.lessonId),
+]);
+
+export const lessonQuizQuestionsRelations = relations(lessonQuizQuestions, ({ one }) => ({
+    lesson: one(lessons, {
+        fields: [lessonQuizQuestions.lessonId],
+        references: [lessons.id],
+    }),
+}));
+
+export const lessonQuizAttempts = mysqlTable('lesson_quiz_attempts', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    userId: varchar('user_id', { length: 36 }).references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    lessonId: varchar('lesson_id', { length: 36 }).references(() => lessons.id, { onDelete: 'cascade' }).notNull(),
+    score: int('score').notNull(),
+    total: int('total').notNull(),
+    // questionId -> chosen option id, graded against the questions at submit time.
+    answers: json('answers').$type<Record<string, string>>().notNull(),
+    submittedAt: datetime('submitted_at').notNull().$defaultFn(() => new Date()),
+}, (table) => [
+    index('idx_lesson_quiz_attempts_lesson_user').on(table.lessonId, table.userId),
+    index('idx_lesson_quiz_attempts_user_id').on(table.userId),
+]);
+
+export const lessonQuizAttemptsRelations = relations(lessonQuizAttempts, ({ one }) => ({
+    user: one(users, {
+        fields: [lessonQuizAttempts.userId],
+        references: [users.id],
+    }),
+    lesson: one(lessons, {
+        fields: [lessonQuizAttempts.lessonId],
+        references: [lessons.id],
+    }),
 }));
 
 // =====================
@@ -471,6 +555,12 @@ export type Course = typeof courses.$inferSelect;
 export type NewCourse = typeof courses.$inferInsert;
 export type Lesson = typeof lessons.$inferSelect;
 export type NewLesson = typeof lessons.$inferInsert;
+export type CourseSection = typeof courseSections.$inferSelect;
+export type NewCourseSection = typeof courseSections.$inferInsert;
+export type LessonQuizQuestion = typeof lessonQuizQuestions.$inferSelect;
+export type NewLessonQuizQuestion = typeof lessonQuizQuestions.$inferInsert;
+export type LessonQuizAttempt = typeof lessonQuizAttempts.$inferSelect;
+export type NewLessonQuizAttempt = typeof lessonQuizAttempts.$inferInsert;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type NewEnrollment = typeof enrollments.$inferInsert;
 export type LessonProgress = typeof lessonProgress.$inferSelect;
