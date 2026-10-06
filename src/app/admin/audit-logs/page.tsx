@@ -66,6 +66,7 @@ function getEntityTypeText(type: string) {
     coupon: 'คูปอง',
     announcement: 'ประกาศ',
     review: 'รีวิว',
+    lesson_quiz: 'แบบทดสอบท้ายบท',
     certificate: 'ใบรับรอง',
     blog: 'บทความ',
     bundle: 'Bundle',
