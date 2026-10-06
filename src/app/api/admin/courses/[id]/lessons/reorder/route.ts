@@ -1,49 +1,35 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { lessons } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { requireAdmin } from '@/lib/auth/helpers';
+import { saveCourseStructure } from '@/lib/courses/course-structure-store';
 import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 import { logError } from '@/lib/error-handler';
+import { courseStructureSchema, validateBody } from '@/lib/validations/admin';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 // POST /api/admin/courses/[id]/lessons/reorder
-// Reorder lessons using Gap-based approach
+// Saves the order of sections and of lessons within them. The body must name every
+// section and lesson of the course once, so a stale editor gets 409 instead of a partial write.
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const guard = await requireAdmin();
+    if (guard instanceof NextResponse) return guard;
 
     const { id: courseId } = await params;
-    const { lessonIds } = await request.json();
-
-    if (!lessonIds || !Array.isArray(lessonIds)) {
-      return NextResponse.json(
-        { error: 'กรุณาระบุ lessonIds' },
-        { status: 400 }
-      );
+    const validation = validateBody(courseStructureSchema, await request.json().catch(() => null));
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Update orderIndex for each lesson using Gap-based (multiply by 100)
-    const updates = lessonIds.map((lessonId: string, index: number) =>
-      db
-        .update(lessons)
-        .set({ orderIndex: (index + 1) * 100 })
-        .where(eq(lessons.id, lessonId))
-    );
-
-    await Promise.all(updates);
+    const result = await saveCourseStructure(courseId, validation.data);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
     await revalidateCoursePagesById(courseId);
 
-    return NextResponse.json({ 
-      message: 'จัดลำดับบทเรียนสำเร็จ',
-      newOrder: lessonIds.map((id: string, i: number) => ({ id, orderIndex: (i + 1) * 100 }))
-    });
+    return NextResponse.json({ message: 'จัดลำดับบทเรียนสำเร็จ' });
   } catch (error) {
     logError(error, { action: 'admin.courses.id.lessons.reorder.reorder_failed' });
     return NextResponse.json(
@@ -52,4 +38,3 @@ export async function POST(request: Request, { params }: RouteParams) {
     );
   }
 }
-

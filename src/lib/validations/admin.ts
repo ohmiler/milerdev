@@ -69,6 +69,21 @@ export const createLessonSchema = z.object({
 
 export const updateLessonSchema = createLessonSchema.partial();
 
+// Course structure validation
+const courseRowIdSchema = z.string().min(1).max(36);
+
+export const courseStructureSchema = z.object({
+    unsectionedLessonIds: z.array(courseRowIdSchema).max(1000),
+    sections: z.array(z.object({
+        id: courseRowIdSchema,
+        lessonIds: z.array(courseRowIdSchema).max(1000),
+    }).strict()).max(200),
+}).strict();
+
+export const courseSectionSchema = z.object({
+    title: z.string().trim().min(1, 'กรุณาระบุชื่อหมวด').max(255),
+}).strict();
+
 // User validation
 export const updateUserSchema = z.object({
     name: z.string().max(255).optional(),

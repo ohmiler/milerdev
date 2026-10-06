@@ -44,6 +44,8 @@ function workspaceStore(): LearningWorkspaceStore {
           videoUrl: 'https://video.example/private',
           videoDuration: 240,
           isFreePreview: false,
+          sectionId: 'section-1',
+          sectionTitle: 'Basics',
         },
       ];
       return curriculumWithPrivateFields;
@@ -74,11 +76,11 @@ describe('LearningWorkspaceProjection', () => {
         isFreePreview: true,
       },
       curriculum: [
-        { id: 'lesson-free', title: 'Free lesson', videoDuration: 120, isFreePreview: true },
-        { id: 'lesson-locked', title: 'Locked lesson', videoDuration: 240, isFreePreview: false },
+        { id: 'lesson-free', title: 'Free lesson', videoDuration: 120, isFreePreview: true, sectionId: null, sectionTitle: null },
+        { id: 'lesson-locked', title: 'Locked lesson', videoDuration: 240, isFreePreview: false, sectionId: 'section-1', sectionTitle: 'Basics' },
       ],
       previousLesson: null,
-      nextLesson: { id: 'lesson-locked', title: 'Locked lesson', videoDuration: 240, isFreePreview: false },
+      nextLesson: { id: 'lesson-locked', title: 'Locked lesson', videoDuration: 240, isFreePreview: false, sectionId: 'section-1', sectionTitle: 'Basics' },
       currentIndex: 0,
       isEnrolled: false,
       canTrackProgress: false,
