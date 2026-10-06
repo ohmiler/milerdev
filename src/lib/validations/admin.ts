@@ -1,13 +1,33 @@
 import { z } from 'zod';
 
+import { normalizeImageUrl } from '@/lib/url';
+
+// Accepts exactly what course pages can display (see normalizeImageUrl): full http(s) URLs,
+// URLs that older uploads saved without a scheme, and site-relative paths. Saves the
+// normalized form, so a legacy value is repaired on the next save instead of blocking it.
+const imageUrlSchema = (label: string) => z.string()
+    .max(2000, `${label}ยาวเกิน 2,000 ตัวอักษร`)
+    .transform((value, ctx) => {
+        if (!value.trim()) return '';
+        const normalized = normalizeImageUrl(value);
+        if (!normalized) {
+            ctx.addIssue({
+                code: 'custom',
+                message: `${label}ไม่ใช่ลิงก์รูปภาพที่ใช้ได้ กรุณาอัปโหลดรูปใหม่หรือกดลบรูป แล้วบันทึกอีกครั้ง`,
+            });
+            return z.NEVER;
+        }
+        return normalized;
+    });
+
 // Course validation
 export const createCourseSchema = z.object({
-    title: z.string().min(1, 'กรุณาระบุชื่อคอร์ส').max(255),
-    description: z.string().max(50000).optional().nullable(),
+    title: z.string().min(1, 'กรุณาระบุชื่อคอร์ส').max(255, 'ชื่อคอร์สยาวเกิน 255 ตัวอักษร'),
+    description: z.string().max(50000, 'คำอธิบายยาวเกิน 50,000 ตัวอักษร').optional().nullable(),
     price: z.union([z.string(), z.number()]).optional(),
     status: z.enum(['draft', 'published', 'archived']).optional(),
-    thumbnailUrl: z.string().url().max(2000).optional().nullable().or(z.literal('')),
-    slug: z.string().max(255).optional().nullable(),
+    thumbnailUrl: imageUrlSchema('รูปภาพปก').optional().nullable(),
+    slug: z.string().max(255, 'Slug ยาวเกิน 255 ตัวอักษร').optional().nullable(),
     tagIds: z.array(z.string()).optional(),
     certificateColor: z.string().max(20).optional(),
 });
@@ -23,11 +43,11 @@ const promoTimeSchema = z.string()
     .nullable();
 
 export const updateCourseSchema = createCourseSchema.omit({ status: true }).partial().extend({
-    previewVideoUrl: z.string().max(2000).optional().nullable().or(z.literal('')),
+    previewVideoUrl: z.string().max(2000, 'ลิงก์วิดีโอแนะนำยาวเกิน 2,000 ตัวอักษร').optional().nullable().or(z.literal('')),
     promoPrice: z.union([z.string(), z.number()]).optional().nullable(),
     promoStartsAt: promoTimeSchema,
     promoEndsAt: promoTimeSchema,
-    certificateHeaderImage: z.string().max(2000).optional().nullable().or(z.literal('')),
+    certificateHeaderImage: z.string().max(2000, 'ลิงก์รูป Header ใบรับรองยาวเกิน 2,000 ตัวอักษร').optional().nullable().or(z.literal('')),
     certificateBadge: z.string().max(50).optional().nullable(),
     instructorId: z.string().min(1).max(36).optional().nullable(),
 }).strict().refine(
