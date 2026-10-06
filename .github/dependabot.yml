@@ -18,6 +18,10 @@ updates:
       # Production runs Node 22 (.nvmrc, engines); never move the types past it.
       - dependency-name: "@types/node"
         versions: [">=23"]
+      # ESLint 10 removed context APIs that eslint-plugin-react (bundled by eslint-config-next)
+      # still calls, so lint crashes. Remove this once eslint-config-next supports ESLint 10.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
