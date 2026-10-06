@@ -8,7 +8,7 @@ import type {
   NewReview,
   NewUser,
 } from '../../src/lib/db/schema';
-import { DEMO_BUNDLE, DEMO_COURSES, DEMO_INSTRUCTOR, DEMO_VIDEOS, type DemoLesson } from './catalog';
+import { DEMO_BUNDLE, DEMO_COURSES, DEMO_INSTRUCTOR, DEMO_VIDEO_CHANNEL, DEMO_VIDEOS, type DemoLesson } from './catalog';
 
 // Every demo row id starts with this prefix. Real ids are cuid2 values, which never contain
 // a hyphen, so removing "demo-%" rows can never touch real data.
@@ -46,7 +46,7 @@ export function demoLessonHtml(lesson: DemoLesson): string {
   }
   if (lesson.video) {
     const video = DEMO_VIDEOS[lesson.video];
-    parts.push(`<p><em>วิดีโอประกอบ: "${escapeHtml(video.title)}" จากช่อง ${escapeHtml(video.channel)} บน YouTube</em></p>`);
+    parts.push(`<p><em>วิดีโอประกอบ: "${escapeHtml(video.title)}" จากช่อง ${DEMO_VIDEO_CHANNEL} บน YouTube</em></p>`);
   }
   return parts.join('');
 }

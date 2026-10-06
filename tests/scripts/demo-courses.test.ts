@@ -101,6 +101,6 @@ describe('demo course rows', () => {
     const html = demoLessonHtml(lesson);
     expect(html).toContain('&lt;h1&gt;');
     expect(html).not.toContain('<h1>');
-    expect(html).toContain('KongRuksiam Official');
+    expect(html).toContain('จากช่อง MilerDev บน YouTube');
   });
 });
