@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { lessons } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { courseSections, lessons } from '@/lib/db/schema';
+import { asc, eq } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
 import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 import { sanitizeRichContent } from '@/lib/security/sanitize';
@@ -32,7 +32,30 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'ไม่พบบทเรียน' }, { status: 404 });
     }
 
-    return NextResponse.json({ lesson });
+    // order_index is a gapped sort key (100, 200, …), not a position. Count the lesson's place
+    // in the same order learners see: order_index, then id.
+    const [courseOrder, sectionRows] = await Promise.all([
+      db
+        .select({ id: lessons.id })
+        .from(lessons)
+        .where(eq(lessons.courseId, lesson.courseId))
+        .orderBy(asc(lessons.orderIndex), asc(lessons.id)),
+      lesson.sectionId
+        ? db
+          .select({ title: courseSections.title })
+          .from(courseSections)
+          .where(eq(courseSections.id, lesson.sectionId))
+          .limit(1)
+        : Promise.resolve([]),
+    ]);
+    const index = courseOrder.findIndex((row) => row.id === lesson.id);
+
+    return NextResponse.json({
+      lesson,
+      position: index >= 0 ? index + 1 : null,
+      lessonCount: courseOrder.length,
+      sectionTitle: sectionRows[0]?.title ?? null,
+    });
   } catch (error) {
     logError(error, { action: 'admin.lessons.lesson_id.fetch_failed' });
     return NextResponse.json(
