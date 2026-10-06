@@ -13,11 +13,21 @@ import * as dotenv from 'dotenv';
 import { and, eq, inArray, like, notLike } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
+import readline from 'node:readline';
 
 import * as schema from '../src/lib/db/schema';
 import { DEMO_COURSES } from './demo-courses/catalog';
 import { buildDemoRows, DEMO_ID_PREFIX, demoCourseId, demoTagId, demoTagSlug } from './demo-courses/rows';
 import { assertLocalDemoTarget } from './demo-courses/target';
+import { chooseLocalDatabaseUrl, describeDatabase, readDevServerDatabaseUrl } from './local-database-target';
+
+function askLine(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => rl.question(question, (answer) => {
+    rl.close();
+    resolve(answer);
+  }));
+}
 
 const { bundleCourses, bundles, courseSections, courseTags, courses, enrollments, lessonQuizQuestions, lessons, reviews, tags, users } = schema;
 const demo = `${DEMO_ID_PREFIX}%`;
@@ -117,9 +127,19 @@ async function enrollUser(tx: Transaction, email: string) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  assertLocalDemoTarget(process.env.DATABASE_URL, process.env.NODE_ENV);
+  // Interactive runs default to the dev server's database; scripted runs keep an explicit DATABASE_URL.
+  const databaseUrl = await chooseLocalDatabaseUrl({
+    envUrl: process.env.DATABASE_URL,
+    devServerUrl: readDevServerDatabaseUrl(),
+    interactive: Boolean(process.stdin.isTTY),
+    ask: askLine,
+    nonInteractive: 'keep-terminal',
+    log: (line) => console.log(line),
+  });
+  assertLocalDemoTarget(databaseUrl, process.env.NODE_ENV);
+  console.log(`Database: ${describeDatabase(databaseUrl!)}`);
 
-  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+  const connection = await mysql.createConnection(databaseUrl!);
   const db = drizzle(connection, { schema, mode: 'default' });
   try {
     await db.transaction(async (tx) => {
