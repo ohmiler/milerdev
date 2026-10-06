@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { applyMaskedInput, hasNonAsciiCharacters, initialMaskedInput } from '../../scripts/local-admin/masked-input';
 import { generateLocalPassword, parseLocalAdminArgs, planLocalAdminWrite } from '../../scripts/local-admin/plan';
 import { getPasswordPolicyError } from '@/lib/auth/password-policy';
-import { assertLocalDatabase } from '../../scripts/local-database-target';
+import { assertLocalDatabase, databaseMismatchWarning, describeDatabase } from '../../scripts/local-database-target';
 
 const now = new Date('2026-10-06T10:00:00Z');
 
@@ -70,6 +70,22 @@ describe('local admin setup', () => {
   it('flags passwords typed with a non-English keyboard layout', () => {
     expect(hasNonAsciiCharacters('correct horse battery staple')).toBe(false);
     expect(hasNonAsciiCharacters('ฟหกดเ่าสวงฟหกดเ')).toBe(true);
+  });
+
+  it('names the database without credentials', () => {
+    expect(describeDatabase('mysql://root:s3cret@127.0.0.1:3306/milerdev')).toBe('127.0.0.1:3306/milerdev');
+    expect(describeDatabase('mysql://root@localhost/milerdev')).toBe('localhost:3306/milerdev');
+  });
+
+  // The owner's terminal had DATABASE_URL set to the E2E database while `npm run dev` used
+  // .env.local, so a successful admin setup could never be used to sign in.
+  it('warns when the terminal database differs from the one the dev server uses', () => {
+    const devServer = 'mysql://root:pw@127.0.0.1:3306/milerdev';
+    expect(databaseMismatchWarning('mysql://e2e_test@127.0.0.1:3306/milerdev_e2e', devServer)).toContain('127.0.0.1:3306/milerdev_e2e');
+    expect(databaseMismatchWarning('mysql://other:pw@127.0.0.1:3306/milerdev', devServer)).toBeNull();
+    expect(databaseMismatchWarning(undefined, devServer)).toBeNull();
+    expect(databaseMismatchWarning('mysql://root@127.0.0.1/milerdev', null)).toBeNull();
+    expect(databaseMismatchWarning('mysql://e2e_test@127.0.0.1/x', devServer)).not.toContain('pw');
   });
 
   it('runs only against a MySQL server on this machine', () => {

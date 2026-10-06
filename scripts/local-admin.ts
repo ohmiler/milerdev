@@ -23,7 +23,12 @@ import * as schema from '../src/lib/db/schema';
 import { applyMaskedInput, hasNonAsciiCharacters, initialMaskedInput } from './local-admin/masked-input';
 import { generateLocalPassword, parseLocalAdminArgs } from './local-admin/plan';
 import { writeLocalAdmin } from './local-admin/write';
-import { assertLocalDatabase } from './local-database-target';
+import {
+  assertLocalDatabase,
+  databaseMismatchWarning,
+  describeDatabase,
+  readDevServerDatabaseUrl,
+} from './local-database-target';
 
 if (!process.env.DATABASE_URL) dotenv.config({ path: '.env.local', quiet: true });
 
@@ -68,6 +73,15 @@ function askYes(question: string): Promise<boolean> {
 async function main() {
   const options = parseLocalAdminArgs(process.argv.slice(2));
   assertLocalDatabase(process.env.DATABASE_URL, process.env.NODE_ENV, 'Local admin setup');
+  console.log(`ฐานข้อมูล: ${describeDatabase(process.env.DATABASE_URL!)}`);
+  const mismatch = databaseMismatchWarning(process.env.DATABASE_URL, readDevServerDatabaseUrl());
+  if (mismatch) {
+    console.log(mismatch);
+    const proceed = process.stdin.isTTY && await askYes('ใช้ฐานข้อมูลนี้ต่อไหม? พิมพ์ y เพื่อยืนยัน หรือ Enter เพื่อยกเลิก: ');
+    if (!proceed) {
+      throw new Error('ยกเลิกแล้ว ไม่มีการเปลี่ยนแปลงใด ๆ ถ้าต้องการใช้ฐานข้อมูลของเว็บ ให้ล้างตัวแปร DATABASE_URL ใน terminal ก่อน');
+    }
+  }
 
   const password = options.generate ? generateLocalPassword() : await readTypedPassword();
   const passwordHash = await hashNewPassword(password);

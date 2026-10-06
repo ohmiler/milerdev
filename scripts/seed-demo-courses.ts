@@ -18,6 +18,7 @@ import * as schema from '../src/lib/db/schema';
 import { DEMO_COURSES } from './demo-courses/catalog';
 import { buildDemoRows, DEMO_ID_PREFIX, demoCourseId, demoTagId, demoTagSlug } from './demo-courses/rows';
 import { assertLocalDemoTarget } from './demo-courses/target';
+import { databaseMismatchWarning, describeDatabase, readDevServerDatabaseUrl } from './local-database-target';
 
 const { bundleCourses, bundles, courseSections, courseTags, courses, enrollments, lessonQuizQuestions, lessons, reviews, tags, users } = schema;
 const demo = `${DEMO_ID_PREFIX}%`;
@@ -118,6 +119,9 @@ async function enrollUser(tx: Transaction, email: string) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   assertLocalDemoTarget(process.env.DATABASE_URL, process.env.NODE_ENV);
+  console.log(`Database: ${describeDatabase(process.env.DATABASE_URL!)}`);
+  const mismatch = databaseMismatchWarning(process.env.DATABASE_URL, readDevServerDatabaseUrl());
+  if (mismatch) console.log(mismatch);
 
   const connection = await mysql.createConnection(process.env.DATABASE_URL!);
   const db = drizzle(connection, { schema, mode: 'default' });
