@@ -5,7 +5,7 @@ import sanitizeHtml from 'sanitize-html';
 
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
 import { db } from '@/lib/db';
-import { courses, enrollments, lessonProgress, lessons } from '@/lib/db/schema';
+import { courseSections, courses, enrollments, lessonProgress, lessons } from '@/lib/db/schema';
 
 type CourseFact = { id: string; slug: string; title: string };
 type LessonAccessFact = {
@@ -24,6 +24,8 @@ type CurriculumFact = {
   title: string;
   videoDuration: number | null;
   isFreePreview: boolean | null;
+  sectionId?: string | null;
+  sectionTitle?: string | null;
 };
 type ProgressFact = {
   lessonId: string;
@@ -48,6 +50,8 @@ export type LearningCurriculumLesson = {
   title: string;
   videoDuration: number | null;
   isFreePreview: boolean;
+  sectionId: string | null;
+  sectionTitle: string | null;
 };
 
 export type LearningWorkspaceProjection =
@@ -131,10 +135,13 @@ const databaseStore: LearningWorkspaceStore = {
         title: lessons.title,
         videoDuration: lessons.videoDuration,
         isFreePreview: lessons.isFreePreview,
+        sectionId: lessons.sectionId,
+        sectionTitle: courseSections.title,
       })
       .from(lessons)
+      .leftJoin(courseSections, eq(lessons.sectionId, courseSections.id))
       .where(eq(lessons.courseId, courseId))
-      .orderBy(asc(lessons.orderIndex));
+      .orderBy(asc(lessons.orderIndex), asc(lessons.id));
   },
   async readProgress(memberId, courseId) {
     return db
@@ -204,6 +211,8 @@ export async function getLearningWorkspaceProjection(
     title: item.title,
     videoDuration: item.videoDuration,
     isFreePreview: Boolean(item.isFreePreview),
+    sectionId: item.sectionId ?? null,
+    sectionTitle: item.sectionId ? item.sectionTitle ?? null : null,
   }));
   const currentIndex = curriculum.findIndex((item) => item.id === lesson.id);
   if (currentIndex < 0) return { kind: 'not_found' };
