@@ -169,7 +169,7 @@ export default function EditCoursePage() {
       <AdminPageHeader
         eyebrow="แก้ไขคอร์ส"
         title={formData.title || 'แก้ไขคอร์ส'}
-        description="ปรับข้อมูลหน้าขาย ราคา โปรโมชั่น และภาพลักษณ์ ส่วนสถานะคอร์สจัดการผ่าน lifecycle actions แยกต่างหาก"
+        description="ปรับข้อมูลหน้าขาย ราคา โปรโมชั่น และภาพลักษณ์ ส่วนการเผยแพร่หรือหยุดขายคอร์สทำที่กล่อง “เปลี่ยนสถานะคอร์ส”"
         actions={
           <>
             <Button asChild variant="outline"><Link href="/admin/courses"><ArrowLeft data-icon="inline-start" aria-hidden />คอร์สทั้งหมด</Link></Button>
@@ -212,11 +212,11 @@ export default function EditCoursePage() {
             </FieldGroup>
           </AdminSection>
 
-          <AdminSection title="ราคา สถานะ และโปรโมชั่น" description="บันทึกราคาแยกจาก lifecycle เพื่อป้องกันการเปิดหรือหยุดขายโดยไม่ตั้งใจ">
+          <AdminSection title="ราคา สถานะ และโปรโมชั่น" description="การบันทึกราคาไม่เปลี่ยนสถานะคอร์ส จึงไม่เผลอเปิดหรือหยุดขายโดยไม่ตั้งใจ">
             <FieldGroup>
               <div className="grid gap-5 sm:grid-cols-2">
                 <Field><FieldLabel htmlFor="course-price">ราคา (บาท)</FieldLabel><Input id="course-price" type="number" min="0" value={formData.price} onChange={(event) => setFormData((previous) => ({ ...previous, price: event.target.value }))} /><FieldDescription>ใช้ 0 สำหรับคอร์สฟรี</FieldDescription></Field>
-                <Field><FieldLabel htmlFor="course-status">สถานะ</FieldLabel><NativeSelect id="course-status" className="w-full" value={formData.status} disabled aria-describedby="course-status-help"><NativeSelectOption value="draft">แบบร่าง</NativeSelectOption><NativeSelectOption value="published">เผยแพร่</NativeSelectOption><NativeSelectOption value="archived">เก็บเข้าคลัง</NativeSelectOption></NativeSelect><FieldDescription id="course-status-help">เปลี่ยนผ่าน lifecycle actions เท่านั้น</FieldDescription></Field>
+                <Field><FieldLabel htmlFor="course-status">สถานะ</FieldLabel><NativeSelect id="course-status" className="w-full" value={formData.status} disabled aria-describedby="course-status-help"><NativeSelectOption value="draft">แบบร่าง</NativeSelectOption><NativeSelectOption value="published">เผยแพร่</NativeSelectOption><NativeSelectOption value="archived">เก็บเข้าคลัง</NativeSelectOption></NativeSelect><FieldDescription id="course-status-help">เปลี่ยนได้ที่กล่อง <a href="#course-status-actions" className="text-link underline underline-offset-2">เปลี่ยนสถานะคอร์ส</a></FieldDescription></Field>
               </div>
               <div className="rounded-xl border bg-muted/30 p-4">
                 <div className="mb-4"><h3 className="font-semibold">ราคาโปรโมชั่น</h3><p className="mt-1 text-sm text-muted-foreground">เว้นว่างหากยังไม่ต้องการเปิดโปรโมชั่น</p></div>
@@ -252,7 +252,7 @@ export default function EditCoursePage() {
               <div className="grid gap-3 rounded-xl border bg-muted/30 p-4 text-sm"><div className="flex justify-between"><span className="text-muted-foreground">สถานะ</span><strong>{statusLabel}</strong></div><div className="flex justify-between"><span className="text-muted-foreground">ราคา</span><strong>{priceLabel}</strong></div><div className="flex justify-between gap-3"><span className="text-muted-foreground">URL</span><span className="max-w-40 truncate font-mono text-xs">/courses/{normalizedSlug}</span></div></div>
               <Button type="submit" disabled={saving} size="lg">{saving ? <AdminPendingLabel>กำลังบันทึก</AdminPendingLabel> : <><Save data-icon="inline-start" aria-hidden />บันทึกการเปลี่ยนแปลง</>}</Button>
               <Button asChild variant="outline"><Link href={`/admin/courses/${courseId}/lessons`}>จัดการบทเรียน</Link></Button>
-              <div className="border-t pt-4"><div className="mb-3 text-sm font-semibold">เปลี่ยนสถานะคอร์ส</div><AdminCourseLifecycleActions status={formData.status} pending={lifecyclePending} onRequest={(action) => { setError(''); setLifecycleAction(action); }} /></div>
+              <div id="course-status-actions" className="scroll-mt-24 border-t pt-4"><div className="mb-3 text-sm font-semibold">เปลี่ยนสถานะคอร์ส</div><AdminCourseLifecycleActions status={formData.status} pending={lifecyclePending} onRequest={(action) => { setError(''); setLifecycleAction(action); }} /></div>
             </CardContent>
           </Card>
         </aside>
