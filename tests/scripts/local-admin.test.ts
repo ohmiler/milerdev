@@ -1,15 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
 import { applyMaskedInput, hasNonAsciiCharacters, initialMaskedInput } from '../../scripts/local-admin/masked-input';
-import { parseLocalAdminArgs, planLocalAdminWrite } from '../../scripts/local-admin/plan';
+import { generateLocalPassword, parseLocalAdminArgs, planLocalAdminWrite } from '../../scripts/local-admin/plan';
+import { getPasswordPolicyError } from '@/lib/auth/password-policy';
 import { assertLocalDatabase } from '../../scripts/local-database-target';
 
 const now = new Date('2026-10-06T10:00:00Z');
 
 describe('local admin setup', () => {
   it('normalizes the email the way login does and keeps an optional name', () => {
-    expect(parseLocalAdminArgs(['--email=  Owner@Example.COM ', '--name=Owner'])).toEqual({ email: 'owner@example.com', name: 'Owner' });
-    expect(parseLocalAdminArgs(['--email=owner@example.com'])).toEqual({ email: 'owner@example.com', name: null });
+    expect(parseLocalAdminArgs(['--email=  Owner@Example.COM ', '--name=Owner'])).toEqual({ email: 'owner@example.com', name: 'Owner', generate: false });
+    expect(parseLocalAdminArgs(['--email=owner@example.com', '--generate'])).toEqual({ email: 'owner@example.com', name: null, generate: true });
+  });
+
+  it('generates a random copy-and-paste password that meets the site policy', () => {
+    const password = generateLocalPassword();
+    expect(password).toMatch(/^[A-HJ-NP-Za-km-z2-9]{5}(-[A-HJ-NP-Za-km-z2-9]{5}){3}$/);
+    expect(getPasswordPolicyError(password)).toBe('');
+    expect(generateLocalPassword()).not.toBe(password);
   });
 
   it.each([

@@ -1,21 +1,36 @@
+import { randomInt } from 'node:crypto';
+
 import type { NewUser, User } from '../../src/lib/db/schema';
 
 export type LocalAdminOptions = { email: string; name: string | null };
+export type LocalAdminArgs = LocalAdminOptions & { generate: boolean };
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Reads `--email=... [--name=...]`. Login lowercases and trims emails, so this does too. */
-export function parseLocalAdminArgs(argv: string[]): LocalAdminOptions {
+/** Reads `--email=... [--name=...] [--generate]`. Login lowercases and trims emails, so this does too. */
+export function parseLocalAdminArgs(argv: string[]): LocalAdminArgs {
   let email = '';
   let name: string | null = null;
+  let generate = false;
   for (const arg of argv) {
     if (arg.startsWith('--email=')) email = arg.slice('--email='.length).toLowerCase().trim();
     else if (arg.startsWith('--name=')) name = arg.slice('--name='.length).trim() || null;
+    else if (arg === '--generate') generate = true;
     else throw new Error(`Unknown option: ${arg}`);
   }
   if (!EMAIL.test(email)) throw new Error('Pass the admin email: npm run db:local-admin -- --email=you@example.com');
   if (name && name.length > 255) throw new Error('--name must be at most 255 characters');
-  return { email, name };
+  return { email, name, generate };
+}
+
+// No look-alike characters (0/O, 1/l/I), so the password can also be read and retyped.
+const READABLE = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+
+/** A random 23-character password in groups of five, e.g. "Ab3dE-fGh2j-...", to copy and paste. */
+export function generateLocalPassword(): string {
+  return Array.from({ length: 4 }, () => (
+    Array.from({ length: 5 }, () => READABLE[randomInt(READABLE.length)]).join('')
+  )).join('-');
 }
 
 type ExistingUser = Pick<User, 'id' | 'name' | 'emailVerifiedAt' | 'sessionVersion'>;

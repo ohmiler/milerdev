@@ -4,6 +4,10 @@
  * characters show as "*", and non-English characters trigger a keyboard-layout warning.
  *
  *   npm run db:local-admin -- --email=you@example.com [--name="Your Name"]
+ *   npm run db:local-admin -- --email=you@example.com --generate
+ *
+ * --generate skips typing: it sets a random password and shows it once in this terminal, to be
+ * pasted into the login page and then changed on the site's settings page.
  *
  * The password follows the site's policy (15–128 characters, not a known breached password).
  * Refuses any database that is not on this machine.
@@ -17,7 +21,7 @@ import { PasswordSecurityError } from '../src/lib/auth/password-errors';
 import { hashNewPassword } from '../src/lib/auth/password-storage';
 import * as schema from '../src/lib/db/schema';
 import { applyMaskedInput, hasNonAsciiCharacters, initialMaskedInput } from './local-admin/masked-input';
-import { parseLocalAdminArgs } from './local-admin/plan';
+import { generateLocalPassword, parseLocalAdminArgs } from './local-admin/plan';
 import { writeLocalAdmin } from './local-admin/write';
 import { assertLocalDatabase } from './local-database-target';
 
@@ -65,6 +69,29 @@ async function main() {
   const options = parseLocalAdminArgs(process.argv.slice(2));
   assertLocalDatabase(process.env.DATABASE_URL, process.env.NODE_ENV, 'Local admin setup');
 
+  const password = options.generate ? generateLocalPassword() : await readTypedPassword();
+  const passwordHash = await hashNewPassword(password);
+
+  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+  const db = drizzle(connection, { schema, mode: 'default' });
+  try {
+    const write = await writeLocalAdmin(db, options, passwordHash);
+    console.log(write.action === 'insert'
+      ? `สร้างบัญชีแอดมิน ${options.email} แล้ว`
+      : `อัปเดต ${options.email} เป็นแอดมินพร้อมรหัสผ่านใหม่แล้ว session เดิมของบัญชีนี้ถูกออกจากระบบ`);
+    if (options.generate) {
+      // Shown once, only in this terminal. Copy and paste it rather than retyping it.
+      console.log(`\nรหัสผ่านชั่วคราว: ${password}\n`);
+      console.log('copy รหัสนี้ไปวางในหน้าเข้าสู่ระบบ แล้วเปลี่ยนเป็นรหัสของคุณเองที่หน้า "ตั้งค่า" บนเว็บ');
+    } else {
+      console.log('ล็อกอินด้วยรหัสผ่านที่เพิ่งตั้งได้เลย');
+    }
+  } finally {
+    await connection.end();
+  }
+}
+
+async function readTypedPassword(): Promise<string> {
   const password = await promptMasked('รหัสผ่านใหม่ (15–128 ตัวอักษร): ');
   const confirmation = await promptMasked('พิมพ์รหัสผ่านอีกครั้ง: ');
   if (password !== confirmation) throw new Error('รหัสผ่านสองครั้งไม่ตรงกัน ไม่มีการเปลี่ยนแปลงใด ๆ');
@@ -76,18 +103,7 @@ async function main() {
       throw new Error('ยกเลิกแล้ว ไม่มีการเปลี่ยนแปลงใด ๆ เปลี่ยนแป้นพิมพ์เป็นภาษาอังกฤษแล้วรันใหม่');
     }
   }
-  const passwordHash = await hashNewPassword(password);
-
-  const connection = await mysql.createConnection(process.env.DATABASE_URL!);
-  const db = drizzle(connection, { schema, mode: 'default' });
-  try {
-    const write = await writeLocalAdmin(db, options, passwordHash);
-    console.log(write.action === 'insert'
-      ? `สร้างบัญชีแอดมิน ${options.email} แล้ว ล็อกอินด้วยรหัสผ่านที่เพิ่งตั้งได้เลย`
-      : `อัปเดต ${options.email} เป็นแอดมินพร้อมรหัสผ่านใหม่แล้ว session เดิมของบัญชีนี้ถูกออกจากระบบ`);
-  } finally {
-    await connection.end();
-  }
+  return password;
 }
 
 main().catch((error) => {
