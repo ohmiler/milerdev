@@ -462,7 +462,7 @@ export default function DraggableLessonList({
               aria-pressed={filter === tab.value}
               onClick={() => setFilter(tab.value)}
             >
-              {tab.label} <span className="tabular-nums opacity-75">{tab.count}</span>
+              {tab.label} <span className="tabular-nums">{tab.count}</span>
             </Button>
           ))}
         </div>

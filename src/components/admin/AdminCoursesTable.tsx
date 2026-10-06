@@ -346,7 +346,7 @@ export default function AdminCoursesTable({ courses }: AdminCoursesTableProps) {
                   setCurrentPage(1);
                 }}
               >
-                {tab.label} <span className="tabular-nums opacity-75">{tab.count}</span>
+                {tab.label} <span className="tabular-nums">{tab.count}</span>
               </Button>
             ))}
           </div>
