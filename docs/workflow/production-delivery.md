@@ -19,7 +19,7 @@
 | คิว merge (merge queue) | ยังไม่มี | ทุก merge ทำให้ PR อื่นต้องอัปเดตและรัน CI ซ้ำ | เจ้าของเปิดใน GitHub |
 | ตาข่าย test ของจุดเสี่ยง | บางส่วน | MySQL จริง: Stripe, PromptPay, ใบรับรอง, ลบ enrollment, admin ให้สิทธิ์เรียน/ออกใบรับรอง; route-policy test; admin route ที่ยังไม่มีเทสต์ของตัวเอง 13 จาก 45 (2026-10-04), webhook/ใบรับรองใน E2E ที่บังคับ | agent + เจ้าของ |
 | Migration ปลอดภัย | บางส่วน | รันเป็น pre-deploy (`npm run db:migrate`), health check `/api/health`; กติกา expand/contract อยู่ใน AGENTS.md; ลบ `db:push` ออกจาก scripts แล้ว (2026-10-04) | - |
-| รอ CI ผ่านก่อน deploy | ยังไม่ยืนยัน | Railway deploy จาก `master` ทันทีหลัง merge; ตัวเลือก "Wait for CI" ยังไม่เห็นในภาพที่ส่งมา | เจ้าของตรวจ/เปิดใน Railway |
+| รอ CI ผ่านก่อน deploy | มีแล้ว | Railway deploy จาก branch `production` ซึ่งขยับเฉพาะเมื่อเจ้าของสั่ง "deploy" และ agent ตรวจแล้วว่า CI ของ commit ล่าสุดบน `master` ผ่าน (ADR 0013) | - |
 | ติดตั้งแบบ lockfile เป๊ะบน production | ยังไม่มี | Railway ใช้ `npm install` ไม่ใช่ `npm ci` | เจ้าของตั้ง install command |
 | ล็อกเวอร์ชัน runtime | มีแล้ว | `.nvmrc` + `engines.node` = 22; Railway ใช้ 22.23.2 | ตรวจ deploy ถัดไปว่ายังเป็น 22 |
 | Smoke test หลัง deploy | มีแล้ว | `Production Smoke` ทำงานหลัง deployment สำเร็จ | - |
@@ -33,21 +33,22 @@
 
 ## Release runbook (ฉบับสั้น)
 
-ก่อน merge งานที่กระทบ production: CI ผ่านบน commit ล่าสุด, branch up to date, PR body ระบุสิ่งที่ยังไม่ได้ตรวจและแผนย้อนกลับ
+ก่อน merge เข้า `master`: CI ผ่านบน commit ล่าสุด, branch up to date, PR body ระบุสิ่งที่ยังไม่ได้ตรวจและแผนย้อนกลับ การ merge ไม่ deploy
 
-หลัง merge: ดู Railway ว่า deploy สำเร็จ (migration, health check), ดูผล `Production Smoke`, ดู log หา label `*_failed` ที่ผิดปกติ ภายในไม่กี่นาทีแรก
+ก่อน deploy (เมื่อเจ้าของสั่ง "deploy"): CI ผ่านบน commit ล่าสุดของ `master`, `Production Smoke` ของ deploy ครั้งก่อนผ่าน, ไม่มี migration ที่ลบสิ่งที่โค้ดบน production ยังใช้ แล้วสรุปรายการ PR ที่จะขึ้นและ fast-forward `production` ไปที่ `master`
 
-ถ้าผิดปกติ: revert PR ผ่าน PR ใหม่ (เร็วที่สุด) ถ้ามี migration แล้ว **ห้ามคาดว่าย้อนได้** ใช้ migration ถัดไปแก้ไปข้างหน้า ถ้าเกี่ยวกับเงินหรือสิทธิ์เรียน แจ้งผู้ได้รับผลกระทบและตรวจ `payments`/`enrollments` เทียบกัน
+หลัง deploy: ดู Railway ว่า deploy สำเร็จ (migration, health check), ดูผล `Production Smoke`, ดู log หา label `*_failed` ที่ผิดปกติ ภายในไม่กี่นาทีแรก
+
+ถ้าผิดปกติ: เจ้าของ rollback deployment ใน Railway (ย้อนแค่โค้ด migration ยังอยู่) หรือ revert ใน `master` ผ่าน PR ใหม่แล้ว deploy อีกครั้ง ถ้ามี migration แล้ว **ห้ามคาดว่าย้อนได้** ใช้ migration ถัดไปแก้ไปข้างหน้า ถ้าเกี่ยวกับเงินหรือสิทธิ์เรียน แจ้งผู้ได้รับผลกระทบและตรวจ `payments`/`enrollments` เทียบกัน
 
 ## Merge authority
 
-AGENTS.md ใช้นโยบายสามระดับ: A เอกสาร/เทสต์อย่างเดียว agent merge เองได้; B โค้ดนอกจุดเสี่ยงสูง เจ้าของพิมพ์ "merge" รายตัว; C จุดเสี่ยงสูงและ CI gate เจ้าของ merge
-ระดับ A มีผลต่อเมื่อ Railway รอ CI ก่อน deploy, มี alert และโหมดสิทธิ์ของเครื่องอนุญาต ถ้ายังไม่ครบ agent ถือเป็นระดับ B
-ดังนั้นข้อ 1 และ 3 ด้านล่างคือสิ่งที่ปลดล็อกระดับ A
+การ merge เข้า `master` ไม่ deploy (ADR 0013) AGENTS.md ใช้นโยบายสามระดับ: A เอกสาร/เทสต์อย่างเดียว และ B โค้ดนอกจุดเสี่ยงสูง agent merge เองเมื่อ CI ผ่าน; C จุดเสี่ยงสูงและ CI gate เจ้าของ merge หรือสั่ง "merge" หลังอ่าน diff
+การ deploy เกิดเมื่อเจ้าของพิมพ์ "deploy" เท่านั้น
 
 ## ลำดับที่แนะนำให้เจ้าของลงมือ
 
-1. ตรวจ Railway: "Wait for CI" และตั้ง install command เป็น `npm ci`
+1. ตั้ง Railway ให้ deploy จาก branch `production` (ADR 0013) และตั้ง install command เป็น `npm ci`
 2. เปิด Merge queue ใน GitHub (หรือยอมรับต้นทุนการอัปเดต branch)
 3. เพิ่ม alert พื้นฐาน (health check ล้ม, อัตรา error) และยืนยันตาราง backup
 4. เปิด secret scanning และ Dependabot alerts ใน GitHub Settings
