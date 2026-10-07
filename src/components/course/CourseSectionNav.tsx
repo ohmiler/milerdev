@@ -67,7 +67,7 @@ export default function CourseSectionNav({ items }: CourseSectionNavProps) {
                 navigateToSection(item.id);
               }}
               className={cn(
-                'relative inline-flex h-14 items-center justify-center gap-2 text-center text-xs font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 motion-reduce:transition-none sm:min-w-0 sm:text-sm',
+                'relative inline-flex h-14 items-center justify-center gap-2 text-center text-caption font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 motion-reduce:transition-none sm:min-w-0 sm:text-sm',
                 activeSection === item.id
                   ? 'text-link after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary'
                   : null,

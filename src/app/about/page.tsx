@@ -156,7 +156,7 @@ export default function AboutPage() {
                     height={768}
                     sizes={'(max-width: 767px) 100vw, 33vw'}
                   />
-                  <figcaption className={'px-4 py-3 text-xs leading-5 text-white/65'}>{media.caption}</figcaption>
+                  <figcaption className={'px-4 py-3 text-caption leading-5 text-white/65'}>{media.caption}</figcaption>
                 </figure>
               ))}
             </div>

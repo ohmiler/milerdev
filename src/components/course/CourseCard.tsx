@@ -74,7 +74,7 @@ export default function CourseCard({
             {tags?.length ? <div className="mb-4 flex flex-wrap gap-2">{tags.slice(0, 3).map((tag) => <TagBadge key={tag.id} tag={tag} />)}{tags.length > 3 ? <Badge variant="outline">+{tags.length - 3}</Badge> : null}</div> : null}
             <h3 className="line-clamp-3 text-xl leading-snug font-semibold tracking-[-.02em] text-balance group-hover:text-link">{title}</h3>
             {outcomes?.length ? <ul className="mt-4 flex flex-col gap-2 text-sm leading-6 text-muted-foreground">{outcomes.map((outcome) => <li key={outcome} className="flex gap-2"><span className="text-link">✓</span>{outcome}</li>)}</ul> : description ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">{getExcerpt(description, 120)}</p> : null}
-            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-caption text-muted-foreground">
               <span className="inline-flex items-center gap-1.5"><BookOpen className="size-3.5" />{lessonCount} บทเรียน</span>
               {durationText ? <span className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" />{durationText}</span> : null}
               {instructorName ? <span className="basis-full">สอนโดย {instructorName}</span> : null}

@@ -390,7 +390,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
                       <strong className="text-sm font-medium wrap-anywhere">{review.displayName}</strong>
                       {review.isVerified && <Badge variant="secondary">ผู้เรียนจริง</Badge>}
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{formatDate(review.createdAt)}</p>
+                    <p className="mt-1 text-caption text-muted-foreground">{formatDate(review.createdAt)}</p>
                   </div>
                 </div>
                 <StarRating rating={review.rating} />

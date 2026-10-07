@@ -42,7 +42,7 @@ export default function EmptyCourseWorkspace({
       <header className="border-b">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <Link className="flex items-center gap-3 font-semibold" href="/dashboard">
-            <span className="flex size-9 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">MD</span>
+            <span className="flex size-9 items-center justify-center rounded-md bg-primary text-caption text-primary-foreground">MD</span>
             MilerDev Learning
           </Link>
           <strong className="hidden max-w-md truncate text-sm md:block">{courseTitle}</strong>

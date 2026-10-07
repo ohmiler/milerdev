@@ -50,7 +50,7 @@ export default function BundleCard({ title, description, decisionFacts }: Bundle
             <strong className="text-2xl">
               {decisionFacts.price.isFree ? 'ฟรี' : decisionFacts.price.bundleFormatted}
             </strong>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-caption text-muted-foreground">
               ซื้อแยกวันนี้ {decisionFacts.price.separateCurrentFormatted}
             </span>
           </div>

@@ -48,7 +48,7 @@ describe('Home spacing foundation', () => {
     const globals = readSource('src/app/globals.css');
     const theme = globals.match(/@theme inline\s*\{[^}]+\}/)?.[0] ?? '';
 
-    for (const step of ['display', 'h1', 'h2', 'h3', 'lead']) {
+    for (const step of ['display', 'h1', 'h2', 'h3', 'lead', 'caption']) {
       expect(theme).toContain(`--text-${step}: var(--type-${step});`);
       expect(globals).toMatch(new RegExp(`--type-${step}: [^;]+;`));
     }

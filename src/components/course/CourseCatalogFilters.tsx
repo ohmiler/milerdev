@@ -201,7 +201,7 @@ export default function CourseCatalogFilters({
 
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{SORT_LABELS[sort] ?? SORT_LABELS.newest}</p>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            <p className="mt-0.5 truncate text-caption text-muted-foreground">
               {selectedTag ?? 'ทุกหัวข้อ'} · {PRICE_LABELS[priceFilter] ?? PRICE_LABELS.all}{previewFilter === 'free' ? ` · ${PREVIEW_LABELS.free}` : ''} · {totalCourses} คอร์ส
             </p>
           </div>
@@ -217,7 +217,7 @@ export default function CourseCatalogFilters({
 
       {activeFilterCount > 0 ? (
         <div className={'mt-4 flex flex-wrap items-center gap-2'} aria-label={'ตัวกรองที่เลือก'}>
-          <span className={'mr-1 text-xs font-medium text-muted-foreground'}>กำลังกรองด้วย</span>
+          <span className={'mr-1 text-caption font-medium text-muted-foreground'}>กำลังกรองด้วย</span>
           {search ? (
             <Badge asChild variant={'secondary'}>
               <Link

@@ -50,7 +50,7 @@ export default function AuthShell({
               <ol className="divide-y divide-white/10 border-y border-white/10">
                 {evidence.map((item, index) => (
                   <li key={item.label} className="grid grid-cols-[2rem_1fr] gap-4 py-5">
-                    <span className="font-mono text-xs text-link-inverse">{String(index + 1).padStart(2, '0')}</span>
+                    <span className="font-mono text-caption text-link-inverse">{String(index + 1).padStart(2, '0')}</span>
                     <div><strong className="text-sm text-white">{item.label}</strong><p className="mt-1 text-sm leading-6 text-white/60">{item.text}</p></div>
                   </li>
                 ))}

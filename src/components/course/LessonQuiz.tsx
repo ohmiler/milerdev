@@ -106,11 +106,11 @@ export default function LessonQuiz({ lessonId, questions, lastAttempt, canSubmit
                         />
                         <span className="min-w-0 flex-1 wrap-anywhere">{option.text}</span>
                         {isCorrectOption ? (
-                          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-[var(--color-success-strong)]">
+                          <span className="flex shrink-0 items-center gap-1 text-caption font-semibold text-[var(--color-success-strong)]">
                             <CircleCheck className="size-4" aria-hidden="true" /><span className="sr-only">, </span>คำตอบที่ถูก
                           </span>
                         ) : isWrongChoice ? (
-                          <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-destructive">
+                          <span className="flex shrink-0 items-center gap-1 text-caption font-semibold text-destructive">
                             <CircleX className="size-4" aria-hidden="true" /><span className="sr-only">, </span>คำตอบของคุณ
                           </span>
                         ) : null}

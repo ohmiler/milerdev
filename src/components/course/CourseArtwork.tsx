@@ -47,7 +47,7 @@ export default function CourseArtwork({ title, slug, tags, compact = false }: Co
 
       {/* The top-left corner stays empty: course cards and Bundle rows put their own badges there. */}
       {compact ? null : (
-        <div className="relative flex justify-end text-[0.68rem] font-semibold">
+        <div className="relative flex justify-end text-caption font-semibold">
           <span className="font-mono tracking-[0.16em] text-white/55">MD—{artworkNumber}</span>
         </div>
       )}
@@ -56,7 +56,7 @@ export default function CourseArtwork({ title, slug, tags, compact = false }: Co
         {compact ? null : (
           <div className="mb-3 flex flex-wrap gap-2 sm:mb-4">
             {(tags?.length ? tags.slice(0, 2) : [{ name: 'คอร์สออนไลน์ภาษาไทย' }]).map((tag) => (
-              <span key={tag.name} className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[0.68rem] font-medium text-white/80 backdrop-blur-sm">
+              <span key={tag.name} className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-caption font-medium text-white/80 backdrop-blur-sm">
                 {tag.name}
               </span>
             ))}

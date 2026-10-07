@@ -80,8 +80,8 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
           onClick={() => handleLessonClick(lesson)}
           aria-label={`${lesson.title}, ${lesson.isFreePreview ? 'ดูฟรี' : isEnrolled ? 'เปิดบทเรียน' : 'ต้องสมัครเรียนก่อน'}`}
         >
-          <span className="text-center font-mono text-xs text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
-          <span className="min-w-0"><strong className="block text-sm leading-6 font-medium wrap-anywhere">{lesson.title}</strong>{duration && <span className="mt-1 block text-xs text-muted-foreground">{duration}</span>}
+          <span className="text-center font-mono text-caption text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
+          <span className="min-w-0"><strong className="block text-sm leading-6 font-medium wrap-anywhere">{lesson.title}</strong>{duration && <span className="mt-1 block text-caption text-muted-foreground">{duration}</span>}
           </span>
           {lesson.isFreePreview ? (
             <Badge variant="secondary">ดูฟรี</Badge>
@@ -114,7 +114,7 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
           <Toggle size="sm" variant="outline" pressed={filterActive} onPressedChange={setFreeOnly} aria-controls={listId}>
             ดูเฉพาะ {freePreviewCount} บทฟรี
           </Toggle>
-          <p className="text-xs text-muted-foreground" role="status">{filterActive ? 'แสดงบททดลองเรียนฟรีทั้งหมด' : 'เลือกดูบททดลองก่อนสมัครเรียนได้'}</p>
+          <p className="text-caption text-muted-foreground" role="status">{filterActive ? 'แสดงบททดลองเรียนฟรีทั้งหมด' : 'เลือกดูบททดลองก่อนสมัครเรียนได้'}</p>
         </div>
       )}
       {sectioned ? (
@@ -124,7 +124,7 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
               {group.title && (
                 <h3 className="mb-2 flex items-baseline justify-between gap-3 text-sm font-semibold">
                   <span className="wrap-anywhere">{group.title}</span>
-                  <span className="shrink-0 text-xs font-normal text-muted-foreground">{sectionCounts.get(group.sectionId) ?? 0} บท</span>
+                  <span className="shrink-0 text-caption font-normal text-muted-foreground">{sectionCounts.get(group.sectionId) ?? 0} บท</span>
                 </h3>
               )}
               <ol className="divide-y overflow-hidden rounded-xl border bg-card">

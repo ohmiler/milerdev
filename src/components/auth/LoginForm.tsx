@@ -105,7 +105,7 @@ export default function LoginForm({
             />
           </AuthField>
 
-          <AuthField htmlFor="login-password" label="รหัสผ่าน" trailing={<Link className="text-xs font-semibold text-link hover:underline" href={forgotPasswordHref}>ลืมรหัสผ่าน?</Link>}>
+          <AuthField htmlFor="login-password" label="รหัสผ่าน" trailing={<Link className="text-caption font-semibold text-link hover:underline" href={forgotPasswordHref}>ลืมรหัสผ่าน?</Link>}>
             <PasswordInput
               id={'login-password'}
               name={'password'}
@@ -139,7 +139,7 @@ export default function LoginForm({
       </Button>
 
       <AuthFootnote>ยังไม่มีบัญชี? <Link href={registerHref}>สมัครสมาชิกฟรี</Link></AuthFootnote>
-      <p className="mt-2 text-center text-xs leading-5 text-muted-foreground">การเข้าสู่ระบบจะใช้ข้อมูลบัญชีตามนโยบายความเป็นส่วนตัวของ MilerDev</p>
+      <p className="mt-2 text-center text-caption leading-5 text-muted-foreground">การเข้าสู่ระบบจะใช้ข้อมูลบัญชีตามนโยบายความเป็นส่วนตัวของ MilerDev</p>
     </>
   );
 }

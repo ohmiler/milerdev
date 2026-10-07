@@ -61,7 +61,7 @@ export default function UserNavigationMenus({
                                         {session.user?.name || 'ผู้ใช้'}
                                     </strong>
                                     {session.user?.email && (
-                                        <span className="block truncate text-xs font-normal text-muted-foreground">
+                                        <span className="block truncate text-caption font-normal text-muted-foreground">
                                             {session.user.email}
                                         </span>
                                     )}

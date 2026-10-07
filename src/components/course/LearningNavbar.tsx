@@ -68,18 +68,18 @@ export default function LearningNavbar({
           </Button>
 
           <div className="hidden items-center gap-2 sm:flex" aria-label="MilerDev">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-[11px] font-bold text-primary-foreground" aria-hidden="true">MD</span>
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-caption font-bold text-primary-foreground" aria-hidden="true">MD</span>
             <span className="font-heading text-sm font-semibold">MilerDev</span>
           </div>
 
           <div className="mx-1 h-6 w-px bg-border sm:mx-2" aria-hidden="true" />
 
           <div className="min-w-0 flex-1">
-            <p className="hidden truncate text-xs text-muted-foreground sm:block">{courseTitle}</p>
+            <p className="hidden truncate text-caption text-muted-foreground sm:block">{courseTitle}</p>
             <strong className="block truncate text-sm font-semibold">{lessonTitle}</strong>
           </div>
 
-          <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground" aria-label={isEnrolled ? `ความคืบหน้า ${progressPercent}%` : 'บทเรียนทดลอง'}>
+          <div className="flex shrink-0 items-center gap-3 text-caption text-muted-foreground" aria-label={isEnrolled ? `ความคืบหน้า ${progressPercent}%` : 'บทเรียนทดลอง'}>
             <span>{isEnrolled ? `${progressPercent}%` : 'ทดลองเรียน'}</span>
             <span className="hidden tabular-nums sm:inline">{currentIndex + 1} / {totalCount}</span>
           </div>
