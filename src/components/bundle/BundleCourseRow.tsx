@@ -85,7 +85,7 @@ export default function BundleCourseRow({
             ) : null}
           </CardHeader>
 
-          <CardContent className={'flex flex-1 flex-wrap content-start gap-x-4 gap-y-2 text-xs text-muted-foreground'}>
+          <CardContent className={'flex flex-1 flex-wrap content-start gap-x-4 gap-y-2 text-caption text-muted-foreground'}>
             <span>{course.evidence.lessonCount} บทเรียน</span>
             {durationText ? <span>{durationText}</span> : null}
             {course.evidence.instructorName ? (

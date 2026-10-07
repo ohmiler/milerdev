@@ -427,7 +427,7 @@ export default function LearnPageClient({
                 <Button asChild variant="outline" className="h-auto min-h-12 justify-start px-4 py-3">
                   <Link href={`/courses/${course.slug}/learn/${prevLesson.id}`}>
                     <ArrowLeft data-icon="inline-start" aria-hidden="true" />
-                    <span className="min-w-0 text-left"><small className="block text-xs font-normal text-muted-foreground">บทก่อนหน้า</small><strong className="block truncate text-sm">{prevLesson.title}</strong></span>
+                    <span className="min-w-0 text-left"><small className="block text-caption font-normal text-muted-foreground">บทก่อนหน้า</small><strong className="block truncate text-sm">{prevLesson.title}</strong></span>
                   </Link>
                 </Button>
               ) : prevLesson ? (
@@ -439,13 +439,13 @@ export default function LearnPageClient({
               {nextLesson && (isEnrolled || nextLesson.isFreePreview) ? (
                 <Button asChild className="h-auto min-h-12 justify-end px-4 py-3">
                   <Link href={`/courses/${course.slug}/learn/${nextLesson.id}`}>
-                    <span className="min-w-0 text-right"><small className="block text-xs font-normal text-primary-foreground/75">บทถัดไป</small><strong className="block truncate text-sm">{nextLesson.title}</strong></span>
+                    <span className="min-w-0 text-right"><small className="block text-caption font-normal text-primary-foreground/75">บทถัดไป</small><strong className="block truncate text-sm">{nextLesson.title}</strong></span>
                     <ArrowRight data-icon="inline-end" aria-hidden="true" />
                   </Link>
                 </Button>
               ) : nextLesson ? (
                 <Button type="button" variant="secondary" className="h-auto min-h-12 justify-end px-4 py-3" onClick={() => openLockedDialog(nextLesson.id)}>
-                  <span className="min-w-0 text-right"><small className="block text-xs font-normal text-muted-foreground">บทถัดไป</small><strong className="block truncate text-sm">{nextLesson.title}</strong></span>
+                  <span className="min-w-0 text-right"><small className="block text-caption font-normal text-muted-foreground">บทถัดไป</small><strong className="block truncate text-sm">{nextLesson.title}</strong></span>
                   <Lock data-icon="inline-end" aria-hidden="true" />
                 </Button>
               ) : <span />}

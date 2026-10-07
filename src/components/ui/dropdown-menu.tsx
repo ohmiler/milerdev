@@ -173,7 +173,7 @@ function DropdownMenuLabel({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "px-3 py-2.5 text-xs text-muted-foreground data-inset:pl-9.5 data-[variant=account]:p-3 data-[variant=account]:text-popover-foreground",
+        "px-3 py-2.5 text-caption text-muted-foreground data-inset:pl-9.5 data-[variant=account]:p-3 data-[variant=account]:text-popover-foreground",
         className
       )}
       {...props}

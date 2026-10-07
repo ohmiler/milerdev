@@ -108,11 +108,11 @@ export default function LessonList({
         </Badge>
         <span className="min-w-0">
           <strong className="block truncate text-sm font-medium text-current">{lesson.title}</strong>
-          <small className="mt-1 block text-xs text-muted-foreground">
+          <small className="mt-1 block text-caption text-muted-foreground">
             {duration ?? (lesson.isFreePreview && !isEnrolled ? 'ทดลองเรียนฟรี' : `บทที่ ${originalIndex + 1}`)}
           </small>
         </span>
-        <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+        <span className="flex items-center gap-1 text-caption font-medium text-muted-foreground">
           {isLocked ? <><Lock className="size-3" aria-hidden="true" />ล็อก</> : isCurrent ? 'กำลังเรียน' : isCompleted ? 'จบแล้ว' : 'เปิด'}
         </span>
       </>
@@ -147,7 +147,7 @@ export default function LessonList({
           {groupBySection(indexedPage).map((group) => (
             <div key={group.key}>
               {group.title && (
-                <h3 className="mb-2 px-3 text-xs font-semibold text-muted-foreground wrap-anywhere">{group.title}</h3>
+                <h3 className="mb-2 px-3 text-caption font-semibold text-muted-foreground wrap-anywhere">{group.title}</h3>
               )}
               <ol className="grid gap-2">{group.items.map(renderLesson)}</ol>
             </div>
@@ -162,7 +162,7 @@ export default function LessonList({
           <Button size="icon" className="min-h-11 min-w-11" variant="ghost" type="button" onClick={() => setPagination({ lessonId: currentLessonId, search: normalizedSearch, page: Math.max(0, page - 1) })} disabled={page === 0} aria-label="หน้าบทเรียนก่อนหน้า">
             ←
           </Button>
-          <span className="text-xs tabular-nums text-muted-foreground">หน้า {page + 1} / {totalPages}</span>
+          <span className="text-caption tabular-nums text-muted-foreground">หน้า {page + 1} / {totalPages}</span>
           <Button size="icon" className="min-h-11 min-w-11" variant="ghost" type="button" onClick={() => setPagination({ lessonId: currentLessonId, search: normalizedSearch, page: Math.min(totalPages - 1, page + 1) })} disabled={page === totalPages - 1} aria-label="หน้าบทเรียนถัดไป">
             →
           </Button>

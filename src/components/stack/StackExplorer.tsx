@@ -49,7 +49,7 @@ function FlatStack({ selectedId, onSelect }: { selectedId: string | null; onSele
       <p className="text-sm text-white/60">เบราว์เซอร์นี้แสดงโมเดล 3 มิติไม่ได้ จึงแสดงเป็นแผนผังแทน</p>
       {STACK_LAYERS.map((layer) => (
         <div key={layer.id} className="rounded-2xl border border-white/10 p-3">
-          <p className="mb-2 text-xs font-medium" style={{ color: layer.color }}>{layer.name}</p>
+          <p className="mb-2 text-caption font-medium" style={{ color: layer.color }}>{layer.name}</p>
           <div className="flex flex-wrap gap-2">
             {STACK_NODES.filter((node) => node.layer === layer.id).map((node) => (
               <button key={node.id} type="button" aria-pressed={node.id === selectedId} className={chipClass} onClick={() => onSelect(node.id)}>{node.name}</button>
@@ -246,7 +246,7 @@ export default function StackExplorer() {
           <div>
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold lg:text-base">ดูข้อมูลวิ่งจริง</h2>
-              <button type="button" onClick={copyLink} className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              <button type="button" onClick={copyLink} className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-caption text-white/70 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                 {copied === 'done' ? <Check className="size-3.5" aria-hidden /> : <Link2 className="size-3.5" aria-hidden />}
                 <span aria-live="polite">{copied === 'done' ? 'คัดลอกแล้ว' : copied === 'failed' ? 'คัดลอกไม่ได้' : 'คัดลอกลิงก์มุมนี้'}</span>
               </button>
@@ -305,7 +305,7 @@ export default function StackExplorer() {
                       )}
                       onClick={() => goToStep(index)}
                     >
-                      <span className="w-5 shrink-0 font-mono text-xs leading-5 opacity-70">{index + 1}</span>
+                      <span className="w-5 shrink-0 font-mono text-caption leading-5 opacity-70">{index + 1}</span>
                       <span className="min-w-0">
                         <span className="block font-medium">{findStackNode(item.from)?.name} → {findStackNode(item.to)?.name}</span>
                         <span className="block opacity-80">{item.caption}</span>
@@ -320,7 +320,7 @@ export default function StackExplorer() {
           <div aria-live="polite" className="border-t border-white/10 pt-3">
             {selected && selectedLayer ? (
               <>
-                <p className="flex items-center gap-2 text-xs font-medium" style={{ color: selectedLayer.color }}>
+                <p className="flex items-center gap-2 text-caption font-medium" style={{ color: selectedLayer.color }}>
                   <span className="size-2 rounded-full" style={{ backgroundColor: selectedLayer.color }} aria-hidden />
                   ชั้น{selectedLayer.name}
                 </p>

@@ -334,7 +334,7 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
                     }}
                   />
                 </CardContent>
-                <CardFooter><p className="text-xs leading-5 text-muted-foreground">ตรวจสอบคอร์สและยอดชำระก่อนยืนยัน ระบบจะเปิดสิทธิ์หลังการชำระเงินได้รับการตรวจสอบแล้ว</p></CardFooter>
+                <CardFooter><p className="text-caption leading-5 text-muted-foreground">ตรวจสอบคอร์สและยอดชำระก่อนยืนยัน ระบบจะเปิดสิทธิ์หลังการชำระเงินได้รับการตรวจสอบแล้ว</p></CardFooter>
               </Card>
             </aside>
           </div>

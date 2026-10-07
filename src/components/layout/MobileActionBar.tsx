@@ -65,7 +65,7 @@ export default function MobileActionBar({
           <div className="mx-auto flex max-w-lg items-center gap-3">
             <div className="min-w-0 flex-1">
               <strong className="block truncate text-lg leading-6 font-semibold">{summary}</strong>
-              {hint ? <span className="block truncate text-xs text-muted-foreground">{hint}</span> : null}
+              {hint ? <span className="block truncate text-caption text-muted-foreground">{hint}</span> : null}
             </div>
             <Button asChild className="shrink-0">{action}</Button>
           </div>

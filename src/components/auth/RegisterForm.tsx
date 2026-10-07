@@ -74,6 +74,6 @@ export default function RegisterForm({ returnTo, loginHref, forgotPasswordHref }
     <AuthDivider>หรือใช้บัญชี Google</AuthDivider>
     <Button variant="outline" className="w-full" onClick={() => signIn('google', { callbackUrl: returnTo })}><GoogleIcon />สมัครสมาชิกด้วย Google</Button>
     <AuthFootnote>มีบัญชีอยู่แล้ว? <Link href={loginHref}>เข้าสู่ระบบ</Link></AuthFootnote>
-    <p className="mt-2 text-center text-xs text-muted-foreground">อ่าน <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว</Link> ก่อนสมัครสมาชิก</p>
+    <p className="mt-2 text-center text-caption text-muted-foreground">อ่าน <Link href="/terms">ข้อกำหนดการใช้งาน</Link> และ <Link href="/privacy">นโยบายความเป็นส่วนตัว</Link> ก่อนสมัครสมาชิก</p>
   </>;
 }

@@ -80,7 +80,8 @@
   --font-display: var(--font-prompt), var(--font-inter), sans-serif;
   --font-body: var(--font-prompt), var(--font-inter), sans-serif;
   --font-code: "Fira Code", "JetBrains Mono", "Cascadia Code", monospace;
-  /* Type scale, used through the text-display, text-h1, text-h2, text-h3 and text-lead utilities.
+  /* Type scale, used through the text-display, text-h1, text-h2, text-h3, text-lead and text-caption
+     utilities. text-caption (13px) is the smallest text people read on non-admin pages.
      Headings grow with the viewport from a phone size to a desktop size, so they need no breakpoints.
      Thai stacks vowels and tone marks above and below the line, so no heading line height goes below 1.22. */
   --type-display: clamp(2.5rem, 1.6rem + 3.2vw, 3.75rem);
@@ -89,6 +90,7 @@
   --type-h3: 1.25rem;
   --type-lead: 1.125rem;
   --type-body: 1rem;
+  --type-caption: 0.8125rem;
   --leading-display: 1.22;
   --leading-heading: 1.3;
   --leading-thai: 1.75;
@@ -452,7 +454,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .rich-content code {
   font-family: 'Fira Code', 'JetBrains Mono', monospace !important;
-  font-size: 0.875em !important;
+  /* Never under 13px (text-caption): code often holds Thai strings. */
+  font-size: max(0.8125rem, 0.875em) !important;
 }
 
 .rich-content :not(pre) > code {
@@ -460,7 +463,7 @@ h1, h2, h3, h4, h5, h6 {
   background: #f1f5f9 !important;
   color: #e11d48 !important;
   border-radius: 4px !important;
-  font-size: 0.85em !important;
+  font-size: max(0.8125rem, 0.85em) !important;
 }
 
 .rich-content img {
@@ -541,7 +544,7 @@ h1, h2, h3, h4, h5, h6 {
   content: attr(data-language);
   display: block;
   text-align: right;
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #64748b;
   text-transform: uppercase;
@@ -563,7 +566,7 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--muted);
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: max(0.8125rem, 0.9em);
   color: var(--foreground);
   font-family: 'Fira Code', 'Consolas', monospace;
 }
@@ -576,7 +579,7 @@ h1, h2, h3, h4, h5, h6 {
   overflow-x: auto;
   margin: 0.75em 0;
   font-family: 'Fira Code', 'Consolas', monospace;
-  font-size: 0.9em;
+  font-size: max(0.8125rem, 0.9em);
   line-height: 1.6;
 }
 .lesson-content pre code { background: none; color: inherit; padding: 0; border-radius: 0; font-size: inherit; }
@@ -662,6 +665,8 @@ h1, h2, h3, h4, h5, h6 {
   --text-h3--line-height: var(--leading-heading);
   --text-lead: var(--type-lead);
   --text-lead--line-height: var(--leading-thai);
+  --text-caption: var(--type-caption);
+  --text-caption--line-height: 1.5;
   --font-heading: var(--font-display);
   --font-sans: var(--font-body);
   --font-mono: var(--font-code);

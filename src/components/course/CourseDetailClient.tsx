@@ -123,7 +123,7 @@ export default function CourseDetailClient({
           <Button asChild className="w-full">
             <Link href={decisionFacts.actions.learner.href!}>{decisionFacts.actions.learner.label}</Link>
           </Button>
-          <a href="#course-curriculum" className="text-center text-xs text-muted-foreground underline underline-offset-4 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">ดูรายการบทเรียนทั้งหมด</a>
+          <a href="#course-curriculum" className="text-center text-caption text-muted-foreground underline underline-offset-4 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">ดูรายการบทเรียนทั้งหมด</a>
         </div>
       );
     }

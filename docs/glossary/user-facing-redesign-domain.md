@@ -206,8 +206,9 @@ The text sizes in `src/app/globals.css`, used through utilities rather than one-
 | `text-h2` | 28 → 40px | 1.3 | A section heading, through Section header |
 | `text-h3` | 20px | 1.3 | A card or step title |
 | `text-lead` | 18px | 1.75 | The paragraph under a hero or page title |
+| `text-caption` | 13px | 1.5 | Meta text, labels, captions and badges; the smallest text on non-admin pages |
 
-Headings grow with the viewport, so they need no breakpoint classes. Thai stacks vowels and tone marks above and below the line, so no heading line height goes below 1.22.
+Nothing on a non-admin page is smaller than `text-caption`: Thai vowels and tone marks blur together below 13px, so `text-xs` (12px) is not used there. Headings grow with the viewport, so they need no breakpoint classes. Thai stacks vowels and tone marks above and below the line, so no heading line height goes below 1.22.
 
 ### Section header
 

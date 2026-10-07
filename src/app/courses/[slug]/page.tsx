@@ -287,9 +287,9 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
                   <section className="mt-7" aria-label="ข้อมูลประกอบการตัดสินใจ">
                     <Separator className="mb-5" />
                     <dl className="flex flex-wrap gap-x-7 gap-y-4">
-                      {courseReady && <div><dt className="text-xs text-muted-foreground">บทเรียน</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{course.lessons.length} <span className="text-sm font-normal">บท</span></dd></div>}
-                      {totalSeconds > 0 && <div><dt className="text-xs text-muted-foreground">วิดีโอทั้งหมด</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{durationText}</dd></div>}
-                      {freePreviewCount > 0 && <div><dt className="text-xs text-muted-foreground">ทดลองเรียนฟรี</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{freePreviewCount} <span className="text-sm font-normal">บท</span></dd></div>}
+                      {courseReady && <div><dt className="text-caption text-muted-foreground">บทเรียน</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{course.lessons.length} <span className="text-sm font-normal">บท</span></dd></div>}
+                      {totalSeconds > 0 && <div><dt className="text-caption text-muted-foreground">วิดีโอทั้งหมด</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{durationText}</dd></div>}
+                      {freePreviewCount > 0 && <div><dt className="text-caption text-muted-foreground">ทดลองเรียนฟรี</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{freePreviewCount} <span className="text-sm font-normal">บท</span></dd></div>}
                     </dl>
                   </section>
                 )}
@@ -341,7 +341,7 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
             <CourseDetailSection id="course-curriculum" eyebrow="เนื้อหาคอร์ส" title="มองเห็นเส้นทางก่อนเริ่มเรียน" description="เรียนตามลำดับ หรือกลับมาทบทวนบทที่ต้องการ">
               <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
                 <h3 className="text-base font-semibold">รายการบทเรียนทั้งหมด</h3>
-                {courseReady && <p className="text-xs text-muted-foreground">{course.lessons.length} บท{totalSeconds > 0 ? ' · ' + durationText : ''}</p>}
+                {courseReady && <p className="text-caption text-muted-foreground">{course.lessons.length} บท{totalSeconds > 0 ? ' · ' + durationText : ''}</p>}
               </div>
               <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} lessons={course.lessons} />
             </CourseDetailSection>

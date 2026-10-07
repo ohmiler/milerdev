@@ -112,7 +112,7 @@ export default function ContactForm() {
       </FieldGroup>
 
       <div className={'flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between'}>
-        <p className={'max-w-md text-xs leading-5 text-muted-foreground'}>เมื่อส่งข้อความ คุณยืนยันว่าข้อมูลที่ระบุสามารถใช้เพื่อติดต่อกลับได้</p>
+        <p className={'max-w-md text-caption leading-5 text-muted-foreground'}>เมื่อส่งข้อความ คุณยืนยันว่าข้อมูลที่ระบุสามารถใช้เพื่อติดต่อกลับได้</p>
         <PendingButton
           className={'sm:min-w-44'}
           type={'submit'}

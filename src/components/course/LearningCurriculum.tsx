@@ -52,7 +52,7 @@ export default function LearningCurriculum({
             <BookOpen className="size-4" />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">เนื้อหาคอร์ส</p>
+            <p className="text-caption font-medium text-muted-foreground">เนื้อหาคอร์ส</p>
             <h2 className="mt-0.5 line-clamp-2 font-heading text-base font-semibold leading-6">{courseTitle}</h2>
           </div>
         </div>
