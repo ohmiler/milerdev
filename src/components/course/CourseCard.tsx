@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ViewTransition } from 'react';
 import { ArrowRight, BookOpen, Clock3, PlayCircle, Star } from 'lucide-react';
-import TagBadge from '@/components/content/TagBadge';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { getExcerpt } from '@/lib/security/sanitize';
@@ -45,6 +44,8 @@ export default function CourseCard({
   const cover = resolveCoverImage(rawThumbnailUrl);
   const durationText = formatCourseDuration(evidence.knownDurationSeconds);
   const hasFreePreview = evidence.freePreviewCount > 0;
+  // The topics a card belongs to, named once above the title (the cover artwork may also show them).
+  const topicLine = tags?.slice(0, 3).map((tag) => tag.name).join(' · ');
 
   return (
     // A full prefetch lets the course page render in the same commit as the navigation, which the
@@ -61,14 +62,14 @@ export default function CourseCard({
           </ViewTransition>
           <div className="absolute top-4 left-4 flex flex-col items-start gap-2">
             {decisionFacts.readiness === 'preparing' ? <Badge variant="secondary">กำลังเตรียมเนื้อหา</Badge> : null}
-            {hasFreePreview ? <Badge className="gap-1.5 bg-background/95 text-foreground shadow-sm"><PlayCircle />มีบทเรียนทดลอง</Badge> : null}
           </div>
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
           <CardContent className="flex flex-1 flex-col px-5 pt-5 sm:px-6 sm:pt-6">
-            {eyebrow ? <p className="mb-3 text-sm font-semibold text-link">{eyebrow}</p> : null}
-            {tags?.length ? <div className="mb-4 flex flex-wrap gap-2">{tags.slice(0, 3).map((tag) => <TagBadge key={tag.id} tag={tag} />)}{tags.length > 3 ? <Badge variant="outline">+{tags.length - 3}</Badge> : null}</div> : null}
+            {eyebrow
+              ? <p className="mb-3 text-sm font-semibold text-link">{eyebrow}</p>
+              : topicLine ? <p className="mb-2 text-sm font-semibold text-link">{topicLine}</p> : null}
             <h3 className="line-clamp-3 text-xl leading-snug font-semibold tracking-[-.02em] text-balance group-hover:text-link">{title}</h3>
             {outcomes?.length ? <ul className="mt-4 flex flex-col gap-2 text-sm leading-6 text-muted-foreground">{outcomes.map((outcome) => <li key={outcome} className="flex gap-2"><span className="text-link">✓</span>{outcome}</li>)}</ul> : description ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">{getExcerpt(description, 120)}</p> : null}
             <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-caption text-muted-foreground">
@@ -77,6 +78,7 @@ export default function CourseCard({
               {instructorName ? <span className="basis-full">สอนโดย {instructorName}</span> : null}
               {evidence.verifiedReview ? <span className="inline-flex items-center gap-1.5"><Star className="size-3.5 fill-current" />{evidence.verifiedReview.average.toFixed(1)} · {evidence.verifiedReview.count} รีวิว</span> : null}
             </div>
+            {hasFreePreview ? <Badge variant="secondary" className="mt-4 gap-1.5 self-start"><PlayCircle aria-hidden="true" />ทดลองเรียนฟรี {evidence.freePreviewCount} บท</Badge> : null}
           </CardContent>
 
           <CardFooter className="mt-5 flex-wrap justify-between gap-x-4 gap-y-3 border-t px-5 py-5 sm:px-6">

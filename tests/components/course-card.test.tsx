@@ -27,6 +27,31 @@ const baseProps = {
 } as const;
 
 describe('shared Home and Catalog CourseCard decision evidence', () => {
+  it('names its topics once above the title, and keeps the free preview off the cover', () => {
+    const html = renderToStaticMarkup(
+      <CourseCard
+        {...baseProps}
+        thumbnailUrl="https://milerdev.b-cdn.net/courses/cover.png"
+        decisionFacts={decisionFacts({ freePreviewCount: 5 })}
+        tags={[{ id: 'tag-1', name: 'React', slug: 'react' }, { id: 'tag-2', name: 'JavaScript', slug: 'javascript' }]}
+      />,
+    );
+
+    expect(html.match(/React · JavaScript/g)).toHaveLength(1);
+    expect(html.indexOf('React · JavaScript')).toBeLessThan(html.indexOf('<h3'));
+    // A badge over the cover hid the title printed on real course covers.
+    expect(html.indexOf('ทดลองเรียนฟรี 5 บท')).toBeGreaterThan(html.indexOf('<h3'));
+  });
+
+  it('shows a learning-path label instead of the topics when Home gives one', () => {
+    const html = renderToStaticMarkup(
+      <CourseCard {...baseProps} thumbnailUrl="https://milerdev.b-cdn.net/courses/cover.png" eyebrow="ขั้นที่ 1 · เริ่มที่นี่" tags={[{ id: 'tag-1', name: 'React', slug: 'react' }]} />,
+    );
+
+    expect(html).toContain('ขั้นที่ 1 · เริ่มที่นี่');
+    expect(html).not.toContain('>React<');
+  });
+
   it('renders truthful optional metadata and keeps one course link', () => {
     const html = renderToStaticMarkup(
       <CourseCard
@@ -43,7 +68,7 @@ describe('shared Home and Catalog CourseCard decision evidence', () => {
 
     expect(html).toContain('React');
     expect(html).toContain('1 ชม. 31 นาที');
-    expect(html).toContain('มีบทเรียนทดลอง');
+    expect(html).toContain('ทดลองเรียนฟรี 1 บท');
     expect(html).toContain('สอนโดย Miler');
     expect(html).toContain('4.8 · 24 รีวิว');
     expect(html).toContain('ดูรายละเอียด');
@@ -54,7 +79,7 @@ describe('shared Home and Catalog CourseCard decision evidence', () => {
     const html = renderToStaticMarkup(<CourseCard {...baseProps} />);
 
     expect(html).not.toContain('ชม.');
-    expect(html).not.toContain('มีบทเรียนทดลอง');
+    expect(html).not.toContain('ทดลองเรียนฟรี');
     expect(html).not.toContain('สอนโดย');
     expect(html).toContain('ดูรายละเอียด');
   });
