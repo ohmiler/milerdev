@@ -176,6 +176,13 @@
       "when": 1791295521666,
       "tag": "0024_powerful_gertrude_yorkes",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1791373759744,
+      "tag": "0025_nebulous_vargas",
+      "breakpoints": true
     }
   ]
 }
