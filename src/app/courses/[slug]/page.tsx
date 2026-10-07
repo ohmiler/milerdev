@@ -1,7 +1,7 @@
 import PaymentCancellationNotice from '@/components/checkout/PaymentCancellationNotice';
 import CourseAccessDeniedNotice from '@/components/course/CourseAccessDeniedNotice';
 import MainContent from '@/components/layout/MainContent';
-import { Suspense } from 'react';
+import { Suspense, ViewTransition } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 // Image import removed - using native img for external URLs
@@ -11,6 +11,7 @@ import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 import Footer from '@/components/layout/Footer';
 import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
 import CourseArtwork from '@/components/course/CourseArtwork';
+import { courseCoverTransitionName } from '@/lib/courses/view-transition';
 import CourseSectionNav from '@/components/course/CourseSectionNav';
 import CourseReviewsWrapper from '@/components/course/CourseReviewsWrapper';
 import CoursePreviewVideo from '@/components/course/CoursePreviewVideo';
@@ -297,11 +298,13 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
               <aside className="w-full max-w-lg justify-self-center md:self-center" aria-label="ตัวอย่างและการสมัครเรียน">
                 <Card className="gap-0 overflow-hidden py-0 shadow-[var(--academy-shadow-card)]">
                   <div className="relative bg-muted">
-                    {normalizeUrl(course.thumbnailUrl) ? (
-                      <img src={normalizeUrl(course.thumbnailUrl)!} alt={course.title} width={1200} height={675} sizes="(min-width: 1024px) 40vw, 100vw" className="aspect-video w-full object-cover" />
-                    ) : (
-                      <div className="aspect-video overflow-hidden"><CourseArtwork title={course.title} slug={course.slug} tags={course.tags} /></div>
-                    )}
+                    <ViewTransition name={courseCoverTransitionName(course.slug)} share="morph" default="none">
+                      {normalizeUrl(course.thumbnailUrl) ? (
+                        <img src={normalizeUrl(course.thumbnailUrl)!} alt={course.title} width={1200} height={675} sizes="(min-width: 1024px) 40vw, 100vw" className="aspect-video w-full object-cover" />
+                      ) : (
+                        <div className="aspect-video overflow-hidden"><CourseArtwork title={course.title} slug={course.slug} tags={course.tags} /></div>
+                      )}
+                    </ViewTransition>
                     {signedPreviewVideoUrl && <CoursePreviewVideo previewVideoUrl={signedPreviewVideoUrl} />}
                   </div>
                   <CardContent id="course-action" className="scroll-mt-40 p-6">
