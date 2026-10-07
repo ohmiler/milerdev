@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { existsSync } from 'node:fs';
+import { expect, test, type Page, type PageScreenshotOptions } from '@playwright/test';
 import { E2E_FIXTURES } from '../fixtures';
 import { openForAudit } from './accessibility';
 import { installRequiredE2EProviderMocks } from './provider-mock-adapter.mjs';
@@ -50,11 +51,21 @@ test.describe('visual regression', () => {
         await openForAudit(page, target.path);
         await loadWholePage(page);
 
-        await expect(page).toHaveScreenshot(`${target.name}-${viewport.name}.png`, {
+        const name = `${target.name}-${viewport.name}.png`;
+        const capture: PageScreenshotOptions = {
           fullPage: true,
           animations: 'disabled',
           // Embedded players load third-party frames that are not part of our UI.
           mask: [page.locator('iframe')],
+        };
+        // Playwright saves the actual image only when a baseline differs, not when it is missing.
+        // Save it here too, under the same -actual.png name, so a first run can be approved.
+        if (!existsSync(testInfo.snapshotPath(name, { kind: 'screenshot' }))) {
+          await page.screenshot({ ...capture, path: testInfo.outputPath(name.replace(/\.png$/, '-actual.png')) });
+        }
+
+        await expect(page).toHaveScreenshot(name, {
+          ...capture,
           // Repeat runs on one machine are pixel-identical. 20 pixels absorbs rare anti-aliasing noise
           // while a recoloured label or a 1px shift still fails.
           maxDiffPixels: 20,

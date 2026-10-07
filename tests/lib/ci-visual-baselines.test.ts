@@ -19,6 +19,15 @@ describe('visual baselines', () => {
     expect(source('playwright.required.config.ts')).toContain("updateSnapshots: process.env.CI ? 'none' : 'missing'");
   });
 
+  // With updateSnapshots 'none', Playwright keeps no full-page image for a missing baseline,
+  // so the first CI run of a new page had nothing to approve.
+  it('saves the full-page screenshot under -actual.png when a baseline is missing', () => {
+    const spec = source('e2e/required/visual-regression.spec.ts');
+
+    expect(spec).toContain("testInfo.snapshotPath(name, { kind: 'screenshot' })");
+    expect(spec).toContain("name.replace(/\\.png$/, '-actual.png')");
+  });
+
   it('runs inside Required E2E and uploads the screenshots a failed run took', () => {
     const workflow = source('.github/workflows/ci.yml');
     const job = workflow.slice(workflow.indexOf('\n  required-e2e:'));
