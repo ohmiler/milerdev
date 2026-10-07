@@ -1,10 +1,12 @@
-import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, json, uniqueIndex, index, check } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, char, text, int, decimal, datetime, boolean, json, uniqueIndex, index, check, type AnyMySqlColumn } from 'drizzle-orm/mysql-core';
 import { relations, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 // =====================
 // USERS TABLE
 // =====================
+export type InstructorProfileLink = { label: string; url: string };
+
 export const users = mysqlTable('users', {
     id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
     email: varchar('email', { length: 255 }).notNull().unique(),
@@ -12,6 +14,10 @@ export const users = mysqlTable('users', {
     name: varchar('name', { length: 255 }),
     avatarUrl: text('avatar_url'),
     role: varchar('role', { length: 20, enum: ['student', 'instructor', 'admin'] }).default('student').notNull(),
+    // Public instructor profile, shown on the course page of a course this user teaches (ADR 0005, Phase 2).
+    headline: varchar('headline', { length: 160 }),
+    bio: text('bio'),
+    profileLinks: json('profile_links').$type<InstructorProfileLink[]>(),
     sessionVersion: int('session_version').default(0).notNull(),
     deactivatedAt: datetime('deactivated_at'),
     emailVerifiedAt: datetime('email_verified_at'),
@@ -88,6 +94,14 @@ export const courses = mysqlTable('courses', {
     promoPrice: decimal('promo_price', { precision: 10, scale: 2 }),
     promoStartsAt: datetime('promo_starts_at'),
     promoEndsAt: datetime('promo_ends_at'),
+    // Structured course content authored in admin (ADR 0005, Phase 2). Each is optional; the page
+    // shows a group only when it has content, and never derives these from the rich description.
+    summary: varchar('summary', { length: 300 }),
+    learningOutcomes: json('learning_outcomes').$type<string[]>(),
+    targetAudience: json('target_audience').$type<string[]>(),
+    prerequisites: json('prerequisites').$type<string[]>(),
+    prerequisiteCourseId: varchar('prerequisite_course_id', { length: 36 })
+        .references((): AnyMySqlColumn => courses.id, { onDelete: 'set null' }),
     createdAt: datetime('created_at').$defaultFn(() => new Date()),
     updatedAt: datetime('updated_at').$defaultFn(() => new Date()),
 });
