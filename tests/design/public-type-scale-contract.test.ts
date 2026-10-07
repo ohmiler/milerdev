@@ -15,6 +15,7 @@ describe('public pages use the shared type scale', () => {
       'src/app/bundles/[slug]/page.tsx',
       'src/app/faq/page.tsx',
       'src/app/stack/page.tsx',
+      'src/components/course/CourseDetailSection.tsx',
     ]) {
       const source = readSource(path);
       expect(source, path).toContain('<SectionHeader');
@@ -28,6 +29,7 @@ describe('public pages use the shared type scale', () => {
       'src/app/bundles/[slug]/page.tsx',
       'src/app/faq/page.tsx',
       'src/app/certificate/[code]/page.tsx',
+      'src/app/courses/[slug]/page.tsx',
     ]) {
       const source = readSource(path);
       expect(source, path).toMatch(/<h1\b[^>]*\btext-h1\b/);

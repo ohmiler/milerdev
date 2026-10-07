@@ -139,6 +139,21 @@ Those fields require coordinated schema, migration, admin-authoring, validation,
 - The route skeleton now matches the resolved layout. Review loading remains local, and enrollment/payment mutations continue to use disabled pending actions rather than page skeletons.
 - Verification passed with 74 Vitest files and 496 tests, ESLint, a 92-route production build, targeted Playwright Course Detail checks, and browser inspection at 390, 768, and 1440 px with no horizontal overflow or console errors. The preview-dialog E2E was skipped because local published fixtures had no preview video; its component remains covered by the existing accessible Dialog composition and browser test when such a fixture exists.
 
+## Phase 2 outcome (2026-10-07)
+
+- ohmiler/milerdev#231 added nullable fields:
+  - on `courses`: `summary`, `learning_outcomes`, `target_audience`, `prerequisites` and `prerequisite_course_id`
+  - on `users`, for the instructor card: `headline`, `bio` and `profile_links`
+- ohmiler/milerdev#232 lets admins write them on the course edit page and on the instructor's user page. Blank fields are stored as `null`. Profile links are https only.
+- The page renders them as design A:
+  - **Hero:** the summary leads, falling back to the description excerpt. The instructor shows as a chip linking to the instructor section. Facts sit in one row.
+  - **"คอร์สนี้เหมาะกับคุณไหม":** shows only the groups an admin wrote. It links the course to take first only while that course is published.
+  - **Full description:** with any fit group present, it moves into a disclosure. Without one, the section stays `รายละเอียดคอร์ส`.
+  - **Instructor card:** shows headline, bio and links, and drops any non-https link again at render time.
+- Saving an instructor profile revalidates the pages of the courses that instructor teaches.
+- Course sections use `SectionHeader`, and the title uses `text-h1`.
+- Still deferred: learner progress in the action card, which reads enrollment state.
+
 ## Verification expectations
 
 - Validate visitor, signed-in non-enrolled, free course, paid course, active promotion, enrolled learner, preview/no-preview, no-lessons, no-instructor, and reviews loading/empty/error/resolved states.
