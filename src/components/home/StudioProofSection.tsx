@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Presentation } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { FacebookIcon, YouTubeIcon } from '@/components/content/SocialIcons';
 import SectionHeader from '@/components/layout/SectionHeader';
@@ -10,17 +10,14 @@ const STUDIO_IMAGES = [
   {
     src: '/showcase/01-showcase-1024x768.webp',
     alt: 'MilerDev แบ่งปันประสบการณ์ด้านการพัฒนาซอฟต์แวร์บนเวที',
-    label: 'เวทีแบ่งปันประสบการณ์',
   },
   {
-    src: '/showcase/05-showcase-1024x768.webp',
-    alt: 'บรรยากาศการสอนและเวิร์กช็อปของ MilerDev',
-    label: 'เวิร์กช็อปและห้องเรียน',
+    src: '/showcase/02-showcase-1024x768.webp',
+    alt: 'ผู้เรียนฟังการบรรยายในเวิร์กช็อปการเขียนโปรแกรมของ MilerDev',
   },
   {
     src: '/showcase/09-showcase-1024x768.webp',
-    alt: 'MilerDev เป็นวิทยากรเรื่องการเขียนโปรแกรมและการพัฒนาเว็บไซต์',
-    label: 'จากงานจริงสู่บทเรียน',
+    alt: 'เบื้องหลังการถ่ายทำบทเรียนในสตูดิโอ MilerDev',
   },
 ] as const;
 
@@ -35,7 +32,7 @@ const INSTRUCTOR = {
   facebook: 'https://www.facebook.com/milerdevpro',
 } as const;
 
-const instructorLinkClass = 'inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 px-3 text-sm font-medium transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40';
+const instructorLinkClass = 'inline-flex items-center gap-1.5 font-medium text-link-inverse underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40';
 
 export default function StudioProofSection() {
   return (
@@ -43,16 +40,41 @@ export default function StudioProofSection() {
       className="bg-navy py-16 text-background sm:py-20 lg:py-24"
       aria-labelledby="studio-proof-title"
     >
-      <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-end lg:gap-16">
-        <div className="max-w-xl">
+      <div className="container grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+        <figure className="m-0 flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            {STUDIO_IMAGES.map((image, index) => (
+              <div
+                key={image.src}
+                className={index === 0
+                  ? 'relative row-span-2 min-h-64 overflow-hidden rounded-2xl bg-navy-raised'
+                  : 'relative aspect-[4/3] overflow-hidden rounded-2xl bg-navy-raised'}
+              >
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  fill
+                  sizes="(min-width: 1024px) 28vw, 50vw"
+                  className={index === 0 ? 'object-cover object-[50%_30%]' : 'object-cover'}
+                />
+              </div>
+            ))}
+          </div>
+          <figcaption className="text-sm text-background/75">
+            ภาพจริงจากเวทีบรรยาย เวิร์กช็อป และสตูดิโอถ่ายทำบทเรียน
+          </figcaption>
+        </figure>
+
+        <div className="flex flex-col items-start gap-6">
           <SectionHeader
             id="studio-proof-title"
             tone="inverse"
-            eyebrow={<><Presentation className="size-4" aria-hidden="true" />MilerDev Studio</>}
+            eyebrow="ผู้สอน"
             title="สอนจากประสบการณ์จริง แล้วอธิบายให้คนเริ่มต้นเห็นภาพ"
             description="MilerDev นำประสบการณ์จากการพัฒนาเว็บไซต์ การสอน และการเป็นวิทยากร มาจัดลำดับเป็นบทเรียนภาษาไทยที่เริ่มจากเหตุผล ก่อนพาไปลงมือสร้างด้วยตัวเอง"
           />
-          <div className="mt-8 flex gap-4 rounded-2xl border border-white/10 bg-navy-raised p-4 sm:p-5">
+
+          <div className="flex w-full items-start gap-4 rounded-2xl border border-white/10 bg-navy-raised p-4">
             {/* The name sits beside the photo, so the photo itself is decorative. */}
             <Image
               src={INSTRUCTOR.photo}
@@ -63,57 +85,26 @@ export default function StudioProofSection() {
               className="size-16 shrink-0 rounded-full object-cover object-[50%_28%]"
             />
             <div className="min-w-0">
-              <h3 className="text-h3 font-semibold">{INSTRUCTOR.name}</h3>
+              <h3 className="text-lead font-semibold">{INSTRUCTOR.name}</h3>
               <p className="text-sm text-background/75">{INSTRUCTOR.role}</p>
-              <p className="mt-3 text-sm leading-7 text-background/75">{INSTRUCTOR.bio}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <p className="mt-2 text-sm leading-6 text-background/75">{INSTRUCTOR.bio}</p>
+              <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 <a href={INSTRUCTOR.youtube} target="_blank" rel="noopener noreferrer" className={instructorLinkClass}>
                   <YouTubeIcon />ช่อง YouTube
                 </a>
                 <a href={INSTRUCTOR.facebook} target="_blank" rel="noopener noreferrer" className={instructorLinkClass}>
                   <FacebookIcon />เพจ Facebook
                 </a>
-              </div>
+              </p>
             </div>
           </div>
-          <Button
-            asChild
-            size="lg"
-            variant="secondary"
-            className="mt-8"
-          >
+
+          <Button asChild size="lg" variant="secondary">
             <Link href="/about">
-              รู้จักแนวทางของ MilerDev
+              รู้จัก MilerDev
               <ArrowRight data-icon="inline-end" aria-hidden="true" />
             </Link>
           </Button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 sm:gap-5" aria-label="ภาพบรรยากาศการสอนจริงของ MilerDev">
-          {STUDIO_IMAGES.map((image, index) => (
-            <figure
-              key={image.src}
-              className={index === 0 ? 'group col-span-2 sm:col-span-1 sm:row-span-2' : 'group'}
-            >
-              <div
-                className={[
-                  'relative overflow-hidden rounded-2xl border border-white/10 bg-navy-raised',
-                  index === 0 ? 'aspect-[16/10] h-full min-h-64 sm:aspect-auto' : 'aspect-[4/3]',
-                ].join(' ')}
-              >
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  sizes={index === 0 ? '(max-width: 640px) 100vw, 34vw' : '(max-width: 640px) 50vw, 24vw'}
-                  className="object-cover transition duration-300 group-hover:scale-[1.02]"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/85 to-transparent px-4 pt-12 pb-4">
-                  <figcaption className="text-sm font-semibold text-white">{image.label}</figcaption>
-                </div>
-              </div>
-            </figure>
-          ))}
         </div>
       </div>
     </section>
