@@ -619,6 +619,37 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* View transitions (React <ViewTransition>). A course cover opened from its card morphs into the
+   cover on the course page; the rest of the page crossfades quickly. */
+::view-transition-group(.morph) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+::view-transition-image-pair(.morph) {
+  animation-name: view-transition-soften;
+}
+
+@keyframes view-transition-soften {
+  35% {
+    filter: blur(2px);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 
 @theme inline {
   --text-display: var(--type-display);

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ViewTransition } from 'react';
 import { ArrowRight, BookOpen, Clock3, PlayCircle, Star } from 'lucide-react';
 import TagBadge from '@/components/content/TagBadge';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { getExcerpt } from '@/lib/security/sanitize';
 import type { CourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 import { formatCourseDuration } from '@/lib/courses/duration';
 import CourseArtwork from '@/components/course/CourseArtwork';
+import { courseCoverTransitionName } from '@/lib/courses/view-transition';
 
 interface Tag { id: string; name: string; slug: string }
 interface CourseCardProps {
@@ -48,13 +50,18 @@ export default function CourseCard({
   const hasFreePreview = evidence.freePreviewCount > 0;
 
   return (
-    <Link href={`/courses/${slug}`} className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+    // A full prefetch lets the course page render in the same commit as the navigation, which the
+    // cover morph needs. The course page has no render side effects, so prefetching only reads.
+    <Link href={`/courses/${slug}`} prefetch className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
       <Card className="h-full gap-0 overflow-hidden py-0 transition-[transform,box-shadow] duration-200 group-hover:-translate-y-1 group-hover:shadow-[var(--academy-shadow-card-hover)] motion-reduce:transform-none">
         {/* One aspect ratio at every width keeps cards in a row the same height. */}
         <div className="relative aspect-[16/9] overflow-hidden bg-[var(--academy-navy)]">
-          {thumbnailUrl
-            ? <img src={thumbnailUrl} alt={title} width={640} height={360} sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw" loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
-            : <CourseArtwork title={title} slug={slug} tags={tags} />}
+          {/* Morphs into the cover on the course page when the card is opened. */}
+          <ViewTransition name={courseCoverTransitionName(slug)} share="morph" default="none">
+            {thumbnailUrl
+              ? <img src={thumbnailUrl} alt={title} width={640} height={360} sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw" loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
+              : <CourseArtwork title={title} slug={slug} tags={tags} />}
+          </ViewTransition>
           <div className="absolute top-4 left-4 flex flex-col items-start gap-2">
             {decisionFacts.readiness === 'preparing' ? <Badge variant="secondary">กำลังเตรียมเนื้อหา</Badge> : null}
             {hasFreePreview ? <Badge className="gap-1.5 bg-background/95 text-foreground shadow-sm"><PlayCircle />มีบทเรียนทดลอง</Badge> : null}
