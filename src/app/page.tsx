@@ -16,6 +16,7 @@ import HomeReviews from '@/components/home/HomeReviews';
 import StudioProofSection from '@/components/home/StudioProofSection';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
+import SectionHeader from '@/components/layout/SectionHeader';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -184,16 +185,13 @@ export default async function HomePage() {
                 คอร์สเขียนโปรแกรมภาษาไทย ลองเรียนก่อนซื้อได้
               </p>
               {/* Phrases never break mid-way: Thai has no spaces between words to wrap on. */}
-              <h1
-                id="home-hero-title"
-                className="text-[clamp(2.5rem,5vw,3.75rem)] leading-[1.22] font-bold"
-              >
+              <h1 id="home-hero-title" className="text-display font-bold">
                 <span className="inline-block">เรียนให้เข้าใจ</span>{' '}
                 <span className="inline-block">สร้างได้จริง</span>{' '}
                 <span className="inline-block text-link">เติบโตเป็น</span>{' '}
                 <span className="inline-block text-link">Developer</span>
               </h1>
-              <p className="max-w-xl text-pretty text-[1.0625rem] leading-8 text-muted-foreground sm:text-lg">
+              <p className="max-w-xl text-lead text-pretty text-muted-foreground">
                 คอร์สภาษาไทยที่พาคุณเห็นภาพรวม เข้าใจเหตุผล และลงมือทำทีละขั้น
                 ตั้งแต่พื้นฐานจนเป็นผลงานที่นำไปต่อยอดได้จริง
               </p>
@@ -235,14 +233,13 @@ export default async function HomePage() {
           aria-labelledby="home-how-title"
         >
           <div className="container">
-            <div className="max-w-2xl" data-reveal>
-              <p className="text-sm font-semibold text-link">วิธีเรียน</p>
-              <h2 id="home-how-title" className="mt-3 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]">
-                เรียนทีละขั้น ในหน้าเรียนแบบเดียวกันทุกคอร์ส
-              </h2>
-              <p className="mt-3 text-pretty leading-8 text-muted-foreground">
-                ภาพด้านล่างมาจากหน้าเรียนจริง ทุกคอร์สใช้หน้าเรียนเดียวกัน ทั้งรายการบท วิดีโอ เนื้อหาประกอบ และความคืบหน้า
-              </p>
+            <div data-reveal>
+              <SectionHeader
+                id="home-how-title"
+                eyebrow="วิธีเรียน"
+                title="เรียนทีละขั้น ในหน้าเรียนแบบเดียวกันทุกคอร์ส"
+                description="ภาพด้านล่างมาจากหน้าเรียนจริง ทุกคอร์สใช้หน้าเรียนเดียวกัน ทั้งรายการบท วิดีโอ เนื้อหาประกอบ และความคืบหน้า"
+              />
             </div>
 
             <ol className={cn('mt-10 grid gap-5 md:grid-cols-2', learningSteps.length === 3 && 'lg:grid-cols-3')}>
@@ -265,7 +262,7 @@ export default async function HomePage() {
                   <span className="self-start rounded-lg bg-secondary px-2.5 py-0.5 font-mono text-sm font-medium text-secondary-foreground">
                     {String(index + 1).padStart(2, '0')}
                   </span>
-                  <h3 className="text-xl leading-snug font-semibold">{step.title}</h3>
+                  <h3 className="text-h3 font-semibold">{step.title}</h3>
                   <p className="leading-7 text-muted-foreground">{step.description}</p>
                 </li>
               ))}
@@ -290,28 +287,23 @@ export default async function HomePage() {
           aria-labelledby="home-courses-title"
         >
           <div className="container">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end" data-reveal>
-              <div className="max-w-2xl">
-                <p className="text-sm font-semibold text-link">
-                  {coursePlan.mode === 'path' ? 'เส้นทางแนะนำ' : 'คอร์สล่าสุดจาก MilerDev'}
-                </p>
-                <h2 id="home-courses-title" className="mt-3 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]">
-                  {coursePlan.mode === 'path' ? 'ยังไม่มีพื้นฐาน เริ่มตามลำดับนี้' : 'เลือกจากเนื้อหา ราคา และบททดลองจริง'}
-                </h2>
-                {coursePlan.mode === 'path' ? (
-                  <p className="mt-3 text-pretty leading-8 text-muted-foreground">
-                    เรียงจากพื้นฐานไปสู่งานจริง กดดูเนื้อหา ราคา และบทเรียนทดลองของแต่ละคอร์สก่อนตัดสินใจ
-                  </p>
-                ) : null}
-              </div>
-              {coursePlan.publishedCount > 0 ? (
-                <Button asChild variant="outline" className="w-fit">
-                  <Link href="/courses">
-                    ดูคอร์สทั้งหมด {coursePlan.publishedCount} คอร์ส
-                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                  </Link>
-                </Button>
-              ) : null}
+            <div data-reveal>
+              <SectionHeader
+                id="home-courses-title"
+                eyebrow={coursePlan.mode === 'path' ? 'เส้นทางแนะนำ' : 'คอร์สล่าสุดจาก MilerDev'}
+                title={coursePlan.mode === 'path' ? 'ยังไม่มีพื้นฐาน เริ่มตามลำดับนี้' : 'เลือกจากเนื้อหา ราคา และบททดลองจริง'}
+                description={coursePlan.mode === 'path'
+                  ? 'เรียงจากพื้นฐานไปสู่งานจริง กดดูเนื้อหา ราคา และบทเรียนทดลองของแต่ละคอร์สก่อนตัดสินใจ'
+                  : undefined}
+                action={coursePlan.publishedCount > 0 ? (
+                  <Button asChild variant="outline">
+                    <Link href="/courses">
+                      ดูคอร์สทั้งหมด {coursePlan.publishedCount} คอร์ส
+                      <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                ) : undefined}
+              />
             </div>
 
             {coursePlan.mode === 'path' ? (
@@ -338,7 +330,7 @@ export default async function HomePage() {
 
                 {coursePlan.extras.length > 0 ? (
                   <div className="mt-10" data-reveal>
-                    <h3 className="text-lg font-semibold">คอร์สเสริม เรียนเมื่อพร้อม</h3>
+                    <h3 className="text-h3 font-semibold">คอร์สเสริม เรียนเมื่อพร้อม</h3>
                     <ul className="mt-4 grid gap-4 md:grid-cols-2">
                       {coursePlan.extras.map((course) => (
                         <li key={course.id}>
@@ -402,17 +394,13 @@ export default async function HomePage() {
         >
           <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-16">
             <div className="max-w-lg lg:sticky lg:top-28" data-reveal>
-              <p className="text-sm font-semibold text-link">คำถามก่อนเริ่มเรียน</p>
-              <h2
+              <SectionHeader
                 id="home-faq-title"
-                className="mt-3 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]"
-              >
-                ข้อมูลที่ควรรู้ก่อนเลือกคอร์ส
-              </h2>
-              <p className="mt-4 leading-8 text-muted-foreground">
-                ตรวจพื้นฐาน ระยะเวลาการเข้าถึง Certificate และขั้นตอนชำระเงินให้ครบก่อนตัดสินใจ
-              </p>
-              <Button asChild variant="link" className="mt-6 px-0">
+                eyebrow="คำถามก่อนเริ่มเรียน"
+                title="ข้อมูลที่ควรรู้ก่อนเลือกคอร์ส"
+                description="ตรวจพื้นฐาน ระยะเวลาการเข้าถึง Certificate และขั้นตอนชำระเงินให้ครบก่อนตัดสินใจ"
+              />
+              <Button asChild variant="link" className="mt-5 px-0">
                 <Link href="/faq">
                   ดูคำถามทั้งหมด
                   <ArrowRight data-icon="inline-end" aria-hidden="true" />
@@ -423,22 +411,16 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section data-home-section="final-cta" className="bg-background py-16 sm:py-20 lg:py-24">
+        <section data-home-section="final-cta" className="bg-background py-16 sm:py-20 lg:py-24" aria-labelledby="home-final-cta-title">
           <div className="container">
             <div className="grid gap-8 rounded-2xl bg-navy px-6 py-10 text-background sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14" data-reveal>
-              <div>
-                <div className="flex items-center gap-2 text-sm font-semibold text-background/75">
-                  <Rocket className="size-4" aria-hidden="true" />
-                  พร้อมเริ่มเส้นทางของคุณแล้วหรือยัง
-                </div>
-                <h2 className="mt-3 max-w-2xl text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl">
-                  เลือกคอร์สแรก แล้วเริ่มสร้างงานของคุณ
-                </h2>
-                <p className="mt-3 max-w-2xl leading-7 text-background/75">
-                  ดูเนื้อหา ราคา และบททดลองให้ครบก่อนตัดสินใจ
-                  หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน
-                </p>
-              </div>
+              <SectionHeader
+                id="home-final-cta-title"
+                tone="inverse"
+                eyebrow={<><Rocket className="size-4" aria-hidden="true" />พร้อมเริ่มเส้นทางของคุณแล้วหรือยัง</>}
+                title="เลือกคอร์สแรก แล้วเริ่มสร้างงานของคุณ"
+                description="ดูเนื้อหา ราคา และบททดลองให้ครบก่อนตัดสินใจ หรือสร้างบัญชีฟรีเพื่อเตรียมพื้นที่เรียนไว้ก่อน"
+              />
               <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
                 <Button asChild size="lg">
                   <Link href="/courses">

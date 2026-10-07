@@ -1,7 +1,7 @@
 # User-facing redesign domain model and glossary
 
 - Status: Living document
-- Last updated: 2026-08-20
+- Last updated: 2026-10-07
 - Source of truth for persisted fields: `src/lib/db/schema.ts`
 
 This document gives design and engineering a shared language. It describes current domain boundaries; it does not replace the database schema or authorization code.
@@ -194,6 +194,24 @@ A route-specific arrangement of patterns. Page composition should not introduce 
 ### Semantic token
 
 A design value named by purpose, such as background, surface, foreground, muted, border, primary, destructive, success, warning, focus ring, and radius. Components consume semantic tokens rather than raw page-specific color values.
+
+### Type scale
+
+The text sizes in `src/app/globals.css`, used through utilities rather than one-off sizes:
+
+| Utility | Phone → desktop | Line height | Use |
+| --- | --- | --- | --- |
+| `text-display` | 40 → 60px | 1.22 | The one hero heading on a landing page |
+| `text-h1` | 36 → 56px | 1.22 | A page title |
+| `text-h2` | 28 → 40px | 1.3 | A section heading, through Section header |
+| `text-h3` | 20px | 1.3 | A card or step title |
+| `text-lead` | 18px | 1.75 | The paragraph under a hero or page title |
+
+Headings grow with the viewport, so they need no breakpoint classes. Thai stacks vowels and tone marks above and below the line, so no heading line height goes below 1.22.
+
+### Section header
+
+`src/components/layout/SectionHeader.tsx`: the eyebrow, `text-h2` heading, description and one optional section action of a public page section, with a navy (`inverse`) tone. It wraps a Thai heading only at the spaces between phrases. Home uses it for every section; other public pages adopt it one page at a time.
 
 ### Migrated route
 

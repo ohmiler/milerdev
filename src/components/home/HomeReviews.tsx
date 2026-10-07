@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 
+import SectionHeader from '@/components/layout/SectionHeader';
 import type { HomeReview } from '@/lib/home/proof';
 
 /** Verified learner reviews. Home leaves this section out when there are none. */
@@ -12,12 +13,13 @@ export default function HomeReviews({ reviews }: { reviews: HomeReview[] }) {
       aria-labelledby="home-reviews-title"
     >
       <div className="container">
-        <div className="max-w-2xl" data-reveal>
-          <p className="text-sm font-semibold text-link">รีวิวจากผู้เรียน</p>
-          <h2 id="home-reviews-title" className="mt-3 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]">
-            ผู้เรียนพูดถึงคอร์สว่าอย่างไร
-          </h2>
-          <p className="mt-3 text-pretty leading-8 text-muted-foreground">รีวิวที่ยืนยันแล้ว พร้อมชื่อคอร์สที่เรียน</p>
+        <div data-reveal>
+          <SectionHeader
+            id="home-reviews-title"
+            eyebrow="รีวิวจากผู้เรียน"
+            title="ผู้เรียนพูดถึงคอร์สว่าอย่างไร"
+            description="รีวิวที่ยืนยันแล้ว พร้อมชื่อคอร์สที่เรียน"
+          />
         </div>
 
         <ul className="mt-10 grid gap-5 md:grid-cols-3">
