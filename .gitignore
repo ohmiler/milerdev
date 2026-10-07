@@ -61,3 +61,7 @@ scripts/wordpress-export.sql
 
 # local agent-skills installer lock
 /skills-lock.json
+
+# Visual baselines are rendered on the Linux CI runner; screenshots from other systems stay local.
+/e2e/required/visual-regression.spec.ts-snapshots/*-win32.png
+/e2e/required/visual-regression.spec.ts-snapshots/*-darwin.png

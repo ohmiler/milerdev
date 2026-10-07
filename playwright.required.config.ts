@@ -17,6 +17,9 @@ export default defineConfig({
   forbidOnly: true,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
+  // CI never writes a missing visual baseline; it fails so a person approves the screenshot
+  // (docs/workflow/visual-baselines.md). Locally, a missing baseline is created for review.
+  updateSnapshots: process.env.CI ? 'none' : 'missing',
   reporter: 'line',
   outputDir: 'test-results/required-e2e',
   use: {

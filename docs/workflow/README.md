@@ -40,7 +40,7 @@
 | --- | --- |
 | Lint & Type Check | admin-text scan, ESLint, `tsc`, และ `schema.ts` ตรงกับ `drizzle/` |
 | Test | Vitest unit/component suite |
-| Required E2E | MySQL แยก, migrations, fixtures, integration tests บน MySQL จริง และ required browser journeys; PR ที่แก้เฉพาะเอกสารข้ามขั้นเหล่านี้ |
+| Required E2E | MySQL แยก, migrations, fixtures, integration tests บน MySQL จริง, required browser journeys และภาพหน้าจอเทียบ baseline ([visual-baselines.md](visual-baselines.md)); PR ที่แก้เฉพาะเอกสารข้ามขั้นเหล่านี้ |
 | Build | production build; เป็นด่านรวมที่ `needs` ทั้งสาม job ข้างต้น |
 
 branch protection (อ่านล่าสุด 2026-09-13) บังคับ `Lint & Type Check`, `Test`, `Build` และไม่บังคับ approval
