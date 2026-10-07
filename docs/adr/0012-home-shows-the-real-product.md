@@ -1,6 +1,6 @@
 # ADR 0012: Home shows the real product, a learning path, and verified reviews
 
-- Status: Accepted (the owner chose design A on 2026-10-07)
+- Status: Accepted (the owner chose design A on 2026-10-07). The hero item and the H1 typography line are superseded by ADR 0014.
 - Date: 2026-10-07
 - Decision owners: MilerDev product and engineering
 - Scope: Public Home page only

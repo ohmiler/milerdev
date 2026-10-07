@@ -1,14 +1,22 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildTypedCode, countTypedChars, HOME_EDITOR_CODE, type CodeToken } from '@/lib/home/typed-code';
+import {
+  buildTypedCode,
+  countCompletedLines,
+  countTypedChars,
+  HOME_EDITOR_FILES,
+  lineText,
+  type CodeToken,
+} from '@/lib/home/typed-code';
 
+const APP = HOME_EDITOR_FILES.app.code;
 const textOf = (tokens: CodeToken[]) => tokens.map((token) => token.text).join('');
 
 describe('Home editor typing', () => {
-  const total = countTypedChars(HOME_EDITOR_CODE);
+  const total = countTypedChars(APP);
 
   it('starts with an empty first line and the caret on it', () => {
-    const view = buildTypedCode(HOME_EDITOR_CODE, 0);
+    const view = buildTypedCode(APP, 0);
 
     expect(view.lines).toHaveLength(1);
     expect(view.lines[0]).toMatchObject({ number: 1, tokens: [], hasCaret: true });
@@ -16,16 +24,15 @@ describe('Home editor typing', () => {
   });
 
   it('types character by character, splitting a token where typing stopped', () => {
-    const view = buildTypedCode(HOME_EDITOR_CODE, 3);
+    const view = buildTypedCode(APP, 3);
 
     expect(textOf(view.lines[0].tokens)).toBe('imp');
     expect(view.caretColumn).toBe(4);
   });
 
   it('shows a new line indented at once, the way an editor auto-indents', () => {
-    const firstThreeLines = HOME_EDITOR_CODE.slice(0, 3);
-    const throughLineThree = countTypedChars(firstThreeLines) + 1;
-    const view = buildTypedCode(HOME_EDITOR_CODE, throughLineThree);
+    const throughLineThree = countTypedChars(APP.slice(0, 3)) + 1;
+    const view = buildTypedCode(APP, throughLineThree);
 
     expect(view.lines).toHaveLength(4);
     expect(textOf(view.lines[3].tokens)).toBe('  ');
@@ -33,19 +40,32 @@ describe('Home editor typing', () => {
     expect(view.lines.filter((line) => line.hasCaret)).toHaveLength(1);
   });
 
-  it('ends with the whole program and the caret after the last brace', () => {
-    const view = buildTypedCode(HOME_EDITOR_CODE, total);
+  it('ends with the whole file and the caret after the last brace', () => {
+    const view = buildTypedCode(APP, total);
 
     expect(view.done).toBe(true);
-    expect(view.lines).toHaveLength(HOME_EDITOR_CODE.length);
-    expect(view.lines.map((line) => textOf(line.tokens))).toEqual(
-      HOME_EDITOR_CODE.map((line) => line.map((token) => token.text).join('')),
-    );
-    expect(view).toMatchObject({ caretLine: 16, caretColumn: 2 });
+    expect(view.lines.map((line) => textOf(line.tokens))).toEqual(APP.map(lineText));
+    expect(view).toMatchObject({ caretLine: APP.length, caretColumn: 2 });
   });
 
   it('clamps out-of-range progress instead of failing', () => {
-    expect(buildTypedCode(HOME_EDITOR_CODE, total + 50).done).toBe(true);
-    expect(buildTypedCode(HOME_EDITOR_CODE, -5)).toMatchObject({ done: false, caretLine: 1, caretColumn: 1 });
+    expect(buildTypedCode(APP, total + 50).done).toBe(true);
+    expect(buildTypedCode(APP, -5)).toMatchObject({ done: false, caretLine: 1, caretColumn: 1 });
+  });
+
+  it('counts a line as typed once its last character is, without waiting for the line break', () => {
+    const firstLine = countTypedChars(APP.slice(0, 1));
+
+    expect(countCompletedLines(APP, firstLine - 1)).toBe(0);
+    expect(countCompletedLines(APP, firstLine)).toBe(1);
+    // The blank second line is typed by its line break.
+    expect(countCompletedLines(APP, firstLine + 1)).toBe(2);
+    expect(countCompletedLines(APP, total)).toBe(APP.length);
+  });
+
+  it('keeps every line short enough for the editor at its narrowest', () => {
+    for (const file of Object.values(HOME_EDITOR_FILES)) {
+      for (const line of file.code) expect(lineText(line).length, lineText(line)).toBeLessThanOrEqual(36);
+    }
   });
 });

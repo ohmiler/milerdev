@@ -10,7 +10,7 @@ const SKIPPED_DIRECTORIES = ['src/app/admin', 'src/components/admin'];
 
 // Files that need literal colours, and why. Everything else uses the semantic tokens in globals.css.
 const ALLOWED_FILES: Record<string, string> = {
-  'src/components/home/HomeCodeEditor.tsx': 'a decorative, aria-hidden VS Code mock with its syntax palette',
+  'src/components/home/HomeCodeEditor.tsx': 'a VS Code mock with its syntax palette, and the mock web page its sample code builds',
   'src/components/stack/StackScene.tsx': 'Three.js materials and lights take literal colours, not CSS variables',
   'src/components/auth/AuthIcons.tsx': "Google's logo must keep Google's brand colours",
   'src/components/certificate/CertificateCard.tsx': "certificates render the course's stored certificate colour",

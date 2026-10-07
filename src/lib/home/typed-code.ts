@@ -1,4 +1,4 @@
-// The code the Home hero editor types out, and the pure "how much is typed so far" view of it.
+// The files the Home hero editor types out, and the pure "how much is typed so far" view of them.
 
 export type CodeTokenKind =
   | 'keyword'
@@ -11,12 +11,17 @@ export type CodeTokenKind =
   | 'bracket'
   | 'attribute'
   | 'text'
-  | 'number';
+  | 'number'
+  | 'selector'
+  | 'property'
+  | 'value';
 
 export interface CodeToken {
   kind: CodeTokenKind;
   text: string;
 }
+
+export type CodeLines = readonly (readonly CodeToken[])[];
 
 export interface TypedCodeLine {
   number: number;
@@ -33,25 +38,63 @@ export interface TypedCodeView {
 
 const t = (kind: CodeTokenKind, text: string): CodeToken => ({ kind, text });
 const indent = (spaces: number) => t('plain', ' '.repeat(spaces));
+const attr = (name: string, value: string) => [t('plain', ' '), t('attribute', name), t('plain', '='), t('string', `"${value}"`)];
+const open = (tag: string, ...rest: CodeToken[]) => [t('bracket', '<'), t('tag', tag), ...rest, t('bracket', '>')];
+const close = (tag: string) => [t('bracket', '</'), t('tag', tag), t('bracket', '>')];
+const declaration = (property: string, value: string, kind: CodeTokenKind = 'value') => [
+  indent(2), t('property', property), t('plain', ': '), t(kind, value), t('plain', ';'),
+];
 
-export const HOME_EDITOR_CODE: readonly (readonly CodeToken[])[] = [
-  [t('keyword', 'import'), t('plain', ' { '), t('variable', 'useState'), t('plain', ' } '), t('keyword', 'from'), t('plain', ' '), t('string', "'react'"), t('plain', ';')],
+// A small shop page: App.jsx builds it, index.css styles it. The preview renders what is typed so far.
+const APP_CODE: CodeLines = [
+  [t('keyword', 'import'), t('plain', ' '), t('string', "'./index.css'"), t('plain', ';')],
   [],
   [t('keyword', 'export'), t('plain', ' '), t('keyword', 'default'), t('plain', ' '), t('storage', 'function'), t('plain', ' '), t('function', 'App'), t('plain', '() {')],
-  [indent(2), t('storage', 'const'), t('plain', ' ['), t('variable', 'lesson'), t('plain', ', '), t('function', 'setLesson'), t('plain', '] = '), t('function', 'useState'), t('plain', '('), t('number', '1'), t('plain', ');')],
-  [indent(2), t('storage', 'const'), t('plain', ' '), t('function', 'next'), t('plain', ' = () '), t('storage', '=>'), t('plain', ' '), t('function', 'setLesson'), t('plain', '('), t('variable', 'lesson'), t('plain', ' + '), t('number', '1'), t('plain', ');')],
-  [],
   [indent(2), t('keyword', 'return'), t('plain', ' (')],
-  [indent(4), t('bracket', '<'), t('tag', 'main'), t('bracket', '>')],
-  [indent(6), t('bracket', '<'), t('tag', 'h1'), t('bracket', '>'), t('text', 'Hello, World'), t('bracket', '</'), t('tag', 'h1'), t('bracket', '>')],
-  [indent(6), t('bracket', '<'), t('tag', 'p'), t('bracket', '>'), t('text', 'วันนี้เรียนบทที่ '), t('plain', '{'), t('variable', 'lesson'), t('plain', '}'), t('bracket', '</'), t('tag', 'p'), t('bracket', '>')],
-  [indent(6), t('bracket', '<'), t('tag', 'button'), t('plain', ' '), t('attribute', 'onClick'), t('plain', '={'), t('function', 'next'), t('plain', '}'), t('bracket', '>')],
-  [indent(8), t('text', 'เรียนบทถัดไป')],
-  [indent(6), t('bracket', '</'), t('tag', 'button'), t('bracket', '>')],
-  [indent(4), t('bracket', '</'), t('tag', 'main'), t('bracket', '>')],
+  [indent(4), ...open('main', ...attr('className', 'page'))],
+  [indent(6), ...open('nav', ...attr('className', 'nav'))],
+  [indent(8), ...open('b'), t('text', 'MilerCoffee'), ...close('b')],
+  [indent(8), ...open('a', ...attr('href', '#menu')), t('text', 'เมนู'), ...close('a')],
+  [indent(6), ...close('nav')],
+  [indent(6), ...open('section', ...attr('className', 'hero'))],
+  [indent(8), ...open('h1'), t('text', 'กาแฟคั่วสด'), ...close('h1')],
+  [indent(8), ...open('p'), t('text', 'ส่งถึงบ้านทุกเช้า'), ...close('p')],
+  [indent(8), ...open('button'), t('text', 'สั่งเลย'), ...close('button')],
+  [indent(6), ...close('section')],
+  [indent(4), ...close('main')],
   [indent(2), t('plain', ');')],
   [t('plain', '}')],
 ];
+
+const CSS_CODE: CodeLines = [
+  [t('selector', '.nav'), t('plain', ' {')],
+  declaration('display', 'flex'),
+  declaration('justify-content', 'space-between'),
+  [t('plain', '}')],
+  [],
+  [t('selector', '.hero'), t('plain', ' {')],
+  declaration('padding', '24px', 'number'),
+  declaration('border-radius', '16px', 'number'),
+  declaration('background', '#6f4e37'),
+  declaration('color', '#fff'),
+  [t('plain', '}')],
+  [],
+  [t('selector', '.hero button'), t('plain', ' {')],
+  declaration('background', '#ffd28a'),
+  declaration('border-radius', '999px', 'number'),
+  [t('plain', '}')],
+];
+
+export type HomeEditorFileId = 'app' | 'css';
+
+export const HOME_EDITOR_FILE_IDS: readonly HomeEditorFileId[] = ['app', 'css'];
+
+export const HOME_EDITOR_FILES: Record<HomeEditorFileId, { name: string; language: string; code: CodeLines }> = {
+  app: { name: 'App.jsx', language: 'JSX', code: APP_CODE },
+  css: { name: 'index.css', language: 'CSS', code: CSS_CODE },
+};
+
+export const lineText = (line: readonly CodeToken[]) => line.map((token) => token.text).join('');
 
 // Leading indentation appears at once, the way an editor auto-indents a new line.
 function isIndent(line: readonly CodeToken[], index: number): boolean {
@@ -63,12 +106,27 @@ function typedLength(line: readonly CodeToken[]): number {
 }
 
 /** Characters to type, counting one per line break and none for indentation. */
-export function countTypedChars(code: readonly (readonly CodeToken[])[]): number {
+export function countTypedChars(code: CodeLines): number {
   return code.reduce((sum, line) => sum + typedLength(line) + 1, 0) - 1;
 }
 
+/** How many lines are typed in full after `typed` characters. */
+export function countCompletedLines(code: CodeLines, typed: number): number {
+  let left = Math.max(0, Math.floor(typed));
+  let completed = 0;
+  for (const line of code) {
+    const length = typedLength(line);
+    if (left < length) break;
+    left -= length;
+    completed += 1;
+    if (left === 0) break;
+    left -= 1;
+  }
+  return completed;
+}
+
 /** The lines visible after `typed` characters, with the caret where typing stopped. */
-export function buildTypedCode(code: readonly (readonly CodeToken[])[], typed: number): TypedCodeView {
+export function buildTypedCode(code: CodeLines, typed: number): TypedCodeView {
   const total = countTypedChars(code);
   let left = Math.max(0, Math.min(Math.floor(typed), total));
   const lines: TypedCodeLine[] = [];

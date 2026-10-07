@@ -56,6 +56,12 @@ test.describe('public homepage', () => {
     expect(heroBox).not.toBeNull();
     expect(heroBox!.y + heroBox!.height).toBeLessThanOrEqual(900);
 
+    // ADR 0014: the title sits on two lines on desktop.
+    const titleLines = await page.locator('#home-hero-title').evaluate((title) =>
+      Math.round(title.getBoundingClientRect().height / Number.parseFloat(getComputedStyle(title).lineHeight)),
+    );
+    expect(titleLines).toBe(2);
+
     const paddings = await page
       .locator('[data-home-section]:not([data-home-section=hero])')
       .evaluateAll((sections) =>
@@ -75,25 +81,24 @@ test.describe('public homepage', () => {
     expect(hasHorizontalOverflow).toBe(false);
   });
 
-  test('types the hero program, then lets the visitor use its result', async ({ page }) => {
+  test('types the hero page into the preview and lets the visitor open each file', async ({ page }) => {
     await page.goto('/');
 
     const hero = page.locator('[data-home-section=hero]');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/เรียนให้เข้าใจ\s*สร้างได้จริง\s*เติบโตเป็น\s*Developer/);
-    const result = hero.getByRole('figure', { name: 'ผลลัพธ์ของโค้ดตัวอย่างบนหน้าเว็บ' });
-    await expect(result.getByText('Hello, World')).toBeVisible({ timeout: 10_000 });
+    await expect(hero.locator('[data-home-preview]')).toContainText('กาแฟคั่วสด', { timeout: 10_000 });
 
-    await result.getByRole('button', { name: 'เรียนบทถัดไป' }).click();
-    await expect(result.getByText('วันนี้เรียนบทที่ 2')).toBeVisible();
+    await hero.getByRole('button', { name: 'index.css' }).click();
+    await expect(hero.getByRole('button', { name: 'index.css' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(hero.locator('[data-home-editor]')).toContainText('border-radius: 999px;');
+    await expect(hero.getByRole('button', { name: 'เล่นการพิมพ์โค้ดตัวอย่างอีกครั้ง' })).toBeVisible();
   });
 
   test('shows the finished program at once for reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
 
-    await expect(
-      page.getByRole('figure', { name: 'ผลลัพธ์ของโค้ดตัวอย่างบนหน้าเว็บ' }).getByText('Hello, World'),
-    ).toBeVisible({ timeout: 1_000 });
+    await expect(page.locator('[data-home-preview]')).toContainText('สั่งเลย', { timeout: 1_000 });
   });
 
   test('shows real learning screens, static teaching proof, and canonical purchase answers', async ({ page }) => {
