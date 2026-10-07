@@ -8,7 +8,10 @@ test('public certificate distinguishes revoked and missing proof and exports a v
   await page.emulateMedia({ reducedMotion: 'reduce' });
   for (const kind of ['active', 'revoked'] as const) {
     await page.goto(`/certificate/${E2E_FIXTURES.certificates[kind].code}`);
-    await expect(page.locator('[data-verification-status]')).toHaveAttribute('data-verification-status', kind === 'active' ? 'valid' : 'revoked');
+    // Read the status from the page people see. For about 250 ms after load, React can still hold a
+    // hidden copy of the streamed page (div#S:1[hidden]) before it swaps it in; an unscoped locator
+    // matched both copies and failed this test about one run in three.
+    await expect(page.getByRole('main').locator('[data-verification-status]')).toHaveAttribute('data-verification-status', kind === 'active' ? 'valid' : 'revoked');
     await expect(page.locator('meta[name=robots]')).toHaveAttribute('content', /noindex/);
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
