@@ -3,12 +3,14 @@ export const dynamic = 'force-dynamic';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Award, Check, PlayCircle, Rocket } from 'lucide-react';
+import { ArrowRight, Award, Rocket } from 'lucide-react';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { HOME_FAQ_ITEMS } from '@/app/faq/faq-data';
 import CourseCard from '@/components/course/CourseCard';
+import ContinueLearningBar from '@/components/home/ContinueLearningBar';
 import HomeAnimations from '@/components/home/HomeAnimations';
+import HomeHeroActions from '@/components/home/HomeHeroActions';
 import HomeCodeEditor from '@/components/home/HomeCodeEditor';
 import HomeCourseRow from '@/components/home/HomeCourseRow';
 import HomeFAQ from '@/components/home/HomeFAQ';
@@ -28,6 +30,7 @@ import {
 import { db } from '@/lib/db';
 import { courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
 import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
+import { getHomeContinueLearning } from '@/lib/home/continue-learning';
 import { describePathStep, planHomeCourses } from '@/lib/home/course-plan';
 import { getHomeReviews, hasPublishedLessonQuiz } from '@/lib/home/proof';
 import { cn } from '@/lib/utils';
@@ -122,12 +125,6 @@ async function getPublishedCourses() {
   });
 }
 
-const HERO_FACTS = [
-  'บทเรียนทดลองเปิดดูได้โดยไม่ต้องสมัคร',
-  'ชำระครั้งเดียว เรียนได้ตลอดชีพ',
-  'ใบรับรองเมื่อเรียนครบ',
-] as const;
-
 const LEARNING_STEPS = [
   {
     image: '/images/home/learn-curriculum.webp',
@@ -160,11 +157,14 @@ const PATH_GRID_COLUMNS: Record<number, string> = {
 };
 
 export default async function HomePage() {
-  const [publishedCourses, reviews, hasQuiz] = await Promise.all([
+  const [publishedCourses, reviews, hasQuiz, continueLearning] = await Promise.all([
     getPublishedCourses(),
     getHomeReviews(),
     hasPublishedLessonQuiz(),
+    getHomeContinueLearning(),
   ]);
+  // A learner with a course in progress gets the continue bar; the visitor prompts below are not for them.
+  const forVisitor = !continueLearning;
   const coursePlan = planHomeCourses(publishedCourses);
   const learningSteps = hasQuiz ? [...LEARNING_STEPS, QUIZ_STEP] : LEARNING_STEPS;
 
@@ -174,6 +174,7 @@ export default async function HomePage() {
 
       <MainContent className="overflow-hidden bg-background text-foreground">
         <HomeAnimations />
+        {continueLearning ? <ContinueLearningBar learning={continueLearning} /> : null}
         <section
           data-home-section="hero"
           className="border-b bg-card"
@@ -182,7 +183,7 @@ export default async function HomePage() {
           <div className="container grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1.17fr)_minmax(0,1fr)] xl:grid-cols-[35.5rem_minmax(0,1fr)] lg:gap-14 lg:py-16">
             <div className="flex max-w-2xl flex-col items-start gap-6" data-reveal>
               <p className="rounded-full bg-secondary px-3.5 py-1.5 text-sm font-medium text-secondary-foreground">
-                คอร์สเขียนโปรแกรมภาษาไทย ลองเรียนก่อนซื้อได้
+                {forVisitor ? 'คอร์สเขียนโปรแกรมภาษาไทย ลองเรียนก่อนซื้อได้' : 'คอร์สเขียนโปรแกรมภาษาไทย'}
               </p>
               {/* Two lines from sm up. Phrases never break mid-way: Thai has no spaces between words to wrap on. */}
               <h1 id="home-hero-title" className="text-display font-bold">
@@ -200,29 +201,7 @@ export default async function HomePage() {
                 ตั้งแต่พื้นฐานจนเป็นผลงานที่นำไปต่อยอดได้จริง
               </p>
 
-              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                <Button asChild size="hero" variant="hero">
-                  <Link href="/courses">
-                    ดูคอร์สทั้งหมด
-                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                  </Link>
-                </Button>
-                <Button asChild size="hero" variant="heroOutline">
-                  <Link href="/courses?preview=free">
-                    <PlayCircle data-icon="inline-start" aria-hidden="true" />
-                    ทดลองบทเรียนฟรี
-                  </Link>
-                </Button>
-              </div>
-
-              <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-                {HERO_FACTS.map((fact) => (
-                  <li key={fact} className="flex items-center gap-1.5">
-                    <Check className="size-4 text-link" aria-hidden="true" />
-                    {fact}
-                  </li>
-                ))}
-              </ul>
+              <HomeHeroActions forVisitor={forVisitor} />
             </div>
 
             <div className="min-w-0" data-reveal data-delay="90">
