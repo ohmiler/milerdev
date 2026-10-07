@@ -1,21 +1,26 @@
 import type { ReactNode } from 'react';
 
+import SectionHeader from '@/components/layout/SectionHeader';
+
 interface CourseDetailSectionProps {
   id: string;
-  eyebrow: string;
   title: string;
   description?: string;
+  /** A short summary of the section, beside the heading from `sm` up. */
+  meta?: ReactNode;
   children: ReactNode;
 }
 
-export default function CourseDetailSection({ id, eyebrow, title, description, children }: CourseDetailSectionProps) {
+export default function CourseDetailSection({ id, title, description, meta, children }: CourseDetailSectionProps) {
   return (
-    <section id={id} aria-labelledby={id + '-title'} className="grid scroll-mt-40 gap-7 py-10 md:grid-cols-[11.5rem_minmax(0,1fr)] md:gap-9 lg:grid-cols-[14.5rem_minmax(0,1fr)] lg:gap-[4.5rem] lg:py-16">
-      <header>
-        <p className="mb-3 text-caption font-medium tracking-wide text-link">{eyebrow}</p>
-        <h2 id={id + '-title'} className="text-2xl leading-relaxed font-semibold tracking-tight text-balance">{title}</h2>
-        {description && <p className="mt-3 text-sm leading-7 text-muted-foreground">{description}</p>}
-      </header>
+    <section id={id} aria-labelledby={id + '-title'} className="scroll-mt-40 py-10 lg:py-14">
+      <SectionHeader
+        id={id + '-title'}
+        title={title}
+        description={description}
+        action={meta ? <p className="text-sm text-muted-foreground">{meta}</p> : undefined}
+        className="mb-6 lg:mb-8"
+      />
       <div className="min-w-0">{children}</div>
     </section>
   );

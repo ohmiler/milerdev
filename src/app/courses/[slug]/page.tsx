@@ -1,7 +1,7 @@
 import PaymentCancellationNotice from '@/components/checkout/PaymentCancellationNotice';
 import CourseAccessDeniedNotice from '@/components/course/CourseAccessDeniedNotice';
 import MainContent from '@/components/layout/MainContent';
-import { Suspense, ViewTransition } from 'react';
+import { Fragment, Suspense, ViewTransition } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 // Image import removed - using native img for external URLs
@@ -24,11 +24,11 @@ import { eq, and } from 'drizzle-orm';
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
 import { getExcerpt, getSanitizedRichContentCached } from '@/lib/security/sanitize';
 import { absoluteUrl, DEFAULT_OG_IMAGE, serializeJsonLd, SITE_URL } from '@/lib/content/seo';
-import TagBadge from '@/components/content/TagBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
-import { Separator } from '@/components/ui/separator';
 import CourseDetailSection from '@/components/course/CourseDetailSection';
+import CourseFit, { hasCourseFitContent } from '@/components/course/CourseFit';
+import CourseInstructorCard from '@/components/course/CourseInstructorCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star } from 'lucide-react';
 import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
@@ -50,7 +50,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const [course] = await db
-    .select({ title: courses.title, description: courses.description, thumbnailUrl: courses.thumbnailUrl })
+    .select({ title: courses.title, summary: courses.summary, description: courses.description, thumbnailUrl: courses.thumbnailUrl })
     .from(courses)
     .where(and(eq(courses.slug, slug), eq(courses.status, 'published')))
     .limit(1);
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'ไม่พบคอร์ส' };
   }
 
-  const description = course.description ? getExcerpt(course.description, 160) : 'เรียนออนไลน์กับ MilerDev';
+  const description = course.summary ?? (course.description ? getExcerpt(course.description, 160) : 'เรียนออนไลน์กับ MilerDev');
 
   const thumbnailUrl = course.thumbnailUrl?.startsWith('http') ? course.thumbnailUrl : course.thumbnailUrl ? `https://${course.thumbnailUrl}` : null;
 
@@ -100,11 +100,18 @@ async function getCourse(slug: string) {
 
   if (!course) return null;
 
-  // Parallelize instructor, lessons, tags, and decision evidence queries
-  const [instructorResult, courseLessons, courseTagRows, reviewStats] = await Promise.all([
+  // Parallelize instructor, lessons, tags, decision evidence and prerequisite queries
+  const [instructorResult, courseLessons, courseTagRows, reviewStats, prerequisiteResult] = await Promise.all([
     course.instructorId
       ? db
-          .select({ id: users.id, name: users.name, avatarUrl: users.avatarUrl })
+          .select({
+            id: users.id,
+            name: users.name,
+            avatarUrl: users.avatarUrl,
+            headline: users.headline,
+            bio: users.bio,
+            profileLinks: users.profileLinks,
+          })
           .from(users)
           .where(eq(users.id, course.instructorId))
           .limit(1)
@@ -116,6 +123,14 @@ async function getCourse(slug: string) {
       .innerJoin(tags, eq(courseTags.tagId, tags.id))
       .where(eq(courseTags.courseId, course.id)),
     getCourseReviewStats(course.id),
+    // Link only to a course a visitor can open.
+    course.prerequisiteCourseId
+      ? db
+          .select({ title: courses.title, slug: courses.slug })
+          .from(courses)
+          .where(and(eq(courses.id, course.prerequisiteCourseId), eq(courses.status, 'published')))
+          .limit(1)
+      : Promise.resolve([]),
   ]);
 
   return {
@@ -124,6 +139,7 @@ async function getCourse(slug: string) {
     lessons: courseLessons,
     tags: courseTagRows,
     reviewStats,
+    prerequisiteCourse: prerequisiteResult[0] || null,
   };
 }
 
@@ -183,19 +199,33 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
   const verifiedReview = decisionFacts.evidence.verifiedReview;
   const instructorAvatarUrl = normalizeUrl(course.instructor?.avatarUrl || null);
   const cover = resolveCoverImage(course.thumbnailUrl);
+  // An admin-written summary leads; the description excerpt stays the fallback (ADR 0005).
+  const lead = course.summary ?? (course.description ? getExcerpt(course.description, 200) : null);
+  const fit = {
+    learningOutcomes: course.learningOutcomes,
+    targetAudience: course.targetAudience,
+    prerequisites: course.prerequisites,
+    prerequisiteCourse: course.prerequisiteCourse,
+  };
+  const showFit = hasCourseFitContent(fit);
+  const curriculumMeta = [
+    courseReady ? `${course.lessons.length} บท` : null,
+    totalSeconds > 0 ? durationText : null,
+    freePreviewCount > 0 ? `ทดลองฟรี ${freePreviewCount} บท` : null,
+  ].filter(Boolean).join(' · ');
 
   const courseSectionItems = [
-    { id: 'course-overview', label: 'รายละเอียดคอร์ส' },
-    { id: 'course-curriculum', label: 'เนื้อหาคอร์ส', count: course.lessons.length },
+    { id: 'course-overview', label: showFit ? 'เหมาะกับคุณไหม' : 'รายละเอียดคอร์ส' },
+    { id: 'course-curriculum', label: 'บทเรียน', count: course.lessons.length },
     ...(instructorName ? [{ id: 'course-instructor', label: 'ผู้สอน' }] : []),
-    { id: 'course-reviews', label: 'รีวิวผู้เรียน', count: verifiedReview?.count },
+    { id: 'course-reviews', label: 'รีวิว', count: verifiedReview?.count },
   ];
 
   const courseJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Course',
     name: course.title,
-    description: course.description ? getExcerpt(course.description, 160) : 'เรียนออนไลน์กับ MilerDev',
+    description: course.summary ?? (course.description ? getExcerpt(course.description, 160) : 'เรียนออนไลน์กับ MilerDev'),
     url: absoluteUrl(`/courses/${slug}`),
     inLanguage: 'th-TH',
     isAccessibleForFree: displayPrice === 0,
@@ -256,7 +286,7 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
             <div className="mx-auto grid max-w-[1204px] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_20rem] md:gap-9 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-20 lg:py-14">
               <div className="min-w-0 self-center">
                 <NavigationBreadcrumbs
-                  className="mb-8"
+                  className="mb-6"
                   items={[
                     { href: '/', label: 'หน้าแรก' },
                     { href: '/courses', label: 'คอร์สทั้งหมด' },
@@ -265,36 +295,49 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
                 />
 
                 {course.tags.length > 0 && (
-                  <div className="mb-5 flex flex-wrap gap-2" aria-label="หัวข้อคอร์ส">
-                    {course.tags.map((tag: { id: string; name: string; slug: string }) => (
-                      <TagBadge key={tag.id} tag={tag} asChild className="h-auto px-2.5 py-1">
-                        <Link href={`/courses?tag=${tag.slug}`}>{tag.name}</Link>
-                      </TagBadge>
+                  <p className="mb-3 flex flex-wrap items-center gap-x-2 text-sm font-semibold text-link">
+                    {course.tags.map((tag: { id: string; name: string; slug: string }, index: number) => (
+                      <Fragment key={tag.id}>
+                        {index > 0 ? <span aria-hidden="true">·</span> : null}
+                        <Link href={`/courses?tag=${tag.slug}`} className="inline-flex min-h-6 items-center underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">{tag.name}</Link>
+                      </Fragment>
                     ))}
-                  </div>
+                  </p>
                 )}
 
-                <h1 className="max-w-3xl text-[1.75rem] leading-[1.2] font-bold tracking-[-.03em] text-balance sm:text-4xl sm:leading-[1.15] lg:text-5xl xl:text-[3.5rem]">{course.title}</h1>
-                {course.description && (
-                  <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground text-pretty">{getExcerpt(course.description, 200)}</p>
+                <h1 className="max-w-3xl text-h1 font-bold text-balance">{course.title}</h1>
+                {lead && (
+                  <p className="mt-4 max-w-2xl text-lead text-muted-foreground text-pretty">{lead}</p>
                 )}
 
-                {verifiedReview && (
-                  <a href="#course-reviews" className="mt-6 inline-flex flex-wrap items-center gap-2 text-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
-                    <Star className="size-4 fill-primary text-primary" aria-hidden="true" />
-                    <strong>{verifiedReview.average.toFixed(1)} / 5</strong>
-                    <span className="text-muted-foreground">จาก {verifiedReview.count} รีวิว</span>
+                {instructorName && (
+                  <a href="#course-instructor" className="mt-6 inline-flex items-center gap-3 rounded-full pr-3 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+                    {instructorAvatarUrl ? (
+                      <img src={instructorAvatarUrl} alt="" width={44} height={44} className="size-11 shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary font-bold text-secondary-foreground" aria-hidden="true">{instructorName.charAt(0)}</span>
+                    )}
+                    <span className="grid leading-snug">
+                      <span className="text-caption text-muted-foreground">สอนโดย</span>
+                      <span className="font-semibold wrap-anywhere">{instructorName}</span>
+                    </span>
                   </a>
                 )}
-                {(courseReady || totalSeconds > 0 || freePreviewCount > 0) && (
-                  <section className="mt-7" aria-label="ข้อมูลประกอบการตัดสินใจ">
-                    <Separator className="mb-5" />
-                    <dl className="flex flex-wrap gap-x-7 gap-y-4">
-                      {courseReady && <div><dt className="text-caption text-muted-foreground">บทเรียน</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{course.lessons.length} <span className="text-sm font-normal">บท</span></dd></div>}
-                      {totalSeconds > 0 && <div><dt className="text-caption text-muted-foreground">วิดีโอทั้งหมด</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{durationText}</dd></div>}
-                      {freePreviewCount > 0 && <div><dt className="text-caption text-muted-foreground">ทดลองเรียนฟรี</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{freePreviewCount} <span className="text-sm font-normal">บท</span></dd></div>}
-                    </dl>
-                  </section>
+
+                {(courseReady || totalSeconds > 0 || freePreviewCount > 0 || verifiedReview) && (
+                  <ul aria-label="ข้อมูลประกอบการตัดสินใจ" className="mt-6 flex flex-wrap gap-x-7 gap-y-3 border-t pt-5 text-muted-foreground">
+                    {courseReady && <li><strong className="font-semibold text-foreground tabular-nums">{course.lessons.length}</strong> บทเรียน</li>}
+                    {totalSeconds > 0 && <li>วิดีโอรวม <strong className="font-semibold text-foreground tabular-nums">{durationText}</strong></li>}
+                    {freePreviewCount > 0 && <li>ทดลองเรียนฟรี <strong className="font-semibold text-foreground tabular-nums">{freePreviewCount} บท</strong></li>}
+                    {verifiedReview && (
+                      <li>
+                        <a href="#course-reviews" className="inline-flex items-center gap-1.5 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+                          <Star className="size-4 fill-primary text-primary" aria-hidden="true" />
+                          <strong className="font-semibold text-foreground tabular-nums">{verifiedReview.average.toFixed(1)}</strong> จาก {verifiedReview.count} รีวิว
+                        </a>
+                      </li>
+                    )}
+                  </ul>
                 )}
               </div>
 
@@ -339,48 +382,41 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
           <CourseSectionNav items={courseSectionItems} />
 
           <article className="mx-auto max-w-[1204px] px-5 sm:px-8">
-            <CourseDetailSection id="course-overview" eyebrow="ภาพรวมคอร์ส" title="รายละเอียดคอร์ส">
-              {course.description ? (
-                <div className="rich-content text-sm leading-8 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:leading-8 [&_li]:leading-8" dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }} />
-              ) : (
-                <Empty className="border p-6">
-                  <EmptyHeader>
-                    <EmptyTitle>กำลังเตรียมรายละเอียดคอร์ส</EmptyTitle>
-                    <EmptyDescription>คอร์สนี้ยังไม่มีรายละเอียดเพิ่มเติม</EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-              )}
-            </CourseDetailSection>
-            <Separator />
-            <CourseDetailSection id="course-curriculum" eyebrow="เนื้อหาคอร์ส" title="มองเห็นเส้นทางก่อนเริ่มเรียน" description="เรียนตามลำดับ หรือกลับมาทบทวนบทที่ต้องการ">
-              <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
-                <h3 className="text-base font-semibold">รายการบทเรียนทั้งหมด</h3>
-                {courseReady && <p className="text-caption text-muted-foreground">{course.lessons.length} บท{totalSeconds > 0 ? ' · ' + durationText : ''}</p>}
-              </div>
+            {showFit ? (
+              <CourseDetailSection id="course-overview" title="คอร์สนี้เหมาะกับคุณไหม">
+                <CourseFit content={fit} />
+                {course.description ? (
+                  <details className="mt-5 rounded-xl border bg-card px-6 py-4">
+                    <summary className="flex min-h-11 cursor-pointer items-center font-semibold focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">อ่านคำอธิบายคอร์สฉบับเต็ม</summary>
+                    <div className="mt-3">
+                      <div className="rich-content text-sm leading-8 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:leading-8 [&_li]:leading-8" dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }} />
+                    </div>
+                  </details>
+                ) : null}
+              </CourseDetailSection>
+            ) : (
+              <CourseDetailSection id="course-overview" title="รายละเอียดคอร์ส">
+                {course.description ? (
+                  <div className="rich-content text-sm leading-8 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_p]:leading-8 [&_li]:leading-8" dangerouslySetInnerHTML={{ __html: getSanitizedRichContentCached(course.description) }} />
+                ) : (
+                  <Empty className="border p-6">
+                    <EmptyHeader>
+                      <EmptyTitle>กำลังเตรียมรายละเอียดคอร์ส</EmptyTitle>
+                      <EmptyDescription>คอร์สนี้ยังไม่มีรายละเอียดเพิ่มเติม</EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                )}
+              </CourseDetailSection>
+            )}
+            <CourseDetailSection id="course-curriculum" title="บทเรียนทั้งหมด" meta={curriculumMeta || undefined}>
               <CourseDetailClient courseId={course.id} courseSlug={course.slug} decisionFacts={decisionFacts} lessons={course.lessons} />
             </CourseDetailSection>
-            {instructorName && (
-              <>
-                <Separator />
-                <CourseDetailSection id="course-instructor" eyebrow="ผู้สอน" title="รู้จักผู้สอน">
-                  <Card className="py-0">
-                    <CardContent className="flex items-center gap-5 p-6">
-                      {instructorAvatarUrl ? (
-                        <img src={instructorAvatarUrl} alt="" width={64} height={64} className="size-16 shrink-0 rounded-2xl object-cover" />
-                      ) : (
-                        <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-secondary text-xl font-bold text-secondary-foreground" aria-hidden="true">{instructorName.charAt(0)}</span>
-                      )}
-                      <div className="grid min-w-0 gap-1">
-                        <span className="text-sm text-muted-foreground">ผู้สอนและดูแลเนื้อหาคอร์สนี้</span>
-                        <strong className="text-lg wrap-anywhere">{instructorName}</strong>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </CourseDetailSection>
-              </>
+            {course.instructor && instructorName && (
+              <CourseDetailSection id="course-instructor" title="ผู้สอน">
+                <CourseInstructorCard instructor={{ ...course.instructor, name: instructorName, avatarUrl: instructorAvatarUrl }} />
+              </CourseDetailSection>
             )}
-            <Separator />
-            <CourseDetailSection id="course-reviews" eyebrow="เสียงจากผู้เรียน" title="รีวิวจากผู้เรียน" description="ประสบการณ์จากผู้ที่เรียนคอร์สนี้">
+            <CourseDetailSection id="course-reviews" title="รีวิวจากผู้เรียน" description="ประสบการณ์จากผู้ที่เรียนคอร์สนี้">
               <Suspense fallback={<div role="status" aria-label="กำลังโหลดรีวิว"><Skeleton className="h-32 w-full" /></div>}>
                 <CourseReviewsWrapper courseSlug={course.slug} />
               </Suspense>

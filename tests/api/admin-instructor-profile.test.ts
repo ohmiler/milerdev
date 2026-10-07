@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
   logAudit: vi.fn(),
+  revalidateInstructorCoursePages: vi.fn(),
   dbLimit: vi.fn(),
   dbUpdate: vi.fn(),
   dbSet: vi.fn(),
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/lib/auth/helpers', () => ({ requireAdmin: mocks.requireAdmin }));
 vi.mock('@/lib/auditLog', () => ({ logAudit: mocks.logAudit }));
+vi.mock('@/lib/courses/revalidate', () => ({ revalidateInstructorCoursePages: mocks.revalidateInstructorCoursePages }));
 vi.mock('@/lib/error-handler', () => ({ logError: vi.fn() }));
 vi.mock('@/lib/db', () => ({
   db: {
@@ -58,6 +60,8 @@ describe('Admin instructor profile', () => {
     // Only the profile: role, name and session state stay with the user lifecycle authority.
     expect(Object.keys(mocks.dbSet.mock.calls[0][0]).sort()).toEqual(['bio', 'headline', 'profileLinks', 'updatedAt']);
     expect(mocks.logAudit).toHaveBeenCalledWith(expect.objectContaining({ entityType: 'instructor_profile', entityId: 'user-teacher' }));
+    // The card shows on cached course pages, so they refresh now rather than within the hour.
+    expect(mocks.revalidateInstructorCoursePages).toHaveBeenCalledWith('user-teacher');
   });
 
   it('stores blanks as null so the card leaves them out', async () => {
@@ -76,6 +80,7 @@ describe('Admin instructor profile', () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ code: 'NOT_INSTRUCTOR' });
     expect(mocks.dbUpdate).not.toHaveBeenCalled();
+    expect(mocks.revalidateInstructorCoursePages).not.toHaveBeenCalled();
   });
 
   it.each([

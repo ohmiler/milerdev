@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { logAudit } from '@/lib/auditLog';
 import { requireAdmin } from '@/lib/auth/helpers';
+import { revalidateInstructorCoursePages } from '@/lib/courses/revalidate';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';
@@ -64,6 +65,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
       })
       .where(eq(users.id, id));
     await logAudit({ userId: session.user.id, action: 'update', entityType: 'instructor_profile', entityId: id });
+    // Course pages are cached for an hour; show the new card on the courses this person teaches now.
+    await revalidateInstructorCoursePages(id);
 
     return NextResponse.json({ message: 'บันทึกประวัติผู้สอนแล้ว' });
   } catch (error) {

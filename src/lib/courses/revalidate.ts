@@ -27,3 +27,12 @@ export async function revalidateCoursePagesById(courseId: string): Promise<void>
     .limit(1);
   revalidateCoursePages(course?.slug);
 }
+
+/** For an instructor profile change: every course page that shows the instructor card. */
+export async function revalidateInstructorCoursePages(instructorId: string): Promise<void> {
+  const taught = await db
+    .select({ slug: courses.slug })
+    .from(courses)
+    .where(eq(courses.instructorId, instructorId));
+  revalidateCoursePages(...taught.map((course) => course.slug));
+}
