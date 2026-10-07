@@ -10,6 +10,7 @@ import BundlePriceSummary from '@/components/bundle/BundlePriceSummary';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
+import SectionHeader from '@/components/layout/SectionHeader';
 import { auth } from '@/lib/auth';
 import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 import { db } from '@/lib/db';
@@ -265,7 +266,7 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
                 <Badge variant={'outline'}>
                   ชุดคอร์ส · {decisionFacts.evidence.courseCount} คอร์ส
                 </Badge>
-                <h1 className={'mt-5 max-w-4xl text-[1.75rem] leading-tight font-bold tracking-tight sm:text-5xl'}>
+                <h1 className={'mt-5 max-w-4xl text-h1 font-bold'}>
                   {bundle.title}
                 </h1>
                 {bundle.description ? (
@@ -283,12 +284,12 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_23rem]">
             <div className="min-w-0">
-              <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold tracking-tight">เส้นทางการเรียนในชุดนี้</h2>
-                </div>
-                <p className="max-w-md text-sm leading-6 text-muted-foreground">เรียงตามลำดับที่วางไว้ เปิดดูรายละเอียดแต่ละคอร์สได้ก่อนตัดสินใจ</p>
-              </div>
+              <SectionHeader
+                id="bundle-path-title"
+                title="เส้นทางการเรียนในชุดนี้"
+                description="เรียงตามลำดับที่วางไว้ เปิดดูรายละเอียดแต่ละคอร์สได้ก่อนตัดสินใจ"
+                className="mb-7"
+              />
 
               <ol className="grid gap-5">
                 {decisionFacts.courses.map((course, index) => {

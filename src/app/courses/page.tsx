@@ -1,5 +1,6 @@
 import MainContent from '@/components/layout/MainContent';
 import PublicPageHeader from '@/components/layout/PublicPageHeader';
+import SectionHeader from '@/components/layout/SectionHeader';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -425,10 +426,13 @@ export default async function CoursesPage({ searchParams }: Props) {
 
         <section id="course-catalog" className="py-14 sm:py-20" aria-labelledby="courses-catalog-title">
           <div className="container">
-            <header className="mb-8 grid gap-4 border-b pb-7 md:grid-cols-[1fr_auto] md:items-end">
-              <div><h2 id="courses-catalog-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">คอร์สทั้งหมด</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">ใช้ตัวกรองเพื่อย่อรายการ แล้วดูรายละเอียดจริงของแต่ละคอร์สก่อนตัดสินใจ</p></div>
-              <Badge variant="secondary" aria-live="polite">พบ {pagination.total} คอร์ส</Badge>
-            </header>
+            <SectionHeader
+              id="courses-catalog-title"
+              title="คอร์สทั้งหมด"
+              description="ใช้ตัวกรองเพื่อย่อรายการ แล้วดูรายละเอียดจริงของแต่ละคอร์สก่อนตัดสินใจ"
+              action={<Badge variant="secondary" aria-live="polite">พบ {pagination.total} คอร์ส</Badge>}
+              className="mb-8 border-b pb-7"
+            />
 
             <CourseCatalogFilters
               tags={allTags}
@@ -466,7 +470,13 @@ export default async function CoursesPage({ searchParams }: Props) {
         {showBundles && bundlesList.length > 0 ? (
           <section className="border-t bg-background py-14 sm:py-20" aria-labelledby="courses-bundles-title">
             <div className="container">
-              <header className="mb-8 grid gap-4 md:grid-cols-[1fr_auto] md:items-end"><div><h2 id="courses-bundles-title" className="text-3xl font-semibold tracking-[-.03em] sm:text-4xl">ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน</p></div><Badge variant="secondary">{bundlesList.length} เส้นทาง</Badge></header>
+              <SectionHeader
+                id="courses-bundles-title"
+                title="ถ้าอยากเรียนต่อเนื่อง ลองดูแบบชุด"
+                description="รวมคอร์สที่ต่อเนื่องกันไว้ในเส้นทางเดียว พร้อมราคาที่เปรียบเทียบได้ชัดเจน"
+                action={<Badge variant="secondary">{bundlesList.length} เส้นทาง</Badge>}
+                className="mb-8"
+              />
               <div className="grid gap-5 lg:grid-cols-2">
                 {bundlesList.map((bundle) => (
                   <BundleCard
