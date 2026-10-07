@@ -27,12 +27,19 @@ import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
 import { showToast } from '@/components/ui/Toast';
 import { transitionAdminCourse } from '@/lib/courses/admin-lifecycle-client';
 import {
   DEFAULT_CERTIFICATE_COLOR,
   normalizeCertificateColor,
 } from '@/lib/certificates/color';
+import {
+  COURSE_CONTENT_LIST_MAX,
+  COURSE_SUMMARY_MAX,
+  contentLinesToList,
+  contentListToLines,
+} from '@/lib/courses/content';
 import type { CourseLifecycleAction, CourseStatus } from '@/lib/courses/lifecycle';
 import { fromThaiDateTimeInput, toThaiDateTimeInput } from '@/lib/courses/promo-time';
 
@@ -64,8 +71,14 @@ export default function EditCoursePage() {
     promoStartsAt: '',
     promoEndsAt: '',
     instructorId: '',
+    summary: '',
+    learningOutcomes: '',
+    targetAudience: '',
+    prerequisites: '',
+    prerequisiteCourseId: '',
   });
   const [instructorOptions, setInstructorOptions] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
+  const [prerequisiteOptions, setPrerequisiteOptions] = useState<Array<{ id: string; title: string; status: CourseStatus }>>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -92,9 +105,15 @@ export default function EditCoursePage() {
             promoStartsAt: toThaiDateTimeInput(data.course.promoStartsAt),
             promoEndsAt: toThaiDateTimeInput(data.course.promoEndsAt),
             instructorId: data.course.instructorId || '',
+            summary: data.course.summary || '',
+            learningOutcomes: contentListToLines(data.course.learningOutcomes),
+            targetAudience: contentListToLines(data.course.targetAudience),
+            prerequisites: contentListToLines(data.course.prerequisites),
+            prerequisiteCourseId: data.course.prerequisiteCourseId || '',
           });
         }
         setInstructorOptions(data.instructorOptions || []);
+        setPrerequisiteOptions(data.prerequisiteOptions || []);
         setSelectedTagIds((data.tags || []).map((tag: { id: string }) => tag.id));
       })
       .catch((caughtError) => setError(caughtError instanceof Error ? caughtError.message : 'โหลดข้อมูลคอร์สไม่สำเร็จ'))
@@ -123,6 +142,10 @@ export default function EditCoursePage() {
           promoStartsAt,
           promoEndsAt,
           instructorId: courseDetails.instructorId || null,
+          learningOutcomes: contentLinesToList(courseDetails.learningOutcomes),
+          targetAudience: contentLinesToList(courseDetails.targetAudience),
+          prerequisites: contentLinesToList(courseDetails.prerequisites),
+          prerequisiteCourseId: courseDetails.prerequisiteCourseId || null,
           tagIds: selectedTagIds,
         }),
       });
@@ -167,10 +190,11 @@ export default function EditCoursePage() {
   const checklist = useMemo(() => [
     { label: 'ชื่อคอร์ส', ready: Boolean(formData.title.trim()) },
     { label: 'คำอธิบาย', ready: Boolean(formData.description.trim()) },
+    { label: 'คำโปรย', ready: Boolean(formData.summary.trim()) },
     { label: 'ภาพปก', ready: Boolean(formData.thumbnailUrl.trim()) },
     { label: 'วิดีโอแนะนำ', ready: Boolean(formData.previewVideoUrl.trim()) },
     { label: 'Slug', ready: Boolean(formData.slug.trim()) },
-  ], [formData.description, formData.previewVideoUrl, formData.slug, formData.thumbnailUrl, formData.title]);
+  ], [formData.description, formData.previewVideoUrl, formData.slug, formData.summary, formData.thumbnailUrl, formData.title]);
   const readyCount = checklist.filter((item) => item.ready).length;
   const readinessPercent = Math.round((readyCount / checklist.length) * 100);
 
@@ -222,6 +246,45 @@ export default function EditCoursePage() {
                 <FieldDescription>ชื่อนี้จะแสดงบนหน้าคอร์สสาธารณะ เลือกได้เฉพาะบัญชีผู้สอนหรือผู้ดูแลที่ยังใช้งานอยู่</FieldDescription>
               </Field>
               <Field><FieldLabel>แท็ก</FieldLabel><TagSelector selectedTagIds={selectedTagIds} onChange={setSelectedTagIds} /></Field>
+            </FieldGroup>
+          </AdminSection>
+
+          <AdminSection title="เนื้อหาบนหน้าคอร์ส" description="ข้อความสั้นที่ช่วยผู้เรียนตัดสินใจ แสดงเหนือรายละเอียดคอร์ส ช่องที่เว้นว่างจะไม่แสดงบนหน้าเว็บ">
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="course-summary">คำโปรย</FieldLabel>
+                <Textarea id="course-summary" rows={2} maxLength={COURSE_SUMMARY_MAX} value={formData.summary} onChange={(event) => setFormData((previous) => ({ ...previous, summary: event.target.value }))} placeholder="เช่น ก้าวสู่การเป็น Front-end Developer ด้วย React ตั้งแต่พื้นฐาน จนสร้างเว็บแอปที่ใส่พอร์ตได้" />
+                <FieldDescription>หนึ่งถึงสองประโยคใต้ชื่อคอร์ส {formData.summary.length}/{COURSE_SUMMARY_MAX} ตัวอักษร</FieldDescription>
+              </Field>
+              <div className="grid gap-5 md:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="course-outcomes">สิ่งที่ผู้เรียนจะได้</FieldLabel>
+                  <Textarea id="course-outcomes" rows={5} value={formData.learningOutcomes} onChange={(event) => setFormData((previous) => ({ ...previous, learningOutcomes: event.target.value }))} />
+                  <FieldDescription>บรรทัดละหนึ่งข้อ ไม่เกิน {COURSE_CONTENT_LIST_MAX} ข้อ</FieldDescription>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="course-audience">เหมาะกับใคร</FieldLabel>
+                  <Textarea id="course-audience" rows={5} value={formData.targetAudience} onChange={(event) => setFormData((previous) => ({ ...previous, targetAudience: event.target.value }))} />
+                  <FieldDescription>บรรทัดละหนึ่งข้อ ไม่เกิน {COURSE_CONTENT_LIST_MAX} ข้อ</FieldDescription>
+                </Field>
+              </div>
+              <div className="grid gap-5 md:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="course-prerequisites">ควรรู้ก่อนเรียน</FieldLabel>
+                  <Textarea id="course-prerequisites" rows={3} value={formData.prerequisites} onChange={(event) => setFormData((previous) => ({ ...previous, prerequisites: event.target.value }))} />
+                  <FieldDescription>บรรทัดละหนึ่งข้อ เว้นว่างถ้าเริ่มจากศูนย์ได้</FieldDescription>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="course-prerequisite-course">คอร์สที่ควรเรียนก่อน</FieldLabel>
+                  <NativeSelect id="course-prerequisite-course" className="w-full" value={formData.prerequisiteCourseId} onChange={(event) => setFormData((previous) => ({ ...previous, prerequisiteCourseId: event.target.value }))}>
+                    <NativeSelectOption value="">ไม่ระบุ</NativeSelectOption>
+                    {prerequisiteOptions.map((option) => (
+                      <NativeSelectOption key={option.id} value={option.id}>{option.title}{option.status === 'draft' ? ' (แบบร่าง)' : option.status === 'archived' ? ' (เก็บเข้าคลัง)' : ''}</NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                  <FieldDescription>แสดงเป็นลิงก์ใต้ “ควรรู้ก่อนเรียน” สำหรับผู้เรียนที่ยังไม่พร้อม</FieldDescription>
+                </Field>
+              </div>
             </FieldGroup>
           </AdminSection>
 
