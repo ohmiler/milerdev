@@ -51,7 +51,7 @@ One of the four most recently created published courses, shown only when the lea
 
 ### Studio proof
 
-Evidence that connects MilerDev Studio's teaching approach and software experience to real teaching activity. The current proof is a static three-image collage with descriptive alternative text; it is not a gallery product or testimonial.
+Evidence that connects MilerDev Studio's teaching approach and software experience to real teaching activity. The current proof is a static three-image collage with descriptive alternative text, and an instructor card: the founder's name and role, and the YouTube channel's subscriber and video counts, rounded down from the public channel page (196K and 3.7K on 2026-10-07, shown as "กว่า 190,000" and "กว่า 3,700") so the claim stays true. Recheck the channel before changing those numbers. It is not a gallery product or testimonial.
 
 ### Learner outcome proof
 

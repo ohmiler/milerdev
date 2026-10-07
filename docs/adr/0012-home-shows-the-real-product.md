@@ -27,7 +27,7 @@ Each section still answers one learner question (ADR 0002's admission rule):
 1. **Hero — ที่นี่ช่วยฉันไปถึงไหน?** The ADR 0001 headline and both CTAs, three true facts (free preview without an account, one payment with lifetime access, a certificate on completion), and a VS Code–style editor that types a short React program, then shows its result. The editor is decorative and hidden from assistive technology; the result's button works. With reduced motion the finished program shows at once, and nothing keeps moving after about ten seconds.
 2. **How you learn — หน้าเรียนเป็นอย่างไร?** Screenshots of the real learning workspace: the lesson list and the notes and code under the video. The practice-quiz card appears only when a published course has a quiz. A certificate note closes the section.
 3. **Courses — เริ่มคอร์สไหนก่อน?** The learning path in `src/lib/home/course-plan.ts` (an ordered list of course slugs), with every other published course listed as an extra. A path needs at least two published steps; otherwise Home falls back to the four latest courses, as before.
-4. **Studio proof — ใครอยู่เบื้องหลัง?** Unchanged except for the shared heading scale.
+4. **Studio proof — ใครอยู่เบื้องหลัง?** The shared heading scale, and (added 2026-10-07 with the owner's approval) an instructor card: name, role as founder, and the YouTube channel's subscriber and video counts rounded down from the public channel page, with links to the channel and Facebook page.
 5. **Reviews — คนที่เรียนแล้วว่าอย่างไร?** Up to three reviews rated 4 or 5 with a written comment, verified, not hidden, on a published course, and named the way the course page names them. The section is left out when there are none.
 6. **FAQ** and 7. **Final CTA** are unchanged.
 
