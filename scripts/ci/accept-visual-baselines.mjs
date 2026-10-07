@@ -39,8 +39,12 @@ function main(runId) {
     }
 
     mkdirSync(BASELINE_DIRECTORY, { recursive: true });
-    for (const screenshot of screenshots) {
+    // A retried test leaves the same screenshot twice; the first attempt's copy is enough.
+    const approved = new Set();
+    for (const screenshot of screenshots.sort()) {
       const target = join(BASELINE_DIRECTORY, baselineNameFor(basename(screenshot)));
+      if (approved.has(target)) continue;
+      approved.add(target);
       copyFileSync(screenshot, target);
       console.log(`approved ${target}`);
     }
