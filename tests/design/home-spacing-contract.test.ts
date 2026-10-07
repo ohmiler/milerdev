@@ -44,15 +44,30 @@ describe('Home spacing foundation', () => {
     expect(home).toContain('reviews.length > 0 ? <HomeReviews');
   });
 
-  it('keeps every Home section heading on one scale', () => {
-    const sectionHeading = 'text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]';
+  it('exposes the type scale as utilities instead of one-off sizes', () => {
+    const globals = readSource('src/app/globals.css');
+    const theme = globals.match(/@theme inline\s*\{[^}]+\}/)?.[0] ?? '';
 
+    for (const step of ['display', 'h1', 'h2', 'h3', 'lead']) {
+      expect(theme).toContain(`--text-${step}: var(--type-${step});`);
+      expect(globals).toMatch(new RegExp(`--type-${step}: [^;]+;`));
+    }
+    // Thai stacks marks above and below the line: headings never get a line height under 1.22.
+    expect(globals).toContain('--leading-display: 1.22;');
+    expect(readSource('src/components/layout/SectionHeader.tsx')).toContain('text-h2');
+  });
+
+  it('gives every Home section heading the shared SectionHeader instead of its own size', () => {
     for (const path of [
       'src/app/page.tsx',
       'src/components/home/StudioProofSection.tsx',
       'src/components/home/HomeReviews.tsx',
     ]) {
-      expect(readSource(path)).toContain(sectionHeading);
+      const source = readSource(path);
+      expect(source, path).toContain('<SectionHeader');
+      expect(source, path).not.toMatch(/<h2\b/);
+      expect(source, path).not.toMatch(/\btext-\[(?:clamp|\d)/);
     }
+    expect(readSource('src/app/page.tsx')).toContain('className="text-display font-bold"');
   });
 });

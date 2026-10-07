@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Presentation } from 'lucide-react';
 
+import SectionHeader from '@/components/layout/SectionHeader';
 import { Button } from '@/components/ui/button';
 
 const STUDIO_IMAGES = [
@@ -30,20 +31,13 @@ export default function StudioProofSection() {
     >
       <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-end lg:gap-16">
         <div className="max-w-xl">
-          <div className="flex items-center gap-2 text-sm font-semibold text-background/75">
-            <Presentation className="size-4" aria-hidden="true" />
-            MilerDev Studio
-          </div>
-          <h2
+          <SectionHeader
             id="studio-proof-title"
-            className="mt-4 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]"
-          >
-            สอนจากประสบการณ์จริง แล้วอธิบายให้คนเริ่มต้นเห็นภาพ
-          </h2>
-          <p className="mt-5 text-pretty leading-8 text-background/75">
-            MilerDev นำประสบการณ์จากการพัฒนาเว็บไซต์ การสอน และการเป็นวิทยากร
-            มาจัดลำดับเป็นบทเรียนภาษาไทยที่เริ่มจากเหตุผล ก่อนพาไปลงมือสร้างด้วยตัวเอง
-          </p>
+            tone="inverse"
+            eyebrow={<><Presentation className="size-4" aria-hidden="true" />MilerDev Studio</>}
+            title="สอนจากประสบการณ์จริง แล้วอธิบายให้คนเริ่มต้นเห็นภาพ"
+            description="MilerDev นำประสบการณ์จากการพัฒนาเว็บไซต์ การสอน และการเป็นวิทยากร มาจัดลำดับเป็นบทเรียนภาษาไทยที่เริ่มจากเหตุผล ก่อนพาไปลงมือสร้างด้วยตัวเอง"
+          />
           <Button
             asChild
             size="lg"
