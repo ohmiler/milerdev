@@ -1,19 +1,19 @@
 # Home conversion domain and section glossary
 
 - Status: Accepted living document
-- Last updated: 2026-08-19
-- Related decision: `docs/adr/0002-home-information-architecture-and-spacing-rhythm.md`
+- Last updated: 2026-10-07
+- Related decisions: `docs/adr/0012-home-shows-the-real-product.md` (section order), `docs/adr/0002-home-information-architecture-and-spacing-rhythm.md` (spacing and admission rule)
 
 ## Journey model
 
 ```mermaid
 flowchart LR
     Visitor[Visitor] --> Promise[Understands the promise]
-    Promise --> Confidence[Confirms product capabilities]
-    Confidence --> Outcome[Recognizes the learning outcomes]
-    Outcome --> Product[Evaluates a published course]
-    Product --> Authority[Finds teaching proof]
-    Authority --> Objections[Resolves objections]
+    Promise --> Workspace[Sees the real learning screen]
+    Workspace --> Path[Finds where to start]
+    Path --> Authority[Finds teaching proof]
+    Authority --> Learners[Reads verified reviews]
+    Learners --> Objections[Resolves objections]
     Objections --> Action[Browses, previews, or registers]
 ```
 
@@ -25,21 +25,29 @@ Home supports this journey; it does not need to explain every product detail tha
 
 The fastest explanation of who MilerDev is for, what practical change the learner can expect, and the next useful action. It is not a complete company introduction.
 
-### Confidence strip
+### Hero facts
 
-A compact list of confirmed product capabilities that reduce uncertainty: Thai explanations, saved progress, lifetime review access, and certificate eligibility. Capability claims must remain true for the actual learning product and must not be presented as social-proof statistics.
+Three short capability claims under the hero actions: free preview without an account, one payment with lifetime access, and a certificate on completion. Like every capability claim, they must stay true for the actual product and are not social-proof statistics. They replace the retired confidence strip.
 
-### Learning outcome
+### Hero editor
 
-A concrete direction for learner growth. The current Home uses เข้าใจเหตุผล, สร้างด้วยตัวเอง, and ต่อยอดเป็นผลงาน. Outcomes are appropriate while the catalog is too small to support distinct learning-path destinations.
+A decorative code editor that types a short program and then shows its working result. It illustrates building, not a product state: it never shows a learner's progress, a score, or a lesson that does not exist.
+
+### How you learn
+
+Screenshots of the real learning workspace with one plain sentence each. A capability appears only when a learner could meet it, so the practice-quiz card waits until a published course has a quiz.
 
 ### Learning path
 
-A real route through available products for a learner goal. A learning-path card must lead to a meaningful filtered catalog, bundle, or path-detail state. A label that sends every learner to the same generic catalog is a marketing topic, not a product path.
+A real route through available products for a learner goal. On Home it is the ordered list of course slugs in `src/lib/home/course-plan.ts`; each step is a real course page. A path needs at least two published steps. A label that sends every learner to the same generic catalog is a marketing topic, not a product path.
+
+### Extra course
+
+A published course outside the learning path, listed after it so no course disappears from Home.
 
 ### Latest product
 
-One of the four most recently created published courses returned by the authoritative Home query. Cards use real price, active promotion, preview, instructor, lesson, duration, and tag data. Latest is not the same as manually featured.
+One of the four most recently created published courses, shown only when the learning path has fewer than two published steps. Cards use real price, active promotion, preview, instructor, lesson, duration, and tag data. Latest is not the same as manually featured.
 
 ### Studio proof
 
@@ -47,7 +55,7 @@ Evidence that connects MilerDev Studio's teaching approach and software experien
 
 ### Learner outcome proof
 
-A verified review, learner project, or case study that shows a result attributable to an actual learner. Anonymous invented testimonial copy is not learner outcome proof. Home omits this role until verifiable assets exist.
+A verified review, learner project, or case study that shows a result attributable to an actual learner. Anonymous invented testimonial copy is not learner outcome proof. Home shows up to three verified, visible reviews rated 4 or 5 with a written comment, named as the course page names them, and leaves the section out when there are none.
 
 ### Canonical FAQ
 

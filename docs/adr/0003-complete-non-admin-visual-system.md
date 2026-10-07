@@ -24,7 +24,7 @@ Public, dashboard, and account surfaces are light-first. The learning workspace 
 
 Thai is the primary task language. Short English eyebrows and established developer terms may remain when they add orientation or character, but actions, status, validation, recovery, and payment language must be immediately understandable in Thai.
 
-Home information architecture and approved copy are frozen. Shared-token changes may fix regressions but must preserve the Home composition and spacing contract from ADR 0002.
+Home information architecture and approved copy are frozen (as defined by ADR 0012 since 2026-10-07). Shared-token changes may fix regressions but must preserve the Home composition and spacing contract from ADR 0002.
 
 ## Implementation boundaries
 

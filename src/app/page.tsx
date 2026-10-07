@@ -3,35 +3,20 @@ export const dynamic = 'force-dynamic';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-  ArrowRight,
-  Award,
-  BookOpenCheck,
-  CheckCircle2,
-  Clock3,
-  Code2,
-  Languages,
-  Lightbulb,
-  PlayCircle,
-  Rocket,
-} from 'lucide-react';
+import { ArrowRight, Award, Check, PlayCircle, Rocket } from 'lucide-react';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { HOME_FAQ_ITEMS } from '@/app/faq/faq-data';
 import CourseCard from '@/components/course/CourseCard';
-import HomeFAQ from '@/components/home/HomeFAQ';
 import HomeAnimations from '@/components/home/HomeAnimations';
+import HomeCodeEditor from '@/components/home/HomeCodeEditor';
+import HomeCourseRow from '@/components/home/HomeCourseRow';
+import HomeFAQ from '@/components/home/HomeFAQ';
+import HomeReviews from '@/components/home/HomeReviews';
 import StudioProofSection from '@/components/home/StudioProofSection';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Empty,
   EmptyContent,
@@ -39,12 +24,17 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Progress } from '@/components/ui/progress';
 import { db } from '@/lib/db';
 import { courses, courseTags, lessons, tags, users } from '@/lib/db/schema';
 import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
+import { describePathStep, planHomeCourses } from '@/lib/home/course-plan';
+import { getHomeReviews, hasPublishedLessonQuiz } from '@/lib/home/proof';
+import { cn } from '@/lib/utils';
 
-async function getLatestCourses() {
+// The catalog is small; this cap only guards against an unexpectedly large one.
+const PUBLISHED_COURSE_LIMIT = 24;
+
+async function getPublishedCourses() {
   const lessonStatsSq = db
     .select({
       courseId: lessons.courseId,
@@ -80,7 +70,7 @@ async function getLatestCourses() {
     .leftJoin(lessonStatsSq, eq(courses.id, lessonStatsSq.courseId))
     .where(eq(courses.status, 'published'))
     .orderBy(desc(courses.createdAt))
-    .limit(4);
+    .limit(PUBLISHED_COURSE_LIMIT);
 
   const courseIds = rows.map((course) => course.id);
   const courseTagRows = courseIds.length > 0
@@ -131,49 +121,51 @@ async function getLatestCourses() {
   });
 }
 
-const CONFIDENCE_POINTS = [
+const HERO_FACTS = [
+  'บทเรียนทดลองเปิดดูได้โดยไม่ต้องสมัคร',
+  'ชำระครั้งเดียว เรียนได้ตลอดชีพ',
+  'ใบรับรองเมื่อเรียนครบ',
+] as const;
+
+const LEARNING_STEPS = [
   {
-    icon: Languages,
-    title: 'อธิบายเป็นภาษาไทย',
-    description: 'เห็นภาพรวมและเหตุผลก่อนลงมือเขียน',
+    image: '/images/home/learn-curriculum.webp',
+    alt: 'รายการบทเรียนในหน้าเรียน แบ่งเป็นหัวข้อ พร้อมบทที่กำลังเรียนและบทที่ยังล็อกอยู่',
+    imageClassName: 'object-[50%_74%]',
+    title: 'เห็นบทเรียนทั้งคอร์สก่อนเริ่ม',
+    description: 'รู้ว่ากำลังอยู่บทไหน เหลืออะไรต้องเรียน และกลับมาเรียนต่อจากบทล่าสุดได้',
   },
   {
-    icon: CheckCircle2,
-    title: 'บันทึกความคืบหน้า',
-    description: 'กลับมาเรียนต่อจากจุดล่าสุดได้',
-  },
-  {
-    icon: Clock3,
-    title: 'เรียนซ้ำได้ตลอดชีพ',
-    description: 'ทบทวนตามจังหวะของคุณได้ทุกเวลา',
-  },
-  {
-    icon: Award,
-    title: 'Certificate เมื่อเรียนจบ',
-    description: 'รับใบรับรองเมื่อผ่านเกณฑ์ของคอร์ส',
+    image: '/images/home/learn-notes.webp',
+    alt: 'ประเด็นสำคัญและโค้ดตัวอย่างใต้วิดีโอในหน้าเรียน',
+    imageClassName: 'object-left-top',
+    title: 'ดูวิดีโอและอ่านเนื้อหาประกอบในหน้าเดียว',
+    description: 'สรุปและโค้ดตัวอย่างอยู่ใต้วิดีโอ คัดลอกไปลองต่อได้ทันที',
   },
 ] as const;
 
-const LEARNING_OUTCOMES = [
-  {
-    icon: Lightbulb,
-    title: 'เข้าใจเหตุผล',
-    description: 'เริ่มจากปัญหาและเป้าหมายของงาน เพื่อให้รู้ว่าเครื่องมือแต่ละชิ้นมีไว้ทำอะไร',
-  },
-  {
-    icon: Code2,
-    title: 'สร้างด้วยตัวเอง',
-    description: 'เรียนแนวคิดผ่านโค้ด ตัวอย่าง และการลงมือทำ โดยไม่หยุดอยู่ที่การจำ syntax',
-  },
-  {
-    icon: Rocket,
-    title: 'ต่อยอดเป็นผลงาน',
-    description: 'เชื่อมบทเรียนเป็นโปรเจกต์ที่อธิบายได้ ทดสอบได้ และนำไปพัฒนาต่อได้',
-  },
-] as const;
+const QUIZ_STEP = {
+  image: '/images/home/learn-quiz.webp',
+  alt: 'คำถามแบบเลือกตอบในแบบทดสอบท้ายบท',
+  imageClassName: 'object-left-top',
+  title: 'ทบทวนด้วยแบบทดสอบท้ายบท',
+  description: 'บทที่มีแบบทดสอบ ตอบแล้วรู้ผลพร้อมคำอธิบาย ทำซ้ำได้ไม่จำกัด',
+} as const;
+
+const PATH_GRID_COLUMNS: Record<number, string> = {
+  2: 'lg:grid-cols-2',
+  3: 'lg:grid-cols-3',
+  4: 'lg:grid-cols-4',
+};
 
 export default async function HomePage() {
-  const latestCourses = await getLatestCourses();
+  const [publishedCourses, reviews, hasQuiz] = await Promise.all([
+    getPublishedCourses(),
+    getHomeReviews(),
+    hasPublishedLessonQuiz(),
+  ]);
+  const coursePlan = planHomeCourses(publishedCourses);
+  const learningSteps = hasQuiz ? [...LEARNING_STEPS, QUIZ_STEP] : LEARNING_STEPS;
 
   return (
     <>
@@ -183,28 +175,30 @@ export default async function HomePage() {
         <HomeAnimations />
         <section
           data-home-section="hero"
-          className="relative isolate border-b bg-[radial-gradient(circle_at_78%_12%,rgba(0,171,255,0.16),transparent_28%),linear-gradient(180deg,var(--background)_0%,var(--muted)_100%)]"
+          className="border-b bg-card"
           aria-labelledby="home-hero-title"
         >
-          <div
-            className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(15,35,58,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(15,35,58,0.025)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]"
-            aria-hidden="true"
-          />
-          <div className="container grid items-center gap-12 py-14 sm:py-16 lg:min-h-[clamp(42rem,86svh,48rem)] lg:grid-cols-[0.92fr_1.08fr] lg:gap-16 lg:py-20">
-            <div className="max-w-2xl" data-reveal>
+          <div className="container grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-14 lg:py-16">
+            <div className="flex max-w-2xl flex-col items-start gap-6" data-reveal>
+              <p className="rounded-full bg-secondary px-3.5 py-1.5 text-sm font-medium text-secondary-foreground">
+                คอร์สเขียนโปรแกรมภาษาไทย ลองเรียนก่อนซื้อได้
+              </p>
+              {/* Phrases never break mid-way: Thai has no spaces between words to wrap on. */}
               <h1
                 id="home-hero-title"
-                className="max-w-[13ch] text-balance text-[clamp(2.7rem,6vw,5.25rem)] font-bold leading-[1.04] tracking-[-0.055em]"
+                className="text-[clamp(2.5rem,5vw,3.75rem)] leading-[1.22] font-bold"
               >
-                เรียนให้เข้าใจ สร้างได้จริง{' '}
-                <span className="text-secondary-foreground">เติบโตเป็น Developer</span>
+                <span className="inline-block">เรียนให้เข้าใจ</span>{' '}
+                <span className="inline-block">สร้างได้จริง</span>{' '}
+                <span className="inline-block text-link">เติบโตเป็น</span>{' '}
+                <span className="inline-block text-link">Developer</span>
               </h1>
-              <p className="mt-6 max-w-xl text-pretty text-base leading-8 text-muted-foreground sm:text-lg">
+              <p className="max-w-xl text-pretty text-[1.0625rem] leading-8 text-muted-foreground sm:text-lg">
                 คอร์สภาษาไทยที่พาคุณเห็นภาพรวม เข้าใจเหตุผล และลงมือทำทีละขั้น
                 ตั้งแต่พื้นฐานจนเป็นผลงานที่นำไปต่อยอดได้จริง
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
                 <Button asChild size="hero" variant="hero">
                   <Link href="/courses">
                     ดูคอร์สทั้งหมด
@@ -218,170 +212,155 @@ export default async function HomePage() {
                   </Link>
                 </Button>
               </div>
+
+              <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+                {HERO_FACTS.map((fact) => (
+                  <li key={fact} className="flex items-center gap-1.5">
+                    <Check className="size-4 text-link" aria-hidden="true" />
+                    {fact}
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <div className="relative mx-auto w-full max-w-[42rem] lg:mx-0" data-reveal data-delay="90">
-              <div className="absolute -left-8 top-12 size-24 rounded-full bg-primary/20 blur-2xl" aria-hidden="true" />
-              <div className="absolute -right-8 bottom-10 size-32 rounded-full bg-primary/15 blur-3xl" aria-hidden="true" />
-              <Card variant="homeMedia" className="relative">
-                <CardContent>
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-[1.45rem] bg-muted">
-                    <Image
-                      src="/images/milerdev-learner-hero-v1.png"
-                      alt="ผู้เรียนกำลังลงมือพัฒนาโปรเจกต์ด้วยแล็ปท็อป"
-                      fill
-                      priority
-                      sizes="(max-width: 1024px) 100vw, 54vw"
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-slate-950/70 to-transparent" />
-                    <div className="absolute right-5 bottom-5 left-5 flex items-end justify-between gap-4 text-white">
-                      <div>
-                        <p className="max-w-sm text-lg font-semibold">
-                          เรียนจากโจทย์จริง แล้วลงมือสร้างไปพร้อมกัน
-                        </p>
-                      </div>
-                      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-[#00abff] shadow-lg">
-                        <PlayCircle className="size-6" aria-hidden="true" />
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card variant="homeProgress" className="absolute -left-3 top-7 hidden w-40 gap-3 sm:flex lg:-left-8">
-                <CardHeader className="grid-cols-[1fr_auto] gap-3">
-                  <CardDescription>ความคืบหน้า</CardDescription>
-                  <CheckCircle2 className="text-success" aria-hidden="true" />
-                  <CardTitle>75%</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Progress value={75} aria-label="ความคืบหน้า 75 เปอร์เซ็นต์" />
-                </CardContent>
-              </Card>
-
-              <Card variant="homeNext" className="absolute -right-2 -bottom-5 hidden w-56 gap-2 sm:flex lg:-right-6">
-                <CardHeader className="grid-cols-[auto_1fr] items-center gap-x-2">
-                  <span className="row-span-2 grid size-9 place-items-center rounded-xl bg-secondary text-secondary-foreground">
-                    <BookOpenCheck aria-hidden="true" />
-                  </span>
-                  <CardDescription>บทเรียนถัดไป</CardDescription>
-                  <CardTitle>สร้าง Feature แรก</CardTitle>
-                </CardHeader>
-              </Card>
+            <div className="min-w-0" data-reveal data-delay="90">
+              <HomeCodeEditor />
             </div>
           </div>
         </section>
 
         <section
-          data-home-section="confidence"
-          className="border-b bg-background"
-          aria-label="สิ่งที่ผู้เรียนได้รับจาก MilerDev"
-        >
-          <div className="container grid gap-6 py-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8 lg:py-9">
-            {CONFIDENCE_POINTS.map(({ icon: Icon, title, description }, index) => (
-              <div key={title} className="flex items-start gap-3" data-reveal data-delay={String(index * 45)}>
-                <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-secondary text-secondary-foreground">
-                  <Icon className="size-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 className="text-sm font-semibold">{title}</h2>
-                  <p className="mt-1 text-xs leading-6 text-muted-foreground">{description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          data-home-section="outcomes"
-          className="bg-muted/30 py-16 sm:py-20 lg:py-24"
-          aria-labelledby="outcomes-title"
+          data-home-section="how"
+          className="py-16 sm:py-20 lg:py-24"
+          aria-labelledby="home-how-title"
         >
           <div className="container">
-            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end lg:gap-16" data-reveal>
-              <div>
-                <h2
-                  id="outcomes-title"
-                  className="max-w-xl text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl lg:text-5xl"
-                >
-                  เข้าใจให้ชัด ก่อนสร้างและต่อยอดด้วยตัวเอง
-                </h2>
-              </div>
-              <div>
-                <p className="max-w-2xl text-pretty leading-8 text-muted-foreground">
-                  MilerDev ไม่ได้พาคุณทำตามวิดีโอให้จบเท่านั้น
-                  แต่จัดลำดับเนื้อหาให้เห็นความสัมพันธ์ระหว่างแนวคิด โค้ด และผลลัพธ์จริง
-                </p>
-                <Button asChild variant="link" className="mt-5 px-0">
-                  <Link href="/about">
-                    ดูวิธีเรียนแบบ MilerDev
-                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                  </Link>
-                </Button>
-              </div>
+            <div className="max-w-2xl" data-reveal>
+              <p className="text-sm font-semibold text-link">วิธีเรียน</p>
+              <h2 id="home-how-title" className="mt-3 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]">
+                เรียนทีละขั้น ในหน้าเรียนแบบเดียวกันทุกคอร์ส
+              </h2>
+              <p className="mt-3 text-pretty leading-8 text-muted-foreground">
+                ภาพด้านล่างมาจากหน้าเรียนจริง ทุกคอร์สใช้หน้าเรียนเดียวกัน ทั้งรายการบท วิดีโอ เนื้อหาประกอบ และความคืบหน้า
+              </p>
             </div>
 
-            <div className="mt-10 grid gap-5 md:grid-cols-3 lg:mt-12">
-              {LEARNING_OUTCOMES.map(({ icon: Icon, title, description }, index) => (
-                <Card
-                  key={title}
-                  data-reveal data-delay={String(index * 55)}
+            <ol className={cn('mt-10 grid gap-5 md:grid-cols-2', learningSteps.length === 3 && 'lg:grid-cols-3')}>
+              {learningSteps.map((step, index) => (
+                <li
+                  key={step.title}
+                  className="flex flex-col gap-3.5 rounded-2xl border bg-card p-5"
+                  data-reveal
+                  data-delay={String(index * 55)}
                 >
-                  <CardHeader>
-                    <span className="grid size-12 place-items-center rounded-2xl bg-secondary text-secondary-foreground">
-                      <Icon className="size-5" aria-hidden="true" />
-                    </span>
-                    <CardTitle className="mt-4 text-xl">{title}</CardTitle>
-                    <CardDescription className="leading-7">{description}</CardDescription>
-                  </CardHeader>
-                </Card>
+                  <div className="relative h-[232px] overflow-hidden rounded-xl border bg-card">
+                    <Image
+                      src={step.image}
+                      alt={step.alt}
+                      fill
+                      sizes="(min-width: 1024px) 360px, (min-width: 768px) 50vw, 100vw"
+                      className={cn('object-cover', step.imageClassName)}
+                    />
+                  </div>
+                  <span className="self-start rounded-lg bg-secondary px-2.5 py-0.5 font-mono text-sm font-medium text-secondary-foreground">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <h3 className="text-xl leading-snug font-semibold">{step.title}</h3>
+                  <p className="leading-7 text-muted-foreground">{step.description}</p>
+                </li>
               ))}
+            </ol>
+
+            <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl bg-secondary px-6 py-5" data-reveal>
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-card text-link">
+                <Award className="size-5" aria-hidden="true" />
+              </span>
+              <p className="min-w-0 flex-1 basis-72 leading-7">
+                <strong className="font-semibold">เรียนครบทุกบท รับใบรับรองอิเล็กทรอนิกส์</strong>{' '}
+                <span className="text-muted-foreground">ดาวน์โหลดหรือแชร์ได้ และมีหน้าให้คนอื่นตรวจสอบว่าเป็นของจริง</span>
+              </p>
             </div>
           </div>
         </section>
 
         <section
-          id="latest-courses"
+          id="home-courses"
           data-home-section="courses"
-          className="bg-background py-16 sm:py-20 lg:py-24"
-          aria-labelledby="latest-courses-title"
+          className="border-y bg-card py-16 sm:py-20 lg:py-24"
+          aria-labelledby="home-courses-title"
         >
           <div className="container">
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end" data-reveal>
-              <div>
-                <p className="text-sm font-semibold text-secondary-foreground">คอร์สล่าสุดจาก MilerDev</p>
-                <h2
-                  id="latest-courses-title"
-                  className="mt-2 text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl"
-                >
-                  เลือกจากเนื้อหา ราคา และบททดลองจริง
+              <div className="max-w-2xl">
+                <p className="text-sm font-semibold text-link">
+                  {coursePlan.mode === 'path' ? 'เส้นทางแนะนำ' : 'คอร์สล่าสุดจาก MilerDev'}
+                </p>
+                <h2 id="home-courses-title" className="mt-3 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]">
+                  {coursePlan.mode === 'path' ? 'ยังไม่มีพื้นฐาน เริ่มตามลำดับนี้' : 'เลือกจากเนื้อหา ราคา และบททดลองจริง'}
                 </h2>
+                {coursePlan.mode === 'path' ? (
+                  <p className="mt-3 text-pretty leading-8 text-muted-foreground">
+                    เรียงจากพื้นฐานไปสู่งานจริง กดดูเนื้อหา ราคา และบทเรียนทดลองของแต่ละคอร์สก่อนตัดสินใจ
+                  </p>
+                ) : null}
               </div>
-              <Button asChild variant="outline" className="w-fit">
-                <Link href="/courses">
-                  ดูคอร์สทั้งหมด
-                  <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                </Link>
-              </Button>
+              {coursePlan.publishedCount > 0 ? (
+                <Button asChild variant="outline" className="w-fit">
+                  <Link href="/courses">
+                    ดูคอร์สทั้งหมด {coursePlan.publishedCount} คอร์ส
+                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                  </Link>
+                </Button>
+              ) : null}
             </div>
 
-            {latestCourses.length > 0 ? (
-              <div
-                data-count={latestCourses.length}
-                data-home-course-track
-                role="region"
-                aria-label="รายการคอร์สล่าสุด"
-                tabIndex={0}
-                className="-mx-4 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-5 outline-none focus-visible:ring-4 focus-visible:ring-ring/30 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4"
+            {coursePlan.mode === 'path' ? (
+              <>
+                <ol
+                  data-count={coursePlan.steps.length}
+                  className={cn('mt-10 grid gap-5 sm:grid-cols-2', PATH_GRID_COLUMNS[Math.min(coursePlan.steps.length, 4)])}
+                >
+                  {coursePlan.steps.map((course, index) => (
+                    <li key={course.id} data-reveal data-delay={String(index * 45)}>
+                      <CourseCard
+                        id={course.id}
+                        title={course.title}
+                        slug={course.slug}
+                        description={course.description}
+                        thumbnailUrl={course.thumbnailUrl}
+                        decisionFacts={course.decisionFacts}
+                        tags={course.tags}
+                        eyebrow={describePathStep(index, index > 0 ? coursePlan.steps[index - 1].title : null)}
+                      />
+                    </li>
+                  ))}
+                </ol>
+
+                {coursePlan.extras.length > 0 ? (
+                  <div className="mt-10" data-reveal>
+                    <h3 className="text-lg font-semibold">คอร์สเสริม เรียนเมื่อพร้อม</h3>
+                    <ul className="mt-4 grid gap-4 md:grid-cols-2">
+                      {coursePlan.extras.map((course) => (
+                        <li key={course.id}>
+                          <HomeCourseRow
+                            title={course.title}
+                            slug={course.slug}
+                            thumbnailUrl={course.thumbnailUrl}
+                            decisionFacts={course.decisionFacts}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
+            ) : coursePlan.courses.length > 0 ? (
+              <ul
+                data-count={coursePlan.courses.length}
+                className={cn('mt-10 grid gap-5 sm:grid-cols-2', PATH_GRID_COLUMNS[Math.max(2, coursePlan.courses.length)])}
               >
-                {latestCourses.map((course, index) => (
-                  <div
-                    key={course.id}
-                    data-reveal
-                    data-delay={String(index * 45)}
-                    className="w-[82vw] max-w-[21rem] shrink-0 snap-start sm:w-auto sm:max-w-none"
-                  >
+                {coursePlan.courses.map((course, index) => (
+                  <li key={course.id} data-reveal data-delay={String(index * 45)}>
                     <CourseCard
                       id={course.id}
                       title={course.title}
@@ -391,9 +370,9 @@ export default async function HomePage() {
                       decisionFacts={course.decisionFacts}
                       tags={course.tags}
                     />
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
               <Empty className="mt-10 border">
                 <EmptyHeader>
@@ -414,17 +393,19 @@ export default async function HomePage() {
 
         <StudioProofSection />
 
+        {reviews.length > 0 ? <HomeReviews reviews={reviews} /> : null}
+
         <section
           data-home-section="faq"
-          className="bg-muted/30 py-16 sm:py-20 lg:py-24"
+          className="bg-card py-16 sm:py-20 lg:py-24"
           aria-labelledby="home-faq-title"
         >
           <div className="container grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-16">
             <div className="max-w-lg lg:sticky lg:top-28" data-reveal>
-              <p className="text-sm font-semibold text-secondary-foreground">คำถามก่อนเริ่มเรียน</p>
+              <p className="text-sm font-semibold text-link">คำถามก่อนเริ่มเรียน</p>
               <h2
                 id="home-faq-title"
-                className="mt-3 text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl"
+                className="mt-3 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]"
               >
                 ข้อมูลที่ควรรู้ก่อนเลือกคอร์ส
               </h2>
@@ -450,7 +431,7 @@ export default async function HomePage() {
                   <Rocket className="size-4" aria-hidden="true" />
                   พร้อมเริ่มเส้นทางของคุณแล้วหรือยัง
                 </div>
-                <h2 className="mt-3 max-w-2xl text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl">
+                <h2 className="mt-3 max-w-2xl text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl">
                   เลือกคอร์สแรก แล้วเริ่มสร้างงานของคุณ
                 </h2>
                 <p className="mt-3 max-w-2xl leading-7 text-background/75">

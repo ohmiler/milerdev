@@ -1,6 +1,6 @@
 # ADR 0002: Home information architecture and spacing rhythm
 
-- Status: Accepted and implemented
+- Status: Accepted and implemented. The Home order is superseded by ADR 0012 (2026-10-07); the spacing foundation, rhythm and section admission rule still apply.
 - Date: 2026-08-19
 - Decision owners: MilerDev product and engineering
 - Scope: Public Home page only

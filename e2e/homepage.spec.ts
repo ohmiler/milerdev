@@ -1,46 +1,40 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
+// ADR 0012. Reviews appear only when the database has verified reviews to show.
 const HOME_SECTION_ORDER = [
   'hero',
-  'confidence',
-  'outcomes',
+  'how',
   'courses',
   'studio-proof',
+  'reviews',
   'faq',
   'final-cta',
 ] as const;
 
+async function renderedSections(page: Page) {
+  return page.locator('[data-home-section]').evaluateAll((sections) =>
+    sections.map((section) => section.getAttribute('data-home-section')),
+  );
+}
+
 test.describe('public homepage', () => {
-  test('keeps the mobile journey ordered, scrollable, and free of page overflow', async ({ page }) => {
+  test('keeps the mobile journey ordered, with both actions on the first screen and no page overflow', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    await expect(page.getByRole('link', { name: 'ดูคอร์สทั้งหมด' }).first()).toHaveAttribute('href', '/courses');
-
-    const renderedOrder = await page.locator('[data-home-section]').evaluateAll((sections) =>
-      sections.map((section) => section.getAttribute('data-home-section')),
-    );
-    expect(renderedOrder).toEqual(HOME_SECTION_ORDER);
+    const rendered = await renderedSections(page);
+    expect(rendered).toEqual(HOME_SECTION_ORDER.filter((section) => section !== 'reviews' || rendered.includes('reviews')));
 
     const positions = await page.locator('[data-home-section]').evaluateAll((sections) =>
       sections.map((section) => Math.round(section.getBoundingClientRect().top + window.scrollY)),
     );
     expect(positions).toEqual([...positions].sort((left, right) => left - right));
 
-    const courseTrack = page.locator('[data-home-course-track]');
-    if (await courseTrack.count()) {
-      await expect.poll(() => courseTrack.evaluate((track) => getComputedStyle(track).display)).toBe('flex');
-
-      const courseCount = Number(await courseTrack.getAttribute('data-count'));
-      if (courseCount > 1) {
-        await expect.poll(() => courseTrack.evaluate((track) => track.scrollWidth > track.clientWidth)).toBe(true);
-      }
-
-      await page.setViewportSize({ width: 768, height: 900 });
-      await expect.poll(() => courseTrack.evaluate((track) => getComputedStyle(track).display)).toBe('grid');
-      await expect
-        .poll(() => courseTrack.evaluate((track) => getComputedStyle(track).gridTemplateColumns.split(' ').length))
-        .toBe(2);
+    const hero = page.locator('[data-home-section=hero]');
+    for (const name of ['ดูคอร์สทั้งหมด', 'ทดลองบทเรียนฟรี']) {
+      const box = await hero.getByRole('link', { name }).boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.y + box!.height).toBeLessThanOrEqual(844);
     }
 
     const hasHorizontalOverflow = await page.evaluate(
@@ -48,46 +42,31 @@ test.describe('public homepage', () => {
     );
     expect(hasHorizontalOverflow).toBe(false);
 
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('button', { name: 'เปิดเมนูหลัก' }).click();
-    await expect(page.locator('#mobile-navigation')).toBeVisible();
-    await expect(page.locator('#mobile-navigation').getByRole('link', { name: 'คอร์สทั้งหมด' })).toBeVisible();
+    const menu = page.getByRole('dialog', { name: 'MilerDev' }).getByRole('navigation', { name: 'ลิงก์หลัก' });
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('link', { name: 'คอร์สทั้งหมด' })).toBeVisible();
   });
 
-  test('uses the approved desktop fold and measurable section rhythm', async ({ page }) => {
+  test('fits the hero in the desktop fold and keeps a measurable section rhythm', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
 
     const heroBox = await page.locator('[data-home-section=hero]').boundingBox();
     expect(heroBox).not.toBeNull();
-    expect(heroBox!.height).toBeGreaterThanOrEqual(670);
-    expect(heroBox!.height).toBeLessThanOrEqual(780);
+    expect(heroBox!.y + heroBox!.height).toBeLessThanOrEqual(900);
 
-    const confidenceTop = await page.locator('[data-home-section=confidence]').evaluate(
-      (section) => Math.round(section.getBoundingClientRect().top + window.scrollY),
-    );
-    expect(confidenceTop).toBeGreaterThan(760);
-    expect(confidenceTop).toBeLessThan(900);
-
-    const standardSections = page.locator(
-      '[data-home-section=outcomes], [data-home-section=courses], [data-home-section=studio-proof], [data-home-section=faq], [data-home-section=final-cta]',
-    );
-    const paddings = await standardSections.evaluateAll((sections) =>
-      sections.map((section) => {
-        const style = getComputedStyle(section);
-        return { top: Number.parseFloat(style.paddingTop), bottom: Number.parseFloat(style.paddingBottom) };
-      }),
-    );
+    const paddings = await page
+      .locator('[data-home-section]:not([data-home-section=hero])')
+      .evaluateAll((sections) =>
+        sections.map((section) => {
+          const style = getComputedStyle(section);
+          return { top: Number.parseFloat(style.paddingTop), bottom: Number.parseFloat(style.paddingBottom) };
+        }),
+      );
     for (const padding of paddings) {
       expect(padding.top).toBeGreaterThanOrEqual(88);
       expect(padding.bottom).toBeGreaterThanOrEqual(88);
-    }
-
-    const courseTrack = page.locator('[data-home-course-track]');
-    if (await courseTrack.count()) {
-      await expect
-        .poll(() => courseTrack.evaluate((track) => getComputedStyle(track).gridTemplateColumns.split(' ').length))
-        .toBe(4);
     }
 
     const hasHorizontalOverflow = await page.evaluate(
@@ -96,20 +75,33 @@ test.describe('public homepage', () => {
     expect(hasHorizontalOverflow).toBe(false);
   });
 
-  test('shows truthful confidence, static teaching proof, and canonical purchase answers', async ({ page }) => {
+  test('types the hero program, then lets the visitor use its result', async ({ page }) => {
     await page.goto('/');
 
-    for (const label of [
-      'อธิบายเป็นภาษาไทย',
-      'บันทึกความคืบหน้า',
-      'เรียนซ้ำได้ตลอดชีพ',
-      'Certificate เมื่อเรียนจบ',
-      'เข้าใจเหตุผล',
-      'สร้างด้วยตัวเอง',
-      'ต่อยอดเป็นผลงาน',
-    ]) {
-      await expect(page.getByRole('heading', { name: label, exact: true })).toBeVisible();
-    }
+    const hero = page.locator('[data-home-section=hero]');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/เรียนให้เข้าใจ\s*สร้างได้จริง\s*เติบโตเป็น\s*Developer/);
+    const result = hero.getByRole('figure', { name: 'ผลลัพธ์ของโค้ดตัวอย่างบนหน้าเว็บ' });
+    await expect(result.getByText('Hello, World')).toBeVisible({ timeout: 10_000 });
+
+    await result.getByRole('button', { name: 'เรียนบทถัดไป' }).click();
+    await expect(result.getByText('วันนี้เรียนบทที่ 2')).toBeVisible();
+  });
+
+  test('shows the finished program at once for reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+
+    await expect(
+      page.getByRole('figure', { name: 'ผลลัพธ์ของโค้ดตัวอย่างบนหน้าเว็บ' }).getByText('Hello, World'),
+    ).toBeVisible({ timeout: 1_000 });
+  });
+
+  test('shows real learning screens, static teaching proof, and canonical purchase answers', async ({ page }) => {
+    await page.goto('/');
+
+    const how = page.locator('[data-home-section=how]');
+    await expect(how.getByRole('heading', { name: 'เห็นบทเรียนทั้งคอร์สก่อนเริ่ม', exact: true })).toBeVisible();
+    await expect(how.getByRole('heading', { name: 'ดูวิดีโอและอ่านเนื้อหาประกอบในหน้าเดียว', exact: true })).toBeVisible();
 
     const studio = page.locator('[data-home-section=studio-proof]');
     await expect(studio.getByRole('img')).toHaveCount(3);

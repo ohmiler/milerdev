@@ -23,14 +23,15 @@ describe('Home spacing foundation', () => {
     expect(containerRule).not.toMatch(/padding\s*:/);
   });
 
+  // ADR 0012: hero, how, courses, studio-proof, reviews (only with verified reviews), faq, final-cta.
   it('marks the approved Home sections for rendered spacing checks', () => {
     const home = readSource('src/app/page.tsx');
     const studioProof = readSource('src/components/home/StudioProofSection.tsx');
+    const reviews = readSource('src/components/home/HomeReviews.tsx');
 
     for (const section of [
       'hero',
-      'confidence',
-      'outcomes',
+      'how',
       'courses',
       'faq',
       'final-cta',
@@ -39,5 +40,19 @@ describe('Home spacing foundation', () => {
     }
 
     expect(studioProof).toContain(`data-home-section="studio-proof"`);
+    expect(reviews).toContain(`data-home-section="reviews"`);
+    expect(home).toContain('reviews.length > 0 ? <HomeReviews');
+  });
+
+  it('keeps every Home section heading on one scale', () => {
+    const sectionHeading = 'text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]';
+
+    for (const path of [
+      'src/app/page.tsx',
+      'src/components/home/StudioProofSection.tsx',
+      'src/components/home/HomeReviews.tsx',
+    ]) {
+      expect(readSource(path)).toContain(sectionHeading);
+    }
   });
 });

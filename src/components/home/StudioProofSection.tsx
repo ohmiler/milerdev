@@ -36,7 +36,7 @@ export default function StudioProofSection() {
           </div>
           <h2
             id="studio-proof-title"
-            className="mt-4 text-balance text-3xl font-bold tracking-[-0.035em] sm:text-4xl lg:text-5xl"
+            className="mt-4 text-[1.75rem] leading-[1.3] font-bold text-balance sm:text-4xl lg:text-[2.5rem]"
           >
             สอนจากประสบการณ์จริง แล้วอธิบายให้คนเริ่มต้นเห็นภาพ
           </h2>
