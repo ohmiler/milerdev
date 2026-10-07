@@ -1,8 +1,9 @@
 // Which published courses Home shows, and in what order.
 
 /**
- * The recommended order for a learner with no background, by course slug.
- * Edit this list when the catalog changes. A slug that is missing or unpublished is skipped.
+ * The recommended order for a learner with no background, by course slug. Home shows it as the path, and
+ * the dashboard suggests a member's next step from it. Edit this list when the catalog changes.
+ * A slug that is missing or unpublished is skipped.
  */
 export const HOME_LEARNING_PATH_SLUGS: readonly string[] = [
   'html-css-masterful',

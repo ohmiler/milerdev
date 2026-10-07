@@ -100,17 +100,18 @@ export function deriveLearningPresentation(
       ? 'เรียนจบแล้ว · ใบรับรองพร้อม'
       : certificate === 'revoked'
         ? 'เรียนจบแล้ว · ใบรับรองถูกเพิกถอน'
-        : 'เรียนจบแล้ว · ยังไม่พบใบรับรอง';
+        : 'เรียนจบแล้ว · รับใบรับรองได้';
     const description = certificate === 'active'
       ? 'การเรียนจบและใบรับรองที่ยังมีผลถูกบันทึกแยกกันเรียบร้อยแล้ว'
       : certificate === 'revoked'
         ? 'การเรียนจบยังคงอยู่ แต่ใบรับรองรายการนี้ถูกเพิกถอนแล้ว'
-        : 'การเรียนจบถูกบันทึกแล้ว แต่ยังไม่พบใบรับรองในบัญชี';
+        // Said as the next step, not as a fault: the certificates page issues it from the recorded completion.
+        : 'การเรียนจบถูกบันทึกแล้ว กดรับใบรับรองได้ที่หน้าใบรับรอง';
     const actionLabel = certificate === 'active'
       ? 'ดูและแชร์ใบรับรอง'
       : certificate === 'revoked'
         ? 'ดูสถานะใบรับรอง'
-        : 'ตรวจสอบสถานะใบรับรอง';
+        : 'รับใบรับรอง';
 
     return {
       enrollment: 'completed',

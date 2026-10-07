@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
+import CourseArtwork from '@/components/course/CourseArtwork';
 import CourseCoverImage from '@/components/course/CourseCoverImage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,8 +23,11 @@ import {
 } from '@/components/ui/empty';
 import { Progress } from '@/components/ui/progress';
 import { resolveCoverImage } from '@/lib/courses/cover-image';
-import { getDashboardLearning } from '@/lib/learning/dashboard';
+import { getDashboardLearning, type DashboardLearning } from '@/lib/learning/dashboard';
+import { chooseNextCourse } from '@/lib/learning/next-course';
+import { getLearningPathCourses } from '@/lib/learning/path-courses';
 import { requireMember } from '@/lib/auth/member-access';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'แดชบอร์ด',
@@ -34,25 +38,49 @@ export const dynamic = 'force-dynamic';
 
 const reviewHref = (slug: string) => `/courses/${slug}/learn`;
 
+// One quiet line under the greeting instead of a row of number boxes; a zero says nothing, so it is left out.
+function describeSummary(summary: DashboardLearning['summary']): string | null {
+  const parts = [
+    summary.activeCourseCount > 0 ? `กำลังเรียน ${summary.activeCourseCount} คอร์ส` : null,
+    summary.completedCourseCount > 0 ? `เรียนจบแล้ว ${summary.completedCourseCount} คอร์ส` : null,
+    summary.activeCertificateCount > 0 ? `ใบรับรอง ${summary.activeCertificateCount} ใบ` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+// A course's cover, or the same artwork the catalogue draws when it has none.
+function CourseThumbnail({ course, className }: {
+  course: { title: string; slug: string; thumbnailUrl: string | null };
+  className?: string;
+}) {
+  const cover = resolveCoverImage(course.thumbnailUrl);
+  return (
+    <div className={cn('relative aspect-video shrink-0 overflow-hidden rounded-lg bg-navy', className)}>
+      {cover
+        ? <CourseCoverImage cover={cover} alt="" width={224} height={126} sizes="7rem" className="size-full object-cover" />
+        : <CourseArtwork title={course.title} slug={course.slug} bare />}
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const member = await requireMember('/dashboard');
-  const dashboard = await getDashboardLearning(member.id);
+  const [dashboard, pathCourses] = await Promise.all([
+    getDashboardLearning(member.id),
+    getLearningPathCourses(),
+  ]);
   const { primary, remaining, summary } = dashboard;
   const primaryCover = resolveCoverImage(primary.course?.thumbnailUrl);
-
-  const metrics = [
-    { label: 'คอร์สทั้งหมด', value: summary.courseCount },
-    { label: 'กำลังเรียน', value: summary.activeCourseCount },
-    { label: 'เรียนจบแล้ว', value: summary.completedCourseCount },
-    { label: 'ใบรับรองที่ใช้งานได้', value: summary.activeCertificateCount },
-  ];
+  const ownedSlugs = [primary, ...remaining].flatMap((item) => (item.course ? [item.course.slug] : []));
+  // Suggested only to a member who already has a course; a newcomer's empty state points to the catalogue.
+  const nextCourse = ownedSlugs.length > 0 ? chooseNextCourse(ownedSlugs, pathCourses) : null;
 
   return (
     <LearnerAccountShell
       current="dashboard"
       title={`สวัสดี, ${member.name || 'สมาชิก'}`}
       description={primary.course
-        ? 'เรียนต่อจากจุดล่าสุด หรือดูสถานะการเรียนทั้งหมดในบัญชีของคุณ'
+        ? describeSummary(summary) ?? 'เรียนต่อจากจุดล่าสุด หรือดูสถานะการเรียนทั้งหมดในบัญชีของคุณ'
         : 'เริ่มจากคอร์สแรกของคุณ คอร์สที่ลงทะเบียนแล้วจะแสดงที่หน้านี้'}
     >
       {primary.course ? (
@@ -64,7 +92,7 @@ export default async function DashboardPage() {
               <Card className="mt-4 py-0 sm:mt-5">
                 <div className="grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                   {/* On phones the course and its next step come first; the cover follows as a short strip. */}
-                  <div className="relative order-last h-36 bg-slate-950 sm:h-auto sm:min-h-64 lg:order-first">
+                  <div className="relative order-last h-36 bg-navy sm:h-auto sm:min-h-64 lg:order-first">
                     {primaryCover ? (
                       <CourseCoverImage
                         className="object-cover"
@@ -75,9 +103,8 @@ export default async function DashboardPage() {
                         sizes="(max-width: 1024px) 100vw, 42vw"
                       />
                     ) : (
-                      <div className="flex h-full flex-col items-center justify-center text-white sm:min-h-64">
-                        <span className="text-4xl font-bold">MD</span>
-                        <small>Learning</small>
+                      <div className="absolute inset-0">
+                        <CourseArtwork title={primary.course.title} slug={primary.course.slug} />
                       </div>
                     )}
                   </div>
@@ -144,20 +171,6 @@ export default async function DashboardPage() {
             </section>
           )}
 
-          {/* A row of zeros says nothing to someone without a course yet. */}
-          {summary.courseCount > 0 ? (
-            <section className="mt-6 sm:mt-8" aria-label="สรุปการเรียน">
-              <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                {metrics.map((metric) => (
-                  <div className="rounded-xl border bg-card p-4 sm:p-5" key={metric.label}>
-                    <dt className="text-sm text-muted-foreground">{metric.label}</dt>
-                    <dd className="mt-1 text-2xl font-bold sm:mt-2 sm:text-3xl">{metric.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          ) : null}
-
           {primary.course && (
             <section className="mt-10 sm:mt-12" aria-labelledby="dashboard-courses-title">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3 sm:mb-5">
@@ -171,22 +184,25 @@ export default async function DashboardPage() {
                   {remaining.map((item) => item.course && (
                     <li key={item.course.slug}>
                       <Card size="sm">
-                        <CardContent className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6">
-                          <div className="min-w-0">
-                            <p className="font-semibold">{item.course.title}</p>
-                            {item.enrollment === 'completed' ? (
-                              <p className="text-sm text-muted-foreground">{item.status.label}</p>
-                            ) : (
-                              // One progress reading per course: the bar and its percentage.
-                              <div className="mt-2 flex items-center gap-3">
-                                <Progress
-                                  className="flex-1"
-                                  value={item.progress.percent}
-                                  aria-label={`ความคืบหน้า ${item.progress.percent}%`}
-                                />
-                                <span className="text-sm text-muted-foreground">{item.progress.percent}%</span>
-                              </div>
-                            )}
+                        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+                          <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                            <CourseThumbnail course={item.course} className="w-24 sm:w-28" />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-semibold leading-snug">{item.course.title}</p>
+                              {item.enrollment === 'completed' ? (
+                                <p className="mt-1 text-sm text-muted-foreground">{item.status.label}</p>
+                              ) : (
+                                // One progress reading per course: the bar and its percentage.
+                                <div className="mt-2 flex items-center gap-3">
+                                  <Progress
+                                    className="flex-1"
+                                    value={item.progress.percent}
+                                    aria-label={`ความคืบหน้า ${item.progress.percent}%`}
+                                  />
+                                  <span className="text-sm text-muted-foreground">{item.progress.percent}%</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {item.enrollment === 'completed' ? (
@@ -194,7 +210,13 @@ export default async function DashboardPage() {
                                 <Link href={reviewHref(item.course.slug)}>ทบทวนบทเรียน</Link>
                               </Button>
                             ) : null}
-                            <Button asChild variant={item.enrollment === 'completed' ? 'outline' : 'default'} size="sm" className="h-auto min-h-8 whitespace-normal text-left">
+                            {/* A finished course's certificate link stays quiet, unless the certificate is still to be collected. */}
+                            <Button
+                              asChild
+                              variant={item.enrollment === 'completed' && item.certificate !== 'missing' ? 'outline' : 'default'}
+                              size="sm"
+                              className="h-auto min-h-8 whitespace-normal text-left"
+                            >
                               <Link href={item.action.href}>{item.action.label}</Link>
                             </Button>
                           </div>
@@ -210,6 +232,29 @@ export default async function DashboardPage() {
               )}
             </section>
           )}
+
+          {nextCourse ? (
+            <section className="mt-10 sm:mt-12" aria-labelledby="dashboard-next-course-title">
+              <h2 className="mb-4 text-xl font-bold sm:mb-5 sm:text-2xl" id="dashboard-next-course-title">แนะนำต่อจากนี้</h2>
+              <Card size="sm">
+                <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                  <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                    <CourseThumbnail course={nextCourse} className="w-24 sm:w-28" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-caption font-medium text-link">{nextCourse.step}</p>
+                      <p className="mt-0.5 font-semibold leading-snug">{nextCourse.title}</p>
+                      {nextCourse.summary ? (
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{nextCourse.summary}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/courses/${nextCourse.slug}`}>ดูรายละเอียดคอร์ส</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </section>
+          ) : null}
     </LearnerAccountShell>
   );
 }

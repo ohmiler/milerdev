@@ -22,4 +22,13 @@ describe('CourseArtwork', () => {
     expect(html).not.toContain('Next.js');
     expect(html).not.toMatch(/MD—\d{2}/);
   });
+
+  it('draws no text when bare, for a thumbnail that sits beside the title', () => {
+    const html = renderToStaticMarkup(<CourseArtwork bare title={title} slug="long-thai" tags={[{ name: 'Next.js' }]} />);
+
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).not.toContain(title);
+    expect(html).not.toContain('Next.js');
+    expect(html).not.toMatch(/MD—\d{2}/);
+  });
 });
