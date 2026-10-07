@@ -56,10 +56,10 @@ describe('LearningPresentation completion and certificate facts', () => {
       progress: { completedLessons: 2, totalLessons: 3, percent: 67 },
       continuation: 'review',
       certificate: 'missing',
-      status: { label: 'เรียนจบแล้ว · ยังไม่พบใบรับรอง' },
+      status: { label: 'เรียนจบแล้ว · รับใบรับรองได้' },
       action: {
         kind: 'view-certificates',
-        label: 'ตรวจสอบสถานะใบรับรอง',
+        label: 'รับใบรับรอง',
         href: '/dashboard/certificates',
       },
     });

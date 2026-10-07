@@ -47,9 +47,10 @@ describe('learner status surfaces', () => {
 
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('กำลังโหลดแดชบอร์ดการเรียน');
-    expect(html).toContain('data-dashboard-loading="header"');
-    expect(html.match(/data-dashboard-loading-stat="true"/g)).toHaveLength(4);
-    expect(html).toContain('data-dashboard-loading="continuation"');
-    expect(html).toContain('data-dashboard-loading="course-index"');
+    // The page has no row of number boxes any more, so neither does its placeholder.
+    expect(html).not.toContain('data-dashboard-loading-stat');
+    expect(html.indexOf('data-dashboard-loading="continuation"')).toBeGreaterThan(-1);
+    expect(html.indexOf('data-dashboard-loading="continuation"'))
+      .toBeLessThan(html.indexOf('data-dashboard-loading="course-index"'));
   });
 });
