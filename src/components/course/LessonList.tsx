@@ -96,7 +96,7 @@ export default function LessonList({
     const isLocked = !isEnrolled && !lesson.isFreePreview;
     const isCurrent = lesson.id === currentLessonId;
     const isCompleted = completedLessonIds?.has(lesson.id) ?? false;
-    const duration = formatDuration(lesson.videoDuration);
+    const meta = formatDuration(lesson.videoDuration) ?? (lesson.isFreePreview && !isEnrolled ? 'ทดลองเรียนฟรี' : null);
     const number = String(originalIndex + 1).padStart(2, '0');
 
     const itemClassName = 'grid h-auto min-h-16 w-full grid-cols-[2rem_minmax(0,1fr)_auto] justify-normal gap-3 px-3 py-2.5 text-left whitespace-normal';
@@ -108,9 +108,8 @@ export default function LessonList({
         </Badge>
         <span className="min-w-0">
           <strong className="block truncate text-sm font-medium text-current">{lesson.title}</strong>
-          <small className="mt-1 block text-caption text-muted-foreground">
-            {duration ?? (lesson.isFreePreview && !isEnrolled ? 'ทดลองเรียนฟรี' : `บทที่ ${originalIndex + 1}`)}
-          </small>
+          {/* The badge already numbers the lesson; the line under the title shows only what the badge does not. */}
+          {meta ? <small className="mt-1 block text-caption text-muted-foreground">{meta}</small> : null}
         </span>
         <span className="flex items-center gap-1 text-caption font-medium text-muted-foreground">
           {isLocked ? <><Lock className="size-3" aria-hidden="true" />ล็อก</> : isCurrent ? 'กำลังเรียน' : isCompleted ? 'จบแล้ว' : 'เปิด'}
