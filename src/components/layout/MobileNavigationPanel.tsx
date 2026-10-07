@@ -59,6 +59,26 @@ export default function MobileNavigationPanel({
                 </div>
             ) : null}
 
+            {hasMemberSession ? (
+                <>
+                    <nav className="flex flex-col gap-1 py-2" aria-label="เมนูบัญชีสมาชิก">
+                        {ACCOUNT_MENU_LINKS.map((destination) => {
+                            const state = getNavigationState(pathname, destination);
+                            const Icon = destination.icon;
+                            return (
+                                <Button key={destination.href} asChild variant={state.active ? 'secondary' : 'ghost'} className="w-full justify-start">
+                                    <Link href={destination.href} onClick={onClose} aria-current={state.ariaCurrent}>
+                                        <Icon data-icon="inline-start" aria-hidden="true" />
+                                        {destination.label}
+                                    </Link>
+                                </Button>
+                            );
+                        })}
+                    </nav>
+                    <Separator />
+                </>
+            ) : null}
+
             <nav className="flex flex-col gap-1 py-2" aria-label="ลิงก์หลัก">
                 {NAV_LINKS.map((destination) => {
                     const state = getNavigationState(pathname, destination);
@@ -77,21 +97,6 @@ export default function MobileNavigationPanel({
             {hasMemberSession ? (
                 <>
                     <Separator />
-                    <nav className="flex flex-col gap-1 py-2" aria-label="เมนูบัญชีสมาชิก">
-                        {ACCOUNT_MENU_LINKS.map((destination) => {
-                            const state = getNavigationState(pathname, destination);
-                            const Icon = destination.icon;
-                            return (
-                                <Button key={destination.href} asChild variant={state.active ? 'secondary' : 'ghost'} className="w-full justify-start">
-                                    <Link href={destination.href} onClick={onClose} aria-current={state.ariaCurrent}>
-                                        <Icon data-icon="inline-start" aria-hidden="true" />
-                                        {destination.label}
-                                    </Link>
-                                </Button>
-                            );
-                        })}
-                    </nav>
-                    <Separator />
                     {isAdmin ? (
                         <>
                             <nav className="flex flex-col gap-1 py-2" aria-label="เมนูผู้ดูแล">
@@ -105,7 +110,8 @@ export default function MobileNavigationPanel({
                             <Separator />
                         </>
                     ) : null}
-                    <Button type="button" variant="destructive" className="mt-3 w-full" onClick={onLogout}>
+                    {/* Used least, so it reads as a plain row; the confirm dialog still guards it. */}
+                    <Button type="button" variant="ghost" className="mt-auto w-full justify-start text-muted-foreground" onClick={onLogout}>
                         <LogOut data-icon="inline-start" aria-hidden="true" />
                         ออกจากระบบ
                     </Button>

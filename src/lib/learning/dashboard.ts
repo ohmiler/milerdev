@@ -16,7 +16,7 @@ import {
   type LearningPresentation,
   type LearningPresentationSource,
 } from '@/lib/learning/presentation';
-import { sortCoursesByLearningActivity } from '@/lib/learning/continuation';
+import { selectContinuationLesson, sortCoursesByLearningActivity } from '@/lib/learning/continuation';
 
 type DashboardLearningRead = {
   enrollments: LearningPresentationSource[];
@@ -157,18 +157,60 @@ const databaseDashboardLearningStore: DashboardLearningStore = {
   },
 };
 
-export async function getDashboardLearning(
-  memberId: string,
-  store: DashboardLearningStore = databaseDashboardLearningStore,
-): Promise<DashboardLearning> {
-  const source = await store.read(memberId);
-  const orderedSources = sortCoursesByLearningActivity(
-    source.enrollments.map((enrollment) => ({
+// Most recent learning activity first, the order both the dashboard and the Home "continue" bar use.
+function byLearningActivity(enrollments: LearningPresentationSource[]) {
+  return sortCoursesByLearningActivity(
+    enrollments.map((enrollment) => ({
       enrollment,
       enrolledAt: enrollment.enrollment.enrolledAt,
       progress: enrollment.progress,
     })),
   ).map(({ enrollment }) => enrollment);
+}
+
+export type ContinueLearning = {
+  course: { title: string; slug: string; thumbnailUrl: string | null };
+  lesson: { title: string; position: number };
+  progress: LearningPresentation['progress'];
+  continuation: 'start' | 'resume';
+  href: string;
+};
+
+/**
+ * The lesson a signed-in member should pick up next, in the course they touched last, or null when no
+ * course is in progress. Finished courses, and courses with no lessons yet, are skipped.
+ */
+export async function getContinueLearning(
+  memberId: string,
+  store: DashboardLearningStore = databaseDashboardLearningStore,
+): Promise<ContinueLearning | null> {
+  const source = await store.read(memberId);
+  for (const enrollment of byLearningActivity(source.enrollments)) {
+    const presentation = deriveLearningPresentation(enrollment);
+    if (presentation.enrollment !== 'active' || !presentation.course) continue;
+    if (presentation.continuation !== 'start' && presentation.continuation !== 'resume') continue;
+    const lessonsInOrder = [...enrollment.lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+    const lessonIds = new Set(lessonsInOrder.map((lesson) => lesson.id));
+    const next = selectContinuationLesson(lessonsInOrder, enrollment.progress.filter((item) => lessonIds.has(item.lessonId)));
+    const position = next ? lessonsInOrder.findIndex((lesson) => lesson.id === next.id) : -1;
+    if (position < 0) continue;
+    return {
+      course: presentation.course,
+      lesson: { title: lessonsInOrder[position].title, position: position + 1 },
+      progress: presentation.progress,
+      continuation: presentation.continuation,
+      href: presentation.action.href,
+    };
+  }
+  return null;
+}
+
+export async function getDashboardLearning(
+  memberId: string,
+  store: DashboardLearningStore = databaseDashboardLearningStore,
+): Promise<DashboardLearning> {
+  const source = await store.read(memberId);
+  const orderedSources = byLearningActivity(source.enrollments);
   const presentations = orderedSources.map(deriveLearningPresentation);
   const primaryIndex = presentations.findIndex((item) => item.enrollment === 'active');
   const selectedIndex = primaryIndex >= 0 ? primaryIndex : presentations.length > 0 ? 0 : -1;

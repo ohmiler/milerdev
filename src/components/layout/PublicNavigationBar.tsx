@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Menu, UserRoundPlus } from 'lucide-react';
+import { BookOpen, Menu, UserRoundPlus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +18,7 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getNavigationState, LOGIN_NAVIGATION, REGISTER_NAVIGATION } from '@/lib/navigation-model';
+import { getAccountDestination, getNavigationState, LOGIN_NAVIGATION, REGISTER_NAVIGATION } from '@/lib/navigation-model';
 import MobileNavigationPanel from './MobileNavigationPanel';
 import { NAV_LINKS } from './navigation-config';
 import SkipToMainContent from './SkipToMainContent';
@@ -37,6 +37,8 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
     const mobileMenuTriggerRef = useRef<HTMLButtonElement>(null);
 
     const isAdmin = session?.user?.role === 'admin';
+    const learning = getAccountDestination('dashboard');
+    const learningState = getNavigationState(pathname, learning);
 
     const closeMobileMenu = () => setIsMenuOpen(false);
     const requestLogout = (returnFocus: HTMLElement | null) => {
@@ -92,12 +94,20 @@ export default function PublicNavigationBar({ onRequestLogout }: PublicNavigatio
                         {status === 'loading' ? (
                             <Skeleton className="size-10 rounded-full" aria-label="กำลังโหลดข้อมูลผู้ใช้" />
                         ) : session ? (
-                            <UserNavigationMenus
-                                session={session}
-                                isAdmin={isAdmin}
-                                pathname={pathname}
-                                onLogout={requestLogout}
-                            />
+                            <>
+                                <Button asChild variant="navigation" size="sm">
+                                    <Link href={learning.href} aria-current={learningState.ariaCurrent}>
+                                        <BookOpen data-icon="inline-start" aria-hidden="true" />
+                                        {learning.label}
+                                    </Link>
+                                </Button>
+                                <UserNavigationMenus
+                                    session={session}
+                                    isAdmin={isAdmin}
+                                    pathname={pathname}
+                                    onLogout={requestLogout}
+                                />
+                            </>
                         ) : (
                             <>
                                 <Button asChild variant="ghost">
