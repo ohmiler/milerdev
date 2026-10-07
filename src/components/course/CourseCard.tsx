@@ -8,6 +8,8 @@ import { getExcerpt } from '@/lib/security/sanitize';
 import type { CourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 import { formatCourseDuration } from '@/lib/courses/duration';
 import CourseArtwork from '@/components/course/CourseArtwork';
+import CourseCoverImage from '@/components/course/CourseCoverImage';
+import { resolveCoverImage } from '@/lib/courses/cover-image';
 import { courseCoverTransitionName } from '@/lib/courses/view-transition';
 
 interface Tag { id: string; name: string; slug: string }
@@ -22,11 +24,6 @@ interface CourseCardProps {
   outcomes?: string[];
   // A short label above the title, such as a learning-path step.
   eyebrow?: string;
-}
-
-function normalizeUrl(url: string | null): string | null {
-  if (!url || url.trim() === '') return null;
-  return url.startsWith('http') ? url : `https://${url}`;
 }
 
 export default function CourseCard({
@@ -45,7 +42,7 @@ export default function CourseCard({
   const discountPercent = pricing.discountPercent ?? 0;
   const instructorName = evidence.instructorName;
   const lessonCount = evidence.lessonCount;
-  const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
+  const cover = resolveCoverImage(rawThumbnailUrl);
   const durationText = formatCourseDuration(evidence.knownDurationSeconds);
   const hasFreePreview = evidence.freePreviewCount > 0;
 
@@ -58,8 +55,8 @@ export default function CourseCard({
         <div className="relative aspect-[16/9] overflow-hidden bg-[var(--academy-navy)]">
           {/* Morphs into the cover on the course page when the card is opened. */}
           <ViewTransition name={courseCoverTransitionName(slug)} share="morph" default="none">
-            {thumbnailUrl
-              ? <img src={thumbnailUrl} alt={title} width={640} height={360} sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw" loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
+            {cover
+              ? <CourseCoverImage cover={cover} alt={title} width={640} height={360} sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transform-none" />
               : <CourseArtwork title={title} slug={slug} tags={tags} />}
           </ViewTransition>
           <div className="absolute top-4 left-4 flex flex-col items-start gap-2">

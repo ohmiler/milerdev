@@ -74,8 +74,18 @@ describe('BundleCourseRow', () => {
     expect(html).toContain('src="https://cdn.example.test/typescript.jpg"');
     expect(html).toContain('width="640"');
     expect(html).toContain('height="360"');
-    expect(html).toContain('sizes="(min-width: 1024px) 12rem, 100vw"');
     expect(html.match(/<a\b/g)).toHaveLength(1);
+  });
+
+  it('describes the 12rem cover column so tablets do not download a full-width cover', () => {
+    const { course } = includedCourse();
+    const original = 'https://milerdev.b-cdn.net/courses/typescript.png';
+    const html = renderToStaticMarkup(
+      <BundleCourseRow course={course} description={null} thumbnailUrl={original} position={1} />,
+    );
+
+    expect(html).toContain(`src="/_next/image?url=${encodeURIComponent(original)}`);
+    expect(html).toContain('sizes="(min-width: 640px) 12rem, 100vw"');
   });
 
   it('shows truthful preparing state without inventing optional evidence', () => {

@@ -214,6 +214,10 @@ Nothing on a non-admin page is smaller than `text-caption`: Thai vowels and tone
 
 `src/components/layout/SectionHeader.tsx`: the eyebrow, `text-h2` heading, description and one optional section action of a public page section, with a navy (`inverse`) tone. It wraps a Thai heading only at the spaces between phrases, so write a heading with a space between its phrases ("หลักที่ใช้ตัดสินใจ ทุกบทเรียน"); a phrase longer than its column still wraps at a word boundary. Home, About, the course catalog, bundle pages, FAQ and Stack use it for every page section. Card, form and long-form document headings (legal pages, certificates, the course detail journey of ADR 0005) keep their own styles.
 
+### Course cover
+
+The image an admin uploads for a course or bundle. Uploads are full-size files (production covers were 2,752px PNGs of about 7 MB), so every learner-facing cover renders through `src/components/course/CourseCoverImage.tsx` with a `sizes` value that matches its column, and the image optimizer sends a resized WebP. `resolveCoverImage()` decides which covers the optimizer may fetch: the hosts in `OPTIMIZED_COVER_HOSTS`, each of which must also be in `images.remotePatterns` in `next.config.ts`. A cover from any other host is shown as uploaded instead of breaking. A course without a cover shows `CourseArtwork`.
+
 ### Migrated route
 
 A route whose representative states use the new design foundation, preserve business behavior, pass relevant checks, and no longer depend on unintended legacy styling.
