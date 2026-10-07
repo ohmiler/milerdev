@@ -163,6 +163,26 @@ describe('MilerDev brand color contract', () => {
     }
   });
 
+  it('keeps success, warning and info alert text readable on their tints in both themes', () => {
+    const globals = readSource('src/app/globals.css');
+    const darkStart = globals.indexOf('[data-theme="dark"] {');
+    const resolveToken = (css: string, name: string): string => {
+      const value = css.match(new RegExp(`--${name}: ([^;]+);`))![1].trim();
+      const reference = value.match(/^var\(--([\w-]+)\)$/);
+      return reference ? resolveToken(globals, reference[1]) : value;
+    };
+
+    // The course page's "you have access" notice and the contact form's sent message were 2.09:1.
+    for (const tone of ['success', 'warning', 'info']) {
+      for (const [theme, css] of [['light', globals.slice(0, darkStart)], ['dark', globals.slice(darkStart)]]) {
+        expect(contrastRatio(resolveToken(css, tone), resolveToken(css, `${tone}-muted`)), `${tone} ${theme}`)
+          .toBeGreaterThanOrEqual(4.5);
+      }
+    }
+    // A description faded to 90% falls below 4.5:1 on these tints, so it keeps the title's colour.
+    expect(readSource('src/components/ui/alert.tsx')).not.toMatch(/alert-description\]:text-(?:success|warning|info)\//);
+  });
+
   it('keeps discount and info badge pairs readable and off the error red', () => {
     const globals = readSource('src/app/globals.css');
 

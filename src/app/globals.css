@@ -71,8 +71,10 @@
   --gray-900: #0f172a;
 
   /* Semantic Colors */
-  --success: var(--color-success);
-  --warning: var(--color-warning);
+  /* Success and warning alerts put this colour as text on their soft tint, so they need the strong
+     shade: #22c55e and #f59e0b are about 2:1 there, the strong shades 5.2:1 and 5:1. */
+  --success: var(--color-success-strong);
+  --warning: var(--color-warning-strong);
   --error: var(--color-error);
   --focus-ring: 0 0 0 3px rgba(0, 171, 255, 0.3);
 

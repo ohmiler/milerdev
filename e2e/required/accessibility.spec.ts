@@ -1,4 +1,4 @@
-import { test, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { E2E_FIXTURES } from '../fixtures';
 import { expectAccessible, openForAudit } from './accessibility';
 import { promoteAccessibilityAdmin } from './accessibility-fixtures';
@@ -47,6 +47,13 @@ test('learner and admin pages have no serious WCAG A/AA findings', async ({ page
   await completeRegistration(page, { name: 'Accessibility Member', email: `accessibility-${id}@example.test`, password: 'Aa1!' + id });
 
   await checkPages(page, ['/dashboard', '/dashboard/payments', '/dashboard/certificates', '/profile', '/settings']);
+
+  // Only a learner who already has access sees the course page's success notice.
+  const freeCourse = `/courses/${E2E_FIXTURES.courses.free.slug}`;
+  await openForAudit(page, freeCourse);
+  await page.getByRole('button', { name: 'ลงทะเบียนเรียนฟรี' }).first().click();
+  await expect(page.getByText('คุณมีสิทธิ์เรียนคอร์สนี้แล้ว').first()).toBeVisible();
+  await checkPages(page, [freeCourse]);
 
   const session = await (await page.request.get('/api/auth/session')).json();
   await promoteAccessibilityAdmin(session.user.id);
