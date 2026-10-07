@@ -78,7 +78,7 @@ function StarRating({ rating, interactive = false, onChange }: {
   }
 
   return (
-    <div className="flex gap-0.5" aria-label={`${rating} จาก 5 ดาว`}>
+    <div role="img" className="flex gap-0.5" aria-label={`${rating} จาก 5 ดาว`}>
       {stars.map(star => (
         <Star
           key={star}

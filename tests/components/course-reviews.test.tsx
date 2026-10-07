@@ -79,6 +79,23 @@ describe('CourseReviews', () => {
     );
   });
 
+  // axe flagged aria-label on a role-less div: screen readers ignored the rating entirely.
+  it('announces each star rating as an image named by its score', async () => {
+    navigationMocks.query = '';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({
+        reviews: [{ id: 'r1', rating: 4, comment: 'อธิบายชัด', displayName: 'มิน', isVerified: true, createdAt: '2026-10-01T00:00:00.000Z' }],
+        stats: { avgRating: 4.4, totalReviews: 1, distribution: { 4: 1 } },
+        pagination: { page: 1, limit: 10, total: 1, totalPages: 1 },
+      }), { status: 200 }),
+    );
+
+    render(<CourseReviews courseSlug="typescript" isEnrolled={false} />);
+
+    await screen.findByText('อธิบายชัด');
+    expect(screen.getAllByRole('img', { name: '4 จาก 5 ดาว' }).length).toBeGreaterThanOrEqual(2);
+  });
+
   it('reloads from restored URL state after browser navigation', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(emptyReviewResponse), { status: 200 }),
