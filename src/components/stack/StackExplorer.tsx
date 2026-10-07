@@ -39,7 +39,7 @@ function useReducedMotion() {
   return useSyncExternalStore(subscribeReducedMotion, () => window.matchMedia(REDUCED_MOTION_QUERY).matches, () => false);
 }
 
-const chipClass = 'shrink-0 whitespace-nowrap rounded-full border border-white/15 px-3 py-1.5 text-sm text-white/85 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-[#0f233a]';
+const chipClass = 'shrink-0 whitespace-nowrap rounded-full border border-white/15 px-3 py-1.5 text-sm text-white/85 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white aria-pressed:border-white aria-pressed:bg-white aria-pressed:text-navy';
 const iconButtonClass = 'inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-40';
 
 // Shown instead of the model when the browser cannot draw WebGL.
@@ -230,7 +230,7 @@ export default function StackExplorer() {
       </div>
 
       <div ref={titleRef} className="pointer-events-none absolute top-4 left-4 max-w-md pr-4 sm:top-8 sm:left-8">
-        <p className="text-sm font-medium text-[#33bcff]">เบื้องหลัง MilerDev</p>
+        <p className="text-sm font-medium text-link-inverse">เบื้องหลัง MilerDev</p>
         <h1 id="stack-title" className="mt-1 text-2xl leading-tight font-semibold tracking-[-.02em] sm:text-4xl">เว็บนี้สร้างด้วยอะไร</h1>
         <p className="mt-2 hidden text-sm leading-6 text-white/65 sm:block">หมุนดูโมเดล กดที่แต่ละส่วนเพื่ออ่านรายละเอียด หรือเลือกเหตุการณ์เพื่อดูข้อมูลวิ่งทีละขั้น</p>
       </div>
@@ -241,7 +241,7 @@ export default function StackExplorer() {
         </p>
       ) : null}
 
-      <aside ref={panelRef} aria-label="รายละเอียดและเส้นทางข้อมูล" className="absolute inset-x-3 bottom-3 flex h-[15rem] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b1b2d]/90 shadow-2xl backdrop-blur-md lg:inset-x-auto lg:top-6 lg:right-6 lg:bottom-6 lg:h-auto lg:w-[24rem]">
+      <aside ref={panelRef} aria-label="รายละเอียดและเส้นทางข้อมูล" className="absolute inset-x-3 bottom-3 flex h-[15rem] flex-col overflow-hidden rounded-2xl border border-white/10 bg-navy/90 shadow-2xl backdrop-blur-md lg:inset-x-auto lg:top-6 lg:right-6 lg:bottom-6 lg:h-auto lg:w-[24rem]">
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 lg:p-5">
           <div>
             <div className="flex items-center justify-between gap-2">
@@ -252,7 +252,7 @@ export default function StackExplorer() {
               </button>
             </div>
             <div className="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
-              <button type="button" aria-pressed={tourStop !== null} className={cn(chipClass, 'border-[#33bcff] text-[#7fd3ff]')} onClick={() => { interact(); startTour(); }}>▶ ทัวร์ทีละชั้น</button>
+              <button type="button" aria-pressed={tourStop !== null} className={cn(chipClass, 'border-link-inverse text-link-inverse')} onClick={() => { interact(); startTour(); }}>▶ ทัวร์ทีละชั้น</button>
               {STACK_JOURNEYS.map((item) => (
                 <button key={item.id} type="button" aria-pressed={item.id === journeyId} className={chipClass} onClick={() => { interact(); startJourney(item.id); }}>{item.name}</button>
               ))}
@@ -270,7 +270,7 @@ export default function StackExplorer() {
                   {closeButton}
                 </div>
               </div>
-              <div className="mt-2 rounded-xl bg-white px-3 py-2 text-sm text-[#0f233a]">
+              <div className="mt-2 rounded-xl bg-white px-3 py-2 text-sm text-navy">
                 <p className="font-medium">{tourStop + 1}/{STACK_TOUR.length} · ชั้น{stopLayer.name}</p>
                 <p>{stop.text}</p>
               </div>
@@ -289,7 +289,7 @@ export default function StackExplorer() {
                 </div>
               </div>
               <p className="mt-1 hidden text-sm text-white/60 lg:block">{journey.summary}</p>
-              <div className="mt-2 rounded-xl bg-white px-3 py-2 text-sm text-[#0f233a] lg:hidden">
+              <div className="mt-2 rounded-xl bg-white px-3 py-2 text-sm text-navy lg:hidden">
                 <p className="font-medium">{step + 1}/{journey.steps.length} · {findStackNode(currentStep.from)?.name} → {findStackNode(currentStep.to)?.name}</p>
                 <p>{currentStep.caption}</p>
               </div>
@@ -301,7 +301,7 @@ export default function StackExplorer() {
                       aria-current={index === step ? 'step' : undefined}
                       className={cn(
                         'flex w-full gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white',
-                        index === step ? 'bg-white text-[#0f233a] hover:bg-white' : index < step ? 'text-white/55' : 'text-white/85',
+                        index === step ? 'bg-white text-navy hover:bg-white' : index < step ? 'text-white/55' : 'text-white/85',
                       )}
                       onClick={() => goToStep(index)}
                     >
