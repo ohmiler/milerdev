@@ -557,6 +557,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Sanitized lesson rich content */
+/* About 70 characters a line, so long notes stay readable beside a wide video. */
+.lesson-content { max-width: 72ch; }
 .lesson-content p { margin: 0.6em 0; color: var(--muted-foreground); }
 .lesson-content h2 { font-size: 1.35rem; font-weight: 600; color: var(--foreground); margin: 1.2em 0 0.5em; }
 .lesson-content h3 { font-size: 1.1rem; font-weight: 600; color: var(--foreground); margin: 1em 0 0.4em; }

@@ -116,6 +116,10 @@ export default function LearnPageClient({
   const hasContent = Boolean(currentLesson.content?.trim());
   const duration = formatDuration(currentLesson.videoDuration);
   const currentSectionTitle = allLessons[currentIndex]?.sectionTitle ?? null;
+  // One primary action per screen: until this lesson is saved as finished, the completion button is primary
+  // and moving on without saving is the outlined one.
+  const nextIsPrimary = isEnrolled && isCurrentCompleted;
+  const nextLabel = isEnrolled && !isCurrentCompleted ? 'ข้ามไปบทถัดไป' : 'บทถัดไป';
   const statusHeading = completionSaveState === 'pending'
     ? 'กำลังบันทึกบทเรียน…'
     : completionSaveState === 'failed'
@@ -437,9 +441,9 @@ export default function LearnPageClient({
               ) : <span className="hidden sm:block" />}
 
               {nextLesson && (isEnrolled || nextLesson.isFreePreview) ? (
-                <Button asChild className="h-auto min-h-12 justify-end px-4 py-3">
+                <Button asChild variant={nextIsPrimary ? 'default' : 'outline'} className="h-auto min-h-12 justify-end px-4 py-3">
                   <Link href={`/courses/${course.slug}/learn/${nextLesson.id}`}>
-                    <span className="min-w-0 text-right"><small className="block text-caption font-normal text-primary-foreground/75">บทถัดไป</small><strong className="block truncate text-sm">{nextLesson.title}</strong></span>
+                    <span className="min-w-0 text-right"><small className={cn('block text-caption font-normal', nextIsPrimary ? 'text-primary-foreground/75' : 'text-muted-foreground')}>{nextLabel}</small><strong className="block truncate text-sm">{nextLesson.title}</strong></span>
                     <ArrowRight data-icon="inline-end" aria-hidden="true" />
                   </Link>
                 </Button>
