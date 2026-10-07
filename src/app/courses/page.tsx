@@ -1,5 +1,4 @@
 import MainContent from '@/components/layout/MainContent';
-import PublicPageHeader from '@/components/layout/PublicPageHeader';
 import SectionHeader from '@/components/layout/SectionHeader';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -8,8 +7,14 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import BundleCard from '@/components/bundle/BundleCard';
 import CourseCard from '@/components/course/CourseCard';
-import CourseCatalogFilters from '@/components/course/CourseCatalogFilters';
+import {
+  CourseCatalogActiveFilters,
+  CourseCatalogSearch,
+  CourseCatalogTopics,
+  type CatalogTopic,
+} from '@/components/course/CourseCatalogFilters';
 import CourseCatalogPagination from '@/components/course/CourseCatalogPagination';
+import CatalogSortSelect from '@/components/course/CourseCatalogSort';
 import { FeedbackState } from '@/components/status/FeedbackState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -84,6 +89,26 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 async function getAllTags(): Promise<Tag[]> {
   return db.select({ id: tags.id, name: tags.name, slug: tags.slug }).from(tags).orderBy(tags.name);
+}
+
+// Topics are the tags that published courses carry, most used first, so a new topic shows up by itself.
+async function getCatalogTopics(): Promise<{ topics: CatalogTopic[]; publishedCount: number }> {
+  const courseCount = count(courses.id);
+  const [topicRows, publishedRows] = await Promise.all([
+    db
+      .select({ slug: tags.slug, name: tags.name, count: courseCount })
+      .from(tags)
+      .innerJoin(courseTags, eq(courseTags.tagId, tags.id))
+      .innerJoin(courses, and(eq(courses.id, courseTags.courseId), eq(courses.status, 'published')))
+      .groupBy(tags.id, tags.slug, tags.name)
+      .orderBy(desc(courseCount), asc(tags.name)),
+    db.select({ total: count() }).from(courses).where(eq(courses.status, 'published')),
+  ]);
+
+  return {
+    topics: topicRows.map((row) => ({ slug: row.slug, name: row.name, count: Number(row.count) })),
+    publishedCount: Number(publishedRows[0]?.total ?? 0),
+  };
 }
 
 async function getPublishedBundles(now: Date): Promise<BundleItem[]> {
@@ -374,7 +399,7 @@ export default async function CoursesPage({ searchParams }: Props) {
   const catalogHref = buildCourseCatalogHref(normalized.query);
   const showBundles = catalogHref === '/courses';
   const now = new Date();
-  const [coursesData, bundlesList] = await Promise.all([
+  const [coursesData, bundlesList, catalogTopics] = await Promise.all([
     getCoursesData({
       page: normalized.query.page,
       limit: 12,
@@ -386,6 +411,7 @@ export default async function CoursesPage({ searchParams }: Props) {
       now,
     }),
     showBundles ? getPublishedBundles(now) : Promise.resolve([]),
+    getCatalogTopics(),
   ]);
   const canonicalPage = clampCourseCatalogPage(
     normalized.query.page,
@@ -401,63 +427,69 @@ export default async function CoursesPage({ searchParams }: Props) {
     price: priceFilter,
     tag: tagFilter,
     preview: previewFilter,
-    sort,
-    page: currentPage,
   } = normalized.query;
-  const hasActiveFilters = Boolean(
-    search
-      || priceFilter !== 'all'
-      || tagFilter !== 'all'
-      || previewFilter !== 'all'
-      || sort !== 'newest'
-      || currentPage > 1,
-  );
+  const filtering = Boolean(search || priceFilter !== 'all' || tagFilter !== 'all' || previewFilter !== 'all');
   const { courses: courseList, pagination } = coursesData;
+  // A valid topic with no published course yet still gets a chip, so the active filter stays visible.
+  const activeTag = tagFilter === 'all' || catalogTopics.topics.some((topic) => topic.slug === tagFilter)
+    ? null
+    : allTags.find((tag) => tag.slug === tagFilter);
+  const topics = activeTag
+    ? [...catalogTopics.topics, { slug: activeTag.slug, name: activeTag.name, count: 0 }]
+    : catalogTopics.topics;
+  const listLabel = filtering ? `พบ ${pagination.total} คอร์ส` : `ทั้งหมด ${pagination.total} คอร์ส`;
 
   return (
     <>
       <Navbar />
       <MainContent key={catalogHref} className="bg-[var(--academy-canvas)]">
-        <PublicPageHeader
-          title="เลือกคอร์สที่พาไปถึงงานชิ้นถัดไป"
-          description="เปรียบเทียบหัวข้อ ราคา และบทเรียนที่เปิดให้ทดลอง แล้วเลือกจุดเริ่มต้นที่ตรงกับทักษะที่คุณอยากพัฒนาจริง"
-          variant="catalog"
-        />
+        <section className="border-b bg-background" aria-labelledby="courses-catalog-title">
+          <div className="container flex flex-col gap-5 py-8 sm:py-10 lg:py-12">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+              <div className="min-w-0 max-w-2xl">
+                <h1 id="courses-catalog-title" className="text-h1 font-semibold text-balance">คอร์สทั้งหมด</h1>
+                <p className="mt-2 text-lead text-pretty text-muted-foreground">คอร์สเขียนโปรแกรมภาษาไทย เลือกตามหัวข้อ แล้วลองดูบทเรียนทดลองก่อนตัดสินใจ</p>
+              </div>
+              <div className="w-full lg:max-w-sm">
+                <CourseCatalogSearch query={normalized.query} />
+              </div>
+            </div>
+            <CourseCatalogTopics query={normalized.query} topics={topics} total={catalogTopics.publishedCount} />
+          </div>
+        </section>
 
-        <section id="course-catalog" className="py-14 sm:py-20" aria-labelledby="courses-catalog-title">
+        <section id="course-catalog" className="py-8 sm:py-10" aria-labelledby="courses-list-title">
           <div className="container">
-            <SectionHeader
-              id="courses-catalog-title"
-              title="คอร์สทั้งหมด"
-              description="ใช้ตัวกรองเพื่อย่อรายการ แล้วดูรายละเอียดจริงของแต่ละคอร์สก่อนตัดสินใจ"
-              action={<Badge variant="secondary" aria-live="polite">พบ {pagination.total} คอร์ส</Badge>}
-              className="mb-8 border-b pb-7"
-            />
-
-            <CourseCatalogFilters
-              tags={allTags}
-              search={search}
-              priceFilter={priceFilter}
-              tagFilter={tagFilter}
-              previewFilter={previewFilter}
-              sort={sort}
-              totalCourses={pagination.total}
-              hasActiveFilters={hasActiveFilters}
-            />
-
-            <div className="mb-6 flex items-center justify-between gap-4"><p className="font-semibold">{search ? `ผลการค้นหาสำหรับ “${search}”` : 'หลักสูตรที่เปิดให้เรียน'}</p><span className="text-sm text-muted-foreground">หน้า {pagination.page} / {Math.max(1, pagination.totalPages)}</span></div>
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <h2 id="courses-list-title" className="text-lead font-semibold" aria-live="polite">{listLabel}</h2>
+                {filtering ? (
+                  <Link href="/courses" className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-link hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40">
+                    ล้างตัวกรอง
+                  </Link>
+                ) : null}
+              </div>
+              <CatalogSortSelect query={normalized.query} />
+            </div>
+            <CourseCatalogActiveFilters query={normalized.query} className="mb-6" />
 
             {courseList.length === 0 ? (
               <FeedbackState
                 state="empty"
                 className="border"
                 title="ไม่พบคอร์สตามเงื่อนไขนี้"
-                description="ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้อและราคาใหม่"
+                description="ลองใช้คำค้นที่สั้นลง หรือเลือกหัวข้ออื่น"
                 action={<Button asChild><Link href="/courses">ดูคอร์สทั้งหมด</Link></Button>}
               />
             ) : (
               <>
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">{courseList.map((course) => <CourseCard key={course.id} id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} decisionFacts={course.decisionFacts} tags={course.tags} />)}</div>
+                <ul className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {courseList.map((course) => (
+                    <li key={course.id} className="min-w-0">
+                      <CourseCard id={course.id} title={course.title} slug={course.slug} description={course.description} thumbnailUrl={course.thumbnailUrl} decisionFacts={course.decisionFacts} tags={course.tags} />
+                    </li>
+                  ))}
+                </ul>
                 <CourseCatalogPagination
                   query={normalized.query}
                   totalPages={pagination.totalPages}
@@ -490,6 +522,27 @@ export default async function CoursesPage({ searchParams }: Props) {
             </div>
           </section>
         ) : null}
+
+        <section className="py-10 sm:py-14" aria-labelledby="courses-help-title">
+          <div className="container">
+            <div className="grid gap-8 rounded-2xl bg-navy px-6 py-10 text-background sm:px-10 sm:py-12 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14">
+              <SectionHeader
+                id="courses-help-title"
+                tone="inverse"
+                title="ยังไม่แน่ใจว่าคอร์สไหน เหมาะกับคุณ"
+                description="ดูบทเรียนทดลองฟรีได้โดยไม่ต้องสมัครสมาชิก หรือเล่าเป้าหมายของคุณให้ทีมงานช่วยแนะนำ"
+              />
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <Button asChild size="lg">
+                  <Link href="/contact">ถามทีมงาน</Link>
+                </Button>
+                <Button asChild size="lg" variant="secondary">
+                  <Link href="/faq">คำถามที่พบบ่อย</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
       </MainContent>
       <Footer />
     </>
