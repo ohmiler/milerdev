@@ -53,6 +53,9 @@ export async function GET(request: Request, { params }: RouteParams) {
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
       deactivatedAt: users.deactivatedAt,
+      headline: users.headline,
+      bio: users.bio,
+      profileLinks: users.profileLinks,
     }).from(users).where(eq(users.id, id)).limit(1);
 
     if (!user) {

@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { getAuditContext, logAudit } from '@/lib/auditLog';
 import { requireAdmin } from '@/lib/auth/helpers';
 import { normalizeCertificateColor } from '@/lib/certificates/color';
+import { normalizeContentList, normalizeSummary } from '@/lib/courses/content';
 import { CourseLifecycleError, courseLifecycleService } from '@/lib/courses/lifecycle';
 import { revalidateCoursePages } from '@/lib/courses/revalidate';
 import { db } from '@/lib/db';
 import { courses, courseTags, tags, users } from '@/lib/db/schema';
 import { logError } from '@/lib/error-handler';
 import { adminCourseLifecycleSchema, updateCourseSchema } from '@/lib/validations/admin';
-import { and, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, ne, or } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 
 interface RouteParams {
@@ -82,7 +83,21 @@ export async function GET(_request: Request, { params }: RouteParams) {
       ))
       .orderBy(users.name);
 
-    return NextResponse.json({ course, tags: courseTagRows, instructorOptions });
+    // Courses a learner could be told to take first: any other course still on sale, plus the
+    // current choice so the form can show it.
+    const prerequisiteOptions = await db
+      .select({ id: courses.id, title: courses.title, status: courses.status })
+      .from(courses)
+      .where(and(
+        ne(courses.id, id),
+        or(
+          ne(courses.status, 'archived'),
+          course.prerequisiteCourseId ? eq(courses.id, course.prerequisiteCourseId) : undefined,
+        ),
+      ))
+      .orderBy(asc(courses.title));
+
+    return NextResponse.json({ course, tags: courseTagRows, instructorOptions, prerequisiteOptions });
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.courses.id.fetch_failed' });
     return NextResponse.json(
@@ -107,7 +122,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         code: 'INVALID_REQUEST',
       }, { status: 400 });
     }
-    const { title, description, price, thumbnailUrl, slug, tagIds, certificateColor, certificateHeaderImage, previewVideoUrl, promoPrice, promoStartsAt, promoEndsAt, instructorId } = parsed.data;
+    const { title, description, price, thumbnailUrl, slug, tagIds, certificateColor, certificateHeaderImage, previewVideoUrl, promoPrice, promoStartsAt, promoEndsAt, instructorId, summary, learningOutcomes, targetAudience, prerequisites, prerequisiteCourseId } = parsed.data;
 
     // Check if course exists
     const [existingCourse] = await db
@@ -139,6 +154,23 @@ export async function PUT(request: Request, { params }: RouteParams) {
       }
     }
 
+    const prerequisiteChanged = prerequisiteCourseId !== undefined && prerequisiteCourseId !== existingCourse.prerequisiteCourseId;
+    if (prerequisiteChanged && prerequisiteCourseId !== null) {
+      const [prerequisite] = prerequisiteCourseId === id
+        ? []
+        : await db
+          .select({ status: courses.status })
+          .from(courses)
+          .where(eq(courses.id, prerequisiteCourseId))
+          .limit(1);
+      if (!prerequisite || prerequisite.status === 'archived') {
+        return NextResponse.json({
+          error: 'คอร์สที่ควรเรียนก่อนต้องเป็นคอร์สอื่นที่ยังเปิดอยู่',
+          code: 'INVALID_PREREQUISITE',
+        }, { status: 400 });
+      }
+    }
+
     // Update course
     await db
       .update(courses)
@@ -157,6 +189,11 @@ export async function PUT(request: Request, { params }: RouteParams) {
         promoStartsAt: promoStartsAt !== undefined ? (promoStartsAt ? new Date(promoStartsAt) : null) : existingCourse.promoStartsAt,
         promoEndsAt: promoEndsAt !== undefined ? (promoEndsAt ? new Date(promoEndsAt) : null) : existingCourse.promoEndsAt,
         instructorId: instructorChanged ? instructorId : existingCourse.instructorId,
+        summary: summary !== undefined ? normalizeSummary(summary) : existingCourse.summary,
+        learningOutcomes: learningOutcomes !== undefined ? normalizeContentList(learningOutcomes) : existingCourse.learningOutcomes,
+        targetAudience: targetAudience !== undefined ? normalizeContentList(targetAudience) : existingCourse.targetAudience,
+        prerequisites: prerequisites !== undefined ? normalizeContentList(prerequisites) : existingCourse.prerequisites,
+        prerequisiteCourseId: prerequisiteChanged ? prerequisiteCourseId : existingCourse.prerequisiteCourseId,
         updatedAt: new Date(),
       })
       .where(eq(courses.id, id));

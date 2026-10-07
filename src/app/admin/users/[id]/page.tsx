@@ -9,6 +9,7 @@ import {
   AdminUserLifecycleAction,
   AdminUserLifecycleBadge,
 } from '@/components/admin/AdminUserLifecycleControls';
+import InstructorProfileForm, { type InstructorProfile } from '@/components/admin/InstructorProfileForm';
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
   AdminEmptyState,
@@ -34,7 +35,7 @@ import {
   type AuthoritativeLifecycleUser,
 } from '@/lib/users/admin-lifecycle-ui';
 
-interface UserInfo {
+interface UserInfo extends InstructorProfile {
   id: string;
   name: string | null;
   email: string;
@@ -277,6 +278,10 @@ export default function AdminUserDetailPage() {
         <AdminMetricCard label="เรียนจบ" value={completedCount.toLocaleString('th-TH')} detail="คอร์สที่มีวันที่เรียนจบแล้ว" tone="success" />
         <AdminMetricCard label="กำลังเรียน" value={inProgressCount.toLocaleString('th-TH')} detail="เริ่มเรียนแล้วแต่ยังไม่จบ" tone="warning" />
       </section>
+
+      {user.role === 'instructor' || user.role === 'admin' ? (
+        <InstructorProfileForm key={user.id} userId={user.id} profile={{ headline: user.headline, bio: user.bio, profileLinks: user.profileLinks }} />
+      ) : null}
 
       <AdminSection title="คอร์สที่ลงทะเบียน" description={`${enrollments.length.toLocaleString('th-TH')} คอร์ส`}>
         {enrollments.length === 0 ? (

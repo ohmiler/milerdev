@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+    COURSE_CONTENT_ITEM_MAX,
+    COURSE_CONTENT_LIST_MAX,
+    COURSE_SUMMARY_MAX,
+} from '@/lib/courses/content';
 import { normalizeImageUrl } from '@/lib/url';
 
 // Accepts exactly what course pages can display (see normalizeImageUrl): full http(s) URLs,
@@ -42,6 +47,10 @@ const promoTimeSchema = z.string()
     .optional()
     .nullable();
 
+const courseContentListSchema = (label: string) => z.array(
+    z.string().max(COURSE_CONTENT_ITEM_MAX, `${label}แต่ละข้อยาวเกิน ${COURSE_CONTENT_ITEM_MAX} ตัวอักษร`),
+).max(COURSE_CONTENT_LIST_MAX, `${label}ใส่ได้ไม่เกิน ${COURSE_CONTENT_LIST_MAX} ข้อ`).optional().nullable();
+
 export const updateCourseSchema = createCourseSchema.omit({ status: true }).partial().extend({
     previewVideoUrl: z.string().max(2000, 'ลิงก์วิดีโอแนะนำยาวเกิน 2,000 ตัวอักษร').optional().nullable().or(z.literal('')),
     promoPrice: z.union([z.string(), z.number()]).optional().nullable(),
@@ -50,6 +59,11 @@ export const updateCourseSchema = createCourseSchema.omit({ status: true }).part
     certificateHeaderImage: z.string().max(2000, 'ลิงก์รูป Header ใบรับรองยาวเกิน 2,000 ตัวอักษร').optional().nullable().or(z.literal('')),
     certificateBadge: z.string().max(50).optional().nullable(),
     instructorId: z.string().min(1).max(36).optional().nullable(),
+    summary: z.string().max(COURSE_SUMMARY_MAX, `คำโปรยยาวเกิน ${COURSE_SUMMARY_MAX} ตัวอักษร`).optional().nullable(),
+    learningOutcomes: courseContentListSchema('สิ่งที่ผู้เรียนจะได้'),
+    targetAudience: courseContentListSchema('กลุ่มผู้เรียนที่เหมาะ'),
+    prerequisites: courseContentListSchema('สิ่งที่ควรรู้ก่อนเรียน'),
+    prerequisiteCourseId: z.string().min(1).max(36).optional().nullable(),
 }).strict().refine(
     ({ promoStartsAt, promoEndsAt }) => !promoStartsAt || !promoEndsAt
         || new Date(promoEndsAt).getTime() > new Date(promoStartsAt).getTime(),
@@ -116,6 +130,22 @@ export const adminUserUpdateSchema = updateUserSchema
         ({ name, role }) => name !== undefined || role !== undefined,
         'กรุณาระบุข้อมูลที่ต้องการแก้ไข',
     );
+
+// The public instructor card on a course page. Links open from a public page, so only https.
+export const adminInstructorProfileSchema = z.object({
+    headline: z.string().trim().max(160, 'ตำแหน่งยาวเกิน 160 ตัวอักษร').nullable(),
+    bio: z.string().trim().max(1000, 'ประวัติยาวเกิน 1,000 ตัวอักษร').nullable(),
+    profileLinks: z.array(z.object({
+        label: z.string().trim().min(1, 'กรุณาระบุชื่อลิงก์').max(40, 'ชื่อลิงก์ยาวเกิน 40 ตัวอักษร'),
+        url: z.string().trim().max(500, 'ลิงก์ยาวเกิน 500 ตัวอักษร').refine((value) => {
+            try {
+                return new URL(value).protocol === 'https:';
+            } catch {
+                return false;
+            }
+        }, 'ลิงก์ต้องขึ้นต้นด้วย https://'),
+    }).strict()).max(4, 'ใส่ลิงก์ได้ไม่เกิน 4 ลิงก์'),
+}).strict();
 
 export const adminUserLifecycleSchema = z.object({
     action: z.enum(['deactivate', 'reactivate']),
