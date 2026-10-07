@@ -21,7 +21,7 @@ MilerDev will use source-owned shadcn/ui primitives plus Tailwind utility compos
 1. New or migrated user-facing components use the primitives under `src/components/ui` rather than rebuilding Button, Input, Label, Select, Card, Dialog, AlertDialog, Sheet, Tabs, Separator, Badge, Alert, Skeleton, or toast behavior.
 2. Route and pattern layout is composed with Tailwind utilities and `cn()`. Migrated user routes do not introduce new CSS Modules.
 3. Legacy CSS Modules are removed from a migrated boundary after all of their consumers move. A shared legacy file is deleted only when it has no consumers; otherwise any remaining admin-only dependency is made explicit and isolated from user code.
-4. Home information architecture remains frozen. Shared primitive or token changes must preserve its approved composition and spacing.
+4. Home information architecture remains frozen (as defined by ADR 0012 since 2026-10-07). Shared primitive or token changes must preserve its approved composition and spacing.
 5. Server Components, authorization, payment truth, enrollment, analytics, database behavior, and external-provider boundaries remain unchanged.
 
 ## Page families in scope

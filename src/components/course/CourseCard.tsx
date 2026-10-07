@@ -18,6 +18,8 @@ interface CourseCardProps {
   decisionFacts: CourseDecisionFacts;
   tags?: Tag[];
   outcomes?: string[];
+  // A short label above the title, such as a learning-path step.
+  eyebrow?: string;
 }
 
 function normalizeUrl(url: string | null): string | null {
@@ -33,6 +35,7 @@ export default function CourseCard({
   decisionFacts,
   tags,
   outcomes,
+  eyebrow,
 }: CourseCardProps) {
   const { evidence, price: pricing } = decisionFacts;
   const displayPrice = pricing.effective;
@@ -60,6 +63,7 @@ export default function CourseCard({
 
         <div className="flex min-w-0 flex-1 flex-col">
           <CardContent className="flex flex-1 flex-col px-5 pt-5 sm:px-6 sm:pt-6">
+            {eyebrow ? <p className="mb-3 text-sm font-semibold text-link">{eyebrow}</p> : null}
             {tags?.length ? <div className="mb-4 flex flex-wrap gap-2">{tags.slice(0, 3).map((tag) => <TagBadge key={tag.id} tag={tag} />)}{tags.length > 3 ? <Badge variant="outline">+{tags.length - 3}</Badge> : null}</div> : null}
             <h3 className="line-clamp-3 text-xl leading-snug font-semibold tracking-[-.02em] text-balance group-hover:text-link">{title}</h3>
             {outcomes?.length ? <ul className="mt-4 flex flex-col gap-2 text-sm leading-6 text-muted-foreground">{outcomes.map((outcome) => <li key={outcome} className="flex gap-2"><span className="text-link">✓</span>{outcome}</li>)}</ul> : description ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">{getExcerpt(description, 120)}</p> : null}
