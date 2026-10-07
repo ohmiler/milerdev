@@ -179,17 +179,21 @@ export default async function HomePage() {
           className="border-b bg-card"
           aria-labelledby="home-hero-title"
         >
-          <div className="container grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-14 lg:py-16">
+          <div className="container grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1.17fr)_minmax(0,1fr)] xl:grid-cols-[35.5rem_minmax(0,1fr)] lg:gap-14 lg:py-16">
             <div className="flex max-w-2xl flex-col items-start gap-6" data-reveal>
               <p className="rounded-full bg-secondary px-3.5 py-1.5 text-sm font-medium text-secondary-foreground">
                 คอร์สเขียนโปรแกรมภาษาไทย ลองเรียนก่อนซื้อได้
               </p>
-              {/* Phrases never break mid-way: Thai has no spaces between words to wrap on. */}
+              {/* Two lines from sm up. Phrases never break mid-way: Thai has no spaces between words to wrap on. */}
               <h1 id="home-hero-title" className="text-display font-bold">
-                <span className="inline-block">เรียนให้เข้าใจ</span>{' '}
-                <span className="inline-block">สร้างได้จริง</span>{' '}
-                <span className="inline-block text-link">เติบโตเป็น</span>{' '}
-                <span className="inline-block text-link">Developer</span>
+                <span className="block sm:whitespace-nowrap">
+                  <span className="inline-block">เรียนให้เข้าใจ</span>{' '}
+                  <span className="inline-block">สร้างได้จริง</span>
+                </span>{' '}
+                <span className="block text-link sm:whitespace-nowrap">
+                  <span className="inline-block">เติบโตเป็น</span>{' '}
+                  <span className="inline-block">Developer</span>
+                </span>
               </h1>
               <p className="max-w-xl text-lead text-pretty text-muted-foreground">
                 คอร์สภาษาไทยที่พาคุณเห็นภาพรวม เข้าใจเหตุผล และลงมือทำทีละขั้น

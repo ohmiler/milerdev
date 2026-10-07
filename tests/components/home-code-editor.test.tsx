@@ -1,14 +1,23 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HomeCodeEditor from '@/components/home/HomeCodeEditor';
+import { EDITOR_CYCLE_TICKS, EDITOR_TICK_MS, heroEditorFrame, heroPreviewState } from '@/lib/home/hero-editor';
 
 let reducedMotion = false;
 
 const editorText = (container: HTMLElement) => container.querySelector('[data-home-editor]')?.textContent ?? '';
-const preview = () => within(screen.getByRole('figure', { name: 'ผลลัพธ์ของโค้ดตัวอย่างบนหน้าเว็บ' }));
+// The mock page under the browser's address bar.
+const previewText = (container: HTMLElement) => container.querySelector('[data-home-preview] > :last-child')?.textContent ?? '';
+const tab = (name: string) => screen.getByRole('button', { name });
+const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
+// Milliseconds into the loop at which a frame first matches.
+const msUntil = (predicate: (tick: number) => boolean) => {
+  for (let tick = 0; tick < EDITOR_CYCLE_TICKS; tick += 1) if (predicate(tick)) return tick * EDITOR_TICK_MS;
+  throw new Error('never happens in one loop');
+};
 
 describe('Home hero code editor', () => {
   beforeEach(() => {
@@ -28,41 +37,77 @@ describe('Home hero code editor', () => {
     vi.unstubAllGlobals();
   });
 
-  it('types the program out, then shows its result', () => {
+  it('types App.jsx while the page appears, then types index.css', () => {
     const { container } = render(<HomeCodeEditor />);
 
-    expect(editorText(container)).not.toContain('useState');
-    expect(preview().getByText('กำลังเขียนโค้ด…')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'เรียนบทถัดไป' })).toBeNull();
+    expect(tab('App.jsx').getAttribute('aria-pressed')).toBe('true');
+    expect(previewText(container)).toBe('');
 
-    act(() => { vi.advanceTimersByTime(10_000); });
+    const headingTyped = msUntil((tick) => heroPreviewState(heroEditorFrame(tick).typed).name);
+    advance(headingTyped);
+    expect(editorText(container)).toContain('<h1>Miler</h1>');
+    expect(previewText(container)).toContain('Miler');
 
-    expect(editorText(container)).toContain("import { useState } from 'react';");
-    expect(editorText(container)).toContain('Ln 16, Col 2');
-    expect(preview().getByText('Hello, World')).toBeTruthy();
+    advance(msUntil((tick) => heroEditorFrame(tick).typed.css > 30) - headingTyped);
+    expect(tab('index.css').getAttribute('aria-pressed')).toBe('true');
+    expect(editorText(container)).toContain('.card {');
   });
 
-  it('lets the visitor click the preview button', () => {
-    render(<HomeCodeEditor />);
-    act(() => { vi.advanceTimersByTime(10_000); });
+  it('starts over after showing the finished page', () => {
+    const { container } = render(<HomeCodeEditor />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'เรียนบทถัดไป' }));
+    advance(EDITOR_CYCLE_TICKS * EDITOR_TICK_MS);
 
-    expect(screen.getByText('วันนี้เรียนบทที่ 2')).toBeTruthy();
+    expect(tab('App.jsx').getAttribute('aria-pressed')).toBe('true');
+    expect(previewText(container)).toBe('');
   });
 
-  it('shows the finished program at once when the visitor asks for reduced motion', () => {
+  it('shows the whole file a visitor picks, and stops the loop', () => {
+    const { container } = render(<HomeCodeEditor />);
+
+    fireEvent.click(tab('index.css'));
+
+    expect(tab('index.css').getAttribute('aria-pressed')).toBe('true');
+    expect(editorText(container)).toContain('border-radius: 8px;');
+    expect(previewText(container)).toContain('ดูผลงาน');
+
+    advance(30_000);
+    expect(tab('index.css').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'เล่นการพิมพ์โค้ดตัวอย่างอีกครั้ง' })).toBeTruthy();
+  });
+
+  it('pauses on request and plays again from the start', () => {
+    const { container } = render(<HomeCodeEditor />);
+    advance(2_000);
+
+    fireEvent.click(screen.getByRole('button', { name: 'หยุดการพิมพ์โค้ดตัวอย่าง' }));
+    const paused = editorText(container);
+    advance(10_000);
+    expect(editorText(container)).toBe(paused);
+
+    fireEvent.click(screen.getByRole('button', { name: 'เล่นการพิมพ์โค้ดตัวอย่างอีกครั้ง' }));
+    expect(previewText(container)).toBe('');
+    expect(screen.getByRole('button', { name: 'หยุดการพิมพ์โค้ดตัวอย่าง' })).toBeTruthy();
+  });
+
+  it('shows the finished page at once and does not move when the visitor asks for reduced motion', () => {
     reducedMotion = true;
     const { container } = render(<HomeCodeEditor />);
 
     expect(editorText(container)).toContain('export default function App()');
-    expect(preview().getByText('Hello, World')).toBeTruthy();
+    expect(previewText(container)).toContain('ดูผลงาน');
+    const still = editorText(container);
+    advance(10_000);
+    expect(editorText(container)).toBe(still);
   });
 
-  it('keeps the decorative editor out of the accessibility tree but describes it', () => {
+  it('describes the demo, keeps the moving code and mock page out of the accessibility tree, and leaves only real controls', () => {
     const { container } = render(<HomeCodeEditor />);
 
-    expect(container.querySelector('[data-home-editor]')?.getAttribute('aria-hidden')).toBe('true');
-    expect(screen.getByText(/ตัวอย่างการเขียนโค้ด React/)).toBeTruthy();
+    expect(screen.getByText(/ตัวอย่างการเขียนโค้ด React และ CSS พร้อมหน้าเว็บ/)).toBeTruthy();
+    expect(container.querySelector('[data-home-preview]')?.getAttribute('aria-hidden')).toBe('true');
+    const focusable = [...container.querySelectorAll('a, button, input, [tabindex]')];
+    expect(focusable.every((element) => element.tagName === 'BUTTON' && !element.closest('[aria-hidden="true"]'))).toBe(true);
+    expect(focusable).toHaveLength(3);
   });
 });
