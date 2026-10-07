@@ -104,6 +104,18 @@ export function buildCourseCatalogHref(
   return search ? `/courses?${search}` : '/courses';
 }
 
+/**
+ * The query's other facets as GET form fields. A form that changes one facet (search, sort)
+ * sends these as hidden inputs so the rest of the filter survives; the page resets to 1.
+ */
+export function courseCatalogFormFields(
+  query: CourseCatalogQuery,
+  changing: Exclude<keyof CourseCatalogQuery, 'page'>,
+): Array<[string, string]> {
+  const href = buildCourseCatalogHref(query, { [changing]: DEFAULT_QUERY[changing], page: 1 });
+  return [...new URL(href, 'https://milerdev.local').searchParams.entries()];
+}
+
 export function clampCourseCatalogPage(page: number, totalPages: number): number {
   return Math.min(Math.max(1, page), Math.max(1, totalPages));
 }

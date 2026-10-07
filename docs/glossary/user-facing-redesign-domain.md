@@ -63,6 +63,10 @@ A priced collection of courses with lifecycle states `draft`, `published`, and `
 
 Catalog classification attached to courses. In the catalog, tags are filters and decision aids; they are not access rules.
 
+### Course catalog
+
+`/courses`, a task page: a short header (title, one line, search) and topic chips come before the course grid, so a course shows in the first screen at phone width. The chips are the tags that published courses carry, most used first, each with its course count, so a new topic appears without a code change. It lists courses only: no learning path or level, which Home owns (ADR 0012). Every filter lives in the URL and works without JavaScript: search and sort are GET forms (sort re-sorts on change when JavaScript runs), chips are links, and the price and free-preview filters that other pages link to show as removable badges. The catalog's lower sections (bundles, help) use the shared section header.
+
 ### Review
 
 Learner feedback associated with a course. Review display and submission states should distinguish absent, pending, successful, and failed interactions without inventing moderation status not present in the current contract.
