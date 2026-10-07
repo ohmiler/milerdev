@@ -52,7 +52,8 @@ export default function SectionHeader({
             {eyebrow}
           </p>
         ) : null}
-        <h2 id={id} className={cn('text-h2 font-bold text-balance', eyebrow && 'mt-3')}>
+        {/* scroll-mt keeps a heading clear of the sticky navbar when a link jumps to it. */}
+        <h2 id={id} className={cn('scroll-mt-24 text-h2 font-bold text-balance', eyebrow && 'mt-3')}>
           {keepPhrasesWhole(title)}
         </h2>
         {description ? (

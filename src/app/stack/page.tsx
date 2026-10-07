@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Footer from '@/components/layout/Footer';
 import MainContent from '@/components/layout/MainContent';
 import Navbar from '@/components/layout/Navbar';
+import SectionHeader from '@/components/layout/SectionHeader';
 import StackExplorer from '@/components/stack/StackExplorer';
 import { Button } from '@/components/ui/button';
 import { findStackNode, STACK_JOURNEYS, STACK_LAYERS, STACK_NODES } from '@/lib/content/stack';
@@ -39,7 +40,7 @@ export default function StackPage() {
 
         <section className={'py-14 sm:py-20'} aria-labelledby={'stack-parts-title'}>
           <div className={'container'}>
-            <h2 id={'stack-parts-title'} className={'scroll-mt-24 text-3xl font-semibold tracking-[-.03em] sm:text-4xl'}>ทุกส่วนในระบบ</h2>
+            <SectionHeader id={'stack-parts-title'} title={'ทุกส่วนในระบบ'} />
             <div className={'mt-8 flex flex-col gap-10'}>
               {STACK_LAYERS.map((layer) => (
                 <div key={layer.id} className={'grid gap-4 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-10'}>
@@ -69,7 +70,7 @@ export default function StackPage() {
 
         <section className={'border-t bg-background py-14 sm:py-20'} aria-labelledby={'stack-flows-title'}>
           <div className={'container'}>
-            <h2 id={'stack-flows-title'} className={'text-3xl font-semibold tracking-[-.03em] sm:text-4xl'}>ข้อมูลวิ่งยังไง</h2>
+            <SectionHeader id={'stack-flows-title'} title={'ข้อมูลวิ่งยังไง'} />
             <div className={'mt-8 grid gap-6 md:grid-cols-2'}>
               {STACK_JOURNEYS.map((journey) => (
                 <div key={journey.id} className={'rounded-2xl border bg-card p-6'}>
@@ -89,12 +90,13 @@ export default function StackPage() {
           </div>
         </section>
 
-        <section className={'py-14 sm:py-20'}>
+        <section className={'py-14 sm:py-20'} aria-labelledby={'stack-cta-title'}>
           <div className={'container grid gap-6 rounded-3xl border bg-card p-8 shadow-[var(--academy-shadow-card)] sm:p-10 md:grid-cols-[1fr_auto] md:items-end'}>
-            <div>
-              <h2 className={'text-3xl leading-tight font-semibold tracking-[-.03em]'}>อยากสร้างเว็บแบบนี้ได้เอง</h2>
-              <p className={'mt-3 leading-7 text-muted-foreground'}>เริ่มจากพื้นฐานที่ใช้จริงในเว็บนี้ แล้วค่อยต่อยอดทีละส่วน</p>
-            </div>
+            <SectionHeader
+              id={'stack-cta-title'}
+              title={'อยากสร้างเว็บแบบนี้ได้เอง'}
+              description={'เริ่มจากพื้นฐานที่ใช้จริงในเว็บนี้ แล้วค่อยต่อยอดทีละส่วน'}
+            />
             <div className={'flex flex-wrap gap-3'}>
               <Button asChild><Link href={'/courses'}>ดูคอร์สทั้งหมด →</Link></Button>
             </div>

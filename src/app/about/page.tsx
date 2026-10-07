@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer';
 import MainContent from '@/components/layout/MainContent';
 import Navbar from '@/components/layout/Navbar';
 import PublicPageHeader from '@/components/layout/PublicPageHeader';
+import SectionHeader from '@/components/layout/SectionHeader';
 import { Badge } from '@/components/ui/badge';
 import { DEFAULT_OG_IMAGE } from '@/lib/content/seo';
 import { Button } from '@/components/ui/button';
@@ -86,9 +87,7 @@ export default function AboutPage() {
               />
             </div>
             <div>
-              <h2 id={'about-manifesto-title'} className={'text-3xl leading-tight font-semibold tracking-[-.03em] text-balance sm:text-4xl'}>
-                การเรียนเขียนโปรแกรมควรพาคุณไปไกลกว่าการทำตาม
-              </h2>
+              <SectionHeader id={'about-manifesto-title'} title={'การเรียนเขียนโปรแกรมควรพาคุณไปไกลกว่าการทำตาม'} />
               <div className={'mt-6 flex max-w-2xl flex-col gap-4 text-base leading-8 text-muted-foreground'}>
                 <p>เป้าหมายของเราไม่ใช่การรวบรวมวิดีโอให้ได้มากที่สุด แต่คือการจัดลำดับความรู้ให้ผู้เรียนเห็นความสัมพันธ์ระหว่างแนวคิด โค้ด และผลลัพธ์ที่เกิดขึ้นจริง</p>
                 <p>เมื่อจบบทเรียน ผู้เรียนควรอธิบายสิ่งที่ตัวเองสร้างได้ แก้ปัญหาต่อได้ และรู้ว่าควรพัฒนาทักษะส่วนไหนเป็นลำดับถัดไป</p>
@@ -99,10 +98,12 @@ export default function AboutPage() {
 
         <section className={'border-y bg-background py-14 sm:py-20'} aria-labelledby={'about-method-title'}>
           <div className={'container'}>
-            <div className={'mb-8 grid gap-3 md:grid-cols-[1fr_.8fr] md:items-end'}>
-              <h2 id={'about-method-title'} className={'text-3xl font-semibold tracking-[-.03em] sm:text-4xl'}>เราออกแบบบทเรียนอย่างไร</h2>
-              <p className={'leading-7 text-muted-foreground'}>ทุกช่วงเรียงจากภาพงานและเหตุผล ไปสู่การลงมือเขียน แล้วจบด้วยสิ่งที่ตรวจสอบได้</p>
-            </div>
+            <SectionHeader
+              id={'about-method-title'}
+              title={'เราออกแบบบทเรียนอย่างไร'}
+              description={'ทุกช่วงเรียงจากภาพงานและเหตุผล ไปสู่การลงมือเขียน แล้วจบด้วยสิ่งที่ตรวจสอบได้'}
+              className={'mb-8'}
+            />
             <ol className={'grid gap-5 md:grid-cols-3'}>
               {learningMethod.map((item) => (
                 <li key={item.step} className={'min-w-0'}>
@@ -123,7 +124,7 @@ export default function AboutPage() {
 
         <section className={'py-14 sm:py-20'} aria-labelledby={'about-principles-title'}>
           <div className={'container grid gap-8 lg:grid-cols-[.7fr_1.3fr] lg:gap-16'}>
-            <h2 id={'about-principles-title'} className={'text-3xl font-semibold tracking-[-.03em] sm:text-4xl'}>หลักที่ใช้ตัดสินใจทุกบทเรียน</h2>
+            <SectionHeader id={'about-principles-title'} title={'หลักที่ใช้ตัดสินใจ ทุกบทเรียน'} />
             <dl className={'divide-y border-y'}>
               {principles.map(([title, description]) => (
                 <div key={title} className={'grid gap-2 py-5 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-8'}>
@@ -137,10 +138,13 @@ export default function AboutPage() {
 
         <section className={'bg-[var(--academy-navy)] py-14 text-white sm:py-20'} aria-labelledby={'about-proof-title'}>
           <div className={'container'}>
-            <div className={'mb-8 grid gap-3 md:grid-cols-[1fr_.8fr] md:items-end'}>
-              <h2 id={'about-proof-title'} className={'text-3xl font-semibold tracking-[-.03em] sm:text-4xl'}>ภาพจากกิจกรรมการสอนและเวทีแบ่งปันความรู้</h2>
-              <p className={'leading-7 text-white/65'}>ภาพชุดนี้บันทึกบรรยากาศการอธิบาย การสาธิต และการเรียนรู้ร่วมกันจากกิจกรรมของ MilerDev</p>
-            </div>
+            <SectionHeader
+              id={'about-proof-title'}
+              tone={'inverse'}
+              title={'ภาพจากกิจกรรมการสอนและเวทีแบ่งปันความรู้'}
+              description={'ภาพชุดนี้บันทึกบรรยากาศการอธิบาย การสาธิต และการเรียนรู้ร่วมกันจากกิจกรรมของ MilerDev'}
+              className={'mb-8'}
+            />
             <div className={'grid gap-5 md:grid-cols-3'}>
               {teachingMedia.map((media) => (
                 <figure key={media.src} className={'overflow-hidden rounded-2xl border border-white/10 bg-white/5'}>
@@ -159,12 +163,13 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className={'py-14 sm:py-20'}>
+        <section className={'py-14 sm:py-20'} aria-labelledby={'about-cta-title'}>
           <div className={'container grid gap-6 rounded-3xl border bg-card p-8 shadow-[var(--academy-shadow-card)] sm:p-10 md:grid-cols-[1fr_auto] md:items-end'}>
-            <div>
-              <h2 className={'text-3xl leading-tight font-semibold tracking-[-.03em]'}>เลือกทักษะที่อยากพัฒนา แล้วเริ่มสร้างโปรเจกต์แรก</h2>
-              <p className={'mt-3 leading-7 text-muted-foreground'}>ดูรายละเอียด ผลลัพธ์ และเนื้อหาของแต่ละคอร์สก่อนตัดสินใจเรียน</p>
-            </div>
+            <SectionHeader
+              id={'about-cta-title'}
+              title={'เลือกทักษะที่อยากพัฒนา แล้วเริ่มสร้างโปรเจกต์แรก'}
+              description={'ดูรายละเอียด ผลลัพธ์ และเนื้อหาของแต่ละคอร์สก่อนตัดสินใจเรียน'}
+            />
             <div className={'flex flex-wrap gap-3'}>
               <Button asChild><Link href={'/courses'}>ดูคอร์สทั้งหมด →</Link></Button>
               <Button variant={'outline'} asChild><Link href={'/contact'}>ติดต่อ MilerDev</Link></Button>

@@ -211,7 +211,7 @@ Headings grow with the viewport, so they need no breakpoint classes. Thai stacks
 
 ### Section header
 
-`src/components/layout/SectionHeader.tsx`: the eyebrow, `text-h2` heading, description and one optional section action of a public page section, with a navy (`inverse`) tone. It wraps a Thai heading only at the spaces between phrases. Home uses it for every section; other public pages adopt it one page at a time.
+`src/components/layout/SectionHeader.tsx`: the eyebrow, `text-h2` heading, description and one optional section action of a public page section, with a navy (`inverse`) tone. It wraps a Thai heading only at the spaces between phrases, so write a heading with a space between its phrases ("หลักที่ใช้ตัดสินใจ ทุกบทเรียน"); a phrase longer than its column still wraps at a word boundary. Home, About, the course catalog, bundle pages, FAQ and Stack use it for every page section. Card, form and long-form document headings (legal pages, certificates, the course detail journey of ADR 0005) keep their own styles.
 
 ### Migrated route
 
