@@ -11,6 +11,8 @@ import NavigationBreadcrumbs from '@/components/layout/NavigationBreadcrumbs';
 import Footer from '@/components/layout/Footer';
 import CourseDetailClient, { CourseDetailProvider } from '@/components/course/CourseDetailClient';
 import CourseArtwork from '@/components/course/CourseArtwork';
+import CourseCoverImage from '@/components/course/CourseCoverImage';
+import { resolveCoverImage } from '@/lib/courses/cover-image';
 import { courseCoverTransitionName } from '@/lib/courses/view-transition';
 import CourseSectionNav from '@/components/course/CourseSectionNav';
 import CourseReviewsWrapper from '@/components/course/CourseReviewsWrapper';
@@ -180,6 +182,7 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
   const instructorName = decisionFacts.evidence.instructorName;
   const verifiedReview = decisionFacts.evidence.verifiedReview;
   const instructorAvatarUrl = normalizeUrl(course.instructor?.avatarUrl || null);
+  const cover = resolveCoverImage(course.thumbnailUrl);
 
   const courseSectionItems = [
     { id: 'course-overview', label: 'รายละเอียดคอร์ส' },
@@ -299,8 +302,19 @@ export default async function CourseDetailPage({ params, searchParams }: Props) 
                 <Card className="gap-0 overflow-hidden py-0 shadow-[var(--academy-shadow-card)]">
                   <div className="relative bg-muted">
                     <ViewTransition name={courseCoverTransitionName(course.slug)} share="morph" default="none">
-                      {normalizeUrl(course.thumbnailUrl) ? (
-                        <img src={normalizeUrl(course.thumbnailUrl)!} alt={course.title} width={1200} height={675} sizes="(min-width: 1024px) 40vw, 100vw" className="aspect-video w-full object-cover" />
+                      {cover ? (
+                        <CourseCoverImage
+                          cover={cover}
+                          alt={course.title}
+                          width={1200}
+                          height={675}
+                          // The purchase card is 22rem wide from lg, 20rem from md, and at most 32rem on phones.
+                          sizes="(min-width: 1024px) 22rem, (min-width: 768px) 20rem, min(100vw, 32rem)"
+                          // The cover is the largest image in the first view, so it should not wait to be lazy-loaded.
+                          loading="eager"
+                          fetchPriority="high"
+                          className="aspect-video w-full object-cover"
+                        />
                       ) : (
                         <div className="aspect-video overflow-hidden"><CourseArtwork title={course.title} slug={course.slug} tags={course.tags} /></div>
                       )}
