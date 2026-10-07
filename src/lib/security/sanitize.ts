@@ -115,11 +115,27 @@ export function stripHtml(html: string): string {
     }).trim();
 }
 
+// Tags that end a line or block of text; removing them must leave a space so words do not join.
+const BLOCK_BOUNDARY = /<(?:br|hr|\/?(?:p|div|li|ul|ol|h[1-6]|blockquote|pre|tr|td|th|table|section|article))\b[^>]*>/gi;
+
+/**
+ * Plain text for React to render from rich HTML. stripHtml() returns escaped HTML (React would
+ * show "&amp;"), and it joins the words on either side of a removed block tag.
+ */
+export function htmlToPlainText(html: string): string {
+    return stripHtml(html.replace(BLOCK_BOUNDARY, ' $&'))
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 /**
  * Get a plain-text excerpt from HTML content.
  */
 export function getExcerpt(html: string, maxLength: number = 200): string {
-    const text = stripHtml(html);
+    const text = htmlToPlainText(html);
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength).trimEnd() + '...';
 }
