@@ -223,7 +223,7 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, focus
 
       // The layer name sits in its own zone at the left end of the shelf, clear of the node labels.
       const tag = document.createElement('div');
-      tag.className = 'rounded-full border border-white/15 bg-[#0f233a]/85 px-[0.7em] py-[0.15em] text-[length:var(--stack-label-size,12px)] font-medium whitespace-nowrap';
+      tag.className = 'rounded-full border border-white/15 bg-navy/85 px-[0.7em] py-[0.15em] text-[length:var(--stack-label-size,12px)] font-medium whitespace-nowrap';
       tag.style.color = layer.color;
       tag.textContent = layer.name;
       const layerLabel = new CSS2DObject(tag);
@@ -253,7 +253,7 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, focus
       label.setAttribute('aria-label', `${node.name} (${node.tag})`);
       label.setAttribute('aria-pressed', 'false');
       // Name only: the tag and details live in the side panel, which keeps neighbouring labels apart.
-      label.className = 'pointer-events-auto rounded-[0.5em] border border-white/15 bg-[#0b1b2d]/90 px-[0.6em] py-[0.25em] text-[length:var(--stack-label-size,12px)] leading-tight font-semibold whitespace-nowrap text-white shadow-lg transition-[opacity,background-color] outline-none hover:bg-[#13304d] focus-visible:ring-2 focus-visible:ring-white data-[state=dim]:opacity-35 data-[state=selected]:bg-white data-[state=selected]:text-[#0f233a]';
+      label.className = 'pointer-events-auto rounded-[0.5em] border border-white/15 bg-navy/90 px-[0.6em] py-[0.25em] text-[length:var(--stack-label-size,12px)] leading-tight font-semibold whitespace-nowrap text-white shadow-lg transition-[opacity,background-color] outline-none hover:bg-navy-raised focus-visible:ring-2 focus-visible:ring-white data-[state=dim]:opacity-35 data-[state=selected]:bg-white data-[state=selected]:text-navy';
       label.textContent = node.name;
       label.addEventListener('click', () => onSelectRef.current(node.id));
       label.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse') setHovered(node.id); });
@@ -289,7 +289,7 @@ export default function StackScene({ selectedId, journeyEdges, activeEdge, focus
 
     // What the current journey step does, written on its link.
     const flowTagElement = document.createElement('div');
-    flowTagElement.className = 'rounded-full bg-[#33bcff] px-[0.7em] py-[0.2em] text-[length:var(--stack-label-size,12px)] font-semibold whitespace-nowrap text-[#0f233a] shadow-lg';
+    flowTagElement.className = 'rounded-full bg-link-inverse px-[0.7em] py-[0.2em] text-[length:var(--stack-label-size,12px)] font-semibold whitespace-nowrap text-navy shadow-lg';
     const flowTag = new CSS2DObject(flowTagElement);
     flowTag.visible = false;
     stack.add(flowTag);

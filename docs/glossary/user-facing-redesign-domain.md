@@ -193,7 +193,7 @@ A route-specific arrangement of patterns. Page composition should not introduce 
 
 ### Semantic token
 
-A design value named by purpose, such as background, surface, foreground, muted, border, primary, destructive, success, warning, focus ring, and radius. Components consume semantic tokens rather than raw page-specific color values.
+A design value named by purpose, such as background, surface, foreground, muted, border, primary, destructive, success, warning, focus ring, and radius. Components consume semantic tokens rather than raw page-specific color values. On non-admin pages a hex colour in a class or string fails `tests/design/no-raw-colors-contract.test.ts`; the few files that need literal colours (Three.js materials, Google's logo, stored certificate colours, the decorative code editor) are listed there with a reason.
 
 ### Type scale
 
