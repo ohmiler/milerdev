@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Presentation } from 'lucide-react';
 
+import { FacebookIcon, YouTubeIcon } from '@/components/content/SocialIcons';
 import SectionHeader from '@/components/layout/SectionHeader';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +24,19 @@ const STUDIO_IMAGES = [
   },
 ] as const;
 
+const INSTRUCTOR = {
+  name: 'ปฏิภาณ เพ็งเภา',
+  role: 'ผู้ก่อตั้งและผู้สอน MilerDev',
+  // From the public YouTube channel on 2026-10-07: 196K subscribers and 3.7K videos. Rounded down
+  // so the claim stays true as the channel grows; recheck the channel before changing the numbers.
+  bio: 'สอนเขียนโปรแกรมภาษาไทยผ่านช่อง YouTube MilerDev ที่มีผู้ติดตามกว่า 190,000 คน และวิดีโอกว่า 3,700 คลิป คอร์สใน MilerDev คือการจัดลำดับความรู้เหล่านั้นให้เรียนต่อเนื่องจนสร้างงานได้จริง',
+  photo: '/showcase/07-showcase-1024x768.webp',
+  youtube: 'https://www.youtube.com/@MilerDev',
+  facebook: 'https://www.facebook.com/milerdevpro',
+} as const;
+
+const instructorLinkClass = 'inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 px-3 text-sm font-medium transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40';
+
 export default function StudioProofSection() {
   return (
     <section data-home-section="studio-proof"
@@ -38,6 +52,30 @@ export default function StudioProofSection() {
             title="สอนจากประสบการณ์จริง แล้วอธิบายให้คนเริ่มต้นเห็นภาพ"
             description="MilerDev นำประสบการณ์จากการพัฒนาเว็บไซต์ การสอน และการเป็นวิทยากร มาจัดลำดับเป็นบทเรียนภาษาไทยที่เริ่มจากเหตุผล ก่อนพาไปลงมือสร้างด้วยตัวเอง"
           />
+          <div className="mt-8 flex gap-4 rounded-2xl border border-white/10 bg-navy-raised p-4 sm:p-5">
+            {/* The name sits beside the photo, so the photo itself is decorative. */}
+            <Image
+              src={INSTRUCTOR.photo}
+              alt=""
+              width={128}
+              height={128}
+              sizes="64px"
+              className="size-16 shrink-0 rounded-full object-cover object-[50%_28%]"
+            />
+            <div className="min-w-0">
+              <h3 className="text-h3 font-semibold">{INSTRUCTOR.name}</h3>
+              <p className="text-sm text-background/75">{INSTRUCTOR.role}</p>
+              <p className="mt-3 text-sm leading-7 text-background/75">{INSTRUCTOR.bio}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a href={INSTRUCTOR.youtube} target="_blank" rel="noopener noreferrer" className={instructorLinkClass}>
+                  <YouTubeIcon />ช่อง YouTube
+                </a>
+                <a href={INSTRUCTOR.facebook} target="_blank" rel="noopener noreferrer" className={instructorLinkClass}>
+                  <FacebookIcon />เพจ Facebook
+                </a>
+              </div>
+            </div>
+          </div>
           <Button
             asChild
             size="lg"
