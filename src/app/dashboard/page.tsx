@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 
 import LearnerAccountShell from '@/components/account/LearnerAccountShell';
+import CourseCoverImage from '@/components/course/CourseCoverImage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Progress } from '@/components/ui/progress';
+import { resolveCoverImage } from '@/lib/courses/cover-image';
 import { getDashboardLearning } from '@/lib/learning/dashboard';
 import { requireMember } from '@/lib/auth/member-access';
 
@@ -31,16 +32,13 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-function thumbnailSrc(value: string) {
-  return value.startsWith('http') || value.startsWith('/') ? value : `https://${value}`;
-}
-
 const reviewHref = (slug: string) => `/courses/${slug}/learn`;
 
 export default async function DashboardPage() {
   const member = await requireMember('/dashboard');
   const dashboard = await getDashboardLearning(member.id);
   const { primary, remaining, summary } = dashboard;
+  const primaryCover = resolveCoverImage(primary.course?.thumbnailUrl);
 
   const metrics = [
     { label: 'คอร์สทั้งหมด', value: summary.courseCount },
@@ -67,13 +65,13 @@ export default async function DashboardPage() {
                 <div className="grid lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                   {/* On phones the course and its next step come first; the cover follows as a short strip. */}
                   <div className="relative order-last h-36 bg-slate-950 sm:h-auto sm:min-h-64 lg:order-first">
-                    {primary.course.thumbnailUrl ? (
-                      <Image
+                    {primaryCover ? (
+                      <CourseCoverImage
                         className="object-cover"
-                        src={thumbnailSrc(primary.course.thumbnailUrl)}
+                        cover={primaryCover}
                         alt={primary.course.title}
                         fill
-                        priority
+                        preload
                         sizes="(max-width: 1024px) 100vw, 42vw"
                       />
                     ) : (

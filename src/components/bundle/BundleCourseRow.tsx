@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import CourseArtwork from '@/components/course/CourseArtwork';
+import CourseCoverImage from '@/components/course/CourseCoverImage';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -11,6 +12,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type { BundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
+import { resolveCoverImage } from '@/lib/courses/cover-image';
 import { formatCourseDuration } from '@/lib/courses/duration';
 import { getExcerpt } from '@/lib/security/sanitize';
 
@@ -21,18 +23,13 @@ type BundleCourseRowProps = {
   position: number;
 };
 
-function normalizeUrl(url: string | null): string | null {
-  if (!url || url.trim() === '') return null;
-  return url.startsWith('http') ? url : `https://${url}`;
-}
-
 export default function BundleCourseRow({
   course,
   description,
   thumbnailUrl: rawThumbnailUrl,
   position,
 }: BundleCourseRowProps) {
-  const thumbnailUrl = normalizeUrl(rawThumbnailUrl);
+  const cover = resolveCoverImage(rawThumbnailUrl);
   const durationText = formatCourseDuration(course.evidence.knownDurationSeconds);
   const review = course.evidence.verifiedReview;
 
@@ -43,15 +40,14 @@ export default function BundleCourseRow({
         href={`/courses/${course.slug}`}
       >
         <div className={'relative aspect-[16/9] overflow-hidden bg-[var(--academy-navy)] sm:aspect-auto sm:min-h-52'}>
-          {thumbnailUrl ? (
-            <img
-              src={thumbnailUrl}
+          {cover ? (
+            <CourseCoverImage
+              cover={cover}
               alt={course.title}
               width={640}
               height={360}
-              sizes={'(min-width: 1024px) 12rem, 100vw'}
-              loading={'lazy'}
-              decoding={'async'}
+              // The cover column is 12rem from the sm breakpoint and full width below it.
+              sizes={'(min-width: 640px) 12rem, 100vw'}
               className={'size-full object-cover'}
             />
           ) : (

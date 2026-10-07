@@ -81,7 +81,26 @@ describe('shared Home and Catalog CourseCard decision evidence', () => {
 
     expect(html).toContain('width="640"');
     expect(html).toContain('height="360"');
+  });
+
+  it('serves an uploaded cover resized for the card instead of the original file', () => {
+    // Production covers are 2,752px PNGs of about 7 MB; the card shows them at about 400px.
+    const original = 'https://milerdev.b-cdn.net/courses/cover.png';
+    const html = renderToStaticMarkup(<CourseCard {...baseProps} thumbnailUrl={original} />);
+
+    expect(html).toContain(`src="/_next/image?url=${encodeURIComponent(original)}`);
+    expect(html).toContain(`/_next/image?url=${encodeURIComponent(original)}&amp;w=640&amp;q=75 640w`);
     expect(html).toContain('sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"');
+    expect(html).not.toContain(`src="${original}"`);
+  });
+
+  it('shows a cover from a host the optimizer may not fetch as uploaded', () => {
+    const html = renderToStaticMarkup(
+      <CourseCard {...baseProps} thumbnailUrl="https://cdn.example.com/course.webp" />,
+    );
+
+    expect(html).toContain('src="https://cdn.example.com/course.webp"');
+    expect(html).not.toContain('/_next/image');
   });
 
   it('keeps the regular price in the card footer instead of covering the thumbnail', () => {
