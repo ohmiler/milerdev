@@ -45,8 +45,8 @@ describe('Home hero code editor', () => {
 
     const headingTyped = msUntil((tick) => heroPreviewState(heroEditorFrame(tick).typed).name);
     advance(headingTyped);
-    expect(editorText(container)).toContain('<h1>Mint</h1>');
-    expect(previewText(container)).toContain('Mint');
+    expect(editorText(container)).toContain('<h1>Miler</h1>');
+    expect(previewText(container)).toContain('Miler');
 
     advance(msUntil((tick) => heroEditorFrame(tick).typed.css > 30) - headingTyped);
     expect(tab('index.css').getAttribute('aria-pressed')).toBe('true');
@@ -68,7 +68,7 @@ describe('Home hero code editor', () => {
     fireEvent.click(tab('index.css'));
 
     expect(tab('index.css').getAttribute('aria-pressed')).toBe('true');
-    expect(editorText(container)).toContain('border-radius: 999px;');
+    expect(editorText(container)).toContain('border-radius: 8px;');
     expect(previewText(container)).toContain('ดูผลงาน');
 
     advance(30_000);

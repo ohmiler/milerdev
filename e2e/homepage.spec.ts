@@ -86,11 +86,11 @@ test.describe('public homepage', () => {
 
     const hero = page.locator('[data-home-section=hero]');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/เรียนให้เข้าใจ\s*สร้างได้จริง\s*เติบโตเป็น\s*Developer/);
-    await expect(hero.locator('[data-home-preview]')).toContainText('Mint', { timeout: 10_000 });
+    await expect(hero.locator('[data-home-preview]')).toContainText('Miler', { timeout: 10_000 });
 
     await hero.getByRole('button', { name: 'index.css' }).click();
     await expect(hero.getByRole('button', { name: 'index.css' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(hero.locator('[data-home-editor]')).toContainText('border-radius: 999px;');
+    await expect(hero.locator('[data-home-editor]')).toContainText('border-radius: 8px;');
     await expect(hero.getByRole('button', { name: 'เล่นการพิมพ์โค้ดตัวอย่างอีกครั้ง' })).toBeVisible();
   });
 

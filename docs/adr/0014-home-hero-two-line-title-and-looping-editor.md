@@ -45,11 +45,12 @@ The owner kept the ADR 0012 hero, the ADR 0001 headline and the VS Code–style 
 
 ### The page the code builds
 
-- **A developer's portfolio card: "Mint, Frontend Developer".** It has an avatar, the skills React, CSS and AI, and a "ดูผลงาน" button. It suits a site whose learners build their own portfolio.
+- **A developer's portfolio card: "Miler, Frontend Developer".** It has an avatar, the skills React, CSS and AI, and a "ดูผลงาน" button. It suits a site whose learners build their own portfolio.
+- **The card looks plain and finished, not like a template:** a white card with a 1px border, near-black and grey text, a neutral avatar and a black button. No gradients and no neon.
 - **It builds up as the code is typed:**
   - While `App.jsx` is typed, each element appears once its line is typed. It starts unstyled, with a bulleted list and a grey button.
-  - While `index.css` is typed, each declaration applies once its line is typed: the dark card, centring, a round avatar, the skills in a cyan row, and a violet pill button.
-  - The card's background and text colour apply together, so text never sits dark on dark or light on white.
+  - While `index.css` is typed, each declaration applies once its line is typed: the card's padding, border and corners, a round avatar, a grey role line, the skills in a row, and the black button.
+  - The button's fill and text colour apply together, so it never shows dark text on black.
 - **It is a picture of a site:** its button is not interactive.
 
 ## Consequences

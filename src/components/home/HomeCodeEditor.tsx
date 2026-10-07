@@ -38,7 +38,7 @@ const TOKEN_COLORS: Record<CodeTokenKind, string> = {
 };
 
 // The portfolio card's own colours, as index.css sets them.
-const CARD = { background: '#0b1120', text: '#e2e8f0', accent: '#22d3ee', button: '#a78bfa' } as const;
+const CARD = { ink: '#171717', muted: '#737373', line: '#e5e5e5', surface: '#f5f5f5' } as const;
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
@@ -174,46 +174,51 @@ export default function HomeCodeEditor() {
               <span className="text-sm leading-none">‹ ›</span>
               <span className="flex-1 truncate rounded-md bg-navy px-2.5 py-0.5 font-mono text-[0.8125rem]">localhost:5173</span>
             </div>
-            <div
-              className={cn(
-                'flex min-h-[240px] flex-1 flex-col gap-2 p-5 text-[0.8125rem] leading-snug transition-colors duration-300 motion-reduce:transition-none',
-                preview.centered ? 'items-center text-center' : 'items-start',
-              )}
-              style={preview.cardColors ? { background: CARD.background, color: CARD.text } : { background: '#ffffff', color: '#111820' }}
-            >
-              {preview.avatar ? (
-                <span
-                  className={cn('grid size-14 shrink-0 place-items-center text-xl font-bold', preview.avatarRound ? 'rounded-full' : 'rounded-none')}
-                  style={{ background: `linear-gradient(135deg, ${CARD.accent}, ${CARD.button})`, color: CARD.background }}
-                >
-                  M
-                </span>
-              ) : null}
-              {preview.name ? <p className="text-2xl leading-tight font-bold">Mint</p> : null}
-              {preview.role ? <p>Frontend Developer</p> : null}
-              {preview.react ? (
-                <ul
-                  className={cn(
-                    preview.skillsRow ? 'flex' : 'block',
-                    preview.skillsCentered && 'justify-center',
-                    preview.skillsGap && 'gap-2',
-                    preview.skillsBare ? 'list-none pl-0' : 'list-disc pl-5',
-                  )}
-                  style={preview.skillsColor ? { color: CARD.accent } : undefined}
-                >
-                  <li>React</li>
-                  {preview.css ? <li>CSS</li> : null}
-                  {preview.ai ? <li>AI</li> : null}
-                </ul>
-              ) : null}
-              {preview.button ? (
-                <span
-                  className={cn('mt-1 inline-block border px-4 py-1 font-semibold text-[#111820]', preview.buttonRounded ? 'rounded-full' : 'rounded-[3px]')}
-                  style={preview.buttonFill ? { background: CARD.button, borderColor: CARD.button } : { background: '#efefef', borderColor: '#767676' }}
-                >
-                  ดูผลงาน
-                </span>
-              ) : null}
+            <div className="flex min-h-[240px] flex-1 flex-col bg-white p-4 text-[0.8125rem] leading-snug text-[#171717]">
+              <div
+                className={cn(
+                  'flex flex-col items-start gap-2 border transition-all duration-300 motion-reduce:transition-none',
+                  preview.cardPadding && 'p-5',
+                  preview.cardRounded && 'rounded-xl',
+                )}
+                style={{ borderColor: preview.cardBorder ? CARD.line : 'transparent' }}
+              >
+                {preview.avatar ? (
+                  <span
+                    className={cn('grid size-12 shrink-0 place-items-center text-base font-semibold', preview.avatarRound ? 'rounded-full' : 'rounded-none')}
+                    style={{ background: CARD.surface, color: '#404040' }}
+                  >
+                    M
+                  </span>
+                ) : null}
+                {preview.name ? <p className="text-2xl leading-tight font-semibold tracking-[-0.02em]">Miler</p> : null}
+                {preview.role ? <p style={preview.roleMuted ? { color: CARD.muted } : undefined}>Frontend Developer</p> : null}
+                {preview.react ? (
+                  <ul
+                    className={cn(
+                      preview.skillsRow ? 'flex' : 'block',
+                      preview.skillsGap && 'gap-3',
+                      preview.skillsBare ? 'list-none pl-0' : 'list-disc pl-5',
+                    )}
+                  >
+                    <li>React</li>
+                    {preview.css ? <li>CSS</li> : null}
+                    {preview.ai ? <li>AI</li> : null}
+                  </ul>
+                ) : null}
+                {preview.button ? (
+                  <span
+                    className={cn('mt-1 inline-block border px-4 py-1.5 font-medium', preview.buttonRounded ? 'rounded-lg' : 'rounded-[3px]')}
+                    style={
+                      preview.buttonColors
+                        ? { background: CARD.ink, borderColor: CARD.ink, color: '#ffffff' }
+                        : { background: '#efefef', borderColor: '#767676', color: CARD.ink }
+                    }
+                  >
+                    ดูผลงาน
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

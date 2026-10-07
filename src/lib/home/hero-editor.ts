@@ -63,17 +63,17 @@ const ELEMENTS = {
 
 // …and the declaration that applies each style.
 const STYLES = {
-  // Background and text colour land together, so the card is never dark text on dark or light text on white.
-  cardColors: lineOf(CSS, 'color: #e2e8f0'),
-  centered: lineOf(CSS, 'text-align'),
+  cardPadding: lineOf(CSS, 'padding'),
+  cardBorder: lineOf(CSS, 'border: 1px'),
+  cardRounded: lineOf(CSS, 'border-radius: 12px'),
   avatarRound: lineOf(CSS, '50%'),
+  roleMuted: lineOf(CSS, '#737373'),
   skillsRow: lineOf(CSS, 'display: flex'),
-  skillsCentered: lineOf(CSS, 'justify-content'),
   skillsGap: lineOf(CSS, 'gap'),
   skillsBare: lineOf(CSS, 'list-style'),
-  skillsColor: lineOf(CSS, '#22d3ee'),
-  buttonFill: lineOf(CSS, '#a78bfa'),
-  buttonRounded: lineOf(CSS, '999px'),
+  // Fill and text colour land together, so the button never shows dark text on black.
+  buttonColors: lineOf(CSS, 'color: #fff'),
+  buttonRounded: lineOf(CSS, 'border-radius: 8px'),
 };
 
 export type HeroPreviewState = Record<keyof typeof ELEMENTS | keyof typeof STYLES, boolean>;
