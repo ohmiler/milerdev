@@ -76,7 +76,7 @@ interface WpReview {
 
 function RatingStars({ rating }: { rating: number }) {
   return (
-    <span className="inline-flex items-center gap-0.5" aria-label={rating + ' จาก 5 ดาว'}>
+    <span role="img" className="inline-flex items-center gap-0.5" aria-label={rating + ' จาก 5 ดาว'}>
       {[1, 2, 3, 4, 5].map((score) => (
         <Star
           key={score}
