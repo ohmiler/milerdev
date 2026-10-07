@@ -65,7 +65,7 @@ describe('Home editor typing', () => {
 
   it('keeps every line short enough for the editor at its narrowest', () => {
     for (const file of Object.values(HOME_EDITOR_FILES)) {
-      for (const line of file.code) expect(lineText(line).length, lineText(line)).toBeLessThanOrEqual(36);
+      for (const line of file.code) expect(lineText(line).length, lineText(line)).toBeLessThanOrEqual(34);
     }
   });
 });

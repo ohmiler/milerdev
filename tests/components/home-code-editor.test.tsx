@@ -9,8 +9,8 @@ import { EDITOR_CYCLE_TICKS, EDITOR_TICK_MS, heroEditorFrame, heroPreviewState }
 let reducedMotion = false;
 
 const editorText = (container: HTMLElement) => container.querySelector('[data-home-editor]')?.textContent ?? '';
-// The mock page under the address bar.
-const previewText = (container: HTMLElement) => (container.querySelector('[data-home-preview]')?.textContent ?? '').replace('localhost:5173', '');
+// The mock page under the browser's address bar.
+const previewText = (container: HTMLElement) => container.querySelector('[data-home-preview] > :last-child')?.textContent ?? '';
 const tab = (name: string) => screen.getByRole('button', { name });
 const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
 // Milliseconds into the loop at which a frame first matches.
@@ -43,14 +43,14 @@ describe('Home hero code editor', () => {
     expect(tab('App.jsx').getAttribute('aria-pressed')).toBe('true');
     expect(previewText(container)).toBe('');
 
-    const headingTyped = msUntil((tick) => heroPreviewState(heroEditorFrame(tick).typed).heading);
+    const headingTyped = msUntil((tick) => heroPreviewState(heroEditorFrame(tick).typed).name);
     advance(headingTyped);
-    expect(editorText(container)).toContain('<h1>กาแฟคั่วสด</h1>');
-    expect(previewText(container)).toContain('กาแฟคั่วสด');
+    expect(editorText(container)).toContain('<h1>Mint</h1>');
+    expect(previewText(container)).toContain('Mint');
 
     advance(msUntil((tick) => heroEditorFrame(tick).typed.css > 30) - headingTyped);
     expect(tab('index.css').getAttribute('aria-pressed')).toBe('true');
-    expect(editorText(container)).toContain('display: flex;');
+    expect(editorText(container)).toContain('.card {');
   });
 
   it('starts over after showing the finished page', () => {
@@ -69,7 +69,7 @@ describe('Home hero code editor', () => {
 
     expect(tab('index.css').getAttribute('aria-pressed')).toBe('true');
     expect(editorText(container)).toContain('border-radius: 999px;');
-    expect(previewText(container)).toContain('สั่งเลย');
+    expect(previewText(container)).toContain('ดูผลงาน');
 
     advance(30_000);
     expect(tab('index.css').getAttribute('aria-pressed')).toBe('true');
@@ -95,7 +95,7 @@ describe('Home hero code editor', () => {
     const { container } = render(<HomeCodeEditor />);
 
     expect(editorText(container)).toContain('export default function App()');
-    expect(previewText(container)).toContain('สั่งเลย');
+    expect(previewText(container)).toContain('ดูผลงาน');
     const still = editorText(container);
     advance(10_000);
     expect(editorText(container)).toBe(still);
@@ -104,7 +104,7 @@ describe('Home hero code editor', () => {
   it('describes the demo, keeps the moving code and mock page out of the accessibility tree, and leaves only real controls', () => {
     const { container } = render(<HomeCodeEditor />);
 
-    expect(screen.getByText(/ตัวอย่างการเขียนโค้ด React และ CSS/)).toBeTruthy();
+    expect(screen.getByText(/ตัวอย่างการเขียนโค้ด React และ CSS พร้อมหน้าเว็บ/)).toBeTruthy();
     expect(container.querySelector('[data-home-preview]')?.getAttribute('aria-hidden')).toBe('true');
     const focusable = [...container.querySelectorAll('a, button, input, [tabindex]')];
     expect(focusable.every((element) => element.tagName === 'BUTTON' && !element.closest('[aria-hidden="true"]'))).toBe(true);

@@ -37,6 +37,9 @@ const TOKEN_COLORS: Record<CodeTokenKind, string> = {
   value: '#ce9178',
 };
 
+// The portfolio card's own colours, as index.css sets them.
+const CARD = { background: '#0b1120', text: '#e2e8f0', accent: '#22d3ee', button: '#a78bfa' } as const;
+
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 function subscribeToReducedMotion(onChange: () => void) {
@@ -67,16 +70,9 @@ function useInView<T extends Element>() {
   return [ref, inView] as const;
 }
 
-const EXPLORER_FILES = [
-  { name: 'App.jsx', depth: 2 },
-  { name: 'main.jsx', depth: 2 },
-  { name: 'index.css', depth: 2 },
-  { name: 'package.json', depth: 1 },
-] as const;
-
 export default function HomeCodeEditor() {
   const reducedMotion = usePrefersReducedMotion();
-  const [rootRef, inView] = useInView<HTMLDivElement>();
+  const [rootRef, inView] = useInView<HTMLElement>();
   // null follows the visitor's motion setting; the play and pause button and the tabs set it explicitly.
   const [playing, setPlaying] = useState<boolean | null>(null);
   const [tick, setTick] = useState(0);
@@ -109,121 +105,124 @@ export default function HomeCodeEditor() {
   };
 
   return (
-    <div ref={rootRef} className="relative lg:pb-36">
-      <figure className="m-0">
-        <figcaption className="sr-only">ตัวอย่างการเขียนโค้ด React และ CSS ในโปรแกรมแก้ไขโค้ด แล้วดูหน้าเว็บที่ได้</figcaption>
-        <div
-          data-home-editor
-          className="overflow-hidden rounded-2xl border border-[#1d3a57] bg-navy shadow-[0_30px_60px_-30px_rgba(15,35,58,0.6)]"
-        >
-          <div className="flex h-9 items-center gap-[7px] border-b border-white/5 bg-[#0b1a2b] pr-1 pl-3.5">
-            <span aria-hidden="true" className="size-[11px] rounded-full bg-[#ff5f57]" />
-            <span aria-hidden="true" className="size-[11px] rounded-full bg-[#febc2e]" />
-            <span aria-hidden="true" className="size-[11px] rounded-full bg-[#28c840]" />
-            <span aria-hidden="true" className="flex-1 text-center text-[0.8125rem] text-[#8fa3b8]">{file.name} — milerdev-course</span>
-            <button
-              type="button"
-              onClick={togglePlaying}
-              aria-label={animating ? 'หยุดการพิมพ์โค้ดตัวอย่าง' : 'เล่นการพิมพ์โค้ดตัวอย่างอีกครั้ง'}
-              className="grid size-7 place-items-center rounded-md text-[#8fa3b8] transition-colors hover:bg-white/10 hover:text-[#f7f9fb] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none motion-reduce:transition-none"
-            >
-              {animating ? <Pause className="size-3.5" aria-hidden="true" /> : <Play className="size-3.5" aria-hidden="true" />}
-            </button>
-          </div>
+    <figure ref={rootRef} className="m-0">
+      <figcaption className="sr-only">ตัวอย่างการเขียนโค้ด React และ CSS พร้อมหน้าเว็บที่ได้ในหน้าต่างเดียวกัน</figcaption>
+      <div
+        data-home-editor
+        className="overflow-hidden rounded-2xl border border-[#1d3a57] bg-navy shadow-[0_30px_60px_-30px_rgba(15,35,58,0.6)]"
+      >
+        <div className="flex h-9 items-center gap-[7px] border-b border-white/5 bg-[#0b1a2b] pr-1 pl-3.5">
+          <span aria-hidden="true" className="size-[11px] rounded-full bg-[#ff5f57]" />
+          <span aria-hidden="true" className="size-[11px] rounded-full bg-[#febc2e]" />
+          <span aria-hidden="true" className="size-[11px] rounded-full bg-[#28c840]" />
+          <span aria-hidden="true" className="flex-1 text-center text-[0.8125rem] text-[#8fa3b8]">{file.name} — my-portfolio</span>
+          <button
+            type="button"
+            onClick={togglePlaying}
+            aria-label={animating ? 'หยุดการพิมพ์โค้ดตัวอย่าง' : 'เล่นการพิมพ์โค้ดตัวอย่างอีกครั้ง'}
+            className="grid size-7 place-items-center rounded-md text-[#8fa3b8] transition-colors hover:bg-white/10 hover:text-[#f7f9fb] focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none motion-reduce:transition-none"
+          >
+            {animating ? <Pause className="size-3.5" aria-hidden="true" /> : <Play className="size-3.5" aria-hidden="true" />}
+          </button>
+        </div>
 
-          <div className="flex">
-            <div aria-hidden="true" className="hidden w-39 shrink-0 border-r border-white/5 bg-[#0b1a2b] py-3 text-[0.8125rem] leading-[1.9] text-[#8fa3b8] md:block lg:hidden xl:block">
-              <div className="px-3.5 pb-1.5 text-[0.6875rem] font-semibold tracking-[0.06em]">EXPLORER</div>
-              <div className="px-3.5 font-medium text-[#c9d6e2]">▾ milerdev-course</div>
-              <div className="pr-3.5 pl-6.5">▾ src</div>
-              {EXPLORER_FILES.map((entry) => (
-                <div
-                  key={entry.name}
-                  className={cn('pr-3.5', entry.depth === 2 ? 'pl-10' : 'pl-6.5', entry.name === file.name && 'bg-primary/15 text-[#f7f9fb]')}
+        {/* Code and browser side by side where the window is wide enough, stacked where it is not. */}
+        <div className="flex flex-col md:flex-row lg:flex-col xl:flex-row">
+          <div className="flex min-w-0 flex-col md:flex-[1.25] xl:flex-[1.25]">
+            <div className="flex bg-[#0b1a2b] text-[0.8125rem]">
+              {HOME_EDITOR_FILE_IDS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={frame.file === id}
+                  onClick={() => showFile(id)}
+                  className={cn(
+                    'border-t-2 px-4 py-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-inset motion-reduce:transition-none',
+                    frame.file === id ? 'border-primary bg-navy text-[#f7f9fb]' : 'border-transparent text-[#8fa3b8] hover:text-[#f7f9fb]',
+                  )}
                 >
-                  {entry.name}
+                  {HOME_EDITOR_FILES[id].name}
+                </button>
+              ))}
+            </div>
+            <div
+              aria-hidden="true"
+              className="h-[364px] overflow-hidden py-3 text-xs leading-5 [font-variant-ligatures:none]"
+              style={{ fontFamily: 'var(--font-code), var(--font-prompt)' }}
+            >
+              {view.lines.map((line) => (
+                <div key={line.number} className="flex whitespace-pre">
+                  <span className="w-[34px] shrink-0 pr-3 text-right text-[#7d93a8]">{line.number}</span>
+                  <span className="min-w-0">
+                    {line.tokens.map((token, index) => (
+                      <span key={index} style={{ color: TOKEN_COLORS[token.kind] }}>{token.text}</span>
+                    ))}
+                    {animating && line.hasCaret ? <span className="ml-px inline-block h-[1.15em] w-0.5 bg-primary align-text-bottom" /> : null}
+                  </span>
                 </div>
               ))}
             </div>
-
-            <div className="flex min-w-0 flex-1 flex-col">
-              <div className="flex bg-[#0b1a2b] text-[0.8125rem]">
-                {HOME_EDITOR_FILE_IDS.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-pressed={frame.file === id}
-                    onClick={() => showFile(id)}
-                    className={cn(
-                      'border-t-2 px-4 py-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:ring-inset motion-reduce:transition-none',
-                      frame.file === id ? 'border-primary bg-navy text-[#f7f9fb]' : 'border-transparent text-[#8fa3b8] hover:text-[#f7f9fb]',
-                    )}
-                  >
-                    {HOME_EDITOR_FILES[id].name}
-                  </button>
-                ))}
-              </div>
-              <div
-                aria-hidden="true"
-                className="h-[364px] overflow-hidden py-3 text-xs leading-5 [font-variant-ligatures:none] sm:h-[398px] sm:text-[0.8125rem] sm:leading-[22px]"
-                style={{ fontFamily: 'var(--font-code), var(--font-prompt)' }}
-              >
-                {view.lines.map((line) => (
-                  <div key={line.number} className="flex whitespace-pre">
-                    <span className="w-[30px] shrink-0 pr-3 text-right text-[#7d93a8] sm:w-[46px] sm:pr-3.5">{line.number}</span>
-                    <span className="min-w-0">
-                      {line.tokens.map((token, index) => (
-                        <span key={index} style={{ color: TOKEN_COLORS[token.kind] }}>{token.text}</span>
-                      ))}
-                      {animating && line.hasCaret ? <span className="ml-px inline-block h-[1.15em] w-0.5 bg-primary align-text-bottom" /> : null}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
-          <div aria-hidden="true" className="flex justify-between gap-3 bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-            <span>main</span>
-            <span>Ln {view.caretLine}, Col {view.caretColumn} · UTF-8 · {file.language}</span>
-          </div>
-        </div>
-
-        {/* The page the code builds. Shown, not used: its link and button are pictures of a site, so it stays out of the tab order. */}
-        <div
-          aria-hidden="true"
-          data-home-preview
-          className="mt-3 overflow-hidden rounded-2xl border bg-card shadow-[0_24px_48px_-20px_rgba(15,35,58,0.45)] lg:absolute lg:-right-3 lg:bottom-0 lg:mt-0 lg:w-[58%] xl:-right-7"
-        >
-          <div className="flex h-8 items-center gap-1.5 border-b bg-muted px-3">
-            <span className="size-[9px] rounded-full bg-border" />
-            <span className="size-[9px] rounded-full bg-border" />
-            <span className="size-[9px] rounded-full bg-border" />
-            <span className="ml-2 font-mono text-[0.8125rem] text-muted-foreground">localhost:5173</span>
-          </div>
-          <div className="h-[160px] overflow-hidden bg-white p-3 text-[0.8125rem] leading-snug text-[#111820]">
-            <div className={cn('min-h-5', preview.navFlex && 'flex items-center gap-3', preview.navSpaced && 'justify-between')}>
-              {preview.brand ? <b className="block">MilerCoffee</b> : null}
-              {preview.menu ? <span className="block text-[#0000ee] underline">เมนู</span> : null}
+          {/* The page the code builds. A picture of a site: its button is not a control, so it stays out of the tab order. */}
+          <div
+            aria-hidden="true"
+            data-home-preview
+            className="flex min-w-0 flex-col border-t border-white/10 md:flex-1 md:border-t-0 md:border-l lg:border-t lg:border-l-0 xl:border-t-0 xl:border-l"
+          >
+            <div className="flex h-8 shrink-0 items-center gap-2 bg-[#0b1a2b] px-3 text-[#8fa3b8]">
+              <span className="text-sm leading-none">‹ ›</span>
+              <span className="flex-1 truncate rounded-md bg-navy px-2.5 py-0.5 font-mono text-[0.8125rem]">localhost:5173</span>
             </div>
             <div
-              className={cn('mt-2 transition-all duration-300 motion-reduce:transition-none', preview.heroPadding && 'p-4', preview.heroRounded && 'rounded-xl')}
-              style={preview.heroColors ? { background: '#6f4e37', color: '#ffffff' } : undefined}
+              className={cn(
+                'flex min-h-[240px] flex-1 flex-col gap-2 p-5 text-[0.8125rem] leading-snug transition-colors duration-300 motion-reduce:transition-none',
+                preview.centered ? 'items-center text-center' : 'items-start',
+              )}
+              style={preview.cardColors ? { background: CARD.background, color: CARD.text } : { background: '#ffffff', color: '#111820' }}
             >
-              {preview.heading ? <p className="text-lg leading-tight font-bold">กาแฟคั่วสด</p> : null}
-              {preview.text ? <p className="mt-1">ส่งถึงบ้านทุกเช้า</p> : null}
+              {preview.avatar ? (
+                <span
+                  className={cn('grid size-14 shrink-0 place-items-center text-xl font-bold', preview.avatarRound ? 'rounded-full' : 'rounded-none')}
+                  style={{ background: `linear-gradient(135deg, ${CARD.accent}, ${CARD.button})`, color: CARD.background }}
+                >
+                  M
+                </span>
+              ) : null}
+              {preview.name ? <p className="text-2xl leading-tight font-bold">Mint</p> : null}
+              {preview.role ? <p>Frontend Developer</p> : null}
+              {preview.react ? (
+                <ul
+                  className={cn(
+                    preview.skillsRow ? 'flex' : 'block',
+                    preview.skillsCentered && 'justify-center',
+                    preview.skillsGap && 'gap-2',
+                    preview.skillsBare ? 'list-none pl-0' : 'list-disc pl-5',
+                  )}
+                  style={preview.skillsColor ? { color: CARD.accent } : undefined}
+                >
+                  <li>React</li>
+                  {preview.css ? <li>CSS</li> : null}
+                  {preview.ai ? <li>AI</li> : null}
+                </ul>
+              ) : null}
               {preview.button ? (
                 <span
-                  className={cn('mt-2 inline-block border px-3 py-0.5 text-[#111820]', preview.buttonRounded ? 'rounded-full' : 'rounded-[3px]')}
-                  style={preview.buttonFill ? { background: '#ffd28a', borderColor: '#ffd28a' } : { background: '#efefef', borderColor: '#767676' }}
+                  className={cn('mt-1 inline-block border px-4 py-1 font-semibold text-[#111820]', preview.buttonRounded ? 'rounded-full' : 'rounded-[3px]')}
+                  style={preview.buttonFill ? { background: CARD.button, borderColor: CARD.button } : { background: '#efefef', borderColor: '#767676' }}
                 >
-                  สั่งเลย
+                  ดูผลงาน
                 </span>
               ) : null}
             </div>
           </div>
         </div>
-      </figure>
-    </div>
+
+        <div aria-hidden="true" className="flex justify-between gap-3 bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+          <span>main</span>
+          <span>Ln {view.caretLine}, Col {view.caretColumn} · UTF-8 · {file.language}</span>
+        </div>
+      </div>
+    </figure>
   );
 }

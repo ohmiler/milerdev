@@ -49,33 +49,42 @@ function lineOf(code: CodeLines, snippet: string): number {
 
 const APP = HOME_EDITOR_FILES.app.code;
 const CSS = HOME_EDITOR_FILES.css.code;
-const REVEAL = {
-  brand: lineOf(APP, '<b>'),
-  menu: lineOf(APP, '<a '),
-  heading: lineOf(APP, '<h1>'),
-  text: lineOf(APP, '<p>'),
+
+// The line that adds each element of the card…
+const ELEMENTS = {
+  avatar: lineOf(APP, '<img'),
+  name: lineOf(APP, '<h1>'),
+  role: lineOf(APP, '<p>'),
+  react: lineOf(APP, '>React<'),
+  css: lineOf(APP, '>CSS<'),
+  ai: lineOf(APP, '>AI<'),
   button: lineOf(APP, '<button>'),
-  navFlex: lineOf(CSS, 'display: flex'),
-  navSpaced: lineOf(CSS, 'justify-content'),
-  heroPadding: lineOf(CSS, 'padding'),
-  heroRounded: lineOf(CSS, 'border-radius: 16px'),
-  // Background and text colour land together, so dark text never sits on the brown fill.
-  heroColors: lineOf(CSS, 'color: #fff'),
-  buttonFill: lineOf(CSS, 'background: #ffd28a'),
-  buttonRounded: lineOf(CSS, 'border-radius: 999px'),
 };
 
-export type HeroPreviewState = Record<keyof typeof REVEAL, boolean>;
+// …and the declaration that applies each style.
+const STYLES = {
+  // Background and text colour land together, so the card is never dark text on dark or light text on white.
+  cardColors: lineOf(CSS, 'color: #e2e8f0'),
+  centered: lineOf(CSS, 'text-align'),
+  avatarRound: lineOf(CSS, '50%'),
+  skillsRow: lineOf(CSS, 'display: flex'),
+  skillsCentered: lineOf(CSS, 'justify-content'),
+  skillsGap: lineOf(CSS, 'gap'),
+  skillsBare: lineOf(CSS, 'list-style'),
+  skillsColor: lineOf(CSS, '#22d3ee'),
+  buttonFill: lineOf(CSS, '#a78bfa'),
+  buttonRounded: lineOf(CSS, '999px'),
+};
+
+export type HeroPreviewState = Record<keyof typeof ELEMENTS | keyof typeof STYLES, boolean>;
+
+const reached = (lines: Record<string, number>, completed: number) =>
+  Object.fromEntries(Object.entries(lines).map(([key, line]) => [key, completed >= line]));
 
 /** What the mock page shows: an element once its line is typed, a style once its declaration is. */
 export function heroPreviewState(typed: TypedProgress): HeroPreviewState {
-  const app = countCompletedLines(APP, typed.app);
-  const css = countCompletedLines(CSS, typed.css);
-  const appKeys = ['brand', 'menu', 'heading', 'text', 'button'] as const;
-  return Object.fromEntries(
-    (Object.keys(REVEAL) as (keyof typeof REVEAL)[]).map((key) => [
-      key,
-      (appKeys as readonly string[]).includes(key) ? app >= REVEAL[key] : css >= REVEAL[key],
-    ]),
-  ) as HeroPreviewState;
+  return {
+    ...reached(ELEMENTS, countCompletedLines(APP, typed.app)),
+    ...reached(STYLES, countCompletedLines(CSS, typed.css)),
+  } as HeroPreviewState;
 }

@@ -86,7 +86,7 @@ test.describe('public homepage', () => {
 
     const hero = page.locator('[data-home-section=hero]');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/เรียนให้เข้าใจ\s*สร้างได้จริง\s*เติบโตเป็น\s*Developer/);
-    await expect(hero.locator('[data-home-preview]')).toContainText('กาแฟคั่วสด', { timeout: 10_000 });
+    await expect(hero.locator('[data-home-preview]')).toContainText('Mint', { timeout: 10_000 });
 
     await hero.getByRole('button', { name: 'index.css' }).click();
     await expect(hero.getByRole('button', { name: 'index.css' })).toHaveAttribute('aria-pressed', 'true');
@@ -98,7 +98,7 @@ test.describe('public homepage', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
 
-    await expect(page.locator('[data-home-preview]')).toContainText('สั่งเลย', { timeout: 1_000 });
+    await expect(page.locator('[data-home-preview]')).toContainText('ดูผลงาน', { timeout: 1_000 });
   });
 
   test('shows real learning screens, static teaching proof, and canonical purchase answers', async ({ page }) => {

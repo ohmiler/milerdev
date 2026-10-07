@@ -29,17 +29,17 @@ describe('Home hero preview', () => {
   });
 
   it('shows each element once its line is typed, unstyled until the CSS is', () => {
-    const halfway = heroEditorFrame(firstTick((tick) => heroPreviewState(heroEditorFrame(tick).typed).brand));
+    const halfway = heroEditorFrame(firstTick((tick) => heroPreviewState(heroEditorFrame(tick).typed).avatar));
     const state = heroPreviewState(halfway.typed);
 
-    expect(state).toMatchObject({ brand: true, button: false, navFlex: false, heroColors: false });
+    expect(state).toMatchObject({ avatar: true, button: false, cardColors: false, avatarRound: false });
     expect(heroPreviewState({ app: FINISHED_PROGRESS.app, css: 0 })).toMatchObject({
-      brand: true, menu: true, heading: true, text: true, button: true, navFlex: false, heroColors: false,
+      avatar: true, name: true, role: true, react: true, css: true, ai: true, button: true, cardColors: false, skillsRow: false,
     });
   });
 
   it('applies the styles in the order they are typed, ending with every one applied', () => {
-    const order = ['navFlex', 'navSpaced', 'heroPadding', 'heroRounded', 'heroColors', 'buttonFill', 'buttonRounded'] as const;
+    const order = ['cardColors', 'centered', 'avatarRound', 'skillsRow', 'skillsCentered', 'skillsGap', 'skillsBare', 'skillsColor', 'buttonFill', 'buttonRounded'] as const;
     const appliedAt = order.map((key) => firstTick((tick) => heroPreviewState(heroEditorFrame(tick).typed)[key]));
 
     expect(appliedAt).toEqual([...appliedAt].sort((left, right) => left - right));

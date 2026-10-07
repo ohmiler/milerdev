@@ -179,7 +179,7 @@ export default async function HomePage() {
           className="border-b bg-card"
           aria-labelledby="home-hero-title"
         >
-          <div className="container grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1.17fr)_minmax(0,1fr)] lg:gap-14 lg:py-16">
+          <div className="container grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1.17fr)_minmax(0,1fr)] xl:grid-cols-[35.5rem_minmax(0,1fr)] lg:gap-14 lg:py-16">
             <div className="flex max-w-2xl flex-col items-start gap-6" data-reveal>
               <p className="rounded-full bg-secondary px-3.5 py-1.5 text-sm font-medium text-secondary-foreground">
                 คอร์สเขียนโปรแกรมภาษาไทย ลองเรียนก่อนซื้อได้
