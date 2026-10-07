@@ -10,14 +10,21 @@
 2. แตก feature branch จาก `master` ล่าสุด ตรวจ worktree และรักษางานที่ไม่เกี่ยวข้องของเจ้าของ
 3. พัฒนาและตรวจพฤติกรรมตามความเสี่ยง แก้ regression ที่เกิดจากงานนี้ก่อนส่งต่อ
 4. Review diff เทียบโจทย์และกติกา repo
-5. Stage เฉพาะไฟล์ของงาน ใช้ Conventional Commit, push branch, เปิด PR เข้า `master` และเชื่อม Issue ถ้ามี
+5. Stage เฉพาะไฟล์ของงาน ใช้ Conventional Commit, push branch และเปิด PR เข้า `master` เมื่องานเสร็จและตรวจแล้ว เชื่อม Issue ถ้ามี
+   PR ไม่ทำให้เกิดการ deploy จึงเปิดได้ทันที CI จะได้รันเร็ว และงานมีสำรองบน GitHub
    PR body ระบุสิ่งที่เปลี่ยน สิ่งที่ตรวจแล้ว สิ่งที่**ยังไม่ได้**ตรวจ และความเสี่ยงต่อ production
-6. รอ CI และแก้ failures ที่เกิดจากงานนี้ อัปเดต branch ด้วยการ merge `master` เข้ามา (ไม่ rebase ไม่ force-push)
-7. Merge ตามระดับความเสี่ยงใน AGENTS.md (หัวข้อ Merging):
-   - **A** เอกสารหรือเทสต์อย่างเดียว: agent merge เองได้ เมื่อเงื่อนไขเบื้องต้นของระดับ A ครบ
-   - **B** โค้ด production นอกจุดเสี่ยงสูง: เจ้าของพิมพ์ "merge" สำหรับ PR นั้น
+   งานเล็กที่เสี่ยงต่ำในหน้าหรือเรื่องเดียวกันรวมเป็น PR เดียวได้ แยก commit เรื่องละ 1 commit และแยกหัวข้อใน PR body
+   งานเสี่ยงสูง migration และ CI ยังต้องแยก PR เดี่ยว PR ที่รวมงานถูก squash merge ถ้า revert จะย้อนทุกเรื่องในนั้น
+6. รายงานเจ้าของว่าเปลี่ยนอะไร ตรวจอะไรแล้ว และลองดูบน dev server ได้อย่างไร
+   งานที่ผู้ใช้มองเห็นต้องแนบภาพก่อนและหลัง ทั้งจอมือถือ (390px) และเดสก์ท็อป (1440px) เพื่อให้เจ้าของตรวจได้โดยไม่ต้องเปิด localhost
+   ปิดท้ายทุกรายงานด้วยสิ่งที่รออยู่: PR ที่เปิดอยู่ และงานที่ merge แล้วแต่ยังไม่ deploy
+7. รอ CI และแก้ failures ที่เกิดจากงานนี้ อัปเดต branch ด้วยการ merge `master` เข้ามา (ไม่ rebase ไม่ force-push)
+8. Merge เข้า `master` ตามระดับความเสี่ยงใน AGENTS.md (หัวข้อ Merging) การ merge ไม่ deploy:
+   - **A** เอกสารหรือเทสต์อย่างเดียว และ **B** โค้ด production นอกจุดเสี่ยงสูง: agent merge เองเมื่อ CI ผ่านจริงและ branch ทันกับ `master`
    - **C** จุดเสี่ยงสูงและ CI gate: เจ้าของ merge เอง หรือสั่ง "merge" หลังอ่าน diff
-8. ทุก merge เข้า `master` คือการ deploy production เจ้าของยืนยันผล Railway และ `Production Smoke`
+9. Deploy เมื่อเจ้าของพิมพ์ "deploy" เท่านั้น (AGENTS.md หัวข้อ Deploying, ADR 0013):
+   agent ตรวจ CI ของ commit ล่าสุดบน `master`, `Production Smoke` ของ deploy ครั้งก่อน และ migration ที่ลบของ
+   แล้วสรุปสิ่งที่จะขึ้น fast-forward branch `production` ไปที่ `master` จากนั้นดู Railway และ `Production Smoke` เจ้าของยืนยันผล
 
 ## Verification scope
 
@@ -25,11 +32,15 @@
 | --- | --- |
 | เอกสารเท่านั้น | ตรวจเนื้อหา ลิงก์ UTF-8 และ diff; ไม่ต้องรัน test suite/build ในเครื่อง |
 | CI/configuration | ตรวจ syntax และ job/step ที่แก้ รันคำสั่งที่เพิ่ม และดู CI ของ PR |
-| Application code | affected tests, lint, `tsc` และ build; ขยายชุดตรวจเมื่อกระทบ shared behavior หรือจุดเสี่ยงสูง |
+| Application code | affected tests, lint, `tsc`, build และ `npm run test:e2e:local` ก่อนเปิด PR; ขยายชุดตรวจเมื่อกระทบ shared behavior หรือจุดเสี่ยงสูง |
 | ข้อความแอดมินภาษาไทย | `npm run check:admin-text` เพิ่มจากการตรวจที่เกี่ยวข้อง |
 | Auth/payment/enrollment/certificate/data | ตรวจ authorization, validation, replay/idempotency และ recovery บน MySQL จริง (`milerdev_e2e`) และ mock providers; รายงานส่วนที่ยังไม่ทดสอบ |
 
 ก่อนส่งมอบรัน `git diff --check` และ `git status --short` เสมอ
+
+`npm run test:e2e:local` รันงาน `Required E2E` ของ CI ในเครื่อง: ล้างฐาน loopback `milerdev_e2e` (ฐานนี้มีไว้ทดสอบอย่างเดียว) รัน migrations สร้าง fixtures แล้วรัน integration tests บน MySQL และ required browser journeys
+ใช้ค่า secret ชั่วคราวทั้งหมด ไม่ยอมทำงานกับฐานอื่น และเซิร์ฟเวอร์ทดสอบบล็อกการเรียกออกนอกเครื่อง ([server-network-guard.mjs](../../e2e/required/server-network-guard.mjs))
+
 การเลือกชุดตรวจในเครื่องไม่เปลี่ยน CI: ทุก PR ที่เข้า `master` รันทุก job ส่วน PR ที่แก้เฉพาะ `docs/` หรือไฟล์ `.md` ที่ root นั้น `Required E2E` ข้ามขั้น MySQL และ browser แต่ยังรายงานผ่าน (ดู [docs-only-scope.mjs](../../scripts/ci/docs-only-scope.mjs))
 
 ## CI gates

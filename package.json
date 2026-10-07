@@ -16,6 +16,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:required": "playwright test --config=playwright.required.config.ts",
+    "test:e2e:local": "tsx scripts/run-local-required-e2e.ts",
     "test:e2e:ui": "playwright test --ui",
     "check:admin-text": "node scripts/check-admin-mojibake.mjs",
     "db:generate": "drizzle-kit generate",
