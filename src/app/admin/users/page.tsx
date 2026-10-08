@@ -2,9 +2,9 @@
 
 import { getPasswordPolicyError } from '@/lib/auth/password-policy';
 
-import { Eye, EyeOff, FileDown, FileUp, Search, Users } from 'lucide-react';
+import { Eye, EyeOff, FileDown, Search, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { AdminUserLifecycleBadge } from '@/components/admin/AdminUserLifecycleControls';
 import { AdminUserRowActions } from '@/components/admin/AdminUserRowActions';
@@ -21,7 +21,6 @@ import {
   AdminStatusBadge,
   type AdminTone,
 } from '@/components/admin/ui/AdminOperations';
-import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -80,8 +79,6 @@ interface Pagination {
   totalPages: number;
 }
 
-type ImportResult = { success?: number; skipped?: number; failed?: number; errors?: string[] };
-
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -101,9 +98,6 @@ export default function AdminUsersPage() {
   const [bulkAction, setBulkAction] = useState('');
   const [bulkRole, setBulkRole] = useState('student');
   const [processingBulk, setProcessingBulk] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [bulkConfirm, setBulkConfirm] = useState(false);
   const [lifecycleConfirm, setLifecycleConfirm] = useState<User | null>(null);
   const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
@@ -228,28 +222,6 @@ export default function AdminUsersPage() {
     window.open(`/api/admin/users/export?${params}`, '_blank');
   };
 
-  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setImporting(true);
-    setImportResult(null);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/admin/users/import', { method: 'POST', body: formData });
-      const data = await response.json();
-      setImportResult(data.results || data);
-      if (!response.ok) throw new Error(data.error || 'นำเข้าผู้ใช้ไม่สำเร็จ');
-      await fetchUsers();
-      showToast('นำเข้าผู้ใช้สำเร็จ', 'success');
-    } catch (caughtError) {
-      showToast(caughtError instanceof Error ? caughtError.message : 'นำเข้าผู้ใช้ไม่สำเร็จ', 'error');
-    } finally {
-      setImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
   const toggleSelectUser = (userId: string) => {
     setSelectedUsers((previous) => previous.includes(userId) ? previous.filter((id) => id !== userId) : [...previous, userId]);
   };
@@ -315,17 +287,10 @@ export default function AdminUsersPage() {
         title="บัญชีผู้ใช้"
         description="ค้นหา ปรับบทบาท และปิดหรือเปิดใช้งานบัญชี โดยไม่ลบประวัติการเรียน การชำระเงิน หรือใบรับรอง"
         actions={
-          <>
-            <Input ref={fileInputRef} type="file" accept=".csv" onChange={handleImport} className="hidden" tabIndex={-1} />
-            <Button variant="outline" disabled={importing} onClick={() => fileInputRef.current?.click()}>
-              <FileUp data-icon="inline-start" aria-hidden />
-              {importing ? 'กำลังนำเข้า' : 'นำเข้า CSV'}
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
-              <FileDown data-icon="inline-start" aria-hidden />
-              ส่งออก CSV
-            </Button>
-          </>
+          <Button variant="outline" onClick={handleExport}>
+            <FileDown data-icon="inline-start" aria-hidden />
+            ส่งออก CSV
+          </Button>
         }
         meta={`เลือกอยู่ ${selectedUsers.length.toLocaleString('th-TH')} บัญชี`}
       />
@@ -364,16 +329,6 @@ export default function AdminUsersPage() {
           </NativeSelect>
         </div>
       </AdminSection>
-
-      {importResult ? (
-        <Alert className="border-[var(--color-success)]/25 bg-[var(--color-success-soft)]">
-          <FileUp aria-hidden />
-          <AlertTitle>ผลการนำเข้าผู้ใช้</AlertTitle>
-          <AlertDescription>สำเร็จ {importResult.success || 0} · ข้าม {importResult.skipped || 0} · ล้มเหลว {importResult.failed || 0}</AlertDescription>
-          <AlertAction><Button variant="ghost" size="sm" onClick={() => setImportResult(null)}>ปิด</Button></AlertAction>
-          {importResult.errors?.length ? <ul className="col-start-2 mt-2 flex list-disc flex-col gap-1 pl-5 text-xs text-destructive">{importResult.errors.slice(0, 5).map((error, index) => <li key={`${error}-${index}`}>{error}</li>)}</ul> : null}
-        </Alert>
-      ) : null}
 
       {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchUsers()}>ลองใหม่</Button>} /> : null}
 

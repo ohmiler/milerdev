@@ -4,10 +4,10 @@ Scope: password creation and verification only. This is not a complete ASVS asse
 
 ## New credentials
 
-- All application writers (verified registration, reset, self-change, admin reset, CSV import) and account-creation scripts call `hashNewPassword`.
+- All application writers (verified registration, reset, self-change, admin reset) and account-creation scripts call `hashNewPassword`.
 - Passwords contain 15–128 Unicode code points after NFC normalization. Spaces are preserved. No uppercase, digit or symbol composition rule is imposed. Control characters and unpaired surrogates are rejected.
 - A small local whole-password blocklist covers common/service-derived choices. Pwned Passwords checks the broader breached-password corpus using a SHA-1 range query. Only five hexadecimal characters are sent; no email, password or full digest is sent. Responses are padded, not cached by the application, and never logged.
-- Screening is mandatory before hashing/writing. Provider errors, malformed responses or a five-second timeout produce a retryable 503 for individual password-setting routes. A breached password produces 400. Registration/reset links remain usable until their original expiry. CSV import reports failed rows, preserving its partial-success contract; rejected rows can be retried without replacing existing users. Existing login does not call the screening provider.
+- Screening is mandatory before hashing/writing. Provider errors, malformed responses or a five-second timeout produce a retryable 503 for individual password-setting routes. A breached password produces 400. Registration/reset links remain usable until their original expiry. Existing login does not call the screening provider.
 - Argon2id uses 19 MiB memory, two iterations, one lane, a 32-byte hash and a library-generated random salt. The entire normalized password participates in hashing. Existing `varchar(255)` storage fits the PHC string; no schema migration or Workbench SQL is needed.
 - CSV quoting is parsed without trimming passwords or deleting quotes. Malformed quoting is rejected. Other fields retain their normal trimming behavior.
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ExternalLink, Eye, EyeOff, Import, MessageSquareText, Search, ShieldCheck, Star, Trash2 } from 'lucide-react';
+import { ExternalLink, Eye, EyeOff, MessageSquareText, Search, ShieldCheck, Star, Trash2 } from 'lucide-react';
 
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
@@ -10,24 +10,13 @@ import {
   AdminLoadingState,
   AdminMetricCard,
   AdminPageHeader,
-  AdminPendingLabel,
   AdminSection,
   AdminStatusBadge,
 } from '@/components/admin/ui/AdminOperations';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import { showToast } from '@/components/ui/Toast';
 
 interface Review {
@@ -66,14 +55,6 @@ interface Pagination {
   totalPages: number;
 }
 
-interface WpReview {
-  course_id: string;
-  display_name: string;
-  comment: string;
-  created_at: string;
-  rating: string;
-}
-
 function RatingStars({ rating }: { rating: number }) {
   return (
     <span role="img" className="inline-flex items-center gap-0.5" aria-label={rating + ' จาก 5 ดาว'}>
@@ -103,14 +84,6 @@ export default function AdminReviewsPage() {
 
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  const [showImport, setShowImport] = useState(false);
-  const [importJson, setImportJson] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [wpStep, setWpStep] = useState<'paste' | 'map' | 'done'>('paste');
-  const [wpReviews, setWpReviews] = useState<WpReview[]>([]);
-  const [wpCourseIds, setWpCourseIds] = useState<string[]>([]);
-  const [courseMapping, setCourseMapping] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchDebounce(search), 400);
@@ -181,90 +154,6 @@ export default function AdminReviewsPage() {
     }
   };
 
-  const handleParseJson = () => {
-    try {
-      const parsed = JSON.parse(importJson);
-
-      if (Array.isArray(parsed) && parsed.some((item: { type?: string }) => item.type === 'table')) {
-        const tableObj = parsed.find((item: { type?: string }) => item.type === 'table');
-        if (tableObj?.data && Array.isArray(tableObj.data)) {
-          const parsedReviews = tableObj.data as WpReview[];
-          setWpReviews(parsedReviews);
-          setWpCourseIds([...new Set(parsedReviews.map((review) => review.course_id))]);
-          setCourseMapping({});
-          setWpStep('map');
-          return;
-        }
-      }
-
-      const reviewsData = Array.isArray(parsed) ? parsed : parsed.reviews;
-      if (Array.isArray(reviewsData) && reviewsData.length > 0 && reviewsData[0].courseId) {
-        handleDirectImport(reviewsData);
-        return;
-      }
-
-      showToast('รูปแบบ JSON ไม่ถูกต้อง', 'error');
-    } catch {
-      showToast('JSON ไม่ถูกต้อง กรุณาตรวจสอบ', 'error');
-    }
-  };
-
-  const handleDirectImport = async (reviewsData: Record<string, unknown>[]) => {
-    setImporting(true);
-    try {
-      const res = await fetch('/api/admin/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviews: reviewsData }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showToast('นำเข้า ' + data.imported + ' รีวิว (ข้าม ' + data.skipped + ')', 'success');
-        setShowImport(false);
-        setImportJson('');
-        setWpStep('paste');
-        await fetchReviews();
-      } else {
-        showToast(data.error || 'เกิดข้อผิดพลาด', 'error');
-      }
-    } catch {
-      showToast('เกิดข้อผิดพลาด', 'error');
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const handleWpImport = async () => {
-    const unmapped = wpCourseIds.filter((id) => !courseMapping[id]);
-    if (unmapped.length > 0) {
-      showToast('กรุณาเลือกคอร์สให้ครบทุก ID', 'error');
-      return;
-    }
-
-    const converted = wpReviews
-      .filter((review) => courseMapping[review.course_id])
-      .map((review) => ({
-        courseId: courseMapping[review.course_id],
-        rating: parseInt(review.rating) || 5,
-        comment: review.comment || null,
-        displayName: review.display_name || 'ผู้ใช้',
-        isVerified: true,
-        createdAt: review.created_at ? review.created_at.replace(' ', 'T') + 'Z' : new Date().toISOString(),
-      }));
-
-    await handleDirectImport(converted);
-  };
-
-  const closeImport = () => {
-    if (importing) return;
-    setShowImport(false);
-    setImportJson('');
-    setWpStep('paste');
-    setWpReviews([]);
-    setWpCourseIds([]);
-    setCourseMapping({});
-  };
-
   const formatDate = (date: string) =>
     new Date(date).toLocaleDateString('th-TH', {
       year: 'numeric',
@@ -279,13 +168,7 @@ export default function AdminReviewsPage() {
       <AdminPageHeader
         eyebrow="เสียงจากผู้เรียน"
         title="จัดการรีวิว"
-        description="ตรวจสอบเสียงตอบรับจากผู้เรียน ซ่อนเนื้อหาที่ไม่เหมาะสม และนำเข้าประวัติจากระบบเดิม"
-        actions={
-          <Button variant="outline" onClick={() => setShowImport(true)}>
-            <Import aria-hidden />
-            นำเข้ารีวิว
-          </Button>
-        }
+        description="ตรวจสอบเสียงตอบรับจากผู้เรียน และซ่อนเนื้อหาที่ไม่เหมาะสม"
       />
 
       {stats ? (
@@ -484,95 +367,6 @@ export default function AdminReviewsPage() {
           </>
         )}
       </AdminSection>
-
-      <Dialog
-        open={showImport}
-        onOpenChange={(open) => {
-          if (open) setShowImport(true);
-          else closeImport();
-        }}
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>นำเข้ารีวิว</DialogTitle>
-            <DialogDescription>
-              รองรับ JSON แบบตรงและ phpMyAdmin export ระบบจะให้จับคู่ Course ID ก่อนนำเข้าข้อมูล WordPress
-            </DialogDescription>
-          </DialogHeader>
-
-          {wpStep === 'paste' ? (
-            <FieldGroup className="my-2 gap-4">
-              <Field>
-                <FieldLabel htmlFor="review-import-json">ข้อมูล JSON</FieldLabel>
-                <Textarea
-                  id="review-import-json"
-                  value={importJson}
-                  onChange={(event) => setImportJson(event.target.value)}
-                  rows={14}
-                  className="font-mono text-xs"
-                  placeholder="วาง JSON ที่นี่"
-                />
-                <FieldDescription>ตรวจสอบว่าไม่มีข้อมูลส่วนบุคคลที่ไม่จำเป็นก่อนนำเข้า</FieldDescription>
-              </Field>
-            </FieldGroup>
-          ) : (
-            <div className="my-2 flex flex-col gap-4">
-              <div className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-                พบ {wpReviews.length.toLocaleString('th-TH')} รีวิว จาก {wpCourseIds.length.toLocaleString('th-TH')} Course ID
-              </div>
-              <div className="flex flex-col gap-3">
-                {wpCourseIds.map((wpId) => {
-                  const count = wpReviews.filter((review) => review.course_id === wpId).length;
-                  return (
-                    <Field key={wpId}>
-                      <FieldLabel htmlFor={'review-map-' + wpId}>
-                        WordPress Course ID: {wpId} · {count.toLocaleString('th-TH')} รีวิว
-                      </FieldLabel>
-                      <NativeSelect
-                        id={'review-map-' + wpId}
-                        value={courseMapping[wpId] || ''}
-                        onChange={(event) =>
-                          setCourseMapping((mapping) => ({ ...mapping, [wpId]: event.target.value }))
-                        }
-                      >
-                        <option value="">เลือกคอร์สปลายทาง</option>
-                        {courses.map((course) => (
-                          <option key={course.id} value={course.id}>
-                            {course.title}
-                          </option>
-                        ))}
-                      </NativeSelect>
-                    </Field>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            {wpStep === 'map' ? (
-              <Button variant="outline" disabled={importing} onClick={() => setWpStep('paste')}>
-                ย้อนกลับ
-              </Button>
-            ) : null}
-            <Button variant="outline" disabled={importing} onClick={closeImport}>
-              ยกเลิก
-            </Button>
-            <Button
-              disabled={importing || (wpStep === 'paste' && !importJson.trim())}
-              onClick={wpStep === 'paste' ? handleParseJson : handleWpImport}
-            >
-              {importing ? (
-                <AdminPendingLabel>กำลังนำเข้า...</AdminPendingLabel>
-              ) : wpStep === 'paste' ? (
-                'ตรวจสอบข้อมูล'
-              ) : (
-                'นำเข้ารีวิว'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <AdminConfirmActionDialog
         open={Boolean(deleteConfirm)}
