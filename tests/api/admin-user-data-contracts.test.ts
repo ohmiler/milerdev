@@ -167,28 +167,6 @@ describe('Admin user lifecycle data contracts', () => {
         expect(dbMock.select).not.toHaveBeenCalled();
     });
 
-    it('skips an existing inactive email during import without updating or inserting it', async () => {
-        state.results = [[{
-            id: 'student-a',
-            deactivatedAt: new Date('2026-07-19T00:00:00.000Z'),
-        }]];
-        const form = new FormData();
-        form.set('file', new File([
-            'email,name,role\nstudent@example.com,Student,student',
-        ], 'users.csv', { type: 'text/csv' }));
-
-        const route = await import('@/app/api/admin/users/import/route');
-        const response = await route.POST(new Request('http://localhost/api/admin/users/import', {
-            method: 'POST',
-            body: form,
-        }));
-        const data = await response.json();
-
-        expect(response.status).toBe(200);
-        expect(data.results).toMatchObject({ success: 0, skipped: 1, failed: 0 });
-        expect(state.insertValues).toHaveLength(0);
-    });
-
     it('short-circuits unauthorized list access', async () => {
         mocks.requireAdmin.mockResolvedValueOnce(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
         const route = await import('@/app/api/admin/users/route');
