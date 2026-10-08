@@ -8,6 +8,7 @@ import { eq, and } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
 import { logError } from '@/lib/error-handler';
+import { stripeCourseDescription } from '@/lib/commerce/checkout-text';
 
 const stripeCheckoutRequestSchema = z.object({
     courseId: z.string().trim().min(1).max(36),
@@ -115,9 +116,7 @@ export async function POST(request: Request) {
                         currency: "thb",
                         product_data: {
                             name: course.title,
-                            description: course.description
-                                ? course.description.replace(/<[^>]*>/g, '').substring(0, 500)
-                                : undefined,
+                            description: stripeCourseDescription(course),
                             images: course.thumbnailUrl ? [course.thumbnailUrl] : undefined,
                         },
                         unit_amount: Math.round(priceNumber * 100), // Convert to satang

@@ -8,6 +8,7 @@ import { eq, asc, and, count, inArray } from "drizzle-orm";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { logError } from '@/lib/error-handler';
+import { stripeBundleDescription } from '@/lib/commerce/checkout-text';
 
 const stripeBundleCheckoutRequestSchema = z.object({
     bundleId: z.string().trim().min(1).max(36),
@@ -103,12 +104,12 @@ export async function POST(request: Request) {
         );
         if (enrollmentChecks.every(Boolean)) {
             return NextResponse.json(
-                { error: "คุณลงทะเบียนคอร์สทั้งหมดใน Bundle นี้แล้ว" },
+                { error: "คุณลงทะเบียนคอร์สทั้งหมดในชุดคอร์สนี้แล้ว" },
                 { status: 400 }
             );
         }
 
-        const courseNames = bCourses.map(c => c.courseTitle).join(', ');
+        const description = stripeBundleDescription(bCourses.map(c => c.courseTitle));
 
         if (parsed.data.expectedAmount !== undefined && parsed.data.expectedAmount !== priceNumber.toFixed(2)) {
             return NextResponse.json({ error: 'ราคาเปลี่ยนแปลง กรุณาตรวจสอบรายการและยืนยันยอดใหม่' }, { status: 409 });
@@ -146,7 +147,7 @@ export async function POST(request: Request) {
                         currency: "thb",
                         product_data: {
                             name: `📦 ${bundle.title}`,
-                            description: `Bundle ${bCourses.length} คอร์ส: ${courseNames}`,
+                            description,
                             images: thumbnailUrl ? [thumbnailUrl] : undefined,
                         },
                         unit_amount: Math.round(priceNumber * 100), // Convert to satang
