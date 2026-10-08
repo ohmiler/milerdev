@@ -18,7 +18,7 @@ it('preserves the exact Bundle destination when a visitor starts checkout', asyn
   mocks.member = false;
   const user = userEvent.setup();
   render(<BundleEnrollButton bundleId="bundle-1" bundleSlug="full-stack" decisionFacts={facts()} />);
-  await user.click(screen.getByRole('button', { name: /ซื้อ Bundle/ }));
+  await user.click(screen.getByRole('button', { name: /ซื้อชุดคอร์ส/ }));
   expect(mocks.push).toHaveBeenCalledWith('/login?callbackUrl=/bundles/full-stack');
 });
 
@@ -27,7 +27,7 @@ it('grants the Bundle learning action after explicit server-confirmed free enrol
   vi.stubGlobal('fetch', fetchMock);
   const user = userEvent.setup();
   render(<BundleEnrollButton bundleId="bundle-1" bundleSlug="full-stack" decisionFacts={facts(0)} />);
-  await user.click(screen.getByRole('button', { name: 'ลงทะเบียน Bundle ฟรี' }));
+  await user.click(screen.getByRole('button', { name: 'ลงทะเบียนชุดคอร์สฟรี' }));
   expect(await screen.findByRole('link', { name: 'ไปการเรียนของฉัน' })).toBeTruthy();
   expect(fetchMock).toHaveBeenCalledWith('/api/bundles/enroll', expect.objectContaining({ body: JSON.stringify({ bundleId: 'bundle-1' }) }));
   expect(mocks.refresh).toHaveBeenCalled();
@@ -43,7 +43,7 @@ it('reviews the server-derived Bundle comparison before choosing a payment metho
   vi.stubGlobal('fetch', fetchMock);
   const user = userEvent.setup();
   render(<BundleEnrollButton bundleId="bundle-1" bundleSlug="full-stack" decisionFacts={facts()} />);
-  await user.click(screen.getByRole('button', { name: /ซื้อ Bundle/ }));
+  await user.click(screen.getByRole('button', { name: /ซื้อชุดคอร์ส/ }));
   expect(await screen.findByText('Bundle จาก server')).toBeTruthy();
   expect(screen.getByText('฿3,500.00')).toBeTruthy();
   expect(screen.getByText('ประหยัด ฿1,010 (29%)')).toBeTruthy();

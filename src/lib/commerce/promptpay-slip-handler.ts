@@ -110,7 +110,7 @@ export async function handlePromptPaySlip(
         sendPaymentConfirmation({
           email: session.user.email,
           name: session.user.name,
-          courseName: details.courseCount ? `${details.title} (Bundle)` : details.title,
+          courseName: details.courseCount ? `${details.title} (ชุดคอร์ส)` : details.title,
           amount: Number(fulfilled.payment.amount),
           paymentId,
         }),

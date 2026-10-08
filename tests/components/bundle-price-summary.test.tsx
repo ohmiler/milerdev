@@ -5,7 +5,7 @@ import BundlePriceSummary from '@/components/bundle/BundlePriceSummary';
 import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts';
 
 describe('BundlePriceSummary', () => {
-  it('uses current separate prices for savings and regular prices as secondary context', () => {
+  it('compares the bundle with buying separately today, without a third regular-total price', () => {
     const facts = deriveBundleDecisionFacts({
       slug: 'full-stack',
       price: '1500.00',
@@ -37,8 +37,8 @@ describe('BundlePriceSummary', () => {
     expect(html).toContain('ซื้อแยกวันนี้');
     expect(html).toContain('฿2,000');
     expect(html).toContain('ประหยัด ฿500 (25%)');
-    expect(html).toContain('ราคาปกติรวม');
-    expect(html).toContain('฿2,200');
+    expect(html).not.toContain('ราคาปกติรวม');
+    expect(html).not.toContain('฿2,200');
     expect(html).not.toMatch(/<s(?:\s|>)/);
   });
 });

@@ -79,8 +79,8 @@ describe('bundle enrollment purchase contract', () => {
 
     expect(paid).toContain('<button');
     expect(paid).toContain(`type=${quote}button${quote}`);
-    expect(paid).toContain('ซื้อ Bundle ฿2,490');
-    expect(free).toContain('ลงทะเบียน Bundle ฟรี');
+    expect(paid).toContain('ซื้อชุดคอร์ส ฿2,490');
+    expect(free).toContain('ลงทะเบียนชุดคอร์สฟรี');
   });
 
   it('routes learners with all entitlements to the dashboard', () => {
@@ -106,9 +106,9 @@ describe('bundle enrollment purchase contract', () => {
       />,
     );
 
-    expect(html).toContain('Bundle นี้กำลังเตรียมเนื้อหา');
+    expect(html).toContain('ชุดคอร์สนี้กำลังเตรียมเนื้อหา');
     expect(html).not.toContain('<button');
-    expect(html).not.toContain('ซื้อ Bundle');
+    expect(html).not.toContain('ซื้อชุดคอร์ส');
   });
 
   it('discloses partial ownership and preserves the full Bundle price', () => {
@@ -122,6 +122,6 @@ describe('bundle enrollment purchase contract', () => {
 
     expect(html).toContain('มีบางคอร์สอยู่ในบัญชีแล้ว');
     expect(html).toContain('ราคาชุดไม่หักมูลค่าคอร์สที่มีอยู่');
-    expect(html).toContain('ซื้อ Bundle ฿2,490');
+    expect(html).toContain('ซื้อชุดคอร์ส ฿2,490');
   });
 });

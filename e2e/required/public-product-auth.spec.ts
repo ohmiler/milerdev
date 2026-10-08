@@ -108,7 +108,7 @@ test('mobile guest returns to the exact Bundle after registration', async ({ pag
   await expect(page.getByRole('complementary', { name: 'สรุปและสมัครชุดคอร์ส' })
     .getByText('ซื้อแยกวันนี้', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.getByRole('button', { name: /Bundle/ }).first().click();
+  await page.getByRole('button', { name: /ซื้อชุดคอร์ส/ }).first().click();
   await registerAndReturnTo(page, destination, 'Mobile Bundle');
 
   expect(network.providerRequests, 'credentials journey must not invoke provider mocks').toEqual([]);
