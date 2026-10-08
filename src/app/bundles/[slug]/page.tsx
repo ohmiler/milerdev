@@ -156,7 +156,7 @@ function getBundleDecisionFacts(
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const bundle = await getBundle(slug);
-  if (!bundle) return { title: 'ไม่พบ Bundle' };
+  if (!bundle) return { title: 'ไม่พบชุดคอร์ส' };
   const decisionFacts = getBundleDecisionFacts(bundle, { now: new Date() });
 
   const description = bundle.description
@@ -320,7 +320,7 @@ export default async function BundleDetailPage({ params, searchParams }: Props) 
                   <dl className="grid gap-3 text-sm [&_div]:flex [&_div]:justify-between [&_div]:gap-4 [&_dt]:text-muted-foreground [&_dd]:font-medium">
                     <div><dt>คอร์สทั้งหมด</dt><dd>{decisionFacts.evidence.courseCount} คอร์ส</dd></div>
                     <div><dt>เนื้อหาทั้งหมด</dt><dd>{decisionFacts.evidence.totalLessons} บทเรียน</dd></div>
-                    <div><dt>Certificate</dt><dd>ทุกคอร์ส</dd></div>
+                    <div><dt>ใบรับรอง</dt><dd>ทุกคอร์ส</dd></div>
                     <div><dt>การเข้าถึง</dt><dd>ตลอดชีพ</dd></div>
                   </dl>
 
