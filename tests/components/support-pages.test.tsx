@@ -1,11 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { FAQ_CATEGORIES } from '@/app/faq/faq-data';
 import ContactForm from '@/components/contact/ContactForm';
 import FAQAccordion, { FAQAnswer } from '@/components/faq/FAQAccordion';
 
 const quote = String.fromCharCode(34);
+
+// The form fills in a signed-in member's details; these static renders are a visitor's.
+vi.mock('next-auth/react', () => ({ useSession: () => ({ data: null, status: 'unauthenticated' }) }));
 
 describe('studio and support page contracts', () => {
   it('preserves the four FAQ categories and all thirteen published answers', () => {
@@ -52,8 +55,8 @@ describe('studio and support page contracts', () => {
     expect(html).toContain(`name=${quote}name${quote}`);
     expect(html).toContain(`minLength=${quote}2${quote}`);
     expect(html).toContain(`name=${quote}email${quote}`);
-    expect(html).toContain(`name=${quote}subject${quote}`);
-    expect(html).toContain(`maxLength=${quote}200${quote}`);
+    // The subject is one of four topics, each a label the API accepts (2 to 200 characters).
+    expect(html.match(new RegExp(`<input type=${quote}radio${quote} required=${quote}${quote}[^>]*name=${quote}subject${quote}`, 'g'))).toHaveLength(4);
     expect(html).toContain(`name=${quote}message${quote}`);
     expect(html).toContain(`minLength=${quote}10${quote}`);
     expect(html).toContain(`maxLength=${quote}5000${quote}`);

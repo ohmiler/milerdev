@@ -1,9 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import ContactForm from '@/components/contact/ContactForm';
 
 const quote = String.fromCharCode(34);
+
+// The form fills in a signed-in member's details; these static renders are a visitor's.
+vi.mock('next-auth/react', () => ({ useSession: () => ({ data: null, status: 'unauthenticated' }) }));
 
 describe('Contact form contracts', () => {
   it('keeps visible labels and native field constraints', () => {
