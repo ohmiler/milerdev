@@ -69,12 +69,19 @@ describe('server error logging contract', () => {
 });
 
 describe('CI test gate contract', () => {
-    it('runs required tests non-interactively before Build', () => {
+    it('runs required tests non-interactively and gates merges on every job', () => {
         const workflow = source('.github/workflows/ci.yml');
 
         expect(workflow).toMatch(/\n  test:\n[\s\S]*?run: npm run test -- --run/);
         expect(workflow).toMatch(/\n  required-e2e:\n[\s\S]*?run: npm run test:e2e:required/);
-        expect(workflow).toContain('needs: [lint-and-typecheck, test, required-e2e]');
         expect(workflow).not.toContain('# test:');
+
+        // The gate waits for every job and still runs when one failed, because GitHub reports a
+        // skipped job as passed. It fails unless every result is success.
+        const gate = workflow.slice(workflow.indexOf('\n  ci-passed:\n'));
+        expect(gate).toContain('name: CI passed');
+        expect(gate).toContain('if: ${{ !cancelled() }}');
+        expect(gate).toContain('needs: [lint-and-typecheck, test, required-e2e, build]');
+        expect(gate).toMatch(/if \[ "\$result" != "success" \]; then[\s\S]*?exit 1/);
     });
 });
