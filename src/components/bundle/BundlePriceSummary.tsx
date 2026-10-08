@@ -4,9 +4,9 @@ type BundlePriceSummaryProps = {
   price: BundleDecisionFacts['price'];
 };
 
+// Two prices to weigh: the bundle and buying the courses separately today. A third, the regular
+// total before promotions, made the choice harder to read, so it is left out.
 export default function BundlePriceSummary({ price }: BundlePriceSummaryProps) {
-  const showRegularContext = price.separateRegular !== price.separateCurrent;
-
   return (
     <div className={'rounded-lg bg-muted p-5'}>
       <p className={'text-sm text-muted-foreground'}>ราคาชุด</p>
@@ -22,12 +22,6 @@ export default function BundlePriceSummary({ price }: BundlePriceSummaryProps) {
           <dt>เปรียบเทียบ</dt>
           <dd className={'font-semibold'}>{price.comparison.label}</dd>
         </div>
-        {showRegularContext ? (
-          <div className={'flex flex-wrap justify-between gap-2 text-muted-foreground'}>
-            <dt>ราคาปกติรวม</dt>
-            <dd>{price.separateRegularFormatted}</dd>
-          </div>
-        ) : null}
       </dl>
     </div>
   );
