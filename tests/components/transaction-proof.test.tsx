@@ -32,6 +32,16 @@ describe('transaction and credential proof contracts', () => {
     expect(renderToStaticMarkup(<TransactionReceipt record={ready} />)).not.toContain('เริ่มเรียนบทแรก');
   });
 
+  it('links to การเรียนของฉัน once, from the card, when the card already offers it', () => {
+    const ready = paymentRecord({ status: 'completed' }, 1);
+    const html = renderToStaticMarkup(<TransactionReceipt record={ready} start={{ href: '/courses/thai/learn', label: 'เริ่มเรียนบทแรก' }} />);
+    expect(ready.presentation.recovery.href).toBe('/dashboard');
+    expect(html.match(new RegExp(`href=${quote}/dashboard${quote}`, 'g'))).toHaveLength(1);
+
+    const pending = renderToStaticMarkup(<TransactionReceipt record={paymentRecord({ status: 'pending' })} />);
+    expect(pending).toContain(`href=${quote}/dashboard${quote}`);
+  });
+
   it('only announces ready after both payment and access are confirmed', () => {
     const html = renderToStaticMarkup(<TransactionReceipt record={paymentRecord({ status: 'completed' }, 1)} />);
     expect(html).toContain('ชำระแล้ว พร้อมเริ่มเรียน');
