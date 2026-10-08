@@ -4,8 +4,6 @@ import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { reviews, users, courses } from '@/lib/db/schema';
 import { desc, eq, sql, and, like, or } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
-import { revalidateCoursePagesById } from '@/lib/courses/revalidate';
 
 // GET /api/admin/reviews - Get all reviews
 export async function GET(request: Request) {
@@ -115,64 +113,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
-// POST /api/admin/reviews - Import reviews (admin only)
-export async function POST(request: Request) {
-  try {
-    const authResult = await requireAdmin();
-    if (authResult instanceof NextResponse) return authResult;
-
-    const body = await request.json();
-    const { reviews: importReviews } = body;
-
-    if (!Array.isArray(importReviews) || importReviews.length === 0) {
-      return NextResponse.json({ error: 'No reviews to import' }, { status: 400 });
-    }
-
-    let imported = 0;
-    const importedCourseIds = new Set<string>();
-    let skipped = 0;
-    const errors: string[] = [];
-
-    for (const review of importReviews) {
-      try {
-        if (!review.courseId || !review.rating) {
-          errors.push(`Skipped: missing courseId or rating`);
-          skipped++;
-          continue;
-        }
-
-        await db.insert(reviews).values({
-          id: createId(),
-          userId: review.userId || null,
-          courseId: review.courseId,
-          rating: Math.min(5, Math.max(1, Math.round(review.rating))),
-          comment: review.comment || null,
-          displayName: review.displayName || null,
-          isVerified: review.isVerified ?? true,
-          isHidden: false,
-          createdAt: review.createdAt ? new Date(review.createdAt) : new Date(),
-          updatedAt: new Date(),
-        });
-        imported++;
-        importedCourseIds.add(review.courseId);
-      } catch (err) {
-        errors.push(`Failed to import review: ${(err as Error).message}`);
-        skipped++;
-      }
-    }
-
-    for (const courseId of importedCourseIds) await revalidateCoursePagesById(courseId);
-
-    return NextResponse.json({
-      message: `Imported ${imported} reviews, skipped ${skipped}`,
-      imported,
-      skipped,
-      errors: errors.slice(0, 10),
-    });
-  } catch (error) {
-    logError(error instanceof Error ? error : new Error(String(error)), { action: 'admin.reviews.handler_failed' });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
-

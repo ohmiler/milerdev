@@ -1,8 +1,8 @@
 'use client';
 
-import { CircleCheck, FileUp, GraduationCap, Plus, Search, Trash2, X } from 'lucide-react';
+import { GraduationCap, Plus, Search, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
@@ -16,7 +16,7 @@ import {
   AdminSection,
   AdminStatusBadge,
 } from '@/components/admin/ui/AdminOperations';
-import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,7 +27,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Progress } from '@/components/ui/progress';
@@ -72,18 +71,6 @@ interface Pagination {
   totalPages: number;
 }
 
-type ImportResult = {
-  success?: number;
-  skipped?: number;
-  userNotFound?: number;
-  courseNotFound?: number;
-  total?: number;
-  errors?: string[];
-  missingUsers?: string[];
-  missingCourses?: string[];
-  matchedAliases?: string[];
-};
-
 export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -103,9 +90,6 @@ export default function AdminEnrollmentsPage() {
   const [addError, setAddError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Enrollment | null>(null);
   const [deleteError, setDeleteError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchDebounce(search), 400);
@@ -201,29 +185,6 @@ export default function AdminEnrollmentsPage() {
     }
   };
 
-  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setImporting(true);
-    setImportResult(null);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/admin/enrollments/import', { method: 'POST', body: formData });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'นำเข้าข้อมูลไม่สำเร็จ');
-      setImportResult(data.results);
-      await fetchEnrollments();
-      showToast(`นำเข้าสำเร็จ ${data.results?.success || 0} รายการ`, 'success');
-    } catch (caughtError) {
-      showToast(caughtError instanceof Error ? caughtError.message : 'นำเข้าข้อมูลไม่สำเร็จ กรุณาลองใหม่', 'error');
-    } finally {
-      setImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('th-TH', {
     year: 'numeric',
     month: 'short',
@@ -237,43 +198,13 @@ export default function AdminEnrollmentsPage() {
         title="การลงทะเบียน"
         description="ตรวจสิทธิ์เข้าเรียน ความคืบหน้า และจัดการการเพิ่มหรือถอนผู้เรียนจากคอร์ส"
         actions={
-          <>
-            <Input ref={fileInputRef} type="file" accept=".csv" onChange={handleImportCSV} className="hidden" tabIndex={-1} />
-            <Button variant="outline" disabled={importing} onClick={() => fileInputRef.current?.click()}>
-              <FileUp data-icon="inline-start" aria-hidden />
-              {importing ? 'กำลังนำเข้า' : 'นำเข้า CSV'}
-            </Button>
-            <Button onClick={() => { setAddError(''); setShowAddModal(true); }}>
-              <Plus data-icon="inline-start" aria-hidden />
-              เพิ่มการลงทะเบียน
-            </Button>
-          </>
+          <Button onClick={() => { setAddError(''); setShowAddModal(true); }}>
+            <Plus data-icon="inline-start" aria-hidden />
+            เพิ่มการลงทะเบียน
+          </Button>
         }
         meta="การเพิ่มสิทธิ์จากหน้านี้เป็นการกระทำโดยผู้ดูแลโดยตรง"
       />
-
-      {importResult ? (
-        <Alert className={importResult.success ? 'border-[var(--color-success)]/25 bg-[var(--color-success-soft)]' : 'border-[var(--color-warning)]/25 bg-[var(--color-warning-soft)]'}>
-          <CircleCheck aria-hidden />
-          <AlertTitle>ผลการนำเข้าข้อมูล</AlertTitle>
-          <AlertDescription>
-            <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1">
-              <span>ทั้งหมด {importResult.total || 0}</span>
-              <span>สำเร็จ {importResult.success || 0}</span>
-              <span>ข้าม {importResult.skipped || 0}</span>
-              <span>ไม่พบผู้ใช้ {importResult.userNotFound || 0}</span>
-              <span>ไม่พบคอร์ส {importResult.courseNotFound || 0}</span>
-            </div>
-            {importResult.matchedAliases?.length ? <ImportDetails title="ชื่อคอร์สที่จับคู่ใกล้เคียง" items={importResult.matchedAliases} /> : null}
-            {importResult.missingCourses?.length ? <ImportDetails title="คอร์สที่ไม่พบ" items={importResult.missingCourses} /> : null}
-            {importResult.missingUsers?.length ? <ImportDetails title="ผู้ใช้ที่ไม่พบ" items={importResult.missingUsers} /> : null}
-            {importResult.errors?.length ? <ImportDetails title="ข้อผิดพลาด" items={importResult.errors} /> : null}
-          </AlertDescription>
-          <AlertAction>
-            <Button variant="ghost" size="icon-sm" onClick={() => setImportResult(null)} aria-label="ปิดผลการนำเข้า"><X aria-hidden /></Button>
-          </AlertAction>
-        </Alert>
-      ) : null}
 
       {stats ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -414,16 +345,5 @@ export default function AdminEnrollmentsPage() {
         onOpenChange={(open) => { if (!open) { setDeleteTarget(null); setDeleteError(''); } }}
       />
     </div>
-  );
-}
-
-function ImportDetails({ title, items }: { title: string; items: string[] }) {
-  return (
-    <details className="mt-3">
-      <summary className="cursor-pointer font-medium">{title} ({items.length.toLocaleString('th-TH')})</summary>
-      <ul className="mt-2 flex max-h-28 list-disc flex-col gap-1 overflow-y-auto pl-5 text-xs">
-        {items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
-      </ul>
-    </details>
   );
 }

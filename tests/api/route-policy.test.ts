@@ -55,12 +55,12 @@ const ADMIN_ROUTES = [
     'audit-logs',
     'bundles/[id]', 'bundles', 'certificates/[id]', 'certificates',
     'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]/sections/[sectionId]',
-    'courses/[id]/sections', 'courses/[id]', 'courses', 'enrollments/[id]', 'enrollments/import', 'enrollments', 'lessons/[lessonId]/quiz', 'lessons/[lessonId]',
+    'courses/[id]/sections', 'courses/[id]', 'courses', 'enrollments/[id]', 'enrollments', 'lessons/[lessonId]/quiz', 'lessons/[lessonId]',
     'media/[id]', 'media', 'payments/[id]', 'payments/cleanup', 'payments',
     'reconciliation/[paymentId]/retry', 'reconciliation/[paymentId]', 'reconciliation',
     'reports/export', 'reports', 'reviews/[id]', 'reviews',
     'settings', 'tags/[id]', 'tags', 'users/[id]/enrollments', 'users/[id]/instructor-profile', 'users/[id]/reset-password',
-    'users/[id]', 'users/bulk', 'users/export', 'users/import', 'users',
+    'users/[id]', 'users/bulk', 'users/export', 'users',
 ];
 for (const r of ADMIN_ROUTES) MANIFEST[`admin/${r}/route.ts`] = 'admin';
 

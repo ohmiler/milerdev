@@ -44,7 +44,6 @@ vi.mock('@/lib/db', () => {
 });
 
 import { PUT as updateBundle } from '@/app/api/admin/bundles/[id]/route';
-import { POST as importReviews } from '@/app/api/admin/reviews/route';
 import { DELETE as deleteReview, PUT as updateReview } from '@/app/api/admin/reviews/[id]/route';
 import { POST as createTag } from '@/app/api/admin/tags/route';
 import { DELETE as deleteTag, PUT as updateTag } from '@/app/api/admin/tags/[id]/route';
@@ -104,20 +103,6 @@ describe('admin content edits purge cached public pages', () => {
       mocks.selectResults.push([review], [{ slug: 'course-a-slug' }]);
       expect((await deleteReview(json('DELETE', {}), params)).status).toBe(200);
       expect(revalidated()).toContain('/courses/course-a-slug');
-    });
-
-    it('purges each course once after importing reviews', async () => {
-      mocks.selectResults.push([{ slug: 'course-a-slug' }]);
-
-      const response = await importReviews(json('POST', {
-        reviews: [
-          { courseId: 'course-a', rating: 5 },
-          { courseId: 'course-a', rating: 4 },
-        ],
-      }));
-
-      expect(response.status).toBe(200);
-      expect(revalidated().filter((path) => path === '/courses/course-a-slug')).toHaveLength(1);
     });
 
     it('does not purge when the review is not found', async () => {
