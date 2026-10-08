@@ -104,7 +104,7 @@ export async function POST(request: Request) {
         );
         if (enrollmentChecks.every(Boolean)) {
             return NextResponse.json(
-                { error: "คุณลงทะเบียนคอร์สทั้งหมดใน Bundle นี้แล้ว" },
+                { error: "คุณลงทะเบียนคอร์สทั้งหมดในชุดคอร์สนี้แล้ว" },
                 { status: 400 }
             );
         }
