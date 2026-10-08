@@ -215,7 +215,7 @@ export default function CourseDetailClient({
             <ul className="grid gap-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2"><Check className="text-primary" aria-hidden="true" /> เข้าเรียนได้ตลอดชีพ</li>
               <li className="flex items-center gap-2"><Check className="text-primary" aria-hidden="true" /> เรียนได้ทุกอุปกรณ์</li>
-              <li className="flex items-center gap-2"><Check className="text-primary" aria-hidden="true" /> รับ Certificate เมื่อเรียนจบ</li>
+              <li className="flex items-center gap-2"><Check className="text-primary" aria-hidden="true" /> รับใบรับรองเมื่อเรียนจบ</li>
             </ul>
           </>
         )}
