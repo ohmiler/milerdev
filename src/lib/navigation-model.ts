@@ -35,8 +35,8 @@ export const ACCOUNT_NAVIGATION = [
   { key: 'dashboard', href: '/dashboard', label: 'การเรียนของฉัน', match: 'exact' },
   { key: 'payments', href: '/dashboard/payments', label: 'การชำระเงิน', match: 'section' },
   { key: 'certificates', href: '/dashboard/certificates', label: 'ใบรับรอง', match: 'section' },
-  { key: 'profile', href: '/profile', label: 'โปรไฟล์', match: 'section' },
-  { key: 'settings', href: '/settings', label: 'ตั้งค่าบัญชี', match: 'section' },
+  // Profile and settings are one page; /settings redirects here.
+  { key: 'profile', href: '/profile', label: 'บัญชีของฉัน', match: 'section' },
 ] as const satisfies readonly NavigationDestination[];
 
 export type AccountNavigationKey = (typeof ACCOUNT_NAVIGATION)[number]['key'];
