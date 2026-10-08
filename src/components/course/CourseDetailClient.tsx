@@ -15,8 +15,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
+import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
 import type { CourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
+import type { CourseLearning } from '@/lib/learning/dashboard';
 
 export type EnrollmentStatus = 'checking' | 'enrolled' | 'not-enrolled';
 
@@ -24,8 +26,11 @@ export type EnrollmentStatus = 'checking' | 'enrolled' | 'not-enrolled';
 const EnrollmentContext = createContext<{
   status: EnrollmentStatus;
   isEnrolled: boolean;
+  // Where an enrolled learner stands, when the enrollment check could tell.
+  learning: CourseLearning | null;
   setEnrollmentStatus: (status: EnrollmentStatus) => void;
-}>({ status: 'checking', isEnrolled: false, setEnrollmentStatus: () => {} });
+  setLearning: (learning: CourseLearning | null) => void;
+}>({ status: 'checking', isEnrolled: false, learning: null, setEnrollmentStatus: () => {}, setLearning: () => {} });
 
 export function useEnrollment() {
   return useContext(EnrollmentContext);
@@ -40,15 +45,27 @@ export function CourseDetailProvider({
   initialStatus?: EnrollmentStatus;
 }) {
   const [status, setEnrollmentStatus] = useState<EnrollmentStatus>(initialStatus);
+  const [learning, setLearning] = useState<CourseLearning | null>(null);
   return (
     <EnrollmentContext.Provider value={{
       status,
       isEnrolled: status === 'enrolled',
+      learning,
       setEnrollmentStatus,
+      setLearning,
     }}>
       {children}
     </EnrollmentContext.Provider>
   );
+}
+
+// What the learner's button says: resume, start, or review once the course is finished.
+function describeLearnerAction(learning: CourseLearning | null, fallback: string) {
+  if (!learning) return fallback;
+  if (learning.completed) return 'ทบทวนบทเรียน';
+  if (learning.continuation === 'resume') return 'เรียนต่อ';
+  if (learning.continuation === 'start') return 'เริ่มเรียน';
+  return fallback;
 }
 
 // ---
@@ -81,14 +98,16 @@ export default function CourseDetailClient({
   hasVideoPreview = false,
   renderMode,
 }: CourseDetailClientProps) {
-  const { status, isEnrolled, setEnrollmentStatus } = useEnrollment();
+  const { status, isEnrolled, learning, setEnrollmentStatus, setLearning } = useEnrollment();
   const price = decisionFacts.price.effective;
   const promoLabel = decisionFacts.promotion.label;
   const courseReady = decisionFacts.readiness === 'ready';
 
-  const handleEnrollmentChange = useCallback((enrolled: boolean) => {
+  const handleEnrollmentChange = useCallback((enrolled: boolean, nextLearning: CourseLearning | null = null) => {
     setEnrollmentStatus(enrolled ? 'enrolled' : 'not-enrolled');
-  }, [setEnrollmentStatus]);
+    setLearning(enrolled ? nextLearning : null);
+  }, [setEnrollmentStatus, setLearning]);
+  const learnerAction = describeLearnerAction(learning, decisionFacts.actions.learner.label);
 
   if (renderMode === 'button') {
     if (!courseReady && status !== 'enrolled') {
@@ -116,12 +135,28 @@ export default function CourseDetailClient({
             <AlertTitle>คุณมีสิทธิ์เรียนคอร์สนี้แล้ว</AlertTitle>
 
           </Alert>
-          <div>
-            <h2 className="text-xl font-semibold">พร้อมกลับมาเรียนต่อ?</h2>
-            <p className="mt-2 text-sm leading-7 text-muted-foreground">เลือกบทที่ต้องการ แล้วเรียนในจังหวะของคุณ</p>
-          </div>
+          {learning && learning.progress.totalLessons > 0 ? (
+            <div className="grid gap-2">
+              <h2 className="text-xl font-semibold">{learning.completed ? 'เรียนจบคอร์สนี้แล้ว' : 'ความคืบหน้าของคุณ'}</h2>
+              <p className="flex justify-between gap-3 text-sm text-muted-foreground tabular-nums">
+                <span>เรียนไปแล้ว {learning.progress.completedLessons} จาก {learning.progress.totalLessons} บท</span>
+                <strong className="text-foreground">{learning.progress.percent}%</strong>
+              </p>
+              <Progress value={learning.progress.percent} aria-label={`ความคืบหน้าคอร์สนี้ ${learning.progress.percent}%`} />
+              {learning.nextLesson ? (
+                <p className="text-sm leading-6">
+                  {learning.continuation === 'start' ? 'เริ่มที่' : 'ต่อจาก'} บทที่ {learning.nextLesson.position} · {learning.nextLesson.title}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-xl font-semibold">พร้อมกลับมาเรียนต่อ?</h2>
+              <p className="mt-2 text-sm leading-7 text-muted-foreground">เลือกบทที่ต้องการ แล้วเรียนในจังหวะของคุณ</p>
+            </div>
+          )}
           <Button asChild className="w-full">
-            <Link href={decisionFacts.actions.learner.href!}>{decisionFacts.actions.learner.label}</Link>
+            <Link href={decisionFacts.actions.learner.href!}>{learnerAction}</Link>
           </Button>
           <a href="#course-curriculum" className="text-center text-caption text-muted-foreground underline underline-offset-4 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">ดูรายการบทเรียนทั้งหมด</a>
         </div>
@@ -194,8 +229,8 @@ export default function CourseDetailClient({
     return isEnrolled ? (
       <MobileActionBar
         targetId="course-action"
-        summary="คุณมีสิทธิ์เรียนคอร์สนี้แล้ว"
-        actionLabel={decisionFacts.actions.learner.label}
+        summary={learning && learning.progress.totalLessons > 0 ? `เรียนไปแล้ว ${learning.progress.percent}%` : 'คุณมีสิทธิ์เรียนคอร์สนี้แล้ว'}
+        actionLabel={learnerAction}
         href={decisionFacts.actions.learner.href!}
         hiddenFrom="md"
       />
@@ -222,7 +257,7 @@ export default function CourseDetailClient({
         </div>
         <Button asChild className="shrink-0">
           {isEnrolled ? (
-            <Link href={decisionFacts.actions.learner.href!}>{decisionFacts.actions.learner.label}<ArrowRight data-icon="inline-end" aria-hidden="true" /></Link>
+            <Link href={decisionFacts.actions.learner.href!}>{learnerAction}<ArrowRight data-icon="inline-end" aria-hidden="true" /></Link>
           ) : (
             <a href="#course-action">{decisionFacts.actions.member.label}<ArrowRight data-icon="inline-end" aria-hidden="true" /></a>
           )}

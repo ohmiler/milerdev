@@ -25,7 +25,8 @@ type DashboardLearningRead = {
 };
 
 export type DashboardLearningStore = {
-  read(memberId: string): Promise<DashboardLearningRead>;
+  // With a course id, only that course's enrollment is read (the course page asks about one course).
+  read(memberId: string, options?: { courseId?: string }): Promise<DashboardLearningRead>;
 };
 
 export type DashboardLearning = {
@@ -41,7 +42,7 @@ export type DashboardLearning = {
 };
 
 const databaseDashboardLearningStore: DashboardLearningStore = {
-  async read(memberId) {
+  async read(memberId, options) {
     const [enrollmentRows, [certificateCount], [paymentCount]] = await Promise.all([
       db
         .select({
@@ -54,7 +55,9 @@ const databaseDashboardLearningStore: DashboardLearningStore = {
         })
         .from(enrollments)
         .innerJoin(courses, eq(enrollments.courseId, courses.id))
-        .where(eq(enrollments.userId, memberId)),
+        .where(options?.courseId
+          ? and(eq(enrollments.userId, memberId), eq(enrollments.courseId, options.courseId))
+          : eq(enrollments.userId, memberId)),
       db
         .select({ count: count() })
         .from(certificates)
@@ -168,6 +171,44 @@ function byLearningActivity(enrollments: LearningPresentationSource[]) {
   ).map(({ enrollment }) => enrollment);
 }
 
+// The lesson to pick up next and its 1-based place in the course, or null when there is none.
+function nextLessonOf(enrollment: LearningPresentationSource): { title: string; position: number } | null {
+  const lessonsInOrder = [...enrollment.lessons].sort((a, b) => a.orderIndex - b.orderIndex);
+  const lessonIds = new Set(lessonsInOrder.map((lesson) => lesson.id));
+  const next = selectContinuationLesson(lessonsInOrder, enrollment.progress.filter((item) => lessonIds.has(item.lessonId)));
+  const index = next ? lessonsInOrder.findIndex((lesson) => lesson.id === next.id) : -1;
+  return index < 0 ? null : { title: lessonsInOrder[index].title, position: index + 1 };
+}
+
+export type CourseLearning = {
+  progress: LearningPresentation['progress'];
+  continuation: LearningPresentation['continuation'];
+  completed: boolean;
+  nextLesson: { title: string; position: number } | null;
+};
+
+/**
+ * Where a member stands in one course, for the course page: progress, whether they start or
+ * resume, and the lesson that opens next. Null when the member is not enrolled in it.
+ */
+export async function getCourseLearning(
+  memberId: string,
+  courseId: string,
+  store: DashboardLearningStore = databaseDashboardLearningStore,
+): Promise<CourseLearning | null> {
+  const source = await store.read(memberId, { courseId });
+  const enrollment = source.enrollments.find((item) => item.course.id === courseId);
+  if (!enrollment) return null;
+  const presentation = deriveLearningPresentation(enrollment);
+  const goesOn = presentation.continuation === 'start' || presentation.continuation === 'resume';
+  return {
+    progress: presentation.progress,
+    continuation: presentation.continuation,
+    completed: presentation.enrollment === 'completed',
+    nextLesson: goesOn ? nextLessonOf(enrollment) : null,
+  };
+}
+
 export type ContinueLearning = {
   course: { title: string; slug: string; thumbnailUrl: string | null };
   lesson: { title: string; position: number };
@@ -189,14 +230,11 @@ export async function getContinueLearning(
     const presentation = deriveLearningPresentation(enrollment);
     if (presentation.enrollment !== 'active' || !presentation.course) continue;
     if (presentation.continuation !== 'start' && presentation.continuation !== 'resume') continue;
-    const lessonsInOrder = [...enrollment.lessons].sort((a, b) => a.orderIndex - b.orderIndex);
-    const lessonIds = new Set(lessonsInOrder.map((lesson) => lesson.id));
-    const next = selectContinuationLesson(lessonsInOrder, enrollment.progress.filter((item) => lessonIds.has(item.lessonId)));
-    const position = next ? lessonsInOrder.findIndex((lesson) => lesson.id === next.id) : -1;
-    if (position < 0) continue;
+    const lesson = nextLessonOf(enrollment);
+    if (!lesson) continue;
     return {
       course: presentation.course,
-      lesson: { title: lessonsInOrder[position].title, position: position + 1 },
+      lesson,
       progress: presentation.progress,
       continuation: presentation.continuation,
       href: presentation.action.href,
