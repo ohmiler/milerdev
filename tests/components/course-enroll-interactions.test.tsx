@@ -28,7 +28,8 @@ it('keeps free enrollment server-authoritative and updates the learning action a
   await user.click(await screen.findByRole('button', { name: 'ลงทะเบียนเรียนฟรี' }));
   await user.click(await screen.findByRole('button', { name: 'เข้าเรียน' }));
   expect(fetchMock).toHaveBeenLastCalledWith('/api/enrollments', expect.objectContaining({ body: JSON.stringify({ courseId: 'course-1' }) }));
-  expect(changed).toHaveBeenLastCalledWith(true);
+  // A fresh enrollment has no progress to show yet.
+  expect(changed).toHaveBeenLastCalledWith(true, null);
   expect(mocks.push).toHaveBeenCalledWith('/courses/typescript/learn');
 });
 
