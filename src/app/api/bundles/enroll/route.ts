@@ -149,7 +149,7 @@ export async function POST(request: Request) {
         }
 
         return NextResponse.json({
-            message: `ลงทะเบียน Bundle สำเร็จ`,
+            message: `ลงทะเบียนชุดคอร์สสำเร็จ`,
             enrolled,
             skipped,
             totalEnrolled: enrolled.length,
