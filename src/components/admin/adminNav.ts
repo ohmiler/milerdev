@@ -34,7 +34,6 @@ export const adminSecondaryLinkGroups: Array<{ title: string; items: AdminNavLin
   {
     title: 'ระบบ',
     items: [
-      { href: '/admin/affiliate-banners', label: 'แบนเนอร์', icon: 'media' },
       { href: '/admin/audit-logs', label: 'บันทึกกิจกรรม', icon: 'logs' },
       { href: '/admin/settings', label: 'ตั้งค่า', icon: 'settings' },
     ],
