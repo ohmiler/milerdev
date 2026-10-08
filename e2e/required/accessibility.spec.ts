@@ -31,6 +31,7 @@ test('public pages have no serious WCAG A/AA findings', async ({ page }, testInf
     `/courses/${E2E_FIXTURES.courses.free.slug}/learn/${E2E_FIXTURES.lessons.freePreview.id}`,
     `/bundles/${E2E_FIXTURES.bundle.slug}`,
     `/certificate/${E2E_FIXTURES.certificates.active.code}`,
+    '/about',
     '/faq',
     '/contact',
     '/login',
