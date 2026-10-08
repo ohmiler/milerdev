@@ -22,8 +22,7 @@ describe('canonical navigation model', () => {
       { href: '/dashboard', label: 'การเรียนของฉัน' },
       { href: '/dashboard/payments', label: 'การชำระเงิน' },
       { href: '/dashboard/certificates', label: 'ใบรับรอง' },
-      { href: '/profile', label: 'โปรไฟล์' },
-      { href: '/settings', label: 'ตั้งค่าบัญชี' },
+      { href: '/profile', label: 'บัญชีของฉัน' },
     ]);
   });
 

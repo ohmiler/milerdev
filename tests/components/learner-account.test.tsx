@@ -29,7 +29,9 @@ describe('learner account contracts', () => {
     expect(html).toContain(`href=${quote}/dashboard/certificates${quote}`);
     expect(html).toContain(`href=${quote}/dashboard/payments${quote}`);
     expect(html).toContain(`href=${quote}/profile${quote}`);
-    expect(html).toContain(`href=${quote}/settings${quote}`);
+    // Profile and settings are one page now.
+    expect(html).not.toContain(`href=${quote}/settings${quote}`);
+    expect(html).toContain('บัญชีของฉัน');
     expect(html.match(new RegExp(`aria-current=${quote}page${quote}`, 'g'))).toHaveLength(2);
   });
 
@@ -48,9 +50,9 @@ describe('learner account contracts', () => {
     const settings = renderToStaticMarkup(<SettingsLoading />);
 
     expect(profile).toContain(`aria-label=${quote}กำลังโหลดโปรไฟล์${quote}`);
-    expect(settings).toContain(`aria-label=${quote}กำลังโหลดการตั้งค่าบัญชี${quote}`);
+    // /settings only redirects to the account page, so it shows that page's placeholder.
+    expect(settings).toBe(profile);
     expect(profile).toContain(`aria-busy=${quote}true${quote}`);
-    expect(settings).toContain(`aria-busy=${quote}true${quote}`);
   });
 
   it('retains the payment and certificate API boundaries plus visible failure branches', () => {
@@ -83,13 +85,13 @@ describe('learner account contracts', () => {
 
   it('keeps password controls collapsed and names the OAuth-only state', () => {
     const password = renderToStaticMarkup(<PasswordSettingsForm hasPassword />);
-    const oauth = renderToStaticMarkup(<PasswordSettingsForm hasPassword={false} />);
+    const oauth = renderToStaticMarkup(<PasswordSettingsForm hasPassword={false} signsInWithGoogle />);
     const source = readFileSync('src/components/settings/PasswordSettingsForm.tsx', 'utf8');
 
     expect(password).toContain(`aria-expanded=${quote}false${quote}`);
     expect(password).toContain('เปลี่ยนรหัสผ่าน');
     expect(password).not.toContain(`<form`);
-    expect(oauth).toContain('Google Login');
+    expect(oauth).toContain('เข้าสู่ระบบด้วย Google');
     expect(oauth).not.toContain(`<form`);
     expect(source).toContain("fetch('/api/auth/change-password'");
     expect(source).toContain("method: 'POST'");
