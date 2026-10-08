@@ -9,8 +9,8 @@ import { HOME_LEARNING_PATH_SLUGS } from '@/lib/home/course-plan';
 import type { PathCourse } from '@/lib/learning/next-course';
 
 /**
- * The published courses on the learning path, for the dashboard's "แนะนำต่อจากนี้". A failed read is
- * logged and returns none, so the dashboard still shows the member's own courses.
+ * The published courses on the learning path, for the dashboard's "แนะนำต่อจากนี้" and the About page's
+ * course path. A failed read is logged and returns none, so either page still renders without it.
  */
 export async function getLearningPathCourses(): Promise<PathCourse[]> {
   try {
@@ -24,7 +24,7 @@ export async function getLearningPathCourses(): Promise<PathCourse[]> {
       .from(courses)
       .where(and(eq(courses.status, 'published'), inArray(courses.slug, [...HOME_LEARNING_PATH_SLUGS])));
   } catch (error) {
-    logError(error, { action: 'dashboard.learning_path.load_failed' });
+    logError(error, { action: 'learning.path_courses.load_failed' });
     return [];
   }
 }
