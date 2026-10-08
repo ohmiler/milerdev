@@ -16,7 +16,6 @@ import { auth } from '@/lib/auth';
 type RouteClass = 'public' | 'auth' | 'admin' | 'signature' | 'delegated' | 'mixed';
 
 const MANIFEST: Record<string, RouteClass> = {
-    'affiliate-banners/route.ts': 'public',
     'auth/[...nextauth]/route.ts': 'delegated',
     'auth/change-password/route.ts': 'auth',
     'auth/register/confirm/route.ts': 'public',
@@ -53,7 +52,7 @@ const MANIFEST: Record<string, RouteClass> = {
 };
 
 const ADMIN_ROUTES = [
-    'affiliate-banners/[id]', 'affiliate-banners', 'audit-logs',
+    'audit-logs',
     'bundles/[id]', 'bundles', 'certificates/[id]', 'certificates',
     'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]/sections/[sectionId]',
     'courses/[id]/sections', 'courses/[id]', 'courses', 'enrollments/[id]', 'enrollments/import', 'enrollments', 'lessons/[lessonId]/quiz', 'lessons/[lessonId]',
@@ -71,8 +70,6 @@ for (const r of ADMIN_ROUTES) MANIFEST[`admin/${r}/route.ts`] = 'admin';
  * fail and the entry must be removed, which is how this list is meant to shrink.
  */
 const STUDENT_GETS_401 = new Set([
-    'admin/affiliate-banners/[id]/route.ts',
-    'admin/affiliate-banners/route.ts',
     'admin/bundles/[id]/route.ts',
     'admin/bundles/route.ts',
 

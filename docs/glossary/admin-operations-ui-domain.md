@@ -109,7 +109,7 @@ A read-oriented surface such as the dashboard or analytics summary. It shows onl
 
 ### Content operations surface
 
-Course, lesson, media, bundle, tag, affiliate-banner, and review workflows. It emphasizes draft/published/archive truth, ordering, preview, validation, and safe publication.
+Course, lesson, media, bundle, tag, and review workflows. It emphasizes draft/published/archive truth, ordering, preview, validation, and safe publication.
 
 ### People operations surface
 
