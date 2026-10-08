@@ -381,7 +381,7 @@ export default async function HomePage() {
                 id="home-faq-title"
                 eyebrow="คำถามก่อนเริ่มเรียน"
                 title="ข้อมูลที่ควรรู้ก่อนเลือกคอร์ส"
-                description="ตรวจพื้นฐาน ระยะเวลาการเข้าถึง Certificate และขั้นตอนชำระเงินให้ครบก่อนตัดสินใจ"
+                description="ตรวจพื้นฐาน ระยะเวลาการเข้าถึง ใบรับรอง และขั้นตอนชำระเงินให้ครบก่อนตัดสินใจ"
               />
               <Button asChild variant="link" className="mt-5 px-0">
                 <Link href="/faq">
