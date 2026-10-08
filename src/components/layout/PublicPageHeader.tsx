@@ -20,7 +20,9 @@ export default function PublicPageHeader({
       data-public-header=""
       data-variant={variant}
       className={cn(
-        'border-b bg-[var(--academy-canvas)] py-16 sm:py-20 lg:py-24',
+        // A task page (Contact) keeps its header short, so the form starts on a phone's first screen.
+        'border-b bg-[var(--academy-canvas)]',
+        variant === 'task' ? 'py-8 sm:py-12' : 'py-16 sm:py-20 lg:py-24',
         variant === 'story' && 'bg-[radial-gradient(circle_at_15%_10%,var(--color-accent-soft),transparent_34%),var(--academy-canvas)]',
         variant === 'catalog' && 'bg-[radial-gradient(circle_at_82%_10%,var(--color-accent-soft),transparent_32%),var(--academy-canvas)]',
       )}

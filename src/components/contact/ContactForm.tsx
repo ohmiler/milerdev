@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { useRef, useState } from 'react';
 import { FeedbackState, PendingButton } from '@/components/status/FeedbackState';
 import { Button } from '@/components/ui/button';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { CONTACT_TOPICS } from '@/lib/content/contact';
 
 type SubmitStatus = 'idle' | 'success' | 'error';
 
@@ -19,6 +21,19 @@ export default function ContactForm() {
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const formLoadTime = useRef(Date.now());
+  const { data: session } = useSession();
+  const member = session?.user;
+  const [prefilledFor, setPrefilledFor] = useState<string | null>(null);
+
+  // A signed-in member's name and email are filled in once, without overwriting anything already typed.
+  if (member?.email && prefilledFor !== member.email) {
+    setPrefilledFor(member.email);
+    setFormData((current) => ({
+      ...current,
+      name: current.name || member.name || '',
+      email: current.email || member.email || '',
+    }));
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -41,7 +56,8 @@ export default function ContactForm() {
         setSubmitStatus('error');
       } else {
         setSubmitStatus('success');
-        setFormData(emptyForm);
+        // The same person may write again: keep who they are, clear what they wrote.
+        setFormData({ ...emptyForm, name: formData.name, email: formData.email });
         formLoadTime.current = Date.now();
       }
     } catch {
@@ -99,10 +115,39 @@ export default function ContactForm() {
           </Field>
         </div>
 
-        <Field>
-          <FieldLabel htmlFor={'contact-subject'}>หัวข้อที่ต้องการติดต่อ</FieldLabel>
-          <Input id={'contact-subject'} name={'subject'} type={'text'} required minLength={2} maxLength={200} value={formData.subject} onChange={(event) => setFormData({ ...formData, subject: event.target.value })} placeholder={'เช่น สอบถามการเข้าเรียนคอร์ส'} />
-        </Field>
+        <FieldSet className={'gap-0'}>
+          <FieldLegend variant={'label'}>เรื่องที่ต้องการติดต่อ</FieldLegend>
+          <div className={'grid gap-2 sm:grid-cols-2'}>
+            {CONTACT_TOPICS.map((topic) => (
+              <label
+                key={topic}
+                className={'flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border bg-background px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted has-checked:border-primary has-checked:bg-secondary has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50'}
+              >
+                <input
+                  type={'radio'}
+                  name={'subject'}
+                  value={topic}
+                  required
+                  checked={formData.subject === topic}
+                  onChange={() => setFormData({ ...formData, subject: topic })}
+                  className={'size-4 shrink-0 accent-primary'}
+                />
+                {topic}
+              </label>
+            ))}
+          </div>
+          {formData.subject === 'การชำระเงิน' ? (
+            <p className={'mt-3 text-sm leading-6 text-muted-foreground'}>
+              {member ? (
+                <>
+                  สถานะของแต่ละรายการดูได้ที่{' '}
+                  <Link className={'font-medium text-link hover:underline'} href={'/dashboard/payments'}>ประวัติการชำระเงิน</Link>
+                  {' '}ถ้ายังไม่ตรง บอกชื่อคอร์สและวันที่ชำระมาด้วย
+                </>
+              ) : 'บอกชื่อคอร์สและวันที่ชำระมาด้วย เพื่อให้ตรวจสอบได้เร็วขึ้น'}
+            </p>
+          ) : null}
+        </FieldSet>
 
         <Field>
           <FieldLabel htmlFor={'contact-message'}>รายละเอียด</FieldLabel>

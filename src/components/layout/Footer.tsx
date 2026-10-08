@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { FacebookIcon, YouTubeIcon } from '@/components/content/SocialIcons';
+import { CONTACT_EMAIL, FACEBOOK_PAGE_URL } from '@/lib/content/contact';
 import { Separator } from '@/components/ui/separator';
 
 const quickLinks = [
@@ -29,7 +30,7 @@ export default function Footer() {
             </Link>
             <p className="mt-5 max-w-md text-sm leading-7 text-muted-foreground">พื้นที่เรียนออนไลน์สำหรับพัฒนาทักษะการเขียนโปรแกรม จากความเข้าใจพื้นฐานไปสู่โปรเจกต์ที่นำไปต่อยอดได้จริง</p>
             <div className="mt-6 flex flex-wrap gap-3" aria-label="ช่องทางติดตาม MilerDev">
-              <a href="https://www.facebook.com/milerdevpro" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-medium hover:bg-muted"><FacebookIcon />Facebook</a>
+              <a href={FACEBOOK_PAGE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-medium hover:bg-muted"><FacebookIcon />Facebook</a>
               <a href="https://www.youtube.com/channel/UCeKE6wQHTt5JpS9_RsH4hrg" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-medium hover:bg-muted"><YouTubeIcon />YouTube</a>
               <a href="https://discord.gg/9Y5ZckGD2B" target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-xl border bg-background px-3 text-sm font-medium hover:bg-muted">Discord</a>
             </div>
@@ -48,7 +49,7 @@ export default function Footer() {
           <div>
             <h2 className="mb-4 text-sm font-semibold">คุยกับเรา</h2>
             <div className="flex flex-col gap-3 text-sm leading-6 text-muted-foreground">
-              <a className={linkClass} href="mailto:milerdev.official@gmail.com">milerdev.official@gmail.com</a>
+              <a className={linkClass} href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
               <address className="not-italic">กรุงเทพมหานคร, ประเทศไทย</address>
               <p>จันทร์–ศุกร์<br />09:00–18:00 น.</p>
             </div>
