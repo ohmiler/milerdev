@@ -35,7 +35,6 @@ export const adminSecondaryLinkGroups: Array<{ title: string; items: AdminNavLin
     title: 'ระบบ',
     items: [
       { href: '/admin/audit-logs', label: 'บันทึกกิจกรรม', icon: 'logs' },
-      { href: '/admin/settings', label: 'ตั้งค่า', icon: 'settings' },
     ],
   },
 ];

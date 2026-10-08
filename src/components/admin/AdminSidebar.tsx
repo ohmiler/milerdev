@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, Settings } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -62,13 +62,12 @@ export default function AdminSidebar({ userName }: AdminSidebarProps) {
         <Button asChild variant="outline" size="sm" className="w-full justify-start">
           <Link href="/"><ExternalLink />ไปหน้าเว็บไซต์</Link>
         </Button>
-        <Link href="/admin/settings" className="flex items-center gap-3 rounded-lg p-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+        <Link href="/profile" className="flex items-center gap-3 rounded-lg p-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-xs font-semibold text-foreground">{initial}</span>
           <div className="min-w-0 flex-1">
             <strong className="block truncate text-sm font-medium text-foreground">{userName}</strong>
             <span className="block text-xs text-muted-foreground">ผู้ดูแลระบบ</span>
           </div>
-          <Settings className="size-4 text-muted-foreground" aria-hidden="true" />
         </Link>
       </div>
     </aside>

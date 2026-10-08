@@ -56,10 +56,10 @@ const ADMIN_ROUTES = [
     'bundles/[id]', 'bundles', 'certificates/[id]', 'certificates',
     'courses/[id]/lessons/reorder', 'courses/[id]/lessons', 'courses/[id]/sections/[sectionId]',
     'courses/[id]/sections', 'courses/[id]', 'courses', 'enrollments/[id]', 'enrollments', 'lessons/[lessonId]/quiz', 'lessons/[lessonId]',
-    'media/[id]', 'media', 'payments/[id]', 'payments/cleanup', 'payments',
+    'media/[id]', 'media', 'payments/[id]', 'payments',
     'reconciliation/[paymentId]/retry', 'reconciliation/[paymentId]', 'reconciliation',
     'reports/export', 'reports', 'reviews/[id]', 'reviews',
-    'settings', 'tags/[id]', 'tags', 'users/[id]/enrollments', 'users/[id]/instructor-profile', 'users/[id]/reset-password',
+    'tags/[id]', 'tags', 'users/[id]/enrollments', 'users/[id]/instructor-profile', 'users/[id]/reset-password',
     'users/[id]', 'users/bulk', 'users/export', 'users',
 ];
 for (const r of ADMIN_ROUTES) MANIFEST[`admin/${r}/route.ts`] = 'admin';

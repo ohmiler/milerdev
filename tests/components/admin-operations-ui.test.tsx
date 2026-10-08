@@ -150,7 +150,7 @@ describe('Admin operations UI', () => {
     const adminComponentSources = collectTsxFiles(join(process.cwd(), 'src/components/admin'))
       .map((path) => readFileSync(path, 'utf8'));
 
-    expect(adminPages).toHaveLength(20);
+    expect(adminPages).toHaveLength(19);
     for (const migratedSource of migratedSources) {
       expect(migratedSource).not.toContain('<style');
       expect(migratedSource).not.toMatch(/#[0-9a-f]{3,8}/i);
@@ -247,9 +247,7 @@ describe('Admin operations UI', () => {
     expect(lessonsSource).not.toContain('admin-lesson-');
 
     const reportsSource = source('src/app/admin/reports/page.tsx');
-    const settingsSource = source('src/app/admin/settings/page.tsx');
     expect(reportsSource).toContain('<TabsList');
     expect(reportsSource).toContain('<SelectGroup>');
-    expect(settingsSource).toContain('<TabsList');
   });
 });

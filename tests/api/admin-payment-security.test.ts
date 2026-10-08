@@ -309,12 +309,4 @@ describe('admin payment mutation boundaries', () => {
     expect(response.status).toBe(409);
     expect(mocks.transactionDelete).not.toHaveBeenCalled();
   });
-
-  it('does not hard-delete stale pending attempts during cleanup', async () => {
-    const route = await import('@/app/api/admin/payments/cleanup/route');
-    const response = await route.DELETE();
-
-    expect(response.status).toBe(405);
-    expect(mocks.dbDelete).not.toHaveBeenCalled();
-  });
 });
