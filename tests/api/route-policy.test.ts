@@ -36,6 +36,7 @@ const MANIFEST: Record<string, RouteClass> = {
     'enrollments/check/route.ts': 'mixed',
     'enrollments/route.ts': 'auth',
     'health/route.ts': 'public',
+    'learning/continue/route.ts': 'auth',
     'lessons/[lessonId]/quiz/attempts/route.ts': 'auth',
     'image-proxy/route.ts': 'mixed',
     'payments/route.ts': 'auth',
