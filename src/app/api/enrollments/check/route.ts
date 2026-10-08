@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { enrollments } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { logError } from '@/lib/error-handler';
+import { getCourseLearning, type CourseLearning } from '@/lib/learning/dashboard';
 
 // GET /api/enrollments/check?courseId=xxx - Check if user is enrolled
 export async function GET(request: Request) {
@@ -31,10 +32,22 @@ export async function GET(request: Request) {
       )
       .limit(1);
 
+    // Where the learner stands, for the course page. It never decides access: a failed read leaves
+    // it out and the answer above still stands.
+    let learning: CourseLearning | null = null;
+    if (enrollment) {
+      try {
+        learning = await getCourseLearning(session.user.id, courseId);
+      } catch (error) {
+        logError(error, { action: 'enrollments.check.learning_failed' });
+      }
+    }
+
     return NextResponse.json({
       enrolled: !!enrollment,
       authenticated: true,
       enrollment: enrollment || null,
+      learning,
     });
   } catch (error) {
     logError(error, { action: 'enrollments.check.fetch_failed' });
@@ -44,4 +57,3 @@ export async function GET(request: Request) {
     );
   }
 }
-

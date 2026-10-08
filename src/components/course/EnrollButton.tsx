@@ -8,12 +8,14 @@ import CheckoutDialog, { CHECKOUT_CONTRACT } from '@/components/checkout/Checkou
 import Modal from '@/components/ui/Modal';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import type { CourseLearning } from '@/lib/learning/dashboard';
 
 interface EnrollButtonProps {
   courseId: string;
   courseSlug: string;
   price: number;
-  onEnrollmentChange?: (enrolled: boolean) => void;
+  // The learner's progress comes with the answer when they are enrolled, for the course page.
+  onEnrollmentChange?: (enrolled: boolean, learning?: CourseLearning | null) => void;
 }
 
 export const COURSE_PAYMENT_CONTRACT = {
@@ -35,9 +37,9 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const updateEnrolled = useCallback((value: boolean) => {
+  const updateEnrolled = useCallback((value: boolean, learning: CourseLearning | null = null) => {
     setEnrolled(value);
-    onEnrollmentChange?.(value);
+    onEnrollmentChange?.(value, learning);
   }, [onEnrollmentChange]);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
     const controller = new AbortController();
     fetch(`/api/enrollments/check?courseId=${encodeURIComponent(courseId)}`, { signal: controller.signal })
       .then((response) => response.json())
-      .then((data) => { if (!controller.signal.aborted) updateEnrolled(data.enrolled === true); })
+      .then((data) => { if (!controller.signal.aborted) updateEnrolled(data.enrolled === true, data.learning ?? null); })
       .catch(() => { if (!controller.signal.aborted) updateEnrolled(false); })
       .finally(() => { if (!controller.signal.aborted) setChecking(false); });
     return () => controller.abort();
