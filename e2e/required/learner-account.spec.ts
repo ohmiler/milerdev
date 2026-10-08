@@ -27,12 +27,15 @@ test('account preserves private destinations, saves a profile, and requires fres
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
   await page.goto('/settings');
+  // Settings moved onto the account page; the old address still leads there.
+  await expect(page).toHaveURL(/\/profile$/);
   await page.getByRole('button', { name: /เปลี่ยนรหัสผ่าน/ }).click();
   await page.getByLabel('รหัสผ่านปัจจุบัน', { exact: true }).fill(password);
   const nextPassword = 'Bb2!' + id;
   await page.getByLabel('รหัสผ่านใหม่', { exact: true }).fill(nextPassword);
   await page.getByLabel('ยืนยันรหัสผ่านใหม่', { exact: true }).fill(nextPassword);
-  await page.getByRole('main').locator('button[type=submit]').click();
+  // The account page also has the name form, so submit the password form itself.
+  await page.getByRole('main').locator('form').filter({ has: page.getByLabel('รหัสผ่านใหม่', { exact: true }) }).locator('button[type=submit]').click();
   await page.waitForURL(/\/login/);
   const session = await (await page.request.get('/api/auth/session')).json();
   expect(session?.user).toBeUndefined();
