@@ -6,8 +6,8 @@ export default function ProfileLoading() {
   return (
     <LearnerAccountShell
       current="profile"
-      title="โปรไฟล์ของฉัน"
-      description="ข้อมูลระบุตัวตนสำหรับบัญชีผู้เรียนและชื่อที่ใช้ในประสบการณ์เรียนของคุณ"
+      title="บัญชีของฉัน"
+      description="ชื่อที่ใช้ในบัญชีและบนใบรับรอง และวิธีเข้าสู่ระบบของคุณ"
     >
       <div aria-busy="true" aria-label="กำลังโหลดโปรไฟล์">
         <p className="sr-only" role="status" aria-live="polite">กำลังโหลดโปรไฟล์</p>
@@ -29,7 +29,8 @@ export default function ProfileLoading() {
           ))}
         </div>
 
-        <Card className="mt-8"><CardHeader><CardTitle><Skeleton className="h-7 w-48" /></CardTitle></CardHeader><CardContent className="grid gap-5"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardContent></Card>
+        <Card className="mt-6"><CardHeader><CardTitle><Skeleton className="h-7 w-48" /></CardTitle></CardHeader><CardContent className="grid gap-5"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardContent></Card>
+        <Card className="mt-6"><CardHeader><CardTitle><Skeleton className="h-7 w-40" /></CardTitle></CardHeader><CardContent><Skeleton className="h-12 w-full" /></CardContent></Card>
         </div>
       </div>
     </LearnerAccountShell>

@@ -27,7 +27,14 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { PasswordInput } from '@/components/auth/AuthFormLayout';
 
-export default function PasswordSettingsForm({ hasPassword }: { hasPassword: boolean }) {
+export default function PasswordSettingsForm({
+  hasPassword,
+  signsInWithGoogle = false,
+}: {
+  hasPassword: boolean;
+  // A Google sign-in is linked. Without one, a passwordless account sets its first password by email.
+  signsInWithGoogle?: boolean;
+}) {
   const router = useRouter();
   const busy = useRef(false);
   const [openItem, setOpenItem] = useState('');
@@ -96,14 +103,29 @@ export default function PasswordSettingsForm({ hasPassword }: { hasPassword: boo
     }
   }
 
-  if (!hasPassword) {
+  if (!hasPassword && signsInWithGoogle) {
     return (
       <Alert>
         <Info aria-hidden="true" />
         <AlertTitle>รหัสผ่าน</AlertTitle>
         <AlertDescription>
-          บัญชีนี้ใช้ Google เข้าสู่ระบบ จึงไม่ต้องตั้งรหัสผ่านแยก
-          <div className="mt-3"><Badge variant="secondary">Google Login</Badge></div>
+          บัญชีนี้เข้าสู่ระบบด้วย Google จึงไม่ต้องตั้งรหัสผ่านแยก
+          <div className="mt-3"><Badge variant="secondary">เข้าสู่ระบบด้วย Google</Badge></div>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!hasPassword) {
+    return (
+      <Alert>
+        <Info aria-hidden="true" />
+        <AlertTitle>บัญชีนี้ยังไม่มีรหัสผ่าน</AlertTitle>
+        <AlertDescription>
+          ตั้งรหัสผ่านแรกได้ด้วยลิงก์ทางอีเมล จากหน้าลืมรหัสผ่าน
+          <div className="mt-3">
+            <Button asChild variant="outline" size="sm"><Link href="/forgot-password">ตั้งรหัสผ่านผ่านอีเมล</Link></Button>
+          </div>
         </AlertDescription>
       </Alert>
     );
