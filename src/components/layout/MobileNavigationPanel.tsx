@@ -18,6 +18,7 @@ import {
     NAV_LINKS,
     UserAvatar,
 } from './navigation-config';
+import MobileContinueCard from './MobileContinueCard';
 
 interface MobileNavigationPanelProps {
     session: Session | null;
@@ -61,6 +62,7 @@ export default function MobileNavigationPanel({
 
             {hasMemberSession ? (
                 <>
+                    <MobileContinueCard onNavigate={onClose} />
                     <nav className="flex flex-col gap-1 py-2" aria-label="เมนูบัญชีสมาชิก">
                         {ACCOUNT_MENU_LINKS.map((destination) => {
                             const state = getNavigationState(pathname, destination);
