@@ -9,7 +9,7 @@ export default function OrderReviewSummary({ review }: { review: OrderReview }) 
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle>{review.target.type === 'bundle' ? 'ตรวจสอบรายการ Bundle' : 'ตรวจสอบรายการคอร์ส'}</CardTitle>
+        <CardTitle>{review.target.type === 'bundle' ? 'ตรวจสอบรายการชุดคอร์ส' : 'ตรวจสอบรายการคอร์ส'}</CardTitle>
         <CardDescription className="break-words">{review.target.title}</CardDescription>
       </CardHeader>
       <CardContent className="flex min-w-0 flex-col gap-3">

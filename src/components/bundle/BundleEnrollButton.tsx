@@ -59,7 +59,7 @@ export default function BundleEnrollButton({ bundleId, bundleSlug, decisionFacts
   }
   const disclosure = decisionFacts.ownership.disclosure ? <Alert><CircleAlert aria-hidden="true" /><AlertTitle>มีบางคอร์สอยู่ในบัญชีแล้ว</AlertTitle><AlertDescription>{decisionFacts.ownership.disclosure}</AlertDescription></Alert> : null;
   if (decisionFacts.actions.acquisition.kind === 'unavailable') {
-    return <div className="flex flex-col gap-4">{disclosure}<Empty className="border"><EmptyHeader><EmptyMedia variant="icon"><CircleAlert aria-hidden="true" /></EmptyMedia><EmptyTitle>Bundle นี้กำลังเตรียมเนื้อหา</EmptyTitle><EmptyDescription>จะเปิดรับสมัครเมื่อทุกคอร์สใน Bundle มีบทเรียนพร้อมแล้ว</EmptyDescription></EmptyHeader></Empty></div>;
+    return <div className="flex flex-col gap-4">{disclosure}<Empty className="border"><EmptyHeader><EmptyMedia variant="icon"><CircleAlert aria-hidden="true" /></EmptyMedia><EmptyTitle>ชุดคอร์สนี้กำลังเตรียมเนื้อหา</EmptyTitle><EmptyDescription>จะเปิดรับสมัครเมื่อทุกคอร์สในชุดมีบทเรียนพร้อมแล้ว</EmptyDescription></EmptyHeader></Empty></div>;
   }
   return (
     <>

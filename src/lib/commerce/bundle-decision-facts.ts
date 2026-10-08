@@ -234,8 +234,8 @@ export function deriveBundleDecisionFacts(
   const acquisition = readiness === 'preparing'
     ? { kind: 'unavailable', label: 'ยังไม่เปิดรับสมัคร', href: null } as const
     : bundlePrice === 0
-      ? { kind: 'enroll-free', label: 'ลงทะเบียน Bundle ฟรี', href: null } as const
-      : { kind: 'start-checkout', label: `ซื้อ Bundle ${bundleFormatted}`, href: null } as const;
+      ? { kind: 'enroll-free', label: 'ลงทะเบียนชุดคอร์สฟรี', href: null } as const
+      : { kind: 'start-checkout', label: `ซื้อชุดคอร์ส ${bundleFormatted}`, href: null } as const;
 
   return {
     readiness,

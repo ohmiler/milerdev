@@ -20,7 +20,7 @@ for (const type of ['course', 'bundle'] as const) {
     const fixture = type === 'course' ? E2E_FIXTURES.courses.longThai : E2E_FIXTURES.bundle;
     const destination = `/${type === 'course' ? 'courses' : 'bundles'}/${fixture.slug}`;
     await registerBuyer(page, destination);
-    const trigger = page.getByRole('button', { name: type === 'course' ? /ซื้อคอร์สนี้/ : /ซื้อ Bundle/ }).first();
+    const trigger = page.getByRole('button', { name: type === 'course' ? /ซื้อคอร์สนี้/ : /ซื้อชุดคอร์ส/ }).first();
     const dialog = page.getByRole('dialog', { name: 'เลือกช่องทางชำระเงิน' });
 
     await page.emulateMedia({ reducedMotion: 'reduce' });

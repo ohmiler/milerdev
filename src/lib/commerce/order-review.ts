@@ -52,11 +52,11 @@ export async function loadOrderReview(
   const bundle = await db.query.bundles.findFirst({
     where: and(eq(bundles.id, input.bundleId!), eq(bundles.status, 'published')),
   });
-  if (!bundle) throw new OrderReviewError('ไม่พบ Bundle ที่เปิดขาย', 404);
+  if (!bundle) throw new OrderReviewError('ไม่พบชุดคอร์สที่เปิดขาย', 404);
   const included = await db.select({ course: courses, orderIndex: bundleCourses.orderIndex }).from(bundleCourses)
     .innerJoin(courses, eq(bundleCourses.courseId, courses.id)).where(eq(bundleCourses.bundleId, bundle.id));
   if (included.some(({ course }) => course.status !== 'published')) {
-    throw new OrderReviewError('Bundle นี้ยังไม่พร้อมรับการลงทะเบียน', 409);
+    throw new OrderReviewError('ชุดคอร์สนี้ยังไม่พร้อมรับการลงทะเบียน', 409);
   }
   const ids = included.map(({ course }) => course.id);
   const [lessonCounts, owned] = ids.length ? await Promise.all([
@@ -73,7 +73,7 @@ export async function loadOrderReview(
   return {
     target: { type: 'bundle', id: bundle.id, title: bundle.title, href: facts.actions.discovery.href },
     price: { amountDue: facts.price.bundle.toFixed(2), currency: 'THB' },
-    access: { ownedCount: facts.ownership.ownedCount, totalCount: ids.length, description: facts.ownership.disclosure || (facts.ownership.status === 'complete' ? 'คุณมีสิทธิ์เรียนทุกคอร์สใน Bundle นี้แล้ว' : facts.price.isFree ? 'เรียนได้ทุกคอร์สใน Bundle ทันทีหลังกดยืนยันลงทะเบียน' : 'เรียนได้ทุกคอร์สใน Bundle ทันทีหลังระบบยืนยันการชำระเงิน') },
+    access: { ownedCount: facts.ownership.ownedCount, totalCount: ids.length, description: facts.ownership.disclosure || (facts.ownership.status === 'complete' ? 'คุณมีสิทธิ์เรียนทุกคอร์สในชุดนี้แล้ว' : facts.price.isFree ? 'เรียนได้ทุกคอร์สในชุดทันทีหลังกดยืนยันลงทะเบียน' : 'เรียนได้ทุกคอร์สในชุดทันทีหลังระบบยืนยันการชำระเงิน') },
     comparison: { separate: facts.price.separateCurrent.toFixed(2), label: facts.price.comparison.label },
     action: facts.ownership.status === 'complete' ? 'owned' : facts.readiness !== 'ready' ? 'unavailable' : facts.price.isFree ? 'enroll-free' : 'pay',
   };
