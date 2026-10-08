@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | Branch สั้น ๆ + PR เล็ก (trunk-based) | มีแล้ว | merge PR ต่อเนื่อง, Conventional Commits | - |
 | CI ก่อน merge | มีแล้ว | lint, `tsc`, admin-text, unit, required E2E บน MySQL จริง, build; ด่าน schema drift | - |
-| Required checks | บางส่วน | branch protection (2026-10-08) บังคับ Lint/Test/Build และให้ branch ทันกับ `master`; GitHub นับ job ที่ skipped เป็นผ่าน จึงมี job `CI passed` ที่ล้มเมื่อ job ใดไม่ `success` | เจ้าของเพิ่ม `CI passed` เป็น required check และปิด "Require branches to be up to date" |
+| Required checks | มีแล้ว | branch protection (2026-10-08) บังคับ Lint/Test/Build และ `CI passed` ไม่บังคับให้ branch ทันกับ `master`; GitHub นับ job ที่ skipped เป็นผ่าน `CI passed` จึงล้มเมื่อ job ใดไม่ `success` | - |
 | คิว merge (merge queue) | ใช้ไม่ได้ตอนนี้ | GitHub merge queue ใช้ได้กับ public repo ที่เป็นของ Organization ([GitHub](https://github.blog/changelog/2023-07-12-pull-request-merge-queue-is-now-generally-available/)) แต่ `ohmiler/milerdev` อยู่ใต้บัญชีส่วนตัว ทางแทน: ไม่บังคับให้ทันกับ `master`, merge ทันทีที่ CI ผ่าน, CI บน `master` หลัง merge และด่าน deploy ตรวจ CI ของ `master` (AGENTS.md หัวข้อ Merging) | พิจารณาย้าย repo ไป Organization เมื่อ PR มากขึ้นหรือ `master` แดงบ่อย |
 | ตาข่าย test ของจุดเสี่ยง | บางส่วน | MySQL จริง: Stripe, PromptPay, ใบรับรอง, ลบ enrollment, admin ให้สิทธิ์เรียน/ออกใบรับรอง; route-policy test; admin route ที่ยังไม่มีเทสต์ของตัวเอง 13 จาก 45 (2026-10-04), webhook/ใบรับรองใน E2E ที่บังคับ | agent + เจ้าของ |
 | Migration ปลอดภัย | บางส่วน | รันเป็น pre-deploy (`npm run db:migrate`), health check `/api/health`; กติกา expand/contract อยู่ใน AGENTS.md; ลบ `db:push` ออกจาก scripts แล้ว (2026-10-04) | - |
@@ -49,7 +49,8 @@
 ## ลำดับที่แนะนำให้เจ้าของลงมือ
 
 1. ตั้ง install command ของ Railway เป็น `npm ci` (deploy จาก branch `production` ตั้งแล้ว 2026-10-07)
-2. ใน GitHub Settings → Branches → `master`: เพิ่ม `CI passed` เป็น required check และปิด "Require branches to be up to date before merging"; ใน Settings → General เปิด "Automatically delete head branches"
-3. เพิ่ม alert พื้นฐาน (health check ล้ม, อัตรา error) และยืนยันตาราง backup
-4. เปิด secret scanning และ Dependabot alerts ใน GitHub Settings
-5. ตัดสินใจ: จะมี staging หรือไม่
+2. เพิ่ม alert พื้นฐาน (health check ล้ม, อัตรา error) และยืนยันตาราง backup
+3. เปิด secret scanning และ Dependabot alerts ใน GitHub Settings
+4. ตัดสินใจ: จะมี staging หรือไม่
+
+ทำแล้ว 2026-10-08: `CI passed` เป็น required check, ปิด "Require branches to be up to date before merging" และเปิด "Automatically delete head branches"
