@@ -6,7 +6,6 @@ import {
     House,
     Info,
     Mail,
-    Settings,
     User,
 } from 'lucide-react';
 
@@ -33,7 +32,6 @@ const accountIcons: Record<(typeof ACCOUNT_NAVIGATION)[number]['key'], LucideIco
     payments: CreditCard,
     certificates: Award,
     profile: User,
-    settings: Settings,
 };
 
 export const NAV_LINKS = PUBLIC_NAVIGATION.map((destination) => ({
