@@ -1,0 +1,49 @@
+# High-risk paths: merge tier C in AGENTS.md.
+# A pull request that touches any path below is merged by the owner, or after the owner
+# reads the diff and says "merge". Every other change is tier A or B.
+# Patterns are path prefixes so that `git diff --name-only` can be checked against them by eye.
+
+# Auth, roles, rate limits and request security
+/src/proxy.ts @ohmiler
+/src/lib/auth/ @ohmiler
+/src/lib/security/ @ohmiler
+/src/lib/users/ @ohmiler
+/src/app/api/auth/ @ohmiler
+/src/app/api/profile/ @ohmiler
+/src/app/api/image-proxy/ @ohmiler
+/src/app/api/admin/users/ @ohmiler
+/src/app/api/admin/settings/ @ohmiler
+
+# Payments, enrollment and webhooks
+/src/lib/commerce/ @ohmiler
+/src/app/api/checkout/ @ohmiler
+/src/app/api/payments/ @ohmiler
+/src/app/api/promptpay/ @ohmiler
+/src/app/api/slip/ @ohmiler
+/src/app/api/stripe/ @ohmiler
+/src/app/api/bundles/ @ohmiler
+/src/app/api/enroll/ @ohmiler
+/src/app/api/enrollments/ @ohmiler
+/src/app/api/admin/enrollments/ @ohmiler
+/src/app/api/admin/payments/ @ohmiler
+/src/app/api/admin/reconciliation/ @ohmiler
+
+# Certificates and the progress that earns them
+/src/lib/certificates/ @ohmiler
+/src/lib/learning/progress.ts @ohmiler
+/src/app/api/certificates/ @ohmiler
+/src/app/api/progress/ @ohmiler
+/src/app/api/admin/certificates/ @ohmiler
+
+# Uploads
+/src/lib/bunny/ @ohmiler
+/src/app/api/upload/ @ohmiler
+/src/app/api/admin/media/ @ohmiler
+
+# Database schema and migrations
+/src/lib/db/ @ohmiler
+/drizzle/ @ohmiler
+
+# CI, repository rules and the agent's own rules
+/.github/ @ohmiler
+/AGENTS.md @ohmiler

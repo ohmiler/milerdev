@@ -11,17 +11,18 @@
 3. พัฒนาและตรวจพฤติกรรมตามความเสี่ยง แก้ regression ที่เกิดจากงานนี้ก่อนส่งต่อ
 4. Review diff เทียบโจทย์และกติกา repo
 5. Stage เฉพาะไฟล์ของงาน ใช้ Conventional Commit, push branch และเปิด PR เข้า `master` เมื่องานเสร็จและตรวจแล้ว เชื่อม Issue ถ้ามี
-   PR ไม่ทำให้เกิดการ deploy จึงเปิดได้ทันที CI จะได้รันเร็ว และงานมีสำรองบน GitHub
+   PR ไม่ทำให้เกิดการ deploy จึงเปิดได้ทันทีที่ตรวจในเครื่องผ่าน CI จะ build และรัน `Required E2E` ให้ ระหว่างนั้นถ่ายภาพหน้าจอไปได้
    PR body ระบุสิ่งที่เปลี่ยน สิ่งที่ตรวจแล้ว สิ่งที่**ยังไม่ได้**ตรวจ และความเสี่ยงต่อ production
    งานเล็กที่เสี่ยงต่ำในหน้าหรือเรื่องเดียวกันรวมเป็น PR เดียวได้ แยก commit เรื่องละ 1 commit และแยกหัวข้อใน PR body
    งานเสี่ยงสูง migration และ CI ยังต้องแยก PR เดี่ยว PR ที่รวมงานถูก squash merge ถ้า revert จะย้อนทุกเรื่องในนั้น
 6. รายงานเจ้าของว่าเปลี่ยนอะไร ตรวจอะไรแล้ว และลองดูบน dev server ได้อย่างไร
    งานที่ผู้ใช้มองเห็นต้องแนบภาพก่อนและหลัง ทั้งจอมือถือ (390px) และเดสก์ท็อป (1440px) เพื่อให้เจ้าของตรวจได้โดยไม่ต้องเปิด localhost
    ปิดท้ายทุกรายงานด้วยสิ่งที่รออยู่: PR ที่เปิดอยู่ และงานที่ merge แล้วแต่ยังไม่ deploy
-7. รอ CI และแก้ failures ที่เกิดจากงานนี้ อัปเดต branch ด้วยการ merge `master` เข้ามา (ไม่ rebase ไม่ force-push)
-8. Merge เข้า `master` ตามระดับความเสี่ยงใน AGENTS.md (หัวข้อ Merging) การ merge ไม่ deploy:
-   - **A** เอกสารหรือเทสต์อย่างเดียว และ **B** โค้ด production นอกจุดเสี่ยงสูง: agent merge เองเมื่อ CI ผ่านจริงและ branch ทันกับ `master`
-   - **C** จุดเสี่ยงสูงและ CI gate: เจ้าของ merge เอง หรือสั่ง "merge" หลังอ่าน diff
+7. รอ CI และแก้ failures ที่เกิดจากงานนี้ merge `master` เข้า branch เฉพาะเมื่อมี conflict หรือ GitHub บังคับให้ทันกับ `master` (ไม่ rebase ไม่ force-push)
+8. Merge เข้า `master` ตามระดับความเสี่ยงใน AGENTS.md (หัวข้อ Merging) ทันทีที่ CI ผ่าน ไม่ต้องเข้าคิว การ merge ไม่ deploy:
+   - **A** เอกสารหรือเทสต์อย่างเดียว และ **B** โค้ด production อื่น: agent merge เองเมื่อ CI ผ่านจริง
+   - **C** PR ที่แตะ path ใดใน [CODEOWNERS](../../.github/CODEOWNERS) (จุดเสี่ยงสูง, migration, CI, AGENTS.md): เจ้าของ merge เอง หรือสั่ง "merge" หลังอ่าน diff
+   หลัง merge ดู CI ของ `master` ถ้าแดง หยุด merge แล้วแก้ `master` ก่อน เพราะ `master` ที่แดง deploy ไม่ได้
 9. Deploy เมื่อเจ้าของพิมพ์ "deploy" เท่านั้น (AGENTS.md หัวข้อ Deploying, ADR 0013):
    agent ตรวจ CI ของ commit ล่าสุดบน `master`, `Production Smoke` ของ deploy ครั้งก่อน และ migration ที่ลบของ
    แล้วสรุปสิ่งที่จะขึ้น fast-forward branch `production` ไปที่ `master` จากนั้นดู Railway และ `Production Smoke` เจ้าของยืนยันผล
@@ -32,7 +33,8 @@
 | --- | --- |
 | เอกสารเท่านั้น | ตรวจเนื้อหา ลิงก์ UTF-8 และ diff; ไม่ต้องรัน test suite/build ในเครื่อง |
 | CI/configuration | ตรวจ syntax และ job/step ที่แก้ รันคำสั่งที่เพิ่ม และดู CI ของ PR |
-| Application code | affected tests, lint, `tsc`, build และ `npm run test:e2e:local` ก่อนเปิด PR; ขยายชุดตรวจเมื่อกระทบ shared behavior หรือจุดเสี่ยงสูง |
+| Application code (tier B) | affected tests, lint และ `tsc` ก่อนเปิด PR; CI รัน build และ `Required E2E` ให้ ถ้าแก้ required journeys หรือ fixtures ให้รัน `npm run test:e2e:local` ด้วย |
+| Application code (tier C) | เหมือน tier B และรัน `npm run test:e2e:local` ก่อนเปิด PR |
 | ข้อความแอดมินภาษาไทย | `npm run check:admin-text` เพิ่มจากการตรวจที่เกี่ยวข้อง |
 | Auth/payment/enrollment/certificate/data | ตรวจ authorization, validation, replay/idempotency และ recovery บน MySQL จริง (`milerdev_e2e`) และ mock providers; รายงานส่วนที่ยังไม่ทดสอบ |
 
