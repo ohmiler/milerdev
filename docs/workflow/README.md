@@ -63,8 +63,8 @@ Build และ Required E2E เก็บ `.next/cache` ไว้ใน GitHub c
 GitHub นับ job ที่ถูก skipped เป็นผ่าน แม้เป็น required check ([GitHub Docs](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/using-conditions-to-control-job-execution))
 `CI passed` จึงรันแม้ job อื่นล้ม (`if: ${{ !cancelled() }}`) และแปลงผลที่ไม่ใช่ `success` เป็นล้ม
 
-branch protection (อ่านล่าสุด 2026-10-08) บังคับ `Lint & Type Check`, `Test`, `Build`, branch ต้องทันกับ `master` และไม่บังคับ approval
-เมื่อเจ้าของเพิ่ม `CI passed` เป็น required check แล้ว `Required E2E` จะถูกบังคับด้วยเครื่อง จนกว่าจะถึงตอนนั้น ก่อน merge ให้ยืนยันว่าทุก job **สำเร็จจริง** ไม่ใช่ถูก skipped
+branch protection (อ่านล่าสุด 2026-10-08) บังคับ `Lint & Type Check`, `Test`, `Build` และ `CI passed` ไม่บังคับให้ branch ทันกับ `master` และไม่บังคับ approval
+`CI passed` ทำให้ `Required E2E` ถูกบังคับด้วยเครื่อง ก่อน merge ยังยืนยันว่าทุก job **สำเร็จจริง** ไม่ใช่ถูก skipped
 
 หลัง deploy สำเร็จ `Production Smoke` ([production-smoke.yml](../../.github/workflows/production-smoke.yml)) ตรวจหน้าเว็บจริง
 ผลผ่านไม่ยืนยันการทำงานของ email, Google หรือ payment providers
