@@ -260,6 +260,18 @@ describe('POST /api/stripe/checkout', () => {
         expect(db.insert).toHaveBeenCalledTimes(1);
     });
 
+    it('sends Stripe a plain-text description, without HTML entities', async () => {
+        vi.mocked(db.query.courses.findFirst).mockResolvedValue({
+            ...publishedCourse,
+            description: '<p>เรียน HTML &amp; CSS</p><p>สร้างเว็บแรก</p>',
+        } as never);
+        mockDb.selectResults = [];
+        const res = await callCheckout({ courseId: 'course-1' });
+        expect(res.status).toBe(200);
+        const stripeCall = (mockedStripe.checkout.sessions.create as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+        expect(stripeCall?.line_items?.[0]?.price_data?.product_data?.description).toBe('เรียน HTML & CSS สร้างเว็บแรก');
+    });
+
     it('should use promo price when promo is active', async () => {
         vi.mocked(db.query.courses.findFirst).mockResolvedValue(promoCourse as never);
         mockDb.selectResults = [];
