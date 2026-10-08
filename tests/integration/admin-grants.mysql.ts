@@ -144,14 +144,20 @@ describe('admin POST /api/admin/enrollments on real MySQL', () => {
 });
 
 describe('admin POST /api/admin/users/[id]/enrollments on real MySQL', () => {
-    it('grants one enrollment without writing an audit entry (KNOWN DEFECT: the other grant route audits)', async () => {
+    it('grants one enrollment and records who granted it', async () => {
         const { userId, courseId } = await seedLearnerAndCourse();
 
         const res = await grantFromUserPage(userId, courseId);
 
         expect(res.status).toBe(200);
-        expect(await enrollmentRows(userId, courseId)).toHaveLength(1);
-        expect(mocks.logAudit).not.toHaveBeenCalled();
+        const { enrollmentId } = await res.json();
+        const rows = await enrollmentRows(userId, courseId);
+        expect(rows).toHaveLength(1);
+        expect(rows[0].id).toBe(enrollmentId);
+        expect(mocks.logAudit).toHaveBeenCalledTimes(1);
+        expect(mocks.logAudit).toHaveBeenCalledWith(expect.objectContaining({
+            userId: 'admin-integration', action: 'create', entityType: 'enrollment', entityId: enrollmentId,
+        }));
     });
 
     it('rejects a duplicate and answers 404 for an unknown learner or course', async () => {
@@ -162,6 +168,8 @@ describe('admin POST /api/admin/users/[id]/enrollments on real MySQL', () => {
         expect((await grantFromUserPage(id('missing-user'), courseId)).status).toBe(404);
         expect((await grantFromUserPage(userId, id('missing-course'))).status).toBe(404);
         expect(await enrollmentRows(userId, courseId)).toHaveLength(1);
+        // Only the grant that created a row is audited.
+        expect(mocks.logAudit).toHaveBeenCalledTimes(1);
     });
 });
 
@@ -179,6 +187,11 @@ describe('admin POST /api/admin/certificates on real MySQL', () => {
         expect(b).toMatchObject({ isNew: false, certificate: { id: a.certificate.id } });
         expect(await certificateRows(userId, courseId)).toHaveLength(1);
         expect(await enrollmentRows(userId, courseId)).toHaveLength(0);
+        // The issue is audited once; returning the existing certificate writes nothing.
+        expect(mocks.logAudit).toHaveBeenCalledTimes(1);
+        expect(mocks.logAudit).toHaveBeenCalledWith(expect.objectContaining({
+            userId: 'admin-integration', action: 'create', entityType: 'certificate', entityId: a.certificate.id,
+        }));
     });
 
     it('issues one certificate when two admin requests race', async () => {
@@ -190,6 +203,7 @@ describe('admin POST /api/admin/certificates on real MySQL', () => {
 
         expect(statuses).toEqual([200, 201]);
         expect(await certificateRows(userId, courseId)).toHaveLength(1);
+        expect(mocks.logAudit).toHaveBeenCalledTimes(1);
     });
 
     it('does not reissue a revoked certificate and reports it as existing (KNOWN BEHAVIOR)', async () => {
