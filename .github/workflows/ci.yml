@@ -53,11 +53,11 @@ jobs:
           # drizzle-kit only reads the schema here; it never connects to this URL.
           DATABASE_URL: mysql://user:pass@localhost:3306/db
 
+  # Runs alongside the other jobs; CI passed below is the gate that needs all of them.
   build:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [lint-and-typecheck, test, required-e2e]
 
     steps:
       - name: Checkout code
@@ -68,6 +68,15 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+
+      # Next.js keeps Turbopack's build work in .next/cache; restoring it starts the build warm.
+      - name: Restore Next.js build cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-build-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-build-${{ hashFiles('package-lock.json') }}-
 
       - name: Install dependencies
         run: npm ci
@@ -160,6 +169,16 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
+      # The journey server builds the app with its own environment, so it keeps its own cache.
+      - name: Restore Next.js build cache
+        if: steps.scope.outputs.run == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-e2e-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-e2e-${{ hashFiles('package-lock.json') }}-
+
       - name: Install dependencies
         if: steps.scope.outputs.run == 'true'
         run: npm ci
@@ -216,3 +235,29 @@ jobs:
             test-results/
           retention-days: 7
           if-no-files-found: ignore
+
+  # The one check branch protection needs. GitHub reports a skipped job as passed, so this
+  # job runs even when a job above failed, and turns any result but success into a failure.
+  ci-passed:
+    name: CI passed
+    if: ${{ !cancelled() }}
+    needs: [lint-and-typecheck, test, required-e2e, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check that every job passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          if [ -z "$RESULTS" ]; then
+            echo "No job results to check."
+            exit 1
+          fi
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "A required job ended as $result."
+              exit 1
+            fi
+          done

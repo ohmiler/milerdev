@@ -45,17 +45,24 @@
 
 ## CI gates
 
-ตาม [ci.yml](../../.github/workflows/ci.yml) สาม job แรกรันพร้อมกัน แล้ว `Build` รันเมื่อทั้งสามผ่าน
+ตาม [ci.yml](../../.github/workflows/ci.yml) สี่ job แรกรันพร้อมกัน แล้ว `CI passed` สรุปผล
+เวลาที่รอจึงเท่ากับ job ที่นานที่สุด (`Required E2E`) ไม่ใช่ผลรวม
 
 | Job | สิ่งที่ตรวจ |
 | --- | --- |
 | Lint & Type Check | admin-text scan, ESLint, `tsc`, และ `schema.ts` ตรงกับ `drizzle/` |
 | Test | Vitest unit/component suite |
 | Required E2E | MySQL แยก, migrations, fixtures, integration tests บน MySQL จริง และ required browser journeys; PR ที่แก้เฉพาะเอกสารข้ามขั้นเหล่านี้ |
-| Build | production build; เป็นด่านรวมที่ `needs` ทั้งสาม job ข้างต้น |
+| Build | production build |
+| CI passed | ด่านรวม: รอทุก job ข้างต้น และล้มถ้า job ใดไม่ `success` รวมถึงถูก skipped หรือถูกยกเลิก |
 
-branch protection (อ่านล่าสุด 2026-09-13) บังคับ `Lint & Type Check`, `Test`, `Build` และไม่บังคับ approval
-`Required E2E` ถูกบังคับทางอ้อมผ่าน `Build`; ก่อน merge ให้ยืนยันว่าทุก job **สำเร็จจริง** ไม่ใช่ถูก skipped
+Build และ Required E2E เก็บ `.next/cache` ไว้ใน GitHub cache เพื่อให้ Turbopack เริ่ม build จากงานรอบก่อน
+
+GitHub นับ job ที่ถูก skipped เป็นผ่าน แม้เป็น required check ([GitHub Docs](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/using-conditions-to-control-job-execution))
+`CI passed` จึงรันแม้ job อื่นล้ม (`if: ${{ !cancelled() }}`) และแปลงผลที่ไม่ใช่ `success` เป็นล้ม
+
+branch protection (อ่านล่าสุด 2026-10-08) บังคับ `Lint & Type Check`, `Test`, `Build`, branch ต้องทันกับ `master` และไม่บังคับ approval
+เมื่อเจ้าของเพิ่ม `CI passed` เป็น required check แล้ว `Required E2E` จะถูกบังคับด้วยเครื่อง จนกว่าจะถึงตอนนั้น ก่อน merge ให้ยืนยันว่าทุก job **สำเร็จจริง** ไม่ใช่ถูก skipped
 
 หลัง deploy สำเร็จ `Production Smoke` ([production-smoke.yml](../../.github/workflows/production-smoke.yml)) ตรวจหน้าเว็บจริง
 ผลผ่านไม่ยืนยันการทำงานของ email, Google หรือ payment providers
