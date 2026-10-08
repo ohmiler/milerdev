@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { certificates, users } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { issueCertificate } from '@/lib/certificates/issuance';
+import { logAudit } from '@/lib/auditLog';
 
 // GET /api/admin/certificates - List all certificates
 export async function GET(request: Request) {
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { userId, courseId } = await request.json();
 
@@ -74,6 +76,10 @@ export async function POST(request: Request) {
     }
 
     const { certificate, isNew } = await issueCertificate(userId, courseId);
+
+    if (isNew) {
+      await logAudit({ userId: session.user.id, action: 'create', entityType: 'certificate', entityId: certificate.id, newValue: `user: ${userId}, course: ${courseId}` });
+    }
 
     return NextResponse.json({
       message: isNew ? 'ออกใบรับรองสำเร็จ' : 'ผู้เรียนมีใบรับรองอยู่แล้ว',

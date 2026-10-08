@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { enrollments, courses, users } from '@/lib/db/schema';
 import { eq, and, notInArray } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
+import { logAudit } from '@/lib/auditLog';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -96,6 +97,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   try {
     const authResult = await requireAdmin();
     if (authResult instanceof NextResponse) return authResult;
+    const { session } = authResult;
 
     const { id } = await params;
     const body = await request.json();
@@ -135,6 +137,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       userId: id,
       courseId,
     });
+
+    await logAudit({ userId: session.user.id, action: 'create', entityType: 'enrollment', entityId: enrollmentId, newValue: `user: ${id}, course: ${courseId}` });
 
     return NextResponse.json({ message: 'ลงทะเบียนสำเร็จ', enrollmentId });
   } catch (error) {
