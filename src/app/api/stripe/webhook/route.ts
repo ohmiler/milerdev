@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   if (customerEmail && details) {
     const courseName = details.courseCount === undefined
       ? details.title
-      : `${details.title} (Bundle)`;
+      : `${details.title} (ชุดคอร์ส)`;
     const enrollmentName = details.courseCount === undefined
       ? details.title
       : `${details.title} (${details.courseCount} courses)`;

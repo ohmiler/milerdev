@@ -63,7 +63,7 @@ describe('server order review', () => {
     mocks.bundle.mockResolvedValue({ id: 'bundle-1', slug: 'thai-bundle', title: 'ชุดคอร์ส', price: '1200.00' });
     results.push([{ course, orderIndex: 0 }, { course: { ...course, id: 'course-2' }, orderIndex: 1 }], [{ courseId: 'course-1', count: 1 }, { courseId: 'course-2', count: 1 }], []);
     const bundle = await loadOrderReview('member-1', { bundleId: 'bundle-1' });
-    expect(bundle.access.description).toBe('เรียนได้ทุกคอร์สใน Bundle ทันทีหลังระบบยืนยันการชำระเงิน');
+    expect(bundle.access.description).toBe('เรียนได้ทุกคอร์สในชุดทันทีหลังระบบยืนยันการชำระเงิน');
     for (const review of [paid, bundle]) expect(review.access.description).not.toMatch(/ฟรี|ลงทะเบียน/);
   });
 
