@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, Menu, Settings } from 'lucide-react';
+import { ExternalLink, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -40,13 +40,12 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
           {/* Each page renders its own h1; the bar only names the section. */}
           <p className="mt-1 font-heading text-lg font-semibold text-foreground">{activeTitle}</p>
         </div>
-        <Link href="/admin/settings" aria-label="เปิดการตั้งค่าผู้ดูแลระบบ" className="flex items-center gap-3 rounded-lg p-1.5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
+        <Link href="/profile" aria-label="เปิดบัญชีของฉัน" className="flex items-center gap-3 rounded-lg p-1.5 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
           <div className="hidden text-right xl:block">
             <strong className="block max-w-52 truncate text-sm font-medium text-foreground">{userName}</strong>
             <span className="block text-xs text-muted-foreground">ผู้ดูแลระบบ</span>
           </div>
           <span className="grid size-10 place-items-center rounded-full bg-muted text-sm font-semibold text-foreground">{initial}</span>
-          <Settings className="size-4 text-muted-foreground" aria-hidden="true" />
         </Link>
       </header>
 
@@ -104,7 +103,7 @@ export default function AdminHeader({ userName }: AdminHeaderProps) {
 
               <SheetFooter className="border-t border-border p-4">
                 <SheetClose asChild>
-                  <Link href="/admin/settings" className="flex items-center gap-3 rounded-lg p-1">
+                  <Link href="/profile" className="flex items-center gap-3 rounded-lg p-1">
                     <span className="grid size-9 place-items-center rounded-full bg-muted text-xs font-semibold">{initial}</span>
                     <div className="min-w-0 text-left">
                       <strong className="block truncate text-sm font-medium">{userName}</strong>
