@@ -36,10 +36,11 @@ const components: MDXComponents = {
   ol: ({ children }) => <ol className="my-5 list-decimal pl-6 [&>li]:my-2 marker:font-semibold">{children}</ol>,
   a: MdxLink,
   strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-  code: ({ children }) => <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.9375em]">{children}</code>,
+  // No ligatures: a beginner should see the >= they have to type, not a single ≥ glyph.
+  code: ({ children }) => <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.9375em] [font-variant-ligatures:none]">{children}</code>,
   // Scroll boxes take keyboard focus so a phone-width reader can scroll them without a pointer.
   pre: ({ children }) => (
-    <pre role="region" tabIndex={0} aria-label="ตัวอย่างโค้ด" className="my-6 overflow-x-auto focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40 rounded-xl bg-foreground px-5 py-4 font-mono text-[0.9375rem] leading-7 text-background [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit">
+    <pre role="region" tabIndex={0} aria-label="ตัวอย่างโค้ด" className="my-6 overflow-x-auto focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40 rounded-xl bg-foreground px-5 py-4 font-mono [font-variant-ligatures:none] text-[0.9375rem] leading-7 text-background [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit">
       {children}
     </pre>
   ),
