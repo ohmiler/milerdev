@@ -40,7 +40,7 @@ export function PromptBox({ text, title = 'ลองสั่ง agent แบบ
           {COPY_LABELS[state]}
         </Button>
       </figcaption>
-      <pre className="m-0 overflow-x-auto whitespace-pre-wrap bg-card px-5 py-4 font-mono text-[0.9375rem] leading-7 text-card-foreground">{text}</pre>
+      <pre className="m-0 overflow-x-auto whitespace-pre-wrap bg-card px-5 py-4 font-mono [font-variant-ligatures:none] text-[0.9375rem] leading-7 text-card-foreground">{text}</pre>
       <span role="status" className="sr-only">{state === 'copied' ? 'คัดลอกโจทย์แล้ว' : ''}</span>
     </figure>
   );
