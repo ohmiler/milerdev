@@ -51,7 +51,7 @@ export const HANDBOOK_CHAPTERS: HandbookChapter[] = [
   { number: 1, slug: 'developers-in-the-ai-era', title: 'Dev ทำอะไร ในยุคที่ AI เขียนโค้ดได้', summary: 'งานที่เปลี่ยนไป และงานที่ยังเป็นของคน', part: 'foundations', status: 'draft', readingMinutes: 8 },
   { number: 2, slug: 'what-is-code', title: 'โค้ดคืออะไร', summary: 'คอมพิวเตอร์ทำตามคำสั่งทีละบรรทัดยังไง', part: 'foundations', status: 'draft', readingMinutes: 10 },
   { number: 3, slug: 'how-the-web-works', title: 'เว็บทำงานยังไง', summary: 'เบราว์เซอร์ เซิร์ฟเวอร์ และฐานข้อมูล', part: 'foundations', status: 'draft', readingMinutes: 10 },
-  { number: 4, slug: 'first-developer-tools', title: 'เครื่องมือแรกของ dev', summary: 'editor, terminal และ Git แบบภาพรวม', part: 'foundations', status: 'planned' },
+  { number: 4, slug: 'first-developer-tools', title: 'เครื่องมือแรกของ dev', summary: 'editor, terminal และ Git แบบภาพรวม', part: 'foundations', status: 'draft', readingMinutes: 10 },
   { number: 5, slug: 'what-is-an-ai-agent', title: 'AI agent คืออะไร', summary: 'ต่างจากแชตบอตตรงที่ลงมือทำงานได้เอง', part: 'agents', status: 'draft', readingMinutes: 10 },
   {
     number: 6,
