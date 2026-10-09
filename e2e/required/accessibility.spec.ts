@@ -33,6 +33,8 @@ test('public pages have no serious WCAG A/AA findings', async ({ page }, testInf
     `/certificate/${E2E_FIXTURES.certificates.active.code}`,
     '/about',
     '/faq',
+    '/handbook',
+    '/handbook/writing-prompts-for-agents',
     '/contact',
     '/login',
     '/register',
