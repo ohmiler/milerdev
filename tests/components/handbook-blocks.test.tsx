@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ChapterLink } from '@/components/handbook/ChapterBlocks';
 import { PromptBox } from '@/components/handbook/PromptBox';
 import { Quiz } from '@/components/handbook/Quiz';
+import { HANDBOOK_CHAPTERS } from '@/lib/handbook/chapters';
 import { headingId } from '@/lib/handbook/headings';
 import { useMDXComponents } from '@/mdx-components';
 
@@ -61,13 +62,18 @@ describe('handbook prompt box', () => {
 });
 
 describe('handbook chapter links and headings', () => {
-  it('links a readable chapter and names one still being written without a link', () => {
+  it('links a published chapter and, in production, names an unpublished one without a link', () => {
+    // Drafts are readable outside production, so check the page a visitor gets.
+    vi.stubEnv('NODE_ENV', 'production');
+    const unpublished = HANDBOOK_CHAPTERS.find((chapter) => chapter.status !== 'published');
     const { rerender } = render(<ChapterLink number={6} />);
     expect(screen.getByRole('link', { name: 'บทที่ 6: เขียนโจทย์ให้ agent' }).getAttribute('href')).toBe('/handbook/writing-prompts-for-agents');
 
-    rerender(<ChapterLink number={9} />);
+    expect(unpublished, 'every chapter is published; pick another case for this test').toBeDefined();
+    rerender(<ChapterLink number={unpublished!.number} />);
     expect(screen.queryByRole('link')).toBeNull();
-    expect(screen.getByText('บทที่ 9: ความปลอดภัย (กำลังเขียน)')).toBeTruthy();
+    expect(screen.getByText(`บทที่ ${unpublished!.number}: ${unpublished!.title} (กำลังเขียน)`)).toBeTruthy();
+    vi.unstubAllEnvs();
   });
 
   it('gives an MDX h2 the id that the "ในหน้านี้" list links to', () => {
