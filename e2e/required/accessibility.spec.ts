@@ -43,6 +43,8 @@ test('public pages have no serious WCAG A/AA findings', async ({ page }, testInf
     '/handbook/reviewing-agent-work',
     '/handbook/tests',
     '/handbook/security-basics',
+    '/handbook/git-and-pull-requests',
+    '/handbook/shipping-to-production',
     '/contact',
     '/login',
     '/register',

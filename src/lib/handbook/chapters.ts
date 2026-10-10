@@ -36,10 +36,11 @@ export const HANDBOOK_DESCRIPTION =
   'คู่มือฟรีสำหรับคนที่ยังไม่เคยเขียนโค้ด เข้าใจพื้นฐานที่ AI ทำแทนไม่ได้ แล้วฝึกสั่งงาน ตรวจงาน และส่งงานขึ้นใช้จริงร่วมกับ AI agent ทีละขั้น';
 
 /**
- * Off until the owner launches the handbook (ADR 0016, decision 7). While off, pages ask search
- * engines not to index them, and the handbook stays out of the navigation and the sitemap.
+ * The owner launched the handbook on 2026-10-10 (ADR 0016, decision 7): published chapters are
+ * indexable, listed in the sitemap, and linked from the navigation and the footer. Setting this
+ * back to false asks search engines not to index the pages and drops them from the sitemap.
  */
-export const HANDBOOK_LAUNCHED = false;
+export const HANDBOOK_LAUNCHED = true;
 
 export const HANDBOOK_PARTS: HandbookPart[] = [
   { id: 'foundations', title: 'พื้นฐานที่ต้องเข้าใจเอง' },
@@ -67,8 +68,8 @@ export const HANDBOOK_CHAPTERS: HandbookChapter[] = [
   { number: 7, slug: 'reviewing-agent-work', title: 'ตรวจงานที่ agent ทำ', summary: 'แม้ยังอ่านโค้ดไม่คล่อง', part: 'agents', status: 'published', readingMinutes: 10, updatedAt: '2026-10-09', reviewedBy: FOUNDER.name },
   { number: 8, slug: 'tests', title: 'เทสต์: ให้เครื่องช่วยตรวจ', summary: 'เขียนครั้งเดียว ตรวจซ้ำได้ทุกครั้ง', part: 'agents', status: 'published', readingMinutes: 10, updatedAt: '2026-10-09', reviewedBy: FOUNDER.name },
   { number: 9, slug: 'security-basics', title: 'ความปลอดภัย', summary: 'รหัสลับ สิทธิ์ และคำสั่งแฝงในข้อมูล', part: 'agents', status: 'published', readingMinutes: 10, updatedAt: '2026-10-09', reviewedBy: FOUNDER.name },
-  { number: 10, slug: 'git-and-pull-requests', title: 'เก็บงานด้วย Git และ Pull Request', summary: 'ย้อนกลับได้ทุกครั้งที่พลาด', part: 'shipping', status: 'draft', readingMinutes: 12 },
-  { number: 11, slug: 'shipping-to-production', title: 'เอางานขึ้นเว็บจริง', summary: 'และย้อนกลับเมื่อมีอะไรพัง', part: 'shipping', status: 'draft', readingMinutes: 12 },
+  { number: 10, slug: 'git-and-pull-requests', title: 'เก็บงานด้วย Git และ Pull Request', summary: 'ย้อนกลับได้ทุกครั้งที่พลาด', part: 'shipping', status: 'published', readingMinutes: 12, updatedAt: '2026-10-10', reviewedBy: FOUNDER.name },
+  { number: 11, slug: 'shipping-to-production', title: 'เอางานขึ้นเว็บจริง', summary: 'และย้อนกลับเมื่อมีอะไรพัง', part: 'shipping', status: 'published', readingMinutes: 12, updatedAt: '2026-10-10', reviewedBy: FOUNDER.name },
 ];
 
 /** Drafts are readable only outside production builds, so the owner can review them locally. */

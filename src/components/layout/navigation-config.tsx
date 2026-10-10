@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
     Award,
     BookOpen,
+    BookOpenText,
     CreditCard,
     House,
     Info,
@@ -23,6 +24,7 @@ export type NavigationIcon = LucideIcon;
 
 const publicIcons: Record<(typeof PUBLIC_NAVIGATION)[number]['key'], LucideIcon> = {
     courses: BookOpen,
+    handbook: BookOpenText,
     about: Info,
     contact: Mail,
 };
