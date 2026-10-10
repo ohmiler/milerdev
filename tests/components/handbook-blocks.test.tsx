@@ -6,9 +6,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ChapterLink } from '@/components/handbook/ChapterBlocks';
 import { PromptBox } from '@/components/handbook/PromptBox';
 import { Quiz } from '@/components/handbook/Quiz';
-import { HANDBOOK_CHAPTERS } from '@/lib/handbook/chapters';
 import { headingId } from '@/lib/handbook/headings';
 import { useMDXComponents } from '@/mdx-components';
+
+// Every real chapter is published, so add one still being written to keep the unpublished path covered.
+vi.mock('@/lib/handbook/chapters', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@/lib/handbook/chapters')>();
+  const planned = { number: 99, slug: 'still-being-written', title: 'บทที่ยังเขียนอยู่', summary: '', part: 'shipping' as const, status: 'planned' as const };
+  return { ...original, HANDBOOK_CHAPTERS: [...original.HANDBOOK_CHAPTERS, planned] };
+});
 
 describe('handbook quiz', () => {
   const quiz = (
@@ -62,18 +68,13 @@ describe('handbook prompt box', () => {
 });
 
 describe('handbook chapter links and headings', () => {
-  it('links a published chapter and, in production, names an unpublished one without a link', () => {
-    // Drafts are readable outside production, so check the page a visitor gets.
-    vi.stubEnv('NODE_ENV', 'production');
-    const unpublished = HANDBOOK_CHAPTERS.find((chapter) => chapter.status !== 'published');
+  it('links a published chapter and names one still being written without a link', () => {
     const { rerender } = render(<ChapterLink number={6} />);
     expect(screen.getByRole('link', { name: 'บทที่ 6: เขียนโจทย์ให้ agent' }).getAttribute('href')).toBe('/handbook/writing-prompts-for-agents');
 
-    expect(unpublished, 'every chapter is published; pick another case for this test').toBeDefined();
-    rerender(<ChapterLink number={unpublished!.number} />);
+    rerender(<ChapterLink number={99} />);
     expect(screen.queryByRole('link')).toBeNull();
-    expect(screen.getByText(`บทที่ ${unpublished!.number}: ${unpublished!.title} (กำลังเขียน)`)).toBeTruthy();
-    vi.unstubAllEnvs();
+    expect(screen.getByText('บทที่ 99: บทที่ยังเขียนอยู่ (กำลังเขียน)')).toBeTruthy();
   });
 
   it('gives an MDX h2 the id that the "ในหน้านี้" list links to', () => {
