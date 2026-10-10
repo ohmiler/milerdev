@@ -1,6 +1,6 @@
 # ADR 0016: A free handbook for developer fundamentals in the agentic-AI era
 
-- Status: Accepted (the owner chose the scope and approved the sample chapter on 2026-10-09)
+- Status: Accepted (the owner chose the scope and approved the sample chapter on 2026-10-09). Launched on 2026-10-10 with all 11 chapters of the first path published; see decision 7.
 - Date: 2026-10-09
 - Decision owners: MilerDev owner and engineering
 - Scope: A new public section, `/handbook`, its content model and its review gate
@@ -23,6 +23,8 @@ The owner reviewed a design canvas with the handbook's landing page and one fini
 5. **Authorship and the review gate.** AI drafts every chapter. A chapter is `published` only after the owner has read and approved it; until then it is `draft` (visible on the development server only) or `planned` (listed as being written). The registry in `src/lib/handbook/chapters.ts` holds that status, and the page states that AI drafted it and who reviewed it.
 6. **Content model.** Chapters are MDX files in the repository (`src/content/handbook/`), rendered by `@next/mdx` and prerendered at build time. There is no database table and no migration. Content changes go through pull requests like code, so every change is reviewed and can be reverted.
 7. **Launch is its own step.** Until the owner says the handbook launches, `/handbook` is not linked from the site navigation or footer, is left out of the sitemap, and asks search engines not to index it. The launch pull request flips that, and decides the stance on training-only AI crawlers that ADR 0011 left open.
+
+   Launch record (2026-10-10): the owner chose to launch once all 11 chapters were published. The main navigation gains "คู่มือ Dev ยุค AI" after "คอร์สทั้งหมด", the footer links it, the sitemap lists `/handbook` and every published chapter, and pages are indexable (`HANDBOOK_LAUNCHED = true`). On AI crawlers the owner kept the site-wide stance unchanged: `robots.txt` allows every crawler, and paid lessons stay behind sign-in.
 8. **Freshness and sources.** Chapters on fundamentals are written to last. A chapter that depends on a specific tool says so and carries its date. No text is copied from MDN or other sources (MDN is CC-BY-SA); chapters may link to them.
 
 ## Consequences

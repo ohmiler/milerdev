@@ -11,6 +11,7 @@ export const MAIN_CONTENT_ID = 'main-content';
 
 export const PUBLIC_NAVIGATION = [
   { key: 'courses', href: '/courses', label: 'คอร์สทั้งหมด', match: 'section' },
+  { key: 'handbook', href: '/handbook', label: 'คู่มือ Dev ยุค AI', match: 'section' },
   { key: 'about', href: '/about', label: 'เกี่ยวกับเรา', match: 'exact' },
   { key: 'contact', href: '/contact', label: 'ติดต่อ', match: 'exact' },
 ] as const satisfies readonly NavigationDestination[];

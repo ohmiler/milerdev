@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 
 const quickLinks = [
   { href: '/courses', label: 'คอร์สทั้งหมด' },
+  { href: '/handbook', label: 'คู่มือ Dev ยุค AI' },
   { href: '/about', label: 'เกี่ยวกับเรา' },
   { href: '/stack', label: 'เบื้องหลัง MilerDev' },
   { href: '/contact', label: 'ติดต่อ' },

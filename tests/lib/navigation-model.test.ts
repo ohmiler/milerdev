@@ -11,6 +11,7 @@ describe('canonical navigation model', () => {
   it('owns the public, guest, and account destinations and labels', () => {
     expect(PUBLIC_NAVIGATION.map(({ href, label }) => ({ href, label }))).toEqual([
       { href: '/courses', label: 'คอร์สทั้งหมด' },
+      { href: '/handbook', label: 'คู่มือ Dev ยุค AI' },
       { href: '/about', label: 'เกี่ยวกับเรา' },
       { href: '/contact', label: 'ติดต่อ' },
     ]);

@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { courses, bundles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { absoluteUrl, SITE_URL } from '@/lib/content/seo';
+import { chapterPath, getReadableChapters, HANDBOOK_LAUNCHED } from '@/lib/handbook/chapters';
 import { logError } from '@/lib/error-handler';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: 'daily', priority: 1 },
     { url: absoluteUrl('/courses'), changeFrequency: 'daily', priority: 0.9 },
+    ...(HANDBOOK_LAUNCHED ? [{ url: absoluteUrl('/handbook'), changeFrequency: 'weekly' as const, priority: 0.7 }] : []),
     { url: absoluteUrl('/about'), changeFrequency: 'monthly', priority: 0.6 },
     { url: absoluteUrl('/stack'), changeFrequency: 'monthly', priority: 0.4 },
     { url: absoluteUrl('/contact'), changeFrequency: 'monthly', priority: 0.5 },
@@ -46,5 +48,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     logError(error, { action: 'sitemap.bundles_failed' });
   }
 
-  return [...staticPages, ...coursePages, ...bundlePages];
+  // Published handbook chapters, once the handbook is launched (ADR 0016). Drafts never appear here.
+  const handbookPages: MetadataRoute.Sitemap = HANDBOOK_LAUNCHED
+    ? getReadableChapters('production').map((chapter) => ({
+        url: absoluteUrl(chapterPath(chapter)),
+        lastModified: chapter.updatedAt ? new Date(`${chapter.updatedAt}T00:00:00+07:00`) : undefined,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      }))
+    : [];
+
+  return [...staticPages, ...handbookPages, ...coursePages, ...bundlePages];
 }

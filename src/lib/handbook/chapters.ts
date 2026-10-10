@@ -36,10 +36,11 @@ export const HANDBOOK_DESCRIPTION =
   'คู่มือฟรีสำหรับคนที่ยังไม่เคยเขียนโค้ด เข้าใจพื้นฐานที่ AI ทำแทนไม่ได้ แล้วฝึกสั่งงาน ตรวจงาน และส่งงานขึ้นใช้จริงร่วมกับ AI agent ทีละขั้น';
 
 /**
- * Off until the owner launches the handbook (ADR 0016, decision 7). While off, pages ask search
- * engines not to index them, and the handbook stays out of the navigation and the sitemap.
+ * The owner launched the handbook on 2026-10-10 (ADR 0016, decision 7): published chapters are
+ * indexable, listed in the sitemap, and linked from the navigation and the footer. Setting this
+ * back to false asks search engines not to index the pages and drops them from the sitemap.
  */
-export const HANDBOOK_LAUNCHED = false;
+export const HANDBOOK_LAUNCHED = true;
 
 export const HANDBOOK_PARTS: HandbookPart[] = [
   { id: 'foundations', title: 'พื้นฐานที่ต้องเข้าใจเอง' },
