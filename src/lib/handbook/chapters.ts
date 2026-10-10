@@ -67,8 +67,8 @@ export const HANDBOOK_CHAPTERS: HandbookChapter[] = [
   { number: 7, slug: 'reviewing-agent-work', title: 'ตรวจงานที่ agent ทำ', summary: 'แม้ยังอ่านโค้ดไม่คล่อง', part: 'agents', status: 'published', readingMinutes: 10, updatedAt: '2026-10-09', reviewedBy: FOUNDER.name },
   { number: 8, slug: 'tests', title: 'เทสต์: ให้เครื่องช่วยตรวจ', summary: 'เขียนครั้งเดียว ตรวจซ้ำได้ทุกครั้ง', part: 'agents', status: 'published', readingMinutes: 10, updatedAt: '2026-10-09', reviewedBy: FOUNDER.name },
   { number: 9, slug: 'security-basics', title: 'ความปลอดภัย', summary: 'รหัสลับ สิทธิ์ และคำสั่งแฝงในข้อมูล', part: 'agents', status: 'published', readingMinutes: 10, updatedAt: '2026-10-09', reviewedBy: FOUNDER.name },
-  { number: 10, slug: 'git-and-pull-requests', title: 'เก็บงานด้วย Git และ Pull Request', summary: 'ย้อนกลับได้ทุกครั้งที่พลาด', part: 'shipping', status: 'planned' },
-  { number: 11, slug: 'shipping-to-production', title: 'เอางานขึ้นเว็บจริง', summary: 'และย้อนกลับเมื่อมีอะไรพัง', part: 'shipping', status: 'planned' },
+  { number: 10, slug: 'git-and-pull-requests', title: 'เก็บงานด้วย Git และ Pull Request', summary: 'ย้อนกลับได้ทุกครั้งที่พลาด', part: 'shipping', status: 'draft', readingMinutes: 12 },
+  { number: 11, slug: 'shipping-to-production', title: 'เอางานขึ้นเว็บจริง', summary: 'และย้อนกลับเมื่อมีอะไรพัง', part: 'shipping', status: 'draft', readingMinutes: 12 },
 ];
 
 /** Drafts are readable only outside production builds, so the owner can review them locally. */
