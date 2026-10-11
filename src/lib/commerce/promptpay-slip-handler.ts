@@ -10,9 +10,19 @@ import {
   releasePromptPayIntent,
 } from '@/lib/commerce/promptpay-fulfillment';
 import { PromptPayIntentError } from '@/lib/commerce/promptpay-intent';
+import { slipTimeProblem, slipTransferredAt, type SlipTimeProblem } from '@/lib/commerce/promptpay-slip-time';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 
 const allowedTypes = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+
+// SlipOK error code: the slip's receiver is not the account bound to the branch.
+const SLIPOK_WRONG_RECEIVER = 1014;
+
+const slipTimeErrors: Record<SlipTimeProblem, string> = {
+  unknown_time: 'ไม่สามารถอ่านเวลาโอนจากสลิปได้ กรุณาลองใหม่หรือติดต่อทีมงาน',
+  too_old: 'สลิปนี้โอนไว้นานก่อนสร้างรายการชำระเงิน กรุณาใช้สลิปของรายการนี้',
+  in_future: 'เวลาโอนในสลิปไม่ถูกต้อง กรุณาติดต่อทีมงาน',
+};
 
 export async function handlePromptPaySlip(
   request: Request,
@@ -52,6 +62,8 @@ export async function handlePromptPaySlip(
     const providerForm = new FormData();
     providerForm.append('files', slipFile);
     providerForm.append('amount', claim.amount.toString());
+    // Required: with log=true SlipOK checks the receiver against the account bound to the
+    // branch (error 1014) and rejects slips it has seen before. Without it, neither check runs.
     providerForm.append('log', 'true');
 
     const controller = new AbortController();
@@ -60,7 +72,14 @@ export async function handlePromptPaySlip(
       success?: boolean;
       code?: number;
       message?: string;
-      data?: { code?: number; amount?: number; transRef?: string };
+      data?: {
+        code?: number;
+        amount?: number;
+        transRef?: string;
+        transTimestamp?: string;
+        transDate?: string;
+        transTime?: string;
+      };
     };
     try {
       const response = await fetch(
@@ -91,10 +110,19 @@ export async function handlePromptPaySlip(
     const promptpayTransRef = slipResult.data?.transRef;
     if (!slipResult.success || typeof slipAmount !== 'number' || slipAmount < claim.amount || !promptpayTransRef) {
       await releasePromptPayIntent(paymentId);
+      const wrongReceiver = slipResult.code === SLIPOK_WRONG_RECEIVER || slipResult.data?.code === SLIPOK_WRONG_RECEIVER;
       return NextResponse.json({
         success: false,
-        error: slipResult.message || 'ไม่สามารถตรวจสอบสลิปได้ กรุณาลองใหม่',
+        error: wrongReceiver
+          ? 'สลิปนี้ไม่ได้โอนเข้าบัญชีของ MilerDev กรุณาตรวจสอบบัญชีปลายทาง'
+          : slipResult.message || 'ไม่สามารถตรวจสอบสลิปได้ กรุณาลองใหม่',
       }, { status: 400 });
+    }
+
+    const timeProblem = slipTimeProblem(slipTransferredAt(slipResult.data), claim.payment.createdAt, new Date());
+    if (timeProblem) {
+      await releasePromptPayIntent(paymentId);
+      return NextResponse.json({ success: false, error: slipTimeErrors[timeProblem] }, { status: 400 });
     }
 
     const fulfilled = await fulfillPromptPayIntent({
