@@ -1,3 +1,4 @@
+import { requireAdminPage } from '@/lib/auth/admin-page';
 import { db } from '@/lib/db';
 import { courses, enrollments, users, lessonProgress, lessons } from '@/lib/db/schema';
 import { eq, sql, desc, and } from 'drizzle-orm';
@@ -83,6 +84,7 @@ async function getCourseWithEnrollments(courseId: string, page: number) {
 }
 
 export default async function CourseEnrollmentsPage({ params, searchParams }: PageProps) {
+  await requireAdminPage();
   const { id } = await params;
   const { page: pageStr } = await searchParams;
   const page = normalizeCourseEnrollmentPage(pageStr);

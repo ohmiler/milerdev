@@ -5,6 +5,7 @@ import { desc, eq, sql } from 'drizzle-orm';
 import AdminCoursesTable from '@/components/admin/AdminCoursesTable';
 import { AdminPageHeader } from '@/components/admin/ui/AdminOperations';
 import { Button } from '@/components/ui/button';
+import { requireAdminPage } from '@/lib/auth/admin-page';
 import { db } from '@/lib/db';
 import { courses, enrollments, lessons } from '@/lib/db/schema';
 
@@ -35,6 +36,7 @@ async function getCourses() {
 }
 
 export default async function AdminCoursesPage() {
+  await requireAdminPage();
   const allCourses = await getCourses();
 
   return (
