@@ -81,16 +81,6 @@ const STUDENT_GETS_401 = new Set([
     'upload/route.ts',
 ]);
 
-/**
- * KNOWN DEVIATION: admin server pages that query the database while relying on the guard in
- * src/app/admin/layout.tsx alone. A fourth entry here should be a conscious decision.
- */
-const ADMIN_PAGES_WITHOUT_PAGE_GUARD = new Set([
-    'admin/page.tsx',
-    'admin/courses/page.tsx',
-    'admin/courses/[id]/enrollments/page.tsx',
-]);
-
 const routeModules = import.meta.glob('../../src/app/api/**/route.ts') as Record<
     string,
     () => Promise<Record<string, unknown>>
@@ -181,13 +171,19 @@ describe('admin route handlers deny callers without an admin session', () => {
     }
 });
 
-describe('admin server pages that read the database', () => {
-    it('either guard the page or are listed as known deviations', () => {
-        const unguarded = Object.entries(adminPageSources)
-            .filter(([, src]) => /from ['"]@\/lib\/db['"]/.test(src))
-            .filter(([, src]) => !/requireAdmin|requireAdminPage|\bauth\(\)/.test(src))
+describe('admin server pages', () => {
+    // The layout's check does not gate its pages: the page segment still renders into the RSC
+    // payload. So every admin page that runs on the server checks the role itself, whether it
+    // reads the database directly or through a helper. Client pages load data from the guarded
+    // /api/admin routes above.
+    it('call requireAdminPage() themselves', () => {
+        const serverPages = Object.entries(adminPageSources)
+            .filter(([, src]) => !/^\s*['"]use client['"]/.test(src));
+        expect(serverPages.length).toBeGreaterThan(0);
+        const unguarded = serverPages
+            .filter(([, src]) => !/\bawait requireAdminPage\(\)/.test(src))
             .map(([k]) => relAdminPage(k))
             .sort();
-        expect(unguarded).toEqual([...ADMIN_PAGES_WITHOUT_PAGE_GUARD].sort());
+        expect(unguarded).toEqual([]);
     });
 });

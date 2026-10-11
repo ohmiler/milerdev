@@ -4,6 +4,7 @@ import { count, desc, eq, gte, sql } from 'drizzle-orm';
 import AdminDashboardView, { type AdminDashboardData } from '@/app/admin/AdminDashboardView';
 import { AdminEmptyState, AdminPageHeader } from '@/components/admin/ui/AdminOperations';
 import { Button } from '@/components/ui/button';
+import { requireAdminPage } from '@/lib/auth/admin-page';
 import { db } from '@/lib/db';
 import { courses, enrollments, lessons, payments, users } from '@/lib/db/schema';
 
@@ -174,6 +175,9 @@ async function getAdminDashboardData(): Promise<AdminDashboardData> {
 }
 
 export default async function AdminDashboardPage() {
+  // Outside the try below: redirect() works by throwing, and the catch would swallow it.
+  await requireAdminPage();
+
   let data: AdminDashboardData | null = null;
 
   try {
