@@ -54,3 +54,23 @@ export async function safeInsertEnrollment(userId: string, courseId: string): Pr
         throw error; // Re-throw non-duplicate errors
     }
 }
+
+type DatabaseTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/**
+ * Insert an enrollment inside a transaction. Returns false when the learner is already enrolled;
+ * a duplicate key rolls back only this statement, so the transaction can continue.
+ */
+export async function insertEnrollmentInTransaction(
+    tx: DatabaseTransaction,
+    userId: string,
+    courseId: string,
+): Promise<boolean> {
+    try {
+        await tx.insert(enrollments).values({ id: createId(), userId, courseId });
+        return true;
+    } catch (error) {
+        if (isDuplicateKeyError(error)) return false;
+        throw error;
+    }
+}
