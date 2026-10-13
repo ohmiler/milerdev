@@ -164,8 +164,22 @@ export async function fulfillStripeCheckoutSession({
   try {
     const result: Extract<StripeFulfillmentResult, { payment: Payment }> = await db.transaction(
       async (tx) => {
+      if (event && (!event.id || !event.type)) reject('INVALID_EVENT');
+
+      // Lock the payment row before anything else. A replay then waits for an admin refund that
+      // is in flight and sees 'refunded' once it commits, instead of re-granting from a stale read
+      // after the refund deleted the enrollment. Locking first also queues concurrent events for
+      // one session behind a single lock rather than deadlocking on the event row's FK check.
+      const [payment] = await tx
+        .select()
+        .from(payments)
+        .where(eq(payments.id, identity.paymentId))
+        .limit(1)
+        .for('update');
+
+      if (!payment) reject('PAYMENT_NOT_FOUND', true);
+
       if (event) {
-        if (!event.id || !event.type) reject('INVALID_EVENT');
         await tx.insert(stripeEvents).values({
           id: event.id,
           type: event.type,
@@ -173,14 +187,6 @@ export async function fulfillStripeCheckoutSession({
           processedAt: new Date(),
         });
       }
-
-      const [payment] = await tx
-        .select()
-        .from(payments)
-        .where(eq(payments.id, identity.paymentId))
-        .limit(1);
-
-      if (!payment) reject('PAYMENT_NOT_FOUND', true);
       if (payment.method !== 'stripe') reject('PAYMENT_METHOD_MISMATCH');
       if (payment.userId !== identity.userId) reject('PAYMENT_OWNER_MISMATCH');
 

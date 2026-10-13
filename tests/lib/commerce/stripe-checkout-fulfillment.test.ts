@@ -51,7 +51,10 @@ function transactionAdapter() {
   return {
     select: vi.fn(() => ({
       from: vi.fn(() => ({
-        where: vi.fn(() => ({ limit: vi.fn().mockResolvedValue([payment()]) })),
+        // Fulfillment reads the payment with .limit(1).for('update').
+        where: vi.fn(() => ({
+          limit: vi.fn(() => Object.assign(Promise.resolve([payment()]), { for: vi.fn().mockResolvedValue([payment()]) })),
+        })),
       })),
     })),
     update: vi.fn(() => ({

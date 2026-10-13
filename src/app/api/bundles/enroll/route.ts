@@ -5,7 +5,7 @@ import { bundles, bundleCourses, courses, lessons, payments } from '@/lib/db/sch
 import { eq, and, count, inArray } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/notifications/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
-import { safeInsertEnrollment } from '@/lib/db/safe-insert';
+import { insertEnrollmentInTransaction } from '@/lib/db/safe-insert';
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
 import { recordPaymentCourseGrants } from '@/lib/commerce/payment-grants';
@@ -111,21 +111,41 @@ export async function POST(request: Request) {
         }
 
         // Enroll in each course (skip if already enrolled)
-        // Uses safeInsertEnrollment to handle concurrent duplicate attempts
         const enrolled: string[] = [];
         const skipped: string[] = [];
 
         if (hasAcceptedPayment) {
-            for (const course of bCourses) {
-                const { created } = await safeInsertEnrollment(session.user.id, course.courseId);
-                if (created) {
-                    enrolled.push(course.courseTitle);
-                } else {
-                    skipped.push(course.courseTitle);
+            const userId = session.user.id;
+            // Re-check the payment under a row lock in the same transaction as the grants. A
+            // concurrent admin refund then either commits first, so this sees it is no longer
+            // completed, or waits until these grants commit and revokes them.
+            const granted = await db.transaction(async (tx) => {
+                const [lockedPayment] = await tx
+                    .select({ id: payments.id })
+                    .from(payments)
+                    .where(and(
+                        eq(payments.id, paymentId),
+                        eq(payments.userId, userId),
+                        eq(payments.bundleId, bundleId),
+                        eq(payments.status, 'completed'),
+                    ))
+                    .limit(1)
+                    .for('update');
+                if (!lockedPayment) return null;
+
+                const created: boolean[] = [];
+                for (const course of bCourses) {
+                    created.push(await insertEnrollmentInTransaction(tx, userId, course.courseId));
                 }
+                await recordPaymentCourseGrants(tx, lockedPayment.id, bCourses.map((course) => course.courseId));
+                return created;
+            });
+            if (!granted) {
+                return NextResponse.json({ error: 'Valid payment required' }, { status: 402 });
             }
-            // hasAcceptedPayment is only set after paymentId matched a completed payment above.
-            await recordPaymentCourseGrants(db, paymentId as string, bCourses.map((course) => course.courseId));
+            bCourses.forEach((course, index) => {
+                (granted[index] ? enrolled : skipped).push(course.courseTitle);
+            });
         } else {
             const fulfillment = await fulfillFreeEnrollment({
                 userId: session.user.id,
