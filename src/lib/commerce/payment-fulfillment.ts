@@ -12,6 +12,7 @@ import {
   type Payment,
 } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
+import { recordPaymentCourseGrants } from '@/lib/commerce/payment-grants';
 
 type PaymentTarget =
   | { type: 'course'; itemId: string }
@@ -237,6 +238,7 @@ export async function fulfillStripeCheckoutSession({
         for (const includedCourse of includedCourses) {
           await insertEnrollment(tx, identity.userId, includedCourse.courseId);
         }
+        await recordPaymentCourseGrants(tx, payment.id, includedCourses.map((course) => course.courseId));
 
         const [bundle] = await tx
           .select()
@@ -335,6 +337,7 @@ export async function fulfillManualPayment({
         for (const includedCourse of includedCourses) {
           if (await insertEnrollment(tx, payment.userId, includedCourse.courseId)) enrolledCount += 1;
         }
+        await recordPaymentCourseGrants(tx, payment.id, includedCourses.map((course) => course.courseId));
       }
 
       await tx.insert(auditLogs).values({

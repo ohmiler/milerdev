@@ -264,7 +264,8 @@ describe('admin payment mutation boundaries', () => {
 
   it('preserves enrollment when another completed payment still grants access', async () => {
     state.selectResults = [{ ...promptPayPayment, status: 'completed' }];
-    state.transactionSelectResults = [[{ count: 1 }], [{ count: 0 }]];
+    // Recorded grants for this payment, then per course: direct, bundle and recorded-grant checks.
+    state.transactionSelectResults = [[], [{ count: 1 }], [{ count: 0 }], [{ count: 0 }]];
     const route = await import('@/app/api/admin/payments/[id]/route');
     const request = new Request('http://localhost/api/admin/payments/pay-1', {
       method: 'PUT',
@@ -280,7 +281,7 @@ describe('admin payment mutation boundaries', () => {
 
   it('revokes enrollment on refund when no other payment grants access', async () => {
     state.selectResults = [{ ...promptPayPayment, status: 'completed' }];
-    state.transactionSelectResults = [[{ count: 0 }], [{ count: 0 }]];
+    state.transactionSelectResults = [[], [{ count: 0 }], [{ count: 0 }], [{ count: 0 }]];
     const route = await import('@/app/api/admin/payments/[id]/route');
     const request = new Request('http://localhost/api/admin/payments/pay-1', {
       method: 'PUT',
