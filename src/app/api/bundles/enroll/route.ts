@@ -8,6 +8,7 @@ import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/ra
 import { safeInsertEnrollment } from '@/lib/db/safe-insert';
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
+import { recordPaymentCourseGrants } from '@/lib/commerce/payment-grants';
 import { logError } from '@/lib/error-handler';
 
 // POST /api/bundles/enroll - Enroll in all courses of a bundle
@@ -123,6 +124,8 @@ export async function POST(request: Request) {
                     skipped.push(course.courseTitle);
                 }
             }
+            // hasAcceptedPayment is only set after paymentId matched a completed payment above.
+            await recordPaymentCourseGrants(db, paymentId as string, bCourses.map((course) => course.courseId));
         } else {
             const fulfillment = await fulfillFreeEnrollment({
                 userId: session.user.id,

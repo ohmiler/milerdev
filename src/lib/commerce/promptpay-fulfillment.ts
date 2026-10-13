@@ -10,6 +10,7 @@ import {
   type Payment,
 } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
+import { recordPaymentCourseGrants } from '@/lib/commerce/payment-grants';
 import {
   assertPromptPayIntentClaim,
   PromptPayIntentError,
@@ -140,6 +141,7 @@ export async function fulfillPromptPayIntent({
       for (const course of includedCourses) {
         if (await insertEnrollment(tx, userId, course.courseId)) enrolledCount += 1;
       }
+      await recordPaymentCourseGrants(tx, payment.id, includedCourses.map((course) => course.courseId));
       const [bundle] = await tx.select({ title: bundles.title })
         .from(bundles).where(eq(bundles.id, payment.bundleId)).limit(1);
       if (bundle) {

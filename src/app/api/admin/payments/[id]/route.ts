@@ -6,6 +6,7 @@ import { auditLogs, payments, enrollments, bundleCourses } from '@/lib/db/schema
 import { eq, and, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
+import { grantedCourseIds, hasOtherRecordedGrant } from '@/lib/commerce/payment-grants';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -139,16 +140,18 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
         // Revoke access only when no other completed payment still grants it.
         if (status === 'refunded' && previousStatus === 'completed' && existingPayment.userId) {
-        const courseIdsToCheck: string[] = [];
+        // What this payment granted: the courses recorded when it granted them, plus the bundle's
+        // current membership, which covers payments made before grants were recorded.
+        const courseIdsToCheck = new Set(await grantedCourseIds(tx, id));
 
         if (existingPayment.bundleId) {
           const bCourses = await tx
             .select({ courseId: bundleCourses.courseId })
             .from(bundleCourses)
             .where(eq(bundleCourses.bundleId, existingPayment.bundleId));
-          courseIdsToCheck.push(...bCourses.map(bc => bc.courseId));
+          for (const bc of bCourses) courseIdsToCheck.add(bc.courseId);
         } else if (existingPayment.courseId) {
-          courseIdsToCheck.push(existingPayment.courseId);
+          courseIdsToCheck.add(existingPayment.courseId);
         }
 
         for (const courseId of courseIdsToCheck) {
@@ -175,7 +178,14 @@ export async function PUT(request: Request, { params }: RouteParams) {
               ne(payments.id, id)
             ));
 
-          const hasOtherEntitlement = (directPayment?.count || 0) > 0 || (bundlePayment?.count || 0) > 0;
+          // Check 3: another completed payment recorded as granting this course
+          const grantedElsewhere = await hasOtherRecordedGrant(tx, {
+            userId: existingPayment.userId!,
+            courseId,
+            excludingPaymentId: id,
+          });
+
+          const hasOtherEntitlement = (directPayment?.count || 0) > 0 || (bundlePayment?.count || 0) > 0 || grantedElsewhere;
           if (!hasOtherEntitlement) {
             await tx.delete(enrollments).where(
               and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, courseId))
