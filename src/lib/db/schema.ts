@@ -322,6 +322,21 @@ export const paymentsRelations = relations(payments, ({ one, many }) => ({
 }));
 
 // =====================
+// PAYMENT COURSE GRANTS TABLE
+// =====================
+// The courses a bundle payment granted, recorded when it grants them. A refund revokes these,
+// not the bundle's current membership, which can change or disappear after the sale.
+export const paymentCourseGrants = mysqlTable('payment_course_grants', {
+    id: varchar('id', { length: 36 }).primaryKey().$defaultFn(() => createId()),
+    paymentId: varchar('payment_id', { length: 36 }).references(() => payments.id, { onDelete: 'cascade' }).notNull(),
+    courseId: varchar('course_id', { length: 36 }).references(() => courses.id, { onDelete: 'cascade' }).notNull(),
+    createdAt: datetime('created_at').$defaultFn(() => new Date()),
+}, (table) => [
+    uniqueIndex('uq_payment_course_grants_payment_course').on(table.paymentId, table.courseId),
+    index('idx_payment_course_grants_course_id').on(table.courseId),
+]);
+
+// =====================
 // AUTH RATE LIMIT BUCKETS
 // =====================
 export const rateLimitBuckets = mysqlTable('rate_limit_buckets', {
