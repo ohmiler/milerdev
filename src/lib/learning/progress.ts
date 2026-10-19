@@ -6,6 +6,7 @@ import { and, count, eq } from 'drizzle-orm';
 import { ensureCompletedCertificate } from '@/lib/certificates/issuance';
 import { db } from '@/lib/db';
 import {
+  courses,
   enrollments,
   lessonProgress,
   lessons,
@@ -66,8 +67,10 @@ export async function updateLearningProgress(
         id: lessons.id,
         courseId: lessons.courseId,
         isFreePreview: lessons.isFreePreview,
+        courseStatus: courses.status,
       })
       .from(lessons)
+      .innerJoin(courses, eq(lessons.courseId, courses.id))
       .where(eq(lessons.id, input.lessonId))
       .limit(1);
     if (!lesson) return { status: 'not_found' };
@@ -84,7 +87,8 @@ export async function updateLearningProgress(
       ))
       .limit(1)
       .for('update');
-    if (!enrollment && !lesson.isFreePreview) return { status: 'forbidden' };
+    // Without an enrollment, only a free preview of a published course may record progress.
+    if (!enrollment && !(lesson.isFreePreview && lesson.courseStatus === 'published')) return { status: 'forbidden' };
 
     const [existingProgress] = await tx
       .select({

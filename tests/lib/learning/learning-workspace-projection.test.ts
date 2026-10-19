@@ -8,7 +8,7 @@ import {
 function workspaceStore(): LearningWorkspaceStore {
   return {
     async readCourse() {
-      return { id: 'course-1', slug: 'typescript', title: 'TypeScript' };
+      return { id: 'course-1', slug: 'typescript', title: 'TypeScript', status: 'published' };
     },
     async readLessonAccess() {
       return { id: 'lesson-free', courseId: 'course-1', isFreePreview: true };
@@ -66,6 +66,7 @@ describe('LearningWorkspaceProjection', () => {
 
     expect(result).toEqual({
       kind: 'ready',
+      // The course status is used for the access decision and is not passed to the client.
       course: { id: 'course-1', slug: 'typescript', title: 'TypeScript' },
       currentLesson: {
         id: 'lesson-free',

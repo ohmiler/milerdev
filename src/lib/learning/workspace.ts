@@ -8,6 +8,7 @@ import { db } from '@/lib/db';
 import { courseSections, courses, enrollments, lessonProgress, lessons } from '@/lib/db/schema';
 
 type CourseFact = { id: string; slug: string; title: string };
+type CourseRecord = CourseFact & { status: string | null };
 type LessonAccessFact = {
   id: string;
   courseId: string;
@@ -34,7 +35,7 @@ type ProgressFact = {
 };
 
 export type LearningWorkspaceStore = {
-  readCourse(courseSlug: string): Promise<CourseFact | null>;
+  readCourse(courseSlug: string): Promise<CourseRecord | null>;
   readLessonAccess(lessonId: string): Promise<LessonAccessFact | null>;
   readAuthorizedLesson(
     lessonId: string,
@@ -81,7 +82,7 @@ export type LearningWorkspaceProjection =
 const databaseStore: LearningWorkspaceStore = {
   async readCourse(courseSlug) {
     const [course] = await db
-      .select({ id: courses.id, slug: courses.slug, title: courses.title })
+      .select({ id: courses.id, slug: courses.slug, title: courses.title, status: courses.status })
       .from(courses)
       .where(eq(courses.slug, courseSlug))
       .limit(1);
@@ -196,8 +197,11 @@ export async function getLearningWorkspaceProjection(
   const isEnrolled = input.memberId
     ? await store.hasEnrollment(input.memberId, course.id)
     : false;
-  if (!isEnrolled && !lessonAccess.isFreePreview) {
-    return { kind: 'access_denied', courseSlug: course.slug };
+  if (!isEnrolled) {
+    // Free previews are public only while the course is: a draft or archived course is not
+    // shown to visitors at all. Enrolled learners keep access to an archived course.
+    if (course.status !== 'published') return { kind: 'not_found' };
+    if (!lessonAccess.isFreePreview) return { kind: 'access_denied', courseSlug: course.slug };
   }
 
   const [lesson, curriculumFacts, progressFacts] = await Promise.all([
@@ -220,7 +224,7 @@ export async function getLearningWorkspaceProjection(
   const currentProgress = progressFacts.find((item) => item.lessonId === lesson.id);
   return {
     kind: 'ready',
-    course,
+    course: { id: course.id, slug: course.slug, title: course.title },
     currentLesson: {
       id: lesson.id,
       title: lesson.title,
