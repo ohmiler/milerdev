@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
@@ -43,12 +43,13 @@ export default function LoginForm({
       ? 'เปลี่ยนรหัสผ่านแล้ว กรุณาเข้าสู่ระบบอีกครั้ง'
       : '';
 
-  useEffect(() => {
-    const errorCode = searchParams.get('error');
-    if (!errorCode) return;
-
-    setError(AUTH_ERROR_MESSAGES[errorCode] || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง');
-  }, [searchParams]);
+  // An ?error= code from the sign-in redirect shows until the next attempt replaces it.
+  const errorCode = searchParams.get('error');
+  const [shownErrorCode, setShownErrorCode] = useState<string | null>(null);
+  if (errorCode !== shownErrorCode) {
+    setShownErrorCode(errorCode);
+    if (errorCode) setError(AUTH_ERROR_MESSAGES[errorCode] || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง');
+  }
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

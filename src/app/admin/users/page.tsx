@@ -42,6 +42,7 @@ import {
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { showToast } from '@/components/ui/Toast';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 import {
   applyAuthoritativeLifecycleState,
   buildAdminUsersSearchParams,
@@ -83,8 +84,6 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({ name: '', role: 'student' });
@@ -110,37 +109,25 @@ export default function AdminUsersPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const params = buildAdminUsersSearchParams({
-        page: currentPage,
-        role: roleFilter,
-        status: statusFilter,
-        search: searchDebounce,
-        sortBy,
-        sortOrder: 'desc',
-      });
-      const response = await fetch(`/api/admin/users?${params}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
-      const nextUsers = (data.users || []) as User[];
-      setUsers(nextUsers);
-      setSelectedUsers((current) => current.filter((id) => nextUsers.some((user) => user.id === id)));
-      setStats(data.stats || null);
-      setPagination(data.pagination || null);
-    } catch (caughtError) {
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, roleFilter, statusFilter, sortBy, searchDebounce]);
+  const usersUrl = `/api/admin/users?${buildAdminUsersSearchParams({
+    page: currentPage,
+    role: roleFilter,
+    status: statusFilter,
+    search: searchDebounce,
+    sortBy,
+    sortOrder: 'desc',
+  })}`;
+  const { loading, error, reload: reloadUsers } = useLoad(usersUrl, async (signal) => {
+    const response = await fetch(usersUrl, { signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
+    const nextUsers = (data.users || []) as User[];
+    setUsers(nextUsers);
+    setSelectedUsers((current) => current.filter((id) => nextUsers.some((user) => user.id === id)));
+    setStats(data.stats || null);
+    setPagination(data.pagination || null);
+  });
+  const loadError = loadErrorMessage(error, 'ไม่สามารถโหลดรายชื่อผู้ใช้ได้');
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
@@ -158,7 +145,7 @@ export default function AdminUsersPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'บันทึกผู้ใช้ไม่สำเร็จ');
-      await fetchUsers();
+      await reloadUsers();
       setEditingUser(null);
       showToast('บันทึกผู้ใช้สำเร็จ', 'success');
     } catch (caughtError) {
@@ -180,7 +167,7 @@ export default function AdminUsersPage() {
       if (!response.ok) throw new Error(data.error || 'ไม่สามารถเปลี่ยนสถานะบัญชีได้');
       setUsers((current) => applyAuthoritativeLifecycleState(current, (data.users || []) as AuthoritativeLifecycleUser[]) as User[]);
       showToast(lifecycleMutationFeedback(action, data.changedCount ?? 0, data.skippedCount ?? 0), 'success');
-      await fetchUsers();
+      await reloadUsers();
     } catch (caughtError) {
       showToast(caughtError instanceof Error ? caughtError.message : 'เปลี่ยนสถานะบัญชีไม่สำเร็จ กรุณาลองใหม่', 'error');
     } finally {
@@ -265,7 +252,7 @@ export default function AdminUsersPage() {
       }
       setSelectedUsers([]);
       setBulkAction('');
-      await fetchUsers();
+      await reloadUsers();
     } catch (caughtError) {
       showToast(caughtError instanceof Error ? caughtError.message : 'ดำเนินการแบบกลุ่มไม่สำเร็จ', 'error');
     } finally {
@@ -330,7 +317,7 @@ export default function AdminUsersPage() {
         </div>
       </AdminSection>
 
-      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchUsers()}>ลองใหม่</Button>} /> : null}
+      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void reloadUsers()}>ลองใหม่</Button>} /> : null}
 
       <AdminSection
         title="รายชื่อบัญชีผู้ใช้"

@@ -30,6 +30,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Textarea } from '@/components/ui/textarea';
+import { useLoad } from '@/lib/hooks/use-load';
 import { cn } from '@/lib/utils';
 
 interface CourseOption {
@@ -78,7 +79,6 @@ const statusPresentation: Record<string, { label: string; tone: AdminTone }> = {
 
 export default function AdminBundlesPage() {
   const [bundlesList, setBundlesList] = useState<Bundle[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(defaultForm);
@@ -88,17 +88,17 @@ export default function AdminBundlesPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const fetchBundles = () => {
-    setLoading(true);
-    fetch('/api/admin/bundles')
-      .then((response) => response.json())
-      .then((data) => setBundlesList(data.bundles || []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
+  const { loading, reload: reloadBundles } = useLoad('/api/admin/bundles', async (signal) => {
+    try {
+      const response = await fetch('/api/admin/bundles', { signal });
+      const data = await response.json();
+      setBundlesList(data.bundles || []);
+    } catch (error) {
+      if (!signal.aborted) console.error(error);
+    }
+  });
 
   useEffect(() => {
-    fetchBundles();
     fetch('/api/admin/courses')
       .then((response) => response.json())
       .then((data) => setCourseOptions(data.courses || []))
@@ -143,7 +143,7 @@ export default function AdminBundlesPage() {
       const res = await fetch('/api/admin/bundles/' + id, { method: 'DELETE' });
       if (res.ok) {
         setDeleteConfirm(null);
-        fetchBundles();
+        void reloadBundles();
       }
     } catch (deleteError) {
       console.error(deleteError);
@@ -193,7 +193,7 @@ export default function AdminBundlesPage() {
       setShowForm(false);
       setEditingId(null);
       setForm(defaultForm);
-      fetchBundles();
+      void reloadBundles();
     } catch {
       setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
     } finally {

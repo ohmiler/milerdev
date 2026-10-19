@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
+import { useLoad } from '@/lib/hooks/use-load';
 import { cn } from '@/lib/utils';
 
 interface AuditLog {
@@ -80,7 +81,6 @@ export default function AdminAuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [filters, setFilters] = useState<Filters | null>(null);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [entityTypeFilter, setEntityTypeFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('all');
@@ -93,31 +93,23 @@ export default function AdminAuditLogsPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchLogs = async () => {
-    setLoading(true);
+  const logsUrl = '/api/admin/audit-logs?' + new URLSearchParams({
+    page: currentPage.toString(),
+    entityType: entityTypeFilter,
+    action: actionFilter,
+    ...(searchDebounce && { search: searchDebounce }),
+  });
+  const { loading } = useLoad(logsUrl, async (signal) => {
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        entityType: entityTypeFilter,
-        action: actionFilter,
-        ...(searchDebounce && { search: searchDebounce }),
-      });
-      const res = await fetch('/api/admin/audit-logs?' + params);
+      const res = await fetch(logsUrl, { signal });
       const data = await res.json();
       setLogs(data.logs || []);
       setPagination(data.pagination || null);
       setFilters(data.filters || null);
     } catch (error) {
-      console.error('Error fetching logs:', error);
-    } finally {
-      setLoading(false);
+      if (!signal.aborted) console.error('Error fetching logs:', error);
     }
-  };
-
-  useEffect(() => {
-    fetchLogs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, entityTypeFilter, actionFilter, searchDebounce]);
+  });
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleString('th-TH', {

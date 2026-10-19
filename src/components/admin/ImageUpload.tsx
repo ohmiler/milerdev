@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { ImageIcon, ImageOff, RefreshCw, Trash2, UploadCloud } from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -29,17 +29,20 @@ export default function ImageUpload({ value, onChange, folder = 'courses' }: Ima
   const [dragOver, setDragOver] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [previewFailed, setPreviewFailed] = useState(false);
+  const [previewSource, setPreviewSource] = useState(value);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // A new image gets a fresh chance to load its preview.
+  if (previewSource !== value) {
+    setPreviewSource(value);
+    setPreviewFailed(false);
+  }
   const previewUrl = normalizeImageUrl(value);
   const previewError = value && !previewUrl
     ? 'URL รูปภาพไม่ถูกต้อง จึงไม่สามารถแสดงตัวอย่างได้'
     : previewFailed
       ? 'โหลดตัวอย่างรูปภาพไม่สำเร็จ กรุณาเปลี่ยนรูปหรือลบ URL นี้'
       : '';
-
-  useEffect(() => {
-    setPreviewFailed(false);
-  }, [value]);
 
   const handleUpload = async (file: File) => {
     setUploadError('');

@@ -4,7 +4,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import LessonQuizEditor from '@/components/admin/LessonQuizEditor';
 import {
@@ -25,6 +25,7 @@ import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { showToast } from '@/components/ui/Toast';
 import { formatLessonPosition } from '@/lib/courses/lesson-position';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 
@@ -43,8 +44,6 @@ export default function EditLessonPage() {
   const router = useRouter();
   const { lessonId } = useParams<{ lessonId: string }>();
   const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [formData, setFormData] = useState({ title: '', content: '', videoUrl: '', videoDuration: '0:00', isFreePreview: false });
@@ -54,40 +53,30 @@ export default function EditLessonPage() {
     sectionTitle: null,
   });
 
-  const fetchLesson = async (id: string) => {
-    setLoading(true);
-    setLoadError('');
-    try {
-      const response = await fetch(`/api/admin/lessons/${id}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'ไม่พบบทเรียน');
-      const loadedLesson = data.lesson as Lesson;
-      setLesson(loadedLesson);
-      setPlacement({
-        position: typeof data.position === 'number' ? data.position : null,
-        lessonCount: typeof data.lessonCount === 'number' ? data.lessonCount : null,
-        sectionTitle: typeof data.sectionTitle === 'string' ? data.sectionTitle : null,
-      });
-      const totalSeconds = loadedLesson.videoDuration || 0;
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      setFormData({
-        title: loadedLesson.title,
-        content: loadedLesson.content || '',
-        videoUrl: loadedLesson.videoUrl || '',
-        videoDuration: `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`,
-        isFreePreview: loadedLesson.isFreePreview || false,
-      });
-    } catch (caughtError) {
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'โหลดข้อมูลบทเรียนไม่สำเร็จ');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchLesson(lessonId);
-  }, [lessonId]);
+  const lessonUrl = `/api/admin/lessons/${lessonId}`;
+  const { loading, error, reload } = useLoad(lessonUrl, async (signal) => {
+    const response = await fetch(lessonUrl, { signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'ไม่พบบทเรียน');
+    const loadedLesson = data.lesson as Lesson;
+    setLesson(loadedLesson);
+    setPlacement({
+      position: typeof data.position === 'number' ? data.position : null,
+      lessonCount: typeof data.lessonCount === 'number' ? data.lessonCount : null,
+      sectionTitle: typeof data.sectionTitle === 'string' ? data.sectionTitle : null,
+    });
+    const totalSeconds = loadedLesson.videoDuration || 0;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    setFormData({
+      title: loadedLesson.title,
+      content: loadedLesson.content || '',
+      videoUrl: loadedLesson.videoUrl || '',
+      videoDuration: `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`,
+      isFreePreview: loadedLesson.isFreePreview || false,
+    });
+  });
+  const loadError = loadErrorMessage(error, 'โหลดข้อมูลบทเรียนไม่สำเร็จ');
 
   const hasTitle = Boolean(formData.title.trim());
   const hasVideo = Boolean(formData.videoUrl.trim());
@@ -133,7 +122,7 @@ export default function EditLessonPage() {
   };
 
   if (loading) return <AdminLoadingState title="กำลังโหลดบทเรียน" />;
-  if (!lesson) return <AdminErrorState description={loadError || 'ไม่พบบทเรียน'} action={<Button variant="outline" onClick={() => void fetchLesson(lessonId)}>ลองใหม่</Button>} />;
+  if (!lesson) return <AdminErrorState description={loadError || 'ไม่พบบทเรียน'} action={<Button variant="outline" onClick={() => void reload()}>ลองใหม่</Button>} />;
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">

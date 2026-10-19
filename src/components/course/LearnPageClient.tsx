@@ -182,16 +182,23 @@ export default function LearnPageClient({
     };
   }, [canTrackProgress, syncWatchTime]);
 
+  // Moving to another lesson, or new saved progress for this one, starts the lesson's state over.
+  const progressKey = `${currentLesson.id}:${currentProgress.completed}:${currentProgress.watchTimeSeconds}`;
+  const [shownProgressKey, setShownProgressKey] = useState(progressKey);
+  if (shownProgressKey !== progressKey) {
+    setShownProgressKey(progressKey);
+    setCompletionSaveState(currentProgress.completed ? 'saved' : 'idle');
+    setWatchSyncFailed(false);
+    setResumedAtSeconds(null);
+    setLockedLesson(null);
+  }
+
   useEffect(() => {
     watchTimeRef.current = currentProgress.watchTimeSeconds;
     lastSyncRef.current = currentProgress.watchTimeSeconds;
     isPlayingRef.current = false;
     watchSyncPendingRef.current = false;
     completionRequestedRef.current = currentProgress.completed;
-    setCompletionSaveState(currentProgress.completed ? 'saved' : 'idle');
-    setWatchSyncFailed(false);
-    setResumedAtSeconds(null);
-    setLockedLesson(null);
   }, [currentLesson.id, currentProgress.completed, currentProgress.watchTimeSeconds]);
 
   const completeCurrentLesson = useCallback(async () => {

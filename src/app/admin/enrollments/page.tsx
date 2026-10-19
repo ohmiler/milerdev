@@ -32,6 +32,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { showToast } from '@/components/ui/Toast';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 
 interface Enrollment {
   id: string;
@@ -77,8 +78,6 @@ export default function AdminEnrollmentsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
   const [courseFilter, setCourseFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,28 +95,21 @@ export default function AdminEnrollmentsPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchEnrollments = async () => {
-    setLoading(true);
-    setLoadError('');
-    try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        courseId: courseFilter,
-        ...(searchDebounce && { search: searchDebounce }),
-      });
-      const response = await fetch(`/api/admin/enrollments?${params}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดการลงทะเบียนได้');
-      setEnrollments(data.enrollments || []);
-      setCourses(data.courses || []);
-      setStats(data.stats || null);
-      setPagination(data.pagination || null);
-    } catch (caughtError) {
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดการลงทะเบียนได้');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const enrollmentsUrl = `/api/admin/enrollments?${new URLSearchParams({
+    page: currentPage.toString(),
+    courseId: courseFilter,
+    ...(searchDebounce && { search: searchDebounce }),
+  })}`;
+  const { loading, error, reload: reloadEnrollments } = useLoad(enrollmentsUrl, async (signal) => {
+    const response = await fetch(enrollmentsUrl, { signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดการลงทะเบียนได้');
+    setEnrollments(data.enrollments || []);
+    setCourses(data.courses || []);
+    setStats(data.stats || null);
+    setPagination(data.pagination || null);
+  });
+  const loadError = loadErrorMessage(error, 'ไม่สามารถโหลดการลงทะเบียนได้');
 
   const fetchUsers = async () => {
     try {
@@ -130,15 +122,11 @@ export default function AdminEnrollmentsPage() {
     }
   };
 
-  useEffect(() => {
-    void fetchEnrollments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseFilter, currentPage, searchDebounce]);
-
-  useEffect(() => {
-    if (showAddModal && users.length === 0) void fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showAddModal]);
+  const openAddModal = () => {
+    setAddError('');
+    setShowAddModal(true);
+    if (users.length === 0) void fetchUsers();
+  };
 
   const confirmDeleteEnrollment = async () => {
     if (!deleteTarget) return;
@@ -150,7 +138,7 @@ export default function AdminEnrollmentsPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'ลบการลงทะเบียนไม่สำเร็จ');
       setDeleteTarget(null);
-      await fetchEnrollments();
+      await reloadEnrollments();
       showToast('ลบการลงทะเบียนสำเร็จ', 'success');
     } catch (caughtError) {
       setDeleteError(caughtError instanceof Error ? caughtError.message : 'ลบการลงทะเบียนไม่สำเร็จ กรุณาลองใหม่');
@@ -174,7 +162,7 @@ export default function AdminEnrollmentsPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'เพิ่มการลงทะเบียนไม่สำเร็จ');
-      await fetchEnrollments();
+      await reloadEnrollments();
       setShowAddModal(false);
       setAddForm({ userId: '', courseId: '' });
       showToast('เพิ่มการลงทะเบียนสำเร็จ', 'success');
@@ -198,7 +186,7 @@ export default function AdminEnrollmentsPage() {
         title="การลงทะเบียน"
         description="ตรวจสิทธิ์เข้าเรียน ความคืบหน้า และจัดการการเพิ่มหรือถอนผู้เรียนจากคอร์ส"
         actions={
-          <Button onClick={() => { setAddError(''); setShowAddModal(true); }}>
+          <Button onClick={openAddModal}>
             <Plus data-icon="inline-start" aria-hidden />
             เพิ่มการลงทะเบียน
           </Button>
@@ -233,7 +221,7 @@ export default function AdminEnrollmentsPage() {
         </div>
       </AdminSection>
 
-      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchEnrollments()}>ลองใหม่</Button>} /> : null}
+      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void reloadEnrollments()}>ลองใหม่</Button>} /> : null}
 
       <AdminSection title="รายการสิทธิ์เข้าเรียน" description={pagination ? `${pagination.total.toLocaleString('th-TH')} รายการ` : undefined}>
         {loading && enrollments.length === 0 ? (

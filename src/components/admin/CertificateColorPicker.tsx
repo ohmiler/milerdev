@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Palette } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -34,12 +34,15 @@ interface Props {
 export default function CertificateColorPicker({ value, onChange }: Props) {
   const committedColor = normalizeCertificateColor(value);
   const [draftColor, setDraftColor] = useState(committedColor);
+  const [draftSource, setDraftSource] = useState(committedColor);
   const [showPicker, setShowPicker] = useState(false);
-  const draftIsValid = isHtmlCertificateColor(draftColor);
 
-  useEffect(() => {
+  // A new color from the form replaces whatever is half-typed.
+  if (draftSource !== committedColor) {
+    setDraftSource(committedColor);
     setDraftColor(committedColor);
-  }, [committedColor]);
+  }
+  const draftIsValid = isHtmlCertificateColor(draftColor);
 
   const updateDraft = (nextValue: string) => {
     setDraftColor(nextValue);

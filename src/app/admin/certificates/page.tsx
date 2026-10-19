@@ -1,7 +1,7 @@
 'use client';
 
 import { ExternalLink, RotateCcw, Search, ShieldAlert, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
 import {
@@ -28,6 +28,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 
 interface Certificate {
   id: string;
@@ -45,9 +46,10 @@ interface Certificate {
 
 export default function AdminCertificatesPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
+  const [restoreError, setRestoreError] = useState('');
   const [search, setSearch] = useState('');
+  // The search runs when the form is submitted, not on every keystroke.
+  const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [revokeTarget, setRevokeTarget] = useState<Certificate | null>(null);
   const [revokeReason, setRevokeReason] = useState('');
@@ -58,30 +60,22 @@ export default function AdminCertificatesPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
-  const loadCertificates = useCallback(async (searchValue: string, statusValue: string) => {
-    setLoading(true);
-    setLoadError('');
-    const params = new URLSearchParams();
-    if (searchValue.trim()) params.set('search', searchValue.trim());
-    if (statusValue !== 'all') params.set('status', statusValue);
+  const params = new URLSearchParams();
+  if (searchTerm) params.set('search', searchTerm);
+  if (statusFilter !== 'all') params.set('status', statusFilter);
+  const certificatesUrl = `/api/admin/certificates?${params}`;
+  const { loading, error, reload } = useLoad(certificatesUrl, async (signal) => {
+    const response = await fetch(certificatesUrl, { signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดใบรับรองได้');
+    setCertificates(data.certificates || []);
+  });
+  const loadError = loadErrorMessage(error, 'ไม่สามารถโหลดใบรับรองได้') || restoreError;
 
-    try {
-      const response = await fetch(`/api/admin/certificates?${params}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดใบรับรองได้');
-      setCertificates(data.certificates || []);
-    } catch (caughtError) {
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดใบรับรองได้');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadCertificates('', statusFilter);
-  }, [loadCertificates, statusFilter]);
-
-  const refreshCertificates = () => loadCertificates(search, statusFilter);
+  const refreshCertificates = () => {
+    setRestoreError('');
+    return reload();
+  };
 
   const handleRevoke = async () => {
     if (!revokeTarget) return;
@@ -107,7 +101,7 @@ export default function AdminCertificatesPage() {
 
   const handleRestore = async (certificate: Certificate) => {
     setRestoringId(certificate.id);
-    setLoadError('');
+    setRestoreError('');
     try {
       const response = await fetch(`/api/admin/certificates/${certificate.id}`, {
         method: 'PUT',
@@ -118,7 +112,7 @@ export default function AdminCertificatesPage() {
       if (!response.ok) throw new Error(data.error || 'คืนสถานะใบรับรองไม่สำเร็จ');
       await refreshCertificates();
     } catch (caughtError) {
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'คืนสถานะใบรับรองไม่สำเร็จ');
+      setRestoreError(caughtError instanceof Error ? caughtError.message : 'คืนสถานะใบรับรองไม่สำเร็จ');
     } finally {
       setRestoringId(null);
     }
@@ -160,6 +154,7 @@ export default function AdminCertificatesPage() {
           className="flex flex-col gap-3 sm:flex-row"
           onSubmit={(event) => {
             event.preventDefault();
+            setSearchTerm(search.trim());
             void refreshCertificates();
           }}
         >
@@ -172,7 +167,7 @@ export default function AdminCertificatesPage() {
               aria-label="ค้นหาใบรับรอง"
             />
           </InputGroup>
-          <NativeSelect className="w-full sm:w-44" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="กรองสถานะใบรับรอง">
+          <NativeSelect className="w-full sm:w-44" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setRestoreError(''); }} aria-label="กรองสถานะใบรับรอง">
             <NativeSelectOption value="all">ทุกสถานะ</NativeSelectOption>
             <NativeSelectOption value="active">ใช้งาน</NativeSelectOption>
             <NativeSelectOption value="revoked">เพิกถอน</NativeSelectOption>

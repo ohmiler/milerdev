@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink, Save } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   AdminCourseLifecycleActions,
@@ -42,6 +42,7 @@ import {
 } from '@/lib/courses/content';
 import type { CourseLifecycleAction, CourseStatus } from '@/lib/courses/lifecycle';
 import { fromThaiDateTimeInput, toThaiDateTimeInput } from '@/lib/courses/promo-time';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 const ImageUpload = dynamic(() => import('@/components/admin/ImageUpload'), { ssr: false });
@@ -51,7 +52,6 @@ const CertificateColorPicker = dynamic(() => import('@/components/admin/Certific
 export default function EditCoursePage() {
   const router = useRouter();
   const { id: courseId } = useParams<{ id: string }>();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [lifecycleAction, setLifecycleAction] = useState<CourseLifecycleAction | null>(null);
@@ -80,45 +80,39 @@ export default function EditCoursePage() {
   const [instructorOptions, setInstructorOptions] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [prerequisiteOptions, setPrerequisiteOptions] = useState<Array<{ id: string; title: string; status: CourseStatus }>>([]);
 
-  useEffect(() => {
-    setLoading(true);
-    setError('');
-    fetch(`/api/admin/courses/${courseId}`)
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'โหลดข้อมูลคอร์สไม่สำเร็จ');
-        return data;
-      })
-      .then((data) => {
-        if (data.course) {
-          setFormData({
-            title: data.course.title || '',
-            slug: data.course.slug || '',
-            description: data.course.description || '',
-            price: String(data.course.price || 0),
-            status: data.course.status || 'draft',
-            thumbnailUrl: data.course.thumbnailUrl || '',
-            certificateColor: normalizeCertificateColor(data.course.certificateColor),
-            certificateHeaderImage: data.course.certificateHeaderImage || '',
-            previewVideoUrl: data.course.previewVideoUrl || '',
-            promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
-            promoStartsAt: toThaiDateTimeInput(data.course.promoStartsAt),
-            promoEndsAt: toThaiDateTimeInput(data.course.promoEndsAt),
-            instructorId: data.course.instructorId || '',
-            summary: data.course.summary || '',
-            learningOutcomes: contentListToLines(data.course.learningOutcomes),
-            targetAudience: contentListToLines(data.course.targetAudience),
-            prerequisites: contentListToLines(data.course.prerequisites),
-            prerequisiteCourseId: data.course.prerequisiteCourseId || '',
-          });
-        }
-        setInstructorOptions(data.instructorOptions || []);
-        setPrerequisiteOptions(data.prerequisiteOptions || []);
-        setSelectedTagIds((data.tags || []).map((tag: { id: string }) => tag.id));
-      })
-      .catch((caughtError) => setError(caughtError instanceof Error ? caughtError.message : 'โหลดข้อมูลคอร์สไม่สำเร็จ'))
-      .finally(() => setLoading(false));
-  }, [courseId]);
+  const courseUrl = `/api/admin/courses/${courseId}`;
+  const { loading, error: loadFailure } = useLoad(courseUrl, async (signal) => {
+    const response = await fetch(courseUrl, { signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'โหลดข้อมูลคอร์สไม่สำเร็จ');
+    if (data.course) {
+      setFormData({
+        title: data.course.title || '',
+        slug: data.course.slug || '',
+        description: data.course.description || '',
+        price: String(data.course.price || 0),
+        status: data.course.status || 'draft',
+        thumbnailUrl: data.course.thumbnailUrl || '',
+        certificateColor: normalizeCertificateColor(data.course.certificateColor),
+        certificateHeaderImage: data.course.certificateHeaderImage || '',
+        previewVideoUrl: data.course.previewVideoUrl || '',
+        promoPrice: data.course.promoPrice ? String(data.course.promoPrice) : '',
+        promoStartsAt: toThaiDateTimeInput(data.course.promoStartsAt),
+        promoEndsAt: toThaiDateTimeInput(data.course.promoEndsAt),
+        instructorId: data.course.instructorId || '',
+        summary: data.course.summary || '',
+        learningOutcomes: contentListToLines(data.course.learningOutcomes),
+        targetAudience: contentListToLines(data.course.targetAudience),
+        prerequisites: contentListToLines(data.course.prerequisites),
+        prerequisiteCourseId: data.course.prerequisiteCourseId || '',
+      });
+    }
+    setInstructorOptions(data.instructorOptions || []);
+    setPrerequisiteOptions(data.prerequisiteOptions || []);
+    setSelectedTagIds((data.tags || []).map((tag: { id: string }) => tag.id));
+  });
+  // Saving and lifecycle errors share the form's alert with a failed load.
+  const pageError = error || loadErrorMessage(loadFailure, 'โหลดข้อมูลคอร์สไม่สำเร็จ');
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -199,7 +193,7 @@ export default function EditCoursePage() {
   const readinessPercent = Math.round((readyCount / checklist.length) * 100);
 
   if (loading) return <AdminLoadingState title="กำลังโหลดคอร์ส" />;
-  if (error && !formData.title) return <AdminErrorState description={error} action={<Button variant="outline" onClick={() => router.refresh()}>ลองใหม่</Button>} />;
+  if (pageError && !formData.title) return <AdminErrorState description={pageError} action={<Button variant="outline" onClick={() => router.refresh()}>ลองใหม่</Button>} />;
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6">
@@ -224,7 +218,7 @@ export default function EditCoursePage() {
         <AdminMetricCard label="ความพร้อม" value={`${readinessPercent}%`} tone={readinessPercent === 100 ? 'success' : 'neutral'} detail={`${readyCount}/${checklist.length} รายการพร้อม`} />
       </div>
 
-      {error ? <Alert variant="destructive"><AlertTitle>ดำเนินการไม่สำเร็จ</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
+      {pageError ? <Alert variant="destructive"><AlertTitle>ดำเนินการไม่สำเร็จ</AlertTitle><AlertDescription>{pageError}</AlertDescription></Alert> : null}
 
       <form id="course-edit-form" onSubmit={handleSubmit} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="grid gap-6">

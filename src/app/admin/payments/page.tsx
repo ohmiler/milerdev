@@ -32,6 +32,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { showToast } from '@/components/ui/Toast';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 
 interface Payment {
   id: string;
@@ -103,8 +104,6 @@ export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [statusIntent, setStatusIntent] = useState<StatusIntent>(null);
   const [statusReason, setStatusReason] = useState('');
@@ -120,33 +119,21 @@ export default function AdminPaymentsPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchPayments = async () => {
-    setLoading(true);
-    setLoadError('');
-    try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        status: statusFilter,
-        method: methodFilter,
-        ...(searchDebounce && { search: searchDebounce }),
-      });
-      const response = await fetch(`/api/admin/payments?${params}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายการชำระเงินได้');
-      setPayments(data.payments || []);
-      setStats(data.stats || null);
-      setPagination(data.pagination || null);
-    } catch (caughtError) {
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายการชำระเงินได้');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchPayments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, methodFilter, currentPage, searchDebounce]);
+  const paymentsUrl = `/api/admin/payments?${new URLSearchParams({
+    page: currentPage.toString(),
+    status: statusFilter,
+    method: methodFilter,
+    ...(searchDebounce && { search: searchDebounce }),
+  })}`;
+  const { loading, error, reload: reloadPayments } = useLoad(paymentsUrl, async (signal) => {
+    const response = await fetch(paymentsUrl, { signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายการชำระเงินได้');
+    setPayments(data.payments || []);
+    setStats(data.stats || null);
+    setPagination(data.pagination || null);
+  });
+  const loadError = loadErrorMessage(error, 'ไม่สามารถโหลดรายการชำระเงินได้');
 
   const openStatusDialog = (payment: Payment, newStatus: Payment['status']) => {
     if (newStatus === payment.status) return;
@@ -176,7 +163,7 @@ export default function AdminPaymentsPage() {
       showToast(`เปลี่ยนสถานะเป็น “${statusText[statusIntent.newStatus]}” สำเร็จ`, 'success');
       setStatusIntent(null);
       setStatusReason('');
-      await fetchPayments();
+      await reloadPayments();
     } catch (caughtError) {
       setStatusError(caughtError instanceof Error ? caughtError.message : 'เปลี่ยนสถานะไม่สำเร็จ กรุณาลองใหม่');
     } finally {
@@ -226,7 +213,7 @@ export default function AdminPaymentsPage() {
         </div>
       </AdminSection>
 
-      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchPayments()}>ลองใหม่</Button>} /> : null}
+      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void reloadPayments()}>ลองใหม่</Button>} /> : null}
 
       <AdminSection title="สมุดรายการชำระเงิน" description={`${(pagination?.total ?? payments.length).toLocaleString('th-TH')} รายการ`}>
         {loading && payments.length === 0 ? (

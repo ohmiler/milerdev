@@ -72,18 +72,18 @@ export default function ManageLessonsPage() {
   const [sectionDeleteError, setSectionDeleteError] = useState('');
   const [sectionDeleting, setSectionDeleting] = useState(false);
 
-  const fetchLessons = async (id: string) => {
-    setLoadError('');
-    try {
-      const response = await fetch(`/api/admin/courses/${id}/lessons`);
+  // Refreshes the list in place; the page-level loading state covers only the first load.
+  const fetchLessons = (id: string) => fetch(`/api/admin/courses/${id}/lessons`)
+    .then(async (response) => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'โหลดบทเรียนไม่สำเร็จ');
       setLessons(data.lessons || []);
       setSections(data.sections || []);
-    } catch (caughtError) {
+      setLoadError('');
+    })
+    .catch((caughtError) => {
       setLoadError(caughtError instanceof Error ? caughtError.message : 'โหลดบทเรียนไม่สำเร็จ');
-    }
-  };
+    });
 
   useEffect(() => {
     void fetchLessons(courseId).finally(() => setLoading(false));
@@ -259,7 +259,7 @@ export default function ManageLessonsPage() {
         </div>
       </AdminSection>
 
-      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchLessons(courseId)}>ลองใหม่</Button>} /> : null}
+      {loadError ? <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => { setLoadError(''); void fetchLessons(courseId); }}>ลองใหม่</Button>} /> : null}
 
       <AdminSection title="โครงสร้างบทเรียน" description="ลากเพื่อจัดลำดับภายในหมวด เลือกหมวดจากเมนูของแต่ละบทเพื่อย้ายข้ามหมวด และแก้วิดีโอแบบ inline">
         {lessons.length === 0 && sections.length === 0 ? (
