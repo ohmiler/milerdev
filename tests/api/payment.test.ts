@@ -124,7 +124,11 @@ vi.mock('@/lib/db', () => ({
                 select: vi.fn().mockImplementation(() => ({
                     from: vi.fn().mockImplementation(() => ({
                         where: vi.fn().mockImplementation(() => ({
-                            limit: vi.fn().mockResolvedValue(mockDb.selectResults),
+                            // Fulfillment reads the payment with .limit(1).for('update').
+                            limit: vi.fn().mockImplementation(() => Object.assign(
+                                Promise.resolve(mockDb.selectResults),
+                                { for: vi.fn().mockResolvedValue(mockDb.selectResults) },
+                            )),
                         })),
                         innerJoin: vi.fn().mockReturnValue({
                             where: vi.fn().mockResolvedValue([]),
