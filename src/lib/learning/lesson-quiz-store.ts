@@ -4,7 +4,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 
 import { db } from '@/lib/db';
-import { enrollments, lessonQuizAttempts, lessonQuizQuestions, lessons } from '@/lib/db/schema';
+import { courses, enrollments, lessonQuizAttempts, lessonQuizQuestions, lessons } from '@/lib/db/schema';
 import {
   gradeQuiz,
   toLearnerQuestion,
@@ -54,20 +54,24 @@ export async function readLearnerQuiz(memberId: string | null, lessonId: string)
   return { questions: questions.map(toLearnerQuestion), lastAttempt };
 }
 
-/** Grades and records a submission. Same access rule as the lesson: enrolled, or a free preview. */
+/**
+ * Grades and records a submission. Same access rule as the lesson: enrolled, or a free preview of
+ * a published course.
+ */
 export async function submitLessonQuizAttempt(input: {
   userId: string;
   lessonId: string;
   answers: Record<string, string>;
 }): Promise<QuizSubmission> {
   const [lesson] = await db
-    .select({ courseId: lessons.courseId, isFreePreview: lessons.isFreePreview })
+    .select({ courseId: lessons.courseId, isFreePreview: lessons.isFreePreview, courseStatus: courses.status })
     .from(lessons)
+    .innerJoin(courses, eq(lessons.courseId, courses.id))
     .where(eq(lessons.id, input.lessonId))
     .limit(1);
   if (!lesson) return { status: 'not_found' };
 
-  if (!lesson.isFreePreview) {
+  if (!(lesson.isFreePreview && lesson.courseStatus === 'published')) {
     const [enrollment] = await db
       .select({ id: enrollments.id })
       .from(enrollments)

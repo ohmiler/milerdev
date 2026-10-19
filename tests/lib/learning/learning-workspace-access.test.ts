@@ -8,7 +8,7 @@ import {
 function enrolledStore(overrides: Partial<LearningWorkspaceStore> = {}): LearningWorkspaceStore {
   return {
     async readCourse() {
-      return { id: 'course-1', slug: 'typescript', title: 'TypeScript' };
+      return { id: 'course-1', slug: 'typescript', title: 'TypeScript', status: 'published' };
     },
     async readLessonAccess() {
       return { id: 'lesson-2', courseId: 'course-1', isFreePreview: false };

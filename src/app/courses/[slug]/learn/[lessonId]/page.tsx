@@ -1,9 +1,7 @@
+import { cache } from 'react';
 import { redirect, notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { courses, lessons } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 import LearnPageClient from '@/components/course/LearnPageClient';
 import { readLearnerQuiz } from '@/lib/learning/lesson-quiz-store';
 import { getLearningWorkspaceProjection } from '@/lib/learning/workspace';
@@ -14,35 +12,33 @@ interface Props {
   params: Promise<{ slug: string; lessonId: string }>;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug, lessonId } = await params;
-  const [lesson] = await db
-    .select({ title: lessons.title })
-    .from(lessons)
-    .where(eq(lessons.id, lessonId))
-    .limit(1);
-  const [course] = await db
-    .select({ title: courses.title })
-    .from(courses)
-    .where(eq(courses.slug, slug))
-    .limit(1);
-
-  const lessonTitle = lesson?.title || 'บทเรียน';
-  const courseTitle = course?.title || 'คอร์ส';
-
-  return {
-    title: `${lessonTitle} - ${courseTitle}`,
-    robots: { index: false, follow: false },
-  };
-}
-
-export default async function LessonPage({ params }: Props) {
-  const [session, { slug, lessonId }] = await Promise.all([auth(), params]);
+// The page and its metadata share one authorized projection per request, so the title never
+// names a lesson or course the visitor may not see.
+const loadLesson = cache(async (slug: string, lessonId: string) => {
+  const session = await auth();
   const projection = await getLearningWorkspaceProjection({
     memberId: session?.user?.id ?? null,
     courseSlug: slug,
     lessonId,
   });
+  return { session, projection };
+});
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug, lessonId } = await params;
+  const { projection } = await loadLesson(slug, lessonId);
+
+  return {
+    title: projection.kind === 'ready'
+      ? `${projection.currentLesson.title} - ${projection.course.title}`
+      : 'บทเรียน',
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function LessonPage({ params }: Props) {
+  const { slug, lessonId } = await params;
+  const { session, projection } = await loadLesson(slug, lessonId);
 
   if (projection.kind === 'not_found') notFound();
   if (projection.kind === 'access_denied') {

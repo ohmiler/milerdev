@@ -17,7 +17,7 @@ describe('LearningWorkspaceProjection authorization order', () => {
       isFreePreview: false,
     });
     const store: LearningWorkspaceStore = {
-      readCourse: vi.fn().mockResolvedValue({ id: 'course-1', slug: 'typescript', title: 'TypeScript' }),
+      readCourse: vi.fn().mockResolvedValue({ id: 'course-1', slug: 'typescript', title: 'TypeScript', status: 'published' }),
       readLessonAccess: vi.fn().mockResolvedValue({
         id: 'lesson-1',
         courseId: 'course-1',
@@ -50,7 +50,7 @@ describe('LearningWorkspaceProjection authorization order', () => {
   it('never reads current content when a locked lesson is denied', async () => {
     const readAuthorizedLesson = vi.fn();
     const store: LearningWorkspaceStore = {
-      readCourse: vi.fn().mockResolvedValue({ id: 'course-1', slug: 'typescript', title: 'TypeScript' }),
+      readCourse: vi.fn().mockResolvedValue({ id: 'course-1', slug: 'typescript', title: 'TypeScript', status: 'published' }),
       readLessonAccess: vi.fn().mockResolvedValue({
         id: 'lesson-1',
         courseId: 'course-1',
