@@ -73,7 +73,6 @@ export function CourseCatalogTopics({
               <Link
                 href={buildCourseCatalogHref(query, { tag: topic.slug, page: 1 })}
                 aria-current={active ? 'page' : undefined}
-                aria-label={`${topic.name} ${topic.count} คอร์ส`}
                 className={cn(
                   'inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/40',
                   active
@@ -81,9 +80,10 @@ export function CourseCatalogTopics({
                     : 'bg-background text-foreground hover:border-link/40 hover:text-link',
                 )}
               >
-                {topic.name}
+                {/* The name comes from this content, so the visible text stays inside it (WCAG 2.5.3). */}
+                {topic.name}{' '}
                 <span className={cn('text-caption tabular-nums', active ? 'text-background/80' : 'text-muted-foreground')}>
-                  {topic.count}
+                  {topic.count}{' '}<span className="sr-only">คอร์ส</span>
                 </span>
               </Link>
             </li>

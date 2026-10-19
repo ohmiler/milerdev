@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import CourseLessonList from '@/components/course/CourseLessonList';
@@ -25,14 +25,15 @@ describe('course curriculum', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(10);
     await user.click(screen.getByRole('button', { name: /ดูเฉพาะ.*บทฟรี/ }));
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
-    const lastPreview = screen.getByRole('button', { name: 'หัวข้อ 12, ดูฟรี' });
-    expect(within(lastPreview).getByText('12')).toBeTruthy();
+    // The name comes from the visible content (WCAG 2.5.3): position, title, duration, state.
+    const lastPreview = screen.getByRole('button', { name: /^บทที่ 12 หัวข้อ 12 .*ดูฟรี$/ });
+    expect(lastPreview.hasAttribute('aria-label')).toBe(false);
     expect(screen.queryByRole('button', { name: /ดูอีก/ })).toBeNull();
     await user.click(lastPreview);
     expect(push).toHaveBeenCalledWith('/courses/react/learn/lesson-12');
     await user.click(screen.getByRole('button', { name: /ดูเฉพาะ.*บทฟรี/ }));
     expect(screen.getAllByRole('listitem')).toHaveLength(10);
-    await user.click(screen.getByRole('button', { name: 'หัวข้อ 1, ต้องสมัครเรียนก่อน' }));
+    await user.click(screen.getByRole('button', { name: /^บทที่ 01 หัวข้อ 1 .*ล็อก ต้องสมัครเรียนก่อน$/ }));
     expect(push).toHaveBeenLastCalledWith('/login?callbackUrl=/courses/react');
   });
 
@@ -41,7 +42,7 @@ describe('course curriculum', () => {
     render(<CourseLessonList lessons={lessons} courseSlug="react" courseId="course-one" isEnrolled />);
     await user.click(screen.getByRole('button', { name: 'ดูอีก 2 บทเรียน' }));
     expect(screen.getAllByRole('listitem')).toHaveLength(12);
-    await user.click(screen.getByRole('button', { name: 'หัวข้อ 11, เปิดบทเรียน' }));
+    await user.click(screen.getByRole('button', { name: /^บทที่ 11 หัวข้อ 11 .*เปิดบทเรียน$/ }));
     expect(push).toHaveBeenLastCalledWith('/courses/react/learn/lesson-11');
     await user.click(screen.getByRole('button', { name: 'ย่อรายการบทเรียน' }));
     expect(screen.getAllByRole('listitem')).toHaveLength(10);

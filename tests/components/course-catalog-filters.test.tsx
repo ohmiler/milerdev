@@ -34,9 +34,11 @@ describe('course catalog topics', () => {
     render(<CourseCatalogTopics query={query()} topics={topics} total={4} />);
     const nav = screen.getByRole('navigation', { name: 'หัวข้อคอร์ส' });
 
-    expect(within(nav).getAllByRole('link').map((item) => item.getAttribute('aria-label'))).toEqual(['ทั้งหมด 4 คอร์ส', 'JavaScript 3 คอร์ส', 'React 1 คอร์ส']);
-    // The visible text stays inside the spoken name.
-    expect(link('JavaScript 3 คอร์ส').textContent).toBe('JavaScript3');
+    const links = within(nav).getAllByRole('link');
+    expect(links.map((item) => item.textContent)).toEqual(['ทั้งหมด 4 คอร์ส', 'JavaScript 3 คอร์ส', 'React 1 คอร์ส']);
+    // The spoken name comes from the content, not an aria-label, so the visible text
+    // ("JavaScript 3", with " คอร์ส" for screen readers only) stays inside it (WCAG 2.5.3).
+    expect(links.some((item) => item.hasAttribute('aria-label'))).toBe(false);
     expect(link('ทั้งหมด 4 คอร์ส').getAttribute('href')).toBe('/courses');
     expect(link('ทั้งหมด 4 คอร์ส').getAttribute('aria-current')).toBe('page');
     expect(link('JavaScript 3 คอร์ส').getAttribute('href')).toBe('/courses?tag=javascript');

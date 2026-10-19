@@ -59,12 +59,12 @@ export default function LearningNavbar({
             variant="outline"
             className="min-h-11 shrink-0 lg:hidden"
             onClick={(event) => onOpenSidebar(event.currentTarget)}
-            aria-label="เปิดรายการบทเรียน"
             title="เปิดรายการบทเรียน"
             data-learning-control="curriculum"
           >
+            {/* The name comes from this content, so the visible word stays inside it (WCAG 2.5.3). */}
             <ListVideo data-icon="inline-start" aria-hidden="true" />
-            บทเรียน
+            <span className="sr-only">เปิดรายการ</span>บทเรียน
           </Button>
 
           <div className="hidden items-center gap-2 sm:flex" aria-label="MilerDev">
@@ -87,12 +87,13 @@ export default function LearningNavbar({
           <Button asChild size="icon-sm" variant="ghost" className="min-h-11 min-w-11 lg:w-auto lg:px-3">
             <Link
               href={`/courses/${courseSlug}`}
-              aria-label={`ออกจากบทเรียนและกลับไปยังคอร์ส ${courseTitle}`}
               title="กลับไปหน้าคอร์ส"
               data-learning-control="course-exit"
             >
+              {/* Icon-only below lg; the name comes from the content at every width (WCAG 2.5.3). */}
               <ArrowLeft data-icon="inline-start" aria-hidden="true" />
-              <span className="hidden lg:inline">กลับหน้าคอร์ส</span>
+              <span className="sr-only lg:not-sr-only">กลับหน้าคอร์ส</span>
+              {' '}<span className="sr-only">{courseTitle}</span>
             </Link>
           </Button>
         </div>

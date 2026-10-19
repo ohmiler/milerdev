@@ -28,7 +28,7 @@ describe('course dead-end recovery', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'บทที่ล็อก, ต้องสมัครเรียนก่อน' }));
+    await user.click(screen.getByRole('button', { name: /บทที่ล็อก .*ต้องสมัครเรียนก่อน$/ }));
 
     const action = screen.getByRole('link', { name: 'ดูราคาและวิธีเข้าเรียน' });
     expect(action.getAttribute('href')).toBe('#course-action');
