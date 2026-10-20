@@ -42,9 +42,9 @@ export function AdminUserLifecycleAction({
       variant={lifecycle.action === 'deactivate' ? 'destructive' : 'outline'}
       onClick={onRequest}
       disabled={pending}
-      aria-label={`${lifecycle.actionLabel}บัญชี`}
     >
-      {pending ? 'กำลังบันทึก...' : lifecycle.actionLabel}
+      {/* The name comes from this content, so the visible words stay inside it (WCAG 2.5.3). */}
+      {pending ? 'กำลังบันทึก...' : <>{lifecycle.actionLabel}<span className="sr-only">บัญชี</span></>}
     </Button>
   );
 }

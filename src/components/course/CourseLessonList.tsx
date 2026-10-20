@@ -78,17 +78,17 @@ export default function CourseLessonList({ lessons, courseSlug, isEnrolled = fal
           variant="ghost"
           className="grid h-auto min-h-16 w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] justify-normal gap-3 rounded-none px-3 py-3 text-left whitespace-normal focus-visible:ring-inset sm:px-4"
           onClick={() => handleLessonClick(lesson)}
-          aria-label={`${lesson.title}, ${lesson.isFreePreview ? 'ดูฟรี' : isEnrolled ? 'เปิดบทเรียน' : 'ต้องสมัครเรียนก่อน'}`}
         >
-          <span className="text-center font-mono text-caption text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
-          <span className="min-w-0"><strong className="block text-sm leading-6 font-medium wrap-anywhere">{lesson.title}</strong>{duration && <span className="mt-1 block text-caption text-muted-foreground">{duration}</span>}
-          </span>
+          {/* The name comes from this content, so the visible text stays inside it (WCAG 2.5.3). */}
+          <span className="text-center font-mono text-caption text-muted-foreground"><span className="sr-only">บทที่</span>{' '}{String(index + 1).padStart(2, '0')}</span>{' '}
+          <span className="min-w-0"><strong className="block text-sm leading-6 font-medium wrap-anywhere">{lesson.title}</strong>{duration && <>{' '}<span className="mt-1 block text-caption text-muted-foreground">{duration}</span></>}
+          </span>{' '}
           {lesson.isFreePreview ? (
             <Badge variant="secondary">ดูฟรี</Badge>
           ) : isEnrolled ? (
             <Badge variant="outline">เปิดบทเรียน</Badge>
           ) : (
-            <Badge variant="outline"><Lock data-icon="inline-end" aria-hidden="true" /> ล็อก</Badge>
+            <Badge variant="outline"><Lock data-icon="inline-end" aria-hidden="true" /> ล็อก{' '}<span className="sr-only">ต้องสมัครเรียนก่อน</span></Badge>
           )}
         </Button>
       </li>

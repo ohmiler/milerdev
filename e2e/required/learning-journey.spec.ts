@@ -60,7 +60,8 @@ test('learning keeps failed completion recoverable and mobile locked navigation 
   const guestPage = await guest.newPage();
   await installRequiredE2EProviderMocks(guestPage, baseURL);
   await guestPage.goto(path);
-  const trigger = guestPage.getByRole('button', { name: 'เปิดรายการบทเรียน' });
+  // The name is the hidden "เปิดรายการ" plus the visible "บทเรียน"; browsers put a space between them.
+  const trigger = guestPage.getByRole('button', { name: 'เปิดรายการ บทเรียน' });
   await trigger.click();
   const sheet = guestPage.getByRole('dialog');
   await sheet.getByRole('searchbox').fill('คําสั่ง');
