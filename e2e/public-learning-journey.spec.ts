@@ -289,7 +289,7 @@ test.describe('public learning journey', () => {
     await page.getByRole('button', { name: 'กลับไปดูบทเรียนปัจจุบัน' }).click();
 
     await page.setViewportSize({ width: 390, height: 844 });
-    const openRail = page.getByRole('button', { name: 'เปิดรายการบทเรียน', exact: true });
+    const openRail = page.getByRole('button', { name: 'เปิดรายการ บทเรียน', exact: true });
     await openRail.click();
 
     const closeRail = page.getByRole('button', { name: 'ปิดรายการบทเรียน', exact: true });

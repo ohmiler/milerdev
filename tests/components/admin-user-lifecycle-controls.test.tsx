@@ -17,7 +17,9 @@ describe('Admin user lifecycle controls', () => {
 
         expect(markup).toContain('ใช้งาน');
         expect(markup).toContain('ปิดใช้งาน');
-        expect(markup).toContain('aria-label="ปิดใช้งานบัญชี"');
+        // The button's name comes from its content and starts with the visible words (WCAG 2.5.3).
+        expect(markup).toContain('ปิดใช้งาน<span class="sr-only">บัญชี</span>');
+        expect(markup).not.toContain('aria-label=');
     });
 
     it('renders an inactive status with a disabled pending reactivation action', () => {
