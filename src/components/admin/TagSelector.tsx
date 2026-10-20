@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AlertCircle, ChevronsUpDown, Tags, X } from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/empty';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Spinner } from '@/components/ui/spinner';
+import { useLoad } from '@/lib/hooks/use-load';
 
 interface Tag {
   id: string;
@@ -39,12 +40,9 @@ type LoadState = 'loading' | 'error' | 'empty' | 'ready';
 
 export default function TagSelector({ selectedTagIds, onChange }: TagSelectorProps) {
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [loadState, setLoadState] = useState<LoadState>('loading');
   const [open, setOpen] = useState(false);
 
-  const loadTags = useCallback(async (signal?: AbortSignal) => {
-    setLoadState('loading');
-
+  const { loading, error, reload: reloadTags } = useLoad('/api/admin/tags', async (signal) => {
     try {
       const response = await fetch('/api/admin/tags', { signal });
       if (!response.ok) throw new Error('Unable to load tags');
@@ -55,19 +53,12 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
         : [];
 
       setAllTags(tags);
-      setLoadState(tags.length > 0 ? 'ready' : 'empty');
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      setAllTags([]);
-      setLoadState('error');
+    } catch (caughtError) {
+      if (!signal.aborted) setAllTags([]);
+      throw caughtError;
     }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void loadTags(controller.signal);
-    return () => controller.abort();
-  }, [loadTags]);
+  });
+  const loadState: LoadState = loading ? 'loading' : error ? 'error' : allTags.length > 0 ? 'ready' : 'empty';
 
   const toggleTag = (tagId: string) => {
     if (selectedTagIds.includes(tagId)) {
@@ -115,7 +106,7 @@ export default function TagSelector({ selectedTagIds, onChange }: TagSelectorPro
           <AlertTitle>โหลดแท็กไม่สำเร็จ</AlertTitle>
           <AlertDescription className="flex flex-col items-start gap-3">
             <span>กรุณาตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</span>
-            <Button type="button" variant="outline" size="sm" onClick={() => void loadTags()}>
+            <Button type="button" variant="outline" size="sm" onClick={() => void reloadTags()}>
               ลองใหม่
             </Button>
           </AlertDescription>

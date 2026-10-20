@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle2, ChevronLeft, ChevronRight, RefreshCw, Search, ShieldAlert, XCircle } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import {
@@ -36,6 +36,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 
 interface PaymentRecord {
   id: string;
@@ -80,6 +81,7 @@ type ActionIntent =
 // Must match the max length of paymentIds in the bulk reconciliation API schema.
 const MAX_BULK_SELECTION = 50;
 const DAY_OPTIONS: DaysFilter[] = [7, 14, 30, 60, 90, 'all'];
+const NO_SELECTION: ReadonlySet<string> = new Set();
 
 const statusLabels: Record<StatusFilter, string> = {
   verifying: 'รอตรวจสอบ',
@@ -99,8 +101,6 @@ export default function ReconciliationPage() {
   const requestedQuery = (searchParams.get('q') ?? '').trim().slice(0, 100);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [summary, setSummary] = useState<Summary>({ verifying: 0, failed: 0, pending: 0 });
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(isStatusFilter(requestedStatus) ? requestedStatus : 'verifying');
   const [daysBack, setDaysBack] = useState<DaysFilter>('all');
   const [page, setPage] = useState(1);
@@ -109,73 +109,57 @@ export default function ReconciliationPage() {
   // The API page size equals the bulk cap, so selecting all means selecting the whole page.
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pageSize: MAX_BULK_SELECTION, total: 0, totalPages: 1 });
   const [actionLoading, setActionLoading] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selection, setSelection] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [actionIntent, setActionIntent] = useState<ActionIntent>(null);
   const [reason, setReason] = useState('');
   const [actionError, setActionError] = useState('');
-  const [caseState, setCaseState] = useState<ReconciliationCaseState>({ status: 'loading' });
-  const [caseReload, setCaseReload] = useState(0);
+  const [caseFacts, setCaseFacts] = useState<ReconciliationCase | null>(null);
   // Filter whose rows are currently in `payments`; lets a failed reload keep rows only for the same filter.
   const loadedKeyRef = useRef<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    const requestKey = `${statusFilter}:${daysBack}:${page}:${searchTerm}`;
-    const params = new URLSearchParams({ status: statusFilter, days: String(daysBack), page: String(page) });
-    if (searchTerm) params.set('q', searchTerm);
-    setLoading(true);
-    setLoadError('');
-    setSelected(new Set());
+  const params = new URLSearchParams({ status: statusFilter, days: String(daysBack), page: String(page) });
+  if (searchTerm) params.set('q', searchTerm);
+  const queueUrl = `/api/admin/reconciliation?${params.toString()}`;
+  const { loading, error, reload } = useLoad(queueUrl, async (signal) => {
     try {
-      const response = await fetch(`/api/admin/reconciliation?${params.toString()}`);
+      const response = await fetch(queueUrl, { signal });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายการกระทบยอดได้');
-      setPayments(data.payments || []);
+      const rows: PaymentRecord[] = data.payments || [];
+      const nextPagination: Pagination = data.pagination || { page: 1, pageSize: MAX_BULK_SELECTION, total: rows.length, totalPages: 1 };
+      setPayments(rows);
       setSummary(data.summary || { verifying: 0, failed: 0, pending: 0 });
-      setPagination(data.pagination || { page: 1, pageSize: MAX_BULK_SELECTION, total: (data.payments || []).length, totalPages: 1 });
-      loadedKeyRef.current = requestKey;
+      setPagination(nextPagination);
+      loadedKeyRef.current = queueUrl;
+      // Resolving the last items of a page can leave it empty while earlier pages remain.
+      if (rows.length === 0 && nextPagination.total > 0 && page > nextPagination.totalPages) setPage(nextPagination.totalPages);
     } catch (caughtError) {
       // Rows from a different filter must not stay on screen under the new filter's label.
-      if (loadedKeyRef.current !== requestKey) setPayments([]);
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายการกระทบยอดได้');
+      if (!signal.aborted && loadedKeyRef.current !== queueUrl) setPayments([]);
+      throw caughtError;
     } finally {
-      setLoading(false);
+      if (!signal.aborted) setSelection(new Set());
     }
-  }, [statusFilter, daysBack, page, searchTerm]);
-
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
-
-  // Resolving the last items of a page can leave it empty while earlier pages remain.
-  useEffect(() => {
-    if (!loading && !loadError && payments.length === 0 && pagination.total > 0 && page > pagination.totalPages) {
-      setPage(pagination.totalPages);
-    }
-  }, [loading, loadError, payments.length, pagination.total, pagination.totalPages, page]);
+  });
+  const loadError = loadErrorMessage(error, 'ไม่สามารถโหลดรายการกระทบยอดได้');
+  // A selection belongs to the rows it was made on: it is empty while rows load and starts over when they arrive.
+  const selected = loading ? NO_SELECTION : selection;
 
   // Load the facts a reviewer needs whenever a single-payment decision dialog opens.
   const caseTargetId = actionIntent?.type === 'single' ? actionIntent.payment.id : null;
-  useEffect(() => {
-    if (!caseTargetId) return;
-    const controller = new AbortController();
-    setCaseState({ status: 'loading' });
-    (async () => {
-      try {
-        const response = await fetch(`/api/admin/reconciliation/${caseTargetId}`, { signal: controller.signal });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายละเอียดรายการได้');
-        setCaseState({ status: 'ready', data: data as ReconciliationCase });
-      } catch (caughtError) {
-        if (controller.signal.aborted) return;
-        setCaseState({
-          status: 'error',
-          message: caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดรายละเอียดรายการได้',
-        });
-      }
-    })();
-    return () => controller.abort();
-  }, [caseTargetId, caseReload]);
+  const caseUrl = `/api/admin/reconciliation/${caseTargetId}`;
+  const caseLoad = useLoad(caseTargetId ? caseUrl : null, async (signal) => {
+    const response = await fetch(caseUrl, { signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'ไม่สามารถโหลดรายละเอียดรายการได้');
+    setCaseFacts(data as ReconciliationCase);
+  });
+  const caseState: ReconciliationCaseState = caseLoad.error
+    ? { status: 'error', message: loadErrorMessage(caseLoad.error, 'ไม่สามารถโหลดรายละเอียดรายการได้') }
+    : caseLoad.loading || !caseFacts
+      ? { status: 'loading' }
+      : { status: 'ready', data: caseFacts };
 
   const caseBlockReason = actionIntent?.type === 'single'
     ? describeCaseBlock(caseState, actionIntent.payment.status)
@@ -231,8 +215,8 @@ export default function ReconciliationPage() {
       setMessage({ type: 'success', text: data.message || 'ดำเนินการสำเร็จ' });
       setActionIntent(null);
       setReason('');
-      setSelected(new Set());
-      await fetchData();
+      setSelection(new Set());
+      await reload();
     } catch (caughtError) {
       setActionError(caughtError instanceof Error ? caughtError.message : 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
     } finally {
@@ -241,7 +225,7 @@ export default function ReconciliationPage() {
   };
 
   const toggleSelect = (id: string) => {
-    setSelected((previous) => {
+    setSelection((previous) => {
       const next = new Set(previous);
       if (next.has(id)) next.delete(id);
       else if (next.size < MAX_BULK_SELECTION) next.add(id);
@@ -252,7 +236,7 @@ export default function ReconciliationPage() {
   const selectablePayments = payments.slice(0, MAX_BULK_SELECTION);
   const allSelectableSelected = selectablePayments.length > 0 && selectablePayments.every((payment) => selected.has(payment.id));
   const toggleSelectAll = () => {
-    setSelected(allSelectableSelected ? new Set() : new Set(selectablePayments.map((payment) => payment.id)));
+    setSelection(allSelectableSelected ? new Set() : new Set(selectablePayments.map((payment) => payment.id)));
   };
   const selectionAtLimit = selected.size >= MAX_BULK_SELECTION;
   // After a failed refresh the rows on screen may be out of date, so mutations stay off until a reload succeeds.
@@ -278,7 +262,7 @@ export default function ReconciliationPage() {
         title="กระทบยอดการชำระเงิน"
         description="จัดการรายการค้าง ตรวจสอบรายการผิดปกติ และบันทึกเหตุผลก่อนอนุมัติหรือปฏิเสธทุกครั้ง"
         actions={
-          <Button variant="outline" disabled={loading} onClick={() => void fetchData()}>
+          <Button variant="outline" disabled={loading} onClick={() => void reload()}>
             <RefreshCw data-icon="inline-start" className={loading ? 'animate-spin' : undefined} aria-hidden />
             รีเฟรช
           </Button>
@@ -348,7 +332,7 @@ export default function ReconciliationPage() {
           <AdminErrorState
             title={showingStaleRows ? 'รีเฟรชไม่สำเร็จ ข้อมูลด้านล่างอาจไม่เป็นปัจจุบัน' : undefined}
             description={showingStaleRows ? `${loadError} · อนุมัติและปฏิเสธถูกปิดไว้จนกว่าจะโหลดสำเร็จ` : loadError}
-            action={<Button variant="outline" onClick={() => void fetchData()}>ลองใหม่</Button>}
+            action={<Button variant="outline" onClick={() => void reload()}>ลองใหม่</Button>}
           />
         ) : null}
         {loading ? (
@@ -441,7 +425,7 @@ export default function ReconciliationPage() {
             <ReconciliationCaseDetails
               state={caseState}
               rowStatus={actionIntent.payment.status}
-              onRetry={() => setCaseReload((previous) => previous + 1)}
+              onRetry={() => void caseLoad.reload()}
             />
           ) : null}
           {actionError ? <Alert variant="destructive"><AlertTitle>ดำเนินการไม่สำเร็จ</AlertTitle><AlertDescription>{actionError}</AlertDescription></Alert> : null}

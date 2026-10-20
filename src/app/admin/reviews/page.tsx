@@ -18,6 +18,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { NativeSelect } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { showToast } from '@/components/ui/Toast';
+import { useLoad } from '@/lib/hooks/use-load';
 
 interface Review {
   id: string;
@@ -74,7 +75,6 @@ export default function AdminReviewsPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState('');
   const [searchDebounce, setSearchDebounce] = useState('');
@@ -90,32 +90,24 @@ export default function AdminReviewsPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchReviews = async () => {
-    setLoading(true);
+  const reviewsUrl = '/api/admin/reviews?' + new URLSearchParams({
+    page: currentPage.toString(),
+    ...(courseFilter !== 'all' && { courseId: courseFilter }),
+    ...(ratingFilter !== 'all' && { rating: ratingFilter }),
+    ...(searchDebounce && { search: searchDebounce }),
+  });
+  const { loading, reload: reloadReviews } = useLoad(reviewsUrl, async (signal) => {
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        ...(courseFilter !== 'all' && { courseId: courseFilter }),
-        ...(ratingFilter !== 'all' && { rating: ratingFilter }),
-        ...(searchDebounce && { search: searchDebounce }),
-      });
-      const res = await fetch('/api/admin/reviews?' + params);
+      const res = await fetch(reviewsUrl, { signal });
       const data = await res.json();
       setReviews(data.reviews || []);
       setCourses(data.courses || []);
       setStats(data.stats || null);
       setPagination(data.pagination || null);
     } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
+      if (!signal.aborted) console.error('Error:', error);
     }
-  };
-
-  useEffect(() => {
-    fetchReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, courseFilter, ratingFilter, searchDebounce]);
+  });
 
   const toggleHidden = async (id: string, isHidden: boolean) => {
     try {
@@ -126,7 +118,7 @@ export default function AdminReviewsPage() {
       });
       if (res.ok) {
         showToast(isHidden ? 'แสดงรีวิวแล้ว' : 'ซ่อนรีวิวแล้ว', 'success');
-        await fetchReviews();
+        await reloadReviews();
       }
     } catch {
       showToast('เกิดข้อผิดพลาด', 'error');
@@ -142,7 +134,7 @@ export default function AdminReviewsPage() {
       if (res.ok) {
         setDeleteConfirm(null);
         showToast('ลบรีวิวสำเร็จ', 'success');
-        await fetchReviews();
+        await reloadReviews();
       } else {
         const data = await res.json();
         showToast(data.error || 'เกิดข้อผิดพลาด', 'error');

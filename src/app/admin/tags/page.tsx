@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ExternalLink, Pencil, Plus, Tag as TagIcon, Trash2 } from 'lucide-react';
 
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { showToast } from '@/components/ui/Toast';
+import { useLoad } from '@/lib/hooks/use-load';
 
 interface Tag {
   id: string;
@@ -27,7 +28,6 @@ interface Tag {
 
 export default function AdminTagsPage() {
   const [tagsList, setTagsList] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
   const [newTagName, setNewTagName] = useState('');
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -36,22 +36,15 @@ export default function AdminTagsPage() {
   const [editName, setEditName] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const fetchTags = async () => {
-    setLoading(true);
+  const { loading, reload: reloadTags } = useLoad('/api/admin/tags', async (signal) => {
     try {
-      const res = await fetch('/api/admin/tags');
+      const res = await fetch('/api/admin/tags', { signal });
       const data = await res.json();
       setTagsList(data.tags || []);
     } catch (error) {
-      console.error('Error fetching tags:', error);
-    } finally {
-      setLoading(false);
+      if (!signal.aborted) console.error('Error fetching tags:', error);
     }
-  };
-
-  useEffect(() => {
-    fetchTags();
-  }, []);
+  });
 
   const handleCreate = async () => {
     if (!newTagName.trim()) {
@@ -69,7 +62,7 @@ export default function AdminTagsPage() {
 
       if (res.ok) {
         setNewTagName('');
-        await fetchTags();
+        await reloadTags();
         showToast('สร้างแท็กสำเร็จ', 'success');
       } else {
         const data = await res.json();
@@ -99,7 +92,7 @@ export default function AdminTagsPage() {
       if (res.ok) {
         setEditing(null);
         setEditName('');
-        await fetchTags();
+        await reloadTags();
         showToast('อัพเดทแท็กสำเร็จ', 'success');
       } else {
         const data = await res.json();
@@ -121,7 +114,7 @@ export default function AdminTagsPage() {
       const res = await fetch('/api/admin/tags/' + id, { method: 'DELETE' });
       if (res.ok) {
         setDeleteConfirm(null);
-        await fetchTags();
+        await reloadTags();
         showToast('ลบแท็กสำเร็จ', 'success');
       } else {
         const data = await res.json();

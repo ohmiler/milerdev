@@ -13,6 +13,7 @@ import { Spinner } from '@/components/ui/spinner';
 import OrderReviewSummary, { formatOrderAmount } from './OrderReviewSummary';
 import type { OrderReview } from '@/lib/commerce/order-review';
 import type { PaymentPresentation } from '@/lib/commerce/payment-presentation';
+import { useLoad } from '@/lib/hooks/use-load';
 
 export const CHECKOUT_CONTRACT = {
   reviewEndpoint: '/api/checkout/review',
@@ -27,6 +28,9 @@ const PAYMENT_METHODS = [
   { id: 'stripe', icon: CreditCard, title: 'บัตรเครดิต / เดบิต', next: 'กรอกบัตรบนหน้าชำระเงินของ Stripe แล้วระบบพากลับมาที่นี่' },
 ] as const;
 
+// Milliseconds left before a PromptPay attempt expires; zero or less once it has.
+const msUntilExpiry = (expiresAt: string) => new Date(expiresAt).getTime() - Date.now();
+
 type Intent = { paymentId: string; amount: number; itemTitle: string; expiresAt: string; promptpayQr?: string | null };
 type Props = {
   open: boolean;
@@ -38,7 +42,6 @@ type Props = {
 };
 
 export default function CheckoutDialog({ open, onClose, target, returnFocusRef, onEnrolled, resumePaymentId }: Props) {
-  const [resumeVersion, setResumeVersion] = useState(0);
   const [resumeChecked, setResumeChecked] = useState(false);
   const [review, setReview] = useState<OrderReview | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,47 +82,53 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
     return () => controller.abort();
   }, [open, intent, target.type, target.id, resumePaymentId]);
 
-  useEffect(() => {
-    if (!open || !resumePaymentId) return;
-    const controller = new AbortController();
-    setLoading(true);
-    setUncertain(true);
+  // Reopening an earlier attempt asks the server for its current state first.
+  const resumeUrl = `${CHECKOUT_CONTRACT.intentEndpoint}?paymentId=${encodeURIComponent(resumePaymentId ?? '')}`;
+  const resumeCheck = useLoad(open && resumePaymentId ? `${resumeUrl}#${target.type}:${target.id}` : null, async (signal) => {
+    if (!resumePaymentId) return;
+    try {
+      const response = await fetch(resumeUrl, { cache: 'no-store', signal });
+      const data = await response.json();
+      const p: PaymentPresentation | undefined = data.presentation;
+      if (!response.ok || p?.attempt?.id !== resumePaymentId || p.attempt.method !== 'promptpay'
+        || p.target.type !== target.type || p.target.id !== target.id || !p.quote || !p.attempt.expiresAt) throw new Error();
+      if (signal.aborted) return;
+      setIntent({ paymentId: p.attempt.id, amount: Number(p.quote.amountDue), itemTitle: p.target.title || 'รายการเดิม', expiresAt: p.attempt.expiresAt });
+      setExpired(msUntilExpiry(p.attempt.expiresAt) <= 0);
+      setPresentation(p);
+      setUncertain(!data.canSubmitSlip);
+      setResumeChecked(true);
+    } catch {
+      if (signal.aborted) return;
+      setUncertain(true);
+      setError('ยังเปิดรายการเดิมไม่ได้ กรุณาตรวจสถานะในประวัติการชำระเงิน อย่าชำระซ้ำ');
+    }
+  });
+  // Until the server answers, the earlier attempt counts as uncertain: no new payment and no slip.
+  const isUncertain = uncertain || resumeCheck.loading;
+  const busy = loading || resumeCheck.loading;
+
+  const retryResume = () => {
     setError(null);
-    fetch(`${CHECKOUT_CONTRACT.intentEndpoint}?paymentId=${encodeURIComponent(resumePaymentId)}`, { cache: 'no-store', signal: controller.signal })
-      .then(async (response) => {
-        const data = await response.json();
-        const p: PaymentPresentation | undefined = data.presentation;
-        if (!response.ok || p?.attempt?.id !== resumePaymentId || p.attempt.method !== 'promptpay'
-          || p.target.type !== target.type || p.target.id !== target.id || !p.quote || !p.attempt.expiresAt) throw new Error();
-        if (controller.signal.aborted) return;
-        setIntent({ paymentId: p.attempt.id, amount: Number(p.quote.amountDue), itemTitle: p.target.title || 'รายการเดิม', expiresAt: p.attempt.expiresAt });
-        setExpired(Date.now() >= new Date(p.attempt.expiresAt).getTime());
-        setPresentation(p);
-        setUncertain(!data.canSubmitSlip);
-        setResumeChecked(true);
-      }).catch(() => {
-        if (!controller.signal.aborted) setError('ยังเปิดรายการเดิมไม่ได้ กรุณาตรวจสถานะในประวัติการชำระเงิน อย่าชำระซ้ำ');
-      }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
-  }, [open, resumePaymentId, resumeVersion, target.id, target.type]);
+    void resumeCheck.reload();
+  };
 
   useEffect(() => {
     if (!intent) return;
-    const remaining = new Date(intent.expiresAt).getTime() - Date.now();
+    const remaining = msUntilExpiry(intent.expiresAt);
     const timer = setTimeout(() => setExpired(true), Math.min(2_147_483_647, Math.max(0, remaining)));
     return () => clearTimeout(timer);
   }, [intent]);
 
+  // Revokes each slip preview once it is replaced or the dialog unmounts.
   useEffect(() => {
-    if (!slipFile) return;
-    const url = URL.createObjectURL(slipFile);
-    setSlipPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [slipFile]);
+    if (!slipPreview) return;
+    return () => URL.revokeObjectURL(slipPreview);
+  }, [slipPreview]);
 
   const close = () => {
     if (busyRef.current) return;
-    if (!intent && !uncertain) setError(null);
+    if (!intent && !isUncertain) setError(null);
     reviewRequest.current += 1;
     setReview(null);
     setSlipFile(null);
@@ -132,7 +141,7 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
     if (busyRef.current) return;
     busyRef.current = true;
     setLoading(true);
-    if (!intent && !uncertain) setError(null);
+    if (!intent && !isUncertain) setError(null);
     reviewRequest.current += 1;
     setReview(null);
     try {
@@ -223,7 +232,7 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
   };
 
   const verifySlip = async () => {
-    if (busyRef.current || !intent || !slipFile || uncertain || expired || Date.now() >= new Date(intent.expiresAt).getTime()) return;
+    if (busyRef.current || !intent || !slipFile || isUncertain || expired || msUntilExpiry(intent.expiresAt) <= 0) return;
     busyRef.current = true;
     setVerifying(true);
     setError(null);
@@ -270,9 +279,12 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
     if (!file) return;
     if (!CHECKOUT_CONTRACT.allowedSlipTypes.includes(file.type)) setSlipError('รองรับเฉพาะไฟล์ JPG, PNG, WEBP เท่านั้น');
     else if (file.size > CHECKOUT_CONTRACT.maxSlipBytes) setSlipError('ไฟล์ต้องมีขนาดไม่เกิน 5MB');
-    else setSlipFile(file);
+    else {
+      setSlipFile(file);
+      setSlipPreview(URL.createObjectURL(file));
+    }
   };
-  const pending = loading || verifying;
+  const pending = busy || verifying;
 
   return (
     <DialogShell
@@ -282,7 +294,7 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
       body={(
         <div className="flex min-w-0 flex-col gap-4" aria-busy={pending}>
           {error ? <Alert variant="destructive"><AlertTitle>ยังดำเนินการไม่สำเร็จ</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
-          {resumePaymentId && !resumeChecked ? <><p role="status">{error ? 'ยังไม่พร้อมเปิดรายการเดิม' : 'กำลังตรวจสอบรายการเดิม'}</p>{error ? <Button type="button" variant="outline" disabled={loading} onClick={() => setResumeVersion((version) => version + 1)}>ตรวจสอบรายการเดิมอีกครั้ง</Button> : null}</> : intent ? (
+          {resumePaymentId && !resumeChecked ? <><p role="status">{error ? 'ยังไม่พร้อมเปิดรายการเดิม' : 'กำลังตรวจสอบรายการเดิม'}</p>{error ? <Button type="button" variant="outline" disabled={busy} onClick={retryResume}>ตรวจสอบรายการเดิมอีกครั้ง</Button> : null}</> : intent ? (
             <>
               <p className="break-words font-medium">{intent.itemTitle}</p>
               <dl className="grid gap-3 text-sm [&>div]:flex [&>div]:flex-wrap [&>div]:justify-between [&>div]:gap-2 [&_dd]:min-w-0 [&_dd]:break-all">
@@ -293,7 +305,7 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
               {expired ? <Alert><AlertTitle>รายการพร้อมเพย์หมดเวลาแล้ว</AlertTitle><AlertDescription>หากโอนเงินแล้วอย่าชำระซ้ำ กรุณาติดต่อพร้อมเลขอ้างอิงเพื่อตรวจสอบรายการ</AlertDescription></Alert> : null}
               {presentation ? <Alert><AlertTitle>{presentation.payment.heading}</AlertTitle><AlertDescription>{presentation.payment.description}</AlertDescription></Alert> : null}
               {verifying ? <p role="status">กำลังตรวจสอบสลิป กรุณารอผล อย่าชำระหรือส่งสลิปซ้ำ</p> : null}
-              {!expired && !uncertain ? (
+              {!expired && !isUncertain ? (
                 <>
                   {resumePaymentId ? null : intent.promptpayQr ? <figure className="flex flex-col items-center gap-2">
                     <Image src={intent.promptpayQr} alt={`QR พร้อมเพย์ ยอด ${formatOrderAmount(intent.amount)}`} width={240} height={240} unoptimized className="size-60 rounded-md bg-white" />
@@ -318,15 +330,15 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
                 </>
               ) : null}
               <Button type="button" variant="outline" disabled={pending} onClick={checkAttempt}>ตรวจสถานะอีกครั้ง</Button>
-              {(expired || uncertain) ? <Button asChild variant="outline"><Link href="/contact">ติดต่อพร้อมเลขอ้างอิง</Link></Button> : null}
+              {(expired || isUncertain) ? <Button asChild variant="outline"><Link href="/contact">ติดต่อพร้อมเลขอ้างอิง</Link></Button> : null}
             </>
           ) : (
             <>
               {review ? <OrderReviewSummary review={review} /> : !error ? <p role="status">กำลังตรวจสอบรายการ...</p> : null}
-              {!review && error && !uncertain ? <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => refreshReview()}>ตรวจสอบรายการอีกครั้ง</Button> : null}
+              {!review && error && !isUncertain ? <Button type="button" variant="outline" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => refreshReview()}>ตรวจสอบรายการอีกครั้ง</Button> : null}
               {review?.action === 'unavailable' ? <Alert><AlertTitle>ยังไม่เปิดรับสมัคร</AlertTitle><AlertDescription>สินค้านี้ยังไม่พร้อมรับการลงทะเบียน กรุณากลับมาตรวจสอบภายหลัง</AlertDescription></Alert> : null}
               {review?.action === 'owned' ? <Button asChild><Link href="/dashboard">ไปการเรียนของฉัน</Link></Button> : null}
-              {review?.action === 'pay' && !uncertain ? <div className="flex flex-col gap-3" role="group" aria-label="ช่องทางชำระเงิน">
+              {review?.action === 'pay' && !isUncertain ? <div className="flex flex-col gap-3" role="group" aria-label="ช่องทางชำระเงิน">
                 {PAYMENT_METHODS.map((method) => (
                   <button
                     key={method.id}
@@ -345,16 +357,16 @@ export default function CheckoutDialog({ open, onClose, target, returnFocusRef, 
                   </button>
                 ))}
               </div> : null}
-              {review?.action === 'enroll-free' && !uncertain ? <Button type="button" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('free')}>ยืนยันลงทะเบียนเรียนฟรี</Button> : null}
-              {loading ? <p role="status"><Spinner aria-hidden="true" />กำลังดำเนินการ...</p> : null}
+              {review?.action === 'enroll-free' && !isUncertain ? <Button type="button" className="h-auto min-h-11 whitespace-normal py-3" disabled={pending} onClick={() => startPayment('free')}>ยืนยันลงทะเบียนเรียนฟรี</Button> : null}
+              {busy ? <p role="status"><Spinner aria-hidden="true" />กำลังดำเนินการ...</p> : null}
             </>
           )}
-          {(intent || uncertain || resumePaymentId) ? <Button asChild variant="outline"><Link href="/dashboard/payments">ดูประวัติการชำระเงิน</Link></Button> : null}
+          {(intent || isUncertain || resumePaymentId) ? <Button asChild variant="outline"><Link href="/dashboard/payments">ดูประวัติการชำระเงิน</Link></Button> : null}
         </div>
       )}
     >
       <Button type="button" variant="outline" disabled={pending} onClick={close}>{intent ? 'ปิดและเก็บรายการไว้' : 'ยกเลิก'}</Button>
-      {intent && (!resumePaymentId || resumeChecked) && !expired && !uncertain ? <Button type="button" disabled={pending || !slipFile} aria-busy={verifying} onClick={verifySlip}>{verifying ? <><Spinner data-icon="inline-start" aria-hidden="true" />กำลังตรวจสอบสลิป...</> : 'ตรวจสอบและชำระเงิน'}</Button> : null}
+      {intent && (!resumePaymentId || resumeChecked) && !expired && !isUncertain ? <Button type="button" disabled={pending || !slipFile} aria-busy={verifying} onClick={verifySlip}>{verifying ? <><Spinner data-icon="inline-start" aria-hidden="true" />กำลังตรวจสอบสลิป...</> : 'ตรวจสอบและชำระเงิน'}</Button> : null}
     </DialogShell>
   );
 }

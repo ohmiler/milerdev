@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { BookOpen, Download, GraduationCap, ReceiptText, TrendingUp, Users } from 'lucide-react';
 
 import {
@@ -27,6 +27,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { showToast } from '@/components/ui/Toast';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 import { cn } from '@/lib/utils';
 
 interface Overview {
@@ -180,35 +181,25 @@ function TrendList({
 
 export default function AdminReportsPage() {
   const [data, setData] = useState<ReportData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState('12');
   const [activeTab, setActiveTab] = useState<ReportTab>('overview');
   const [exporting, setExporting] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
+  const reportsUrl = '/api/admin/reports?period=' + period;
+  const { loading, error: loadFailure, reload } = useLoad(reportsUrl, async (signal) => {
+    let res: Response;
+    let json: ReportData & { error?: string };
     try {
-      const res = await fetch('/api/admin/reports?period=' + period);
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
-        return;
-      }
-      setData(json);
+      res = await fetch(reportsUrl, { signal });
+      json = await res.json();
     } catch (fetchError) {
-      console.error('Error fetching reports:', fetchError);
-      setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-    } finally {
-      setLoading(false);
+      if (!signal.aborted) console.error('Error fetching reports:', fetchError);
+      throw new Error('เกิดข้อผิดพลาดในการเชื่อมต่อ');
     }
-  };
-
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period]);
+    if (!res.ok) throw new Error(json.error || 'เกิดข้อผิดพลาดในการดึงข้อมูล');
+    setData(json);
+  });
+  const error = loadErrorMessage(loadFailure, 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
 
   const handleExport = async (type: string) => {
     setExporting(type);
@@ -241,7 +232,7 @@ export default function AdminReportsPage() {
         title="โหลดรายงานไม่สำเร็จ"
         description={error}
         action={
-          <Button variant="outline" size="sm" onClick={fetchData}>
+          <Button variant="outline" size="sm" onClick={() => void reload()}>
             ลองใหม่
           </Button>
         }

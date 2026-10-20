@@ -23,6 +23,7 @@ import {
   type CourseReviewQuery,
   type CourseReviewSort,
 } from '@/lib/courses/review-query';
+import { useLoad } from '@/lib/hooks/use-load';
 import { cn } from '@/lib/utils';
 
 interface Review {
@@ -112,8 +113,6 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState('');
 
   // Form
   const [showForm, setShowForm] = useState(false);
@@ -130,34 +129,20 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
     );
   }, [normalized.query, pathname, router, searchParams]);
 
-  const fetchReviews = useCallback(async (signal?: AbortSignal) => {
-    setLoading(true);
-    setFetchError('');
-    try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        sort,
-        ...(filterRating ? { rating: filterRating.toString() } : {}),
-      });
-      const res = await fetch(`/api/courses/${courseSlug}/reviews?${params}`, { signal });
-      if (!res.ok) throw new Error('Review request failed');
-      const data = await res.json();
-      setReviews(data.reviews || []);
-      setStats(data.stats || null);
-      setPagination(data.pagination || null);
-    } catch (error) {
-      if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) return;
-      setFetchError('ไม่สามารถโหลดรีวิวได้ในขณะนี้');
-    } finally {
-      if (!signal?.aborted) setLoading(false);
-    }
-  }, [courseSlug, currentPage, filterRating, sort]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void fetchReviews(controller.signal);
-    return () => controller.abort();
-  }, [fetchReviews]);
+  const reviewsUrl = `/api/courses/${courseSlug}/reviews?${new URLSearchParams({
+    page: currentPage.toString(),
+    sort,
+    ...(filterRating ? { rating: filterRating.toString() } : {}),
+  })}`;
+  const { loading, error, reload: reloadReviews } = useLoad(reviewsUrl, async (signal) => {
+    const res = await fetch(reviewsUrl, { signal });
+    if (!res.ok) throw new Error('Review request failed');
+    const data = await res.json();
+    setReviews(data.reviews || []);
+    setStats(data.stats || null);
+    setPagination(data.pagination || null);
+  });
+  const fetchError = error ? 'ไม่สามารถโหลดรีวิวได้ในขณะนี้' : '';
 
   useEffect(() => {
     if (!normalized.isCanonical) {
@@ -191,7 +176,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
       setFormRating(0);
       setFormComment('');
       if (currentPage === 1) {
-        await fetchReviews();
+        await reloadReviews();
       } else {
         updateReviewQuery({ page: 1 });
       }
@@ -356,7 +341,7 @@ export default function CourseReviews({ courseSlug, isEnrolled }: CourseReviewsP
           <AlertTitle>โหลดรีวิวไม่สำเร็จ</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
             <span>{fetchError}</span>
-            <Button type="button" variant="outline" size="sm" onClick={() => void fetchReviews()}>
+            <Button type="button" variant="outline" size="sm" onClick={() => void reloadReviews()}>
               ลองโหลดรีวิวอีกครั้ง
             </Button>
           </AlertDescription>

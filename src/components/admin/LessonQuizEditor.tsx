@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDown, ArrowUp, ListChecks, Plus, Save, Trash2, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import {
   AdminEmptyState,
@@ -16,6 +16,7 @@ import { Field, FieldDescription, FieldLabel, FieldLegend, FieldSet } from '@/co
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { showToast } from '@/components/ui/Toast';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 import { QUIZ_LIMITS, lessonQuizInputSchema, type QuizQuestion } from '@/lib/learning/lesson-quiz';
 
 // Draft keys are client-only; ids are sent back so saved questions keep their identity.
@@ -59,32 +60,19 @@ export function toQuizPayload(drafts: DraftQuestion[]) {
 
 export default function LessonQuizEditor({ lessonId }: { lessonId: string }) {
   const [questions, setQuestions] = useState<DraftQuestion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [dirty, setDirty] = useState(false);
 
-  const load = async () => {
-    setLoading(true);
-    setLoadError('');
-    try {
-      const response = await fetch(`/api/admin/lessons/${lessonId}/quiz`);
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'โหลดแบบทดสอบไม่สำเร็จ');
-      setQuestions(toDraft(data.questions ?? []));
-      setDirty(false);
-    } catch (caughtError) {
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'โหลดแบบทดสอบไม่สำเร็จ');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonId]);
+  const quizUrl = `/api/admin/lessons/${lessonId}/quiz`;
+  const { loading, error, reload } = useLoad(quizUrl, async () => {
+    const response = await fetch(quizUrl);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'โหลดแบบทดสอบไม่สำเร็จ');
+    setQuestions(toDraft(data.questions ?? []));
+    setDirty(false);
+  });
+  const loadError = loadErrorMessage(error, 'โหลดแบบทดสอบไม่สำเร็จ');
 
   const update = (next: (current: DraftQuestion[]) => DraftQuestion[]) => {
     setQuestions(next);
@@ -135,7 +123,7 @@ export default function LessonQuizEditor({ lessonId }: { lessonId: string }) {
   if (loadError) {
     return (
       <AdminSection title="แบบทดสอบท้ายบท" description={description}>
-        <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void load()}>ลองใหม่</Button>} />
+        <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void reload()}>ลองใหม่</Button>} />
       </AdminSection>
     );
   }

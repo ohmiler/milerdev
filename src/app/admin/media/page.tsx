@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Copy, ExternalLink, File, FileImage, FileText, Film, HardDrive, Search, Trash2, Upload } from 'lucide-react';
 
 import { AdminConfirmActionDialog } from '@/components/admin/ui/AdminConfirmActionDialog';
@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { NativeSelect } from '@/components/ui/native-select';
 import { showToast } from '@/components/ui/Toast';
+import { useLoad } from '@/lib/hooks/use-load';
 
 interface MediaFile {
   id: string;
@@ -58,40 +59,39 @@ export default function AdminMediaPage() {
   const [mediaList, setMediaList] = useState<MediaFile[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState('all');
   const [search, setSearch] = useState('');
+  // The search runs on Enter or the search button, not on every keystroke.
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<MediaFile | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchMedia = async () => {
-    setLoading(true);
+  const mediaUrl = '/api/admin/media?' + new URLSearchParams({
+    page: currentPage.toString(),
+    type: typeFilter,
+    search: searchTerm,
+  });
+  const { loading, reload: reloadMedia } = useLoad(mediaUrl, async (signal) => {
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        type: typeFilter,
-        search,
-      });
-      const res = await fetch('/api/admin/media?' + params);
+      const res = await fetch(mediaUrl, { signal });
       const data = await res.json();
       setMediaList(data.media || []);
       setStats(data.stats || null);
       setPagination(data.pagination || null);
     } catch (error) {
-      console.error('Error fetching media:', error);
-    } finally {
-      setLoading(false);
+      if (!signal.aborted) console.error('Error fetching media:', error);
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchMedia();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, typeFilter]);
+  const submitSearch = () => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+    void reloadMedia();
+  };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -113,7 +113,7 @@ export default function AdminMediaPage() {
           showToast(data.error || 'เกิดข้อผิดพลาดในการอัพโหลด', 'error');
         }
       }
-      await fetchMedia();
+      await reloadMedia();
       showToast('อัพโหลดสำเร็จ', 'success');
     } catch (error) {
       console.error('Upload error:', error);
@@ -133,7 +133,7 @@ export default function AdminMediaPage() {
       const res = await fetch('/api/admin/media/' + id, { method: 'DELETE' });
       if (res.ok) {
         setDeleteConfirm(null);
-        await fetchMedia();
+        await reloadMedia();
         if (selectedMedia?.id === id) setSelectedMedia(null);
         showToast('ลบไฟล์สำเร็จ', 'success');
       } else {
@@ -247,10 +247,7 @@ export default function AdminMediaPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  setCurrentPage(1);
-                  fetchMedia();
-                }
+                if (event.key === 'Enter') submitSearch();
               }}
               placeholder="ค้นหาชื่อไฟล์"
               aria-label="ค้นหาชื่อไฟล์"
@@ -258,10 +255,7 @@ export default function AdminMediaPage() {
           </InputGroup>
           <Button
             variant="outline"
-            onClick={() => {
-              setCurrentPage(1);
-              fetchMedia();
-            }}
+            onClick={submitSearch}
           >
             ค้นหา
           </Button>

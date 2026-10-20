@@ -31,32 +31,37 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
   const session = sessionResult?.data;
   const status = sessionResult?.status ?? 'unauthenticated';
   const sessionUserId = session?.user.id;
-  const [enrolled, setEnrolled] = useState(false);
-  const [checking, setChecking] = useState(true);
+  // The learner and course an enrollment answer belongs to; signed out, there is nothing to check.
+  const checkKey = sessionUserId ? `${sessionUserId}:${courseId}` : null;
+  const [answer, setAnswer] = useState<{ key: string; enrolled: boolean } | null>(null);
+  const checking = status === 'loading' || (checkKey !== null && answer?.key !== checkKey);
+  const enrolled = checkKey !== null && answer?.key === checkKey && answer.enrolled;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const updateEnrolled = useCallback((value: boolean, learning: CourseLearning | null = null) => {
-    setEnrolled(value);
+  const updateEnrolled = useCallback((key: string, value: boolean, learning: CourseLearning | null = null) => {
+    setAnswer({ key, enrolled: value });
     onEnrollmentChange?.(value, learning);
   }, [onEnrollmentChange]);
 
   useEffect(() => {
     if (status === 'loading') return;
-    if (!sessionUserId) {
-      updateEnrolled(false);
-      setChecking(false);
+    if (!checkKey) {
+      onEnrollmentChange?.(false, null);
       return;
     }
     const controller = new AbortController();
     fetch(`/api/enrollments/check?courseId=${encodeURIComponent(courseId)}`, { signal: controller.signal })
       .then((response) => response.json())
-      .then((data) => { if (!controller.signal.aborted) updateEnrolled(data.enrolled === true, data.learning ?? null); })
-      .catch(() => { if (!controller.signal.aborted) updateEnrolled(false); })
-      .finally(() => { if (!controller.signal.aborted) setChecking(false); });
+      .then((data) => { if (!controller.signal.aborted) updateEnrolled(checkKey, data.enrolled === true, data.learning ?? null); })
+      .catch(() => { if (!controller.signal.aborted) updateEnrolled(checkKey, false); });
     return () => controller.abort();
-  }, [sessionUserId, status, courseId, updateEnrolled]);
+  }, [checkKey, status, courseId, onEnrollmentChange, updateEnrolled]);
+
+  const markEnrolled = () => {
+    if (checkKey) updateEnrolled(checkKey, true);
+  };
 
   const handleEnroll = async () => {
     if (!session) {
@@ -73,7 +78,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId }),
       });
       const data = await response.json();
-      if (response.ok) updateEnrolled(true);
+      if (response.ok) markEnrolled();
       else setError(data.error || 'ไม่สามารถลงทะเบียนได้ กรุณาลองใหม่');
     } catch {
       setError('ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่');
@@ -86,7 +91,7 @@ export default function EnrollButton({ courseId, courseSlug, price, onEnrollment
         {checking || loading ? <Spinner data-icon="inline-start" aria-hidden="true" /> : enrolled ? <PlayCircle data-icon="inline-start" aria-hidden="true" /> : null}
         {checking ? 'กำลังตรวจสอบ...' : loading ? 'กำลังดำเนินการ...' : enrolled ? 'เข้าเรียน' : price === 0 ? 'ลงทะเบียนเรียนฟรี' : `ซื้อคอร์สนี้ ฿${price.toLocaleString()}`}
       </Button>
-      <CheckoutDialog key={`${sessionUserId}:${courseId}`} open={open} onClose={() => setOpen(false)} target={{ type: 'course', id: courseId }} returnFocusRef={triggerRef} onEnrolled={() => updateEnrolled(true)} />
+      <CheckoutDialog key={`${sessionUserId}:${courseId}`} open={open} onClose={() => setOpen(false)} target={{ type: 'course', id: courseId }} returnFocusRef={triggerRef} onEnrolled={markEnrolled} />
       <Modal isOpen={Boolean(error)} onClose={() => setError(null)} returnFocusRef={triggerRef} type="error" title="เกิดข้อผิดพลาด">{error}</Modal>
     </>
   );

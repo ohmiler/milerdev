@@ -3,7 +3,7 @@
 import { ArrowLeft, Award, BookOpen, ExternalLink, Plus, Search, Trash2, WalletCards } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import {
   AdminUserLifecycleAction,
@@ -26,6 +26,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { showToast } from '@/components/ui/Toast';
+import { loadErrorMessage, useLoad } from '@/lib/hooks/use-load';
 import {
   applyAuthoritativeLifecycleState,
   getLifecyclePresentation,
@@ -103,9 +104,6 @@ export default function AdminUserDetailPage() {
   const [availableCourses, setAvailableCourses] = useState<AvailableCourse[]>([]);
   const [learnerPayments, setLearnerPayments] = useState<LearnerPayment[] | null>(null);
   const [learnerCertificates, setLearnerCertificates] = useState<LearnerCertificate[] | null>(null);
-  const [historyError, setHistoryError] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Enrollment | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -115,56 +113,35 @@ export default function AdminUserDetailPage() {
   const [lifecycleConfirm, setLifecycleConfirm] = useState(false);
   const [updatingLifecycle, setUpdatingLifecycle] = useState(false);
 
-  const fetchUserData = async () => {
-    setLoading(true);
-    setLoadError('');
-    try {
-      const response = await fetch(`/api/admin/users/${userId}/enrollments`);
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        if (response.status === 404) {
-          showToast('ไม่พบข้อมูลผู้ใช้', 'error');
-          router.push('/admin/users');
-          return;
-        }
-        throw new Error(data.error || 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
+  const userDataUrl = `/api/admin/users/${userId}/enrollments`;
+  const { loading, error, reload: reloadUserData } = useLoad(userId ? userDataUrl : null, async () => {
+    const response = await fetch(userDataUrl);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 404) {
+        showToast('ไม่พบข้อมูลผู้ใช้', 'error');
+        router.push('/admin/users');
+        return;
       }
-      setUser(data.user);
-      setEnrollments(data.enrollments || []);
-      setAvailableCourses(data.availableCourses || []);
-    } catch (caughtError) {
-      setLoadError(caughtError instanceof Error ? caughtError.message : 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
-    } finally {
-      setLoading(false);
+      throw new Error(data.error || 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
     }
-  };
+    setUser(data.user);
+    setEnrollments(data.enrollments || []);
+    setAvailableCourses(data.availableCourses || []);
+  });
+  const loadError = loadErrorMessage(error, 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
 
   // Payments and certificates load alongside the enrollments; a failure here leaves the rest of the page usable.
-  const fetchLearnerHistory = async () => {
-    setHistoryError('');
-    try {
-      const [paymentResponse, certificateResponse] = await Promise.all([
-        fetch(`/api/admin/payments?userId=${encodeURIComponent(userId)}&limit=50`),
-        fetch(`/api/admin/certificates?userId=${encodeURIComponent(userId)}`),
-      ]);
-      if (!paymentResponse.ok || !certificateResponse.ok) throw new Error('history unavailable');
-      const [paymentData, certificateData] = await Promise.all([paymentResponse.json(), certificateResponse.json()]);
-      setLearnerPayments(paymentData.payments || []);
-      setLearnerCertificates(certificateData.certificates || []);
-    } catch {
-      setHistoryError('โหลดประวัติการชำระเงินและใบรับรองไม่สำเร็จ');
-    }
-  };
-
-  useEffect(() => {
-    if (userId) void fetchLearnerHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
-  useEffect(() => {
-    if (userId) void fetchUserData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  const paymentsUrl = `/api/admin/payments?userId=${encodeURIComponent(userId)}&limit=50`;
+  const certificatesUrl = `/api/admin/certificates?userId=${encodeURIComponent(userId)}`;
+  const { error: historyFailure, reload: reloadHistory } = useLoad(userId ? paymentsUrl : null, async () => {
+    const [paymentResponse, certificateResponse] = await Promise.all([fetch(paymentsUrl), fetch(certificatesUrl)]);
+    if (!paymentResponse.ok || !certificateResponse.ok) throw new Error('history unavailable');
+    const [paymentData, certificateData] = await Promise.all([paymentResponse.json(), certificateResponse.json()]);
+    setLearnerPayments(paymentData.payments || []);
+    setLearnerCertificates(certificateData.certificates || []);
+  });
+  const historyError = historyFailure ? 'โหลดประวัติการชำระเงินและใบรับรองไม่สำเร็จ' : '';
 
   const handleUnenroll = async () => {
     if (!deleteTarget) return;
@@ -176,7 +153,7 @@ export default function AdminUserDetailPage() {
       if (!response.ok) throw new Error(data.error || 'ถอนสิทธิ์การลงทะเบียนไม่สำเร็จ');
       setDeleteTarget(null);
       showToast('ถอนสิทธิ์การลงทะเบียนสำเร็จ', 'success');
-      await fetchUserData();
+      await reloadUserData();
     } catch (caughtError) {
       setDeleteError(caughtError instanceof Error ? caughtError.message : 'ถอนสิทธิ์ไม่สำเร็จ');
     } finally {
@@ -196,7 +173,7 @@ export default function AdminUserDetailPage() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || 'เพิ่มสิทธิ์เข้าเรียนไม่สำเร็จ');
       showToast(`เพิ่ม “${course.title}” สำเร็จ`, 'success');
-      await fetchUserData();
+      await reloadUserData();
     } catch (caughtError) {
       showToast(caughtError instanceof Error ? caughtError.message : 'เพิ่มสิทธิ์เข้าเรียนไม่สำเร็จ', 'error');
     } finally {
@@ -250,7 +227,7 @@ export default function AdminUserDetailPage() {
   const filteredEnrolled = enrollments.filter((enrollment) => (enrollment.courseTitle || '').toLowerCase().includes(searchEnrolled.toLowerCase()));
 
   if (loading && !user) return <AdminLoadingState title="กำลังโหลดข้อมูลผู้ใช้" />;
-  if (loadError && !user) return <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void fetchUserData()}>ลองใหม่</Button>} />;
+  if (loadError && !user) return <AdminErrorState description={loadError} action={<Button variant="outline" onClick={() => void reloadUserData()}>ลองใหม่</Button>} />;
   if (!user) return null;
 
   return (
@@ -309,7 +286,7 @@ export default function AdminUserDetailPage() {
 
       <AdminSection title="ประวัติการชำระเงิน" description={learnerPayments ? `${learnerPayments.length.toLocaleString('th-TH')} รายการ` : undefined}>
         {historyError ? (
-          <AdminErrorState description={historyError} action={<Button variant="outline" onClick={() => void fetchLearnerHistory()}>ลองใหม่</Button>} />
+          <AdminErrorState description={historyError} action={<Button variant="outline" onClick={() => void reloadHistory()}>ลองใหม่</Button>} />
         ) : !learnerPayments ? (
           <AdminLoadingState title="กำลังโหลดประวัติการชำระเงิน" />
         ) : learnerPayments.length === 0 ? (

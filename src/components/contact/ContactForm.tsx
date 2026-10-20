@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FeedbackState, PendingButton } from '@/components/status/FeedbackState';
 import { Button } from '@/components/ui/button';
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field';
@@ -20,7 +20,11 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const formLoadTime = useRef(Date.now());
+  // When the form appeared, for the server's too-fast-to-be-human check. Set after mount: reading the clock is not pure.
+  const formLoadTime = useRef(0);
+  useEffect(() => {
+    formLoadTime.current = Date.now();
+  }, []);
   const { data: session } = useSession();
   const member = session?.user;
   const [prefilledFor, setPrefilledFor] = useState<string | null>(null);

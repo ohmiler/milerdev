@@ -106,7 +106,6 @@
   "overrides": {
     "next-auth": {
       "nodemailer": "$nodemailer"
-    },
-    "eslint-plugin-react-hooks": "7.0.1"
+    }
   }
 }
