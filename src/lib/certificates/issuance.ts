@@ -3,6 +3,7 @@ import 'server-only';
 import { createId } from '@paralleldrive/cuid2';
 import { and, asc, eq } from 'drizzle-orm';
 
+import { generateCertificateCode } from '@/lib/certificates/code';
 import { db } from '@/lib/db';
 import { certificates, courses, enrollments, users } from '@/lib/db/schema';
 import { isDuplicateKeyError } from '@/lib/db/safe-insert';
@@ -35,19 +36,6 @@ export type CompletedCertificateResult =
   | { kind: 'not_completed' };
 
 const MAX_CODE_ATTEMPTS = 5;
-
-function generateCertificateCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'CERT-';
-  for (let index = 0; index < 4; index++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  code += '-';
-  for (let index = 0; index < 4; index++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
 
 async function issueCertificateWithAuthority(
   userId: string,
