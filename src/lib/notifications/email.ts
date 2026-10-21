@@ -72,6 +72,17 @@ function emailLayout(content: string): string {
 </html>`;
 }
 
+// Every value that comes from a person (a name, a course title, an id) is escaped before it is
+// put into a template: names reach these emails from sign-up forms and from Stripe Checkout.
+function escapeHtml(str: string): string {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function button(text: string, url: string, color: string = BRAND_COLOR): string {
     return `<a href="${url}" style="display:inline-block;padding:14px 28px;background:${color};color:white;text-decoration:none;border-radius:10px;font-weight:600;font-size:0.9375rem;margin:8px 0;">${text}</a>`;
 }
@@ -161,15 +172,6 @@ export async function sendContactNotification({
 }: SendContactNotificationParams) {
     const adminEmail = process.env.CONTACT_EMAIL || 'milerdev.official@gmail.com';
 
-    function escapeHtml(str: string): string {
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
     const html = emailLayout(`
       <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">📬 ข้อความจากหน้าติดต่อ</h2>
       ${infoBox([
@@ -232,7 +234,7 @@ interface SendCertificateEmailParams {
  */
 export async function sendWelcomeEmail({ email, name }: SendWelcomeEmailParams) {
     const html = emailLayout(`
-      <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">สวัสดีครับ ${name}!</h2>
+      <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">สวัสดีครับ ${escapeHtml(name)}!</h2>
       <p style="color:#475569;line-height:1.7;margin:0 0 16px;">
         ขอบคุณที่สมัครสมาชิกกับ <strong>MilerDev</strong> เรายินดีต้อนรับคุณเข้าสู่ชุมชนนักพัฒนา
       </p>
@@ -261,14 +263,14 @@ export async function sendEnrollmentEmail({
     const html = emailLayout(`
       <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">ลงทะเบียนเรียบร้อย!</h2>
       <p style="color:#475569;line-height:1.7;margin:0 0 16px;">
-        สวัสดีครับ ${name}, คุณได้ลงทะเบียนเรียนคอร์สเรียบร้อยแล้ว
+        สวัสดีครับ ${escapeHtml(name)}, คุณได้ลงทะเบียนเรียนคอร์สเรียบร้อยแล้ว
       </p>
       ${infoBox([
-        { label: 'คอร์ส', value: courseName },
+        { label: 'คอร์ส', value: escapeHtml(courseName) },
         { label: 'สถานะ', value: '<span style="color:#10b981;">พร้อมเรียน</span>' },
       ])}
       <div style="text-align:center;margin:24px 0;">
-        ${button('เริ่มเรียนเลย', `${APP_URL}/courses/${courseSlug}/learn`, '#10b981')}
+        ${button('เริ่มเรียนเลย', `${APP_URL}/courses/${encodeURIComponent(courseSlug)}/learn`, '#10b981')}
       </div>
       <p style="color:#94a3b8;font-size:0.8125rem;margin:16px 0 0;">
         คุณสามารถเข้าเรียนได้ตลอดเวลาจากหน้า Dashboard ของคุณ
@@ -307,7 +309,7 @@ export async function sendPasswordResetEmail({
     const html = emailLayout(`
       <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">รีเซ็ตรหัสผ่าน</h2>
       <p style="color:#475569;line-height:1.7;margin:0 0 16px;">
-        สวัสดีครับ ${name || 'คุณ'}, เราได้รับคำขอรีเซ็ตรหัสผ่านของคุณ
+        สวัสดีครับ ${escapeHtml(name || 'คุณ')}, เราได้รับคำขอรีเซ็ตรหัสผ่านของคุณ
       </p>
       <p style="color:#475569;line-height:1.7;margin:0 0 24px;">
         คลิกปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่ ลิงก์นี้จะหมดอายุใน <strong>1 ชั่วโมง</strong>
@@ -337,12 +339,12 @@ export async function sendPaymentConfirmation({
     const html = emailLayout(`
       <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">ชำระเงินสำเร็จ!</h2>
       <p style="color:#475569;line-height:1.7;margin:0 0 16px;">
-        สวัสดีครับ ${name}, เราได้รับการชำระเงินของคุณเรียบร้อยแล้ว
+        สวัสดีครับ ${escapeHtml(name)}, เราได้รับการชำระเงินของคุณเรียบร้อยแล้ว
       </p>
       ${infoBox([
-        { label: 'คอร์ส', value: courseName },
+        { label: 'คอร์ส', value: escapeHtml(courseName) },
         { label: 'จำนวนเงิน', value: `฿${amount.toLocaleString()}` },
-        { label: 'หมายเลขอ้างอิง', value: paymentId },
+        { label: 'หมายเลขอ้างอิง', value: escapeHtml(paymentId) },
         { label: 'สถานะ', value: '<span style="color:#10b981;">ชำระแล้ว</span>' },
       ])}
       <div style="text-align:center;margin:24px 0;">
@@ -364,15 +366,15 @@ export async function sendCertificateEmail({
     courseName,
     certificateCode,
 }: SendCertificateEmailParams) {
-    const certUrl = `${APP_URL}/certificate/${certificateCode}`;
+    const certUrl = `${APP_URL}/certificate/${encodeURIComponent(certificateCode)}`;
     const html = emailLayout(`
       <h2 style="color:#1e293b;font-size:1.375rem;margin:0 0 8px;">ยินดีด้วย! คุณได้รับใบรับรอง</h2>
       <p style="color:#475569;line-height:1.7;margin:0 0 16px;">
-        สวัสดีครับ ${name}, คุณได้สำเร็จหลักสูตรเรียบร้อยแล้ว!
+        สวัสดีครับ ${escapeHtml(name)}, คุณได้สำเร็จหลักสูตรเรียบร้อยแล้ว!
       </p>
       ${infoBox([
-        { label: 'คอร์ส', value: courseName },
-        { label: 'รหัสใบรับรอง', value: `<span style="font-family:monospace;color:${BRAND_COLOR};font-weight:700;">${certificateCode}</span>` },
+        { label: 'คอร์ส', value: escapeHtml(courseName) },
+        { label: 'รหัสใบรับรอง', value: `<span style="font-family:monospace;color:${BRAND_COLOR};font-weight:700;">${escapeHtml(certificateCode)}</span>` },
         { label: 'สถานะ', value: '<span style="color:#10b981;">ออกใบรับรองแล้ว</span>' },
       ])}
       <div style="text-align:center;margin:24px 0;">

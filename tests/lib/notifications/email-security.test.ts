@@ -87,6 +87,22 @@ describe('email SMTP security boundary', () => {
         expect(message.html).not.toContain('<script>');
     });
 
+    it('escapes names and course titles in payment, enrollment and certificate emails', async () => {
+        const { sendPaymentConfirmation, sendEnrollmentEmail, sendCertificateEmail, sendWelcomeEmail } = await import('@/lib/notifications/email');
+        const payload = '<a href="https://attacker.example">Claim your refund</a>';
+
+        await sendPaymentConfirmation({ email: 'student@example.test', name: payload, courseName: payload, amount: 990, paymentId: 'pay-1' });
+        await sendEnrollmentEmail({ email: 'student@example.test', name: payload, courseName: payload, courseSlug: '"><a href="https://attacker.example' });
+        await sendCertificateEmail({ email: 'student@example.test', name: payload, courseName: payload, certificateCode: 'CERT-AAAA-BBBB' });
+        await sendWelcomeEmail({ email: 'student@example.test', name: payload });
+
+        expect(mocks.sendMail).toHaveBeenCalledTimes(4);
+        for (const [message] of mocks.sendMail.mock.calls) {
+            expect(message.html).not.toContain('https://attacker.example"');
+            expect(message.html).toContain('&lt;a href=&quot;https://attacker.example&quot;&gt;');
+        }
+    });
+
     it('preserves the ordinary SMTP fallback behavior', async () => {
         const { sendWelcomeEmail } = await import('@/lib/notifications/email');
 

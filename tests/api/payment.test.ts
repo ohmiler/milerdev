@@ -24,6 +24,10 @@ vi.mock('@/lib/notifications/email', () => ({
     sendEnrollmentEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/lib/commerce/payment-recipient', () => ({
+    loadPaymentRecipient: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock('@paralleldrive/cuid2', () => ({
     createId: vi.fn().mockReturnValue('mock-cuid'),
 }));
@@ -144,6 +148,8 @@ import { auth } from '@/lib/auth';
 import { stripe } from '@/lib/commerce/stripe';
 import { checkRateLimit } from '@/lib/security/rate-limit';
 import { db } from '@/lib/db';
+import { loadPaymentRecipient } from '@/lib/commerce/payment-recipient';
+import { sendEnrollmentEmail, sendPaymentConfirmation } from '@/lib/notifications/email';
 
 const mockedAuth = vi.mocked(auth);
 const mockedRateLimit = vi.mocked(checkRateLimit);
@@ -382,6 +388,57 @@ describe('POST /api/stripe/webhook', () => {
         const res = await callWebhook('valid-body');
         expect(res.status).toBe(200);
         expect(mockDb.updateSetData?.status).toBe('completed');
+    });
+
+    function completedSessionWithPayerDetails(customerDetails: { email: string; name: string }) {
+        (mockedStripe.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+            id: 'evt_course_payer_details',
+            type: 'checkout.session.completed',
+            data: {
+                object: {
+                    metadata: { paymentId: 'pay-1', userId: 'user-1', courseId: 'course-1', type: 'course' },
+                    payment_intent: 'pi_test',
+                    payment_status: 'paid',
+                    amount_total: 99000,
+                    currency: 'thb',
+                    customer_details: customerDetails,
+                },
+            },
+        });
+        vi.mocked(db.query.enrollments.findFirst).mockResolvedValue(null as never);
+        // Fulfillment reads the course inside the transaction to build the email details.
+        mockDb.queryFindFirstResult = publishedCourse;
+        mockDb.selectResults = [{ id: 'pay-1', userId: 'user-1', courseId: 'course-1', bundleId: null, amount: '990', currency: 'THB', method: 'stripe', stripePaymentId: null, status: 'pending' }];
+    }
+
+    it('sends the receipt and enrollment emails to the paying account, not the address typed at Checkout', async () => {
+        completedSessionWithPayerDetails({ email: 'someone-else@example.test', name: '<a href="https://attacker.example">x</a>' });
+        vi.mocked(loadPaymentRecipient).mockResolvedValue({ email: 'owner@example.test', name: 'Account Owner' });
+
+        const res = await callWebhook('valid-body');
+
+        expect(res.status).toBe(200);
+        expect(loadPaymentRecipient).toHaveBeenCalledWith('user-1');
+        await vi.waitFor(() => expect(sendEnrollmentEmail).toHaveBeenCalled());
+        expect(sendPaymentConfirmation).toHaveBeenCalledWith(expect.objectContaining({ email: 'owner@example.test', name: 'Account Owner', paymentId: 'pay-1' }));
+        expect(sendEnrollmentEmail).toHaveBeenCalledWith(expect.objectContaining({ email: 'owner@example.test', name: 'Account Owner' }));
+        const sent = JSON.stringify([vi.mocked(sendPaymentConfirmation).mock.calls, vi.mocked(sendEnrollmentEmail).mock.calls]);
+        expect(sent).not.toContain('someone-else@example.test');
+        expect(sent).not.toContain('attacker.example');
+    });
+
+    it('sends no payment emails when the paying account has no email address', async () => {
+        completedSessionWithPayerDetails({ email: 'someone-else@example.test', name: 'Payer' });
+        vi.mocked(loadPaymentRecipient).mockResolvedValue(null);
+
+        const res = await callWebhook('valid-body');
+
+        expect(res.status).toBe(200);
+        expect(mockDb.updateSetData?.status).toBe('completed');
+        await vi.waitFor(() => expect(loadPaymentRecipient).toHaveBeenCalledWith('user-1'));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(sendPaymentConfirmation).not.toHaveBeenCalled();
+        expect(sendEnrollmentEmail).not.toHaveBeenCalled();
     });
 
     it('should skip duplicate enrollment on webhook retry', async () => {
