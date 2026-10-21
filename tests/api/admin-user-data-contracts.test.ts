@@ -158,6 +158,26 @@ describe('Admin user lifecycle data contracts', () => {
         expect(csv).toContain('inactive,2026-07-19T00:00:00.000Z');
     });
 
+    it('exports a formula-like name as one quoted text cell', async () => {
+        // A learner chooses their own display name; it reaches the admin's spreadsheet.
+        state.results = [[{
+            id: 'student-a',
+            name: '-x,=HYPERLINK("https://attacker.example","open")',
+            email: 'student@example.com',
+            role: 'student',
+            emailVerifiedAt: null,
+            createdAt: new Date('2026-07-01T00:00:00.000Z'),
+            deactivatedAt: null,
+            enrollmentCount: 0,
+        }]];
+
+        const route = await import('@/app/api/admin/users/export/route');
+        const response = await route.GET(new Request('http://localhost/api/admin/users/export'));
+        const csv = await response.text();
+
+        expect(csv).toContain('student-a,"\'-x,=HYPERLINK(""https://attacker.example"",""open"")",student@example.com,');
+    });
+
     it('rejects an invalid lifecycle export filter before reading users', async () => {
         const route = await import('@/app/api/admin/users/export/route');
         const response = await route.GET(new Request('http://localhost/api/admin/users/export?status=disabled'));

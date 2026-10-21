@@ -5,18 +5,7 @@ import { db } from '@/lib/db';
 import { enrollments, users } from '@/lib/db/schema';
 import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import { adminUserLifecycleFilterSchema } from '@/lib/validations/admin';
-
-// Sanitize CSV field to prevent formula injection
-function csvSafe(value: string | number | null | undefined): string {
-  const str = String(value ?? '');
-  if (/^[=+\-@\t\r]/.test(str)) {
-    return `'${str}`;
-  }
-  if (/[,"\n\r]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+import { csvCell } from '@/lib/security/csv';
 
 const EXPORT_BATCH_SIZE = 250;
 
@@ -116,7 +105,7 @@ export async function GET(request: Request) {
         const createdAt = user.createdAt ? new Date(user.createdAt).toISOString() : '';
         const lifecycleStatus = user.deactivatedAt === null ? 'active' : 'inactive';
         const deactivatedAt = user.deactivatedAt ? new Date(user.deactivatedAt).toISOString() : '';
-        return `${csvSafe(user.id)},${csvSafe(user.name)},${csvSafe(user.email)},${csvSafe(user.role)},${csvSafe(verified)},${csvSafe(createdAt)},${Number(user.enrollmentCount || 0)},${lifecycleStatus},${csvSafe(deactivatedAt)}\n`;
+        return `${csvCell(user.id)},${csvCell(user.name)},${csvCell(user.email)},${csvCell(user.role)},${csvCell(verified)},${csvCell(createdAt)},${Number(user.enrollmentCount || 0)},${lifecycleStatus},${csvCell(deactivatedAt)}\n`;
       }
     );
 

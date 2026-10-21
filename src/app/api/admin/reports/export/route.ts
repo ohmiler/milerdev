@@ -4,18 +4,7 @@ import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { payments, enrollments, users, courses } from '@/lib/db/schema';
 import { desc, eq, sql, gte } from 'drizzle-orm';
-
-// Sanitize CSV field to prevent formula injection
-function csvSafe(value: string | number | null | undefined): string {
-  const str = String(value ?? '');
-  if (/^[=+\-@\t\r]/.test(str)) {
-    return `'${str}`;
-  }
-  if (/[,"\n\r]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+import { csvCell } from '@/lib/security/csv';
 
 const EXPORT_MAX_PERIOD_MONTHS = 24;
 const EXPORT_BATCH_SIZE = 250;
@@ -98,7 +87,7 @@ export async function GET(request: Request) {
               .orderBy(desc(payments.createdAt))
               .limit(limit)
               .offset(offset),
-          (row) => `${csvSafe(row.id)},${csvSafe(row.amount)},${csvSafe(row.status)},${csvSafe(row.method)},${csvSafe(row.createdAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`
+          (row) => `${csvCell(row.id)},${csvCell(row.amount)},${csvCell(row.status)},${csvCell(row.method)},${csvCell(row.createdAt?.toISOString())},${csvCell(row.userName)},${csvCell(row.userEmail)},${csvCell(row.courseTitle)}\n`
         );
         filename = `payments-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
@@ -125,7 +114,7 @@ export async function GET(request: Request) {
               .orderBy(desc(enrollments.enrolledAt))
               .limit(limit)
               .offset(offset),
-          (row) => `${csvSafe(row.id)},${csvSafe(row.enrolledAt?.toISOString())},${row.progressPercent || 0},${csvSafe(row.completedAt?.toISOString())},${csvSafe(row.userName)},${csvSafe(row.userEmail)},${csvSafe(row.courseTitle)}\n`
+          (row) => `${csvCell(row.id)},${csvCell(row.enrolledAt?.toISOString())},${row.progressPercent || 0},${csvCell(row.completedAt?.toISOString())},${csvCell(row.userName)},${csvCell(row.userEmail)},${csvCell(row.courseTitle)}\n`
         );
         filename = `enrollments-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
@@ -159,7 +148,7 @@ export async function GET(request: Request) {
               .orderBy(desc(users.createdAt))
               .limit(limit)
               .offset(offset),
-          (row) => `${csvSafe(row.id)},${csvSafe(row.name)},${csvSafe(row.email)},${csvSafe(row.role)},${csvSafe(row.createdAt?.toISOString())},${enrollmentCountMap.get(row.id) || 0}\n`
+          (row) => `${csvCell(row.id)},${csvCell(row.name)},${csvCell(row.email)},${csvCell(row.role)},${csvCell(row.createdAt?.toISOString())},${enrollmentCountMap.get(row.id) || 0}\n`
         );
         filename = `users-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
@@ -205,7 +194,7 @@ export async function GET(request: Request) {
               .orderBy(desc(courses.createdAt))
               .limit(limit)
               .offset(offset),
-          (row) => `${csvSafe(row.id)},${csvSafe(row.title)},${csvSafe(row.price)},${csvSafe(row.status)},${csvSafe(row.createdAt?.toISOString())},${enrollmentCountMap.get(row.id) || 0},${revenueMap.get(row.id) || 0}\n`
+          (row) => `${csvCell(row.id)},${csvCell(row.title)},${csvCell(row.price)},${csvCell(row.status)},${csvCell(row.createdAt?.toISOString())},${enrollmentCountMap.get(row.id) || 0},${revenueMap.get(row.id) || 0}\n`
         );
         filename = `courses-report-${new Date().toISOString().split('T')[0]}.csv`;
         break;
