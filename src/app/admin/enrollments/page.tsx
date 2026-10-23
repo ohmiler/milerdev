@@ -1,6 +1,6 @@
 'use client';
 
-import { GraduationCap, Plus, Search, Trash2 } from 'lucide-react';
+import { Ban, GraduationCap, Plus, RotateCcw, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -41,6 +41,7 @@ interface Enrollment {
   enrolledAt: string;
   progressPercent: number | null;
   completedAt: string | null;
+  revokedAt: string | null;
   userName: string | null;
   userEmail: string | null;
   courseTitle: string | null;
@@ -136,12 +137,32 @@ export default function AdminEnrollmentsPage() {
     try {
       const response = await fetch(`/api/admin/enrollments/${enrollmentId}`, { method: 'DELETE' });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'ลบการลงทะเบียนไม่สำเร็จ');
+      if (!response.ok) throw new Error(data.error || 'ถอนสิทธิ์เรียนไม่สำเร็จ');
       setDeleteTarget(null);
       await reloadEnrollments();
-      showToast('ลบการลงทะเบียนสำเร็จ', 'success');
+      showToast('ถอนสิทธิ์เรียนสำเร็จ', 'success');
     } catch (caughtError) {
-      setDeleteError(caughtError instanceof Error ? caughtError.message : 'ลบการลงทะเบียนไม่สำเร็จ กรุณาลองใหม่');
+      setDeleteError(caughtError instanceof Error ? caughtError.message : 'ถอนสิทธิ์เรียนไม่สำเร็จ กรุณาลองใหม่');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const restoreEnrollment = async (enrollment: Enrollment) => {
+    if (!enrollment.userId || !enrollment.courseId) return;
+    setUpdating(enrollment.id);
+    try {
+      const response = await fetch('/api/admin/enrollments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: enrollment.userId, courseId: enrollment.courseId }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'คืนสิทธิ์เรียนไม่สำเร็จ');
+      await reloadEnrollments();
+      showToast('คืนสิทธิ์เรียนสำเร็จ', 'success');
+    } catch (caughtError) {
+      showToast(caughtError instanceof Error ? caughtError.message : 'คืนสิทธิ์เรียนไม่สำเร็จ กรุณาลองใหม่', 'error');
     } finally {
       setUpdating(null);
     }
@@ -165,7 +186,7 @@ export default function AdminEnrollmentsPage() {
       await reloadEnrollments();
       setShowAddModal(false);
       setAddForm({ userId: '', courseId: '' });
-      showToast('เพิ่มการลงทะเบียนสำเร็จ', 'success');
+      showToast(data.restored ? 'คืนสิทธิ์เรียนสำเร็จ' : 'เพิ่มการลงทะเบียนสำเร็จ', 'success');
     } catch (caughtError) {
       setAddError(caughtError instanceof Error ? caughtError.message : 'เพิ่มการลงทะเบียนไม่สำเร็จ กรุณาลองใหม่');
     } finally {
@@ -259,15 +280,26 @@ export default function AdminEnrollmentsPage() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-muted-foreground" data-label="วันที่ลงทะเบียน">{formatDate(enrollment.enrolledAt)}</TableCell>
                       <TableCell data-label="สถานะ">
-                        <AdminStatusBadge tone={enrollment.completedAt ? 'success' : progress > 0 ? 'info' : 'neutral'}>
-                          {enrollment.completedAt ? 'เรียนจบ' : progress > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}
-                        </AdminStatusBadge>
+                        {enrollment.revokedAt ? (
+                          <AdminStatusBadge tone="danger">ถอนสิทธิ์แล้ว</AdminStatusBadge>
+                        ) : (
+                          <AdminStatusBadge tone={enrollment.completedAt ? 'success' : progress > 0 ? 'info' : 'neutral'}>
+                            {enrollment.completedAt ? 'เรียนจบ' : progress > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}
+                          </AdminStatusBadge>
+                        )}
                       </TableCell>
                       <TableCell data-label="จัดการ">
                         <div className="flex justify-end max-md:justify-start">
-                          <Button variant="ghost" size="icon-sm" disabled={updating === enrollment.id} onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอน ${enrollment.userName || enrollment.userEmail || 'ผู้ใช้'} ออกจากคอร์ส`}>
-                            <Trash2 aria-hidden />
-                          </Button>
+                          {enrollment.revokedAt ? (
+                            <Button variant="outline" size="sm" disabled={updating === enrollment.id || !enrollment.userId || !enrollment.courseId} onClick={() => void restoreEnrollment(enrollment)} aria-label={`คืนสิทธิ์เรียนให้ ${enrollment.userName || enrollment.userEmail || 'ผู้ใช้'}`}>
+                              <RotateCcw data-icon="inline-start" aria-hidden />
+                              คืนสิทธิ์
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="icon-sm" disabled={updating === enrollment.id} onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอนสิทธิ์ ${enrollment.userName || enrollment.userEmail || 'ผู้ใช้'} จากคอร์ส`}>
+                              <Ban aria-hidden />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -322,8 +354,8 @@ export default function AdminEnrollmentsPage() {
 
       <AdminConfirmActionDialog
         open={Boolean(deleteTarget)}
-        title="ถอนสิทธิ์การลงทะเบียน"
-        description="ผู้เรียนจะเสียสิทธิ์เข้าคอร์สและข้อมูลความคืบหน้าที่ผูกกับการลงทะเบียนนี้อาจถูกลบ"
+        title="ถอนสิทธิ์เรียน"
+        description="ผู้เรียนจะเข้าเรียนคอร์สนี้ไม่ได้จนกว่าผู้ดูแลจะคืนสิทธิ์ การชำระเงินเดิมจะไม่คืนสิทธิ์ให้เอง ความคืบหน้าและใบรับรองยังเก็บไว้"
         target={deleteTarget ? <span>{deleteTarget.userName || deleteTarget.userEmail || 'ผู้ใช้'} · {deleteTarget.courseTitle || 'ไม่ระบุคอร์ส'}</span> : null}
         confirmLabel="ถอนสิทธิ์"
         pending={Boolean(deleteTarget && updating === deleteTarget.id)}

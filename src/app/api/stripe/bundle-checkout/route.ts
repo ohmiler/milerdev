@@ -9,6 +9,7 @@ import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/ra
 import { requirePublishedBundleCourses, requireReadyBundleCourses } from '@/lib/commerce/bundle-commerce';
 import { logError } from '@/lib/error-handler';
 import { stripeBundleDescription } from '@/lib/commerce/checkout-text';
+import { BUNDLE_ACCESS_WITHDRAWN_MESSAGE } from '@/lib/learning/enrollment-access';
 
 const stripeBundleCheckoutRequestSchema = z.object({
     bundleId: z.string().trim().min(1).max(36),
@@ -95,13 +96,17 @@ export async function POST(request: Request) {
         const enrollmentChecks = await Promise.all(
             bCourses.map(async (c) => {
                 const [enrollment] = await db
-                    .select()
+                    .select({ revokedAt: enrollments.revokedAt })
                     .from(enrollments)
                     .where(and(eq(enrollments.userId, session.user.id), eq(enrollments.courseId, c.courseId)))
                     .limit(1);
-                return !!enrollment;
+                return enrollment ?? null;
             })
         );
+        // Paying would not restore a revoked course, so the bundle is not for sale to this learner.
+        if (enrollmentChecks.some((enrollment) => enrollment?.revokedAt)) {
+            return NextResponse.json({ error: BUNDLE_ACCESS_WITHDRAWN_MESSAGE }, { status: 403 });
+        }
         if (enrollmentChecks.every(Boolean)) {
             return NextResponse.json(
                 { error: "คุณลงทะเบียนคอร์สทั้งหมดในชุดคอร์สนี้แล้ว" },

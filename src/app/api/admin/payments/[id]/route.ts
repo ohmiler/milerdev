@@ -3,7 +3,7 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { auditLogs, payments, enrollments, bundleCourses } from '@/lib/db/schema';
-import { eq, and, ne, sql } from 'drizzle-orm';
+import { eq, and, isNull, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { fulfillManualPayment } from '@/lib/commerce/payment-fulfillment';
 import { grantedCourseIds, hasOtherRecordedGrant } from '@/lib/commerce/payment-grants';
@@ -187,8 +187,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
           const hasOtherEntitlement = (directPayment?.count || 0) > 0 || (bundlePayment?.count || 0) > 0 || grantedElsewhere;
           if (!hasOtherEntitlement) {
+            // A revoked row stays: deleting it would let another grant path insert a fresh one.
             await tx.delete(enrollments).where(
-              and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, courseId))
+              and(eq(enrollments.userId, existingPayment.userId!), eq(enrollments.courseId, courseId), isNull(enrollments.revokedAt))
             );
           }
         }

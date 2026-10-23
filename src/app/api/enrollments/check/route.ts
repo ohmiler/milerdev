@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { logError } from '@/lib/error-handler';
 import { getCourseLearning, type CourseLearning } from '@/lib/learning/dashboard';
 
@@ -27,7 +27,8 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(enrollments.userId, session.user.id),
-          eq(enrollments.courseId, courseId)
+          eq(enrollments.courseId, courseId),
+          isNull(enrollments.revokedAt),
         )
       )
       .limit(1);

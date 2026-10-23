@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { and, count, eq, sql } from 'drizzle-orm';
+import { and, count, eq, isNull, sql } from 'drizzle-orm';
 import { requireMember } from '@/lib/auth/member-access';
 import { db } from '@/lib/db';
 import { accounts, users, enrollments } from '@/lib/db/schema';
@@ -35,7 +35,7 @@ async function getAccount(userId: string) {
   if (!user) return null;
 
   const [[enrollmentStats], [google]] = await Promise.all([
-    db.select({ count: count() }).from(enrollments).where(eq(enrollments.userId, userId)),
+    db.select({ count: count() }).from(enrollments).where(and(eq(enrollments.userId, userId), isNull(enrollments.revokedAt))),
     db.select({ count: count() }).from(accounts).where(and(eq(accounts.userId, userId), eq(accounts.provider, 'google'))),
   ]);
 

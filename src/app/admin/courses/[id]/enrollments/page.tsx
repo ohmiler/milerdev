@@ -51,6 +51,7 @@ async function getCourseWithEnrollments(courseId: string, page: number) {
       enrolledAt: enrollments.enrolledAt,
       progressPercent: enrollments.progressPercent,
       completedAt: enrollments.completedAt,
+      revokedAt: enrollments.revokedAt,
       userId: users.id,
       userName: users.name,
       userEmail: users.email,

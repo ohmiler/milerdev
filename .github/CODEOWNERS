@@ -31,6 +31,7 @@
 # Certificates and the progress that earns them
 /src/lib/certificates/ @ohmiler
 /src/lib/learning/progress.ts @ohmiler
+/src/lib/learning/enrollment-access.ts @ohmiler
 /src/app/api/certificates/ @ohmiler
 /src/app/api/progress/ @ohmiler
 /src/app/api/admin/certificates/ @ohmiler

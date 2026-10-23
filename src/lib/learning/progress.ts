@@ -75,10 +75,11 @@ export async function updateLearningProgress(
       .limit(1);
     if (!lesson) return { status: 'not_found' };
 
-    const [enrollment] = await tx
+    const [enrollmentRow] = await tx
       .select({
         id: enrollments.id,
         completedAt: enrollments.completedAt,
+        revokedAt: enrollments.revokedAt,
       })
       .from(enrollments)
       .where(and(
@@ -87,6 +88,8 @@ export async function updateLearningProgress(
       ))
       .limit(1)
       .for('update');
+    // A revoked enrollment gives no access; its row and progress stay only so an admin can restore them.
+    const enrollment = enrollmentRow && !enrollmentRow.revokedAt ? enrollmentRow : undefined;
     // Without an enrollment, only a free preview of a published course may record progress.
     if (!enrollment && !(lesson.isFreePreview && lesson.courseStatus === 'published')) return { status: 'forbidden' };
 

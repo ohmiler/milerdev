@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import sanitizeHtml from 'sanitize-html';
 
 import { extractBunnyVideoInfo, generateSignedVideoUrl, isBunnyVideo } from '@/lib/bunny/stream';
@@ -125,6 +125,7 @@ const databaseStore: LearningWorkspaceStore = {
       .where(and(
         eq(enrollments.userId, memberId),
         eq(enrollments.courseId, courseId),
+        isNull(enrollments.revokedAt),
       ))
       .limit(1);
     return Boolean(enrollment);

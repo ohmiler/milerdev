@@ -5,6 +5,7 @@ import { deriveBundleDecisionFacts } from '@/lib/commerce/bundle-decision-facts'
 import { deriveCourseDecisionFacts } from '@/lib/commerce/course-decision-facts';
 import { db } from '@/lib/db';
 import { bundleCourses, bundles, courses, enrollments, lessons } from '@/lib/db/schema';
+import { ACCESS_WITHDRAWN_MESSAGE, BUNDLE_ACCESS_WITHDRAWN_MESSAGE } from '@/lib/learning/enrollment-access';
 
 export type OrderReview = {
   target: { type: 'course' | 'bundle'; id: string; title: string; href: string };
@@ -31,8 +32,9 @@ export async function loadOrderReview(
     if (!course) throw new OrderReviewError('ไม่พบคอร์สที่เปิดขาย', 404);
     const owned = await db.query.enrollments.findFirst({
       where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, course.id)),
-      columns: { id: true },
+      columns: { id: true, revokedAt: true },
     });
+    if (owned?.revokedAt) throw new OrderReviewError(ACCESS_WITHDRAWN_MESSAGE, 403);
     const facts = deriveCourseDecisionFacts({
       slug: course.slug, regularPrice: course.price, lessonCount: course.lessons.length,
       promotion: course.promoPrice === null ? null : {
@@ -61,8 +63,9 @@ export async function loadOrderReview(
   const ids = included.map(({ course }) => course.id);
   const [lessonCounts, owned] = ids.length ? await Promise.all([
     db.select({ courseId: lessons.courseId, count: count() }).from(lessons).where(inArray(lessons.courseId, ids)).groupBy(lessons.courseId),
-    db.select({ courseId: enrollments.courseId }).from(enrollments).where(and(eq(enrollments.userId, userId), inArray(enrollments.courseId, ids))),
+    db.select({ courseId: enrollments.courseId, revokedAt: enrollments.revokedAt }).from(enrollments).where(and(eq(enrollments.userId, userId), inArray(enrollments.courseId, ids))),
   ]) : [[], []];
+  if (owned.some((row) => row.revokedAt)) throw new OrderReviewError(BUNDLE_ACCESS_WITHDRAWN_MESSAGE, 403);
   const counts = new Map(lessonCounts.map((row) => [row.courseId, row.count]));
   const ownedIds = new Set(owned.map((row) => row.courseId));
   const facts = deriveBundleDecisionFacts({ slug: bundle.slug, price: bundle.price, courses: included.map(({ course, orderIndex }) => ({

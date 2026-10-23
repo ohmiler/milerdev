@@ -3,7 +3,7 @@ import { logError } from '@/lib/error-handler';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { reviews, courses, users, enrollments } from '@/lib/db/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, isNull, sql } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { stripHtml } from '@/lib/security/sanitize';
@@ -142,7 +142,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       .from(enrollments)
       .where(and(
         eq(enrollments.userId, session.user.id!),
-        eq(enrollments.courseId, course.id)
+        eq(enrollments.courseId, course.id),
+        isNull(enrollments.revokedAt),
       ))
       .limit(1);
 

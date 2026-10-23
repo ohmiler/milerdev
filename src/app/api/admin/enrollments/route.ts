@@ -4,8 +4,8 @@ import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { enrollments, users, courses } from '@/lib/db/schema';
 import { desc, eq, sql, and, like, or } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
 import { logAudit } from '@/lib/auditLog';
+import { grantCourseAccessByAdmin } from '@/lib/learning/enrollment-access';
 
 // GET /api/admin/enrollments - Get all enrollments
 export async function GET(request: Request) {
@@ -48,6 +48,7 @@ export async function GET(request: Request) {
           enrolledAt: enrollments.enrolledAt,
           progressPercent: enrollments.progressPercent,
           completedAt: enrollments.completedAt,
+          revokedAt: enrollments.revokedAt,
           userName: users.name,
           userEmail: users.email,
           courseTitle: courses.title,
@@ -125,29 +126,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'กรุณาระบุผู้ใช้และคอร์ส' }, { status: 400 });
     }
 
-    // Check if already enrolled
-    const [existing] = await db
-      .select()
-      .from(enrollments)
-      .where(and(
-        eq(enrollments.userId, userId),
-        eq(enrollments.courseId, courseId)
-      ))
-      .limit(1);
-
-    if (existing) {
+    // A grant on a revoked enrollment restores it, with the learner's progress.
+    const grant = await grantCourseAccessByAdmin(userId, courseId);
+    if (grant.status === 'already_active') {
       return NextResponse.json({ error: 'ผู้ใช้ลงทะเบียนคอร์สนี้แล้ว' }, { status: 400 });
     }
 
-    // Create enrollment
-    const enrollmentId = createId();
-    await db.insert(enrollments).values({
-      id: enrollmentId,
-      userId,
-      courseId,
-      enrolledAt: new Date(),
-      progressPercent: 0,
-    });
+    const { enrollmentId } = grant;
+    if (grant.status === 'restored') {
+      await logAudit({ userId: session.user.id, action: 'update', entityType: 'enrollment', entityId: enrollmentId, newValue: `restored access: user: ${userId}, course: ${courseId}` });
+      return NextResponse.json({ message: 'คืนสิทธิ์เรียนสำเร็จ', enrollmentId, restored: true });
+    }
 
     await logAudit({ userId: session.user.id, action: 'create', entityType: 'enrollment', entityId: enrollmentId, newValue: `user: ${userId}, course: ${courseId}` });
 

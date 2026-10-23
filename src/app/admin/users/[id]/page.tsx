@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Award, BookOpen, ExternalLink, Plus, Search, Trash2, WalletCards } from 'lucide-react';
+import { ArrowLeft, Award, Ban, BookOpen, ExternalLink, Plus, RotateCcw, Search, WalletCards } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -52,6 +52,7 @@ interface Enrollment {
   enrolledAt: string | null;
   progressPercent: number | null;
   completedAt: string | null;
+  revokedAt: string | null;
   courseTitle: string | null;
   courseSlug: string | null;
   coursePrice: string | null;
@@ -150,9 +151,9 @@ export default function AdminUserDetailPage() {
     try {
       const response = await fetch(`/api/admin/enrollments/${deleteTarget.id}`, { method: 'DELETE' });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'ถอนสิทธิ์การลงทะเบียนไม่สำเร็จ');
+      if (!response.ok) throw new Error(data.error || 'ถอนสิทธิ์เรียนไม่สำเร็จ');
       setDeleteTarget(null);
-      showToast('ถอนสิทธิ์การลงทะเบียนสำเร็จ', 'success');
+      showToast('ถอนสิทธิ์เรียนสำเร็จ', 'success');
       await reloadUserData();
     } catch (caughtError) {
       setDeleteError(caughtError instanceof Error ? caughtError.message : 'ถอนสิทธิ์ไม่สำเร็จ');
@@ -160,6 +161,36 @@ export default function AdminUserDetailPage() {
       setDeleting(false);
     }
   };
+
+  // Restoring is an admin grant on the revoked enrollment: the learner gets their progress back.
+  const handleRestore = async (enrollment: Enrollment) => {
+    if (enrollingCourseId || !enrollment.courseId) return;
+    setEnrollingCourseId(enrollment.courseId);
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/enrollments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: enrollment.courseId }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'คืนสิทธิ์เรียนไม่สำเร็จ');
+      showToast(`คืนสิทธิ์ “${enrollment.courseTitle || 'คอร์ส'}” สำเร็จ`, 'success');
+      await reloadUserData();
+    } catch (caughtError) {
+      showToast(caughtError instanceof Error ? caughtError.message : 'คืนสิทธิ์เรียนไม่สำเร็จ', 'error');
+    } finally {
+      setEnrollingCourseId(null);
+    }
+  };
+
+  const enrollmentAction = (enrollment: Enrollment) => enrollment.revokedAt ? (
+    <Button variant="outline" size="sm" disabled={Boolean(enrollingCourseId) || !enrollment.courseId} onClick={() => void handleRestore(enrollment)} aria-label={`คืนสิทธิ์คอร์ส ${enrollment.courseTitle || ''}`}>
+      <RotateCcw data-icon="inline-start" aria-hidden />
+      {enrollingCourseId && enrollingCourseId === enrollment.courseId ? 'กำลังคืนสิทธิ์' : 'คืนสิทธิ์'}
+    </Button>
+  ) : (
+    <Button variant="ghost" size="icon-sm" onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอนสิทธิ์คอร์ส ${enrollment.courseTitle || ''}`}><Ban aria-hidden /></Button>
+  );
 
   const handleEnroll = async (course: AvailableCourse) => {
     if (enrollingCourseId) return;
@@ -274,8 +305,8 @@ export default function AdminUserDetailPage() {
                     <TableCell><div className="font-medium">{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}</div>{enrollment.coursePrice ? <div className="mt-1 text-xs text-muted-foreground">{formatPrice(enrollment.coursePrice)}</div> : null}</TableCell>
                     <TableCell><div className="flex min-w-32 items-center gap-3"><Progress value={progress} className="w-24" aria-label={`ความคืบหน้า ${progress}%`} /><span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{progress}%</span></div></TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">{formatDate(enrollment.enrolledAt)}</TableCell>
-                    <TableCell><div className="flex flex-wrap gap-1.5"><AdminStatusBadge tone={enrollment.completedAt ? 'success' : progress > 0 ? 'warning' : 'neutral'}>{enrollment.completedAt ? 'เรียนจบ' : progress > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}</AdminStatusBadge>{missingCertificate(enrollment) ? <AdminStatusBadge tone="danger">ยังไม่มีใบรับรอง</AdminStatusBadge> : null}</div></TableCell>
-                    <TableCell><div className="flex justify-end"><Button variant="ghost" size="icon-sm" onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอนสิทธิ์คอร์ส ${enrollment.courseTitle || ''}`}><Trash2 aria-hidden /></Button></div></TableCell>
+                    <TableCell><div className="flex flex-wrap gap-1.5">{enrollment.revokedAt ? <AdminStatusBadge tone="danger">ถอนสิทธิ์แล้ว</AdminStatusBadge> : null}<AdminStatusBadge tone={enrollment.completedAt ? 'success' : progress > 0 ? 'warning' : 'neutral'}>{enrollment.completedAt ? 'เรียนจบ' : progress > 0 ? 'กำลังเรียน' : 'ยังไม่เริ่ม'}</AdminStatusBadge>{missingCertificate(enrollment) ? <AdminStatusBadge tone="danger">ยังไม่มีใบรับรอง</AdminStatusBadge> : null}</div></TableCell>
+                    <TableCell><div className="flex justify-end">{enrollmentAction(enrollment)}</div></TableCell>
                   </TableRow>
                 );
               })}
@@ -332,7 +363,7 @@ export default function AdminUserDetailPage() {
         )}
       </AdminSection>
 
-      <AdminSection title="จัดการสิทธิ์คอร์ส" description="เพิ่มคอร์สโดยผู้ดูแล หรือถอนสิทธิ์พร้อมคำเตือนเรื่องข้อมูลความคืบหน้า">
+      <AdminSection title="จัดการสิทธิ์คอร์ส" description="เพิ่มคอร์สโดยผู้ดูแล ถอนสิทธิ์ หรือคืนสิทธิ์ที่ถอนไว้ ความคืบหน้ายังเก็บไว้ทุกกรณี">
         <div className="grid gap-5 lg:grid-cols-2">
           <CoursePickerPanel title={`คอร์สที่เพิ่มได้ (${availableCourses.length})`} search={searchAvailable} onSearchChange={setSearchAvailable} placeholder="ค้นหาคอร์สที่เพิ่มได้">
             {filteredAvailable.length ? filteredAvailable.map((course) => (
@@ -343,11 +374,11 @@ export default function AdminUserDetailPage() {
             )) : <div className="p-6 text-center text-sm text-muted-foreground">ไม่มีคอร์สที่สามารถเพิ่มได้</div>}
           </CoursePickerPanel>
 
-          <CoursePickerPanel title={`คอร์สที่มีสิทธิ์ (${enrollments.length})`} search={searchEnrolled} onSearchChange={setSearchEnrolled} placeholder="ค้นหาคอร์สที่มีสิทธิ์">
+          <CoursePickerPanel title={`คอร์สที่ลงทะเบียน (${enrollments.length})`} search={searchEnrolled} onSearchChange={setSearchEnrolled} placeholder="ค้นหาคอร์สที่ลงทะเบียน">
             {filteredEnrolled.length ? filteredEnrolled.map((enrollment) => (
               <div key={enrollment.id} className="flex items-center justify-between gap-3 border-b px-3 py-3 last:border-0">
-                <div className="min-w-0"><div className="truncate font-medium">{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}</div><div className="mt-1 text-xs text-muted-foreground">{enrollment.progressPercent || 0}% · {enrollment.completedAt ? 'เรียนจบ' : 'กำลังเรียน'}</div></div>
-                <Button variant="ghost" size="icon-sm" onClick={() => { setDeleteError(''); setDeleteTarget(enrollment); }} aria-label={`ถอนสิทธิ์ ${enrollment.courseTitle || ''}`}><Trash2 aria-hidden /></Button>
+                <div className="min-w-0"><div className="truncate font-medium">{enrollment.courseTitle || 'คอร์สที่ถูกลบ'}</div><div className="mt-1 text-xs text-muted-foreground">{enrollment.progressPercent || 0}% · {enrollment.revokedAt ? 'ถอนสิทธิ์แล้ว' : enrollment.completedAt ? 'เรียนจบ' : 'กำลังเรียน'}</div></div>
+                {enrollmentAction(enrollment)}
               </div>
             )) : <div className="p-6 text-center text-sm text-muted-foreground">ยังไม่มีคอร์สที่ลงทะเบียน</div>}
           </CoursePickerPanel>
@@ -356,8 +387,8 @@ export default function AdminUserDetailPage() {
 
       <AdminConfirmActionDialog
         open={Boolean(deleteTarget)}
-        title="ถอนสิทธิ์การลงทะเบียน"
-        description="สิทธิ์เข้าเรียนและข้อมูลความคืบหน้าที่ผูกกับการลงทะเบียนนี้อาจถูกลบ"
+        title="ถอนสิทธิ์เรียน"
+        description="ผู้เรียนจะเข้าเรียนคอร์สนี้ไม่ได้จนกว่าผู้ดูแลจะคืนสิทธิ์ การชำระเงินเดิมจะไม่คืนสิทธิ์ให้เอง ความคืบหน้าและใบรับรองยังเก็บไว้"
         target={deleteTarget?.courseTitle || 'คอร์สที่ไม่ระบุชื่อ'}
         confirmLabel="ถอนสิทธิ์"
         pending={deleting}
