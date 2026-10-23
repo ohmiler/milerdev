@@ -234,6 +234,8 @@ export const enrollments = mysqlTable('enrollments', {
     enrolledAt: datetime('enrolled_at').$defaultFn(() => new Date()),
     progressPercent: int('progress_percent').default(0),
     completedAt: datetime('completed_at'),
+    // Set when an admin withdraws access. The row, progress and certificate stay; only an admin clears it.
+    revokedAt: datetime('revoked_at'),
 }, (table) => [
     uniqueIndex('uq_enrollment_user_course').on(table.userId, table.courseId),
 ]);

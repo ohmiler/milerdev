@@ -190,6 +190,13 @@
       "when": 1791886931924,
       "tag": "0026_unknown_shooting_star",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1792785889902,
+      "tag": "0027_fuzzy_lenny_balinger",
+      "breakpoints": true
     }
   ]
 }
