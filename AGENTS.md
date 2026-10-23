@@ -60,12 +60,13 @@ Merging into `master` does not deploy.
 | --- | --- | --- |
 | A | Docs or tests only | The agent, once the checks below pass |
 | B | Other production code | The agent, once the checks below pass |
-| C | Any path in `.github/CODEOWNERS`: high-risk code, migrations, CI, this file | The owner merges, or says "merge" after reading the diff |
+| C | Any path in `.github/CODEOWNERS` (high-risk code, migrations, CI, this file), or any PR opened by someone other than `ohmiler` or `dependabot[bot]` | The owner merges, or says "merge" after reading the diff |
 
 When unsure, use the higher tier. Before merging, check once:
 
 1. Every CI job passed (not skipped) on the latest commit.
 2. The PR is mergeable: no conflicts, and GitHub allows the merge.
+3. The author is `ohmiler` or `dependabot[bot]` (`gh pr view <number> --json author`). The repository is public, so anyone can open a PR whose own code turns CI green; a PR from anyone else is tier C.
 
 If anything is still running, wait. Merge each PR as soon as it passes, in any order, squash-merging one at a time. Merge `master` into a PR only when it conflicts or GitHub requires the branch to be up to date; do not refresh every open PR after each merge. Report each merge.
 
