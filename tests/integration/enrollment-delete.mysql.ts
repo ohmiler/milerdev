@@ -10,7 +10,8 @@ import {
  *
  * Deleting an enrollment or its course used to be blocked by measurement_outbox rows (#147).
  * That table is retired and dropped by migration 0023, so these tests pin that both deletes
- * now go through and that the admin route removes only that course's progress.
+ * now go through. The admin route no longer deletes: it revokes, keeping the row and all progress
+ * (tests/integration/enrollment-revocation.mysql.ts covers what that protects).
  */
 
 const mocks = vi.hoisted(() => ({
@@ -106,16 +107,17 @@ describe('deleting an enrollment on real MySQL', () => {
 });
 
 describe('admin DELETE /api/admin/enrollments/[id] on real MySQL', () => {
-    it('removes the enrollment and only that course\'s progress', async () => {
+    it('revokes the enrollment and keeps it and every progress row', async () => {
         mocks.auth.mockResolvedValue({ user: { id: 'admin-1', role: 'admin' } });
         const a = await seedEnrollment();
 
         const res = await callDelete(a.enrollmentId);
 
         expect(res.status).toBe(200);
-        expect(await enrollmentExists(a.enrollmentId)).toBe(false);
+        const [row] = await db.select().from(enrollments).where(eq(enrollments.id, a.enrollmentId));
+        expect(row.revokedAt).toBeInstanceOf(Date);
         const left = await db.select().from(lessonProgress).where(eq(lessonProgress.userId, a.userId));
-        expect(left.map((r) => r.lessonId)).toEqual([a.otherLessonId]);
+        expect(left.map((r) => r.lessonId).sort()).toEqual([a.lessonId, a.otherLessonId].sort());
     });
 
 });

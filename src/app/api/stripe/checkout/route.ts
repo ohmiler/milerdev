@@ -9,6 +9,7 @@ import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/ra
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
 import { logError } from '@/lib/error-handler';
 import { stripeCourseDescription } from '@/lib/commerce/checkout-text';
+import { ACCESS_WITHDRAWN_MESSAGE } from '@/lib/learning/enrollment-access';
 
 const stripeCheckoutRequestSchema = z.object({
     courseId: z.string().trim().min(1).max(36),
@@ -54,6 +55,9 @@ export async function POST(request: Request) {
                 eq(enrollments.courseId, courseId)
             ),
         });
+        if (existingEnrollment?.revokedAt) {
+            return NextResponse.json({ error: ACCESS_WITHDRAWN_MESSAGE }, { status: 403 });
+        }
         if (existingEnrollment) {
             return NextResponse.json(
                 { error: "คุณลงทะเบียนคอร์สนี้แล้ว" },

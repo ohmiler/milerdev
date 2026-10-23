@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { createId } from '@paralleldrive/cuid2';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 
 import { db } from '@/lib/db';
 import { courses, enrollments, lessonQuizAttempts, lessonQuizQuestions, lessons } from '@/lib/db/schema';
@@ -75,7 +75,7 @@ export async function submitLessonQuizAttempt(input: {
     const [enrollment] = await db
       .select({ id: enrollments.id })
       .from(enrollments)
-      .where(and(eq(enrollments.userId, input.userId), eq(enrollments.courseId, lesson.courseId)))
+      .where(and(eq(enrollments.userId, input.userId), eq(enrollments.courseId, lesson.courseId), isNull(enrollments.revokedAt)))
       .limit(1);
     if (!enrollment) return { status: 'forbidden' };
   }

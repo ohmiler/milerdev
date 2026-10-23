@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { enrollments, courses, lessons } from '@/lib/db/schema';
-import { eq, and, count, desc } from 'drizzle-orm';
+import { eq, and, count, desc, isNull } from 'drizzle-orm';
 import { sendEnrollmentEmail } from '@/lib/notifications/email';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
 import { COURSE_NOT_READY, requireCourseHasLessons } from '@/lib/courses/availability';
 import { logError } from '@/lib/error-handler';
+import { ACCESS_WITHDRAWN_MESSAGE } from '@/lib/learning/enrollment-access';
 
 // GET /api/enrollments - Get user's enrollments
 export async function GET() {
@@ -25,7 +26,7 @@ export async function GET() {
       })
       .from(enrollments)
       .innerJoin(courses, eq(enrollments.courseId, courses.id))
-      .where(eq(enrollments.userId, session.user.id))
+      .where(and(eq(enrollments.userId, session.user.id), isNull(enrollments.revokedAt)))
       .orderBy(desc(enrollments.enrolledAt));
 
     // Format result
@@ -85,6 +86,9 @@ export async function POST(request: Request) {
       )
       .limit(1);
 
+    if (existingEnrollment?.revokedAt) {
+      return NextResponse.json({ error: ACCESS_WITHDRAWN_MESSAGE }, { status: 403 });
+    }
     if (existingEnrollment) {
       return NextResponse.json(
         { error: 'คุณลงทะเบียนคอร์สนี้แล้ว', enrollment: existingEnrollment },

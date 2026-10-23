@@ -23,11 +23,12 @@ export async function loadPaymentRecords(userId: string): Promise<PaymentRecord[
   if (!rows.length) return [];
   const bundleIds = [...new Set(rows.flatMap((row) => row.bundleId ? [row.bundleId] : []))];
   const [owned, included] = await Promise.all([
-    db.select({ courseId: enrollments.courseId }).from(enrollments).where(eq(enrollments.userId, userId)),
+    db.select({ courseId: enrollments.courseId, revokedAt: enrollments.revokedAt }).from(enrollments).where(eq(enrollments.userId, userId)),
     bundleIds.length ? db.select({ bundleId: bundleCourses.bundleId, courseId: bundleCourses.courseId })
       .from(bundleCourses).where(inArray(bundleCourses.bundleId, bundleIds)) : Promise.resolve([]),
   ]);
-  const ownedIds = new Set(owned.map((row) => row.courseId));
+  const ownedIds = new Set(owned.flatMap((row) => (row.revokedAt ? [] : [row.courseId])));
+  const revokedIds = new Set(owned.flatMap((row) => (row.revokedAt ? [row.courseId] : [])));
   const now = new Date();
   return rows.map((attempt, index) => {
     const type = attempt.bundleId ? 'bundle' : 'course';
@@ -54,6 +55,17 @@ export async function loadPaymentRecords(userId: string): Promise<PaymentRecord[
       && (attempt.status !== 'failed' || presentation.access.state !== 'none' || conflictingAttempt || !slug)) {
       presentation.recovery = contact;
       presentation.payment.preventDuplicatePayment = true;
+    }
+    // An admin withdrew access this payment gave. It does not come back by itself, so say so
+    // instead of "กำลังเปิดสิทธิ์", and send the learner to support rather than to pay again.
+    if (attempt.status === 'completed' && courseIds.some((courseId) => revokedIds.has(courseId))) {
+      presentation.payment = {
+        ...presentation.payment,
+        label: 'ชำระแล้ว · สิทธิ์ถูกระงับ',
+        heading: 'ชำระแล้ว แต่สิทธิ์เรียนถูกระงับ',
+        description: 'ผู้ดูแลระงับสิทธิ์เรียนจากรายการนี้ กรุณาติดต่อเราพร้อมเลขอ้างอิง อย่าชำระซ้ำ',
+      };
+      presentation.recovery = contact;
     }
     if (canSubmitSlip) {
       presentation.recovery = { kind: 'resume', label: 'แนบสลิปในรายการเดิม', href: `/dashboard/payments/${encodeURIComponent(attempt.id)}` };

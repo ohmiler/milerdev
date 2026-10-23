@@ -3,13 +3,14 @@ import { logError } from '@/lib/error-handler';
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { enrollments, courses, payments } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { sendEnrollmentEmail } from "@/lib/notifications/email";
 import { z } from "zod";
 import { checkRateLimit, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { safeInsertEnrollment } from "@/lib/db/safe-insert";
 import { COURSE_NOT_READY, requireCourseHasLessons } from "@/lib/courses/availability";
 import { fulfillFreeEnrollment } from '@/lib/commerce/free-enrollment-fulfillment';
+import { ACCESS_WITHDRAWN_MESSAGE } from '@/lib/learning/enrollment-access';
 
 // Validation schema
 const enrollSchema = z.object({
@@ -60,6 +61,10 @@ export async function POST(request: Request) {
             ),
         });
 
+        if (existingEnrollment?.revokedAt) {
+            // A completed payment does not undo an admin's revocation; only an admin restores it.
+            return NextResponse.json({ error: ACCESS_WITHDRAWN_MESSAGE }, { status: 403 });
+        }
         if (existingEnrollment) {
             return NextResponse.json(
                 { error: "Already enrolled in this course" },
@@ -168,7 +173,8 @@ export async function GET(request: Request) {
         const enrollment = await db.query.enrollments.findFirst({
             where: and(
                 eq(enrollments.userId, session.user.id),
-                eq(enrollments.courseId, courseId)
+                eq(enrollments.courseId, courseId),
+                isNull(enrollments.revokedAt),
             ),
         });
 

@@ -19,6 +19,7 @@ import { PROMPTPAY_INTENT_TTL_MS } from '@/lib/commerce/promptpay-intent';
 import { createPromptPayQr } from '@/lib/commerce/promptpay-qr';
 import { checkRateLimit, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { logError } from '@/lib/error-handler';
+import { ACCESS_WITHDRAWN_MESSAGE, BUNDLE_ACCESS_WITHDRAWN_MESSAGE } from '@/lib/learning/enrollment-access';
 
 const intentSchema = z.object({
   courseId: z.string().min(1).max(36).optional(),
@@ -30,7 +31,7 @@ const intentSchema = z.object({
   }
 });
 
-function unavailable(code: string, status: 400 | 404 | 409 = 409): never {
+function unavailable(code: string, status: 400 | 403 | 404 | 409 = 409): never {
   throw Object.assign(new Error(code), { status });
 }
 
@@ -69,13 +70,14 @@ export async function POST(request: Request) {
           unavailable(COURSE_NOT_READY);
         }
 
-        const [existingEnrollment] = await tx.select({ id: enrollments.id })
+        const [existingEnrollment] = await tx.select({ id: enrollments.id, revokedAt: enrollments.revokedAt })
           .from(enrollments)
           .where(and(
             eq(enrollments.userId, session.user.id),
             eq(enrollments.courseId, course.id),
           ))
           .limit(1);
+        if (existingEnrollment?.revokedAt) unavailable(ACCESS_WITHDRAWN_MESSAGE, 403);
         if (existingEnrollment) unavailable('ALREADY_ENROLLED', 400);
 
         const originalPrice = Number(course.price);
@@ -139,10 +141,13 @@ export async function POST(request: Request) {
         .for('update');
       if (!bundle || bundle.status !== 'published') unavailable('BUNDLE_NOT_AVAILABLE', 404);
 
-      const enrolledRows = await tx.select({ courseId: enrollments.courseId })
+      const enrolledRows = await tx.select({ courseId: enrollments.courseId, revokedAt: enrollments.revokedAt })
         .from(enrollments)
         .where(eq(enrollments.userId, session.user.id));
       const enrolledIds = new Set(enrolledRows.map((row) => row.courseId));
+      // Paying would not restore a revoked course, so the bundle is not for sale to this learner.
+      const revokedIds = new Set(enrolledRows.flatMap((row) => (row.revokedAt ? [row.courseId] : [])));
+      if (includedCourses.some((course) => revokedIds.has(course.id))) unavailable(BUNDLE_ACCESS_WITHDRAWN_MESSAGE, 403);
       if (includedCourses.every((course) => enrolledIds.has(course.id))) {
         unavailable('ALREADY_ENROLLED', 400);
       }

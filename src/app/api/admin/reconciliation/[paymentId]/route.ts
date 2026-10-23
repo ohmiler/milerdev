@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { MAX_RECONCILIATION_RETRIES } from '@/lib/commerce/reconciliation';
 import { db } from '@/lib/db';
@@ -123,7 +123,7 @@ async function readEntitlement(payment: {
         const [row] = await db
             .select({ enrolled: sql<number>`COUNT(*)` })
             .from(enrollments)
-            .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)));
+            .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId), isNull(enrollments.revokedAt)));
         return { kind: 'course', total: 1, enrolled: Number(row?.enrolled || 0) > 0 ? 1 : 0 };
     }
 
@@ -136,7 +136,7 @@ async function readEntitlement(payment: {
             .select({ enrolled: sql<number>`COUNT(*)` })
             .from(enrollments)
             .innerJoin(bundleCourses, eq(enrollments.courseId, bundleCourses.courseId))
-            .where(and(eq(enrollments.userId, userId), eq(bundleCourses.bundleId, bundleId as string))),
+            .where(and(eq(enrollments.userId, userId), eq(bundleCourses.bundleId, bundleId as string), isNull(enrollments.revokedAt))),
     ]);
     return {
         kind: 'bundle',

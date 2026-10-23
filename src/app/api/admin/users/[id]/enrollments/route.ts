@@ -3,9 +3,9 @@ import { logError } from '@/lib/error-handler';
 import { requireAdmin } from '@/lib/auth/helpers';
 import { db } from '@/lib/db';
 import { enrollments, courses, users } from '@/lib/db/schema';
-import { eq, and, notInArray } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
+import { eq, notInArray } from 'drizzle-orm';
 import { logAudit } from '@/lib/auditLog';
+import { grantCourseAccessByAdmin } from '@/lib/learning/enrollment-access';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -45,6 +45,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         enrolledAt: enrollments.enrolledAt,
         progressPercent: enrollments.progressPercent,
         completedAt: enrollments.completedAt,
+        revokedAt: enrollments.revokedAt,
         courseTitle: courses.title,
         courseSlug: courses.slug,
         coursePrice: courses.price,
@@ -55,7 +56,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       .where(eq(enrollments.userId, id))
       .orderBy(enrollments.enrolledAt);
 
-    // Get available courses (not enrolled)
+    // Courses the learner has no enrollment for. A revoked one is restored from its own row.
     const enrolledCourseIds = userEnrollments
       .map(e => e.courseId)
       .filter((id): id is string => id !== null);
@@ -119,24 +120,17 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'ไม่พบคอร์ส' }, { status: 404 });
     }
 
-    // Check if already enrolled
-    const existing = await db
-      .select({ id: enrollments.id })
-      .from(enrollments)
-      .where(and(eq(enrollments.userId, id), eq(enrollments.courseId, courseId)))
-      .limit(1);
-
-    if (existing.length > 0) {
+    // A grant on a revoked enrollment restores it, with the learner's progress.
+    const grant = await grantCourseAccessByAdmin(id, courseId);
+    if (grant.status === 'already_active') {
       return NextResponse.json({ error: 'ผู้ใช้ลงทะเบียนคอร์สนี้แล้ว' }, { status: 400 });
     }
 
-    // Create enrollment
-    const enrollmentId = createId();
-    await db.insert(enrollments).values({
-      id: enrollmentId,
-      userId: id,
-      courseId,
-    });
+    const { enrollmentId } = grant;
+    if (grant.status === 'restored') {
+      await logAudit({ userId: session.user.id, action: 'update', entityType: 'enrollment', entityId: enrollmentId, newValue: `restored access: user: ${id}, course: ${courseId}` });
+      return NextResponse.json({ message: 'คืนสิทธิ์เรียนสำเร็จ', enrollmentId, restored: true });
+    }
 
     await logAudit({ userId: session.user.id, action: 'create', entityType: 'enrollment', entityId: enrollmentId, newValue: `user: ${id}, course: ${courseId}` });
 

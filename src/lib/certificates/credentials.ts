@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNotNull, isNull, or } from 'drizzle-orm';
 
 import { ensureCompletedCertificate } from '@/lib/certificates/issuance';
 import { db } from '@/lib/db';
@@ -109,7 +109,12 @@ const databaseProjectionStore: CertificateProjectionStore = {
         })
         .from(enrollments)
         .innerJoin(courses, eq(enrollments.courseId, courses.id))
-        .where(eq(enrollments.userId, memberId)),
+        // A revoked course the learner already finished still earns its certificate; an unfinished
+        // one is no longer theirs to continue.
+        .where(and(
+          eq(enrollments.userId, memberId),
+          or(isNull(enrollments.revokedAt), isNotNull(enrollments.completedAt)),
+        )),
       db
         .select({
           courseId: certificates.courseId,
