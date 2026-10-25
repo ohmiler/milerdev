@@ -35,6 +35,7 @@ vi.mock('@paralleldrive/cuid2', () => ({
 vi.mock('@/lib/security/rate-limit', () => ({
     checkRateLimit: vi.fn().mockReturnValue({ success: true, remaining: 10, resetTime: Date.now() + 60000 }),
     getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
+    getClientThrottleKey: vi.fn().mockReturnValue('127.0.0.1'),
     rateLimits: {
         auth: { maxRequests: 5, windowMs: 60000 },
         sensitive: { maxRequests: 10, windowMs: 60000 },

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
+import { getClientThrottleKey, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { authRateLimitUnavailableResponse, consumeAuthRateLimit } from '@/lib/auth/rate-limit';
 import { completeEmailRegistration } from '@/lib/auth/email-registration';
 import { newPasswordSchema } from '@/lib/auth/password-validation';
@@ -15,7 +15,7 @@ const schema = z.object({
 export async function POST(request: Request) {
     try {
         const limit = await consumeAuthRateLimit({
-            namespace: 'register-confirm', identifier: getClientIP(request), ...rateLimits.auth,
+            namespace: 'register-confirm', identifier: getClientThrottleKey(request), ...rateLimits.auth,
         }).catch(() => null);
         if (!limit) return authRateLimitUnavailableResponse();
         if (!limit.success) return rateLimitResponse(limit.resetTime);

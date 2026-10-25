@@ -4,7 +4,7 @@ import { users } from '@/lib/db/schema';
 import { eq, and, gt, isNull, sql } from 'drizzle-orm';
 import { hashNewPassword } from '@/lib/auth/password-storage';
 import { z } from 'zod';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
+import { getClientThrottleKey, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,
@@ -31,10 +31,10 @@ function invalidResetLinkResponse() {
 export async function POST(request: Request) {
     try {
         // Rate limiting
-        const clientIP = getClientIP(request);
+        const throttleKey = getClientThrottleKey(request);
         const rateLimit = await consumeAuthRateLimit({
             namespace: 'reset-confirm',
-            identifier: clientIP,
+            identifier: throttleKey,
             ...rateLimits.auth,
         }).catch(() => null);
 

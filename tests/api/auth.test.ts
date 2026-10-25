@@ -39,6 +39,7 @@ vi.mock('@/lib/auth/rate-limit', () => ({
 // Mock existing response/IP helpers
 vi.mock('@/lib/security/rate-limit', () => ({
     getClientIP: vi.fn().mockReturnValue('127.0.0.1'),
+    getClientThrottleKey: vi.fn().mockReturnValue('127.0.0.1'),
     rateLimits: {
         auth: { maxRequests: 5, windowMs: 60000 },
         sensitive: { maxRequests: 10, windowMs: 60000 },

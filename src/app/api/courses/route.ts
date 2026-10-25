@@ -4,15 +4,15 @@ import { db } from "@/lib/db";
 import { courses, users, lessons, courseTags, tags } from "@/lib/db/schema";
 import { eq, desc, asc, and, count, like, gt, sql } from "drizzle-orm";
 import { createId } from "@paralleldrive/cuid2";
-import { checkRateLimit, getClientIP, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
+import { checkRateLimit, getClientThrottleKey, rateLimits, rateLimitResponse } from "@/lib/security/rate-limit";
 import { logError } from '@/lib/error-handler';
 
 // GET /api/courses - Get all published courses with filters and pagination
 export async function GET(request: Request) {
     try {
         // Rate limit public endpoint
-        const clientIP = getClientIP(request);
-        const rateLimit = checkRateLimit(`courses:${clientIP}`, rateLimits.general);
+        const throttleKey = getClientThrottleKey(request);
+        const rateLimit = checkRateLimit(`courses:${throttleKey}`, rateLimits.general);
         if (!rateLimit.success) return rateLimitResponse(rateLimit.resetTime);
 
         const { searchParams } = new URL(request.url);

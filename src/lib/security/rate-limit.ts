@@ -1,9 +1,11 @@
 import {
     getClientIP,
     getClientIPFromHeaders,
+    getClientThrottleKey,
+    getClientThrottleKeyFromHeaders,
 } from '@/lib/security/client-ip';
 
-export { getClientIP, getClientIPFromHeaders };
+export { getClientIP, getClientIPFromHeaders, getClientThrottleKey, getClientThrottleKeyFromHeaders };
 
 /**
  * Lightweight in-memory limiter for non-auth API routes and optimistic proxy defense.

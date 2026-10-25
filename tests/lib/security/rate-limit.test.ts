@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { checkRateLimit, rateLimits, getClientIP } from '@/lib/security/rate-limit';
+import { checkRateLimit, rateLimits, getClientIP, getClientThrottleKey } from '@/lib/security/rate-limit';
+import { throttleKeyForIP } from '@/lib/security/client-ip';
 
 describe('Rate Limiter', () => {
     beforeEach(() => {
@@ -90,6 +91,34 @@ describe('Rate Limiter', () => {
             });
 
             expect(getClientIP(request)).toBe('unknown');
+        });
+    });
+
+    describe('throttle keys', () => {
+        it('keeps an IPv4 address and unknown as they are', () => {
+            expect(throttleKeyForIP('203.0.113.10')).toBe('203.0.113.10');
+            expect(throttleKeyForIP('unknown')).toBe('unknown');
+        });
+
+        it('counts every address in one IPv6 /64 as one client', () => {
+            const keys = ['2001:db8::1', '2001:db8::ffff:2', '2001:0db8:0000:0000:1234:5678:9abc:def0', '2001:db8:0:0::']
+                .map(throttleKeyForIP);
+
+            expect(new Set(keys)).toEqual(new Set(['2001:db8:0:0::/64']));
+        });
+
+        it('keeps different IPv6 /64 networks apart', () => {
+            expect(throttleKeyForIP('2001:db8:0:1::1')).toBe('2001:db8:0:1::/64');
+            expect(throttleKeyForIP('2001:db8:0:2::1')).toBe('2001:db8:0:2::/64');
+            expect(throttleKeyForIP('::1')).toBe('0:0:0:0::/64');
+            expect(throttleKeyForIP('fe80:1:2:3:4::')).toBe('fe80:1:2:3::/64');
+        });
+
+        it('derives the key from the same client address as getClientIP', () => {
+            const request = new Request('http://localhost', { headers: { 'x-real-ip': '2001:DB8::42' } });
+
+            expect(getClientIP(request)).toBe('2001:db8::42');
+            expect(getClientThrottleKey(request)).toBe('2001:db8:0:0::/64');
         });
     });
 
