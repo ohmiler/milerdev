@@ -9,6 +9,16 @@ vi.mock('@/lib/auth/password-screening', () => ({ assertPasswordNotCompromised: 
 import { emailRegistrations, users } from '@/lib/db/schema';
 
 const mocks = vi.hoisted(() => ({ send: vi.fn().mockResolvedValue(true) }));
+// The register route answers first and requests the registration in after(); queue that work so
+// the test can run it, the way next start runs it once the response is sent.
+const afterTasks = vi.hoisted(() => [] as Array<() => unknown>);
+vi.mock('next/server', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('next/server')>()),
+    after: (task: () => unknown) => { afterTasks.push(task); },
+}));
+async function runAfterTasks() {
+    for (const task of afterTasks.splice(0)) await task();
+}
 vi.mock('@/lib/notifications/email', () => ({ sendRegistrationVerificationEmail: mocks.send }));
 let db: typeof import('@/lib/db').db;
 let service: typeof import('@/lib/auth/email-registration');
@@ -59,6 +69,7 @@ describe('real MySQL registration ownership and concurrency', () => {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'x-real-ip': '192.0.2.87' }, body: JSON.stringify(body),
         });
         expect((await requestRegistration(request({ email, password: 'AttackerPassword1!', role: 'admin' }))).status).toBe(200);
+        await runAfterTasks();
         expect(await findUser(email)).toBeUndefined();
         const token = tokenFor(email);
         expect((await confirmRegistration(request({ token, name: 'Owner', password: 'OwnerPassword1!' }))).status).toBe(200);

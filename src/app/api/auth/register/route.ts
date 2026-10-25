@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { getClientThrottleKey, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import { authRateLimitUnavailableResponse, consumeAuthRateLimit } from '@/lib/auth/rate-limit';
 import { REGISTRATION_ACCEPTED, requestEmailRegistration } from '@/lib/auth/email-registration';
+import { logError } from '@/lib/error-handler';
 
 const schema = z.object({
     email: z.string().trim().email('รูปแบบอีเมลไม่ถูกต้อง').max(255),
@@ -32,7 +33,13 @@ export async function POST(request: Request) {
         }
         // Ignore password/name/role from old clients: the mailbox holder must
         // choose fresh credentials when redeeming the emailed token.
-        await requestEmailRegistration(email, validation.data.callbackUrl);
+        // The work depends on whether the email already has an account: a new address waits for
+        // database writes and an email provider round trip, an existing one returns after one read.
+        // It runs after the neutral response is sent, so the response time is the same for both.
+        const callbackUrl = validation.data.callbackUrl;
+        after(() => requestEmailRegistration(email, callbackUrl).catch((error) => {
+            logError(error, { action: 'auth.registration.request_failed' });
+        }));
         return NextResponse.json(REGISTRATION_ACCEPTED);
     } catch {
         console.error('[Registration] Request failed');

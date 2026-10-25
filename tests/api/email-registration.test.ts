@@ -1,6 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ request: vi.fn(), complete: vi.fn(), limit: vi.fn() }));
+const mocks = vi.hoisted(() => ({ request: vi.fn(), complete: vi.fn(), limit: vi.fn(), logError: vi.fn() }));
+// The register route answers first and requests the registration in after(); queue that work.
+const afterTasks = vi.hoisted(() => [] as Array<() => unknown>);
+vi.mock('next/server', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('next/server')>()),
+    after: (task: () => unknown) => { afterTasks.push(task); },
+}));
+vi.mock('@/lib/error-handler', () => ({ logError: mocks.logError, logEvent: vi.fn() }));
+async function runAfterTasks() {
+    for (const task of afterTasks.splice(0)) await task();
+}
 vi.mock('@/lib/auth/email-registration', () => ({
     requestEmailRegistration: mocks.request, completeEmailRegistration: mocks.complete,
     REGISTRATION_ACCEPTED: { message: 'ตรวจสอบคำขอแล้ว', retryAfterSeconds: 60 },
@@ -18,6 +28,7 @@ const request = (body: unknown) => new Request('http://localhost/api/auth/regist
 const valid = { token: 'a'.repeat(64), name: 'Mailbox Owner', password: 'OwnerPassword1!' };
 beforeEach(() => {
     vi.clearAllMocks();
+    afterTasks.length = 0;
     mocks.limit.mockResolvedValue({ success: true, resetTime: Date.now() + 60000 });
     mocks.request.mockResolvedValue(undefined);
     mocks.complete.mockResolvedValue({ loginHref: '/login?callbackUrl=%2Fcourses' });
@@ -26,12 +37,35 @@ describe('email registration HTTP boundary', () => {
     it('requests verification without using an unverified password or role', async () => {
         const response = await requestRegistration(request({ email: ' NEW@Example.Test ', password: 'AttackerPass1', role: 'admin', callbackUrl: '/courses' }));
         expect(response.status).toBe(200);
+        await runAfterTasks();
         expect(mocks.request).toHaveBeenCalledWith('new@example.test', '/courses');
         expect(mocks.complete).not.toHaveBeenCalled();
         expect(await response.json()).toEqual({ message: 'ตรวจสอบคำขอแล้ว', retryAfterSeconds: 60 });
         expect(mocks.limit.mock.calls[1][0].identifier).not.toContain('@');
         expect(mocks.limit).toHaveBeenCalledTimes(3);
     });
+    it('answers before the registration work runs, so its time does not depend on the account', async () => {
+        // A request that never finishes stands in for a slow email provider.
+        mocks.request.mockReturnValue(new Promise(() => {}));
+
+        const response = await requestRegistration(request({ email: 'new@example.test' }));
+
+        expect(response.status).toBe(200);
+        expect(await response.json()).toEqual({ message: 'ตรวจสอบคำขอแล้ว', retryAfterSeconds: 60 });
+        expect(mocks.request).not.toHaveBeenCalled();
+        expect(afterTasks).toHaveLength(1);
+    });
+
+    it('logs a failed registration request without changing the answer', async () => {
+        mocks.request.mockRejectedValue(new Error('provider down'));
+
+        const response = await requestRegistration(request({ email: 'new@example.test' }));
+        await runAfterTasks();
+
+        expect(response.status).toBe(200);
+        expect(mocks.logError).toHaveBeenCalledWith(expect.any(Error), { action: 'auth.registration.request_failed' });
+    });
+
     it('returns the same neutral contract for email throttling without sending again', async () => {
         mocks.limit.mockResolvedValueOnce({ success: true }).mockResolvedValueOnce({ success: false });
         const response = await requestRegistration(request({ email: 'new@example.test' }));

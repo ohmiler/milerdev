@@ -1,5 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// The reset route answers first and does the account work in after(). Queue that work here so a
+// test can check the answer alone and then run the work before asserting its effects.
+const afterTasks = vi.hoisted(() => [] as Array<() => unknown>);
+vi.mock('next/server', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('next/server')>()),
+    after: (task: () => unknown) => { afterTasks.push(task); },
+}));
+async function runAfterTasks() {
+    for (const task of afterTasks.splice(0)) await task();
+}
+
 vi.mock('@/lib/auth/password-storage', () => ({
     hashNewPassword: vi.fn().mockResolvedValue('$argon2id$test-hash'),
     verifyPassword: vi.fn(),
@@ -122,8 +133,28 @@ describe('POST /api/auth/reset-password', () => {
 
     async function callReset(body: Record<string, unknown>) {
         const mod = await import('@/app/api/auth/reset-password/route');
-        return mod.POST(makeRequest('http://localhost:3000/api/auth/reset-password', body));
+        const response = await mod.POST(makeRequest('http://localhost:3000/api/auth/reset-password', body));
+        await runAfterTasks();
+        return response;
     }
+
+    it('answers before it reads the account or sends anything', async () => {
+        afterTasks.length = 0;
+        mockDbState.selectResult = [{ id: 'user-1', email: 'user@example.com', name: 'User', deactivatedAt: null }];
+        const mod = await import('@/app/api/auth/reset-password/route');
+
+        const response = await mod.POST(makeRequest('http://localhost:3000/api/auth/reset-password', { email: 'user@example.com' }));
+
+        expect(response.status).toBe(200);
+        await expect(response.json()).resolves.toEqual({ message: 'ตรวจสอบคำขอแล้ว', retryAfterSeconds: 300 });
+        expect(afterTasks).toHaveLength(1);
+        expect(mockDbState.updateSet).toBeNull();
+        expect(sendPasswordResetEmail).not.toHaveBeenCalled();
+
+        await runAfterTasks();
+        expect(mockDbState.updateSet?.resetToken).toBeTruthy();
+        expect(sendPasswordResetEmail).toHaveBeenCalledTimes(1);
+    });
 
     it('should return the same neutral cooldown contract for every account state', async () => {
         const expected = {
