@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ACCOUNT_LOGIN_LIMIT, authorizeCredentials } from '@/lib/auth/credentials';
+import { ACCOUNT_LOGIN_LIMIT, authorizeCredentials, NO_ACCOUNT_PASSWORD_HASH } from '@/lib/auth/credentials';
+import { verifyPassword } from '@/lib/auth/password-storage';
 import { applyJwtSessionPolicy } from '@/lib/auth/session';
 import type { JWT } from 'next-auth/jwt';
 
@@ -190,7 +191,7 @@ describe('credentials authorization rate-limit boundary', () => {
         });
     });
 
-    it('returns the same denied shape for an inactive account without checking its password', async () => {
+    it('denies an inactive account after the same password work, never checking its own hash', async () => {
         const dependencies = createDependencies();
         dependencies.findUserByEmail.mockResolvedValue({
             id: 'user-1',
@@ -206,7 +207,56 @@ describe('credentials authorization rate-limit boundary', () => {
             request,
             dependencies
         )).resolves.toBeNull();
-        expect(dependencies.comparePassword).not.toHaveBeenCalled();
+        expect(dependencies.comparePassword).toHaveBeenCalledTimes(1);
+        expect(dependencies.comparePassword).toHaveBeenCalledWith('Password1', NO_ACCOUNT_PASSWORD_HASH);
+    });
+
+    it.each([
+        ['an unknown email', undefined],
+        ['a Google-only account', { passwordHash: null }],
+    ])('verifies the guess against a throwaway hash for %s and still denies it', async (_label, override) => {
+        const dependencies = createDependencies();
+        const user = await dependencies.findUserByEmail();
+        dependencies.findUserByEmail.mockResolvedValue(override && { ...user, ...override });
+        // Even a verifier that says yes cannot sign anyone in through the throwaway hash.
+        dependencies.comparePassword.mockResolvedValue(true);
+
+        await expect(authorizeCredentials(
+            { email: 'learner@example.test', password: 'Password1' }, request, dependencies,
+        )).resolves.toBeNull();
+        expect(dependencies.comparePassword).toHaveBeenCalledWith('Password1', NO_ACCOUNT_PASSWORD_HASH);
+    });
+
+    it('uses a real argon2id hash at the cost of new passwords, which no guess matches', async () => {
+        expect(NO_ACCOUNT_PASSWORD_HASH.startsWith('$argon2id$v=19$m=19456,p=1,t=2$')).toBe(true);
+        await expect(verifyPassword('Password1', NO_ACCOUNT_PASSWORD_HASH)).resolves.toBe(false);
+    });
+
+    it('takes about as long for an unknown email as for a wrong password with the real verifier', async () => {
+        const argon2 = (await import('argon2')).default;
+        const realHash = await argon2.hash('CorrectHorse1!', {
+            type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1, hashLength: 32,
+        });
+        const dependencies = createDependencies();
+        dependencies.comparePassword.mockImplementation(verifyPassword);
+        const user = await dependencies.findUserByEmail();
+        const median = async (account: unknown) => {
+            dependencies.findUserByEmail.mockResolvedValue(account);
+            const samples: number[] = [];
+            for (let sample = 0; sample < 5; sample++) {
+                const started = performance.now();
+                await authorizeCredentials({ email: 'learner@example.test', password: 'WrongGuess1!' }, request, dependencies);
+                samples.push(performance.now() - started);
+            }
+            return samples.sort((a, b) => a - b)[2];
+        };
+
+        const wrongPassword = await median({ ...user, passwordHash: realHash });
+        const unknownEmail = await median(undefined);
+
+        // Without the throwaway verify an unknown email returns in well under a millisecond, while
+        // argon2 takes tens of milliseconds. A loose bound keeps this stable on busy machines.
+        expect(unknownEmail).toBeGreaterThan(wrongPassword * 0.4);
     });
 
     it('fails closed when account state lookup is unavailable', async () => {

@@ -8,6 +8,12 @@ type CredentialsInput = Partial<Record<'email' | 'password', unknown>>;
 // not the account exists, so the budget itself reveals nothing about which emails have accounts.
 export const ACCOUNT_LOGIN_LIMIT = { maxRequests: 10, windowMs: 15 * 60_000 };
 
+// An argon2id hash, at the cost hashNewPassword uses, of a random value nobody kept. When an email
+// has no usable password (no account, Google only, or deactivated), sign-in still verifies the
+// guess against this hash, so it takes as long as a wrong password for a real account and the
+// response time does not reveal which emails have password accounts. It never authenticates.
+export const NO_ACCOUNT_PASSWORD_HASH = '$argon2id$v=19$m=19456,p=1,t=2$iD648l85vYqobZNDjj5rvA$4UL9TNGxJupT532bjr9u2TpK1S70anviA6qxcUFVuDI';
+
 type CredentialUser = {
     id: string;
     email: string;
@@ -68,7 +74,10 @@ export async function authorizeCredentials(
     } catch {
         return null;
     }
-    if (!user?.passwordHash || user.deactivatedAt !== null) return null;
+    if (!user?.passwordHash || user.deactivatedAt !== null) {
+        await dependencies.comparePassword(credentials.password, NO_ACCOUNT_PASSWORD_HASH).catch(() => false);
+        return null;
+    }
     const verifiedSessionVersion = user.sessionVersion;
     if (!Number.isSafeInteger(verifiedSessionVersion) || verifiedSessionVersion < 0) return null;
 
