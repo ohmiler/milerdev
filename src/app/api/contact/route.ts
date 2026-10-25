@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/security/rate-limit';
+import { checkRateLimit, getClientIP, getClientThrottleKey, rateLimitResponse } from '@/lib/security/rate-limit';
 import { sendContactNotification } from '@/lib/notifications/email';
 import { logError } from '@/lib/error-handler';
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     try {
         // Rate limiting — 3 submissions per 10 minutes per IP
         const clientIP = getClientIP(request);
-        const rateLimit = checkRateLimit(`contact:${clientIP}`, {
+        const rateLimit = checkRateLimit(`contact:${getClientThrottleKey(request)}`, {
             maxRequests: 3,
             windowMs: 10 * 60 * 1000, // 10 minutes
         });

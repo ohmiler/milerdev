@@ -1,7 +1,12 @@
 import type { AuthRateLimitResult } from '@/lib/auth/rate-limit';
-import { getClientIP } from '@/lib/security/client-ip';
+import { getClientThrottleKey } from '@/lib/security/client-ip';
 
 type CredentialsInput = Partial<Record<'email' | 'password', unknown>>;
+
+// Each email gets its own budget on top of the per-client one, so guessing one account's password
+// cannot be sped up by rotating client addresses. Every attempt counts, for every email, whether or
+// not the account exists, so the budget itself reveals nothing about which emails have accounts.
+export const ACCOUNT_LOGIN_LIMIT = { maxRequests: 10, windowMs: 15 * 60_000 };
 
 type CredentialUser = {
     id: string;
@@ -38,21 +43,25 @@ export async function authorizeCredentials(
         return null;
     }
 
-    let rateLimit: AuthRateLimitResult;
+    const normalizedEmail = credentials.email.toLowerCase().trim();
     try {
-        rateLimit = await dependencies.consumeRateLimit({
+        const clientLimit = await dependencies.consumeRateLimit({
             namespace: 'login',
-            identifier: getClientIP(request),
+            identifier: getClientThrottleKey(request),
             maxRequests: 10,
             windowMs: 60_000,
         });
+        if (!clientLimit.success) return null;
+        const accountLimit = await dependencies.consumeRateLimit({
+            namespace: 'login-account',
+            identifier: normalizedEmail,
+            ...ACCOUNT_LOGIN_LIMIT,
+        });
+        if (!accountLimit.success) return null;
     } catch {
         return null;
     }
 
-    if (!rateLimit.success) return null;
-
-    const normalizedEmail = credentials.email.toLowerCase().trim();
     let user: CredentialUser | null | undefined;
     try {
         user = await dependencies.findUserByEmail(normalizedEmail);

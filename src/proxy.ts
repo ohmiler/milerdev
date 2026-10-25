@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { getClientIPFromHeaders } from '@/lib/security/client-ip';
+import { getClientThrottleKeyFromHeaders } from '@/lib/security/client-ip';
 
 type ProxyGlobal = typeof globalThis & {
     __milerdevProxyCleanupStarted?: boolean;
@@ -148,17 +148,17 @@ export function proxy(request: NextRequest) {
         return createInvalidAuthSigninResponse(request);
     }
 
-    // Rate limit admin API: 60 requests per minute per IP
+    // Rate limit admin API: 60 requests per minute per IP (per /64 for IPv6)
     if (isAdminApiRoute) {
-        const ip = getClientIPFromHeaders(request.headers);
+        const ip = getClientThrottleKeyFromHeaders(request.headers);
         if (!middlewareRateLimit(`admin:${ip}`, 60, RATE_LIMIT_WINDOW_MS)) {
             return createRateLimitResponse(request, 'Too many requests. Please try again later.');
         }
     }
 
-    // Rate limit auth login: 10 requests per minute per IP
+    // Rate limit auth login: 10 requests per minute per IP (per /64 for IPv6)
     if (isCredentialsCallbackRoute) {
-        const ip = getClientIPFromHeaders(request.headers);
+        const ip = getClientThrottleKeyFromHeaders(request.headers);
         if (!middlewareRateLimit(`login:${ip}`, 10, RATE_LIMIT_WINDOW_MS)) {
             return createRateLimitResponse(request, 'Too many login attempts. Please try again later.');
         }

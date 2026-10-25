@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { authorizeCredentials } from '@/lib/auth/credentials';
+import { ACCOUNT_LOGIN_LIMIT, authorizeCredentials } from '@/lib/auth/credentials';
 import { applyJwtSessionPolicy } from '@/lib/auth/session';
 import type { JWT } from 'next-auth/jwt';
 
@@ -112,6 +112,44 @@ describe('credentials authorization rate-limit boundary', () => {
         });
         expect(dependencies.findUserByEmail).not.toHaveBeenCalled();
         expect(dependencies.comparePassword).not.toHaveBeenCalled();
+    });
+
+    it('gives each email its own budget that rotating client addresses cannot reset', async () => {
+        const dependencies = createDependencies();
+        const buckets = new Map<string, number>();
+        dependencies.consumeRateLimit.mockImplementation(async ({ namespace, identifier, maxRequests }) => {
+            const key = `${namespace} ${identifier}`;
+            const count = (buckets.get(key) ?? 0) + 1;
+            buckets.set(key, count);
+            return { success: count <= maxRequests, remaining: Math.max(0, maxRequests - count), resetTime: Date.now() + 60_000 };
+        });
+        dependencies.comparePassword.mockResolvedValue(false);
+
+        for (let attempt = 1; attempt <= ACCOUNT_LOGIN_LIMIT.maxRequests + 1; attempt++) {
+            const fromNewAddress = new Request(request.url, { method: 'POST', headers: { 'x-real-ip': `192.0.2.${attempt}` } });
+            await expect(authorizeCredentials(
+                { email: ' Learner@Example.test ', password: `guess-${attempt}` }, fromNewAddress, dependencies,
+            )).resolves.toBeNull();
+        }
+
+        // Every address was fresh, so only the email budget stopped the last guess.
+        expect(dependencies.comparePassword).toHaveBeenCalledTimes(ACCOUNT_LOGIN_LIMIT.maxRequests);
+        expect(dependencies.findUserByEmail).toHaveBeenCalledTimes(ACCOUNT_LOGIN_LIMIT.maxRequests);
+        expect(dependencies.consumeRateLimit).toHaveBeenCalledWith({
+            namespace: 'login-account', identifier: 'learner@example.test', maxRequests: 10, windowMs: 900_000,
+        });
+    });
+
+    it('spends an email budget the same way whether or not the email has an account', async () => {
+        const dependencies = createDependencies();
+        dependencies.findUserByEmail.mockResolvedValue(undefined);
+
+        await authorizeCredentials({ email: 'nobody@example.test', password: 'Password1' }, request, dependencies);
+
+        expect(dependencies.consumeRateLimit).toHaveBeenCalledTimes(2);
+        expect(dependencies.consumeRateLimit).toHaveBeenLastCalledWith(expect.objectContaining({
+            namespace: 'login-account', identifier: 'nobody@example.test',
+        }));
     });
 
     it('fails closed without user lookup when the limiter is unavailable', async () => {

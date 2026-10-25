@@ -16,7 +16,7 @@ vi.mock('@/lib/auth/rate-limit', () => ({
   authRateLimitUnavailableResponse: vi.fn(),
 }));
 vi.mock('@/lib/security/rate-limit', () => ({
-  getClientIP: () => '127.0.0.1', rateLimits: { auth: {} }, rateLimitResponse: vi.fn(),
+  getClientIP: () => '127.0.0.1', getClientThrottleKey: () => '127.0.0.1', rateLimits: { auth: {} }, rateLimitResponse: vi.fn(),
 }));
 vi.mock('@/lib/db', () => ({ db: {
   select: () => ({ from: () => ({ where: () => ({ limit: mocks.select }) }) }),

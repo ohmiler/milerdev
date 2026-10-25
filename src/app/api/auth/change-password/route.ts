@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { newPasswordSchema } from '@/lib/auth/password-validation';
 import { PasswordSecurityError } from '@/lib/auth/password-errors';
 import { auth } from '@/lib/auth';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
+import { getClientThrottleKey, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,
@@ -29,10 +29,10 @@ export async function POST(request: Request) {
         }
 
         // Rate limiting
-        const clientIP = getClientIP(request);
+        const throttleKey = getClientThrottleKey(request);
         const rateLimit = await consumeAuthRateLimit({
             namespace: 'change-pw',
-            identifier: clientIP,
+            identifier: throttleKey,
             ...rateLimits.auth,
         }).catch(() => null);
 

@@ -70,3 +70,31 @@ export function getClientIPFromHeaders(headers: Pick<Headers, 'get'>): string {
 export function getClientIP(request: Request): string {
     return getClientIPFromHeaders(request.headers);
 }
+
+function expandIPv6(ip: string): string[] {
+    const [head, tail] = ip.split('::');
+    const headGroups = head ? head.split(':') : [];
+    if (tail === undefined) return headGroups;
+    const tailGroups = tail ? tail.split(':') : [];
+    const zeros = Array<string>(8 - headGroups.length - tailGroups.length).fill('0');
+    return [...headGroups, ...zeros, ...tailGroups];
+}
+
+/**
+ * What a throttle counts against for this client address. An IPv6 host is usually given a whole
+ * /64, so counting each address would hand it 2^64 fresh buckets; it counts per /64 instead.
+ * IPv4 addresses and 'unknown' are returned unchanged. Logs keep the full address (getClientIP).
+ */
+export function throttleKeyForIP(ip: string): string {
+    if (!ip.includes(':')) return ip;
+    const network = expandIPv6(ip).slice(0, 4).map((group) => parseInt(group, 16).toString(16));
+    return `${network.join(':')}::/64`;
+}
+
+export function getClientThrottleKeyFromHeaders(headers: Pick<Headers, 'get'>): string {
+    return throttleKeyForIP(getClientIPFromHeaders(headers));
+}
+
+export function getClientThrottleKey(request: Request): string {
+    return getClientThrottleKeyFromHeaders(request.headers);
+}

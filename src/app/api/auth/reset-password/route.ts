@@ -5,7 +5,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/notifications/email';
 import { randomBytes, createHash } from 'crypto';
-import { getClientIP, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
+import { getClientThrottleKey, rateLimits, rateLimitResponse } from '@/lib/security/rate-limit';
 import {
     authRateLimitUnavailableResponse,
     consumeAuthRateLimit,
@@ -27,10 +27,10 @@ const resetSchema = z.object({
 export async function POST(request: Request) {
     try {
         // Rate limiting
-        const clientIP = getClientIP(request);
+        const throttleKey = getClientThrottleKey(request);
         const rateLimit = await consumeAuthRateLimit({
             namespace: 'reset',
-            identifier: clientIP,
+            identifier: throttleKey,
             ...rateLimits.auth,
         }).catch(() => null);
 
