@@ -14,6 +14,9 @@ updates:
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
+        # A Stripe SDK release can require a newer API version, which src/lib/commerce/stripe.ts
+        # pins on purpose. Stripe gets its own PR so that one decision never blocks the rest.
+        exclude-patterns: ["stripe"]
     ignore:
       # Production runs Node 22 (.nvmrc, engines); never move the types past it.
       - dependency-name: "@types/node"
