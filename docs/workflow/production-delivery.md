@@ -27,7 +27,8 @@
 | Staging / preview | ยังไม่มี | ทดสอบกับของจริงได้แค่หลัง deploy | พิจารณา Railway PR environment |
 | Log และ alert | บางส่วน | log redacted และมี label แยก route; ยังไม่ยืนยันว่ามี alert (error rate, health check) | เจ้าของตั้ง alert ใน Railway/uptime monitor |
 | Backup และการกู้คืน | บางส่วน | เคยซ้อมกู้คืนในเครื่อง; ยังไม่ยืนยันตารางสำรองและการทดสอบกู้คืนเป็นระยะ | เจ้าของยืนยัน |
-| Dependency และช่องโหว่ | บางส่วน | `.github/dependabot.yml` เปิด PR อัปเดต npm และ GitHub Actions ทุกวันจันทร์ (2026-10-04); ยังไม่ยืนยัน secret scanning/Dependabot alerts | เจ้าของเปิด secret scanning และ Dependabot alerts ใน Settings |
+| Dependency และช่องโหว่ | บางส่วน | `.github/dependabot.yml` เปิด PR อัปเดต npm และ GitHub Actions ทุกวันจันทร์ (2026-10-04) โดย Stripe แยกเป็น PR เดี่ยว (2026-11-17); secret scanning และ push protection เปิดแล้ว ส่วน Dependabot alerts และ security updates ยังปิด (อ่านจาก GitHub API 2026-11-16) | เจ้าของเปิด Dependabot alerts และ security updates ใน Settings |
+| ป้องกัน branch ที่ deploy | ยังไม่มี | `master` มี branch protection แต่ `production` ไม่มี จึง force-push หรือลบได้ (อ่านจาก GitHub API 2026-11-16) | เจ้าของเปิด protection ของ `production`: ห้าม force-push และห้ามลบ |
 | ผู้ตรวจ (review) งานเสี่ยงสูง | บางส่วน | ไม่บังคับ approval; [CODEOWNERS](../../.github/CODEOWNERS) ระบุ path เสี่ยงสูงที่ต้องให้เจ้าของ merge (tier C) | - |
 | Secrets | มีแล้ว | Infisical + กฎห้ามอ่าน `.env` | - |
 
@@ -50,7 +51,10 @@
 
 1. ตั้ง install command ของ Railway เป็น `npm ci` (deploy จาก branch `production` ตั้งแล้ว 2026-10-07)
 2. เพิ่ม alert พื้นฐาน (health check ล้ม, อัตรา error) และยืนยันตาราง backup
-3. เปิด secret scanning และ Dependabot alerts ใน GitHub Settings
-4. ตัดสินใจ: จะมี staging หรือไม่
+3. เปิด Dependabot alerts และ security updates ใน GitHub Settings (secret scanning เปิดแล้ว)
+4. เปิด branch protection ของ `production`: ห้าม force-push และห้ามลบ
+5. ตัดสินใจ: จะมี staging หรือไม่
 
 ทำแล้ว 2026-10-08: `CI passed` เป็น required check, ปิด "Require branches to be up to date before merging" และเปิด "Automatically delete head branches"
+
+ทำแล้ว 2026-11-17: repo อนุญาตเฉพาะ squash merge (ปิด merge commit และ rebase merge) และปิด auto-merge ให้ตรงกับ AGENTS.md
